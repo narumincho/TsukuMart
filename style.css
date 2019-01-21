@@ -1,0 +1,51 @@
+body {
+    margin: 0;
+}
+
+.itemList {
+    display: grid;
+    grid-gap: 1rem;
+}
+
+.item {
+    display: flex;
+    height: 6rem;
+    box-shadow: #000 0 1px 3px;
+    padding: 1rem;
+}
+.itemTitle {
+    font-size: 1.5rem;
+    padding: 0 1rem;
+}
+.itemPrice {
+    align-self: flex-end;
+}
+.itemImage {
+    width: 6rem;
+    object-fit: contain;
+}
+img {
+    display: block;
+}
+.exhibitButton {
+    position: fixed;
+    bottom: 3rem;
+    right: 1rem;
+    border-radius: 50%;
+    background-color: blue;
+    color: white;
+    text-align: center;
+    width: 6rem;
+    height: 6rem;
+}
+.bottomMenu {
+    position: fixed;
+    bottom: 0;
+    display: flex;
+    background-color: white;
+    height: 3rem;
+    width: 100%;
+}
+.bottomMenuItem {
+    padding: 1rem;
+}
