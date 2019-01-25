@@ -4,8 +4,6 @@ import Browser
 import Html
 import Html.Attributes
 import Html.Events
-import Svg
-import Svg.Attributes
 
 
 type Model
