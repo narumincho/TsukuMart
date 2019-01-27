@@ -7,7 +7,10 @@ import Html.Events
 
 
 type Model
-    = Model { selectedTab : Tab }
+    = Model
+        { selectedTab : Tab
+        , openedMenu : Bool
+        }
 
 
 type Tab
@@ -18,6 +21,8 @@ type Tab
 
 type Msg
     = TabChange Tab
+    | OpenMenu
+    | CloseMenu
 
 
 main : Program () Model Msg
@@ -33,7 +38,9 @@ main =
 init : () -> ( Model, Cmd Msg )
 init _ =
     ( Model
-        { selectedTab = Recommend }
+        { selectedTab = Recommend
+        , openedMenu = False
+        }
     , Cmd.none
     )
 
@@ -49,17 +56,38 @@ update msg (Model rec) =
             , Cmd.none
             )
 
+        OpenMenu ->
+            ( Model
+                { rec
+                    | openedMenu = True
+                }
+            , Cmd.none
+            )
+
+        CloseMenu ->
+            ( Model
+                { rec
+                    | openedMenu = False
+                }
+            , Cmd.none
+            )
+
 
 view : Model -> { title : String, body : List (Html.Html Msg) }
-view (Model { selectedTab }) =
+view (Model { selectedTab, openedMenu }) =
     { title = "つくマート"
     , body =
         [ header
         , mainTab selectedTab
         , itemList
         , exhibitButton
+        , menu openedMenu
         ]
     }
+
+
+
+{- Header -}
 
 
 header : Html.Html Msg
@@ -71,6 +99,80 @@ header =
         , searchButton
         , notificationsButton
         ]
+
+
+menuButton : Html.Html Msg
+menuButton =
+    Html.img
+        [ Html.Attributes.src "assets/menu.svg"
+        , Html.Attributes.alt "メニュー"
+        , headerButton
+        , Html.Events.onClick OpenMenu
+        ]
+        []
+
+
+logo : Html.Html Msg
+logo =
+    Html.img
+        [ Html.Attributes.src "assets/logo.svg"
+        , Html.Attributes.alt "つくマート"
+        , Html.Attributes.class "logo"
+        ]
+        []
+
+
+searchButton : Html.Html Msg
+searchButton =
+    Html.img
+        [ Html.Attributes.src "assets/search.svg"
+        , Html.Attributes.alt "探す"
+        , headerButton
+        ]
+        []
+
+
+notificationsButton : Html.Html Msg
+notificationsButton =
+    Html.img
+        [ Html.Attributes.src "assets/notifications.svg"
+        , Html.Attributes.alt "通知"
+        , headerButton
+        ]
+        []
+
+
+headerButton : Html.Attribute Msg
+headerButton =
+    Html.Attributes.class "headerButton"
+
+
+
+{- Menu -}
+
+
+menu : Bool -> Html.Html Msg
+menu isOpened =
+    Html.div
+        [ Html.Attributes.class "menu" ]
+        (if isOpened then
+            [ Html.div
+                [ Html.Attributes.class "menu-shadow"
+                , Html.Events.onClick CloseMenu
+                ]
+                []
+            , Html.div
+                [ Html.Attributes.class "menu-main" ]
+                [ Html.text "ユーザ、メニューのリスト" ]
+            ]
+
+         else
+            []
+        )
+
+
+
+{- Main Tab -}
 
 
 mainTab : Tab -> Html.Html Msg
@@ -119,51 +221,6 @@ mainTabSelectLine selectedTab =
             ]
             []
         ]
-
-
-menuButton : Html.Html Msg
-menuButton =
-    Html.img
-        [ Html.Attributes.src "assets/menu.svg"
-        , Html.Attributes.alt "メニュー"
-        , headerButton
-        ]
-        []
-
-
-logo : Html.Html Msg
-logo =
-    Html.img
-        [ Html.Attributes.src "assets/logo.svg"
-        , Html.Attributes.alt "つくマート"
-        , Html.Attributes.class "logo"
-        ]
-        []
-
-
-searchButton : Html.Html Msg
-searchButton =
-    Html.img
-        [ Html.Attributes.src "assets/search.svg"
-        , Html.Attributes.alt "探す"
-        , headerButton
-        ]
-        []
-
-
-notificationsButton : Html.Html Msg
-notificationsButton =
-    Html.img
-        [ Html.Attributes.src "assets/notifications.svg"
-        , Html.Attributes.alt "通知"
-        , headerButton
-        ]
-        []
-
-
-headerButton : Html.Attribute Msg
-headerButton =
-    Html.Attributes.class "headerButton"
 
 
 itemList : Html.Html Msg
