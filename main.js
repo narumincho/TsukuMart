@@ -4311,11 +4311,12 @@ function _Browser_load(url)
 	}));
 }
 var author$project$Main$Model = elm$core$Basics$identity;
+var author$project$Main$NotOpenedYet = 0;
 var author$project$Main$Recommend = 1;
-var elm$core$Basics$False = 1;
 var elm$core$Basics$identity = function (x) {
 	return x;
 };
+var elm$core$Basics$False = 1;
 var elm$core$Basics$True = 0;
 var elm$core$Result$isOk = function (result) {
 	if (!result.$) {
@@ -4794,9 +4795,11 @@ var elm$core$Platform$Cmd$batch = _Platform_batch;
 var elm$core$Platform$Cmd$none = elm$core$Platform$Cmd$batch(_List_Nil);
 var author$project$Main$init = function (_n0) {
 	return _Utils_Tuple2(
-		{I: false, O: 1},
+		{I: 0, O: 1},
 		elm$core$Platform$Cmd$none);
 };
+var author$project$Main$Close = 1;
+var author$project$Main$Open = 2;
 var author$project$Main$update = F2(
 	function (msg, _n0) {
 		var rec = _n0;
@@ -4812,13 +4815,13 @@ var author$project$Main$update = F2(
 				return _Utils_Tuple2(
 					_Utils_update(
 						rec,
-						{I: true}),
+						{I: 2}),
 					elm$core$Platform$Cmd$none);
 			default:
 				return _Utils_Tuple2(
 					_Utils_update(
 						rec,
-						{I: false}),
+						{I: 1}),
 					elm$core$Platform$Cmd$none);
 		}
 	});
@@ -5154,38 +5157,145 @@ var author$project$Main$mainTab = function (selectedTab) {
 				])));
 };
 var author$project$Main$CloseMenu = {$: 2};
-var author$project$Main$menu = function (isOpened) {
-	return A2(
+var author$project$Main$menuMain = _List_fromArray(
+	[
+		A2(
 		elm$html$Html$div,
+		_List_fromArray(
+			[
+				elm$html$Html$Attributes$class('menu-account')
+			]),
+		_List_fromArray(
+			[
+				A2(
+				elm$html$Html$img,
+				_List_fromArray(
+					[
+						elm$html$Html$Attributes$class('menu-account-image'),
+						elm$html$Html$Attributes$src('assets/accountImage.png')
+					]),
+				_List_Nil),
+				elm$html$Html$text('user')
+			])),
+		A2(
+		elm$html$Html$div,
+		_List_fromArray(
+			[
+				elm$html$Html$Attributes$class('menu-item')
+			]),
+		_List_fromArray(
+			[
+				elm$html$Html$text('いいね・閲覧したもの')
+			])),
+		A2(
+		elm$html$Html$div,
+		_List_fromArray(
+			[
+				elm$html$Html$Attributes$class('menu-item')
+			]),
+		_List_fromArray(
+			[
+				elm$html$Html$text('出品したもの')
+			])),
+		A2(
+		elm$html$Html$div,
+		_List_fromArray(
+			[
+				elm$html$Html$Attributes$class('menu-item')
+			]),
+		_List_fromArray(
+			[
+				elm$html$Html$text('購入したもの')
+			])),
+		A2(
+		elm$html$Html$div,
+		_List_fromArray(
+			[
+				elm$html$Html$Attributes$class('menu-item')
+			]),
+		_List_fromArray(
+			[
+				elm$html$Html$text('使い方')
+			])),
+		A2(
+		elm$html$Html$div,
+		_List_fromArray(
+			[
+				elm$html$Html$Attributes$class('menu-item')
+			]),
+		_List_fromArray(
+			[
+				elm$html$Html$text('設定')
+			]))
+	]);
+var elm$virtual_dom$VirtualDom$keyedNode = function (tag) {
+	return _VirtualDom_keyedNode(
+		_VirtualDom_noScript(tag));
+};
+var elm$html$Html$Keyed$node = elm$virtual_dom$VirtualDom$keyedNode;
+var author$project$Main$menu = function (menuState) {
+	return A3(
+		elm$html$Html$Keyed$node,
+		'div',
 		_List_fromArray(
 			[
 				elm$html$Html$Attributes$class('menu')
 			]),
-		isOpened ? _List_fromArray(
-			[
-				A2(
-				elm$html$Html$div,
-				_List_fromArray(
-					[
-						elm$html$Html$Attributes$class('menu-shadow'),
-						elm$html$Html$Events$onClick(author$project$Main$CloseMenu)
-					]),
-				_List_Nil),
-				A2(
-				elm$html$Html$div,
-				_List_fromArray(
-					[
-						elm$html$Html$Attributes$class('menu-main')
-					]),
-				_List_fromArray(
-					[
-						elm$html$Html$text('ユーザ、メニューのリスト')
-					]))
-			]) : _List_Nil);
+		function () {
+			switch (menuState) {
+				case 0:
+					return _List_Nil;
+				case 2:
+					return _List_fromArray(
+						[
+							_Utils_Tuple2(
+							'os',
+							A2(
+								elm$html$Html$div,
+								_List_fromArray(
+									[
+										elm$html$Html$Attributes$class('menu-shadow menu-shadow-appear'),
+										elm$html$Html$Events$onClick(author$project$Main$CloseMenu)
+									]),
+								_List_Nil)),
+							_Utils_Tuple2(
+							'om',
+							A2(
+								elm$html$Html$div,
+								_List_fromArray(
+									[
+										elm$html$Html$Attributes$class('menu-list menu-list-open')
+									]),
+								author$project$Main$menuMain))
+						]);
+				default:
+					return _List_fromArray(
+						[
+							_Utils_Tuple2(
+							'cs',
+							A2(
+								elm$html$Html$div,
+								_List_fromArray(
+									[
+										elm$html$Html$Attributes$class('menu-shadow menu-shadow-disappear')
+									]),
+								_List_Nil)),
+							_Utils_Tuple2(
+							'cm',
+							A2(
+								elm$html$Html$div,
+								_List_fromArray(
+									[
+										elm$html$Html$Attributes$class('menu-list menu-list-close')
+									]),
+								author$project$Main$menuMain))
+						]);
+			}
+		}());
 };
 var author$project$Main$view = function (_n0) {
 	var selectedTab = _n0.O;
-	var openedMenu = _n0.I;
+	var menuState = _n0.I;
 	return {
 		ap: _List_fromArray(
 			[
@@ -5193,7 +5303,7 @@ var author$project$Main$view = function (_n0) {
 				author$project$Main$mainTab(selectedTab),
 				author$project$Main$itemList,
 				author$project$Main$exhibitButton,
-				author$project$Main$menu(openedMenu)
+				author$project$Main$menu(menuState)
 			]),
 		h: 'つくマート'
 	};

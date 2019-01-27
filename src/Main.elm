@@ -4,13 +4,20 @@ import Browser
 import Html
 import Html.Attributes
 import Html.Events
+import Html.Keyed
 
 
 type Model
     = Model
         { selectedTab : Tab
-        , openedMenu : Bool
+        , menuState : MenuState
         }
+
+
+type MenuState
+    = NotOpenedYet
+    | Close
+    | Open
 
 
 type Tab
@@ -39,7 +46,7 @@ init : () -> ( Model, Cmd Msg )
 init _ =
     ( Model
         { selectedTab = Recommend
-        , openedMenu = False
+        , menuState = NotOpenedYet
         }
     , Cmd.none
     )
@@ -59,7 +66,7 @@ update msg (Model rec) =
         OpenMenu ->
             ( Model
                 { rec
-                    | openedMenu = True
+                    | menuState = Open
                 }
             , Cmd.none
             )
@@ -67,21 +74,21 @@ update msg (Model rec) =
         CloseMenu ->
             ( Model
                 { rec
-                    | openedMenu = False
+                    | menuState = Close
                 }
             , Cmd.none
             )
 
 
 view : Model -> { title : String, body : List (Html.Html Msg) }
-view (Model { selectedTab, openedMenu }) =
+view (Model { selectedTab, menuState }) =
     { title = "つくマート"
     , body =
         [ header
         , mainTab selectedTab
         , itemList
         , exhibitButton
-        , menu openedMenu
+        , menu menuState
         ]
     }
 
@@ -151,25 +158,69 @@ headerButton =
 {- Menu -}
 
 
-menu : Bool -> Html.Html Msg
-menu isOpened =
-    Html.div
+menu : MenuState -> Html.Html Msg
+menu menuState =
+    Html.Keyed.node "div"
         [ Html.Attributes.class "menu" ]
-        (if isOpened then
-            [ Html.div
-                [ Html.Attributes.class "menu-shadow"
-                , Html.Events.onClick CloseMenu
-                ]
+        (case menuState of
+            NotOpenedYet ->
                 []
-            , Html.div
-                [ Html.Attributes.class "menu-main" ]
-                [ Html.text "ユーザ、メニューのリスト" ]
-            ]
 
-         else
-            []
+            Open ->
+                [ ( "os"
+                  , Html.div
+                        [ Html.Attributes.class "menu-shadow menu-shadow-appear"
+                        , Html.Events.onClick CloseMenu
+                        ]
+                        []
+                  )
+                , ( "om"
+                  , Html.div
+                        [ Html.Attributes.class "menu-list menu-list-open" ]
+                        menuMain
+                  )
+                ]
+
+            Close ->
+                [ ( "cs"
+                  , Html.div
+                        [ Html.Attributes.class "menu-shadow menu-shadow-disappear" ]
+                        []
+                  )
+                , ( "cm"
+                  , Html.div
+                        [ Html.Attributes.class "menu-list menu-list-close" ]
+                        menuMain
+                  )
+                ]
         )
 
+menuMain : List (Html.Html Msg)
+menuMain =
+    [ Html.div
+        [Html.Attributes.class "menu-account"]
+        [Html.img
+            [ Html.Attributes.class "menu-account-image"
+            , Html.Attributes.src "assets/accountImage.png"]
+            []
+        , Html.text "user"
+        ]
+    , Html.div
+        [ Html.Attributes.class "menu-item" ]
+        [ Html.text "いいね・閲覧したもの" ]
+    , Html.div
+        [ Html.Attributes.class "menu-item" ]
+        [ Html.text "出品したもの" ]
+    , Html.div
+        [ Html.Attributes.class "menu-item" ]
+        [ Html.text "購入したもの" ]
+    , Html.div
+        [ Html.Attributes.class "menu-item" ]
+        [ Html.text "使い方" ]
+    , Html.div
+        [ Html.Attributes.class "menu-item" ]
+        [ Html.text "設定" ]
+    ]
 
 
 {- Main Tab -}

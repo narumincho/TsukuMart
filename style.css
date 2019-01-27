@@ -58,21 +58,30 @@ h1:hover {
             Menu
 ===========================*/
 
-.menu-main {
+.menu-list {
     position: absolute;
     width: 80%;
     height: 100%;
     top: 0;
-    left: -80%;
     background-color: #ddd;
     z-index: 2;
-    animation-name: menu-open;
     animation-duration: 300ms;
-    animation-timing-function:ease;
+    animation-timing-function: ease;
     animation-delay: 0ms;
     animation-iteration-count: 1;
     animation-direction: normal;
     animation-fill-mode: forwards;
+    display: flex;
+    flex-direction: column;
+}
+
+.menu-list-open {
+    animation-name: menu-open;
+}
+
+.menu-list-close {
+    animation-name: menu-close;
+    pointer-events: none;
 }
 
 @keyframes menu-open {
@@ -84,6 +93,15 @@ h1:hover {
     }
 }
 
+@keyframes menu-close {
+    0% {
+        left: 0;
+    }
+    100% {
+        left: -80%;
+    }
+}
+
 .menu-shadow {
     position: absolute;
     width: 100%;
@@ -91,7 +109,6 @@ h1:hover {
     top: 0;
     left: 0;
     z-index: 2;
-    animation-name: shadow-darker;
     animation-duration: 300ms;
     animation-timing-function: ease;
     animation-delay: 0ms;
@@ -100,14 +117,53 @@ h1:hover {
     animation-fill-mode: forwards;
 }
 
-@keyframes shadow-darker {
-    0% {
-        background-color: rgba(0, 0, 0, 0);
-    }
+.menu-shadow-appear {
+    animation-name: shadow-appear;
+}
 
+.menu-shadow-disappear {
+    animation-name: shadow-disappear;
+    pointer-events: none;
+}
+
+@keyframes shadow-appear {
+    0% {
+        background-color: rgba(0, 0, 0, 0)
+    }
     100% {
+        background-color: rgba(0, 0, 0, 0.7);
+    }
+}
+
+@keyframes shadow-disappear {
+    0% {
         background-color: rgba(0, 0, 0, 0.7)
     }
+    100% {
+        background-color: rgba(0, 0, 0, 0);
+    }
+}
+
+.menu-account {
+    height: 5rem;
+    display: flex;
+    align-items: center;
+    background-color: var(--primaryColor);
+    color: #ddd;
+    font-size: 1.7rem;
+}
+
+.menu-account-image {
+    height: 4rem;
+    width: 4rem;
+    border-radius: 50%;
+}
+
+.menu-item {
+    height: 3rem;
+    display: flex;
+    align-items: center;
+    font-size: 1.4rem;
 }
 /*===========================
             Main Tab
