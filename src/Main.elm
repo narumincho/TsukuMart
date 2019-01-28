@@ -1,10 +1,12 @@
 port module Main exposing (main)
 
 import Browser
+import Browser.Navigation
 import Html
 import Html.Attributes
 import Html.Events
 import Html.Keyed
+import Url
 
 
 
@@ -22,6 +24,7 @@ type Model
         { selectedTab : Tab
         , menuState : MenuState
         , wideScreenMode : Bool
+        , key : Browser.Navigation.Key
         }
 
 
@@ -43,27 +46,46 @@ type Msg
     | CloseMenu
     | ToWideScreenMode
     | ToNarrowScreenMode
+    | UrlChange Url.Url
+    | UrlRequest Browser.UrlRequest
 
 
 main : Program () Model Msg
 main =
-    Browser.document
+    Browser.application
         { init = init
         , update = update
         , view = view
         , subscriptions = subscription
+        , onUrlRequest = onUrlRequest
+        , onUrlChange = onUrlChange
         }
 
 
-init : () -> ( Model, Cmd Msg )
-init _ =
+init : () -> Url.Url -> Browser.Navigation.Key -> ( Model, Cmd Msg )
+init _ url key =
+    let
+        _ =
+            Debug.log "load url" (Url.toString url)
+    in
     ( Model
         { selectedTab = Recommend
         , menuState = NotOpenedYet
         , wideScreenMode = False
+        , key = key
         }
     , Cmd.none
     )
+
+
+onUrlRequest : Browser.UrlRequest -> Msg
+onUrlRequest =
+    UrlRequest
+
+
+onUrlChange : Url.Url -> Msg
+onUrlChange =
+    UrlChange
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -104,6 +126,31 @@ update msg (Model rec) =
                 { rec | wideScreenMode = False }
             , Cmd.none
             )
+
+        UrlChange url ->
+            let
+                _ =
+                    Debug.log "url change" url
+            in
+            ( Model rec
+            , Cmd.none
+            )
+
+        UrlRequest urlRequest ->
+            case urlRequest of
+                Browser.Internal url ->
+                    let
+                        _ =
+                            Debug.log "url request internal" url
+                    in
+                    ( Model rec
+                    , Browser.Navigation.pushUrl rec.key (Url.toString url)
+                    )
+
+                Browser.External string ->
+                    ( Model rec
+                    , Browser.Navigation.load string
+                    )
 
 
 view : Model -> { title : String, body : List (Html.Html Msg) }
@@ -245,21 +292,17 @@ menuMain =
             []
         , Html.text "user"
         ]
+    , Html.a
+        [ Html.Attributes.class "menu-item"
+        , Html.Attributes.href "/like-history"
+        ]
+        [ Html.text "いいね・閲覧した商品" ]
     , Html.div
         [ Html.Attributes.class "menu-item" ]
-        [ Html.text "いいね・閲覧したもの" ]
+        [ Html.text "出品した商品" ]
     , Html.div
         [ Html.Attributes.class "menu-item" ]
-        [ Html.text "出品したもの" ]
-    , Html.div
-        [ Html.Attributes.class "menu-item" ]
-        [ Html.text "購入したもの" ]
-    , Html.div
-        [ Html.Attributes.class "menu-item" ]
-        [ Html.text "使い方" ]
-    , Html.div
-        [ Html.Attributes.class "menu-item" ]
-        [ Html.text "設定" ]
+        [ Html.text "購入した商品" ]
     ]
 
 
