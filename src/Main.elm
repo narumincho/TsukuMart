@@ -1,4 +1,4 @@
-module Main exposing (main)
+port module Main exposing (main)
 
 import Browser
 import Html
@@ -7,10 +7,21 @@ import Html.Events
 import Html.Keyed
 
 
+
+{- Intは意味のない値 -}
+
+
+port toWideScreenMode : (Int -> msg) -> Sub msg
+
+
+port toNarrowScreenMode : (Int -> msg) -> Sub msg
+
+
 type Model
     = Model
         { selectedTab : Tab
         , menuState : MenuState
+        , wideScreenMode : Bool
         }
 
 
@@ -30,6 +41,8 @@ type Msg
     = TabChange Tab
     | OpenMenu
     | CloseMenu
+    | ToWideScreenMode
+    | ToNarrowScreenMode
 
 
 main : Program () Model Msg
@@ -38,7 +51,7 @@ main =
         { init = init
         , update = update
         , view = view
-        , subscriptions = always Sub.none
+        , subscriptions = subscription
         }
 
 
@@ -47,6 +60,7 @@ init _ =
     ( Model
         { selectedTab = Recommend
         , menuState = NotOpenedYet
+        , wideScreenMode = False
         }
     , Cmd.none
     )
@@ -79,16 +93,28 @@ update msg (Model rec) =
             , Cmd.none
             )
 
+        ToWideScreenMode ->
+            ( Model
+                { rec | wideScreenMode = True }
+            , Cmd.none
+            )
+
+        ToNarrowScreenMode ->
+            ( Model
+                { rec | wideScreenMode = False }
+            , Cmd.none
+            )
+
 
 view : Model -> { title : String, body : List (Html.Html Msg) }
-view (Model { selectedTab, menuState }) =
+view (Model { selectedTab, menuState, wideScreenMode }) =
     { title = "つくマート"
     , body =
-        [ header
+        [ header wideScreenMode
         , mainTab selectedTab
         , itemList
         , exhibitButton
-        , menu menuState
+        , menu wideScreenMode menuState
         ]
     }
 
@@ -97,15 +123,21 @@ view (Model { selectedTab, menuState }) =
 {- Header -}
 
 
-header : Html.Html Msg
-header =
+header : Bool -> Html.Html Msg
+header wideMode =
     Html.header
         []
-        [ menuButton
-        , Html.h1 [] [ logo ]
-        , searchButton
-        , notificationsButton
-        ]
+        ((if wideMode then
+            []
+
+          else
+            [ menuButton ]
+         )
+            ++ [ Html.h1 [] [ logo ]
+               , searchButton
+               , notificationsButton
+               ]
+        )
 
 
 menuButton : Html.Html Msg
@@ -158,50 +190,58 @@ headerButton =
 {- Menu -}
 
 
-menu : MenuState -> Html.Html Msg
-menu menuState =
-    Html.Keyed.node "div"
-        [ Html.Attributes.class "menu" ]
-        (case menuState of
-            NotOpenedYet ->
-                []
+menu : Bool -> MenuState -> Html.Html Msg
+menu isWideMode menuState =
+    if isWideMode then
+        Html.div
+            [ Html.Attributes.class "menu-always-show" ]
+            menuMain
 
-            Open ->
-                [ ( "os"
-                  , Html.div
-                        [ Html.Attributes.class "menu-shadow menu-shadow-appear"
-                        , Html.Events.onClick CloseMenu
-                        ]
-                        []
-                  )
-                , ( "om"
-                  , Html.div
-                        [ Html.Attributes.class "menu-list menu-list-open" ]
-                        menuMain
-                  )
-                ]
+    else
+        Html.Keyed.node "div"
+            [ Html.Attributes.class "menu" ]
+            (case menuState of
+                NotOpenedYet ->
+                    []
 
-            Close ->
-                [ ( "cs"
-                  , Html.div
-                        [ Html.Attributes.class "menu-shadow menu-shadow-disappear" ]
-                        []
-                  )
-                , ( "cm"
-                  , Html.div
-                        [ Html.Attributes.class "menu-list menu-list-close" ]
-                        menuMain
-                  )
-                ]
-        )
+                Open ->
+                    [ ( "os"
+                      , Html.div
+                            [ Html.Attributes.class "menu-shadow menu-shadow-appear"
+                            , Html.Events.onClick CloseMenu
+                            ]
+                            []
+                      )
+                    , ( "om"
+                      , Html.div
+                            [ Html.Attributes.class "menu-list menu-list-open" ]
+                            menuMain
+                      )
+                    ]
+
+                Close ->
+                    [ ( "cs"
+                      , Html.div
+                            [ Html.Attributes.class "menu-shadow menu-shadow-disappear" ]
+                            []
+                      )
+                    , ( "cm"
+                      , Html.div
+                            [ Html.Attributes.class "menu-list menu-list-close" ]
+                            menuMain
+                      )
+                    ]
+            )
+
 
 menuMain : List (Html.Html Msg)
 menuMain =
     [ Html.div
-        [Html.Attributes.class "menu-account"]
-        [Html.img
+        [ Html.Attributes.class "menu-account" ]
+        [ Html.img
             [ Html.Attributes.class "menu-account-image"
-            , Html.Attributes.src "assets/accountImage.png"]
+            , Html.Attributes.src "assets/accountImage.png"
+            ]
             []
         , Html.text "user"
         ]
@@ -221,6 +261,7 @@ menuMain =
         [ Html.Attributes.class "menu-item" ]
         [ Html.text "設定" ]
     ]
+
 
 
 {- Main Tab -}
@@ -286,6 +327,10 @@ itemList =
          , { title = "マンガ", price = 10, like = 99 }
          , { title = "ゲーム", price = 10, like = 99 }
          , { title = "絵本", price = 100, like = 5 }
+         , { title = "棚", price = 1000, like = 2 }
+         , { title = "いす", price = 1000, like = 2 }
+         , { title = "バッテリー", price = 300, like = 20 }
+         , { title = "教科書", price = 20, like = 10 }
          ]
             |> List.map item
         )
@@ -315,3 +360,14 @@ exhibitButton =
     Html.div
         [ Html.Attributes.class "exhibitButton" ]
         [ Html.text "出品" ]
+
+
+subscription : Model -> Sub Msg
+subscription (Model { wideScreenMode }) =
+    Sub.batch
+        (if wideScreenMode then
+            [ toNarrowScreenMode (always ToNarrowScreenMode) ]
+
+         else
+            [ toWideScreenMode (always ToWideScreenMode) ]
+        )

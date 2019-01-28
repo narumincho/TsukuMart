@@ -784,11 +784,11 @@ function _Debug_crash_UNUSED(identifier, fact1, fact2, fact3, fact4)
 
 function _Debug_regionToString(region)
 {
-	if (region.P.C === region.U.C)
+	if (region.Q.C === region.V.C)
 	{
-		return 'on line ' + region.P.C;
+		return 'on line ' + region.Q.C;
 	}
-	return 'on lines ' + region.P.C + ' through ' + region.U.C;
+	return 'on lines ' + region.Q.C + ' through ' + region.V.C;
 }
 
 
@@ -1857,9 +1857,9 @@ var _Platform_worker = F4(function(impl, flagDecoder, debugMetadata, args)
 	return _Platform_initialize(
 		flagDecoder,
 		args,
-		impl.aw,
+		impl.ax,
+		impl.aE,
 		impl.aD,
-		impl.aC,
 		function() { return function() {} }
 	);
 });
@@ -2660,8 +2660,8 @@ var _VirtualDom_mapEventRecord = F2(function(func, record)
 {
 	return {
 		n: func(record.n),
-		Q: record.Q,
-		N: record.N
+		R: record.R,
+		O: record.O
 	}
 });
 
@@ -2930,10 +2930,10 @@ function _VirtualDom_makeCallback(eventNode, initialHandler)
 
 		var value = result.a;
 		var message = !tag ? value : tag < 3 ? value.a : value.n;
-		var stopPropagation = tag == 1 ? value.b : tag == 3 && value.Q;
+		var stopPropagation = tag == 1 ? value.b : tag == 3 && value.R;
 		var currentEventNode = (
 			stopPropagation && event.stopPropagation(),
-			(tag == 2 ? value.b : tag == 3 && value.N) && event.preventDefault(),
+			(tag == 2 ? value.b : tag == 3 && value.O) && event.preventDefault(),
 			eventNode
 		);
 		var tagger;
@@ -3883,11 +3883,11 @@ var _Browser_element = _Debugger_element || F4(function(impl, flagDecoder, debug
 	return _Platform_initialize(
 		flagDecoder,
 		args,
-		impl.aw,
+		impl.ax,
+		impl.aE,
 		impl.aD,
-		impl.aC,
 		function(sendToApp, initialModel) {
-			var view = impl.aF;
+			var view = impl.aG;
 			/**/
 			var domNode = args['node'];
 			//*/
@@ -3919,12 +3919,12 @@ var _Browser_document = _Debugger_document || F4(function(impl, flagDecoder, deb
 	return _Platform_initialize(
 		flagDecoder,
 		args,
-		impl.aw,
+		impl.ax,
+		impl.aE,
 		impl.aD,
-		impl.aC,
 		function(sendToApp, initialModel) {
 			var divertHrefToApp = impl.D && impl.D(sendToApp)
-			var view = impl.aF;
+			var view = impl.aG;
 			var title = _VirtualDom_doc.title;
 			var bodyNode = _VirtualDom_doc.body;
 			var currNode = _VirtualDom_virtualize(bodyNode);
@@ -3932,12 +3932,12 @@ var _Browser_document = _Debugger_document || F4(function(impl, flagDecoder, deb
 			{
 				_VirtualDom_divertHrefToApp = divertHrefToApp;
 				var doc = view(model);
-				var nextNode = _VirtualDom_node('body')(_List_Nil)(doc.ap);
+				var nextNode = _VirtualDom_node('body')(_List_Nil)(doc.aq);
 				var patches = _VirtualDom_diff(currNode, nextNode);
 				bodyNode = _VirtualDom_applyPatches(bodyNode, currNode, patches, sendToApp);
 				currNode = nextNode;
 				_VirtualDom_divertHrefToApp = 0;
-				(title !== doc.h) && (_VirtualDom_doc.title = title = doc.h);
+				(title !== doc.e) && (_VirtualDom_doc.title = title = doc.e);
 			});
 		}
 	);
@@ -3993,8 +3993,8 @@ function _Browser_makeAnimator(model, draw)
 
 function _Browser_application(impl)
 {
-	var onUrlChange = impl.ay;
-	var onUrlRequest = impl.az;
+	var onUrlChange = impl.az;
+	var onUrlRequest = impl.aA;
 	var key = function() { key.a(onUrlChange(_Browser_getUrl())); };
 
 	return _Browser_document({
@@ -4014,9 +4014,9 @@ function _Browser_application(impl)
 					var next = elm$url$Url$fromString(href).a;
 					sendToApp(onUrlRequest(
 						(next
-							&& curr.af === next.af
-							&& curr.X === next.X
-							&& curr.ac.a === next.ac.a
+							&& curr.ag === next.ag
+							&& curr.Y === next.Y
+							&& curr.ad.a === next.ad.a
 						)
 							? elm$browser$Browser$Internal(next)
 							: elm$browser$Browser$External(href)
@@ -4024,13 +4024,13 @@ function _Browser_application(impl)
 				}
 			});
 		},
-		aw: function(flags)
+		ax: function(flags)
 		{
-			return A3(impl.aw, flags, _Browser_getUrl(), key);
+			return A3(impl.ax, flags, _Browser_getUrl(), key);
 		},
-		aF: impl.aF,
-		aD: impl.aD,
-		aC: impl.aC
+		aG: impl.aG,
+		aE: impl.aE,
+		aD: impl.aD
 	});
 }
 
@@ -4096,17 +4096,17 @@ var _Browser_decodeEvent = F2(function(decoder, event)
 function _Browser_visibilityInfo()
 {
 	return (typeof _VirtualDom_doc.hidden !== 'undefined')
-		? { au: 'hidden', aq: 'visibilitychange' }
+		? { av: 'hidden', ar: 'visibilitychange' }
 		:
 	(typeof _VirtualDom_doc.mozHidden !== 'undefined')
-		? { au: 'mozHidden', aq: 'mozvisibilitychange' }
+		? { av: 'mozHidden', ar: 'mozvisibilitychange' }
 		:
 	(typeof _VirtualDom_doc.msHidden !== 'undefined')
-		? { au: 'msHidden', aq: 'msvisibilitychange' }
+		? { av: 'msHidden', ar: 'msvisibilitychange' }
 		:
 	(typeof _VirtualDom_doc.webkitHidden !== 'undefined')
-		? { au: 'webkitHidden', aq: 'webkitvisibilitychange' }
-		: { au: 'hidden', aq: 'visibilitychange' };
+		? { av: 'webkitHidden', ar: 'webkitvisibilitychange' }
+		: { av: 'hidden', ar: 'visibilitychange' };
 }
 
 
@@ -4187,10 +4187,10 @@ var _Browser_call = F2(function(functionName, id)
 function _Browser_getViewport()
 {
 	return {
-		aj: _Browser_getScene(),
-		am: {
-			J: _Browser_window.pageXOffset,
-			K: _Browser_window.pageYOffset,
+		ak: _Browser_getScene(),
+		an: {
+			K: _Browser_window.pageXOffset,
+			L: _Browser_window.pageYOffset,
 			A: _Browser_doc.documentElement.clientWidth,
 			v: _Browser_doc.documentElement.clientHeight
 		}
@@ -4226,13 +4226,13 @@ function _Browser_getViewportOf(id)
 	return _Browser_withNode(id, function(node)
 	{
 		return {
-			aj: {
+			ak: {
 				A: node.scrollWidth,
 				v: node.scrollHeight
 			},
-			am: {
-				J: node.scrollLeft,
-				K: node.scrollTop,
+			an: {
+				K: node.scrollLeft,
+				L: node.scrollTop,
 				A: node.clientWidth,
 				v: node.clientHeight
 			}
@@ -4264,16 +4264,16 @@ function _Browser_getElement(id)
 		var x = _Browser_window.pageXOffset;
 		var y = _Browser_window.pageYOffset;
 		return {
-			aj: _Browser_getScene(),
-			am: {
-				J: x,
-				K: y,
+			ak: _Browser_getScene(),
+			an: {
+				K: x,
+				L: y,
 				A: _Browser_doc.documentElement.clientWidth,
 				v: _Browser_doc.documentElement.clientHeight
 			},
-			ar: {
-				J: x + rect.left,
-				K: y + rect.top,
+			as: {
+				K: x + rect.left,
+				L: y + rect.top,
 				A: rect.width,
 				v: rect.height
 			}
@@ -4313,10 +4313,10 @@ function _Browser_load(url)
 var author$project$Main$Model = elm$core$Basics$identity;
 var author$project$Main$NotOpenedYet = 0;
 var author$project$Main$Recommend = 1;
+var elm$core$Basics$False = 1;
 var elm$core$Basics$identity = function (x) {
 	return x;
 };
-var elm$core$Basics$False = 1;
 var elm$core$Basics$True = 0;
 var elm$core$Result$isOk = function (result) {
 	if (!result.$) {
@@ -4795,8 +4795,31 @@ var elm$core$Platform$Cmd$batch = _Platform_batch;
 var elm$core$Platform$Cmd$none = elm$core$Platform$Cmd$batch(_List_Nil);
 var author$project$Main$init = function (_n0) {
 	return _Utils_Tuple2(
-		{I: 0, O: 1},
+		{J: 0, P: 1, I: false},
 		elm$core$Platform$Cmd$none);
+};
+var author$project$Main$ToNarrowScreenMode = {$: 4};
+var author$project$Main$ToWideScreenMode = {$: 3};
+var elm$json$Json$Decode$int = _Json_decodeInt;
+var author$project$Main$toNarrowScreenMode = _Platform_incomingPort('toNarrowScreenMode', elm$json$Json$Decode$int);
+var author$project$Main$toWideScreenMode = _Platform_incomingPort('toWideScreenMode', elm$json$Json$Decode$int);
+var elm$core$Basics$always = F2(
+	function (a, _n0) {
+		return a;
+	});
+var elm$core$Platform$Sub$batch = _Platform_batch;
+var author$project$Main$subscription = function (_n0) {
+	var wideScreenMode = _n0.I;
+	return elm$core$Platform$Sub$batch(
+		wideScreenMode ? _List_fromArray(
+			[
+				author$project$Main$toNarrowScreenMode(
+				elm$core$Basics$always(author$project$Main$ToNarrowScreenMode))
+			]) : _List_fromArray(
+			[
+				author$project$Main$toWideScreenMode(
+				elm$core$Basics$always(author$project$Main$ToWideScreenMode))
+			]));
 };
 var author$project$Main$Close = 1;
 var author$project$Main$Open = 2;
@@ -4809,19 +4832,31 @@ var author$project$Main$update = F2(
 				return _Utils_Tuple2(
 					_Utils_update(
 						rec,
-						{O: tab}),
+						{P: tab}),
 					elm$core$Platform$Cmd$none);
 			case 1:
 				return _Utils_Tuple2(
 					_Utils_update(
 						rec,
-						{I: 2}),
+						{J: 2}),
+					elm$core$Platform$Cmd$none);
+			case 2:
+				return _Utils_Tuple2(
+					_Utils_update(
+						rec,
+						{J: 1}),
+					elm$core$Platform$Cmd$none);
+			case 3:
+				return _Utils_Tuple2(
+					_Utils_update(
+						rec,
+						{I: true}),
 					elm$core$Platform$Cmd$none);
 			default:
 				return _Utils_Tuple2(
 					_Utils_update(
 						rec,
-						{I: 1}),
+						{I: false}),
 					elm$core$Platform$Cmd$none);
 		}
 	});
@@ -4928,20 +4963,24 @@ var author$project$Main$searchButton = A2(
 	_List_Nil);
 var elm$html$Html$h1 = _VirtualDom_node('h1');
 var elm$html$Html$header = _VirtualDom_node('header');
-var author$project$Main$header = A2(
-	elm$html$Html$header,
-	_List_Nil,
-	_List_fromArray(
-		[
-			author$project$Main$menuButton,
-			A2(
-			elm$html$Html$h1,
-			_List_Nil,
+var author$project$Main$header = function (wideMode) {
+	return A2(
+		elm$html$Html$header,
+		_List_Nil,
+		_Utils_ap(
+			wideMode ? _List_Nil : _List_fromArray(
+				[author$project$Main$menuButton]),
 			_List_fromArray(
-				[author$project$Main$logo])),
-			author$project$Main$searchButton,
-			author$project$Main$notificationsButton
-		]));
+				[
+					A2(
+					elm$html$Html$h1,
+					_List_Nil,
+					_List_fromArray(
+						[author$project$Main$logo])),
+					author$project$Main$searchButton,
+					author$project$Main$notificationsButton
+				])));
+};
 var author$project$Main$itemImage = A2(
 	elm$html$Html$img,
 	_List_fromArray(
@@ -4951,9 +4990,9 @@ var author$project$Main$itemImage = A2(
 		]),
 	_List_Nil);
 var author$project$Main$item = function (_n0) {
-	var title = _n0.h;
-	var price = _n0.k;
-	var like = _n0.i;
+	var title = _n0.e;
+	var price = _n0.h;
+	var like = _n0.g;
 	return A2(
 		elm$html$Html$div,
 		_List_fromArray(
@@ -5074,14 +5113,18 @@ var author$project$Main$itemList = A2(
 		author$project$Main$item,
 		_List_fromArray(
 			[
-				{i: 1, k: 300, h: '冷蔵庫'},
-				{i: 5, k: 100, h: '洗濯機'},
-				{i: 99, k: 10, h: '時計'},
-				{i: 5, k: 100, h: '掃除機'},
-				{i: 9, k: 200, h: '自転車'},
-				{i: 99, k: 10, h: 'マンガ'},
-				{i: 99, k: 10, h: 'ゲーム'},
-				{i: 5, k: 100, h: '絵本'}
+				{g: 1, h: 300, e: '冷蔵庫'},
+				{g: 5, h: 100, e: '洗濯機'},
+				{g: 99, h: 10, e: '時計'},
+				{g: 5, h: 100, e: '掃除機'},
+				{g: 9, h: 200, e: '自転車'},
+				{g: 99, h: 10, e: 'マンガ'},
+				{g: 99, h: 10, e: 'ゲーム'},
+				{g: 5, h: 100, e: '絵本'},
+				{g: 2, h: 1000, e: '棚'},
+				{g: 2, h: 1000, e: 'いす'},
+				{g: 20, h: 300, e: 'バッテリー'},
+				{g: 10, h: 20, e: '教科書'}
 			])));
 var author$project$Main$Free = 2;
 var author$project$Main$Recent = 0;
@@ -5233,79 +5276,87 @@ var elm$virtual_dom$VirtualDom$keyedNode = function (tag) {
 		_VirtualDom_noScript(tag));
 };
 var elm$html$Html$Keyed$node = elm$virtual_dom$VirtualDom$keyedNode;
-var author$project$Main$menu = function (menuState) {
-	return A3(
-		elm$html$Html$Keyed$node,
-		'div',
-		_List_fromArray(
-			[
-				elm$html$Html$Attributes$class('menu')
-			]),
-		function () {
-			switch (menuState) {
-				case 0:
-					return _List_Nil;
-				case 2:
-					return _List_fromArray(
-						[
-							_Utils_Tuple2(
-							'os',
-							A2(
-								elm$html$Html$div,
-								_List_fromArray(
-									[
-										elm$html$Html$Attributes$class('menu-shadow menu-shadow-appear'),
-										elm$html$Html$Events$onClick(author$project$Main$CloseMenu)
-									]),
-								_List_Nil)),
-							_Utils_Tuple2(
-							'om',
-							A2(
-								elm$html$Html$div,
-								_List_fromArray(
-									[
-										elm$html$Html$Attributes$class('menu-list menu-list-open')
-									]),
-								author$project$Main$menuMain))
-						]);
-				default:
-					return _List_fromArray(
-						[
-							_Utils_Tuple2(
-							'cs',
-							A2(
-								elm$html$Html$div,
-								_List_fromArray(
-									[
-										elm$html$Html$Attributes$class('menu-shadow menu-shadow-disappear')
-									]),
-								_List_Nil)),
-							_Utils_Tuple2(
-							'cm',
-							A2(
-								elm$html$Html$div,
-								_List_fromArray(
-									[
-										elm$html$Html$Attributes$class('menu-list menu-list-close')
-									]),
-								author$project$Main$menuMain))
-						]);
-			}
-		}());
-};
+var author$project$Main$menu = F2(
+	function (isWideMode, menuState) {
+		return isWideMode ? A2(
+			elm$html$Html$div,
+			_List_fromArray(
+				[
+					elm$html$Html$Attributes$class('menu-always-show')
+				]),
+			author$project$Main$menuMain) : A3(
+			elm$html$Html$Keyed$node,
+			'div',
+			_List_fromArray(
+				[
+					elm$html$Html$Attributes$class('menu')
+				]),
+			function () {
+				switch (menuState) {
+					case 0:
+						return _List_Nil;
+					case 2:
+						return _List_fromArray(
+							[
+								_Utils_Tuple2(
+								'os',
+								A2(
+									elm$html$Html$div,
+									_List_fromArray(
+										[
+											elm$html$Html$Attributes$class('menu-shadow menu-shadow-appear'),
+											elm$html$Html$Events$onClick(author$project$Main$CloseMenu)
+										]),
+									_List_Nil)),
+								_Utils_Tuple2(
+								'om',
+								A2(
+									elm$html$Html$div,
+									_List_fromArray(
+										[
+											elm$html$Html$Attributes$class('menu-list menu-list-open')
+										]),
+									author$project$Main$menuMain))
+							]);
+					default:
+						return _List_fromArray(
+							[
+								_Utils_Tuple2(
+								'cs',
+								A2(
+									elm$html$Html$div,
+									_List_fromArray(
+										[
+											elm$html$Html$Attributes$class('menu-shadow menu-shadow-disappear')
+										]),
+									_List_Nil)),
+								_Utils_Tuple2(
+								'cm',
+								A2(
+									elm$html$Html$div,
+									_List_fromArray(
+										[
+											elm$html$Html$Attributes$class('menu-list menu-list-close')
+										]),
+									author$project$Main$menuMain))
+							]);
+				}
+			}());
+	});
 var author$project$Main$view = function (_n0) {
-	var selectedTab = _n0.O;
-	var menuState = _n0.I;
+	var selectedTab = _n0.P;
+	var menuState = _n0.J;
+	var wideScreenMode = _n0.I;
 	return {
-		ap: _List_fromArray(
+		aq: _List_fromArray(
 			[
-				author$project$Main$header,
+				author$project$Main$header(wideScreenMode),
 				author$project$Main$mainTab(selectedTab),
 				author$project$Main$itemList,
 				author$project$Main$exhibitButton,
-				author$project$Main$menu(menuState)
+				A2(author$project$Main$menu, wideScreenMode, menuState)
 			]),
-		h: 'つくマート'
+		e: 'つくマート'
 	};
 };
 var elm$browser$Browser$External = function (a) {
@@ -5424,7 +5475,7 @@ var elm$core$String$contains = _String_contains;
 var elm$core$String$toInt = _String_toInt;
 var elm$url$Url$Url = F6(
 	function (protocol, host, port_, path, query, fragment) {
-		return {W: fragment, X: host, aa: path, ac: port_, af: protocol, ag: query};
+		return {X: fragment, Y: host, ab: path, ad: port_, ag: protocol, ah: query};
 	});
 var elm$url$Url$chompBeforePath = F5(
 	function (protocol, path, params, frag, str) {
@@ -5529,18 +5580,7 @@ var elm$url$Url$fromString = function (str) {
 		A2(elm$core$String$dropLeft, 8, str)) : elm$core$Maybe$Nothing);
 };
 var elm$browser$Browser$document = _Browser_document;
-var elm$core$Basics$always = F2(
-	function (a, _n0) {
-		return a;
-	});
-var elm$core$Platform$Sub$batch = _Platform_batch;
-var elm$core$Platform$Sub$none = elm$core$Platform$Sub$batch(_List_Nil);
 var author$project$Main$main = elm$browser$Browser$document(
-	{
-		aw: author$project$Main$init,
-		aC: elm$core$Basics$always(elm$core$Platform$Sub$none),
-		aD: author$project$Main$update,
-		aF: author$project$Main$view
-	});
+	{ax: author$project$Main$init, aD: author$project$Main$subscription, aE: author$project$Main$update, aG: author$project$Main$view});
 _Platform_export({'Main':{'init':author$project$Main$main(
 	elm$json$Json$Decode$succeed(0))(0)}});}(this));

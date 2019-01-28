@@ -14,6 +14,15 @@
     <script src="main.js"></script>
     <script>
         /* Elmを起動!! */
-        const app = Elm.Main.init({node: document.getElementById("root")});
+        const app = Elm.Main.init({ node: document.getElementById("root") });
+        const windowResizeListener = (e) => {
+            if (1000 < innerWidth) {
+                app.ports.toWideScreenMode.send(0);
+            } else {
+                app.ports.toNarrowScreenMode.send(0);
+            }
+        }
+        addEventListener("resize", windowResizeListener);
+        windowResizeListener();
     </script>
 </body>

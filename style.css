@@ -7,6 +7,10 @@ html {
 body {
     margin: 0;
     height: 100%;
+    width: 100%;
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    grid-template-rows: max-content max-content 1fr;
 }
 
 /*===========================
@@ -14,6 +18,8 @@ body {
 ===========================*/
 
 header {
+    grid-column: 2 / 3;
+    grid-row: 1 / 2;
     background-color: var(--primaryColor);
     display: flex;
     height: 4rem;
@@ -151,6 +157,8 @@ h1:hover {
     background-color: var(--primaryColor);
     color: #ddd;
     font-size: 1.7rem;
+    font-weight: bold;
+    padding: 0 2rem;
 }
 
 .menu-account-image {
@@ -160,16 +168,31 @@ h1:hover {
 }
 
 .menu-item {
-    height: 3rem;
+    padding: 1rem;
     display: flex;
     align-items: center;
-    font-size: 1.4rem;
+    font-size: 1.6rem;
+    user-select: none;
+}
+
+.menu-item:hover {
+    background-color: #ccc;
+    cursor: pointer;
+}
+
+.menu-always-show {
+    width: 20rem;
+    background-color: #ddd;
+    grid-column: 1 / 2;
+    grid-row: 1 / 4;
 }
 /*===========================
             Main Tab
 ===========================*/
 
 .mainTab {
+    grid-column: 2 / 3;
+    grid-row: 2 / 3;
     background-color: #f0f0f0;
     display: grid;
     width: 100%;
@@ -177,6 +200,7 @@ h1:hover {
     grid-template-columns: 1fr 1fr 1fr;
     grid-template-rows: 3rem 4px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .mainTab-item {
@@ -231,12 +255,15 @@ h1:hover {
 .mainTab-selectLine-right {
     left: calc( 100% / 3 * 2);
 }
-
+/*===========================
+            Item List
+===========================*/
 .itemList {
+    grid-column: 2 / 3;
+    grid-row: 3 / 4;
     display: grid;
     grid-template-columns: 50% 50%;
     overflow: auto;
-    height: calc(100% - 7rem);
     align-content: flex-start;
 }
 
@@ -263,7 +290,9 @@ h1:hover {
 img {
     display: block;
 }
-
+/*===========================
+        Exhibit Button
+===========================*/
 .exhibitButton {
     position: fixed;
     bottom: 3rem;
