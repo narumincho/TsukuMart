@@ -336,11 +336,15 @@ menuMain =
         , Html.Attributes.href "/like-history"
         ]
         [ Html.text "いいね・閲覧した商品" ]
-    , Html.div
-        [ Html.Attributes.class "menu-item" ]
+    , Html.a
+        [ Html.Attributes.class "menu-item"
+        , Html.Attributes.href "exhibition-item"
+        ]
         [ Html.text "出品した商品" ]
-    , Html.div
-        [ Html.Attributes.class "menu-item" ]
+    , Html.a
+        [ Html.Attributes.class "menu-item"
+        , Html.Attributes.href "purchase-item"
+        ]
         [ Html.text "購入した商品" ]
     ]
 
@@ -368,6 +372,14 @@ mainTab page =
         , Html.Attributes.style
             "grid-template-columns"
             (List.repeat (List.length tabList) "1fr" |> String.join " ")
+        , Html.Attributes.style
+            "height"
+            (if tabList == [] then
+                "0"
+
+             else
+                "3rem"
+            )
         ]
         (case tabList of
             _ :: _ ->

@@ -10379,7 +10379,11 @@ var author$project$Main$mainTab = function (page) {
 					A2(
 						elm$core$List$repeat,
 						elm$core$List$length(tabList),
-						'1fr')))
+						'1fr'))),
+				A2(
+				elm$html$Html$Attributes$style,
+				'height',
+				_Utils_eq(tabList, _List_Nil) ? '0' : '3rem')
 			]),
 		function () {
 			if (tabList.b) {
@@ -10433,20 +10437,22 @@ var author$project$Main$menuMain = _List_fromArray(
 				elm$html$Html$text('いいね・閲覧した商品')
 			])),
 		A2(
-		elm$html$Html$div,
+		elm$html$Html$a,
 		_List_fromArray(
 			[
-				elm$html$Html$Attributes$class('menu-item')
+				elm$html$Html$Attributes$class('menu-item'),
+				elm$html$Html$Attributes$href('exhibition-item')
 			]),
 		_List_fromArray(
 			[
 				elm$html$Html$text('出品した商品')
 			])),
 		A2(
-		elm$html$Html$div,
+		elm$html$Html$a,
 		_List_fromArray(
 			[
-				elm$html$Html$Attributes$class('menu-item')
+				elm$html$Html$Attributes$class('menu-item'),
+				elm$html$Html$Attributes$href('purchase-item')
 			]),
 		_List_fromArray(
 			[
