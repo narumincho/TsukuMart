@@ -250,14 +250,14 @@ h1:hover {
     grid-column: 2 / 3;
     grid-row: 3 / 4;
     display: grid;
-    grid-template-columns: 50% 50%;
+    grid-template-columns: 1fr 1fr;
     overflow: auto;
     align-content: flex-start;
 }
 
 .item {
     display: flex;
-    height: 6rem;
+    flex-direction: column;
     box-shadow: #000 0 1px 3px;
     padding: .5rem;
 }
@@ -271,7 +271,7 @@ h1:hover {
 }
 
 .itemImage {
-    width: 6rem;
+    width: 100%;
     object-fit: contain;
 }
 
