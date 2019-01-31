@@ -173,6 +173,8 @@ h1:hover {
     align-items: center;
     font-size: 1.6rem;
     user-select: none;
+    text-decoration: none;
+    color: #000;
 }
 
 .menu-item:hover {
@@ -250,8 +252,8 @@ h1:hover {
     grid-column: 2 / 3;
     grid-row: 3 / 4;
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    overflow: auto;
+    overflow-y: auto;
+    overflow-x: hidden;
     align-content: flex-start;
 }
 
@@ -264,6 +266,7 @@ h1:hover {
 
 .itemTitle {
     font-size: 1.5rem;
+    overflow-wrap: break-word;
 }
 
 .itemPrice {

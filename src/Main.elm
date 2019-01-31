@@ -193,7 +193,7 @@ view (Model { page, menuState, wideScreenMode }) =
     , body =
         [ header wideScreenMode
         , mainTab page
-        , itemList
+        , itemList wideScreenMode
         , exhibitButton
         , menu wideScreenMode menuState
         ]
@@ -449,10 +449,18 @@ mainTabSelectLine index count =
         ]
 
 
-itemList : Html.Html Msg
-itemList =
+itemList : Bool -> Html.Html Msg
+itemList isWideMode =
     Html.div
-        [ Html.Attributes.class "itemList" ]
+        [ Html.Attributes.class "itemList"
+        , Html.Attributes.style "grid-template-columns"
+            (if isWideMode then
+                "33.3% 33.4% 33.3%"
+
+             else
+                "50% 50%"
+            )
+        ]
         ([ { title = "冷蔵庫", price = 300, like = 1 }
          , { title = "洗濯機", price = 100, like = 5 }
          , { title = "時計", price = 10, like = 99 }

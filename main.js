@@ -10180,30 +10180,36 @@ var author$project$Main$item = function (_n0) {
 					]))
 			]));
 };
-var author$project$Main$itemList = A2(
-	elm$html$Html$div,
-	_List_fromArray(
-		[
-			elm$html$Html$Attributes$class('itemList')
-		]),
-	A2(
-		elm$core$List$map,
-		author$project$Main$item,
+var author$project$Main$itemList = function (isWideMode) {
+	return A2(
+		elm$html$Html$div,
 		_List_fromArray(
 			[
-				{like: 1, price: 300, title: '冷蔵庫'},
-				{like: 5, price: 100, title: '洗濯機'},
-				{like: 99, price: 10, title: '時計'},
-				{like: 5, price: 100, title: '掃除機'},
-				{like: 9, price: 200, title: '自転車'},
-				{like: 99, price: 10, title: 'マンガ'},
-				{like: 99, price: 10, title: 'ゲーム'},
-				{like: 5, price: 100, title: '絵本'},
-				{like: 2, price: 1000, title: '棚'},
-				{like: 2, price: 1000, title: 'いす'},
-				{like: 20, price: 300, title: 'バッテリー'},
-				{like: 10, price: 20, title: '教科書'}
-			])));
+				elm$html$Html$Attributes$class('itemList'),
+				A2(
+				elm$html$Html$Attributes$style,
+				'grid-template-columns',
+				isWideMode ? '33.3% 33.4% 33.3%' : '50% 50%')
+			]),
+		A2(
+			elm$core$List$map,
+			author$project$Main$item,
+			_List_fromArray(
+				[
+					{like: 1, price: 300, title: '冷蔵庫'},
+					{like: 5, price: 100, title: '洗濯機'},
+					{like: 99, price: 10, title: '時計'},
+					{like: 5, price: 100, title: '掃除機'},
+					{like: 9, price: 200, title: '自転車'},
+					{like: 99, price: 10, title: 'マンガ'},
+					{like: 99, price: 10, title: 'ゲーム'},
+					{like: 5, price: 100, title: '絵本'},
+					{like: 2, price: 1000, title: '棚'},
+					{like: 2, price: 1000, title: 'いす'},
+					{like: 20, price: 300, title: 'バッテリー'},
+					{like: 10, price: 20, title: '教科書'}
+				])));
+};
 var author$project$Main$Free = {$: 'Free'};
 var author$project$Main$History = {$: 'History'};
 var author$project$Main$Recent = {$: 'Recent'};
@@ -10540,7 +10546,7 @@ var author$project$Main$view = function (_n0) {
 			[
 				author$project$Main$header(wideScreenMode),
 				author$project$Main$mainTab(page),
-				author$project$Main$itemList,
+				author$project$Main$itemList(wideScreenMode),
 				author$project$Main$exhibitButton,
 				A2(author$project$Main$menu, wideScreenMode, menuState)
 			]),
