@@ -7,6 +7,7 @@ import Html.Attributes
 import Html.Events
 import Html.Keyed
 import Url
+import Url.Parser
 
 
 
@@ -29,9 +30,9 @@ type Model
 
 
 type MenuState
-    = NotOpenedYet
-    | Close
-    | Open
+    = MenuNotOpenedYet
+    | MenuClose
+    | MenuOpen
 
 
 type Page
@@ -82,8 +83,8 @@ init _ url key =
             Debug.log "load url" (Url.toString url)
     in
     ( Model
-        { page = PageHome Recommend
-        , menuState = NotOpenedYet
+        { page = urlToPage url |> Maybe.withDefault (PageHome Recommend)
+        , menuState = MenuNotOpenedYet
         , wideScreenMode = False
         , key = key
         }
@@ -115,7 +116,7 @@ update msg (Model rec) =
         OpenMenu ->
             ( Model
                 { rec
-                    | menuState = Open
+                    | menuState = MenuOpen
                 }
             , Cmd.none
             )
@@ -123,7 +124,7 @@ update msg (Model rec) =
         CloseMenu ->
             ( Model
                 { rec
-                    | menuState = Close
+                    | menuState = MenuClose
                 }
             , Cmd.none
             )
@@ -156,7 +157,12 @@ update msg (Model rec) =
                         _ =
                             Debug.log "url request internal" url
                     in
-                    ( Model rec
+                    ( case urlToPage url of
+                        Just page ->
+                            Model { rec | page = page, menuState = MenuClose }
+
+                        Nothing ->
+                            Model { rec | menuState = MenuClose }
                     , Browser.Navigation.pushUrl rec.key (Url.toString url)
                     )
 
@@ -164,6 +170,21 @@ update msg (Model rec) =
                     ( Model rec
                     , Browser.Navigation.load string
                     )
+
+
+urlToPage : Url.Url -> Maybe Page
+urlToPage url =
+    Url.Parser.parse urlParser url
+
+
+urlParser : Url.Parser.Parser (Page -> a) a
+urlParser =
+    Url.Parser.oneOf
+        [ Url.Parser.map (PageHome Recommend) Url.Parser.top
+        , Url.Parser.map (PageLikeAndHistory Like) (Url.Parser.s "like-history")
+        , Url.Parser.map PageExhibitionItem (Url.Parser.s "exhibition-item")
+        , Url.Parser.map PagePurchaseItem (Url.Parser.s "purchase-item")
+        ]
 
 
 view : Model -> { title : String, body : List (Html.Html Msg) }
@@ -261,10 +282,10 @@ menu isWideMode menuState =
         Html.Keyed.node "div"
             [ Html.Attributes.class "menu" ]
             (case menuState of
-                NotOpenedYet ->
+                MenuNotOpenedYet ->
                     []
 
-                Open ->
+                MenuOpen ->
                     [ ( "os"
                       , Html.div
                             [ Html.Attributes.class "menu-shadow menu-shadow-appear"
@@ -279,7 +300,7 @@ menu isWideMode menuState =
                       )
                     ]
 
-                Close ->
+                MenuClose ->
                     [ ( "cs"
                       , Html.div
                             [ Html.Attributes.class "menu-shadow menu-shadow-disappear" ]
@@ -307,6 +328,11 @@ menuMain =
         ]
     , Html.a
         [ Html.Attributes.class "menu-item"
+        , Html.Attributes.href "/"
+        ]
+        [ Html.text "ホーム" ]
+    , Html.a
+        [ Html.Attributes.class "menu-item"
         , Html.Attributes.href "/like-history"
         ]
         [ Html.text "いいね・閲覧した商品" ]
@@ -325,40 +351,45 @@ menuMain =
 
 mainTab : Page -> Html.Html Msg
 mainTab page =
+    let
+        tabList =
+            case page of
+                PageHome tab ->
+                    [ ( PageHome Recent, "新着" ), ( PageHome Recommend, "おすすめ" ), ( PageHome Free, "0円" ) ]
+
+                PageLikeAndHistory tab ->
+                    [ ( PageLikeAndHistory Like, "いいね" ), ( PageLikeAndHistory History, "閲覧履歴" ) ]
+
+                _ ->
+                    []
+    in
     Html.div
-        [ Html.Attributes.class "mainTab" ]
-        (case page of
-            PageHome tab ->
-                [ ( Recent, "新着" ), ( Recommend, "おすすめ" ), ( Free, "0円" ) ]
-                    |> mainTabItemList tab PageHome
+        [ Html.Attributes.class "mainTab"
+        , Html.Attributes.style
+            "grid-template-columns"
+            (List.repeat (List.length tabList) "1fr" |> String.join " ")
+        ]
+        (case tabList of
+            _ :: _ ->
+                mainTabItemList page tabList
 
-            PageLikeAndHistory tab ->
-                [ ( Like, "いいね" ), ( History, "閲覧履歴" ) ]
-                    |> mainTabItemList tab PageLikeAndHistory
-
-            PageExhibitionItem ->
-                []
-
-            PageUser ->
-                []
-
-            PagePurchaseItem ->
+            [] ->
                 []
         )
 
 
-mainTabItemList : a -> (a -> Page) -> List ( a, String ) -> List (Html.Html Msg)
-mainTabItemList selectedTab page tabList =
+mainTabItemList : Page -> List ( Page, String ) -> List (Html.Html Msg)
+mainTabItemList selectedPage tabList =
     (tabList
         |> List.map
             (\( tab, label ) ->
-                mainTabItem (tab == selectedTab)
+                mainTabItem (tab == selectedPage)
                     label
-                    (ChangePage (page tab))
+                    (ChangePage tab)
             )
     )
         ++ [ mainTabSelectLine
-                (firstElementIndex selectedTab (List.map Tuple.first tabList) |> Maybe.withDefault 0)
+                (firstElementIndex selectedPage (List.map Tuple.first tabList) |> Maybe.withDefault 0)
                 (List.length tabList)
            ]
 
@@ -399,7 +430,8 @@ mainTabSelectLine index count =
     Html.div [ Html.Attributes.class "mainTab-selectLineArea" ]
         [ Html.div
             [ Html.Attributes.class "mainTab-selectLine"
-            , Html.Attributes.style "left" ("calc( 100% /" ++ String.fromInt count ++ " * " ++ String.fromInt index)
+            , Html.Attributes.style "left" ("calc( 100% /" ++ String.fromInt count ++ " * " ++ String.fromInt index ++ ")")
+            , Html.Attributes.style "width" ("calc( 100% / " ++ String.fromInt count ++ ")")
             ]
             []
         ]
