@@ -186,6 +186,7 @@ h1:hover {
     grid-column: 1 / 2;
     grid-row: 1 / 4;
 }
+
 /*===========================
             Main Tab
 ===========================*/
@@ -243,21 +244,10 @@ h1:hover {
     height: 100%;
     transition: all 300ms 0s ease;
 }
-
-.mainTab-selectLine-left {
-    left: calc( 100% / 3 * 0);
-}
-
-.mainTab-selectLine-center {
-    left: calc( 100% / 3 * 1);
-}
-
-.mainTab-selectLine-right {
-    left: calc( 100% / 3 * 2);
-}
 /*===========================
             Item List
 ===========================*/
+
 .itemList {
     grid-column: 2 / 3;
     grid-row: 3 / 4;
@@ -290,9 +280,11 @@ h1:hover {
 img {
     display: block;
 }
+
 /*===========================
         Exhibit Button
 ===========================*/
+
 .exhibitButton {
     position: fixed;
     bottom: 3rem;

@@ -4874,6 +4874,9 @@ var author$project$Main$Model = function (a) {
 	return {$: 'Model', a: a};
 };
 var author$project$Main$NotOpenedYet = {$: 'NotOpenedYet'};
+var author$project$Main$PageHome = function (a) {
+	return {$: 'PageHome', a: a};
+};
 var author$project$Main$Recommend = {$: 'Recommend'};
 var elm$core$Basics$False = {$: 'False'};
 var elm$core$Basics$identity = function (x) {
@@ -5408,7 +5411,12 @@ var author$project$Main$init = F3(
 			elm$url$Url$toString(url));
 		return _Utils_Tuple2(
 			author$project$Main$Model(
-				{key: key, menuState: author$project$Main$NotOpenedYet, selectedTab: author$project$Main$Recommend, wideScreenMode: false}),
+				{
+					key: key,
+					menuState: author$project$Main$NotOpenedYet,
+					page: author$project$Main$PageHome(author$project$Main$Recommend),
+					wideScreenMode: false
+				}),
 			elm$core$Platform$Cmd$none);
 	});
 var author$project$Main$UrlChange = function (a) {
@@ -9722,13 +9730,13 @@ var author$project$Main$update = F2(
 	function (msg, _n0) {
 		var rec = _n0.a;
 		switch (msg.$) {
-			case 'TabChange':
-				var tab = msg.a;
+			case 'ChangePage':
+				var page = msg.a;
 				return _Utils_Tuple2(
 					author$project$Main$Model(
 						_Utils_update(
 							rec,
-							{selectedTab: tab})),
+							{page: page})),
 					elm$core$Platform$Cmd$none);
 			case 'OpenMenu':
 				return _Utils_Tuple2(
@@ -9937,77 +9945,154 @@ var author$project$Main$itemList = A2(
 				{like: 10, price: 20, title: '教科書'}
 			])));
 var author$project$Main$Free = {$: 'Free'};
-var author$project$Main$Recent = {$: 'Recent'};
-var author$project$Main$TabChange = function (a) {
-	return {$: 'TabChange', a: a};
+var author$project$Main$History = {$: 'History'};
+var author$project$Main$Like = {$: 'Like'};
+var author$project$Main$PageLikeAndHistory = function (a) {
+	return {$: 'PageLikeAndHistory', a: a};
 };
-var author$project$Main$mainTabItem = F2(
-	function (selectedTab, _n0) {
-		var tab = _n0.a;
-		var label = _n0.b;
-		return A2(
+var author$project$Main$Recent = {$: 'Recent'};
+var author$project$Main$ChangePage = function (a) {
+	return {$: 'ChangePage', a: a};
+};
+var elm$core$Maybe$map = F2(
+	function (f, maybe) {
+		if (maybe.$ === 'Just') {
+			var value = maybe.a;
+			return elm$core$Maybe$Just(
+				f(value));
+		} else {
+			return elm$core$Maybe$Nothing;
+		}
+	});
+var author$project$Main$firstElementIndex = F2(
+	function (a, list) {
+		if (!list.b) {
+			return elm$core$Maybe$Nothing;
+		} else {
+			var x = list.a;
+			var xs = list.b;
+			return _Utils_eq(x, a) ? elm$core$Maybe$Just(0) : A2(
+				elm$core$Maybe$map,
+				elm$core$Basics$add(1),
+				A2(author$project$Main$firstElementIndex, a, xs));
+		}
+	});
+var author$project$Main$mainTabItem = F3(
+	function (isSelected, label, clickEvent) {
+		return isSelected ? A2(
 			elm$html$Html$div,
 			_List_fromArray(
 				[
-					elm$html$Html$Attributes$class(
-					_Utils_eq(tab, selectedTab) ? 'mainTab-item-select' : 'mainTab-item'),
-					elm$html$Html$Events$onClick(
-					author$project$Main$TabChange(tab))
+					elm$html$Html$Attributes$class('mainTab-item-select')
+				]),
+			_List_fromArray(
+				[
+					elm$html$Html$text(label)
+				])) : A2(
+			elm$html$Html$div,
+			_List_fromArray(
+				[
+					elm$html$Html$Attributes$class('mainTab-item'),
+					elm$html$Html$Events$onClick(clickEvent)
 				]),
 			_List_fromArray(
 				[
 					elm$html$Html$text(label)
 				]));
 	});
-var author$project$Main$mainTabSelectLine = function (selectedTab) {
-	return A2(
-		elm$html$Html$div,
-		_List_fromArray(
-			[
-				elm$html$Html$Attributes$class('mainTab-selectLineArea')
-			]),
-		_List_fromArray(
-			[
-				A2(
-				elm$html$Html$div,
-				_List_fromArray(
-					[
-						elm$html$Html$Attributes$class(
-						'mainTab-selectLine ' + function () {
-							switch (selectedTab.$) {
-								case 'Recent':
-									return 'mainTab-selectLine-left';
-								case 'Recommend':
-									return 'mainTab-selectLine-center';
-								default:
-									return 'mainTab-selectLine-right';
-							}
-						}())
-					]),
-				_List_Nil)
-			]));
-};
-var author$project$Main$mainTab = function (selectedTab) {
+var author$project$Main$mainTabSelectLine = F2(
+	function (index, count) {
+		return A2(
+			elm$html$Html$div,
+			_List_fromArray(
+				[
+					elm$html$Html$Attributes$class('mainTab-selectLineArea')
+				]),
+			_List_fromArray(
+				[
+					A2(
+					elm$html$Html$div,
+					_List_fromArray(
+						[
+							elm$html$Html$Attributes$class('mainTab-selectLine'),
+							A2(
+							elm$html$Html$Attributes$style,
+							'left',
+							'calc( 100% /' + (elm$core$String$fromInt(count) + (' * ' + elm$core$String$fromInt(index))))
+						]),
+					_List_Nil)
+				]));
+	});
+var author$project$Main$mainTabItemList = F3(
+	function (selectedTab, page, tabList) {
+		return _Utils_ap(
+			A2(
+				elm$core$List$map,
+				function (_n0) {
+					var tab = _n0.a;
+					var label = _n0.b;
+					return A3(
+						author$project$Main$mainTabItem,
+						_Utils_eq(tab, selectedTab),
+						label,
+						author$project$Main$ChangePage(
+							page(tab)));
+				},
+				tabList),
+			_List_fromArray(
+				[
+					A2(
+					author$project$Main$mainTabSelectLine,
+					A2(
+						elm$core$Maybe$withDefault,
+						0,
+						A2(
+							author$project$Main$firstElementIndex,
+							selectedTab,
+							A2(elm$core$List$map, elm$core$Tuple$first, tabList))),
+					elm$core$List$length(tabList))
+				]));
+	});
+var author$project$Main$mainTab = function (page) {
 	return A2(
 		elm$html$Html$div,
 		_List_fromArray(
 			[
 				elm$html$Html$Attributes$class('mainTab')
 			]),
-		_Utils_ap(
-			A2(
-				elm$core$List$map,
-				author$project$Main$mainTabItem(selectedTab),
-				_List_fromArray(
-					[
-						_Utils_Tuple2(author$project$Main$Recent, '新着'),
-						_Utils_Tuple2(author$project$Main$Recommend, 'おすすめ'),
-						_Utils_Tuple2(author$project$Main$Free, '0円')
-					])),
-			_List_fromArray(
-				[
-					author$project$Main$mainTabSelectLine(selectedTab)
-				])));
+		function () {
+			switch (page.$) {
+				case 'PageHome':
+					var tab = page.a;
+					return A3(
+						author$project$Main$mainTabItemList,
+						tab,
+						author$project$Main$PageHome,
+						_List_fromArray(
+							[
+								_Utils_Tuple2(author$project$Main$Recent, '新着'),
+								_Utils_Tuple2(author$project$Main$Recommend, 'おすすめ'),
+								_Utils_Tuple2(author$project$Main$Free, '0円')
+							]));
+				case 'PageLikeAndHistory':
+					var tab = page.a;
+					return A3(
+						author$project$Main$mainTabItemList,
+						tab,
+						author$project$Main$PageLikeAndHistory,
+						_List_fromArray(
+							[
+								_Utils_Tuple2(author$project$Main$Like, 'いいね'),
+								_Utils_Tuple2(author$project$Main$History, '閲覧履歴')
+							]));
+				case 'PageExhibitionItem':
+					return _List_Nil;
+				case 'PageUser':
+					return _List_Nil;
+				default:
+					return _List_Nil;
+			}
+		}());
 };
 var author$project$Main$CloseMenu = {$: 'CloseMenu'};
 var author$project$Main$menuMain = _List_fromArray(
@@ -10135,14 +10220,14 @@ var author$project$Main$menu = F2(
 			}());
 	});
 var author$project$Main$view = function (_n0) {
-	var selectedTab = _n0.a.selectedTab;
+	var page = _n0.a.page;
 	var menuState = _n0.a.menuState;
 	var wideScreenMode = _n0.a.wideScreenMode;
 	return {
 		body: _List_fromArray(
 			[
 				author$project$Main$header(wideScreenMode),
-				author$project$Main$mainTab(selectedTab),
+				author$project$Main$mainTab(page),
 				author$project$Main$itemList,
 				author$project$Main$exhibitButton,
 				A2(author$project$Main$menu, wideScreenMode, menuState)
@@ -10154,4 +10239,4 @@ var elm$browser$Browser$application = _Browser_application;
 var author$project$Main$main = elm$browser$Browser$application(
 	{init: author$project$Main$init, onUrlChange: author$project$Main$onUrlChange, onUrlRequest: author$project$Main$onUrlRequest, subscriptions: author$project$Main$subscription, update: author$project$Main$update, view: author$project$Main$view});
 _Platform_export({'Main':{'init':author$project$Main$main(
-	elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.0"},"types":{"message":"Main.Msg","aliases":{"Url.Url":{"args":[],"type":"{ protocol : Url.Protocol, host : String.String, port_ : Maybe.Maybe Basics.Int, path : String.String, query : Maybe.Maybe String.String, fragment : Maybe.Maybe String.String }"}},"unions":{"Main.Msg":{"args":[],"tags":{"TabChange":["Main.Tab"],"OpenMenu":[],"CloseMenu":[],"ToWideScreenMode":[],"ToNarrowScreenMode":[],"UrlChange":["Url.Url"],"UrlRequest":["Browser.UrlRequest"]}},"Main.Tab":{"args":[],"tags":{"Recent":[],"Recommend":[],"Free":[]}},"Browser.UrlRequest":{"args":[],"tags":{"Internal":["Url.Url"],"External":["String.String"]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"String.String":{"args":[],"tags":{"String":[]}},"Url.Protocol":{"args":[],"tags":{"Http":[],"Https":[]}}}}})}});}(this));
+	elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.0"},"types":{"message":"Main.Msg","aliases":{"Url.Url":{"args":[],"type":"{ protocol : Url.Protocol, host : String.String, port_ : Maybe.Maybe Basics.Int, path : String.String, query : Maybe.Maybe String.String, fragment : Maybe.Maybe String.String }"}},"unions":{"Main.Msg":{"args":[],"tags":{"ChangePage":["Main.Page"],"OpenMenu":[],"CloseMenu":[],"ToWideScreenMode":[],"ToNarrowScreenMode":[],"UrlChange":["Url.Url"],"UrlRequest":["Browser.UrlRequest"]}},"Main.Page":{"args":[],"tags":{"PageHome":["Main.Home"],"PageUser":[],"PageLikeAndHistory":["Main.LikeAndHistory"],"PageExhibitionItem":[],"PagePurchaseItem":[]}},"Browser.UrlRequest":{"args":[],"tags":{"Internal":["Url.Url"],"External":["String.String"]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"String.String":{"args":[],"tags":{"String":[]}},"Url.Protocol":{"args":[],"tags":{"Http":[],"Https":[]}},"Main.Home":{"args":[],"tags":{"Recent":[],"Recommend":[],"Free":[]}},"Main.LikeAndHistory":{"args":[],"tags":{"Like":[],"History":[]}}}}})}});}(this));

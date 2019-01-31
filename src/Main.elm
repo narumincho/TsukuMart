@@ -21,7 +21,7 @@ port toNarrowScreenMode : (Int -> msg) -> Sub msg
 
 type Model
     = Model
-        { selectedTab : Tab
+        { page : Page
         , menuState : MenuState
         , wideScreenMode : Bool
         , key : Browser.Navigation.Key
@@ -34,14 +34,27 @@ type MenuState
     | Open
 
 
-type Tab
+type Page
+    = PageHome Home
+    | PageUser
+    | PageLikeAndHistory LikeAndHistory
+    | PageExhibitionItem
+    | PagePurchaseItem
+
+
+type Home
     = Recent
     | Recommend
     | Free
 
 
+type LikeAndHistory
+    = Like
+    | History
+
+
 type Msg
-    = TabChange Tab
+    = ChangePage Page
     | OpenMenu
     | CloseMenu
     | ToWideScreenMode
@@ -69,7 +82,7 @@ init _ url key =
             Debug.log "load url" (Url.toString url)
     in
     ( Model
-        { selectedTab = Recommend
+        { page = PageHome Recommend
         , menuState = NotOpenedYet
         , wideScreenMode = False
         , key = key
@@ -91,10 +104,10 @@ onUrlChange =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg (Model rec) =
     case msg of
-        TabChange tab ->
+        ChangePage page ->
             ( Model
                 { rec
-                    | selectedTab = tab
+                    | page = page
                 }
             , Cmd.none
             )
@@ -154,11 +167,11 @@ update msg (Model rec) =
 
 
 view : Model -> { title : String, body : List (Html.Html Msg) }
-view (Model { selectedTab, menuState, wideScreenMode }) =
+view (Model { page, menuState, wideScreenMode }) =
     { title = "つくマート"
     , body =
         [ header wideScreenMode
-        , mainTab selectedTab
+        , mainTab page
         , itemList
         , exhibitButton
         , menu wideScreenMode menuState
@@ -310,49 +323,83 @@ menuMain =
 {- Main Tab -}
 
 
-mainTab : Tab -> Html.Html Msg
-mainTab selectedTab =
+mainTab : Page -> Html.Html Msg
+mainTab page =
     Html.div
         [ Html.Attributes.class "mainTab" ]
-        (([ ( Recent, "新着" ), ( Recommend, "おすすめ" ), ( Free, "0円" ) ]
-            |> List.map (mainTabItem selectedTab)
-         )
-            ++ [ mainTabSelectLine selectedTab ]
+        (case page of
+            PageHome tab ->
+                [ ( Recent, "新着" ), ( Recommend, "おすすめ" ), ( Free, "0円" ) ]
+                    |> mainTabItemList tab PageHome
+
+            PageLikeAndHistory tab ->
+                [ ( Like, "いいね" ), ( History, "閲覧履歴" ) ]
+                    |> mainTabItemList tab PageLikeAndHistory
+
+            PageExhibitionItem ->
+                []
+
+            PageUser ->
+                []
+
+            PagePurchaseItem ->
+                []
         )
 
 
-mainTabItem : Tab -> ( Tab, String ) -> Html.Html Msg
-mainTabItem selectedTab ( tab, label ) =
-    Html.div
-        [ Html.Attributes.class
-            (if tab == selectedTab then
-                "mainTab-item-select"
-
-             else
-                "mainTab-item"
+mainTabItemList : a -> (a -> Page) -> List ( a, String ) -> List (Html.Html Msg)
+mainTabItemList selectedTab page tabList =
+    (tabList
+        |> List.map
+            (\( tab, label ) ->
+                mainTabItem (tab == selectedTab)
+                    label
+                    (ChangePage (page tab))
             )
-        , Html.Events.onClick (TabChange tab)
-        ]
-        [ Html.text label ]
+    )
+        ++ [ mainTabSelectLine
+                (firstElementIndex selectedTab (List.map Tuple.first tabList) |> Maybe.withDefault 0)
+                (List.length tabList)
+           ]
 
 
-mainTabSelectLine : Tab -> Html.Html Msg
-mainTabSelectLine selectedTab =
+firstElementIndex : a -> List a -> Maybe Int
+firstElementIndex a list =
+    case list of
+        [] ->
+            Nothing
+
+        x :: xs ->
+            if x == a then
+                Just 0
+
+            else
+                firstElementIndex a xs |> Maybe.map ((+) 1)
+
+
+mainTabItem : Bool -> String -> Msg -> Html.Html Msg
+mainTabItem isSelected label clickEvent =
+    if isSelected then
+        Html.div
+            [ Html.Attributes.class "mainTab-item-select" ]
+            [ Html.text label ]
+
+    else
+        Html.div
+            [ Html.Attributes.class "mainTab-item"
+            , Html.Events.onClick clickEvent
+            ]
+            [ Html.text label ]
+
+
+{-| タブの下線
+-}
+mainTabSelectLine : Int -> Int -> Html.Html Msg
+mainTabSelectLine index count =
     Html.div [ Html.Attributes.class "mainTab-selectLineArea" ]
         [ Html.div
-            [ Html.Attributes.class
-                ("mainTab-selectLine "
-                    ++ (case selectedTab of
-                            Recent ->
-                                "mainTab-selectLine-left"
-
-                            Recommend ->
-                                "mainTab-selectLine-center"
-
-                            Free ->
-                                "mainTab-selectLine-right"
-                       )
-                )
+            [ Html.Attributes.class "mainTab-selectLine"
+            , Html.Attributes.style "left" ("calc( 100% /" ++ String.fromInt count ++ " * " ++ String.fromInt index)
             ]
             []
         ]
