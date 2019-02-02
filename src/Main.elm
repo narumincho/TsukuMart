@@ -41,7 +41,11 @@ type Page
     | PageLikeAndHistory LikeAndHistory
     | PageExhibitionItemList
     | PagePurchaseItemList
-    | PageExhibition
+    | PageExhibition ExhibitionState
+
+
+type alias ExhibitionState =
+    { title : String, description : String, price : Maybe Int }
 
 
 type Home
@@ -147,7 +151,15 @@ update msg (Model rec) =
                 _ =
                     Debug.log "url change" url
             in
-            ( Model rec
+            ( case urlToPage url of
+                Just (PageExhibition state) ->
+                    Model { rec | page = PageExhibition state, menuState = MenuNotOpenedYet }
+
+                Just page ->
+                    Model { rec | page = page, menuState = MenuClose }
+
+                Nothing ->
+                    Model { rec | menuState = MenuClose }
             , Cmd.none
             )
 
@@ -158,15 +170,7 @@ update msg (Model rec) =
                         _ =
                             Debug.log "url request internal" url
                     in
-                    ( case urlToPage url of
-                        Just PageExhibition ->
-                            Model { rec | page = PageExhibition, menuState = MenuNotOpenedYet }
-
-                        Just page ->
-                            Model { rec | page = page, menuState = MenuClose }
-
-                        Nothing ->
-                            Model { rec | menuState = MenuClose }
+                    ( update (UrlChange url) (Model rec) |> Tuple.first
                     , Browser.Navigation.pushUrl rec.key (Url.toString url)
                     )
 
@@ -185,10 +189,11 @@ urlParser : Url.Parser.Parser (Page -> a) a
 urlParser =
     Url.Parser.oneOf
         [ Url.Parser.map (PageHome Recommend) Url.Parser.top
+        , Url.Parser.map (PageHome Recommend) (Url.Parser.s "index.html")
         , Url.Parser.map (PageLikeAndHistory Like) (Url.Parser.s "like-history")
         , Url.Parser.map PageExhibitionItemList (Url.Parser.s "exhibition-item")
         , Url.Parser.map PagePurchaseItemList (Url.Parser.s "purchase-item")
-        , Url.Parser.map PageExhibition (Url.Parser.s "exhibition")
+        , Url.Parser.map (PageExhibition { title = "", description = "", price = Nothing }) (Url.Parser.s "exhibition")
         ]
 
 
@@ -200,11 +205,12 @@ view (Model { page, menuState, wideScreenMode }) =
         , mainTab page
         , menu wideScreenMode menuState
         ]
-            ++ (if page == PageExhibition then
-                    [ exhibitionView ]
+            ++ (case page of
+                    PageExhibition exhibitionState ->
+                        [ exhibitionView exhibitionState ]
 
-                else
-                    [ itemList wideScreenMode, exhibitButton ]
+                    _ ->
+                        [ itemList wideScreenMode, exhibitButton ]
                )
     }
 
@@ -382,8 +388,8 @@ mainTab page =
                 PageUser ->
                     []
 
-                PageExhibition ->
-                    [ ( PageExhibition, "商品の情報を入力" ) ]
+                PageExhibition state ->
+                    [ ( PageExhibition state, "商品の情報を入力" ) ]
     in
     Html.div
         [ Html.Attributes.class "mainTab"
@@ -524,19 +530,24 @@ exhibitButton =
         [ Html.text "出品" ]
 
 
-exhibitionView : Html.Html Msg
-exhibitionView =
+exhibitionView : ExhibitionState -> Html.Html Msg
+exhibitionView { title, description, price } =
     Html.div
         [ Html.Attributes.class "exhibitionView" ]
         [ exhibitionViewPhoto
         , exhibitionViewItemTitleAndDescription
+        , exhibitionViewItemPrice price
         ]
 
 
 exhibitionViewPhoto : Html.Html Msg
 exhibitionViewPhoto =
-    Html.div
-        [ Html.Attributes.class "exhibitionView-photo" ]
+    Html.input
+        [ Html.Attributes.class "exhibitionView-photo"
+        , Html.Attributes.type_ "file"
+        , Html.Attributes.multiple True
+        , Html.Attributes.accept "image/*"
+        ]
         [ Html.img
             [ Html.Attributes.src "assets/add_a_photo.svg"
             , Html.Attributes.class "exhibitionView-photo-icon"
@@ -548,8 +559,9 @@ exhibitionViewPhoto =
 exhibitionViewItemTitleAndDescription : Html.Html Msg
 exhibitionViewItemTitleAndDescription =
     Html.div
-        []
-        [ Html.input
+        [ Html.Attributes.class "exhibitionView-itemTitleAndDescription" ]
+        [ Html.h2 [] [ Html.text "商品名と説明" ]
+        , Html.input
             [ Html.Attributes.placeholder "商品名(40文字まで)"
             , Html.Attributes.class "exhibitionView-itemTitle"
             , Html.Attributes.maxlength 40
@@ -560,6 +572,31 @@ exhibitionViewItemTitleAndDescription =
             , Html.Attributes.class "exhibitionView-itemDescription"
             ]
             []
+        ]
+
+
+exhibitionViewItemPrice : Maybe Int -> Html.Html Msg
+exhibitionViewItemPrice price =
+    Html.div
+        [ Html.Attributes.class "exhibitionView-itemPrice" ]
+        [ Html.text "販売価格 (0～100万円)"
+        , Html.div
+            [ Html.Attributes.class "exhibitionView-itemPrice-input" ]
+            [ Html.input
+                ([ Html.Attributes.type_ "number"
+                 , Html.Attributes.class "exhibitionView-itemPrice-input-input"
+                 ]
+                    ++ (case price of
+                            Just p ->
+                                [ Html.Attributes.value (String.fromInt p) ]
+
+                            Nothing ->
+                                []
+                       )
+                )
+                []
+            , Html.text "円"
+            ]
         ]
 
 

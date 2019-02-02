@@ -4896,12 +4896,15 @@ var author$project$Main$PageHome = function (a) {
 };
 var author$project$Main$Recommend = {$: 'Recommend'};
 var author$project$Main$Like = {$: 'Like'};
-var author$project$Main$PageExhibition = {$: 'PageExhibition'};
+var author$project$Main$PageExhibition = function (a) {
+	return {$: 'PageExhibition', a: a};
+};
 var author$project$Main$PageExhibitionItemList = {$: 'PageExhibitionItemList'};
 var author$project$Main$PageLikeAndHistory = function (a) {
 	return {$: 'PageLikeAndHistory', a: a};
 };
 var author$project$Main$PagePurchaseItemList = {$: 'PagePurchaseItemList'};
+var elm$core$Maybe$Nothing = {$: 'Nothing'};
 var elm$core$Basics$EQ = {$: 'EQ'};
 var elm$core$Basics$LT = {$: 'LT'};
 var elm$core$Elm$JsArray$foldr = _JsArray_foldr;
@@ -5190,6 +5193,10 @@ var author$project$Main$urlParser = elm$url$Url$Parser$oneOf(
 			elm$url$Url$Parser$top),
 			A2(
 			elm$url$Url$Parser$map,
+			author$project$Main$PageHome(author$project$Main$Recommend),
+			elm$url$Url$Parser$s('index.html')),
+			A2(
+			elm$url$Url$Parser$map,
 			author$project$Main$PageLikeAndHistory(author$project$Main$Like),
 			elm$url$Url$Parser$s('like-history')),
 			A2(
@@ -5202,13 +5209,13 @@ var author$project$Main$urlParser = elm$url$Url$Parser$oneOf(
 			elm$url$Url$Parser$s('purchase-item')),
 			A2(
 			elm$url$Url$Parser$map,
-			author$project$Main$PageExhibition,
+			author$project$Main$PageExhibition(
+				{description: '', price: elm$core$Maybe$Nothing, title: ''}),
 			elm$url$Url$Parser$s('exhibition'))
 		]));
 var elm$core$Maybe$Just = function (a) {
 	return {$: 'Just', a: a};
 };
-var elm$core$Maybe$Nothing = {$: 'Nothing'};
 var elm$url$Url$Parser$getFirstMatch = function (states) {
 	getFirstMatch:
 	while (true) {
@@ -10021,37 +10028,43 @@ var author$project$Main$update = F2(
 				var url = msg.a;
 				var _n2 = A2(elm$core$Debug$log, 'url change', url);
 				return _Utils_Tuple2(
-					author$project$Main$Model(rec),
+					function () {
+						var _n3 = author$project$Main$urlToPage(url);
+						if (_n3.$ === 'Just') {
+							if (_n3.a.$ === 'PageExhibition') {
+								var state = _n3.a.a;
+								return author$project$Main$Model(
+									_Utils_update(
+										rec,
+										{
+											menuState: author$project$Main$MenuNotOpenedYet,
+											page: author$project$Main$PageExhibition(state)
+										}));
+							} else {
+								var page = _n3.a;
+								return author$project$Main$Model(
+									_Utils_update(
+										rec,
+										{menuState: author$project$Main$MenuClose, page: page}));
+							}
+						} else {
+							return author$project$Main$Model(
+								_Utils_update(
+									rec,
+									{menuState: author$project$Main$MenuClose}));
+						}
+					}(),
 					elm$core$Platform$Cmd$none);
 			default:
 				var urlRequest = msg.a;
 				if (urlRequest.$ === 'Internal') {
 					var url = urlRequest.a;
-					var _n4 = A2(elm$core$Debug$log, 'url request internal', url);
+					var _n5 = A2(elm$core$Debug$log, 'url request internal', url);
 					return _Utils_Tuple2(
-						function () {
-							var _n5 = author$project$Main$urlToPage(url);
-							if (_n5.$ === 'Just') {
-								if (_n5.a.$ === 'PageExhibition') {
-									var _n6 = _n5.a;
-									return author$project$Main$Model(
-										_Utils_update(
-											rec,
-											{menuState: author$project$Main$MenuNotOpenedYet, page: author$project$Main$PageExhibition}));
-								} else {
-									var page = _n5.a;
-									return author$project$Main$Model(
-										_Utils_update(
-											rec,
-											{menuState: author$project$Main$MenuClose, page: page}));
-								}
-							} else {
-								return author$project$Main$Model(
-									_Utils_update(
-										rec,
-										{menuState: author$project$Main$MenuClose}));
-							}
-						}(),
+						A2(
+							author$project$Main$update,
+							author$project$Main$UrlChange(url),
+							author$project$Main$Model(rec)).a,
 						A2(
 							elm$browser$Browser$Navigation$pushUrl,
 							rec.key,
@@ -10076,6 +10089,52 @@ var author$project$Main$exhibitButton = A2(
 			elm$html$Html$text('出品')
 		]));
 var elm$html$Html$input = _VirtualDom_node('input');
+var elm$html$Html$Attributes$type_ = elm$html$Html$Attributes$stringProperty('type');
+var elm$html$Html$Attributes$value = elm$html$Html$Attributes$stringProperty('value');
+var author$project$Main$exhibitionViewItemPrice = function (price) {
+	return A2(
+		elm$html$Html$div,
+		_List_fromArray(
+			[
+				elm$html$Html$Attributes$class('exhibitionView-itemPrice')
+			]),
+		_List_fromArray(
+			[
+				elm$html$Html$text('販売価格 (0～100万円)'),
+				A2(
+				elm$html$Html$div,
+				_List_fromArray(
+					[
+						elm$html$Html$Attributes$class('exhibitionView-itemPrice-input')
+					]),
+				_List_fromArray(
+					[
+						A2(
+						elm$html$Html$input,
+						_Utils_ap(
+							_List_fromArray(
+								[
+									elm$html$Html$Attributes$type_('number'),
+									elm$html$Html$Attributes$class('exhibitionView-itemPrice-input-input')
+								]),
+							function () {
+								if (price.$ === 'Just') {
+									var p = price.a;
+									return _List_fromArray(
+										[
+											elm$html$Html$Attributes$value(
+											elm$core$String$fromInt(p))
+										]);
+								} else {
+									return _List_Nil;
+								}
+							}()),
+						_List_Nil),
+						elm$html$Html$text('円')
+					]))
+			]));
+};
+var elm$html$Html$h2 = _VirtualDom_node('h2');
 var elm$html$Html$textarea = _VirtualDom_node('textarea');
 var elm$html$Html$Attributes$maxlength = function (n) {
 	return A2(
@@ -10086,9 +10145,19 @@ var elm$html$Html$Attributes$maxlength = function (n) {
 var elm$html$Html$Attributes$placeholder = elm$html$Html$Attributes$stringProperty('placeholder');
 var author$project$Main$exhibitionViewItemTitleAndDescription = A2(
 	elm$html$Html$div,
-	_List_Nil,
 	_List_fromArray(
 		[
+			elm$html$Html$Attributes$class('exhibitionView-itemTitleAndDescription')
+		]),
+	_List_fromArray(
+		[
+			A2(
+			elm$html$Html$h2,
+			_List_Nil,
+			_List_fromArray(
+				[
+					elm$html$Html$text('商品名と説明')
+				])),
 			A2(
 			elm$html$Html$input,
 			_List_fromArray(
@@ -10108,6 +10177,16 @@ var author$project$Main$exhibitionViewItemTitleAndDescription = A2(
 			_List_Nil)
 		]));
 var elm$html$Html$img = _VirtualDom_node('img');
+var elm$html$Html$Attributes$accept = elm$html$Html$Attributes$stringProperty('accept');
+var elm$json$Json$Encode$bool = _Json_wrap;
+var elm$html$Html$Attributes$boolProperty = F2(
+	function (key, bool) {
+		return A2(
+			_VirtualDom_property,
+			key,
+			elm$json$Json$Encode$bool(bool));
+	});
+var elm$html$Html$Attributes$multiple = elm$html$Html$Attributes$boolProperty('multiple');
 var elm$html$Html$Attributes$src = function (url) {
 	return A2(
 		elm$html$Html$Attributes$stringProperty,
@@ -10115,10 +10194,13 @@ var elm$html$Html$Attributes$src = function (url) {
 		_VirtualDom_noJavaScriptOrHtmlUri(url));
 };
 var author$project$Main$exhibitionViewPhoto = A2(
-	elm$html$Html$div,
+	elm$html$Html$input,
 	_List_fromArray(
 		[
-			elm$html$Html$Attributes$class('exhibitionView-photo')
+			elm$html$Html$Attributes$class('exhibitionView-photo'),
+			elm$html$Html$Attributes$type_('file'),
+			elm$html$Html$Attributes$multiple(true),
+			elm$html$Html$Attributes$accept('image/*')
 		]),
 	_List_fromArray(
 		[
@@ -10131,14 +10213,23 @@ var author$project$Main$exhibitionViewPhoto = A2(
 				]),
 			_List_Nil)
 		]));
-var author$project$Main$exhibitionView = A2(
-	elm$html$Html$div,
-	_List_fromArray(
-		[
-			elm$html$Html$Attributes$class('exhibitionView')
-		]),
-	_List_fromArray(
-		[author$project$Main$exhibitionViewPhoto, author$project$Main$exhibitionViewItemTitleAndDescription]));
+var author$project$Main$exhibitionView = function (_n0) {
+	var title = _n0.title;
+	var description = _n0.description;
+	var price = _n0.price;
+	return A2(
+		elm$html$Html$div,
+		_List_fromArray(
+			[
+				elm$html$Html$Attributes$class('exhibitionView')
+			]),
+		_List_fromArray(
+			[
+				author$project$Main$exhibitionViewPhoto,
+				author$project$Main$exhibitionViewItemTitleAndDescription,
+				author$project$Main$exhibitionViewItemPrice(price)
+			]));
+};
 var elm$html$Html$Attributes$alt = elm$html$Html$Attributes$stringProperty('alt');
 var author$project$Main$logo = A2(
 	elm$html$Html$img,
@@ -10449,9 +10540,12 @@ var author$project$Main$mainTab = function (page) {
 			case 'PageUser':
 				return _List_Nil;
 			default:
+				var state = page.a;
 				return _List_fromArray(
 					[
-						_Utils_Tuple2(author$project$Main$PageExhibition, '商品の情報を入力')
+						_Utils_Tuple2(
+						author$project$Main$PageExhibition(state),
+						'商品の情報を入力')
 					]);
 		}
 	}();
@@ -10633,12 +10727,21 @@ var author$project$Main$view = function (_n0) {
 					author$project$Main$mainTab(page),
 					A2(author$project$Main$menu, wideScreenMode, menuState)
 				]),
-			_Utils_eq(page, author$project$Main$PageExhibition) ? _List_fromArray(
-				[author$project$Main$exhibitionView]) : _List_fromArray(
-				[
-					author$project$Main$itemList(wideScreenMode),
-					author$project$Main$exhibitButton
-				])),
+			function () {
+				if (page.$ === 'PageExhibition') {
+					var exhibitionState = page.a;
+					return _List_fromArray(
+						[
+							author$project$Main$exhibitionView(exhibitionState)
+						]);
+				} else {
+					return _List_fromArray(
+						[
+							author$project$Main$itemList(wideScreenMode),
+							author$project$Main$exhibitButton
+						]);
+				}
+			}()),
 		title: 'つくマート'
 	};
 };
@@ -10646,4 +10749,4 @@ var elm$browser$Browser$application = _Browser_application;
 var author$project$Main$main = elm$browser$Browser$application(
 	{init: author$project$Main$init, onUrlChange: author$project$Main$onUrlChange, onUrlRequest: author$project$Main$onUrlRequest, subscriptions: author$project$Main$subscription, update: author$project$Main$update, view: author$project$Main$view});
 _Platform_export({'Main':{'init':author$project$Main$main(
-	elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.0"},"types":{"message":"Main.Msg","aliases":{"Url.Url":{"args":[],"type":"{ protocol : Url.Protocol, host : String.String, port_ : Maybe.Maybe Basics.Int, path : String.String, query : Maybe.Maybe String.String, fragment : Maybe.Maybe String.String }"}},"unions":{"Main.Msg":{"args":[],"tags":{"ChangePage":["Main.Page"],"OpenMenu":[],"CloseMenu":[],"ToWideScreenMode":[],"ToNarrowScreenMode":[],"UrlChange":["Url.Url"],"UrlRequest":["Browser.UrlRequest"]}},"Main.Page":{"args":[],"tags":{"PageHome":["Main.Home"],"PageUser":[],"PageLikeAndHistory":["Main.LikeAndHistory"],"PageExhibitionItemList":[],"PagePurchaseItemList":[],"PageExhibition":[]}},"Browser.UrlRequest":{"args":[],"tags":{"Internal":["Url.Url"],"External":["String.String"]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"String.String":{"args":[],"tags":{"String":[]}},"Url.Protocol":{"args":[],"tags":{"Http":[],"Https":[]}},"Main.Home":{"args":[],"tags":{"Recent":[],"Recommend":[],"Free":[]}},"Main.LikeAndHistory":{"args":[],"tags":{"Like":[],"History":[]}}}}})}});}(this));
+	elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.0"},"types":{"message":"Main.Msg","aliases":{"Url.Url":{"args":[],"type":"{ protocol : Url.Protocol, host : String.String, port_ : Maybe.Maybe Basics.Int, path : String.String, query : Maybe.Maybe String.String, fragment : Maybe.Maybe String.String }"},"Main.ExhibitionState":{"args":[],"type":"{ title : String.String, description : String.String, price : Maybe.Maybe Basics.Int }"}},"unions":{"Main.Msg":{"args":[],"tags":{"ChangePage":["Main.Page"],"OpenMenu":[],"CloseMenu":[],"ToWideScreenMode":[],"ToNarrowScreenMode":[],"UrlChange":["Url.Url"],"UrlRequest":["Browser.UrlRequest"]}},"Main.Page":{"args":[],"tags":{"PageHome":["Main.Home"],"PageUser":[],"PageLikeAndHistory":["Main.LikeAndHistory"],"PageExhibitionItemList":[],"PagePurchaseItemList":[],"PageExhibition":["Main.ExhibitionState"]}},"Browser.UrlRequest":{"args":[],"tags":{"Internal":["Url.Url"],"External":["String.String"]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"String.String":{"args":[],"tags":{"String":[]}},"Url.Protocol":{"args":[],"tags":{"Http":[],"Https":[]}},"Main.Home":{"args":[],"tags":{"Recent":[],"Recommend":[],"Free":[]}},"Main.LikeAndHistory":{"args":[],"tags":{"Like":[],"History":[]}}}}})}});}(this));
