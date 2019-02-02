@@ -4896,11 +4896,12 @@ var author$project$Main$PageHome = function (a) {
 };
 var author$project$Main$Recommend = {$: 'Recommend'};
 var author$project$Main$Like = {$: 'Like'};
-var author$project$Main$PageExhibitionItem = {$: 'PageExhibitionItem'};
+var author$project$Main$PageExhibition = {$: 'PageExhibition'};
+var author$project$Main$PageExhibitionItemList = {$: 'PageExhibitionItemList'};
 var author$project$Main$PageLikeAndHistory = function (a) {
 	return {$: 'PageLikeAndHistory', a: a};
 };
-var author$project$Main$PagePurchaseItem = {$: 'PagePurchaseItem'};
+var author$project$Main$PagePurchaseItemList = {$: 'PagePurchaseItemList'};
 var elm$core$Basics$EQ = {$: 'EQ'};
 var elm$core$Basics$LT = {$: 'LT'};
 var elm$core$Elm$JsArray$foldr = _JsArray_foldr;
@@ -5193,12 +5194,16 @@ var author$project$Main$urlParser = elm$url$Url$Parser$oneOf(
 			elm$url$Url$Parser$s('like-history')),
 			A2(
 			elm$url$Url$Parser$map,
-			author$project$Main$PageExhibitionItem,
+			author$project$Main$PageExhibitionItemList,
 			elm$url$Url$Parser$s('exhibition-item')),
 			A2(
 			elm$url$Url$Parser$map,
-			author$project$Main$PagePurchaseItem,
-			elm$url$Url$Parser$s('purchase-item'))
+			author$project$Main$PagePurchaseItemList,
+			elm$url$Url$Parser$s('purchase-item')),
+			A2(
+			elm$url$Url$Parser$map,
+			author$project$Main$PageExhibition,
+			elm$url$Url$Parser$s('exhibition'))
 		]));
 var elm$core$Maybe$Just = function (a) {
 	return {$: 'Just', a: a};
@@ -10027,11 +10032,19 @@ var author$project$Main$update = F2(
 						function () {
 							var _n5 = author$project$Main$urlToPage(url);
 							if (_n5.$ === 'Just') {
-								var page = _n5.a;
-								return author$project$Main$Model(
-									_Utils_update(
-										rec,
-										{menuState: author$project$Main$MenuClose, page: page}));
+								if (_n5.a.$ === 'PageExhibition') {
+									var _n6 = _n5.a;
+									return author$project$Main$Model(
+										_Utils_update(
+											rec,
+											{menuState: author$project$Main$MenuNotOpenedYet, page: author$project$Main$PageExhibition}));
+								} else {
+									var page = _n5.a;
+									return author$project$Main$Model(
+										_Utils_update(
+											rec,
+											{menuState: author$project$Main$MenuClose, page: page}));
+								}
 							} else {
 								return author$project$Main$Model(
 									_Utils_update(
@@ -10052,7 +10065,7 @@ var author$project$Main$update = F2(
 		}
 	});
 var author$project$Main$exhibitButton = A2(
-	elm$html$Html$div,
+	elm$html$Html$a,
 	_List_fromArray(
 		[
 			elm$html$Html$Attributes$class('exhibitButton'),
@@ -10062,14 +10075,71 @@ var author$project$Main$exhibitButton = A2(
 		[
 			elm$html$Html$text('出品')
 		]));
+var elm$html$Html$input = _VirtualDom_node('input');
+var elm$html$Html$textarea = _VirtualDom_node('textarea');
+var elm$html$Html$Attributes$maxlength = function (n) {
+	return A2(
+		_VirtualDom_attribute,
+		'maxlength',
+		elm$core$String$fromInt(n));
+};
+var elm$html$Html$Attributes$placeholder = elm$html$Html$Attributes$stringProperty('placeholder');
+var author$project$Main$exhibitionViewItemTitleAndDescription = A2(
+	elm$html$Html$div,
+	_List_Nil,
+	_List_fromArray(
+		[
+			A2(
+			elm$html$Html$input,
+			_List_fromArray(
+				[
+					elm$html$Html$Attributes$placeholder('商品名(40文字まで)'),
+					elm$html$Html$Attributes$class('exhibitionView-itemTitle'),
+					elm$html$Html$Attributes$maxlength(40)
+				]),
+			_List_Nil),
+			A2(
+			elm$html$Html$textarea,
+			_List_fromArray(
+				[
+					elm$html$Html$Attributes$placeholder('商品の説明'),
+					elm$html$Html$Attributes$class('exhibitionView-itemDescription')
+				]),
+			_List_Nil)
+		]));
 var elm$html$Html$img = _VirtualDom_node('img');
-var elm$html$Html$Attributes$alt = elm$html$Html$Attributes$stringProperty('alt');
 var elm$html$Html$Attributes$src = function (url) {
 	return A2(
 		elm$html$Html$Attributes$stringProperty,
 		'src',
 		_VirtualDom_noJavaScriptOrHtmlUri(url));
 };
+var author$project$Main$exhibitionViewPhoto = A2(
+	elm$html$Html$div,
+	_List_fromArray(
+		[
+			elm$html$Html$Attributes$class('exhibitionView-photo')
+		]),
+	_List_fromArray(
+		[
+			A2(
+			elm$html$Html$img,
+			_List_fromArray(
+				[
+					elm$html$Html$Attributes$src('assets/add_a_photo.svg'),
+					elm$html$Html$Attributes$class('exhibitionView-photo-icon')
+				]),
+			_List_Nil)
+		]));
+var author$project$Main$exhibitionView = A2(
+	elm$html$Html$div,
+	_List_fromArray(
+		[
+			elm$html$Html$Attributes$class('exhibitionView')
+		]),
+	_List_fromArray(
+		[author$project$Main$exhibitionViewPhoto, author$project$Main$exhibitionViewItemTitleAndDescription]));
+var elm$html$Html$Attributes$alt = elm$html$Html$Attributes$stringProperty('alt');
 var author$project$Main$logo = A2(
 	elm$html$Html$img,
 	_List_fromArray(
@@ -10366,18 +10436,23 @@ var author$project$Main$mainTab = function (page) {
 						author$project$Main$PageLikeAndHistory(author$project$Main$History),
 						'閲覧履歴')
 					]);
-			case 'PagePurchaseItem':
+			case 'PagePurchaseItemList':
 				return _List_fromArray(
 					[
-						_Utils_Tuple2(author$project$Main$PagePurchaseItem, '購入した商品')
+						_Utils_Tuple2(author$project$Main$PagePurchaseItemList, '購入した商品')
 					]);
-			case 'PageExhibitionItem':
+			case 'PageExhibitionItemList':
 				return _List_fromArray(
 					[
-						_Utils_Tuple2(author$project$Main$PageExhibitionItem, '出品した商品')
+						_Utils_Tuple2(author$project$Main$PageExhibitionItemList, '出品した商品')
 					]);
-			default:
+			case 'PageUser':
 				return _List_Nil;
+			default:
+				return _List_fromArray(
+					[
+						_Utils_Tuple2(author$project$Main$PageExhibition, '商品の情報を入力')
+					]);
 		}
 	}();
 	return A2(
@@ -10551,14 +10626,19 @@ var author$project$Main$view = function (_n0) {
 	var menuState = _n0.a.menuState;
 	var wideScreenMode = _n0.a.wideScreenMode;
 	return {
-		body: _List_fromArray(
-			[
-				author$project$Main$header(wideScreenMode),
-				author$project$Main$mainTab(page),
-				author$project$Main$itemList(wideScreenMode),
-				author$project$Main$exhibitButton,
-				A2(author$project$Main$menu, wideScreenMode, menuState)
-			]),
+		body: _Utils_ap(
+			_List_fromArray(
+				[
+					author$project$Main$header(wideScreenMode),
+					author$project$Main$mainTab(page),
+					A2(author$project$Main$menu, wideScreenMode, menuState)
+				]),
+			_Utils_eq(page, author$project$Main$PageExhibition) ? _List_fromArray(
+				[author$project$Main$exhibitionView]) : _List_fromArray(
+				[
+					author$project$Main$itemList(wideScreenMode),
+					author$project$Main$exhibitButton
+				])),
 		title: 'つくマート'
 	};
 };
@@ -10566,4 +10646,4 @@ var elm$browser$Browser$application = _Browser_application;
 var author$project$Main$main = elm$browser$Browser$application(
 	{init: author$project$Main$init, onUrlChange: author$project$Main$onUrlChange, onUrlRequest: author$project$Main$onUrlRequest, subscriptions: author$project$Main$subscription, update: author$project$Main$update, view: author$project$Main$view});
 _Platform_export({'Main':{'init':author$project$Main$main(
-	elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.0"},"types":{"message":"Main.Msg","aliases":{"Url.Url":{"args":[],"type":"{ protocol : Url.Protocol, host : String.String, port_ : Maybe.Maybe Basics.Int, path : String.String, query : Maybe.Maybe String.String, fragment : Maybe.Maybe String.String }"}},"unions":{"Main.Msg":{"args":[],"tags":{"ChangePage":["Main.Page"],"OpenMenu":[],"CloseMenu":[],"ToWideScreenMode":[],"ToNarrowScreenMode":[],"UrlChange":["Url.Url"],"UrlRequest":["Browser.UrlRequest"]}},"Main.Page":{"args":[],"tags":{"PageHome":["Main.Home"],"PageUser":[],"PageLikeAndHistory":["Main.LikeAndHistory"],"PageExhibitionItem":[],"PagePurchaseItem":[]}},"Browser.UrlRequest":{"args":[],"tags":{"Internal":["Url.Url"],"External":["String.String"]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"String.String":{"args":[],"tags":{"String":[]}},"Url.Protocol":{"args":[],"tags":{"Http":[],"Https":[]}},"Main.Home":{"args":[],"tags":{"Recent":[],"Recommend":[],"Free":[]}},"Main.LikeAndHistory":{"args":[],"tags":{"Like":[],"History":[]}}}}})}});}(this));
+	elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.0"},"types":{"message":"Main.Msg","aliases":{"Url.Url":{"args":[],"type":"{ protocol : Url.Protocol, host : String.String, port_ : Maybe.Maybe Basics.Int, path : String.String, query : Maybe.Maybe String.String, fragment : Maybe.Maybe String.String }"}},"unions":{"Main.Msg":{"args":[],"tags":{"ChangePage":["Main.Page"],"OpenMenu":[],"CloseMenu":[],"ToWideScreenMode":[],"ToNarrowScreenMode":[],"UrlChange":["Url.Url"],"UrlRequest":["Browser.UrlRequest"]}},"Main.Page":{"args":[],"tags":{"PageHome":["Main.Home"],"PageUser":[],"PageLikeAndHistory":["Main.LikeAndHistory"],"PageExhibitionItemList":[],"PagePurchaseItemList":[],"PageExhibition":[]}},"Browser.UrlRequest":{"args":[],"tags":{"Internal":["Url.Url"],"External":["String.String"]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"String.String":{"args":[],"tags":{"String":[]}},"Url.Protocol":{"args":[],"tags":{"Http":[],"Https":[]}},"Main.Home":{"args":[],"tags":{"Recent":[],"Recommend":[],"Free":[]}},"Main.LikeAndHistory":{"args":[],"tags":{"Like":[],"History":[]}}}}})}});}(this));

@@ -39,8 +39,9 @@ type Page
     = PageHome Home
     | PageUser
     | PageLikeAndHistory LikeAndHistory
-    | PageExhibitionItem
-    | PagePurchaseItem
+    | PageExhibitionItemList
+    | PagePurchaseItemList
+    | PageExhibition
 
 
 type Home
@@ -158,6 +159,9 @@ update msg (Model rec) =
                             Debug.log "url request internal" url
                     in
                     ( case urlToPage url of
+                        Just PageExhibition ->
+                            Model { rec | page = PageExhibition, menuState = MenuNotOpenedYet }
+
                         Just page ->
                             Model { rec | page = page, menuState = MenuClose }
 
@@ -182,8 +186,9 @@ urlParser =
     Url.Parser.oneOf
         [ Url.Parser.map (PageHome Recommend) Url.Parser.top
         , Url.Parser.map (PageLikeAndHistory Like) (Url.Parser.s "like-history")
-        , Url.Parser.map PageExhibitionItem (Url.Parser.s "exhibition-item")
-        , Url.Parser.map PagePurchaseItem (Url.Parser.s "purchase-item")
+        , Url.Parser.map PageExhibitionItemList (Url.Parser.s "exhibition-item")
+        , Url.Parser.map PagePurchaseItemList (Url.Parser.s "purchase-item")
+        , Url.Parser.map PageExhibition (Url.Parser.s "exhibition")
         ]
 
 
@@ -193,10 +198,14 @@ view (Model { page, menuState, wideScreenMode }) =
     , body =
         [ header wideScreenMode
         , mainTab page
-        , itemList wideScreenMode
-        , exhibitButton
         , menu wideScreenMode menuState
         ]
+            ++ (if page == PageExhibition then
+                    [ exhibitionView ]
+
+                else
+                    [ itemList wideScreenMode, exhibitButton ]
+               )
     }
 
 
@@ -364,14 +373,17 @@ mainTab page =
                 PageLikeAndHistory _ ->
                     [ ( PageLikeAndHistory Like, "いいね" ), ( PageLikeAndHistory History, "閲覧履歴" ) ]
 
-                PagePurchaseItem ->
-                    [ ( PagePurchaseItem, "購入した商品" ) ]
+                PagePurchaseItemList ->
+                    [ ( PagePurchaseItemList, "購入した商品" ) ]
 
-                PageExhibitionItem ->
-                    [ ( PageExhibitionItem, "出品した商品" ) ]
+                PageExhibitionItemList ->
+                    [ ( PageExhibitionItemList, "出品した商品" ) ]
 
                 PageUser ->
                     []
+
+                PageExhibition ->
+                    [ ( PageExhibition, "商品の情報を入力" ) ]
     in
     Html.div
         [ Html.Attributes.class "mainTab"
@@ -505,11 +517,50 @@ itemImage =
 
 exhibitButton : Html.Html Msg
 exhibitButton =
-    Html.div
+    Html.a
         [ Html.Attributes.class "exhibitButton"
         , Html.Attributes.href "/exhibition"
         ]
         [ Html.text "出品" ]
+
+
+exhibitionView : Html.Html Msg
+exhibitionView =
+    Html.div
+        [ Html.Attributes.class "exhibitionView" ]
+        [ exhibitionViewPhoto
+        , exhibitionViewItemTitleAndDescription
+        ]
+
+
+exhibitionViewPhoto : Html.Html Msg
+exhibitionViewPhoto =
+    Html.div
+        [ Html.Attributes.class "exhibitionView-photo" ]
+        [ Html.img
+            [ Html.Attributes.src "assets/add_a_photo.svg"
+            , Html.Attributes.class "exhibitionView-photo-icon"
+            ]
+            []
+        ]
+
+
+exhibitionViewItemTitleAndDescription : Html.Html Msg
+exhibitionViewItemTitleAndDescription =
+    Html.div
+        []
+        [ Html.input
+            [ Html.Attributes.placeholder "商品名(40文字まで)"
+            , Html.Attributes.class "exhibitionView-itemTitle"
+            , Html.Attributes.maxlength 40
+            ]
+            []
+        , Html.textarea
+            [ Html.Attributes.placeholder "商品の説明"
+            , Html.Attributes.class "exhibitionView-itemDescription"
+            ]
+            []
+        ]
 
 
 subscription : Model -> Sub Msg
