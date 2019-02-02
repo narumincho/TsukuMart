@@ -10055,7 +10055,8 @@ var author$project$Main$exhibitButton = A2(
 	elm$html$Html$div,
 	_List_fromArray(
 		[
-			elm$html$Html$Attributes$class('exhibitButton')
+			elm$html$Html$Attributes$class('exhibitButton'),
+			elm$html$Html$Attributes$href('/exhibition')
 		]),
 	_List_fromArray(
 		[
@@ -10343,7 +10344,6 @@ var author$project$Main$mainTab = function (page) {
 	var tabList = function () {
 		switch (page.$) {
 			case 'PageHome':
-				var tab = page.a;
 				return _List_fromArray(
 					[
 						_Utils_Tuple2(
@@ -10357,7 +10357,6 @@ var author$project$Main$mainTab = function (page) {
 						'0円')
 					]);
 			case 'PageLikeAndHistory':
-				var tab = page.a;
 				return _List_fromArray(
 					[
 						_Utils_Tuple2(
@@ -10366,6 +10365,16 @@ var author$project$Main$mainTab = function (page) {
 						_Utils_Tuple2(
 						author$project$Main$PageLikeAndHistory(author$project$Main$History),
 						'閲覧履歴')
+					]);
+			case 'PagePurchaseItem':
+				return _List_fromArray(
+					[
+						_Utils_Tuple2(author$project$Main$PagePurchaseItem, '購入した商品')
+					]);
+			case 'PageExhibitionItem':
+				return _List_fromArray(
+					[
+						_Utils_Tuple2(author$project$Main$PageExhibitionItem, '出品した商品')
 					]);
 			default:
 				return _List_Nil;

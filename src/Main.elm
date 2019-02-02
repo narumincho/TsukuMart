@@ -358,13 +358,19 @@ mainTab page =
     let
         tabList =
             case page of
-                PageHome tab ->
+                PageHome _ ->
                     [ ( PageHome Recent, "新着" ), ( PageHome Recommend, "おすすめ" ), ( PageHome Free, "0円" ) ]
 
-                PageLikeAndHistory tab ->
+                PageLikeAndHistory _ ->
                     [ ( PageLikeAndHistory Like, "いいね" ), ( PageLikeAndHistory History, "閲覧履歴" ) ]
 
-                _ ->
+                PagePurchaseItem ->
+                    [ ( PagePurchaseItem, "購入した商品" ) ]
+
+                PageExhibitionItem ->
+                    [ ( PageExhibitionItem, "出品した商品" ) ]
+
+                PageUser ->
                     []
     in
     Html.div
@@ -500,7 +506,9 @@ itemImage =
 exhibitButton : Html.Html Msg
 exhibitButton =
     Html.div
-        [ Html.Attributes.class "exhibitButton" ]
+        [ Html.Attributes.class "exhibitButton"
+        , Html.Attributes.href "/exhibition"
+        ]
         [ Html.text "出品" ]
 
 
