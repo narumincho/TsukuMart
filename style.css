@@ -386,6 +386,17 @@ img {
     outline: none;
 }
 
+/*===============================================
+        Send Email sアドにメールを送るための画面
+===============================================*/
+
+.sendEmailView {
+    grid-column: 2 / 3;
+    grid-row: 3 / 4;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
 h2 {
     font-size: 1.2rem;
     margin: 0;

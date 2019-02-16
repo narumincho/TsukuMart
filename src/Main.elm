@@ -83,10 +83,6 @@ main =
 
 init : () -> Url.Url -> Browser.Navigation.Key -> ( Model, Cmd Msg )
 init _ url key =
-    let
-        _ =
-            Debug.log "load url" (Url.toString url)
-    in
     ( Model
         { page = urlToPage url |> Maybe.withDefault (PageHome Recommend)
         , menuState = MenuNotOpenedYet
@@ -147,10 +143,6 @@ update msg (Model rec) =
             )
 
         UrlChange url ->
-            let
-                _ =
-                    Debug.log "url change" url
-            in
             ( case urlToPage url of
                 Just (PageExhibition state) ->
                     Model { rec | page = PageExhibition state, menuState = MenuNotOpenedYet }
@@ -166,10 +158,6 @@ update msg (Model rec) =
         UrlRequest urlRequest ->
             case urlRequest of
                 Browser.Internal url ->
-                    let
-                        _ =
-                            Debug.log "url request internal" url
-                    in
                     ( update (UrlChange url) (Model rec) |> Tuple.first
                     , Browser.Navigation.pushUrl rec.key (Url.toString url)
                     )
@@ -598,6 +586,13 @@ exhibitionViewItemPrice price =
             , Html.text "円"
             ]
         ]
+
+
+sendEmail : Html.Html Msg
+sendEmail =
+    Html.div
+        [ Html.Attributes.class "sendEmailView" ]
+        [ Html.text "新規登録かパスワードを忘れてしまった人のためにsアドに認証メールを送る" ]
 
 
 subscription : Model -> Sub Msg
