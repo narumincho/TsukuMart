@@ -43,7 +43,8 @@ h1:hover {
 }
 
 .logo {
-    height: 2rem;
+    height: 3rem;
+    display: block;
 }
 
 .headerButton {
