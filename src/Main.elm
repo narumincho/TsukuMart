@@ -211,7 +211,7 @@ view (Model { page, menuState, wideScreenMode }) =
     { title = "つくマート"
     , body =
         [ header wideScreenMode
-        , mainTab page
+        , mainTab page wideScreenMode
         , menu wideScreenMode menuState
         ]
             ++ (case page of
@@ -504,7 +504,7 @@ menu : Bool -> MenuState -> Html.Html Msg
 menu isWideMode menuState =
     if isWideMode then
         Html.div
-            [ Html.Attributes.class "menu-always-show" ]
+            [ Html.Attributes.class "menu-wide" ]
             menuMain
 
     else
@@ -583,8 +583,8 @@ menuMain =
 {- Main Tab -}
 
 
-mainTab : Page -> Html.Html Msg
-mainTab page =
+mainTab : Page -> Bool -> Html.Html Msg
+mainTab page wideScreenMode =
     let
         tabList =
             case page of
@@ -607,7 +607,8 @@ mainTab page =
                     [ ( PageExhibition state, "商品の情報を入力" ) ]
     in
     Html.div
-        [ Html.Attributes.class "mainTab"
+        [ Html.Attributes.classList
+            [ ( "mainTab", True ), ( "mainTab-wide", wideScreenMode ) ]
         , Html.Attributes.style
             "grid-template-columns"
             (List.repeat (List.length tabList) "1fr" |> String.join " ")
@@ -691,7 +692,8 @@ mainTabSelectLine index count =
 itemList : Bool -> Html.Html Msg
 itemList isWideMode =
     Html.div
-        [ Html.Attributes.class "itemList"
+        [ Html.Attributes.classList
+            [ ( "itemList", True ), ( "itemList-wide", isWideMode ) ]
         , Html.Attributes.style "grid-template-columns"
             (if isWideMode then
                 "33.3% 33.4% 33.3%"

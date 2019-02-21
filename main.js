@@ -11108,12 +11108,38 @@ var author$project$Main$item = function (_n0) {
 					]))
 			]));
 };
+var elm$core$List$filter = F2(
+	function (isGood, list) {
+		return A3(
+			elm$core$List$foldr,
+			F2(
+				function (x, xs) {
+					return isGood(x) ? A2(elm$core$List$cons, x, xs) : xs;
+				}),
+			_List_Nil,
+			list);
+	});
+var elm$html$Html$Attributes$classList = function (classes) {
+	return elm$html$Html$Attributes$class(
+		A2(
+			elm$core$String$join,
+			' ',
+			A2(
+				elm$core$List$map,
+				elm$core$Tuple$first,
+				A2(elm$core$List$filter, elm$core$Tuple$second, classes))));
+};
 var author$project$Main$itemList = function (isWideMode) {
 	return A2(
 		elm$html$Html$div,
 		_List_fromArray(
 			[
-				elm$html$Html$Attributes$class('itemList'),
+				elm$html$Html$Attributes$classList(
+				_List_fromArray(
+					[
+						_Utils_Tuple2('itemList', true),
+						_Utils_Tuple2('itemList-wide', isWideMode)
+					])),
 				A2(
 				elm$html$Html$Attributes$style,
 				'grid-template-columns',
@@ -11267,84 +11293,90 @@ var elm$core$List$repeat = F2(
 	function (n, value) {
 		return A3(elm$core$List$repeatHelp, _List_Nil, n, value);
 	});
-var author$project$Main$mainTab = function (page) {
-	var tabList = function () {
-		switch (page.$) {
-			case 'PageHome':
-				return _List_fromArray(
-					[
-						_Utils_Tuple2(
-						author$project$Main$PageHome(author$project$Main$Recent),
-						'新着'),
-						_Utils_Tuple2(
-						author$project$Main$PageHome(author$project$Main$Recommend),
-						'おすすめ'),
-						_Utils_Tuple2(
-						author$project$Main$PageHome(author$project$Main$Free),
-						'0円')
-					]);
-			case 'PageLikeAndHistory':
-				return _List_fromArray(
-					[
-						_Utils_Tuple2(
-						author$project$Main$PageLikeAndHistory(author$project$Main$Like),
-						'いいね'),
-						_Utils_Tuple2(
-						author$project$Main$PageLikeAndHistory(author$project$Main$History),
-						'閲覧履歴')
-					]);
-			case 'PagePurchaseItemList':
-				return _List_fromArray(
-					[
-						_Utils_Tuple2(author$project$Main$PagePurchaseItemList, '購入した商品')
-					]);
-			case 'PageExhibitionItemList':
-				return _List_fromArray(
-					[
-						_Utils_Tuple2(author$project$Main$PageExhibitionItemList, '出品した商品')
-					]);
-			case 'PageUser':
-				var emailAddress = page.a.emailAddress;
-				var password = page.a.password;
-				return _List_Nil;
-			default:
-				var state = page.a;
-				return _List_fromArray(
-					[
-						_Utils_Tuple2(
-						author$project$Main$PageExhibition(state),
-						'商品の情報を入力')
-					]);
-		}
-	}();
-	return A2(
-		elm$html$Html$div,
-		_List_fromArray(
-			[
-				elm$html$Html$Attributes$class('mainTab'),
-				A2(
-				elm$html$Html$Attributes$style,
-				'grid-template-columns',
-				A2(
-					elm$core$String$join,
-					' ',
-					A2(
-						elm$core$List$repeat,
-						elm$core$List$length(tabList),
-						'1fr'))),
-				A2(
-				elm$html$Html$Attributes$style,
-				'height',
-				_Utils_eq(tabList, _List_Nil) ? '0' : '3rem')
-			]),
-		function () {
-			if (tabList.b) {
-				return A2(author$project$Main$mainTabItemList, page, tabList);
-			} else {
-				return _List_Nil;
+var author$project$Main$mainTab = F2(
+	function (page, wideScreenMode) {
+		var tabList = function () {
+			switch (page.$) {
+				case 'PageHome':
+					return _List_fromArray(
+						[
+							_Utils_Tuple2(
+							author$project$Main$PageHome(author$project$Main$Recent),
+							'新着'),
+							_Utils_Tuple2(
+							author$project$Main$PageHome(author$project$Main$Recommend),
+							'おすすめ'),
+							_Utils_Tuple2(
+							author$project$Main$PageHome(author$project$Main$Free),
+							'0円')
+						]);
+				case 'PageLikeAndHistory':
+					return _List_fromArray(
+						[
+							_Utils_Tuple2(
+							author$project$Main$PageLikeAndHistory(author$project$Main$Like),
+							'いいね'),
+							_Utils_Tuple2(
+							author$project$Main$PageLikeAndHistory(author$project$Main$History),
+							'閲覧履歴')
+						]);
+				case 'PagePurchaseItemList':
+					return _List_fromArray(
+						[
+							_Utils_Tuple2(author$project$Main$PagePurchaseItemList, '購入した商品')
+						]);
+				case 'PageExhibitionItemList':
+					return _List_fromArray(
+						[
+							_Utils_Tuple2(author$project$Main$PageExhibitionItemList, '出品した商品')
+						]);
+				case 'PageUser':
+					var emailAddress = page.a.emailAddress;
+					var password = page.a.password;
+					return _List_Nil;
+				default:
+					var state = page.a;
+					return _List_fromArray(
+						[
+							_Utils_Tuple2(
+							author$project$Main$PageExhibition(state),
+							'商品の情報を入力')
+						]);
 			}
-		}());
-};
+		}();
+		return A2(
+			elm$html$Html$div,
+			_List_fromArray(
+				[
+					elm$html$Html$Attributes$classList(
+					_List_fromArray(
+						[
+							_Utils_Tuple2('mainTab', true),
+							_Utils_Tuple2('mainTab-wide', wideScreenMode)
+						])),
+					A2(
+					elm$html$Html$Attributes$style,
+					'grid-template-columns',
+					A2(
+						elm$core$String$join,
+						' ',
+						A2(
+							elm$core$List$repeat,
+							elm$core$List$length(tabList),
+							'1fr'))),
+					A2(
+					elm$html$Html$Attributes$style,
+					'height',
+					_Utils_eq(tabList, _List_Nil) ? '0' : '3rem')
+				]),
+			function () {
+				if (tabList.b) {
+					return A2(author$project$Main$mainTabItemList, page, tabList);
+				} else {
+					return _List_Nil;
+				}
+			}());
+	});
 var author$project$Main$CloseMenu = {$: 'CloseMenu'};
 var author$project$Main$menuMain = _List_fromArray(
 	[
@@ -11423,7 +11455,7 @@ var author$project$Main$menu = F2(
 			elm$html$Html$div,
 			_List_fromArray(
 				[
-					elm$html$Html$Attributes$class('menu-always-show')
+					elm$html$Html$Attributes$class('menu-wide')
 				]),
 			author$project$Main$menuMain) : A3(
 			elm$html$Html$Keyed$node,
@@ -11494,7 +11526,7 @@ var author$project$Main$view = function (_n0) {
 			_List_fromArray(
 				[
 					author$project$Main$header(wideScreenMode),
-					author$project$Main$mainTab(page),
+					A2(author$project$Main$mainTab, page, wideScreenMode),
 					A2(author$project$Main$menu, wideScreenMode, menuState)
 				]),
 			function () {

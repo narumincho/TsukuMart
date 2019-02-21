@@ -8,6 +8,9 @@ body {
     margin: 0;
     height: 100%;
     width: 100%;
+}
+
+.body-wide {
     display: grid;
     grid-template-columns: max-content 1fr;
     grid-template-rows: max-content max-content 1fr;
@@ -29,6 +32,7 @@ header {
     width: 100%;
     box-sizing: border-box;
     padding: .5rem;
+    z-index: 2;
 }
 
 h1 {
@@ -67,7 +71,7 @@ h1:hover {
 ===========================*/
 
 .menu-list {
-    position: absolute;
+    position: fixed;
     width: 80%;
     height: 100%;
     top: 0;
@@ -81,6 +85,14 @@ h1:hover {
     animation-fill-mode: forwards;
     display: flex;
     flex-direction: column;
+}
+
+.menu-wide {
+    width: 20rem;
+    height: calc(100% - 4rem);
+    background-color: #ddd;
+    position: fixed;
+    top: 4rem;
 }
 
 .menu-list-open {
@@ -111,7 +123,7 @@ h1:hover {
 }
 
 .menu-shadow {
-    position: absolute;
+    position: fixed;
     width: 100%;
     height: 100%;
     top: 0;
@@ -184,29 +196,27 @@ h1:hover {
     cursor: pointer;
 }
 
-.menu-always-show {
-    width: 20rem;
-    background-color: #ddd;
-    grid-column: 1 / 2;
-    grid-row: 1 / 4;
-}
-
 /*===========================
             Main Tab
 ===========================*/
 
 .mainTab {
-    grid-column: 2 / 3;
-    grid-row: 2 / 3;
     background-color: #f0f0f0;
     display: grid;
     width: 100%;
-    grid-template-columns: 1fr 1fr 1fr;
     grid-template-rows: 3rem 4px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
     position: fixed;
     top: 4rem;
+    z-index: 1;
+}
+
+.mainTab-wide {
+    position: fixed;
+    left: 20rem;
+    top: 4rem;
+    width: calc( 100% - 20rem);
 }
 
 .mainTab-item {
@@ -254,12 +264,16 @@ h1:hover {
 ===========================*/
 
 .itemList {
-    grid-column: 2 / 3;
-    grid-row: 3 / 4;
     display: grid;
-    -webkit-overflow-scrolling : touch;
+    -webkit-overflow-scrolling: touch;
     align-content: flex-start;
     padding-top: 7rem;
+}
+
+.itemList-wide {
+    width: calc(100% - 20rem);
+    position: relative;
+    left: 20rem;
 }
 
 .item {
@@ -311,12 +325,11 @@ img {
 ===============================*/
 
 .exhibitionView {
-    grid-column: 2 / 3;
-    grid-row: 3 / 4;
     overflow-y: auto;
     overflow-x: hidden;
     display: flex;
     flex-direction: column;
+    padding-top: 7rem;
 }
 
 .exhibitionView-photo {
@@ -396,8 +409,7 @@ img {
 ===============================================*/
 
 .sendEmailView {
-    grid-column: 2 / 3;
-    grid-row: 3 / 4;
+    padding-top: 7rem;
     overflow-y: auto;
     overflow-x: hidden;
 }
