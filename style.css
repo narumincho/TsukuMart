@@ -66,9 +66,9 @@ h1:hover {
     border-radius: 50%;
 }
 
-/*===========================
-            Menu
-===========================*/
+/*=====================================
+        Menu 左サイドに表示するメニュー
+=====================================*/
 
 .menu-list {
     position: fixed;
@@ -290,6 +290,7 @@ h1:hover {
 
 .itemPrice {
     align-self: flex-end;
+    font-size: 1.3rem;
 }
 
 .itemImage {
@@ -405,13 +406,9 @@ img {
 }
 
 /*===============================================
-        Send Email sアドにメールを送るための画面
 ===============================================*/
 
-.sendEmailView {
-    padding-top: 7rem;
-    overflow-y: auto;
-    overflow-x: hidden;
+.mainView {
 }
 
 h2 {

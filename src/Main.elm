@@ -40,11 +40,16 @@ type MenuState
 
 type Page
     = PageHome Home
-    | PageUser { emailAddress : String, password : String }
+    | PageUser UserSignUpPage
     | PageLikeAndHistory LikeAndHistory
     | PageExhibitionItemList
     | PagePurchaseItemList
     | PageExhibition ExhibitionState
+
+
+type UserSignUpPage
+    = UserSignUpPageStudentHasSAddress { studentId : String, password : String }
+    | UserSignUpPageNewStudent { emailAddress : String, password : String }
 
 
 type alias ExhibitionState =
@@ -198,7 +203,7 @@ urlParser =
     Url.Parser.oneOf
         [ Url.Parser.map (PageHome Recommend) Url.Parser.top
         , Url.Parser.map (PageHome Recommend) (Url.Parser.s "index.html")
-        , Url.Parser.map (PageUser { emailAddress = "", password = "" }) (Url.Parser.s "user-signup")
+        , Url.Parser.map (PageUser (UserSignUpPageStudentHasSAddress { studentId = "", password = "" })) (Url.Parser.s "user-signup")
         , Url.Parser.map (PageLikeAndHistory Like) (Url.Parser.s "like-history")
         , Url.Parser.map PageExhibitionItemList (Url.Parser.s "exhibition-item")
         , Url.Parser.map PagePurchaseItemList (Url.Parser.s "purchase-item")
@@ -217,6 +222,9 @@ view (Model { page, menuState, wideScreenMode }) =
             ++ (case page of
                     PageExhibition exhibitionState ->
                         [ exhibitionView exhibitionState ]
+
+                    PageUser userPage ->
+                        [ userSignUpView userPage wideScreenMode ]
 
                     _ ->
                         [ itemList wideScreenMode, exhibitButton, sendSampleButton ]
@@ -546,12 +554,13 @@ menu isWideMode menuState =
 
 menuMain : List (Html.Html Msg)
 menuMain =
-    [ Html.div
-        [ Html.Attributes.class "menu-account" ]
+    [ Html.a
+        [ Html.Attributes.class "menu-account"
+        , Html.Attributes.href "/user-signup"
+        ]
         [ Html.img
             [ Html.Attributes.class "menu-account-image"
             , Html.Attributes.src "assets/accountImage.png"
-            , Html.Attributes.href "/user-signup"
             ]
             []
         , Html.text "user"
@@ -586,64 +595,84 @@ menuMain =
 mainTab : Page -> Bool -> Html.Html Msg
 mainTab page wideScreenMode =
     let
-        tabList =
+        tabData : TabType
+        tabData =
             case page of
                 PageHome _ ->
-                    [ ( PageHome Recent, "新着" ), ( PageHome Recommend, "おすすめ" ), ( PageHome Free, "0円" ) ]
+                    TabMulti
+                        [ ( PageHome Recent, "新着" )
+                        , ( PageHome Recommend, "おすすめ" )
+                        , ( PageHome Free, "0円" )
+                        ]
 
                 PageLikeAndHistory _ ->
-                    [ ( PageLikeAndHistory Like, "いいね" ), ( PageLikeAndHistory History, "閲覧履歴" ) ]
+                    TabMulti
+                        [ ( PageLikeAndHistory Like, "いいね" )
+                        , ( PageLikeAndHistory History, "閲覧履歴" )
+                        ]
 
                 PagePurchaseItemList ->
-                    [ ( PagePurchaseItemList, "購入した商品" ) ]
+                    TabSingle "購入した商品"
 
                 PageExhibitionItemList ->
-                    [ ( PageExhibitionItemList, "出品した商品" ) ]
+                    TabSingle "出品した商品"
 
-                PageUser { emailAddress, password } ->
-                    []
+                PageUser pageUser ->
+                    TabSingle "ユーザー登録"
 
                 PageExhibition state ->
-                    [ ( PageExhibition state, "商品の情報を入力" ) ]
+                    TabSingle "商品の情報を入力"
     in
     Html.div
         [ Html.Attributes.classList
             [ ( "mainTab", True ), ( "mainTab-wide", wideScreenMode ) ]
         , Html.Attributes.style
             "grid-template-columns"
-            (List.repeat (List.length tabList) "1fr" |> String.join " ")
-        , Html.Attributes.style
-            "height"
-            (if tabList == [] then
-                "0"
-
-             else
-                "3rem"
-            )
+            (List.repeat (tabTypeToCount tabData) "1fr" |> String.join " ")
+        , Html.Attributes.style "height" "3rem"
         ]
-        (case tabList of
-            _ :: _ ->
-                mainTabItemList page tabList
-
-            [] ->
-                []
-        )
+        (mainTabItemList page tabData)
 
 
-mainTabItemList : Page -> List ( Page, String ) -> List (Html.Html Msg)
-mainTabItemList selectedPage tabList =
-    (tabList
-        |> List.map
-            (\( tab, label ) ->
-                mainTabItem (tab == selectedPage)
-                    label
-                    (ChangePage tab)
+type TabType
+    = TabMulti (List ( Page, String ))
+    | TabSingle String
+
+
+tabTypeToCount : TabType -> Int
+tabTypeToCount tabType =
+    case tabType of
+        TabMulti list ->
+            List.length list
+
+        TabSingle _ ->
+            1
+
+
+mainTabItemList : Page -> TabType -> List (Html.Html Msg)
+mainTabItemList selectedPage tabData =
+    case tabData of
+        TabMulti tabList ->
+            (tabList
+                |> List.map
+                    (\( tab, label ) ->
+                        mainTabItem (tab == selectedPage)
+                            label
+                            (Just (ChangePage tab))
+                    )
             )
-    )
-        ++ [ mainTabSelectLine
-                (firstElementIndex selectedPage (List.map Tuple.first tabList) |> Maybe.withDefault 0)
-                (List.length tabList)
-           ]
+                ++ [ mainTabSelectLine
+                        (firstElementIndex selectedPage (List.map Tuple.first tabList) |> Maybe.withDefault 0)
+                        (List.length tabList)
+                   ]
+
+        TabSingle label ->
+            [ mainTabItem
+                True
+                label
+                Nothing
+            , mainTabSelectLine 0 1
+            ]
 
 
 firstElementIndex : a -> List a -> Maybe Int
@@ -660,22 +689,32 @@ firstElementIndex a list =
                 firstElementIndex a xs |> Maybe.map ((+) 1)
 
 
-mainTabItem : Bool -> String -> Msg -> Html.Html Msg
-mainTabItem isSelected label clickEvent =
+mainTabItem : Bool -> String -> Maybe Msg -> Html.Html Msg
+mainTabItem isSelected label clickEventMaybe =
     if isSelected then
         Html.div
             [ Html.Attributes.class "mainTab-item-select" ]
             [ Html.text label ]
 
     else
-        Html.div
-            [ Html.Attributes.class "mainTab-item"
-            , Html.Events.onClick clickEvent
-            ]
-            [ Html.text label ]
+        case clickEventMaybe of
+            Just clickEvent ->
+                Html.div
+                    [ Html.Attributes.class "mainTab-item"
+                    , Html.Events.onClick clickEvent
+                    ]
+                    [ Html.text label ]
+
+            Nothing ->
+                Html.div
+                    [ Html.Attributes.class "mainTab-item" ]
+                    [ Html.text label ]
 
 
 {-| タブの下線
+mainTabSelectLine index count
+index : 何番目のタブを選択しているか
+count : 全部で何個のタブがあるか
 -}
 mainTabSelectLine : Int -> Int -> Html.Html Msg
 mainTabSelectLine index count =
@@ -827,18 +866,31 @@ sendEmail =
 sendSampleButton : Html.Html Msg
 sendSampleButton =
     Html.div
-        []
-        []
+        [ Html.Attributes.style "position" "absolute"
+        , Html.Attributes.style "background-color" "white"
+        , Html.Attributes.style "padding" "1rem"
+        , Html.Attributes.style "top" "6rem"
+        , Html.Events.onClick Request
+        ]
+        [ Html.text "サンプルボタン" ]
 
 
 
---         Html.Attributes.style "position" "absolute"
---        , Html.Attributes.style "background-color" "white"
---        , Html.Attributes.style "padding" "1rem"
---        , Html.Events.onClick Request
---        ]
---        [ Html.text "サンプルボタン" ]
 --
+
+
+userSignUpView : UserSignUpPage -> Bool -> Html.Html Msg
+userSignUpView userPage isWideScreenMode =
+    case userPage of
+        UserSignUpPageStudentHasSAddress _ ->
+            Html.div
+                [ Html.Attributes.class "sendEmailView" ]
+                [ Html.text "Sアドからの登録" ]
+
+        UserSignUpPageNewStudent _ ->
+            Html.div
+                [ Html.Attributes.class "sendEmailView" ]
+                [ Html.text "Sアドを持っていない人の登録" ]
 
 
 subscription : Model -> Sub Msg

@@ -5082,6 +5082,9 @@ var author$project$Main$PagePurchaseItemList = {$: 'PagePurchaseItemList'};
 var author$project$Main$PageUser = function (a) {
 	return {$: 'PageUser', a: a};
 };
+var author$project$Main$UserSignUpPageStudentHasSAddress = function (a) {
+	return {$: 'UserSignUpPageStudentHasSAddress', a: a};
+};
 var elm$core$Maybe$Nothing = {$: 'Nothing'};
 var elm$core$Basics$EQ = {$: 'EQ'};
 var elm$core$Basics$LT = {$: 'LT'};
@@ -5376,7 +5379,8 @@ var author$project$Main$urlParser = elm$url$Url$Parser$oneOf(
 			A2(
 			elm$url$Url$Parser$map,
 			author$project$Main$PageUser(
-				{emailAddress: '', password: ''}),
+				author$project$Main$UserSignUpPageStudentHasSAddress(
+					{password: '', studentId: ''})),
 			elm$url$Url$Parser$s('user-signup')),
 			A2(
 			elm$url$Url$Parser$map,
@@ -11167,6 +11171,12 @@ var author$project$Main$itemList = function (isWideMode) {
 var author$project$Main$Free = {$: 'Free'};
 var author$project$Main$History = {$: 'History'};
 var author$project$Main$Recent = {$: 'Recent'};
+var author$project$Main$TabMulti = function (a) {
+	return {$: 'TabMulti', a: a};
+};
+var author$project$Main$TabSingle = function (a) {
+	return {$: 'TabSingle', a: a};
+};
 var author$project$Main$ChangePage = function (a) {
 	return {$: 'ChangePage', a: a};
 };
@@ -11194,27 +11204,45 @@ var author$project$Main$firstElementIndex = F2(
 		}
 	});
 var author$project$Main$mainTabItem = F3(
-	function (isSelected, label, clickEvent) {
-		return isSelected ? A2(
-			elm$html$Html$div,
-			_List_fromArray(
-				[
-					elm$html$Html$Attributes$class('mainTab-item-select')
-				]),
-			_List_fromArray(
-				[
-					elm$html$Html$text(label)
-				])) : A2(
-			elm$html$Html$div,
-			_List_fromArray(
-				[
-					elm$html$Html$Attributes$class('mainTab-item'),
-					elm$html$Html$Events$onClick(clickEvent)
-				]),
-			_List_fromArray(
-				[
-					elm$html$Html$text(label)
-				]));
+	function (isSelected, label, clickEventMaybe) {
+		if (isSelected) {
+			return A2(
+				elm$html$Html$div,
+				_List_fromArray(
+					[
+						elm$html$Html$Attributes$class('mainTab-item-select')
+					]),
+				_List_fromArray(
+					[
+						elm$html$Html$text(label)
+					]));
+		} else {
+			if (clickEventMaybe.$ === 'Just') {
+				var clickEvent = clickEventMaybe.a;
+				return A2(
+					elm$html$Html$div,
+					_List_fromArray(
+						[
+							elm$html$Html$Attributes$class('mainTab-item'),
+							elm$html$Html$Events$onClick(clickEvent)
+						]),
+					_List_fromArray(
+						[
+							elm$html$Html$text(label)
+						]));
+			} else {
+				return A2(
+					elm$html$Html$div,
+					_List_fromArray(
+						[
+							elm$html$Html$Attributes$class('mainTab-item')
+						]),
+					_List_fromArray(
+						[
+							elm$html$Html$text(label)
+						]));
+			}
+		}
 	});
 var author$project$Main$mainTabSelectLine = F2(
 	function (index, count) {
@@ -11244,34 +11272,53 @@ var author$project$Main$mainTabSelectLine = F2(
 				]));
 	});
 var author$project$Main$mainTabItemList = F2(
-	function (selectedPage, tabList) {
-		return _Utils_ap(
-			A2(
-				elm$core$List$map,
-				function (_n0) {
-					var tab = _n0.a;
-					var label = _n0.b;
-					return A3(
-						author$project$Main$mainTabItem,
-						_Utils_eq(tab, selectedPage),
-						label,
-						author$project$Main$ChangePage(tab));
-				},
-				tabList),
-			_List_fromArray(
-				[
-					A2(
-					author$project$Main$mainTabSelectLine,
-					A2(
-						elm$core$Maybe$withDefault,
-						0,
+	function (selectedPage, tabData) {
+		if (tabData.$ === 'TabMulti') {
+			var tabList = tabData.a;
+			return _Utils_ap(
+				A2(
+					elm$core$List$map,
+					function (_n1) {
+						var tab = _n1.a;
+						var label = _n1.b;
+						return A3(
+							author$project$Main$mainTabItem,
+							_Utils_eq(tab, selectedPage),
+							label,
+							elm$core$Maybe$Just(
+								author$project$Main$ChangePage(tab)));
+					},
+					tabList),
+				_List_fromArray(
+					[
 						A2(
-							author$project$Main$firstElementIndex,
-							selectedPage,
-							A2(elm$core$List$map, elm$core$Tuple$first, tabList))),
-					elm$core$List$length(tabList))
-				]));
+						author$project$Main$mainTabSelectLine,
+						A2(
+							elm$core$Maybe$withDefault,
+							0,
+							A2(
+								author$project$Main$firstElementIndex,
+								selectedPage,
+								A2(elm$core$List$map, elm$core$Tuple$first, tabList))),
+						elm$core$List$length(tabList))
+					]));
+		} else {
+			var label = tabData.a;
+			return _List_fromArray(
+				[
+					A3(author$project$Main$mainTabItem, true, label, elm$core$Maybe$Nothing),
+					A2(author$project$Main$mainTabSelectLine, 0, 1)
+				]);
+		}
 	});
+var author$project$Main$tabTypeToCount = function (tabType) {
+	if (tabType.$ === 'TabMulti') {
+		var list = tabType.a;
+		return elm$core$List$length(list);
+	} else {
+		return 1;
+	}
+};
 var elm$core$List$repeatHelp = F3(
 	function (result, n, value) {
 		repeatHelp:
@@ -11295,53 +11342,43 @@ var elm$core$List$repeat = F2(
 	});
 var author$project$Main$mainTab = F2(
 	function (page, wideScreenMode) {
-		var tabList = function () {
+		var tabData = function () {
 			switch (page.$) {
 				case 'PageHome':
-					return _List_fromArray(
-						[
-							_Utils_Tuple2(
-							author$project$Main$PageHome(author$project$Main$Recent),
-							'新着'),
-							_Utils_Tuple2(
-							author$project$Main$PageHome(author$project$Main$Recommend),
-							'おすすめ'),
-							_Utils_Tuple2(
-							author$project$Main$PageHome(author$project$Main$Free),
-							'0円')
-						]);
+					return author$project$Main$TabMulti(
+						_List_fromArray(
+							[
+								_Utils_Tuple2(
+								author$project$Main$PageHome(author$project$Main$Recent),
+								'新着'),
+								_Utils_Tuple2(
+								author$project$Main$PageHome(author$project$Main$Recommend),
+								'おすすめ'),
+								_Utils_Tuple2(
+								author$project$Main$PageHome(author$project$Main$Free),
+								'0円')
+							]));
 				case 'PageLikeAndHistory':
-					return _List_fromArray(
-						[
-							_Utils_Tuple2(
-							author$project$Main$PageLikeAndHistory(author$project$Main$Like),
-							'いいね'),
-							_Utils_Tuple2(
-							author$project$Main$PageLikeAndHistory(author$project$Main$History),
-							'閲覧履歴')
-						]);
+					return author$project$Main$TabMulti(
+						_List_fromArray(
+							[
+								_Utils_Tuple2(
+								author$project$Main$PageLikeAndHistory(author$project$Main$Like),
+								'いいね'),
+								_Utils_Tuple2(
+								author$project$Main$PageLikeAndHistory(author$project$Main$History),
+								'閲覧履歴')
+							]));
 				case 'PagePurchaseItemList':
-					return _List_fromArray(
-						[
-							_Utils_Tuple2(author$project$Main$PagePurchaseItemList, '購入した商品')
-						]);
+					return author$project$Main$TabSingle('購入した商品');
 				case 'PageExhibitionItemList':
-					return _List_fromArray(
-						[
-							_Utils_Tuple2(author$project$Main$PageExhibitionItemList, '出品した商品')
-						]);
+					return author$project$Main$TabSingle('出品した商品');
 				case 'PageUser':
-					var emailAddress = page.a.emailAddress;
-					var password = page.a.password;
-					return _List_Nil;
+					var pageUser = page.a;
+					return author$project$Main$TabSingle('ユーザー登録');
 				default:
 					var state = page.a;
-					return _List_fromArray(
-						[
-							_Utils_Tuple2(
-							author$project$Main$PageExhibition(state),
-							'商品の情報を入力')
-						]);
+					return author$project$Main$TabSingle('商品の情報を入力');
 			}
 		}();
 		return A2(
@@ -11362,29 +11399,21 @@ var author$project$Main$mainTab = F2(
 						' ',
 						A2(
 							elm$core$List$repeat,
-							elm$core$List$length(tabList),
+							author$project$Main$tabTypeToCount(tabData),
 							'1fr'))),
-					A2(
-					elm$html$Html$Attributes$style,
-					'height',
-					_Utils_eq(tabList, _List_Nil) ? '0' : '3rem')
+					A2(elm$html$Html$Attributes$style, 'height', '3rem')
 				]),
-			function () {
-				if (tabList.b) {
-					return A2(author$project$Main$mainTabItemList, page, tabList);
-				} else {
-					return _List_Nil;
-				}
-			}());
+			A2(author$project$Main$mainTabItemList, page, tabData));
 	});
 var author$project$Main$CloseMenu = {$: 'CloseMenu'};
 var author$project$Main$menuMain = _List_fromArray(
 	[
 		A2(
-		elm$html$Html$div,
+		elm$html$Html$a,
 		_List_fromArray(
 			[
-				elm$html$Html$Attributes$class('menu-account')
+				elm$html$Html$Attributes$class('menu-account'),
+				elm$html$Html$Attributes$href('/user-signup')
 			]),
 		_List_fromArray(
 			[
@@ -11393,8 +11422,7 @@ var author$project$Main$menuMain = _List_fromArray(
 				_List_fromArray(
 					[
 						elm$html$Html$Attributes$class('menu-account-image'),
-						elm$html$Html$Attributes$src('assets/accountImage.png'),
-						elm$html$Html$Attributes$href('/user-signup')
+						elm$html$Html$Attributes$src('assets/accountImage.png')
 					]),
 				_List_Nil),
 				elm$html$Html$text('user')
@@ -11516,7 +11544,47 @@ var author$project$Main$menu = F2(
 				}
 			}());
 	});
-var author$project$Main$sendSampleButton = A2(elm$html$Html$div, _List_Nil, _List_Nil);
+var author$project$Main$Request = {$: 'Request'};
+var author$project$Main$sendSampleButton = A2(
+	elm$html$Html$div,
+	_List_fromArray(
+		[
+			A2(elm$html$Html$Attributes$style, 'position', 'absolute'),
+			A2(elm$html$Html$Attributes$style, 'background-color', 'white'),
+			A2(elm$html$Html$Attributes$style, 'padding', '1rem'),
+			A2(elm$html$Html$Attributes$style, 'top', '6rem'),
+			elm$html$Html$Events$onClick(author$project$Main$Request)
+		]),
+	_List_fromArray(
+		[
+			elm$html$Html$text('サンプルボタン')
+		]));
+var author$project$Main$userSignUpView = F2(
+	function (userPage, isWideScreenMode) {
+		if (userPage.$ === 'UserSignUpPageStudentHasSAddress') {
+			return A2(
+				elm$html$Html$div,
+				_List_fromArray(
+					[
+						elm$html$Html$Attributes$class('sendEmailView')
+					]),
+				_List_fromArray(
+					[
+						elm$html$Html$text('Sアドからの登録')
+					]));
+		} else {
+			return A2(
+				elm$html$Html$div,
+				_List_fromArray(
+					[
+						elm$html$Html$Attributes$class('sendEmailView')
+					]),
+				_List_fromArray(
+					[
+						elm$html$Html$text('Sアドを持っていない人の登録')
+					]));
+		}
+	});
 var author$project$Main$view = function (_n0) {
 	var page = _n0.a.page;
 	var menuState = _n0.a.menuState;
@@ -11530,19 +11598,26 @@ var author$project$Main$view = function (_n0) {
 					A2(author$project$Main$menu, wideScreenMode, menuState)
 				]),
 			function () {
-				if (page.$ === 'PageExhibition') {
-					var exhibitionState = page.a;
-					return _List_fromArray(
-						[
-							author$project$Main$exhibitionView(exhibitionState)
-						]);
-				} else {
-					return _List_fromArray(
-						[
-							author$project$Main$itemList(wideScreenMode),
-							author$project$Main$exhibitButton,
-							author$project$Main$sendSampleButton
-						]);
+				switch (page.$) {
+					case 'PageExhibition':
+						var exhibitionState = page.a;
+						return _List_fromArray(
+							[
+								author$project$Main$exhibitionView(exhibitionState)
+							]);
+					case 'PageUser':
+						var userPage = page.a;
+						return _List_fromArray(
+							[
+								A2(author$project$Main$userSignUpView, userPage, wideScreenMode)
+							]);
+					default:
+						return _List_fromArray(
+							[
+								author$project$Main$itemList(wideScreenMode),
+								author$project$Main$exhibitButton,
+								author$project$Main$sendSampleButton
+							]);
 				}
 			}()),
 		title: 'つくマート'
@@ -11552,4 +11627,4 @@ var elm$browser$Browser$application = _Browser_application;
 var author$project$Main$main = elm$browser$Browser$application(
 	{init: author$project$Main$init, onUrlChange: author$project$Main$onUrlChange, onUrlRequest: author$project$Main$onUrlRequest, subscriptions: author$project$Main$subscription, update: author$project$Main$update, view: author$project$Main$view});
 _Platform_export({'Main':{'init':author$project$Main$main(
-	elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.0"},"types":{"message":"Main.Msg","aliases":{"Url.Url":{"args":[],"type":"{ protocol : Url.Protocol, host : String.String, port_ : Maybe.Maybe Basics.Int, path : String.String, query : Maybe.Maybe String.String, fragment : Maybe.Maybe String.String }"},"Main.ExhibitionState":{"args":[],"type":"{ title : String.String, description : String.String, price : Maybe.Maybe Basics.Int }"}},"unions":{"Main.Msg":{"args":[],"tags":{"ChangePage":["Main.Page"],"OpenMenu":[],"CloseMenu":[],"ToWideScreenMode":[],"ToNarrowScreenMode":[],"UrlChange":["Url.Url"],"UrlRequest":["Browser.UrlRequest"],"Request":[],"Response":["String.String"]}},"Main.Page":{"args":[],"tags":{"PageHome":["Main.Home"],"PageUser":["{ emailAddress : String.String, password : String.String }"],"PageLikeAndHistory":["Main.LikeAndHistory"],"PageExhibitionItemList":[],"PagePurchaseItemList":[],"PageExhibition":["Main.ExhibitionState"]}},"Browser.UrlRequest":{"args":[],"tags":{"Internal":["Url.Url"],"External":["String.String"]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"String.String":{"args":[],"tags":{"String":[]}},"Url.Protocol":{"args":[],"tags":{"Http":[],"Https":[]}},"Main.Home":{"args":[],"tags":{"Recent":[],"Recommend":[],"Free":[]}},"Main.LikeAndHistory":{"args":[],"tags":{"Like":[],"History":[]}}}}})}});}(this));
+	elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.0"},"types":{"message":"Main.Msg","aliases":{"Url.Url":{"args":[],"type":"{ protocol : Url.Protocol, host : String.String, port_ : Maybe.Maybe Basics.Int, path : String.String, query : Maybe.Maybe String.String, fragment : Maybe.Maybe String.String }"},"Main.ExhibitionState":{"args":[],"type":"{ title : String.String, description : String.String, price : Maybe.Maybe Basics.Int }"}},"unions":{"Main.Msg":{"args":[],"tags":{"ChangePage":["Main.Page"],"OpenMenu":[],"CloseMenu":[],"ToWideScreenMode":[],"ToNarrowScreenMode":[],"UrlChange":["Url.Url"],"UrlRequest":["Browser.UrlRequest"],"Request":[],"Response":["String.String"]}},"Main.Page":{"args":[],"tags":{"PageHome":["Main.Home"],"PageUser":["Main.UserSignUpPage"],"PageLikeAndHistory":["Main.LikeAndHistory"],"PageExhibitionItemList":[],"PagePurchaseItemList":[],"PageExhibition":["Main.ExhibitionState"]}},"Browser.UrlRequest":{"args":[],"tags":{"Internal":["Url.Url"],"External":["String.String"]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"String.String":{"args":[],"tags":{"String":[]}},"Url.Protocol":{"args":[],"tags":{"Http":[],"Https":[]}},"Main.Home":{"args":[],"tags":{"Recent":[],"Recommend":[],"Free":[]}},"Main.LikeAndHistory":{"args":[],"tags":{"Like":[],"History":[]}},"Main.UserSignUpPage":{"args":[],"tags":{"UserSignUpPageStudentHasSAddress":["{ studentId : String.String, password : String.String }"],"UserSignUpPageNewStudent":["{ emailAddress : String.String, password : String.String }"]}}}}})}});}(this));
