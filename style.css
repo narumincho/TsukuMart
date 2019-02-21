@@ -256,6 +256,7 @@ h1:hover {
     display: grid;
     overflow-y: auto;
     overflow-x: hidden;
+    -webkit-overflow-scrolling : touch;
     align-content: flex-start;
 }
 
@@ -353,6 +354,7 @@ img {
     font-size: 1.3rem;
     resize: none;
     border: none;
+    -webkit-overflow-scrolling: touch;
     border-bottom: #aaa 2px solid;
 }
 

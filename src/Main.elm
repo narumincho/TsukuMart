@@ -6,6 +6,7 @@ import Html
 import Html.Attributes
 import Html.Events
 import Html.Keyed
+import Http
 import Svg
 import Svg.Attributes
 import Url
@@ -39,7 +40,7 @@ type MenuState
 
 type Page
     = PageHome Home
-    | PageUser
+    | PageUser { emailAddress : String, password : String }
     | PageLikeAndHistory LikeAndHistory
     | PageExhibitionItemList
     | PagePurchaseItemList
@@ -69,6 +70,8 @@ type Msg
     | ToNarrowScreenMode
     | UrlChange Url.Url
     | UrlRequest Browser.UrlRequest
+    | Request
+    | Response String
 
 
 main : Program () Model Msg
@@ -169,6 +172,21 @@ update msg (Model rec) =
                     , Browser.Navigation.load string
                     )
 
+        Request ->
+            ( Model rec
+            , Http.get
+                { url = "https://elm-lang.org/assets/public-opinion.txt"
+                , expect = Http.expectString (Result.withDefault "" >> Response)
+                }
+            )
+
+        Response string ->
+            let
+                _ =
+                    Debug.log "response" string
+            in
+            ( Model rec, Cmd.none )
+
 
 urlToPage : Url.Url -> Maybe Page
 urlToPage url =
@@ -180,6 +198,7 @@ urlParser =
     Url.Parser.oneOf
         [ Url.Parser.map (PageHome Recommend) Url.Parser.top
         , Url.Parser.map (PageHome Recommend) (Url.Parser.s "index.html")
+        , Url.Parser.map (PageUser { emailAddress = "", password = "" }) (Url.Parser.s "user-signup")
         , Url.Parser.map (PageLikeAndHistory Like) (Url.Parser.s "like-history")
         , Url.Parser.map PageExhibitionItemList (Url.Parser.s "exhibition-item")
         , Url.Parser.map PagePurchaseItemList (Url.Parser.s "purchase-item")
@@ -200,7 +219,7 @@ view (Model { page, menuState, wideScreenMode }) =
                         [ exhibitionView exhibitionState ]
 
                     _ ->
-                        [ itemList wideScreenMode, exhibitButton ]
+                        [ itemList wideScreenMode, exhibitButton, sendSampleButton ]
                )
     }
 
@@ -532,6 +551,7 @@ menuMain =
         [ Html.img
             [ Html.Attributes.class "menu-account-image"
             , Html.Attributes.src "assets/accountImage.png"
+            , Html.Attributes.href "/user-signup"
             ]
             []
         , Html.text "user"
@@ -580,7 +600,7 @@ mainTab page =
                 PageExhibitionItemList ->
                     [ ( PageExhibitionItemList, "出品した商品" ) ]
 
-                PageUser ->
+                PageUser { emailAddress, password } ->
                     []
 
                 PageExhibition state ->
@@ -800,6 +820,23 @@ sendEmail =
     Html.div
         [ Html.Attributes.class "sendEmailView" ]
         [ Html.text "新規登録かパスワードを忘れてしまった人のためにsアドに認証メールを送る" ]
+
+
+sendSampleButton : Html.Html Msg
+sendSampleButton =
+    Html.div
+        []
+        []
+
+
+
+--         Html.Attributes.style "position" "absolute"
+--        , Html.Attributes.style "background-color" "white"
+--        , Html.Attributes.style "padding" "1rem"
+--        , Html.Events.onClick Request
+--        ]
+--        [ Html.text "サンプルボタン" ]
+--
 
 
 subscription : Model -> Sub Msg
