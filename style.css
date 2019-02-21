@@ -25,7 +25,8 @@ header {
     height: 4rem;
     align-items: center;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.18);
-    position: relative;
+    position: fixed;
+    width: 100%;
     box-sizing: border-box;
     padding: .5rem;
 }
@@ -204,6 +205,8 @@ h1:hover {
     grid-template-rows: 3rem 4px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    position: fixed;
+    top: 4rem;
 }
 
 .mainTab-item {
@@ -254,10 +257,9 @@ h1:hover {
     grid-column: 2 / 3;
     grid-row: 3 / 4;
     display: grid;
-    overflow-y: auto;
-    overflow-x: hidden;
     -webkit-overflow-scrolling : touch;
     align-content: flex-start;
+    padding-top: 7rem;
 }
 
 .item {
