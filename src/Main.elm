@@ -358,6 +358,7 @@ tsukuBird =
     , Svg.image
         [ Svg.Attributes.xlinkHref "assets/logoBird.png"
         , Svg.Attributes.width "370"
+        , Svg.Attributes.height "320"
         , Svg.Attributes.transform "translate(307.49) scale(0.36)"
         ]
         []
@@ -927,11 +928,16 @@ userLogInView logInPage isWideScreenMode =
         ]
         [ Html.div
             [ Html.Attributes.class "logIn-form" ]
-            [ logInIdView
-            , logInPasswordView
-            , logInButton
+            [ Html.div
+                [ Html.Attributes.class "logIn-form-group" ]
+                [ logInIdView
+                , logInPasswordView
+                , logInButton
+                ]
             , orLabel
-            , signInButton
+            , Html.div
+                [ Html.Attributes.class "logIn-form-group" ]
+                [ signInButton ]
             ]
         ]
 

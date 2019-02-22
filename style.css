@@ -440,7 +440,12 @@ img {
 .logIn-form {
     padding: 1rem;
     display: grid;
-    gap: 2rem;
+    gap: 1rem;
+}
+
+.logIn-form-group {
+    display: grid;
+    gap: 1.5rem;
 }
 
 .logIn-form-item {

@@ -10941,6 +10941,7 @@ var author$project$Main$tuskuBirdShadow = A2(
 		]),
 	_List_Nil);
 var elm$svg$Svg$image = elm$svg$Svg$trustedNode('image');
+var elm$svg$Svg$Attributes$height = _VirtualDom_attribute('height');
 var elm$svg$Svg$Attributes$width = _VirtualDom_attribute('width');
 var elm$svg$Svg$Attributes$xlinkHref = function (value) {
 	return A3(
@@ -10958,6 +10959,7 @@ var author$project$Main$tsukuBird = _List_fromArray(
 			[
 				elm$svg$Svg$Attributes$xlinkHref('assets/logoBird.png'),
 				elm$svg$Svg$Attributes$width('370'),
+				elm$svg$Svg$Attributes$height('320'),
 				elm$svg$Svg$Attributes$transform('translate(307.49) scale(0.36)')
 			]),
 		_List_Nil)
@@ -11732,7 +11734,25 @@ var author$project$Main$userLogInView = F2(
 							elm$html$Html$Attributes$class('logIn-form')
 						]),
 					_List_fromArray(
-						[author$project$Main$logInIdView, author$project$Main$logInPasswordView, author$project$Main$logInButton, author$project$Main$orLabel, author$project$Main$signInButton]))
+						[
+							A2(
+							elm$html$Html$div,
+							_List_fromArray(
+								[
+									elm$html$Html$Attributes$class('logIn-form-group')
+								]),
+							_List_fromArray(
+								[author$project$Main$logInIdView, author$project$Main$logInPasswordView, author$project$Main$logInButton])),
+							author$project$Main$orLabel,
+							A2(
+							elm$html$Html$div,
+							_List_fromArray(
+								[
+									elm$html$Html$Attributes$class('logIn-form-group')
+								]),
+							_List_fromArray(
+								[author$project$Main$signInButton]))
+						]))
 				]));
 	});
 var elm$html$Html$form = _VirtualDom_node('form');
