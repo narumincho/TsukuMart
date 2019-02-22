@@ -434,6 +434,62 @@ img {
 }
 
 /*===============================================
+                Log In ログイン画面
+===============================================*/
+
+.logIn-form {
+    padding: 1rem;
+    display: grid;
+    gap: 2rem;
+}
+
+.logIn-form-item {
+    width: 100%;
+}
+
+.logIn-form-subTitle {
+    font-size: 1.2rem;
+}
+
+.logIn-form-subTitle-forgotPassword {
+    color: skyblue;
+    font-size: 1rem;
+}
+
+.logIn-form-input {
+    font-size: 1.2rem;
+    padding: .4rem;
+    width: 100%;
+    border: solid 2px #000;
+    box-sizing: border-box;
+    border-radius: 4px;
+}
+
+.logIn-form-logInButton {
+    background-color: var(--primaryColor);
+    color: #ddd;
+    padding: 1rem;
+    text-align: center;
+    font-size: 1.5rem;
+    border-radius: 4px;
+}
+
+.logIn-form-orLabel {
+    color: #aaa;
+    font-size: 1rem;
+    text-align: center;
+}
+
+.logIn-form-signInButton {
+    background-color: #999;
+    color: #111;
+    padding: 1rem;
+    text-align: center;
+    font-size: 1.5rem;
+    border-radius: 4px;
+}
+/*===============================================
+                Sign In 新規登録画面
 ===============================================*/
 
 .userPage-form {

@@ -11618,6 +11618,98 @@ var author$project$Main$sendSampleButton = A2(
 		[
 			elm$html$Html$text('サンプルボタン')
 		]));
+var author$project$Main$logInButton = A2(
+	elm$html$Html$div,
+	_List_fromArray(
+		[
+			elm$html$Html$Attributes$class('logIn-form-logInButton')
+		]),
+	_List_fromArray(
+		[
+			elm$html$Html$text('ログイン')
+		]));
+var author$project$Main$logInIdView = A2(
+	elm$html$Html$div,
+	_List_fromArray(
+		[
+			elm$html$Html$Attributes$class('logIn-form-item')
+		]),
+	_List_fromArray(
+		[
+			A2(
+			elm$html$Html$div,
+			_List_fromArray(
+				[
+					elm$html$Html$Attributes$class('logIn-form-subTitle')
+				]),
+			_List_fromArray(
+				[
+					elm$html$Html$text('学籍番号かメールアドレス')
+				])),
+			A2(
+			elm$html$Html$input,
+			_List_fromArray(
+				[
+					elm$html$Html$Attributes$class('logIn-form-input')
+				]),
+			_List_Nil)
+		]));
+var author$project$Main$logInPasswordView = A2(
+	elm$html$Html$div,
+	_List_fromArray(
+		[
+			elm$html$Html$Attributes$class('logIn-form-item')
+		]),
+	_List_fromArray(
+		[
+			A2(
+			elm$html$Html$div,
+			_List_fromArray(
+				[
+					elm$html$Html$Attributes$class('logIn-form-subTitle')
+				]),
+			_List_fromArray(
+				[
+					elm$html$Html$text('パスワード'),
+					A2(
+					elm$html$Html$span,
+					_List_fromArray(
+						[
+							elm$html$Html$Attributes$class('logIn-form-subTitle-forgotPassword')
+						]),
+					_List_fromArray(
+						[
+							elm$html$Html$text('パスワードを忘れた')
+						]))
+				])),
+			A2(
+			elm$html$Html$input,
+			_List_fromArray(
+				[
+					elm$html$Html$Attributes$class('logIn-form-input')
+				]),
+			_List_Nil)
+		]));
+var author$project$Main$orLabel = A2(
+	elm$html$Html$div,
+	_List_fromArray(
+		[
+			elm$html$Html$Attributes$class('logIn-form-orLabel')
+		]),
+	_List_fromArray(
+		[
+			elm$html$Html$text('or')
+		]));
+var author$project$Main$signInButton = A2(
+	elm$html$Html$div,
+	_List_fromArray(
+		[
+			elm$html$Html$Attributes$class('logIn-form-signInButton')
+		]),
+	_List_fromArray(
+		[
+			elm$html$Html$text('新規登録')
+		]));
 var author$project$Main$userLogInView = F2(
 	function (logInPage, isWideScreenMode) {
 		return A2(
@@ -11633,7 +11725,14 @@ var author$project$Main$userLogInView = F2(
 				]),
 			_List_fromArray(
 				[
-					elm$html$Html$text('ログイン')
+					A2(
+					elm$html$Html$div,
+					_List_fromArray(
+						[
+							elm$html$Html$Attributes$class('logIn-form')
+						]),
+					_List_fromArray(
+						[author$project$Main$logInIdView, author$project$Main$logInPasswordView, author$project$Main$logInButton, author$project$Main$orLabel, author$project$Main$signInButton]))
 				]));
 	});
 var elm$html$Html$form = _VirtualDom_node('form');

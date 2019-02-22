@@ -917,15 +917,66 @@ sendSampleButton =
         [ Html.text "サンプルボタン" ]
 
 
+{-| ログイン画面
+-}
 userLogInView : LogInPage -> Bool -> Html.Html Msg
 userLogInView logInPage isWideScreenMode =
     Html.div
         [ Html.Attributes.classList
             [ ( "itemList", True ), ( "itemList-wide", isWideScreenMode ) ]
         ]
+        [ Html.div
+            [ Html.Attributes.class "logIn-form" ]
+            [ logInIdView
+            , logInPasswordView
+            , logInButton
+            , orLabel
+            , signInButton
+            ]
+        ]
+
+
+logInIdView : Html.Html msg
+logInIdView =
+    Html.div [ Html.Attributes.class "logIn-form-item" ]
+        [ Html.div [ Html.Attributes.class "logIn-form-subTitle" ] [ Html.text "学籍番号かメールアドレス" ]
+        , Html.input [ Html.Attributes.class "logIn-form-input" ] []
+        ]
+
+
+logInPasswordView : Html.Html msg
+logInPasswordView =
+    Html.div [ Html.Attributes.class "logIn-form-item" ]
+        [ Html.div [ Html.Attributes.class "logIn-form-subTitle" ]
+            [ Html.text "パスワード"
+            , Html.span
+                [ Html.Attributes.class "logIn-form-subTitle-forgotPassword" ]
+                [ Html.text "パスワードを忘れた" ]
+            ]
+        , Html.input [ Html.Attributes.class "logIn-form-input" ] []
+        ]
+
+
+logInButton : Html.Html msg
+logInButton =
+    Html.div
+        [ Html.Attributes.class "logIn-form-logInButton" ]
         [ Html.text "ログイン" ]
 
 
+orLabel : Html.Html msg
+orLabel =
+    Html.div [ Html.Attributes.class "logIn-form-orLabel" ]
+        [ Html.text "or" ]
+
+
+signInButton : Html.Html msg
+signInButton =
+    Html.div [ Html.Attributes.class "logIn-form-signInButton" ] [ Html.text "新規登録" ]
+
+
+{-| 新規登録画面
+-}
 userSignUpView : UserSignUpPage -> Bool -> Html.Html Msg
 userSignUpView userPage isWideScreenMode =
     Html.div
