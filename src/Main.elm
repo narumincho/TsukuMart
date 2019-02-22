@@ -40,7 +40,8 @@ type MenuState
 
 type Page
     = PageHome Home
-    | PageUser UserSignUpPage
+    | PageSignUp UserSignUpPage
+    | PageLogIn LogInPage
     | PageLikeAndHistory LikeAndHistory
     | PageExhibitionItemList
     | PagePurchaseItemList
@@ -50,6 +51,14 @@ type Page
 type UserSignUpPage
     = UserSignUpPageStudentHasSAddress { studentId : String, password : String }
     | UserSignUpPageNewStudent { emailAddress : String, password : String }
+
+
+type LogInPage
+    = LogInPage
+        { nextPage : Page
+        , studentIdOrEmailAddress : String
+        , password : String
+        }
 
 
 type alias ExhibitionState =
@@ -94,7 +103,7 @@ main =
 init : () -> Url.Url -> Browser.Navigation.Key -> ( Model, Cmd Msg )
 init _ url key =
     ( Model
-        { page = urlToPage url |> Maybe.withDefault (PageHome Recommend)
+        { page = urlToPage url Nothing |> Maybe.withDefault (PageHome Recommend)
         , menuState = MenuNotOpenedYet
         , wideScreenMode = False
         , key = key
@@ -153,7 +162,7 @@ update msg (Model rec) =
             )
 
         UrlChange url ->
-            ( case urlToPage url of
+            ( case urlToPage url (Just rec.page) of
                 Just (PageExhibition state) ->
                     Model { rec | page = PageExhibition state, menuState = MenuNotOpenedYet }
 
@@ -193,21 +202,42 @@ update msg (Model rec) =
             ( Model rec, Cmd.none )
 
 
-urlToPage : Url.Url -> Maybe Page
-urlToPage url =
-    Url.Parser.parse urlParser url
+urlToPage : Url.Url -> Maybe Page -> Maybe Page
+urlToPage url beforePageMaybe =
+    Url.Parser.parse (urlParser beforePageMaybe) url
 
 
-urlParser : Url.Parser.Parser (Page -> a) a
-urlParser =
+urlParser : Maybe Page -> Url.Parser.Parser (Page -> a) a
+urlParser beforePageMaybe =
     Url.Parser.oneOf
-        [ Url.Parser.map (PageHome Recommend) Url.Parser.top
-        , Url.Parser.map (PageHome Recommend) (Url.Parser.s "index.html")
-        , Url.Parser.map (PageUser (UserSignUpPageStudentHasSAddress { studentId = "", password = "" })) (Url.Parser.s "user-signup")
-        , Url.Parser.map (PageLikeAndHistory Like) (Url.Parser.s "like-history")
-        , Url.Parser.map PageExhibitionItemList (Url.Parser.s "exhibition-item")
-        , Url.Parser.map PagePurchaseItemList (Url.Parser.s "purchase-item")
-        , Url.Parser.map (PageExhibition { title = "", description = "", price = Nothing }) (Url.Parser.s "exhibition")
+        [ Url.Parser.map
+            (PageHome Recommend)
+            Url.Parser.top
+        , Url.Parser.map
+            (PageHome Recommend)
+            (Url.Parser.s "index.html")
+        , Url.Parser.map
+            (PageSignUp (UserSignUpPageStudentHasSAddress { studentId = "", password = "" }))
+            (Url.Parser.s "user-signup")
+        , Url.Parser.map
+            (PageLogIn
+                (LogInPage
+                    { nextPage = beforePageMaybe |> Maybe.withDefault (PageHome Recommend), studentIdOrEmailAddress = "", password = "" }
+                )
+            )
+            (Url.Parser.s "user-login")
+        , Url.Parser.map
+            (PageLikeAndHistory Like)
+            (Url.Parser.s "like-history")
+        , Url.Parser.map
+            PageExhibitionItemList
+            (Url.Parser.s "exhibition-item")
+        , Url.Parser.map
+            PagePurchaseItemList
+            (Url.Parser.s "purchase-item")
+        , Url.Parser.map
+            (PageExhibition { title = "", description = "", price = Nothing })
+            (Url.Parser.s "exhibition")
         ]
 
 
@@ -223,8 +253,11 @@ view (Model { page, menuState, wideScreenMode }) =
                     PageExhibition exhibitionState ->
                         [ exhibitionView exhibitionState ]
 
-                    PageUser userPage ->
+                    PageSignUp userPage ->
                         [ userSignUpView userPage wideScreenMode ]
+
+                    PageLogIn logInPage ->
+                        [ userLogInView logInPage wideScreenMode ]
 
                     _ ->
                         [ itemList wideScreenMode, exhibitButton, sendSampleButton ]
@@ -554,16 +587,22 @@ menu isWideMode menuState =
 
 menuMain : List (Html.Html Msg)
 menuMain =
-    [ Html.a
+    [ Html.div
         [ Html.Attributes.class "menu-account"
-        , Html.Attributes.href "/user-signup"
         ]
-        [ Html.img
-            [ Html.Attributes.class "menu-account-image"
-            , Html.Attributes.src "assets/accountImage.png"
+        [ Html.div [ Html.Attributes.class "menu-noLogin" ] [ Html.text "ログインしていません" ]
+        , Html.div [ Html.Attributes.class "menu-logInsignUpButtonContainer" ]
+            [ Html.a
+                [ Html.Attributes.class "menu-logInButton"
+                , Html.Attributes.href "/user-login"
+                ]
+                [ Html.text "ログイン" ]
+            , Html.a
+                [ Html.Attributes.class "menu-signUpButton"
+                , Html.Attributes.href "/user-signup"
+                ]
+                [ Html.text "新規登録" ]
             ]
-            []
-        , Html.text "user"
         ]
     , Html.a
         [ Html.Attributes.class "menu-item"
@@ -617,10 +656,13 @@ mainTab page wideScreenMode =
                 PageExhibitionItemList ->
                     TabSingle "出品した商品"
 
-                PageUser pageUser ->
-                    TabSingle "ユーザー登録"
+                PageSignUp _ ->
+                    TabSingle "新規登録"
 
-                PageExhibition state ->
+                PageLogIn _ ->
+                    TabSingle "ログイン"
+
+                PageExhibition _ ->
                     TabSingle "商品の情報を入力"
     in
     Html.div
@@ -875,22 +917,42 @@ sendSampleButton =
         [ Html.text "サンプルボタン" ]
 
 
-
---
+userLogInView : LogInPage -> Bool -> Html.Html Msg
+userLogInView logInPage isWideScreenMode =
+    Html.div
+        [ Html.Attributes.classList
+            [ ( "itemList", True ), ( "itemList-wide", isWideScreenMode ) ]
+        ]
+        [ Html.text "ログイン" ]
 
 
 userSignUpView : UserSignUpPage -> Bool -> Html.Html Msg
 userSignUpView userPage isWideScreenMode =
-    case userPage of
-        UserSignUpPageStudentHasSAddress _ ->
-            Html.div
-                [ Html.Attributes.class "sendEmailView" ]
-                [ Html.text "Sアドからの登録" ]
+    Html.div
+        [ Html.Attributes.classList
+            [ ( "itemList", True ), ( "itemList-wide", isWideScreenMode ) ]
+        ]
+        (case userPage of
+            UserSignUpPageStudentHasSAddress _ ->
+                [ Html.form
+                    [ Html.Attributes.class "userPage-form" ]
+                    [ Html.div
+                        [ Html.Attributes.class "userPage-form-title" ]
+                        [ Html.text "sアドを持っているか" ]
+                    , Html.select
+                        [ Html.Attributes.class "userPage-form-select" ]
+                        [ Html.option [] [ Html.text "sアドを持っている" ]
+                        , Html.option [] [ Html.text "sアドを持っていない" ]
+                        ]
+                    , Html.div
+                        [ Html.Attributes.class "userPage-form-description" ]
+                        [ Html.text "sアドをは… 学生証の画像を添付しなきゃだめ" ]
+                    ]
+                ]
 
-        UserSignUpPageNewStudent _ ->
-            Html.div
-                [ Html.Attributes.class "sendEmailView" ]
-                [ Html.text "Sアドを持っていない人の登録" ]
+            UserSignUpPageNewStudent _ ->
+                []
+        )
 
 
 subscription : Model -> Sub Msg

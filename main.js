@@ -1546,7 +1546,7 @@ function _Json_runArrayDecoder(decoder, value, toElmValue)
 
 function _Json_isArray(value)
 {
-	return Array.isArray(value) || (typeof FileList === 'function' && value instanceof FileList);
+	return Array.isArray(value) || (typeof FileList !== 'undefined' && value instanceof FileList);
 }
 
 function _Json_toElmArray(array)
@@ -5071,6 +5071,9 @@ var author$project$Main$PageHome = function (a) {
 };
 var author$project$Main$Recommend = {$: 'Recommend'};
 var author$project$Main$Like = {$: 'Like'};
+var author$project$Main$LogInPage = function (a) {
+	return {$: 'LogInPage', a: a};
+};
 var author$project$Main$PageExhibition = function (a) {
 	return {$: 'PageExhibition', a: a};
 };
@@ -5078,14 +5081,33 @@ var author$project$Main$PageExhibitionItemList = {$: 'PageExhibitionItemList'};
 var author$project$Main$PageLikeAndHistory = function (a) {
 	return {$: 'PageLikeAndHistory', a: a};
 };
+var author$project$Main$PageLogIn = function (a) {
+	return {$: 'PageLogIn', a: a};
+};
 var author$project$Main$PagePurchaseItemList = {$: 'PagePurchaseItemList'};
-var author$project$Main$PageUser = function (a) {
-	return {$: 'PageUser', a: a};
+var author$project$Main$PageSignUp = function (a) {
+	return {$: 'PageSignUp', a: a};
 };
 var author$project$Main$UserSignUpPageStudentHasSAddress = function (a) {
 	return {$: 'UserSignUpPageStudentHasSAddress', a: a};
 };
+var elm$core$Basics$apR = F2(
+	function (x, f) {
+		return f(x);
+	});
+var elm$core$Basics$identity = function (x) {
+	return x;
+};
 var elm$core$Maybe$Nothing = {$: 'Nothing'};
+var elm$core$Maybe$withDefault = F2(
+	function (_default, maybe) {
+		if (maybe.$ === 'Just') {
+			var value = maybe.a;
+			return value;
+		} else {
+			return _default;
+		}
+	});
 var elm$core$Basics$EQ = {$: 'EQ'};
 var elm$core$Basics$LT = {$: 'LT'};
 var elm$core$Elm$JsArray$foldr = _JsArray_foldr;
@@ -5170,9 +5192,6 @@ var elm$core$Basics$apL = F2(
 	function (f, x) {
 		return f(x);
 	});
-var elm$core$Basics$identity = function (x) {
-	return x;
-};
 var elm$core$Basics$add = _Basics_add;
 var elm$core$Basics$gt = _Utils_gt;
 var elm$core$List$foldl = F3(
@@ -5365,41 +5384,56 @@ var elm$url$Url$Parser$top = elm$url$Url$Parser$Parser(
 		return _List_fromArray(
 			[state]);
 	});
-var author$project$Main$urlParser = elm$url$Url$Parser$oneOf(
-	_List_fromArray(
-		[
-			A2(
-			elm$url$Url$Parser$map,
-			author$project$Main$PageHome(author$project$Main$Recommend),
-			elm$url$Url$Parser$top),
-			A2(
-			elm$url$Url$Parser$map,
-			author$project$Main$PageHome(author$project$Main$Recommend),
-			elm$url$Url$Parser$s('index.html')),
-			A2(
-			elm$url$Url$Parser$map,
-			author$project$Main$PageUser(
-				author$project$Main$UserSignUpPageStudentHasSAddress(
-					{password: '', studentId: ''})),
-			elm$url$Url$Parser$s('user-signup')),
-			A2(
-			elm$url$Url$Parser$map,
-			author$project$Main$PageLikeAndHistory(author$project$Main$Like),
-			elm$url$Url$Parser$s('like-history')),
-			A2(
-			elm$url$Url$Parser$map,
-			author$project$Main$PageExhibitionItemList,
-			elm$url$Url$Parser$s('exhibition-item')),
-			A2(
-			elm$url$Url$Parser$map,
-			author$project$Main$PagePurchaseItemList,
-			elm$url$Url$Parser$s('purchase-item')),
-			A2(
-			elm$url$Url$Parser$map,
-			author$project$Main$PageExhibition(
-				{description: '', price: elm$core$Maybe$Nothing, title: ''}),
-			elm$url$Url$Parser$s('exhibition'))
-		]));
+var author$project$Main$urlParser = function (beforePageMaybe) {
+	return elm$url$Url$Parser$oneOf(
+		_List_fromArray(
+			[
+				A2(
+				elm$url$Url$Parser$map,
+				author$project$Main$PageHome(author$project$Main$Recommend),
+				elm$url$Url$Parser$top),
+				A2(
+				elm$url$Url$Parser$map,
+				author$project$Main$PageHome(author$project$Main$Recommend),
+				elm$url$Url$Parser$s('index.html')),
+				A2(
+				elm$url$Url$Parser$map,
+				author$project$Main$PageSignUp(
+					author$project$Main$UserSignUpPageStudentHasSAddress(
+						{password: '', studentId: ''})),
+				elm$url$Url$Parser$s('user-signup')),
+				A2(
+				elm$url$Url$Parser$map,
+				author$project$Main$PageLogIn(
+					author$project$Main$LogInPage(
+						{
+							nextPage: A2(
+								elm$core$Maybe$withDefault,
+								author$project$Main$PageHome(author$project$Main$Recommend),
+								beforePageMaybe),
+							password: '',
+							studentIdOrEmailAddress: ''
+						})),
+				elm$url$Url$Parser$s('user-login')),
+				A2(
+				elm$url$Url$Parser$map,
+				author$project$Main$PageLikeAndHistory(author$project$Main$Like),
+				elm$url$Url$Parser$s('like-history')),
+				A2(
+				elm$url$Url$Parser$map,
+				author$project$Main$PageExhibitionItemList,
+				elm$url$Url$Parser$s('exhibition-item')),
+				A2(
+				elm$url$Url$Parser$map,
+				author$project$Main$PagePurchaseItemList,
+				elm$url$Url$Parser$s('purchase-item')),
+				A2(
+				elm$url$Url$Parser$map,
+				author$project$Main$PageExhibition(
+					{description: '', price: elm$core$Maybe$Nothing, title: ''}),
+				elm$url$Url$Parser$s('exhibition'))
+			]));
+};
 var elm$core$Maybe$Just = function (a) {
 	return {$: 'Just', a: a};
 };
@@ -6039,23 +6073,14 @@ var elm$url$Url$Parser$parse = F2(
 					url.fragment,
 					elm$core$Basics$identity)));
 	});
-var author$project$Main$urlToPage = function (url) {
-	return A2(elm$url$Url$Parser$parse, author$project$Main$urlParser, url);
-};
+var author$project$Main$urlToPage = F2(
+	function (url, beforePageMaybe) {
+		return A2(
+			elm$url$Url$Parser$parse,
+			author$project$Main$urlParser(beforePageMaybe),
+			url);
+	});
 var elm$core$Basics$False = {$: 'False'};
-var elm$core$Basics$apR = F2(
-	function (x, f) {
-		return f(x);
-	});
-var elm$core$Maybe$withDefault = F2(
-	function (_default, maybe) {
-		if (maybe.$ === 'Just') {
-			var value = maybe.a;
-			return value;
-		} else {
-			return _default;
-		}
-	});
 var elm$core$Basics$True = {$: 'True'};
 var elm$core$Result$isOk = function (result) {
 	if (result.$ === 'Ok') {
@@ -6419,7 +6444,7 @@ var author$project$Main$init = F3(
 					page: A2(
 						elm$core$Maybe$withDefault,
 						author$project$Main$PageHome(author$project$Main$Recommend),
-						author$project$Main$urlToPage(url)),
+						A2(author$project$Main$urlToPage, url, elm$core$Maybe$Nothing)),
 					wideScreenMode: false
 				}),
 			elm$core$Platform$Cmd$none);
@@ -10480,7 +10505,10 @@ var author$project$Main$update = F2(
 				var url = msg.a;
 				return _Utils_Tuple2(
 					function () {
-						var _n2 = author$project$Main$urlToPage(url);
+						var _n2 = A2(
+							author$project$Main$urlToPage,
+							url,
+							elm$core$Maybe$Just(rec.page));
 						if (_n2.$ === 'Just') {
 							if (_n2.a.$ === 'PageExhibition') {
 								var state = _n2.a.a;
@@ -11373,11 +11401,11 @@ var author$project$Main$mainTab = F2(
 					return author$project$Main$TabSingle('購入した商品');
 				case 'PageExhibitionItemList':
 					return author$project$Main$TabSingle('出品した商品');
-				case 'PageUser':
-					var pageUser = page.a;
-					return author$project$Main$TabSingle('ユーザー登録');
+				case 'PageSignUp':
+					return author$project$Main$TabSingle('新規登録');
+				case 'PageLogIn':
+					return author$project$Main$TabSingle('ログイン');
 				default:
-					var state = page.a;
 					return author$project$Main$TabSingle('商品の情報を入力');
 			}
 		}();
@@ -11409,23 +11437,54 @@ var author$project$Main$CloseMenu = {$: 'CloseMenu'};
 var author$project$Main$menuMain = _List_fromArray(
 	[
 		A2(
-		elm$html$Html$a,
+		elm$html$Html$div,
 		_List_fromArray(
 			[
-				elm$html$Html$Attributes$class('menu-account'),
-				elm$html$Html$Attributes$href('/user-signup')
+				elm$html$Html$Attributes$class('menu-account')
 			]),
 		_List_fromArray(
 			[
 				A2(
-				elm$html$Html$img,
+				elm$html$Html$div,
 				_List_fromArray(
 					[
-						elm$html$Html$Attributes$class('menu-account-image'),
-						elm$html$Html$Attributes$src('assets/accountImage.png')
+						elm$html$Html$Attributes$class('menu-noLogin')
 					]),
-				_List_Nil),
-				elm$html$Html$text('user')
+				_List_fromArray(
+					[
+						elm$html$Html$text('ログインしていません')
+					])),
+				A2(
+				elm$html$Html$div,
+				_List_fromArray(
+					[
+						elm$html$Html$Attributes$class('menu-logInsignUpButtonContainer')
+					]),
+				_List_fromArray(
+					[
+						A2(
+						elm$html$Html$a,
+						_List_fromArray(
+							[
+								elm$html$Html$Attributes$class('menu-logInButton'),
+								elm$html$Html$Attributes$href('/user-login')
+							]),
+						_List_fromArray(
+							[
+								elm$html$Html$text('ログイン')
+							])),
+						A2(
+						elm$html$Html$a,
+						_List_fromArray(
+							[
+								elm$html$Html$Attributes$class('menu-signUpButton'),
+								elm$html$Html$Attributes$href('/user-signup')
+							]),
+						_List_fromArray(
+							[
+								elm$html$Html$text('新規登録')
+							]))
+					]))
 			])),
 		A2(
 		elm$html$Html$a,
@@ -11559,31 +11618,101 @@ var author$project$Main$sendSampleButton = A2(
 		[
 			elm$html$Html$text('サンプルボタン')
 		]));
+var author$project$Main$userLogInView = F2(
+	function (logInPage, isWideScreenMode) {
+		return A2(
+			elm$html$Html$div,
+			_List_fromArray(
+				[
+					elm$html$Html$Attributes$classList(
+					_List_fromArray(
+						[
+							_Utils_Tuple2('itemList', true),
+							_Utils_Tuple2('itemList-wide', isWideScreenMode)
+						]))
+				]),
+			_List_fromArray(
+				[
+					elm$html$Html$text('ログイン')
+				]));
+	});
+var elm$html$Html$form = _VirtualDom_node('form');
+var elm$html$Html$option = _VirtualDom_node('option');
+var elm$html$Html$select = _VirtualDom_node('select');
 var author$project$Main$userSignUpView = F2(
 	function (userPage, isWideScreenMode) {
-		if (userPage.$ === 'UserSignUpPageStudentHasSAddress') {
-			return A2(
-				elm$html$Html$div,
-				_List_fromArray(
-					[
-						elm$html$Html$Attributes$class('sendEmailView')
-					]),
-				_List_fromArray(
-					[
-						elm$html$Html$text('Sアドからの登録')
-					]));
-		} else {
-			return A2(
-				elm$html$Html$div,
-				_List_fromArray(
-					[
-						elm$html$Html$Attributes$class('sendEmailView')
-					]),
-				_List_fromArray(
-					[
-						elm$html$Html$text('Sアドを持っていない人の登録')
-					]));
-		}
+		return A2(
+			elm$html$Html$div,
+			_List_fromArray(
+				[
+					elm$html$Html$Attributes$classList(
+					_List_fromArray(
+						[
+							_Utils_Tuple2('itemList', true),
+							_Utils_Tuple2('itemList-wide', isWideScreenMode)
+						]))
+				]),
+			function () {
+				if (userPage.$ === 'UserSignUpPageStudentHasSAddress') {
+					return _List_fromArray(
+						[
+							A2(
+							elm$html$Html$form,
+							_List_fromArray(
+								[
+									elm$html$Html$Attributes$class('userPage-form')
+								]),
+							_List_fromArray(
+								[
+									A2(
+									elm$html$Html$div,
+									_List_fromArray(
+										[
+											elm$html$Html$Attributes$class('userPage-form-title')
+										]),
+									_List_fromArray(
+										[
+											elm$html$Html$text('sアドを持っているか')
+										])),
+									A2(
+									elm$html$Html$select,
+									_List_fromArray(
+										[
+											elm$html$Html$Attributes$class('userPage-form-select')
+										]),
+									_List_fromArray(
+										[
+											A2(
+											elm$html$Html$option,
+											_List_Nil,
+											_List_fromArray(
+												[
+													elm$html$Html$text('sアドを持っている')
+												])),
+											A2(
+											elm$html$Html$option,
+											_List_Nil,
+											_List_fromArray(
+												[
+													elm$html$Html$text('sアドを持っていない')
+												]))
+										])),
+									A2(
+									elm$html$Html$div,
+									_List_fromArray(
+										[
+											elm$html$Html$Attributes$class('userPage-form-description')
+										]),
+									_List_fromArray(
+										[
+											elm$html$Html$text('sアドをは… 学生証の画像を添付しなきゃだめ')
+										]))
+								]))
+						]);
+				} else {
+					return _List_Nil;
+				}
+			}());
 	});
 var author$project$Main$view = function (_n0) {
 	var page = _n0.a.page;
@@ -11605,11 +11734,17 @@ var author$project$Main$view = function (_n0) {
 							[
 								author$project$Main$exhibitionView(exhibitionState)
 							]);
-					case 'PageUser':
+					case 'PageSignUp':
 						var userPage = page.a;
 						return _List_fromArray(
 							[
 								A2(author$project$Main$userSignUpView, userPage, wideScreenMode)
+							]);
+					case 'PageLogIn':
+						var logInPage = page.a;
+						return _List_fromArray(
+							[
+								A2(author$project$Main$userLogInView, logInPage, wideScreenMode)
 							]);
 					default:
 						return _List_fromArray(
@@ -11627,4 +11762,4 @@ var elm$browser$Browser$application = _Browser_application;
 var author$project$Main$main = elm$browser$Browser$application(
 	{init: author$project$Main$init, onUrlChange: author$project$Main$onUrlChange, onUrlRequest: author$project$Main$onUrlRequest, subscriptions: author$project$Main$subscription, update: author$project$Main$update, view: author$project$Main$view});
 _Platform_export({'Main':{'init':author$project$Main$main(
-	elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.0"},"types":{"message":"Main.Msg","aliases":{"Url.Url":{"args":[],"type":"{ protocol : Url.Protocol, host : String.String, port_ : Maybe.Maybe Basics.Int, path : String.String, query : Maybe.Maybe String.String, fragment : Maybe.Maybe String.String }"},"Main.ExhibitionState":{"args":[],"type":"{ title : String.String, description : String.String, price : Maybe.Maybe Basics.Int }"}},"unions":{"Main.Msg":{"args":[],"tags":{"ChangePage":["Main.Page"],"OpenMenu":[],"CloseMenu":[],"ToWideScreenMode":[],"ToNarrowScreenMode":[],"UrlChange":["Url.Url"],"UrlRequest":["Browser.UrlRequest"],"Request":[],"Response":["String.String"]}},"Main.Page":{"args":[],"tags":{"PageHome":["Main.Home"],"PageUser":["Main.UserSignUpPage"],"PageLikeAndHistory":["Main.LikeAndHistory"],"PageExhibitionItemList":[],"PagePurchaseItemList":[],"PageExhibition":["Main.ExhibitionState"]}},"Browser.UrlRequest":{"args":[],"tags":{"Internal":["Url.Url"],"External":["String.String"]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"String.String":{"args":[],"tags":{"String":[]}},"Url.Protocol":{"args":[],"tags":{"Http":[],"Https":[]}},"Main.Home":{"args":[],"tags":{"Recent":[],"Recommend":[],"Free":[]}},"Main.LikeAndHistory":{"args":[],"tags":{"Like":[],"History":[]}},"Main.UserSignUpPage":{"args":[],"tags":{"UserSignUpPageStudentHasSAddress":["{ studentId : String.String, password : String.String }"],"UserSignUpPageNewStudent":["{ emailAddress : String.String, password : String.String }"]}}}}})}});}(this));
+	elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.0"},"types":{"message":"Main.Msg","aliases":{"Url.Url":{"args":[],"type":"{ protocol : Url.Protocol, host : String.String, port_ : Maybe.Maybe Basics.Int, path : String.String, query : Maybe.Maybe String.String, fragment : Maybe.Maybe String.String }"},"Main.ExhibitionState":{"args":[],"type":"{ title : String.String, description : String.String, price : Maybe.Maybe Basics.Int }"}},"unions":{"Main.Msg":{"args":[],"tags":{"ChangePage":["Main.Page"],"OpenMenu":[],"CloseMenu":[],"ToWideScreenMode":[],"ToNarrowScreenMode":[],"UrlChange":["Url.Url"],"UrlRequest":["Browser.UrlRequest"],"Request":[],"Response":["String.String"]}},"Main.Page":{"args":[],"tags":{"PageHome":["Main.Home"],"PageSignUp":["Main.UserSignUpPage"],"PageLogIn":["Main.LogInPage"],"PageLikeAndHistory":["Main.LikeAndHistory"],"PageExhibitionItemList":[],"PagePurchaseItemList":[],"PageExhibition":["Main.ExhibitionState"]}},"Browser.UrlRequest":{"args":[],"tags":{"Internal":["Url.Url"],"External":["String.String"]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"String.String":{"args":[],"tags":{"String":[]}},"Url.Protocol":{"args":[],"tags":{"Http":[],"Https":[]}},"Main.Home":{"args":[],"tags":{"Recent":[],"Recommend":[],"Free":[]}},"Main.LikeAndHistory":{"args":[],"tags":{"Like":[],"History":[]}},"Main.LogInPage":{"args":[],"tags":{"LogInPage":["{ nextPage : Main.Page, studentIdOrEmailAddress : String.String, password : String.String }"]}},"Main.UserSignUpPage":{"args":[],"tags":{"UserSignUpPageStudentHasSAddress":["{ studentId : String.String, password : String.String }"],"UserSignUpPageNewStudent":["{ emailAddress : String.String, password : String.String }"]}}}}})}});}(this));

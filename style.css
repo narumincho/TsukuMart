@@ -165,14 +165,42 @@ h1:hover {
 }
 
 .menu-account {
-    height: 5rem;
     display: flex;
-    align-items: center;
+    flex-direction: column;
     background-color: var(--primaryColor);
+    padding: 1rem;
+    text-decoration: none;
+}
+
+.menu-noLogin {
+    text-align: center;
+    font-size: 1rem;
     color: #ddd;
-    font-size: 1.7rem;
-    font-weight: bold;
-    padding: 0 2rem;
+    padding: 1rem 0;
+}
+
+.menu-logInsignUpButtonContainer {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.menu-logInButton {
+    background-color: #999;
+    color: #111;
+    text-align: center;
+    padding: 1rem 0;
+    border-radius: .4rem;
+    text-decoration: none;
+}
+
+.menu-signUpButton {
+    background-color: #999;
+    color: #111;
+    text-align: center;
+    padding: 1rem 0;
+    border-radius: .4rem;
+    text-decoration: none;
 }
 
 .menu-account-image {
@@ -408,8 +436,27 @@ img {
 /*===============================================
 ===============================================*/
 
-.mainView {
+.userPage-form {
+    padding: 1rem;
 }
+
+.userPage-form-title {
+    font-size: 2rem;
+}
+
+.userPage-form-select {
+    width: 100%;
+    font-size: 1.5rem;
+    padding: .5rem;
+    line-height: 1;
+    height: 4rem;
+}
+
+.userPage-form-description {
+    font-size: 1rem;
+}
+
+.mainView {}
 
 h2 {
     font-size: 1.2rem;
