@@ -11434,82 +11434,88 @@ var author$project$Main$forgotPasswordView = _List_fromArray(
 	[
 		elm$html$Html$text('パスワードを忘れたら。登録している学籍番号かメールアドレスを入力してください。パスワードを再発行します。')
 	]);
-var author$project$Main$logInButton = A2(
-	elm$html$Html$div,
-	_List_fromArray(
-		[
-			elm$html$Html$Attributes$class('logIn-form-logInButton')
-		]),
-	_List_fromArray(
-		[
-			elm$html$Html$text('ログイン')
-		]));
-var author$project$Main$logInIdView = A2(
-	elm$html$Html$div,
-	_List_fromArray(
-		[
-			elm$html$Html$Attributes$class('logIn-form-item')
-		]),
-	_List_fromArray(
-		[
-			A2(
-			elm$html$Html$div,
-			_List_fromArray(
-				[
-					elm$html$Html$Attributes$class('logIn-form-subTitle')
-				]),
-			_List_fromArray(
-				[
-					elm$html$Html$text('学籍番号かメールアドレス')
-				])),
-			A2(
-			elm$html$Html$input,
-			_List_fromArray(
-				[
-					elm$html$Html$Attributes$class('logIn-form-input')
-				]),
-			_List_Nil)
-		]));
+var author$project$Main$logInButton = _List_fromArray(
+	[
+		A2(
+		elm$html$Html$button,
+		_List_fromArray(
+			[
+				elm$html$Html$Attributes$class('logIn-form-logInButton')
+			]),
+		_List_fromArray(
+			[
+				elm$html$Html$text('ログイン')
+			]))
+	]);
+var elm$html$Html$label = _VirtualDom_node('label');
+var elm$html$Html$Attributes$for = elm$html$Html$Attributes$stringProperty('htmlFor');
+var author$project$Main$logInIdView = _List_fromArray(
+	[
+		A2(
+		elm$html$Html$label,
+		_List_fromArray(
+			[
+				elm$html$Html$Attributes$class('logIn-form-subTitle'),
+				elm$html$Html$Attributes$for('logInId')
+			]),
+		_List_fromArray(
+			[
+				elm$html$Html$text('学籍番号かメールアドレス')
+			])),
+		A2(
+		elm$html$Html$input,
+		_List_fromArray(
+			[
+				elm$html$Html$Attributes$class('logIn-form-input'),
+				elm$html$Html$Attributes$id('logInId')
+			]),
+		_List_Nil)
+	]);
 var author$project$Main$ForgotPassword = {$: 'ForgotPassword'};
-var author$project$Main$logInPasswordView = A2(
-	elm$html$Html$div,
-	_List_fromArray(
-		[
-			elm$html$Html$Attributes$class('logIn-form-item')
-		]),
-	_List_fromArray(
-		[
-			A2(
-			elm$html$Html$div,
-			_List_fromArray(
-				[
-					elm$html$Html$Attributes$class('logIn-form-subTitle')
-				]),
-			_List_fromArray(
-				[
-					elm$html$Html$text('パスワード'),
-					A2(
-					elm$html$Html$span,
-					_List_fromArray(
-						[
-							elm$html$Html$Attributes$class('logIn-form-subTitle-forgotPassword'),
-							elm$html$Html$Events$onClick(
-							author$project$Main$ChangePage(
-								author$project$Main$PageLogIn(author$project$Main$ForgotPassword)))
-						]),
-					_List_fromArray(
-						[
-							elm$html$Html$text('パスワードを忘れた')
-						]))
-				])),
-			A2(
-			elm$html$Html$input,
-			_List_fromArray(
-				[
-					elm$html$Html$Attributes$class('logIn-form-input')
-				]),
-			_List_Nil)
-		]));
+var elm$html$Html$Attributes$minlength = function (n) {
+	return A2(
+		_VirtualDom_attribute,
+		'minLength',
+		elm$core$String$fromInt(n));
+};
+var author$project$Main$logInPasswordView = _List_fromArray(
+	[
+		A2(
+		elm$html$Html$label,
+		_List_fromArray(
+			[
+				elm$html$Html$Attributes$class('logIn-form-subTitle'),
+				elm$html$Html$Attributes$for('logInPassword')
+			]),
+		_List_fromArray(
+			[
+				elm$html$Html$text('パスワード'),
+				A2(
+				elm$html$Html$span,
+				_List_fromArray(
+					[
+						elm$html$Html$Attributes$class('logIn-form-subTitle-forgotPassword'),
+						elm$html$Html$Events$onClick(
+						author$project$Main$ChangePage(
+							author$project$Main$PageLogIn(author$project$Main$ForgotPassword)))
+					]),
+				_List_fromArray(
+					[
+						elm$html$Html$text('パスワードを忘れた')
+					]))
+			])),
+		A2(
+		elm$html$Html$input,
+		_List_fromArray(
+			[
+				elm$html$Html$Attributes$type_('password'),
+				elm$html$Html$Attributes$class('logIn-form-input'),
+				elm$html$Html$Attributes$id('logInPassword'),
+				elm$html$Html$Attributes$minlength(9),
+				elm$html$Html$Attributes$maxlength(50)
+			]),
+		_List_Nil)
+	]);
 var author$project$Main$orLabel = A2(
 	elm$html$Html$div,
 	_List_fromArray(
@@ -11521,7 +11527,7 @@ var author$project$Main$orLabel = A2(
 			elm$html$Html$text('or')
 		]));
 var author$project$Main$signUpButton = A2(
-	elm$html$Html$div,
+	elm$html$Html$button,
 	_List_fromArray(
 		[
 			elm$html$Html$Attributes$class('logIn-form-signInButton')
@@ -11530,6 +11536,7 @@ var author$project$Main$signUpButton = A2(
 		[
 			elm$html$Html$text('新規登録')
 		]));
+var elm$html$Html$form = _VirtualDom_node('form');
 var author$project$Main$logInPageView = _List_fromArray(
 	[
 		A2(
@@ -11541,13 +11548,14 @@ var author$project$Main$logInPageView = _List_fromArray(
 		_List_fromArray(
 			[
 				A2(
-				elm$html$Html$div,
+				elm$html$Html$form,
 				_List_fromArray(
 					[
 						elm$html$Html$Attributes$class('logIn-form-group')
 					]),
-				_List_fromArray(
-					[author$project$Main$logInIdView, author$project$Main$logInPasswordView, author$project$Main$logInButton])),
+				elm$core$List$concat(
+					_List_fromArray(
+						[author$project$Main$logInIdView, author$project$Main$logInPasswordView, author$project$Main$logInButton]))),
 				author$project$Main$orLabel,
 				A2(
 				elm$html$Html$div,
@@ -11664,7 +11672,9 @@ var author$project$Main$passwordForm = function (password) {
 					_List_fromArray(
 						[
 							elm$html$Html$Attributes$class('userPage-form-input'),
-							elm$html$Html$Attributes$type_('password')
+							elm$html$Html$Attributes$type_('password'),
+							elm$html$Html$Attributes$minlength(9),
+							elm$html$Html$Attributes$maxlength(50)
 						]),
 					_List_Nil),
 					A2(
@@ -11700,7 +11710,7 @@ var author$project$Main$sAddressSelectView = function (userSignUpPage) {
 		_List_fromArray(
 			[
 				A2(
-				elm$html$Html$div,
+				elm$html$Html$button,
 				_Utils_ap(
 					_List_fromArray(
 						[
@@ -11725,7 +11735,7 @@ var author$project$Main$sAddressSelectView = function (userSignUpPage) {
 						elm$html$Html$text('持っている')
 					])),
 				A2(
-				elm$html$Html$div,
+				elm$html$Html$button,
 				_Utils_ap(
 					_List_fromArray(
 						[
@@ -11760,7 +11770,7 @@ var author$project$Main$signUpSubmitButton = A2(
 	_List_fromArray(
 		[
 			A2(
-			elm$html$Html$div,
+			elm$html$Html$button,
 			_List_fromArray(
 				[
 					elm$html$Html$Attributes$class('userPage-form-signUpButton')

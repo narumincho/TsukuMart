@@ -537,6 +537,8 @@ img {
     text-align: center;
     user-select: none;
     cursor: pointer;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.18);
 }
 
 .userPage-form-select-item:hover {
@@ -571,6 +573,7 @@ img {
     background-color: var(--primaryColor);
     color: #ddd;
     padding: 1rem;
+    width: 100%;
     text-align: center;
     font-size: 1.5rem;
     border-radius: .4rem;

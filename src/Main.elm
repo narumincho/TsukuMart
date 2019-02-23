@@ -933,12 +933,14 @@ logInPageView : List (Html.Html Msg)
 logInPageView =
     [ Html.div
         [ Html.Attributes.class "logIn-form" ]
-        [ Html.div
+        [ Html.form
             [ Html.Attributes.class "logIn-form-group" ]
-            [ logInIdView
-            , logInPasswordView
-            , logInButton
-            ]
+            ([ logInIdView
+             , logInPasswordView
+             , logInButton
+             ]
+                |> List.concat
+            )
         , orLabel
         , Html.div
             [ Html.Attributes.class "logIn-form-group" ]
@@ -947,27 +949,35 @@ logInPageView =
     ]
 
 
-logInIdView : Html.Html msg
+logInIdView : List (Html.Html msg)
 logInIdView =
-    Html.div [ Html.Attributes.class "logIn-form-item" ]
-        [ Html.div [ Html.Attributes.class "logIn-form-subTitle" ] [ Html.text "学籍番号かメールアドレス" ]
-        , Html.input [ Html.Attributes.class "logIn-form-input" ] []
-        ]
+    [ Html.label [ Html.Attributes.class "logIn-form-subTitle", Html.Attributes.for "logInId" ] [ Html.text "学籍番号かメールアドレス" ]
+    , Html.input [ Html.Attributes.class "logIn-form-input", Html.Attributes.id "logInId" ] []
+    ]
 
 
-logInPasswordView : Html.Html Msg
+logInPasswordView : List (Html.Html Msg)
 logInPasswordView =
-    Html.div [ Html.Attributes.class "logIn-form-item" ]
-        [ Html.div [ Html.Attributes.class "logIn-form-subTitle" ]
-            [ Html.text "パスワード"
-            , Html.span
-                [ Html.Attributes.class "logIn-form-subTitle-forgotPassword"
-                , Html.Events.onClick (ChangePage (PageLogIn ForgotPassword))
-                ]
-                [ Html.text "パスワードを忘れた" ]
-            ]
-        , Html.input [ Html.Attributes.class "logIn-form-input" ] []
+    [ Html.label
+        [ Html.Attributes.class "logIn-form-subTitle"
+        , Html.Attributes.for "logInPassword"
         ]
+        [ Html.text "パスワード"
+        , Html.span
+            [ Html.Attributes.class "logIn-form-subTitle-forgotPassword"
+            , Html.Events.onClick (ChangePage (PageLogIn ForgotPassword))
+            ]
+            [ Html.text "パスワードを忘れた" ]
+        ]
+    , Html.input
+        [ Html.Attributes.type_ "password"
+        , Html.Attributes.class "logIn-form-input"
+        , Html.Attributes.id "logInPassword"
+        , Html.Attributes.minlength 9
+        , Html.Attributes.maxlength 50
+        ]
+        []
+    ]
 
 
 {-| パスワードを忘れた画面
@@ -977,11 +987,12 @@ forgotPasswordView =
     [ Html.text "パスワードを忘れたら。登録している学籍番号かメールアドレスを入力してください。パスワードを再発行します。" ]
 
 
-logInButton : Html.Html msg
+logInButton : List (Html.Html msg)
 logInButton =
-    Html.div
+    [ Html.button
         [ Html.Attributes.class "logIn-form-logInButton" ]
         [ Html.text "ログイン" ]
+    ]
 
 
 orLabel : Html.Html msg
@@ -992,7 +1003,9 @@ orLabel =
 
 signUpButton : Html.Html msg
 signUpButton =
-    Html.div [ Html.Attributes.class "logIn-form-signInButton" ] [ Html.text "新規登録" ]
+    Html.button
+        [ Html.Attributes.class "logIn-form-signInButton" ]
+        [ Html.text "新規登録" ]
 
 
 {-| 新規登録画面
@@ -1038,7 +1051,7 @@ sAddressSelectView userSignUpPage =
     in
     Html.div
         [ Html.Attributes.class "userPage-form-select" ]
-        [ Html.div
+        [ Html.button
             ([ Html.Attributes.classList
                 [ ( "userPage-form-select-item", True )
                 , ( "userPage-form-select-itemSelect", leftSelect )
@@ -1053,7 +1066,7 @@ sAddressSelectView userSignUpPage =
                    )
             )
             [ Html.text "持っている" ]
-        , Html.div
+        , Html.button
             ([ Html.Attributes.classList
                 [ ( "userPage-form-select-item", True )
                 , ( "userPage-form-select-itemSelect", not leftSelect )
@@ -1167,6 +1180,8 @@ passwordForm password =
         , Html.input
             [ Html.Attributes.class "userPage-form-input"
             , Html.Attributes.type_ "password"
+            , Html.Attributes.minlength 9
+            , Html.Attributes.maxlength 50
             ]
             []
         , Html.div
@@ -1180,7 +1195,7 @@ signUpSubmitButton : Html.Html Msg
 signUpSubmitButton =
     Html.div
         [ Html.Attributes.class "userPage-form" ]
-        [ Html.div
+        [ Html.button
             [ Html.Attributes.class "userPage-form-signUpButton" ]
             [ Html.text "新規登録" ]
         ]
