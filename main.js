@@ -11566,19 +11566,179 @@ var author$project$Main$userLogInView = function (logInPage) {
 		return author$project$Main$forgotPasswordView;
 	}
 };
-var elm$html$Html$form = _VirtualDom_node('form');
-var elm$html$Html$option = _VirtualDom_node('option');
-var elm$html$Html$select = _VirtualDom_node('select');
-var author$project$Main$userSignUpView = function (userPage) {
-	if (userPage.$ === 'UserSignUpPageStudentHasSAddress') {
-		return _List_fromArray(
+var author$project$Main$newStudentFormList = _List_fromArray(
+	[
+		A2(
+		elm$html$Html$div,
+		_List_fromArray(
+			[
+				elm$html$Html$Attributes$class('userPage-form-title')
+			]),
+		_List_fromArray(
+			[
+				elm$html$Html$text('登録用メールアドレス')
+			])),
+		A2(
+		elm$html$Html$input,
+		_List_fromArray(
+			[
+				elm$html$Html$Attributes$class('userPage-form-input')
+			]),
+		_List_Nil),
+		A2(
+		elm$html$Html$div,
+		_List_fromArray(
+			[
+				elm$html$Html$Attributes$class('userPage-form-description')
+			]),
+		_List_fromArray(
+			[
+				elm$html$Html$text('Sアドをつかえるまでの…')
+			]))
+	]);
+var author$project$Main$passwordForm = function (password) {
+	return _List_fromArray(
+		[
+			A2(
+			elm$html$Html$div,
+			_List_fromArray(
+				[
+					elm$html$Html$Attributes$class('userPage-form-title')
+				]),
+			_List_fromArray(
+				[
+					elm$html$Html$text('パスワード')
+				])),
+			A2(
+			elm$html$Html$input,
+			_List_fromArray(
+				[
+					elm$html$Html$Attributes$class('userPage-form-input')
+				]),
+			_List_Nil),
+			A2(
+			elm$html$Html$div,
+			_List_fromArray(
+				[
+					elm$html$Html$Attributes$class('userPage-form-description')
+				]),
+			_List_fromArray(
+				[
+					elm$html$Html$text('9文字以上…')
+				]))
+		]);
+};
+var author$project$Main$UserSignUpPageNewStudent = function (a) {
+	return {$: 'UserSignUpPageNewStudent', a: a};
+};
+var author$project$Main$sAddressSelectView = function (userSignUpPage) {
+	var leftSelect = function () {
+		if (userSignUpPage.$ === 'UserSignUpPageStudentHasSAddress') {
+			return true;
+		} else {
+			return false;
+		}
+	}();
+	return A2(
+		elm$html$Html$div,
+		_List_fromArray(
+			[
+				elm$html$Html$Attributes$class('userPage-form-select')
+			]),
+		_List_fromArray(
 			[
 				A2(
-				elm$html$Html$form,
+				elm$html$Html$div,
+				_Utils_ap(
+					_List_fromArray(
+						[
+							elm$html$Html$Attributes$classList(
+							_List_fromArray(
+								[
+									_Utils_Tuple2('userPage-form-select-item', true),
+									_Utils_Tuple2('userPage-form-select-itemSelect', leftSelect)
+								])),
+							A2(elm$html$Html$Attributes$style, 'border-radius', '.4rem 0 0 .4rem')
+						]),
+					leftSelect ? _List_Nil : _List_fromArray(
+						[
+							elm$html$Html$Events$onClick(
+							author$project$Main$ChangePage(
+								author$project$Main$PageSignUp(
+									author$project$Main$UserSignUpPageStudentHasSAddress(
+										{password: '', studentId: ''}))))
+						])),
 				_List_fromArray(
 					[
-						elm$html$Html$Attributes$class('userPage-form')
-					]),
+						elm$html$Html$text('持っている')
+					])),
+				A2(
+				elm$html$Html$div,
+				_Utils_ap(
+					_List_fromArray(
+						[
+							elm$html$Html$Attributes$classList(
+							_List_fromArray(
+								[
+									_Utils_Tuple2('userPage-form-select-item', true),
+									_Utils_Tuple2('userPage-form-select-itemSelect', !leftSelect)
+								])),
+							A2(elm$html$Html$Attributes$style, 'border-radius', '0 .4rem .4rem 0')
+						]),
+					leftSelect ? _List_fromArray(
+						[
+							elm$html$Html$Events$onClick(
+							author$project$Main$ChangePage(
+								author$project$Main$PageSignUp(
+									author$project$Main$UserSignUpPageNewStudent(
+										{emailAddress: '', password: ''}))))
+						]) : _List_Nil),
+				_List_fromArray(
+					[
+						elm$html$Html$text('持っていない')
+					]))
+			]));
+};
+var author$project$Main$studentHasSAddresFormList = _List_fromArray(
+	[
+		A2(
+		elm$html$Html$div,
+		_List_fromArray(
+			[
+				elm$html$Html$Attributes$class('userPage-form-title')
+			]),
+		_List_fromArray(
+			[
+				elm$html$Html$text('学籍番号か～@s.tsukuba.ac.jpのメールアドレス')
+			])),
+		A2(
+		elm$html$Html$input,
+		_List_fromArray(
+			[
+				elm$html$Html$Attributes$class('userPage-form-input')
+			]),
+		_List_Nil),
+		A2(
+		elm$html$Html$div,
+		_List_fromArray(
+			[
+				elm$html$Html$Attributes$class('userPage-form-description')
+			]),
+		_List_fromArray(
+			[
+				elm$html$Html$text('20からはじまる…')
+			]))
+	]);
+var author$project$Main$userSignUpView = function (userSignUpPage) {
+	return _List_fromArray(
+		[
+			A2(
+			elm$html$Html$div,
+			_List_fromArray(
+				[
+					elm$html$Html$Attributes$class('userPage-form')
+				]),
+			_Utils_ap(
 				_List_fromArray(
 					[
 						A2(
@@ -11589,31 +11749,9 @@ var author$project$Main$userSignUpView = function (userPage) {
 							]),
 						_List_fromArray(
 							[
-								elm$html$Html$text('sアドを持っているか')
+								elm$html$Html$text('sアドを')
 							])),
-						A2(
-						elm$html$Html$select,
-						_List_fromArray(
-							[
-								elm$html$Html$Attributes$class('userPage-form-select')
-							]),
-						_List_fromArray(
-							[
-								A2(
-								elm$html$Html$option,
-								_List_Nil,
-								_List_fromArray(
-									[
-										elm$html$Html$text('sアドを持っている')
-									])),
-								A2(
-								elm$html$Html$option,
-								_List_Nil,
-								_List_fromArray(
-									[
-										elm$html$Html$text('sアドを持っていない')
-									]))
-							])),
+						author$project$Main$sAddressSelectView(userSignUpPage),
 						A2(
 						elm$html$Html$div,
 						_List_fromArray(
@@ -11624,11 +11762,26 @@ var author$project$Main$userSignUpView = function (userPage) {
 							[
 								elm$html$Html$text('sアドをは… 学生証の画像を添付しなきゃだめ')
 							]))
-					]))
-			]);
-	} else {
-		return _List_Nil;
-	}
+					]),
+				_Utils_ap(
+					function () {
+						if (userSignUpPage.$ === 'UserSignUpPageStudentHasSAddress') {
+							return author$project$Main$studentHasSAddresFormList;
+						} else {
+							return author$project$Main$newStudentFormList;
+						}
+					}(),
+					author$project$Main$passwordForm(
+						function () {
+							if (userSignUpPage.$ === 'UserSignUpPageStudentHasSAddress') {
+								var password = userSignUpPage.a.password;
+								return password;
+							} else {
+								var password = userSignUpPage.a.password;
+								return password;
+							}
+						}()))))
+		]);
 };
 var author$project$Main$mainView = F2(
 	function (page, isWideScreenMode) {

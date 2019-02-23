@@ -298,6 +298,7 @@ h1:hover {
 /*===========================
             Item List
 ===========================*/
+
 .item {
     display: flex;
     flex-direction: column;
@@ -335,28 +336,22 @@ img {
     border-radius: 50%;
     background-color: orange;
     color: #000;
-    text-align: center;
     width: 6rem;
     height: 6rem;
-    justify-items: center;
-    align-items: center;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+    text-decoration: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 /*===============================
         Exhibition 出品画面
 ===============================*/
 
-.exhibitionView {
-    overflow-y: auto;
-    overflow-x: hidden;
-    display: flex;
-    flex-direction: column;
-    padding-top: 7rem;
-}
-
 .exhibitionView-photo {
     height: 9rem;
+    width: 100%;
     background-color: gray;
     display: flex;
     align-items: center;
@@ -365,6 +360,7 @@ img {
 
 .exhibitionView-photo-icon {
     width: 3rem;
+    height: 3rem;
 }
 
 .exhibitionView-itemTitleAndDescription {
@@ -488,7 +484,7 @@ img {
 
 .logIn-form-logInButton:hover {
     background-color: var(--primaryColorLight);
-    color:#111;
+    color: #111;
 }
 
 .logIn-form-orLabel {
@@ -512,6 +508,7 @@ img {
 .logIn-form-signInButton:hover {
     background-color: #bbb;
 }
+
 /*===============================================
                 Sign In 新規登録画面
 ===============================================*/
@@ -526,18 +523,51 @@ img {
 
 .userPage-form-select {
     width: 100%;
-    font-size: 1.5rem;
     padding: .5rem;
-    line-height: 1;
-    height: 4rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    box-sizing: border-box;
+}
+
+.userPage-form-select-item {
+    background-color: #999;
+    padding: .5rem;
+    text-align: center;
+    user-select: none;
+    cursor: pointer;
+}
+
+.userPage-form-select-item:hover {
+    background-color: #bbb;
+    color: #111;
+}
+
+.userPage-form-select-itemSelect {
+    background-color: var(--primaryColor);
+    color: white;
+}
+
+.userPage-form-select-itemSelect:hover {
+    background-color: var(--primaryColorLight);
+    color: #111;
 }
 
 .userPage-form-description {
     font-size: 1rem;
 }
+
+.userPage-form-input {
+    font-size: 1.2rem;
+    padding: .4rem;
+    width: 100%;
+    border: solid 2px #000;
+    box-sizing: border-box;
+    border-radius: .4rem;
+}
 /*===============================================
            Main View 画面に主に表示する場所
 ===============================================*/
+
 .mainView {
     display: grid;
     align-content: flex-start;
