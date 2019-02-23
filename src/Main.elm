@@ -1001,31 +1001,30 @@ userSignUpView : UserSignUpPage -> List (Html.Html Msg)
 userSignUpView userSignUpPage =
     [ Html.div
         [ Html.Attributes.class "userPage-form" ]
-        ([ Html.div
+        [ Html.div
             [ Html.Attributes.class "userPage-form-title" ]
             [ Html.text "sアドを" ]
-         , sAddressSelectView userSignUpPage
-         , Html.div
+        , sAddressSelectView userSignUpPage
+        , Html.div
             [ Html.Attributes.class "userPage-form-description" ]
             [ Html.text "sアドをは… 学生証の画像を添付しなきゃだめ" ]
-         ]
-            ++ (case userSignUpPage of
-                    UserSignUpPageStudentHasSAddress _ ->
-                        studentHasSAddresFormList
-
-                    UserSignUpPageNewStudent _ ->
-                        newStudentFormList
-               )
-            ++ passwordForm
-                (case userSignUpPage of
-                    UserSignUpPageStudentHasSAddress { password } ->
-                        password
-
-                    UserSignUpPageNewStudent { password } ->
-                        password
-                )
-        )
+        ]
     ]
+        ++ (case userSignUpPage of
+                UserSignUpPageStudentHasSAddress _ ->
+                    studentHasSAddressFormList
+
+                UserSignUpPageNewStudent _ ->
+                    newStudentFormList
+           )
+        ++ passwordForm
+            (case userSignUpPage of
+                UserSignUpPageStudentHasSAddress { password } ->
+                    password
+
+                UserSignUpPageNewStudent { password } ->
+                    password
+            )
 
 
 sAddressSelectView : UserSignUpPage -> Html.Html Msg
@@ -1074,40 +1073,66 @@ sAddressSelectView userSignUpPage =
         ]
 
 
-studentHasSAddresFormList : List (Html.Html Msg)
-studentHasSAddresFormList =
+studentHasSAddressFormList : List (Html.Html Msg)
+studentHasSAddressFormList =
     [ Html.div
-        [ Html.Attributes.class "userPage-form-title" ]
-        [ Html.text "学籍番号か～@s.tsukuba.ac.jpのメールアドレス" ]
-    , Html.input [ Html.Attributes.class "userPage-form-input" ] []
-    , Html.div
-        [ Html.Attributes.class "userPage-form-description" ]
-        [ Html.text "20からはじまる…" ]
+        [ Html.Attributes.class "userPage-form" ]
+        [ Html.div
+            [ Html.Attributes.class "userPage-form-title" ]
+            [ Html.text "学籍番号か～@～.tsukuba.ac.jpのメールアドレス" ]
+        , Html.input
+            [ Html.Attributes.class "userPage-form-input" ]
+            []
+        , Html.div
+            [ Html.Attributes.class "userPage-form-description" ]
+            [ Html.text "20からはじまる…" ]
+        ]
     ]
 
 
 newStudentFormList : List (Html.Html Msg)
 newStudentFormList =
     [ Html.div
-        [ Html.Attributes.class "userPage-form-title" ]
-        [ Html.text "登録用メールアドレス" ]
-    , Html.input [ Html.Attributes.class "userPage-form-input" ] []
+        [ Html.Attributes.class "userPage-form" ]
+        [ Html.div
+            [ Html.Attributes.class "userPage-form-title" ]
+            [ Html.text "登録用メールアドレス" ]
+        , Html.input [ Html.Attributes.class "userPage-form-input" ] []
+        , Html.div
+            [ Html.Attributes.class "userPage-form-description" ]
+            [ Html.text "Sアドをつかえるまでの…" ]
+        ]
     , Html.div
-        [ Html.Attributes.class "userPage-form-description" ]
-        [ Html.text "Sアドをつかえるまでの…" ]
+        [ Html.Attributes.class "userPage-form" ]
+        [ Html.div
+            [ Html.Attributes.class "userPage-form-title" ]
+            [ Html.text "学生証" ]
+        , Html.input [ Html.Attributes.class "userPage-form-input" ] []
+        , Html.div
+            [ Html.Attributes.class "userPage-form-description" ]
+            []
+        ]
     ]
 
 
 passwordForm : String -> List (Html.Html Msg)
 passwordForm password =
     [ Html.div
-        [ Html.Attributes.class "userPage-form-title" ]
-        [ Html.text "パスワード" ]
-    , Html.input [ Html.Attributes.class "userPage-form-input" ] []
-    , Html.div
-        [ Html.Attributes.class "userPage-form-description" ]
-        [ Html.text "9文字以上…" ]
+        [ Html.Attributes.class "userPage-form" ]
+        [ Html.div
+            [ Html.Attributes.class "userPage-form-title" ]
+            [ Html.text "パスワード" ]
+        , Html.input
+            [ Html.Attributes.class "userPage-form-input"
+            , Html.Attributes.type_ "password"
+            ]
+            []
+        , Html.div
+            [ Html.Attributes.class "userPage-form-description" ]
+            [ Html.text "9文字以上…" ]
+        ]
     ]
+
 
 subscription : Model -> Sub Msg
 subscription (Model { wideScreenMode }) =
