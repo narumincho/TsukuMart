@@ -59,6 +59,7 @@ type LogInPage
         , studentIdOrEmailAddress : String
         , password : String
         }
+    | ForgotPassword
 
 
 type alias ExhibitionState =
@@ -926,20 +927,31 @@ userLogInView logInPage isWideScreenMode =
         [ Html.Attributes.classList
             [ ( "itemList", True ), ( "itemList-wide", isWideScreenMode ) ]
         ]
+        (case logInPage of
+            LogInPage _ ->
+                logInPageView isWideScreenMode
+
+            ForgotPassword ->
+                forgotPasswordView isWideScreenMode
+        )
+
+
+logInPageView : Bool -> List (Html.Html Msg)
+logInPageView isWideScreenMode =
+    [ Html.div
+        [ Html.Attributes.class "logIn-form" ]
         [ Html.div
-            [ Html.Attributes.class "logIn-form" ]
-            [ Html.div
-                [ Html.Attributes.class "logIn-form-group" ]
-                [ logInIdView
-                , logInPasswordView
-                , logInButton
-                ]
-            , orLabel
-            , Html.div
-                [ Html.Attributes.class "logIn-form-group" ]
-                [ signInButton ]
+            [ Html.Attributes.class "logIn-form-group" ]
+            [ logInIdView
+            , logInPasswordView
+            , logInButton
             ]
+        , orLabel
+        , Html.div
+            [ Html.Attributes.class "logIn-form-group" ]
+            [ signInButton ]
         ]
+    ]
 
 
 logInIdView : Html.Html msg
@@ -950,17 +962,26 @@ logInIdView =
         ]
 
 
-logInPasswordView : Html.Html msg
+logInPasswordView : Html.Html Msg
 logInPasswordView =
     Html.div [ Html.Attributes.class "logIn-form-item" ]
         [ Html.div [ Html.Attributes.class "logIn-form-subTitle" ]
             [ Html.text "パスワード"
             , Html.span
-                [ Html.Attributes.class "logIn-form-subTitle-forgotPassword" ]
+                [ Html.Attributes.class "logIn-form-subTitle-forgotPassword"
+                , Html.Events.onClick (ChangePage (PageLogIn ForgotPassword))
+                ]
                 [ Html.text "パスワードを忘れた" ]
             ]
         , Html.input [ Html.Attributes.class "logIn-form-input" ] []
         ]
+
+
+{-| パスワードを忘れた画面
+-}
+forgotPasswordView : Bool -> List (Html.Html msg)
+forgotPasswordView isWideScreenMode =
+    [ Html.text "パスワードを忘れたら。登録している学籍番号かメールアドレスを入力してください。パスワードを再発行します。" ]
 
 
 logInButton : Html.Html msg

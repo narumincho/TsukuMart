@@ -5095,9 +5095,6 @@ var elm$core$Basics$apR = F2(
 	function (x, f) {
 		return f(x);
 	});
-var elm$core$Basics$identity = function (x) {
-	return x;
-};
 var elm$core$Maybe$Nothing = {$: 'Nothing'};
 var elm$core$Maybe$withDefault = F2(
 	function (_default, maybe) {
@@ -5192,6 +5189,9 @@ var elm$core$Basics$apL = F2(
 	function (f, x) {
 		return f(x);
 	});
+var elm$core$Basics$identity = function (x) {
+	return x;
+};
 var elm$core$Basics$add = _Basics_add;
 var elm$core$Basics$gt = _Utils_gt;
 var elm$core$List$foldl = F3(
@@ -11620,6 +11620,12 @@ var author$project$Main$sendSampleButton = A2(
 		[
 			elm$html$Html$text('サンプルボタン')
 		]));
+var author$project$Main$forgotPasswordView = function (isWideScreenMode) {
+	return _List_fromArray(
+		[
+			elm$html$Html$text('パスワードを忘れたら。登録している学籍番号かメールアドレスを入力してください。パスワードを再発行します。')
+		]);
+};
 var author$project$Main$logInButton = A2(
 	elm$html$Html$div,
 	_List_fromArray(
@@ -11656,6 +11662,7 @@ var author$project$Main$logInIdView = A2(
 				]),
 			_List_Nil)
 		]));
+var author$project$Main$ForgotPassword = {$: 'ForgotPassword'};
 var author$project$Main$logInPasswordView = A2(
 	elm$html$Html$div,
 	_List_fromArray(
@@ -11677,7 +11684,10 @@ var author$project$Main$logInPasswordView = A2(
 					elm$html$Html$span,
 					_List_fromArray(
 						[
-							elm$html$Html$Attributes$class('logIn-form-subTitle-forgotPassword')
+							elm$html$Html$Attributes$class('logIn-form-subTitle-forgotPassword'),
+							elm$html$Html$Events$onClick(
+							author$project$Main$ChangePage(
+								author$project$Main$PageLogIn(author$project$Main$ForgotPassword)))
 						]),
 					_List_fromArray(
 						[
@@ -11712,6 +11722,37 @@ var author$project$Main$signInButton = A2(
 		[
 			elm$html$Html$text('新規登録')
 		]));
+var author$project$Main$logInPageView = function (isWideScreenMode) {
+	return _List_fromArray(
+		[
+			A2(
+			elm$html$Html$div,
+			_List_fromArray(
+				[
+					elm$html$Html$Attributes$class('logIn-form')
+				]),
+			_List_fromArray(
+				[
+					A2(
+					elm$html$Html$div,
+					_List_fromArray(
+						[
+							elm$html$Html$Attributes$class('logIn-form-group')
+						]),
+					_List_fromArray(
+						[author$project$Main$logInIdView, author$project$Main$logInPasswordView, author$project$Main$logInButton])),
+					author$project$Main$orLabel,
+					A2(
+					elm$html$Html$div,
+					_List_fromArray(
+						[
+							elm$html$Html$Attributes$class('logIn-form-group')
+						]),
+					_List_fromArray(
+						[author$project$Main$signInButton]))
+				]))
+		]);
+};
 var author$project$Main$userLogInView = F2(
 	function (logInPage, isWideScreenMode) {
 		return A2(
@@ -11725,35 +11766,13 @@ var author$project$Main$userLogInView = F2(
 							_Utils_Tuple2('itemList-wide', isWideScreenMode)
 						]))
 				]),
-			_List_fromArray(
-				[
-					A2(
-					elm$html$Html$div,
-					_List_fromArray(
-						[
-							elm$html$Html$Attributes$class('logIn-form')
-						]),
-					_List_fromArray(
-						[
-							A2(
-							elm$html$Html$div,
-							_List_fromArray(
-								[
-									elm$html$Html$Attributes$class('logIn-form-group')
-								]),
-							_List_fromArray(
-								[author$project$Main$logInIdView, author$project$Main$logInPasswordView, author$project$Main$logInButton])),
-							author$project$Main$orLabel,
-							A2(
-							elm$html$Html$div,
-							_List_fromArray(
-								[
-									elm$html$Html$Attributes$class('logIn-form-group')
-								]),
-							_List_fromArray(
-								[author$project$Main$signInButton]))
-						]))
-				]));
+			function () {
+				if (logInPage.$ === 'LogInPage') {
+					return author$project$Main$logInPageView(isWideScreenMode);
+				} else {
+					return author$project$Main$forgotPasswordView(isWideScreenMode);
+				}
+			}());
 	});
 var elm$html$Html$form = _VirtualDom_node('form');
 var elm$html$Html$option = _VirtualDom_node('option');
@@ -11881,4 +11900,4 @@ var elm$browser$Browser$application = _Browser_application;
 var author$project$Main$main = elm$browser$Browser$application(
 	{init: author$project$Main$init, onUrlChange: author$project$Main$onUrlChange, onUrlRequest: author$project$Main$onUrlRequest, subscriptions: author$project$Main$subscription, update: author$project$Main$update, view: author$project$Main$view});
 _Platform_export({'Main':{'init':author$project$Main$main(
-	elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.0"},"types":{"message":"Main.Msg","aliases":{"Url.Url":{"args":[],"type":"{ protocol : Url.Protocol, host : String.String, port_ : Maybe.Maybe Basics.Int, path : String.String, query : Maybe.Maybe String.String, fragment : Maybe.Maybe String.String }"},"Main.ExhibitionState":{"args":[],"type":"{ title : String.String, description : String.String, price : Maybe.Maybe Basics.Int }"}},"unions":{"Main.Msg":{"args":[],"tags":{"ChangePage":["Main.Page"],"OpenMenu":[],"CloseMenu":[],"ToWideScreenMode":[],"ToNarrowScreenMode":[],"UrlChange":["Url.Url"],"UrlRequest":["Browser.UrlRequest"],"Request":[],"Response":["String.String"]}},"Main.Page":{"args":[],"tags":{"PageHome":["Main.Home"],"PageSignUp":["Main.UserSignUpPage"],"PageLogIn":["Main.LogInPage"],"PageLikeAndHistory":["Main.LikeAndHistory"],"PageExhibitionItemList":[],"PagePurchaseItemList":[],"PageExhibition":["Main.ExhibitionState"]}},"Browser.UrlRequest":{"args":[],"tags":{"Internal":["Url.Url"],"External":["String.String"]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"String.String":{"args":[],"tags":{"String":[]}},"Url.Protocol":{"args":[],"tags":{"Http":[],"Https":[]}},"Main.Home":{"args":[],"tags":{"Recent":[],"Recommend":[],"Free":[]}},"Main.LikeAndHistory":{"args":[],"tags":{"Like":[],"History":[]}},"Main.LogInPage":{"args":[],"tags":{"LogInPage":["{ nextPage : Main.Page, studentIdOrEmailAddress : String.String, password : String.String }"]}},"Main.UserSignUpPage":{"args":[],"tags":{"UserSignUpPageStudentHasSAddress":["{ studentId : String.String, password : String.String }"],"UserSignUpPageNewStudent":["{ emailAddress : String.String, password : String.String }"]}}}}})}});}(this));
+	elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.0"},"types":{"message":"Main.Msg","aliases":{"Url.Url":{"args":[],"type":"{ protocol : Url.Protocol, host : String.String, port_ : Maybe.Maybe Basics.Int, path : String.String, query : Maybe.Maybe String.String, fragment : Maybe.Maybe String.String }"},"Main.ExhibitionState":{"args":[],"type":"{ title : String.String, description : String.String, price : Maybe.Maybe Basics.Int }"}},"unions":{"Main.Msg":{"args":[],"tags":{"ChangePage":["Main.Page"],"OpenMenu":[],"CloseMenu":[],"ToWideScreenMode":[],"ToNarrowScreenMode":[],"UrlChange":["Url.Url"],"UrlRequest":["Browser.UrlRequest"],"Request":[],"Response":["String.String"]}},"Main.Page":{"args":[],"tags":{"PageHome":["Main.Home"],"PageSignUp":["Main.UserSignUpPage"],"PageLogIn":["Main.LogInPage"],"PageLikeAndHistory":["Main.LikeAndHistory"],"PageExhibitionItemList":[],"PagePurchaseItemList":[],"PageExhibition":["Main.ExhibitionState"]}},"Browser.UrlRequest":{"args":[],"tags":{"Internal":["Url.Url"],"External":["String.String"]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"String.String":{"args":[],"tags":{"String":[]}},"Url.Protocol":{"args":[],"tags":{"Http":[],"Https":[]}},"Main.Home":{"args":[],"tags":{"Recent":[],"Recommend":[],"Free":[]}},"Main.LikeAndHistory":{"args":[],"tags":{"Like":[],"History":[]}},"Main.LogInPage":{"args":[],"tags":{"LogInPage":["{ nextPage : Main.Page, studentIdOrEmailAddress : String.String, password : String.String }"],"ForgotPassword":[]}},"Main.UserSignUpPage":{"args":[],"tags":{"UserSignUpPageStudentHasSAddress":["{ studentId : String.String, password : String.String }"],"UserSignUpPageNewStudent":["{ emailAddress : String.String, password : String.String }"]}}}}})}});}(this));

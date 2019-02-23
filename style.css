@@ -438,14 +438,15 @@ img {
 ===============================================*/
 
 .logIn-form {
-    padding: 1rem;
     display: grid;
     gap: 1rem;
 }
 
 .logIn-form-group {
     display: grid;
+    background-color: #eee;
     gap: 1.5rem;
+    padding: 1.5rem;
 }
 
 .logIn-form-item {
@@ -457,8 +458,17 @@ img {
 }
 
 .logIn-form-subTitle-forgotPassword {
-    color: skyblue;
+    color: rgb(25, 99, 128);
     font-size: 1rem;
+    padding: 0 1rem;
+    user-select: none;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.logIn-form-subTitle-forgotPassword:hover {
+    color: rgb(42, 136, 173);
+    background-color: #ccc;
 }
 
 .logIn-form-input {
@@ -477,6 +487,14 @@ img {
     text-align: center;
     font-size: 1.5rem;
     border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.18);
+    user-select: none;
+    cursor: pointer;
+}
+
+.logIn-form-logInButton:hover {
+    background-color: var(--primaryColorLight);
+    color:#111;
 }
 
 .logIn-form-orLabel {
@@ -492,6 +510,13 @@ img {
     text-align: center;
     font-size: 1.5rem;
     border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.18);
+    user-select: none;
+    cursor: pointer;
+}
+
+.logIn-form-signInButton:hover {
+    background-color: #bbb;
 }
 /*===============================================
                 Sign In 新規登録画面
