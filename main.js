@@ -10573,159 +10573,6 @@ var author$project$Main$update = F2(
 					elm$core$Platform$Cmd$none);
 		}
 	});
-var author$project$Main$exhibitButton = A2(
-	elm$html$Html$a,
-	_List_fromArray(
-		[
-			elm$html$Html$Attributes$class('exhibitButton'),
-			elm$html$Html$Attributes$href('/exhibition')
-		]),
-	_List_fromArray(
-		[
-			elm$html$Html$text('出品')
-		]));
-var elm$html$Html$input = _VirtualDom_node('input');
-var elm$html$Html$Attributes$type_ = elm$html$Html$Attributes$stringProperty('type');
-var elm$html$Html$Attributes$value = elm$html$Html$Attributes$stringProperty('value');
-var author$project$Main$exhibitionViewItemPrice = function (price) {
-	return A2(
-		elm$html$Html$div,
-		_List_fromArray(
-			[
-				elm$html$Html$Attributes$class('exhibitionView-itemPrice')
-			]),
-		_List_fromArray(
-			[
-				elm$html$Html$text('販売価格 (0～100万円)'),
-				A2(
-				elm$html$Html$div,
-				_List_fromArray(
-					[
-						elm$html$Html$Attributes$class('exhibitionView-itemPrice-input')
-					]),
-				_List_fromArray(
-					[
-						A2(
-						elm$html$Html$input,
-						_Utils_ap(
-							_List_fromArray(
-								[
-									elm$html$Html$Attributes$type_('number'),
-									elm$html$Html$Attributes$class('exhibitionView-itemPrice-input-input')
-								]),
-							function () {
-								if (price.$ === 'Just') {
-									var p = price.a;
-									return _List_fromArray(
-										[
-											elm$html$Html$Attributes$value(
-											elm$core$String$fromInt(p))
-										]);
-								} else {
-									return _List_Nil;
-								}
-							}()),
-						_List_Nil),
-						elm$html$Html$text('円')
-					]))
-			]));
-};
-var elm$html$Html$h2 = _VirtualDom_node('h2');
-var elm$html$Html$textarea = _VirtualDom_node('textarea');
-var elm$html$Html$Attributes$maxlength = function (n) {
-	return A2(
-		_VirtualDom_attribute,
-		'maxlength',
-		elm$core$String$fromInt(n));
-};
-var elm$html$Html$Attributes$placeholder = elm$html$Html$Attributes$stringProperty('placeholder');
-var author$project$Main$exhibitionViewItemTitleAndDescription = A2(
-	elm$html$Html$div,
-	_List_fromArray(
-		[
-			elm$html$Html$Attributes$class('exhibitionView-itemTitleAndDescription')
-		]),
-	_List_fromArray(
-		[
-			A2(
-			elm$html$Html$h2,
-			_List_Nil,
-			_List_fromArray(
-				[
-					elm$html$Html$text('商品名と説明')
-				])),
-			A2(
-			elm$html$Html$input,
-			_List_fromArray(
-				[
-					elm$html$Html$Attributes$placeholder('商品名(40文字まで)'),
-					elm$html$Html$Attributes$class('exhibitionView-itemTitle'),
-					elm$html$Html$Attributes$maxlength(40)
-				]),
-			_List_Nil),
-			A2(
-			elm$html$Html$textarea,
-			_List_fromArray(
-				[
-					elm$html$Html$Attributes$placeholder('商品の説明'),
-					elm$html$Html$Attributes$class('exhibitionView-itemDescription')
-				]),
-			_List_Nil)
-		]));
-var elm$html$Html$img = _VirtualDom_node('img');
-var elm$html$Html$Attributes$accept = elm$html$Html$Attributes$stringProperty('accept');
-var elm$json$Json$Encode$bool = _Json_wrap;
-var elm$html$Html$Attributes$boolProperty = F2(
-	function (key, bool) {
-		return A2(
-			_VirtualDom_property,
-			key,
-			elm$json$Json$Encode$bool(bool));
-	});
-var elm$html$Html$Attributes$multiple = elm$html$Html$Attributes$boolProperty('multiple');
-var elm$html$Html$Attributes$src = function (url) {
-	return A2(
-		elm$html$Html$Attributes$stringProperty,
-		'src',
-		_VirtualDom_noJavaScriptOrHtmlUri(url));
-};
-var author$project$Main$exhibitionViewPhoto = A2(
-	elm$html$Html$input,
-	_List_fromArray(
-		[
-			elm$html$Html$Attributes$class('exhibitionView-photo'),
-			elm$html$Html$Attributes$type_('file'),
-			elm$html$Html$Attributes$multiple(true),
-			elm$html$Html$Attributes$accept('image/*')
-		]),
-	_List_fromArray(
-		[
-			A2(
-			elm$html$Html$img,
-			_List_fromArray(
-				[
-					elm$html$Html$Attributes$src('assets/add_a_photo.svg'),
-					elm$html$Html$Attributes$class('exhibitionView-photo-icon')
-				]),
-			_List_Nil)
-		]));
-var author$project$Main$exhibitionView = function (_n0) {
-	var title = _n0.title;
-	var description = _n0.description;
-	var price = _n0.price;
-	return A2(
-		elm$html$Html$div,
-		_List_fromArray(
-			[
-				elm$html$Html$Attributes$class('exhibitionView')
-			]),
-		_List_fromArray(
-			[
-				author$project$Main$exhibitionViewPhoto,
-				author$project$Main$exhibitionViewItemTitleAndDescription,
-				author$project$Main$exhibitionViewItemPrice(price)
-			]));
-};
 var elm$svg$Svg$Attributes$fill = _VirtualDom_attribute('fill');
 var author$project$Main$logoSubTextFontColor = elm$svg$Svg$Attributes$fill('#ffe2a6');
 var elm$svg$Svg$trustedNode = _VirtualDom_nodeNS('http://www.w3.org/2000/svg');
@@ -11041,7 +10888,14 @@ var author$project$Main$logo = A2(
 			_Utils_ap(author$project$Main$tsukuBird, author$project$Main$logoSubText))));
 var author$project$Main$OpenMenu = {$: 'OpenMenu'};
 var author$project$Main$headerButton = elm$html$Html$Attributes$class('headerButton');
+var elm$html$Html$img = _VirtualDom_node('img');
 var elm$html$Html$Attributes$alt = elm$html$Html$Attributes$stringProperty('alt');
+var elm$html$Html$Attributes$src = function (url) {
+	return A2(
+		elm$html$Html$Attributes$stringProperty,
+		'src',
+		_VirtualDom_noJavaScriptOrHtmlUri(url));
+};
 var author$project$Main$menuButton = A2(
 	elm$html$Html$img,
 	_List_fromArray(
@@ -11088,114 +10942,6 @@ var author$project$Main$header = function (wideMode) {
 						[author$project$Main$logo])),
 					author$project$Main$searchButton,
 					author$project$Main$notificationsButton
-				])));
-};
-var author$project$Main$itemImage = A2(
-	elm$html$Html$img,
-	_List_fromArray(
-		[
-			elm$html$Html$Attributes$class('itemImage'),
-			elm$html$Html$Attributes$src('assets/itemDummy.png')
-		]),
-	_List_Nil);
-var author$project$Main$item = function (_n0) {
-	var title = _n0.title;
-	var price = _n0.price;
-	var like = _n0.like;
-	return A2(
-		elm$html$Html$div,
-		_List_fromArray(
-			[
-				elm$html$Html$Attributes$class('item')
-			]),
-		_List_fromArray(
-			[
-				author$project$Main$itemImage,
-				A2(
-				elm$html$Html$div,
-				_List_fromArray(
-					[
-						elm$html$Html$Attributes$class('itemTitle')
-					]),
-				_List_fromArray(
-					[
-						elm$html$Html$text(title)
-					])),
-				A2(
-				elm$html$Html$div,
-				_List_fromArray(
-					[
-						elm$html$Html$Attributes$class('itemPrice')
-					]),
-				_List_fromArray(
-					[
-						elm$html$Html$text(
-						elm$core$String$fromInt(price) + '円')
-					])),
-				A2(
-				elm$html$Html$div,
-				_List_Nil,
-				_List_fromArray(
-					[
-						elm$html$Html$text(
-						'いいね' + elm$core$String$fromInt(like))
-					]))
-			]));
-};
-var elm$core$List$filter = F2(
-	function (isGood, list) {
-		return A3(
-			elm$core$List$foldr,
-			F2(
-				function (x, xs) {
-					return isGood(x) ? A2(elm$core$List$cons, x, xs) : xs;
-				}),
-			_List_Nil,
-			list);
-	});
-var elm$html$Html$Attributes$classList = function (classes) {
-	return elm$html$Html$Attributes$class(
-		A2(
-			elm$core$String$join,
-			' ',
-			A2(
-				elm$core$List$map,
-				elm$core$Tuple$first,
-				A2(elm$core$List$filter, elm$core$Tuple$second, classes))));
-};
-var author$project$Main$itemList = function (isWideMode) {
-	return A2(
-		elm$html$Html$div,
-		_List_fromArray(
-			[
-				elm$html$Html$Attributes$classList(
-				_List_fromArray(
-					[
-						_Utils_Tuple2('itemList', true),
-						_Utils_Tuple2('itemList-wide', isWideMode)
-					])),
-				A2(
-				elm$html$Html$Attributes$style,
-				'grid-template-columns',
-				isWideMode ? '33.3% 33.4% 33.3%' : '50% 50%')
-			]),
-		A2(
-			elm$core$List$map,
-			author$project$Main$item,
-			_List_fromArray(
-				[
-					{like: 1, price: 300, title: '冷蔵庫'},
-					{like: 5, price: 100, title: '洗濯機'},
-					{like: 99, price: 10, title: '時計'},
-					{like: 5, price: 100, title: '掃除機'},
-					{like: 9, price: 200, title: '自転車'},
-					{like: 99, price: 10, title: 'マンガ'},
-					{like: 99, price: 10, title: 'ゲーム'},
-					{like: 5, price: 100, title: '絵本'},
-					{like: 2, price: 1000, title: '棚'},
-					{like: 2, price: 1000, title: 'いす'},
-					{like: 20, price: 300, title: 'バッテリー'},
-					{like: 10, price: 20, title: '教科書'}
 				])));
 };
 var author$project$Main$Free = {$: 'Free'};
@@ -11370,6 +11116,27 @@ var elm$core$List$repeat = F2(
 	function (n, value) {
 		return A3(elm$core$List$repeatHelp, _List_Nil, n, value);
 	});
+var elm$core$List$filter = F2(
+	function (isGood, list) {
+		return A3(
+			elm$core$List$foldr,
+			F2(
+				function (x, xs) {
+					return isGood(x) ? A2(elm$core$List$cons, x, xs) : xs;
+				}),
+			_List_Nil,
+			list);
+	});
+var elm$html$Html$Attributes$classList = function (classes) {
+	return elm$html$Html$Attributes$class(
+		A2(
+			elm$core$String$join,
+			' ',
+			A2(
+				elm$core$List$map,
+				elm$core$Tuple$first,
+				A2(elm$core$List$filter, elm$core$Tuple$second, classes))));
+};
 var author$project$Main$mainTab = F2(
 	function (page, wideScreenMode) {
 		var tabData = function () {
@@ -11434,6 +11201,470 @@ var author$project$Main$mainTab = F2(
 					A2(elm$html$Html$Attributes$style, 'height', '3rem')
 				]),
 			A2(author$project$Main$mainTabItemList, page, tabData));
+	});
+var author$project$Main$exhibitButton = A2(
+	elm$html$Html$a,
+	_List_fromArray(
+		[
+			elm$html$Html$Attributes$class('exhibitButton'),
+			elm$html$Html$Attributes$href('/exhibition')
+		]),
+	_List_fromArray(
+		[
+			elm$html$Html$text('出品')
+		]));
+var elm$html$Html$input = _VirtualDom_node('input');
+var elm$html$Html$Attributes$type_ = elm$html$Html$Attributes$stringProperty('type');
+var elm$html$Html$Attributes$value = elm$html$Html$Attributes$stringProperty('value');
+var author$project$Main$exhibitionViewItemPrice = function (price) {
+	return A2(
+		elm$html$Html$div,
+		_List_fromArray(
+			[
+				elm$html$Html$Attributes$class('exhibitionView-itemPrice')
+			]),
+		_List_fromArray(
+			[
+				elm$html$Html$text('販売価格 (0～100万円)'),
+				A2(
+				elm$html$Html$div,
+				_List_fromArray(
+					[
+						elm$html$Html$Attributes$class('exhibitionView-itemPrice-input')
+					]),
+				_List_fromArray(
+					[
+						A2(
+						elm$html$Html$input,
+						_Utils_ap(
+							_List_fromArray(
+								[
+									elm$html$Html$Attributes$type_('number'),
+									elm$html$Html$Attributes$class('exhibitionView-itemPrice-input-input')
+								]),
+							function () {
+								if (price.$ === 'Just') {
+									var p = price.a;
+									return _List_fromArray(
+										[
+											elm$html$Html$Attributes$value(
+											elm$core$String$fromInt(p))
+										]);
+								} else {
+									return _List_Nil;
+								}
+							}()),
+						_List_Nil),
+						elm$html$Html$text('円')
+					]))
+			]));
+};
+var elm$html$Html$h2 = _VirtualDom_node('h2');
+var elm$html$Html$textarea = _VirtualDom_node('textarea');
+var elm$html$Html$Attributes$maxlength = function (n) {
+	return A2(
+		_VirtualDom_attribute,
+		'maxlength',
+		elm$core$String$fromInt(n));
+};
+var elm$html$Html$Attributes$placeholder = elm$html$Html$Attributes$stringProperty('placeholder');
+var author$project$Main$exhibitionViewItemTitleAndDescription = A2(
+	elm$html$Html$div,
+	_List_fromArray(
+		[
+			elm$html$Html$Attributes$class('exhibitionView-itemTitleAndDescription')
+		]),
+	_List_fromArray(
+		[
+			A2(
+			elm$html$Html$h2,
+			_List_Nil,
+			_List_fromArray(
+				[
+					elm$html$Html$text('商品名と説明')
+				])),
+			A2(
+			elm$html$Html$input,
+			_List_fromArray(
+				[
+					elm$html$Html$Attributes$placeholder('商品名(40文字まで)'),
+					elm$html$Html$Attributes$class('exhibitionView-itemTitle'),
+					elm$html$Html$Attributes$maxlength(40)
+				]),
+			_List_Nil),
+			A2(
+			elm$html$Html$textarea,
+			_List_fromArray(
+				[
+					elm$html$Html$Attributes$placeholder('商品の説明'),
+					elm$html$Html$Attributes$class('exhibitionView-itemDescription')
+				]),
+			_List_Nil)
+		]));
+var elm$html$Html$Attributes$accept = elm$html$Html$Attributes$stringProperty('accept');
+var elm$json$Json$Encode$bool = _Json_wrap;
+var elm$html$Html$Attributes$boolProperty = F2(
+	function (key, bool) {
+		return A2(
+			_VirtualDom_property,
+			key,
+			elm$json$Json$Encode$bool(bool));
+	});
+var elm$html$Html$Attributes$multiple = elm$html$Html$Attributes$boolProperty('multiple');
+var author$project$Main$exhibitionViewPhoto = A2(
+	elm$html$Html$input,
+	_List_fromArray(
+		[
+			elm$html$Html$Attributes$class('exhibitionView-photo'),
+			elm$html$Html$Attributes$type_('file'),
+			elm$html$Html$Attributes$multiple(true),
+			elm$html$Html$Attributes$accept('image/*')
+		]),
+	_List_fromArray(
+		[
+			A2(
+			elm$html$Html$img,
+			_List_fromArray(
+				[
+					elm$html$Html$Attributes$src('assets/add_a_photo.svg'),
+					elm$html$Html$Attributes$class('exhibitionView-photo-icon')
+				]),
+			_List_Nil)
+		]));
+var author$project$Main$exhibitionView = function (_n0) {
+	var title = _n0.title;
+	var description = _n0.description;
+	var price = _n0.price;
+	return A2(
+		elm$html$Html$div,
+		_List_fromArray(
+			[
+				elm$html$Html$Attributes$class('exhibitionView')
+			]),
+		_List_fromArray(
+			[
+				author$project$Main$exhibitionViewPhoto,
+				author$project$Main$exhibitionViewItemTitleAndDescription,
+				author$project$Main$exhibitionViewItemPrice(price)
+			]));
+};
+var author$project$Main$itemImage = A2(
+	elm$html$Html$img,
+	_List_fromArray(
+		[
+			elm$html$Html$Attributes$class('itemImage'),
+			elm$html$Html$Attributes$src('assets/itemDummy.png')
+		]),
+	_List_Nil);
+var author$project$Main$item = function (_n0) {
+	var title = _n0.title;
+	var price = _n0.price;
+	var like = _n0.like;
+	return A2(
+		elm$html$Html$div,
+		_List_fromArray(
+			[
+				elm$html$Html$Attributes$class('item')
+			]),
+		_List_fromArray(
+			[
+				author$project$Main$itemImage,
+				A2(
+				elm$html$Html$div,
+				_List_fromArray(
+					[
+						elm$html$Html$Attributes$class('itemTitle')
+					]),
+				_List_fromArray(
+					[
+						elm$html$Html$text(title)
+					])),
+				A2(
+				elm$html$Html$div,
+				_List_fromArray(
+					[
+						elm$html$Html$Attributes$class('itemPrice')
+					]),
+				_List_fromArray(
+					[
+						elm$html$Html$text(
+						elm$core$String$fromInt(price) + '円')
+					])),
+				A2(
+				elm$html$Html$div,
+				_List_Nil,
+				_List_fromArray(
+					[
+						elm$html$Html$text(
+						'いいね' + elm$core$String$fromInt(like))
+					]))
+			]));
+};
+var author$project$Main$itemList = function (isWideMode) {
+	return A2(
+		elm$html$Html$div,
+		_List_fromArray(
+			[
+				A2(elm$html$Html$Attributes$style, 'display', 'grid'),
+				A2(
+				elm$html$Html$Attributes$style,
+				'grid-template-columns',
+				isWideMode ? '33.3% 33.4% 33.3%' : '50% 50%')
+			]),
+		A2(
+			elm$core$List$map,
+			author$project$Main$item,
+			_List_fromArray(
+				[
+					{like: 1, price: 300, title: '冷蔵庫'},
+					{like: 5, price: 100, title: '洗濯機'},
+					{like: 99, price: 10, title: '時計'},
+					{like: 5, price: 100, title: '掃除機'},
+					{like: 9, price: 200, title: '自転車'},
+					{like: 99, price: 10, title: 'マンガ'},
+					{like: 99, price: 10, title: 'ゲーム'},
+					{like: 5, price: 100, title: '絵本'},
+					{like: 2, price: 1000, title: '棚'},
+					{like: 2, price: 1000, title: 'いす'},
+					{like: 20, price: 300, title: 'バッテリー'},
+					{like: 10, price: 20, title: '教科書'}
+				])));
+};
+var author$project$Main$forgotPasswordView = _List_fromArray(
+	[
+		elm$html$Html$text('パスワードを忘れたら。登録している学籍番号かメールアドレスを入力してください。パスワードを再発行します。')
+	]);
+var author$project$Main$logInButton = A2(
+	elm$html$Html$div,
+	_List_fromArray(
+		[
+			elm$html$Html$Attributes$class('logIn-form-logInButton')
+		]),
+	_List_fromArray(
+		[
+			elm$html$Html$text('ログイン')
+		]));
+var author$project$Main$logInIdView = A2(
+	elm$html$Html$div,
+	_List_fromArray(
+		[
+			elm$html$Html$Attributes$class('logIn-form-item')
+		]),
+	_List_fromArray(
+		[
+			A2(
+			elm$html$Html$div,
+			_List_fromArray(
+				[
+					elm$html$Html$Attributes$class('logIn-form-subTitle')
+				]),
+			_List_fromArray(
+				[
+					elm$html$Html$text('学籍番号かメールアドレス')
+				])),
+			A2(
+			elm$html$Html$input,
+			_List_fromArray(
+				[
+					elm$html$Html$Attributes$class('logIn-form-input')
+				]),
+			_List_Nil)
+		]));
+var author$project$Main$ForgotPassword = {$: 'ForgotPassword'};
+var author$project$Main$logInPasswordView = A2(
+	elm$html$Html$div,
+	_List_fromArray(
+		[
+			elm$html$Html$Attributes$class('logIn-form-item')
+		]),
+	_List_fromArray(
+		[
+			A2(
+			elm$html$Html$div,
+			_List_fromArray(
+				[
+					elm$html$Html$Attributes$class('logIn-form-subTitle')
+				]),
+			_List_fromArray(
+				[
+					elm$html$Html$text('パスワード'),
+					A2(
+					elm$html$Html$span,
+					_List_fromArray(
+						[
+							elm$html$Html$Attributes$class('logIn-form-subTitle-forgotPassword'),
+							elm$html$Html$Events$onClick(
+							author$project$Main$ChangePage(
+								author$project$Main$PageLogIn(author$project$Main$ForgotPassword)))
+						]),
+					_List_fromArray(
+						[
+							elm$html$Html$text('パスワードを忘れた')
+						]))
+				])),
+			A2(
+			elm$html$Html$input,
+			_List_fromArray(
+				[
+					elm$html$Html$Attributes$class('logIn-form-input')
+				]),
+			_List_Nil)
+		]));
+var author$project$Main$orLabel = A2(
+	elm$html$Html$div,
+	_List_fromArray(
+		[
+			elm$html$Html$Attributes$class('logIn-form-orLabel')
+		]),
+	_List_fromArray(
+		[
+			elm$html$Html$text('or')
+		]));
+var author$project$Main$signInButton = A2(
+	elm$html$Html$div,
+	_List_fromArray(
+		[
+			elm$html$Html$Attributes$class('logIn-form-signInButton')
+		]),
+	_List_fromArray(
+		[
+			elm$html$Html$text('新規登録')
+		]));
+var author$project$Main$logInPageView = _List_fromArray(
+	[
+		A2(
+		elm$html$Html$div,
+		_List_fromArray(
+			[
+				elm$html$Html$Attributes$class('logIn-form')
+			]),
+		_List_fromArray(
+			[
+				A2(
+				elm$html$Html$div,
+				_List_fromArray(
+					[
+						elm$html$Html$Attributes$class('logIn-form-group')
+					]),
+				_List_fromArray(
+					[author$project$Main$logInIdView, author$project$Main$logInPasswordView, author$project$Main$logInButton])),
+				author$project$Main$orLabel,
+				A2(
+				elm$html$Html$div,
+				_List_fromArray(
+					[
+						elm$html$Html$Attributes$class('logIn-form-group')
+					]),
+				_List_fromArray(
+					[author$project$Main$signInButton]))
+			]))
+	]);
+var author$project$Main$userLogInView = function (logInPage) {
+	if (logInPage.$ === 'LogInPage') {
+		return author$project$Main$logInPageView;
+	} else {
+		return author$project$Main$forgotPasswordView;
+	}
+};
+var elm$html$Html$form = _VirtualDom_node('form');
+var elm$html$Html$option = _VirtualDom_node('option');
+var elm$html$Html$select = _VirtualDom_node('select');
+var author$project$Main$userSignUpView = function (userPage) {
+	if (userPage.$ === 'UserSignUpPageStudentHasSAddress') {
+		return _List_fromArray(
+			[
+				A2(
+				elm$html$Html$form,
+				_List_fromArray(
+					[
+						elm$html$Html$Attributes$class('userPage-form')
+					]),
+				_List_fromArray(
+					[
+						A2(
+						elm$html$Html$div,
+						_List_fromArray(
+							[
+								elm$html$Html$Attributes$class('userPage-form-title')
+							]),
+						_List_fromArray(
+							[
+								elm$html$Html$text('sアドを持っているか')
+							])),
+						A2(
+						elm$html$Html$select,
+						_List_fromArray(
+							[
+								elm$html$Html$Attributes$class('userPage-form-select')
+							]),
+						_List_fromArray(
+							[
+								A2(
+								elm$html$Html$option,
+								_List_Nil,
+								_List_fromArray(
+									[
+										elm$html$Html$text('sアドを持っている')
+									])),
+								A2(
+								elm$html$Html$option,
+								_List_Nil,
+								_List_fromArray(
+									[
+										elm$html$Html$text('sアドを持っていない')
+									]))
+							])),
+						A2(
+						elm$html$Html$div,
+						_List_fromArray(
+							[
+								elm$html$Html$Attributes$class('userPage-form-description')
+							]),
+						_List_fromArray(
+							[
+								elm$html$Html$text('sアドをは… 学生証の画像を添付しなきゃだめ')
+							]))
+					]))
+			]);
+	} else {
+		return _List_Nil;
+	}
+};
+var author$project$Main$mainView = F2(
+	function (page, isWideScreenMode) {
+		return A2(
+			elm$html$Html$div,
+			_List_fromArray(
+				[
+					elm$html$Html$Attributes$classList(
+					_List_fromArray(
+						[
+							_Utils_Tuple2('mainView', true),
+							_Utils_Tuple2('mainView-wide', isWideScreenMode)
+						]))
+				]),
+			function () {
+				switch (page.$) {
+					case 'PageExhibition':
+						var exhibitionState = page.a;
+						return _List_fromArray(
+							[
+								author$project$Main$exhibitionView(exhibitionState)
+							]);
+					case 'PageSignUp':
+						var userPage = page.a;
+						return author$project$Main$userSignUpView(userPage);
+					case 'PageLogIn':
+						var logInPage = page.a;
+						return author$project$Main$userLogInView(logInPage);
+					default:
+						return _List_fromArray(
+							[
+								author$project$Main$itemList(isWideScreenMode),
+								author$project$Main$exhibitButton
+							]);
+				}
+			}());
 	});
 var author$project$Main$CloseMenu = {$: 'CloseMenu'};
 var author$project$Main$menuMain = _List_fromArray(
@@ -11605,294 +11836,18 @@ var author$project$Main$menu = F2(
 				}
 			}());
 	});
-var author$project$Main$Request = {$: 'Request'};
-var author$project$Main$sendSampleButton = A2(
-	elm$html$Html$div,
-	_List_fromArray(
-		[
-			A2(elm$html$Html$Attributes$style, 'position', 'absolute'),
-			A2(elm$html$Html$Attributes$style, 'background-color', 'white'),
-			A2(elm$html$Html$Attributes$style, 'padding', '1rem'),
-			A2(elm$html$Html$Attributes$style, 'top', '6rem'),
-			elm$html$Html$Events$onClick(author$project$Main$Request)
-		]),
-	_List_fromArray(
-		[
-			elm$html$Html$text('サンプルボタン')
-		]));
-var author$project$Main$forgotPasswordView = function (isWideScreenMode) {
-	return _List_fromArray(
-		[
-			elm$html$Html$text('パスワードを忘れたら。登録している学籍番号かメールアドレスを入力してください。パスワードを再発行します。')
-		]);
-};
-var author$project$Main$logInButton = A2(
-	elm$html$Html$div,
-	_List_fromArray(
-		[
-			elm$html$Html$Attributes$class('logIn-form-logInButton')
-		]),
-	_List_fromArray(
-		[
-			elm$html$Html$text('ログイン')
-		]));
-var author$project$Main$logInIdView = A2(
-	elm$html$Html$div,
-	_List_fromArray(
-		[
-			elm$html$Html$Attributes$class('logIn-form-item')
-		]),
-	_List_fromArray(
-		[
-			A2(
-			elm$html$Html$div,
-			_List_fromArray(
-				[
-					elm$html$Html$Attributes$class('logIn-form-subTitle')
-				]),
-			_List_fromArray(
-				[
-					elm$html$Html$text('学籍番号かメールアドレス')
-				])),
-			A2(
-			elm$html$Html$input,
-			_List_fromArray(
-				[
-					elm$html$Html$Attributes$class('logIn-form-input')
-				]),
-			_List_Nil)
-		]));
-var author$project$Main$ForgotPassword = {$: 'ForgotPassword'};
-var author$project$Main$logInPasswordView = A2(
-	elm$html$Html$div,
-	_List_fromArray(
-		[
-			elm$html$Html$Attributes$class('logIn-form-item')
-		]),
-	_List_fromArray(
-		[
-			A2(
-			elm$html$Html$div,
-			_List_fromArray(
-				[
-					elm$html$Html$Attributes$class('logIn-form-subTitle')
-				]),
-			_List_fromArray(
-				[
-					elm$html$Html$text('パスワード'),
-					A2(
-					elm$html$Html$span,
-					_List_fromArray(
-						[
-							elm$html$Html$Attributes$class('logIn-form-subTitle-forgotPassword'),
-							elm$html$Html$Events$onClick(
-							author$project$Main$ChangePage(
-								author$project$Main$PageLogIn(author$project$Main$ForgotPassword)))
-						]),
-					_List_fromArray(
-						[
-							elm$html$Html$text('パスワードを忘れた')
-						]))
-				])),
-			A2(
-			elm$html$Html$input,
-			_List_fromArray(
-				[
-					elm$html$Html$Attributes$class('logIn-form-input')
-				]),
-			_List_Nil)
-		]));
-var author$project$Main$orLabel = A2(
-	elm$html$Html$div,
-	_List_fromArray(
-		[
-			elm$html$Html$Attributes$class('logIn-form-orLabel')
-		]),
-	_List_fromArray(
-		[
-			elm$html$Html$text('or')
-		]));
-var author$project$Main$signInButton = A2(
-	elm$html$Html$div,
-	_List_fromArray(
-		[
-			elm$html$Html$Attributes$class('logIn-form-signInButton')
-		]),
-	_List_fromArray(
-		[
-			elm$html$Html$text('新規登録')
-		]));
-var author$project$Main$logInPageView = function (isWideScreenMode) {
-	return _List_fromArray(
-		[
-			A2(
-			elm$html$Html$div,
-			_List_fromArray(
-				[
-					elm$html$Html$Attributes$class('logIn-form')
-				]),
-			_List_fromArray(
-				[
-					A2(
-					elm$html$Html$div,
-					_List_fromArray(
-						[
-							elm$html$Html$Attributes$class('logIn-form-group')
-						]),
-					_List_fromArray(
-						[author$project$Main$logInIdView, author$project$Main$logInPasswordView, author$project$Main$logInButton])),
-					author$project$Main$orLabel,
-					A2(
-					elm$html$Html$div,
-					_List_fromArray(
-						[
-							elm$html$Html$Attributes$class('logIn-form-group')
-						]),
-					_List_fromArray(
-						[author$project$Main$signInButton]))
-				]))
-		]);
-};
-var author$project$Main$userLogInView = F2(
-	function (logInPage, isWideScreenMode) {
-		return A2(
-			elm$html$Html$div,
-			_List_fromArray(
-				[
-					elm$html$Html$Attributes$classList(
-					_List_fromArray(
-						[
-							_Utils_Tuple2('itemList', true),
-							_Utils_Tuple2('itemList-wide', isWideScreenMode)
-						]))
-				]),
-			function () {
-				if (logInPage.$ === 'LogInPage') {
-					return author$project$Main$logInPageView(isWideScreenMode);
-				} else {
-					return author$project$Main$forgotPasswordView(isWideScreenMode);
-				}
-			}());
-	});
-var elm$html$Html$form = _VirtualDom_node('form');
-var elm$html$Html$option = _VirtualDom_node('option');
-var elm$html$Html$select = _VirtualDom_node('select');
-var author$project$Main$userSignUpView = F2(
-	function (userPage, isWideScreenMode) {
-		return A2(
-			elm$html$Html$div,
-			_List_fromArray(
-				[
-					elm$html$Html$Attributes$classList(
-					_List_fromArray(
-						[
-							_Utils_Tuple2('itemList', true),
-							_Utils_Tuple2('itemList-wide', isWideScreenMode)
-						]))
-				]),
-			function () {
-				if (userPage.$ === 'UserSignUpPageStudentHasSAddress') {
-					return _List_fromArray(
-						[
-							A2(
-							elm$html$Html$form,
-							_List_fromArray(
-								[
-									elm$html$Html$Attributes$class('userPage-form')
-								]),
-							_List_fromArray(
-								[
-									A2(
-									elm$html$Html$div,
-									_List_fromArray(
-										[
-											elm$html$Html$Attributes$class('userPage-form-title')
-										]),
-									_List_fromArray(
-										[
-											elm$html$Html$text('sアドを持っているか')
-										])),
-									A2(
-									elm$html$Html$select,
-									_List_fromArray(
-										[
-											elm$html$Html$Attributes$class('userPage-form-select')
-										]),
-									_List_fromArray(
-										[
-											A2(
-											elm$html$Html$option,
-											_List_Nil,
-											_List_fromArray(
-												[
-													elm$html$Html$text('sアドを持っている')
-												])),
-											A2(
-											elm$html$Html$option,
-											_List_Nil,
-											_List_fromArray(
-												[
-													elm$html$Html$text('sアドを持っていない')
-												]))
-										])),
-									A2(
-									elm$html$Html$div,
-									_List_fromArray(
-										[
-											elm$html$Html$Attributes$class('userPage-form-description')
-										]),
-									_List_fromArray(
-										[
-											elm$html$Html$text('sアドをは… 学生証の画像を添付しなきゃだめ')
-										]))
-								]))
-						]);
-				} else {
-					return _List_Nil;
-				}
-			}());
-	});
 var author$project$Main$view = function (_n0) {
 	var page = _n0.a.page;
 	var menuState = _n0.a.menuState;
 	var wideScreenMode = _n0.a.wideScreenMode;
 	return {
-		body: _Utils_ap(
-			_List_fromArray(
-				[
-					author$project$Main$header(wideScreenMode),
-					A2(author$project$Main$mainTab, page, wideScreenMode),
-					A2(author$project$Main$menu, wideScreenMode, menuState)
-				]),
-			function () {
-				switch (page.$) {
-					case 'PageExhibition':
-						var exhibitionState = page.a;
-						return _List_fromArray(
-							[
-								author$project$Main$exhibitionView(exhibitionState)
-							]);
-					case 'PageSignUp':
-						var userPage = page.a;
-						return _List_fromArray(
-							[
-								A2(author$project$Main$userSignUpView, userPage, wideScreenMode)
-							]);
-					case 'PageLogIn':
-						var logInPage = page.a;
-						return _List_fromArray(
-							[
-								A2(author$project$Main$userLogInView, logInPage, wideScreenMode)
-							]);
-					default:
-						return _List_fromArray(
-							[
-								author$project$Main$itemList(wideScreenMode),
-								author$project$Main$exhibitButton,
-								author$project$Main$sendSampleButton
-							]);
-				}
-			}()),
+		body: _List_fromArray(
+			[
+				author$project$Main$header(wideScreenMode),
+				A2(author$project$Main$mainTab, page, wideScreenMode),
+				A2(author$project$Main$menu, wideScreenMode, menuState),
+				A2(author$project$Main$mainView, page, wideScreenMode)
+			]),
 		title: 'つくマート'
 	};
 };

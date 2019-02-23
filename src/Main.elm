@@ -249,20 +249,8 @@ view (Model { page, menuState, wideScreenMode }) =
         [ header wideScreenMode
         , mainTab page wideScreenMode
         , menu wideScreenMode menuState
+        , mainView page wideScreenMode
         ]
-            ++ (case page of
-                    PageExhibition exhibitionState ->
-                        [ exhibitionView exhibitionState ]
-
-                    PageSignUp userPage ->
-                        [ userSignUpView userPage wideScreenMode ]
-
-                    PageLogIn logInPage ->
-                        [ userLogInView logInPage wideScreenMode ]
-
-                    _ ->
-                        [ itemList wideScreenMode, exhibitButton, sendSampleButton ]
-               )
     }
 
 
@@ -772,11 +760,31 @@ mainTabSelectLine index count =
         ]
 
 
+mainView : Page -> Bool -> Html.Html Msg
+mainView page isWideScreenMode =
+    Html.div
+        [ Html.Attributes.classList
+            [ ( "mainView", True ), ( "mainView-wide", isWideScreenMode ) ]
+        ]
+        (case page of
+            PageExhibition exhibitionState ->
+                [ exhibitionView exhibitionState ]
+
+            PageSignUp userPage ->
+                userSignUpView userPage
+
+            PageLogIn logInPage ->
+                userLogInView logInPage
+
+            _ ->
+                [ itemList isWideScreenMode, exhibitButton ]
+        )
+
+
 itemList : Bool -> Html.Html Msg
 itemList isWideMode =
     Html.div
-        [ Html.Attributes.classList
-            [ ( "itemList", True ), ( "itemList-wide", isWideMode ) ]
+        [ Html.Attributes.style "display" "grid"
         , Html.Attributes.style "grid-template-columns"
             (if isWideMode then
                 "33.3% 33.4% 33.3%"
@@ -907,37 +915,20 @@ sendEmail =
         [ Html.text "新規登録かパスワードを忘れてしまった人のためにsアドに認証メールを送る" ]
 
 
-sendSampleButton : Html.Html Msg
-sendSampleButton =
-    Html.div
-        [ Html.Attributes.style "position" "absolute"
-        , Html.Attributes.style "background-color" "white"
-        , Html.Attributes.style "padding" "1rem"
-        , Html.Attributes.style "top" "6rem"
-        , Html.Events.onClick Request
-        ]
-        [ Html.text "サンプルボタン" ]
-
-
 {-| ログイン画面
 -}
-userLogInView : LogInPage -> Bool -> Html.Html Msg
-userLogInView logInPage isWideScreenMode =
-    Html.div
-        [ Html.Attributes.classList
-            [ ( "itemList", True ), ( "itemList-wide", isWideScreenMode ) ]
-        ]
-        (case logInPage of
-            LogInPage _ ->
-                logInPageView isWideScreenMode
+userLogInView : LogInPage -> List (Html.Html Msg)
+userLogInView logInPage =
+    case logInPage of
+        LogInPage _ ->
+            logInPageView
 
-            ForgotPassword ->
-                forgotPasswordView isWideScreenMode
-        )
+        ForgotPassword ->
+            forgotPasswordView
 
 
-logInPageView : Bool -> List (Html.Html Msg)
-logInPageView isWideScreenMode =
+logInPageView : List (Html.Html Msg)
+logInPageView =
     [ Html.div
         [ Html.Attributes.class "logIn-form" ]
         [ Html.div
@@ -979,8 +970,8 @@ logInPasswordView =
 
 {-| パスワードを忘れた画面
 -}
-forgotPasswordView : Bool -> List (Html.Html msg)
-forgotPasswordView isWideScreenMode =
+forgotPasswordView : List (Html.Html msg)
+forgotPasswordView =
     [ Html.text "パスワードを忘れたら。登録している学籍番号かメールアドレスを入力してください。パスワードを再発行します。" ]
 
 
@@ -1004,33 +995,28 @@ signInButton =
 
 {-| 新規登録画面
 -}
-userSignUpView : UserSignUpPage -> Bool -> Html.Html Msg
-userSignUpView userPage isWideScreenMode =
-    Html.div
-        [ Html.Attributes.classList
-            [ ( "itemList", True ), ( "itemList-wide", isWideScreenMode ) ]
-        ]
-        (case userPage of
-            UserSignUpPageStudentHasSAddress _ ->
-                [ Html.form
-                    [ Html.Attributes.class "userPage-form" ]
-                    [ Html.div
-                        [ Html.Attributes.class "userPage-form-title" ]
-                        [ Html.text "sアドを持っているか" ]
-                    , Html.select
-                        [ Html.Attributes.class "userPage-form-select" ]
-                        [ Html.option [] [ Html.text "sアドを持っている" ]
-                        , Html.option [] [ Html.text "sアドを持っていない" ]
-                        ]
-                    , Html.div
-                        [ Html.Attributes.class "userPage-form-description" ]
-                        [ Html.text "sアドをは… 学生証の画像を添付しなきゃだめ" ]
+userSignUpView : UserSignUpPage -> List (Html.Html Msg)
+userSignUpView userPage =
+    case userPage of
+        UserSignUpPageStudentHasSAddress _ ->
+            [ Html.form
+                [ Html.Attributes.class "userPage-form" ]
+                [ Html.div
+                    [ Html.Attributes.class "userPage-form-title" ]
+                    [ Html.text "sアドを持っているか" ]
+                , Html.select
+                    [ Html.Attributes.class "userPage-form-select" ]
+                    [ Html.option [] [ Html.text "sアドを持っている" ]
+                    , Html.option [] [ Html.text "sアドを持っていない" ]
                     ]
+                , Html.div
+                    [ Html.Attributes.class "userPage-form-description" ]
+                    [ Html.text "sアドをは… 学生証の画像を添付しなきゃだめ" ]
                 ]
+            ]
 
-            UserSignUpPageNewStudent _ ->
-                []
-        )
+        UserSignUpPageNewStudent _ ->
+            []
 
 
 subscription : Model -> Sub Msg
