@@ -49,7 +49,7 @@ type Page
 
 
 type UserSignUpPage
-    = UserSignUpPageStudentHasSAddress { studentId : String, password : String }
+    = UserSignUpPageStudentHasSAddress { studentIdOrTsukubaEmailAddress : String, password : String }
     | UserSignUpPageNewStudent { emailAddress : String, password : String }
 
 
@@ -218,7 +218,7 @@ urlParser beforePageMaybe =
             (PageHome Recommend)
             (Url.Parser.s "index.html")
         , Url.Parser.map
-            (PageSignUp (UserSignUpPageStudentHasSAddress { studentId = "", password = "" }))
+            (PageSignUp (UserSignUpPageStudentHasSAddress { studentIdOrTsukubaEmailAddress = "", password = "" }))
             (Url.Parser.s "user-signup")
         , Url.Parser.map
             (PageLogIn
@@ -910,8 +910,8 @@ exhibitionViewItemPrice price =
         ]
 
 
-sendEmail : Html.Html Msg
-sendEmail =
+sendEmailView : Html.Html Msg
+sendEmailView =
     Html.div
         [ Html.Attributes.class "sendEmailView" ]
         [ Html.text "新規登録かパスワードを忘れてしまった人のためにsアドに認証メールを送る" ]
@@ -942,7 +942,7 @@ logInPageView =
         , orLabel
         , Html.div
             [ Html.Attributes.class "logIn-form-group" ]
-            [ signInButton ]
+            [ signUpButton ]
         ]
     ]
 
@@ -990,8 +990,8 @@ orLabel =
         [ Html.text "or" ]
 
 
-signInButton : Html.Html msg
-signInButton =
+signUpButton : Html.Html msg
+signUpButton =
     Html.div [ Html.Attributes.class "logIn-form-signInButton" ] [ Html.text "新規登録" ]
 
 
@@ -1005,14 +1005,11 @@ userSignUpView userSignUpPage =
             [ Html.Attributes.class "userPage-form-title" ]
             [ Html.text "sアドを" ]
         , sAddressSelectView userSignUpPage
-        , Html.div
-            [ Html.Attributes.class "userPage-form-description" ]
-            [ Html.text "sアドをは… 学生証の画像を添付しなきゃだめ" ]
         ]
     ]
         ++ (case userSignUpPage of
-                UserSignUpPageStudentHasSAddress _ ->
-                    studentHasSAddressFormList
+                UserSignUpPageStudentHasSAddress { studentIdOrTsukubaEmailAddress } ->
+                    studentHasSAddressFormList studentIdOrTsukubaEmailAddress
 
                 UserSignUpPageNewStudent _ ->
                     newStudentFormList
@@ -1025,6 +1022,7 @@ userSignUpView userSignUpPage =
                 UserSignUpPageNewStudent { password } ->
                     password
             )
+        ++ [ signUpSubmitButton ]
 
 
 sAddressSelectView : UserSignUpPage -> Html.Html Msg
@@ -1051,7 +1049,7 @@ sAddressSelectView userSignUpPage =
                         []
 
                     else
-                        [ Html.Events.onClick (ChangePage (PageSignUp (UserSignUpPageStudentHasSAddress { studentId = "", password = "" }))) ]
+                        [ Html.Events.onClick (ChangePage (PageSignUp (UserSignUpPageStudentHasSAddress { studentIdOrTsukubaEmailAddress = "", password = "" }))) ]
                    )
             )
             [ Html.text "持っている" ]
@@ -1073,8 +1071,8 @@ sAddressSelectView userSignUpPage =
         ]
 
 
-studentHasSAddressFormList : List (Html.Html Msg)
-studentHasSAddressFormList =
+studentHasSAddressFormList : String -> List (Html.Html Msg)
+studentHasSAddressFormList string =
     [ Html.div
         [ Html.Attributes.class "userPage-form" ]
         [ Html.div
@@ -1085,9 +1083,53 @@ studentHasSAddressFormList =
             []
         , Html.div
             [ Html.Attributes.class "userPage-form-description" ]
-            [ Html.text "20からはじまる…" ]
+            [ Html.text
+                (case analysisStudentIdOrEmailAddress string of
+                    _ ->
+                        "解析結果"
+                )
+            ]
         ]
     ]
+
+
+analysisStudentIdOrEmailAddress : String -> AnalysisStudentIdOrEmailAddressResult
+analysisStudentIdOrEmailAddress string =
+    ANone
+
+
+type AnalysisStudentIdOrEmailAddressResult
+    = ANone
+    | AStudentId StudentId
+    | ATsukubaEmailAddress
+    | APartStudentId (List StudentIdNumber)
+    | AErrorStudentIdLong
+    | AEmailButIsNotTsukuba
+
+
+type alias StudentId =
+    { year : ( StudentIdNumber, StudentIdNumber )
+    , id :
+        { i0 : StudentIdNumber
+        , i1 : StudentIdNumber
+        , i2 : StudentIdNumber
+        , i3 : StudentIdNumber
+        , i4 : StudentIdNumber
+        }
+    }
+
+
+type StudentIdNumber
+    = SI0
+    | SI1
+    | SI2
+    | SI3
+    | SI4
+    | SI5
+    | SI6
+    | SI7
+    | SI8
+    | SI9
 
 
 newStudentFormList : List (Html.Html Msg)
@@ -1132,6 +1174,16 @@ passwordForm password =
             [ Html.text "9文字以上…" ]
         ]
     ]
+
+
+signUpSubmitButton : Html.Html Msg
+signUpSubmitButton =
+    Html.div
+        [ Html.Attributes.class "userPage-form" ]
+        [ Html.div
+            [ Html.Attributes.class "userPage-form-signUpButton" ]
+            [ Html.text "新規登録" ]
+        ]
 
 
 subscription : Model -> Sub Msg

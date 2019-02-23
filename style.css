@@ -429,6 +429,7 @@ img {
 
 .logIn-form {
     display: grid;
+    max-width: 40rem;
     gap: 1rem;
 }
 
@@ -510,11 +511,12 @@ img {
 }
 
 /*===============================================
-                Sign In 新規登録画面
+                Sign Up 新規登録画面
 ===============================================*/
 
 .userPage-form {
     padding: 1rem;
+    max-width: 40rem;
 }
 
 .userPage-form-title {
@@ -564,6 +566,24 @@ img {
     box-sizing: border-box;
     border-radius: .4rem;
 }
+
+.userPage-form-signUpButton {
+    background-color: var(--primaryColor);
+    color: #ddd;
+    padding: 1rem;
+    text-align: center;
+    font-size: 1.5rem;
+    border-radius: .4rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.18);
+    user-select: none;
+    cursor: pointer;
+}
+
+.userPage-form-signUpButton:hover {
+    background-color: var(--primaryColorLight);
+    color: #111;
+}
+
 /*===============================================
            Main View 画面に主に表示する場所
 ===============================================*/
@@ -572,12 +592,14 @@ img {
     display: grid;
     align-content: flex-start;
     padding-top: 7rem;
+    display: grid;
 }
 
 .mainView-wide {
     width: calc(100% - 20rem);
     position: relative;
     left: 20rem;
+    display: grid;
 }
 
 h2 {

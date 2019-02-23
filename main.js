@@ -5400,7 +5400,7 @@ var author$project$Main$urlParser = function (beforePageMaybe) {
 				elm$url$Url$Parser$map,
 				author$project$Main$PageSignUp(
 					author$project$Main$UserSignUpPageStudentHasSAddress(
-						{password: '', studentId: ''})),
+						{password: '', studentIdOrTsukubaEmailAddress: ''})),
 				elm$url$Url$Parser$s('user-signup')),
 				A2(
 				elm$url$Url$Parser$map,
@@ -11520,7 +11520,7 @@ var author$project$Main$orLabel = A2(
 		[
 			elm$html$Html$text('or')
 		]));
-var author$project$Main$signInButton = A2(
+var author$project$Main$signUpButton = A2(
 	elm$html$Html$div,
 	_List_fromArray(
 		[
@@ -11556,7 +11556,7 @@ var author$project$Main$logInPageView = _List_fromArray(
 						elm$html$Html$Attributes$class('logIn-form-group')
 					]),
 				_List_fromArray(
-					[author$project$Main$signInButton]))
+					[author$project$Main$signUpButton]))
 			]))
 	]);
 var author$project$Main$userLogInView = function (logInPage) {
@@ -11718,7 +11718,7 @@ var author$project$Main$sAddressSelectView = function (userSignUpPage) {
 							author$project$Main$ChangePage(
 								author$project$Main$PageSignUp(
 									author$project$Main$UserSignUpPageStudentHasSAddress(
-										{password: '', studentId: ''}))))
+										{password: '', studentIdOrTsukubaEmailAddress: ''}))))
 						])),
 				_List_fromArray(
 					[
@@ -11751,45 +11751,74 @@ var author$project$Main$sAddressSelectView = function (userSignUpPage) {
 					]))
 			]));
 };
-var author$project$Main$studentHasSAddressFormList = _List_fromArray(
-	[
-		A2(
-		elm$html$Html$div,
-		_List_fromArray(
-			[
-				elm$html$Html$Attributes$class('userPage-form')
-			]),
-		_List_fromArray(
-			[
-				A2(
-				elm$html$Html$div,
-				_List_fromArray(
-					[
-						elm$html$Html$Attributes$class('userPage-form-title')
-					]),
-				_List_fromArray(
-					[
-						elm$html$Html$text('学籍番号か～@～.tsukuba.ac.jpのメールアドレス')
-					])),
-				A2(
-				elm$html$Html$input,
-				_List_fromArray(
-					[
-						elm$html$Html$Attributes$class('userPage-form-input')
-					]),
-				_List_Nil),
-				A2(
-				elm$html$Html$div,
-				_List_fromArray(
-					[
-						elm$html$Html$Attributes$class('userPage-form-description')
-					]),
-				_List_fromArray(
-					[
-						elm$html$Html$text('20からはじまる…')
-					]))
-			]))
-	]);
+var author$project$Main$signUpSubmitButton = A2(
+	elm$html$Html$div,
+	_List_fromArray(
+		[
+			elm$html$Html$Attributes$class('userPage-form')
+		]),
+	_List_fromArray(
+		[
+			A2(
+			elm$html$Html$div,
+			_List_fromArray(
+				[
+					elm$html$Html$Attributes$class('userPage-form-signUpButton')
+				]),
+			_List_fromArray(
+				[
+					elm$html$Html$text('新規登録')
+				]))
+		]));
+var author$project$Main$ANone = {$: 'ANone'};
+var author$project$Main$analysisStudentIdOrEmailAddress = function (string) {
+	return author$project$Main$ANone;
+};
+var author$project$Main$studentHasSAddressFormList = function (string) {
+	return _List_fromArray(
+		[
+			A2(
+			elm$html$Html$div,
+			_List_fromArray(
+				[
+					elm$html$Html$Attributes$class('userPage-form')
+				]),
+			_List_fromArray(
+				[
+					A2(
+					elm$html$Html$div,
+					_List_fromArray(
+						[
+							elm$html$Html$Attributes$class('userPage-form-title')
+						]),
+					_List_fromArray(
+						[
+							elm$html$Html$text('学籍番号か～@～.tsukuba.ac.jpのメールアドレス')
+						])),
+					A2(
+					elm$html$Html$input,
+					_List_fromArray(
+						[
+							elm$html$Html$Attributes$class('userPage-form-input')
+						]),
+					_List_Nil),
+					A2(
+					elm$html$Html$div,
+					_List_fromArray(
+						[
+							elm$html$Html$Attributes$class('userPage-form-description')
+						]),
+					_List_fromArray(
+						[
+							elm$html$Html$text(
+							function () {
+								var _n0 = author$project$Main$analysisStudentIdOrEmailAddress(string);
+								return '解析結果';
+							}())
+						]))
+				]))
+		]);
+};
 var author$project$Main$userSignUpView = function (userSignUpPage) {
 	return _Utils_ap(
 		_List_fromArray(
@@ -11812,37 +11841,31 @@ var author$project$Main$userSignUpView = function (userSignUpPage) {
 							[
 								elm$html$Html$text('sアドを')
 							])),
-						author$project$Main$sAddressSelectView(userSignUpPage),
-						A2(
-						elm$html$Html$div,
-						_List_fromArray(
-							[
-								elm$html$Html$Attributes$class('userPage-form-description')
-							]),
-						_List_fromArray(
-							[
-								elm$html$Html$text('sアドをは… 学生証の画像を添付しなきゃだめ')
-							]))
+						author$project$Main$sAddressSelectView(userSignUpPage)
 					]))
 			]),
 		_Utils_ap(
 			function () {
 				if (userSignUpPage.$ === 'UserSignUpPageStudentHasSAddress') {
-					return author$project$Main$studentHasSAddressFormList;
+					var studentIdOrTsukubaEmailAddress = userSignUpPage.a.studentIdOrTsukubaEmailAddress;
+					return author$project$Main$studentHasSAddressFormList(studentIdOrTsukubaEmailAddress);
 				} else {
 					return author$project$Main$newStudentFormList;
 				}
 			}(),
-			author$project$Main$passwordForm(
-				function () {
-					if (userSignUpPage.$ === 'UserSignUpPageStudentHasSAddress') {
-						var password = userSignUpPage.a.password;
-						return password;
-					} else {
-						var password = userSignUpPage.a.password;
-						return password;
-					}
-				}())));
+			_Utils_ap(
+				author$project$Main$passwordForm(
+					function () {
+						if (userSignUpPage.$ === 'UserSignUpPageStudentHasSAddress') {
+							var password = userSignUpPage.a.password;
+							return password;
+						} else {
+							var password = userSignUpPage.a.password;
+							return password;
+						}
+					}()),
+				_List_fromArray(
+					[author$project$Main$signUpSubmitButton]))));
 };
 var author$project$Main$mainView = F2(
 	function (page, isWideScreenMode) {
@@ -12069,4 +12092,4 @@ var elm$browser$Browser$application = _Browser_application;
 var author$project$Main$main = elm$browser$Browser$application(
 	{init: author$project$Main$init, onUrlChange: author$project$Main$onUrlChange, onUrlRequest: author$project$Main$onUrlRequest, subscriptions: author$project$Main$subscription, update: author$project$Main$update, view: author$project$Main$view});
 _Platform_export({'Main':{'init':author$project$Main$main(
-	elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.0"},"types":{"message":"Main.Msg","aliases":{"Url.Url":{"args":[],"type":"{ protocol : Url.Protocol, host : String.String, port_ : Maybe.Maybe Basics.Int, path : String.String, query : Maybe.Maybe String.String, fragment : Maybe.Maybe String.String }"},"Main.ExhibitionState":{"args":[],"type":"{ title : String.String, description : String.String, price : Maybe.Maybe Basics.Int }"}},"unions":{"Main.Msg":{"args":[],"tags":{"ChangePage":["Main.Page"],"OpenMenu":[],"CloseMenu":[],"ToWideScreenMode":[],"ToNarrowScreenMode":[],"UrlChange":["Url.Url"],"UrlRequest":["Browser.UrlRequest"],"Request":[],"Response":["String.String"]}},"Main.Page":{"args":[],"tags":{"PageHome":["Main.Home"],"PageSignUp":["Main.UserSignUpPage"],"PageLogIn":["Main.LogInPage"],"PageLikeAndHistory":["Main.LikeAndHistory"],"PageExhibitionItemList":[],"PagePurchaseItemList":[],"PageExhibition":["Main.ExhibitionState"]}},"Browser.UrlRequest":{"args":[],"tags":{"Internal":["Url.Url"],"External":["String.String"]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"String.String":{"args":[],"tags":{"String":[]}},"Url.Protocol":{"args":[],"tags":{"Http":[],"Https":[]}},"Main.Home":{"args":[],"tags":{"Recent":[],"Recommend":[],"Free":[]}},"Main.LikeAndHistory":{"args":[],"tags":{"Like":[],"History":[]}},"Main.LogInPage":{"args":[],"tags":{"LogInPage":["{ nextPage : Main.Page, studentIdOrEmailAddress : String.String, password : String.String }"],"ForgotPassword":[]}},"Main.UserSignUpPage":{"args":[],"tags":{"UserSignUpPageStudentHasSAddress":["{ studentId : String.String, password : String.String }"],"UserSignUpPageNewStudent":["{ emailAddress : String.String, password : String.String }"]}}}}})}});}(this));
+	elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.0"},"types":{"message":"Main.Msg","aliases":{"Url.Url":{"args":[],"type":"{ protocol : Url.Protocol, host : String.String, port_ : Maybe.Maybe Basics.Int, path : String.String, query : Maybe.Maybe String.String, fragment : Maybe.Maybe String.String }"},"Main.ExhibitionState":{"args":[],"type":"{ title : String.String, description : String.String, price : Maybe.Maybe Basics.Int }"}},"unions":{"Main.Msg":{"args":[],"tags":{"ChangePage":["Main.Page"],"OpenMenu":[],"CloseMenu":[],"ToWideScreenMode":[],"ToNarrowScreenMode":[],"UrlChange":["Url.Url"],"UrlRequest":["Browser.UrlRequest"],"Request":[],"Response":["String.String"]}},"Main.Page":{"args":[],"tags":{"PageHome":["Main.Home"],"PageSignUp":["Main.UserSignUpPage"],"PageLogIn":["Main.LogInPage"],"PageLikeAndHistory":["Main.LikeAndHistory"],"PageExhibitionItemList":[],"PagePurchaseItemList":[],"PageExhibition":["Main.ExhibitionState"]}},"Browser.UrlRequest":{"args":[],"tags":{"Internal":["Url.Url"],"External":["String.String"]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"String.String":{"args":[],"tags":{"String":[]}},"Url.Protocol":{"args":[],"tags":{"Http":[],"Https":[]}},"Main.Home":{"args":[],"tags":{"Recent":[],"Recommend":[],"Free":[]}},"Main.LikeAndHistory":{"args":[],"tags":{"Like":[],"History":[]}},"Main.LogInPage":{"args":[],"tags":{"LogInPage":["{ nextPage : Main.Page, studentIdOrEmailAddress : String.String, password : String.String }"],"ForgotPassword":[]}},"Main.UserSignUpPage":{"args":[],"tags":{"UserSignUpPageStudentHasSAddress":["{ studentIdOrTsukubaEmailAddress : String.String, password : String.String }"],"UserSignUpPageNewStudent":["{ emailAddress : String.String, password : String.String }"]}}}}})}});}(this));
