@@ -28,8 +28,7 @@ port toNarrowScreenMode : (Int -> msg) -> Sub msg
 type Model
     = Model
         { page : Page
-        , menuState : MenuState
-        , wideScreenMode : Bool
+        , menuState : Maybe MenuState
         , key : Browser.Navigation.Key
         }
 
@@ -116,8 +115,7 @@ init : () -> Url.Url -> Browser.Navigation.Key -> ( Model, Cmd Msg )
 init _ url key =
     ( Model
         { page = urlToPage url Nothing
-        , menuState = MenuNotOpenedYet
-        , wideScreenMode = False
+        , menuState = Just MenuNotOpenedYet
         , key = key
         }
     , Cmd.none
@@ -136,44 +134,55 @@ update msg (Model rec) =
             )
 
         OpenMenu ->
-            ( Model
-                { rec
-                    | menuState = MenuOpen
-                }
+            ( case rec.menuState of
+                Just _ ->
+                    Model
+                        { rec
+                            | menuState = Just MenuOpen
+                        }
+
+                Nothing ->
+                    Model rec
             , Cmd.none
             )
 
         CloseMenu ->
-            ( Model
-                { rec
-                    | menuState = MenuClose
-                }
+            ( case rec.menuState of
+                Just _ ->
+                    Model
+                        { rec
+                            | menuState = Just MenuClose
+                        }
+
+                Nothing ->
+                    Model rec
             , Cmd.none
             )
 
         ToWideScreenMode ->
             ( Model
-                { rec | wideScreenMode = True }
+                { rec | menuState = Nothing }
             , Cmd.none
             )
 
         ToNarrowScreenMode ->
             ( Model
-                { rec | wideScreenMode = False }
+                { rec | menuState = Just MenuNotOpenedYet }
             , Cmd.none
             )
 
         UrlChange url ->
-            ( case urlToPage url (Just rec.page) of
-                PageExhibition state ->
-                    Model { rec | page = PageExhibition state, menuState = MenuNotOpenedYet }
+            ( Model
+                { rec
+                    | page = urlToPage url (Just rec.page)
+                    , menuState =
+                        case rec.menuState of
+                            Just MenuOpen ->
+                                Just MenuClose
 
-                page ->
-                    let
-                        _ =
-                            Debug.log "page?" page
-                    in
-                    Model { rec | page = page, menuState = MenuClose }
+                            _ ->
+                                rec.menuState
+                }
             , Cmd.none
             )
 
@@ -294,13 +303,17 @@ urlParser beforePageMaybe =
 {-| 見た目を決める
 -}
 view : Model -> { title : String, body : List (Html.Html Msg) }
-view (Model { page, menuState, wideScreenMode }) =
+view (Model { page, menuState }) =
+    let
+        isWideScreen =
+            menuState == Nothing
+    in
     { title = "つくマート"
     , body =
-        [ header wideScreenMode
-        , mainTab page wideScreenMode
-        , menu wideScreenMode menuState
-        , mainView page wideScreenMode
+        [ header isWideScreen
+        , mainTab page isWideScreen
+        , menuView menuState
+        , mainView page isWideScreen
         ]
     }
 
@@ -586,48 +599,49 @@ headerButton =
 {- Menu -}
 
 
-menu : Bool -> MenuState -> Html.Html Msg
-menu isWideMode menuState =
-    if isWideMode then
-        Html.div
-            [ Html.Attributes.class "menu-wide" ]
-            menuMain
+menuView : Maybe MenuState -> Html.Html Msg
+menuView menuStateMaybe =
+    case menuStateMaybe of
+        Just menuState ->
+            Html.Keyed.node "div"
+                [ Html.Attributes.class "menu" ]
+                (case menuState of
+                    MenuNotOpenedYet ->
+                        []
 
-    else
-        Html.Keyed.node "div"
-            [ Html.Attributes.class "menu" ]
-            (case menuState of
-                MenuNotOpenedYet ->
-                    []
+                    MenuOpen ->
+                        [ ( "os"
+                          , Html.div
+                                [ Html.Attributes.class "menu-shadow menu-shadow-appear"
+                                , Html.Events.onClick CloseMenu
+                                ]
+                                []
+                          )
+                        , ( "om"
+                          , Html.div
+                                [ Html.Attributes.class "menu-list menu-list-open" ]
+                                menuMain
+                          )
+                        ]
 
-                MenuOpen ->
-                    [ ( "os"
-                      , Html.div
-                            [ Html.Attributes.class "menu-shadow menu-shadow-appear"
-                            , Html.Events.onClick CloseMenu
-                            ]
-                            []
-                      )
-                    , ( "om"
-                      , Html.div
-                            [ Html.Attributes.class "menu-list menu-list-open" ]
-                            menuMain
-                      )
-                    ]
+                    MenuClose ->
+                        [ ( "cs"
+                          , Html.div
+                                [ Html.Attributes.class "menu-shadow menu-shadow-disappear" ]
+                                []
+                          )
+                        , ( "cm"
+                          , Html.div
+                                [ Html.Attributes.class "menu-list menu-list-close" ]
+                                menuMain
+                          )
+                        ]
+                )
 
-                MenuClose ->
-                    [ ( "cs"
-                      , Html.div
-                            [ Html.Attributes.class "menu-shadow menu-shadow-disappear" ]
-                            []
-                      )
-                    , ( "cm"
-                      , Html.div
-                            [ Html.Attributes.class "menu-list menu-list-close" ]
-                            menuMain
-                      )
-                    ]
-            )
+        Nothing ->
+            Html.div
+                [ Html.Attributes.class "menu-wide" ]
+                menuMain
 
 
 menuMain : List (Html.Html Msg)
@@ -1301,11 +1315,10 @@ signUpJson userSignUpPage =
 
 
 subscription : Model -> Sub Msg
-subscription (Model { wideScreenMode }) =
-    Sub.batch
-        (if wideScreenMode then
-            [ toNarrowScreenMode (always ToNarrowScreenMode) ]
+subscription (Model { menuState }) =
+    case menuState of
+        Just _ ->
+            toWideScreenMode (always ToWideScreenMode)
 
-         else
-            [ toWideScreenMode (always ToWideScreenMode) ]
-        )
+        Nothing ->
+            toNarrowScreenMode (always ToNarrowScreenMode)

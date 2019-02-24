@@ -6450,9 +6450,8 @@ var author$project$Main$init = F3(
 			author$project$Main$Model(
 				{
 					key: key,
-					menuState: author$project$Main$MenuNotOpenedYet,
-					page: A2(author$project$Main$urlToPage, url, elm$core$Maybe$Nothing),
-					wideScreenMode: false
+					menuState: elm$core$Maybe$Just(author$project$Main$MenuNotOpenedYet),
+					page: A2(author$project$Main$urlToPage, url, elm$core$Maybe$Nothing)
 				}),
 			elm$core$Platform$Cmd$none);
 	});
@@ -6465,19 +6464,15 @@ var elm$core$Basics$always = F2(
 	function (a, _n0) {
 		return a;
 	});
-var elm$core$Platform$Sub$batch = _Platform_batch;
 var author$project$Main$subscription = function (_n0) {
-	var wideScreenMode = _n0.a.wideScreenMode;
-	return elm$core$Platform$Sub$batch(
-		wideScreenMode ? _List_fromArray(
-			[
-				author$project$Main$toNarrowScreenMode(
-				elm$core$Basics$always(author$project$Main$ToNarrowScreenMode))
-			]) : _List_fromArray(
-			[
-				author$project$Main$toWideScreenMode(
-				elm$core$Basics$always(author$project$Main$ToWideScreenMode))
-			]));
+	var menuState = _n0.a.menuState;
+	if (menuState.$ === 'Just') {
+		return author$project$Main$toWideScreenMode(
+			elm$core$Basics$always(author$project$Main$ToWideScreenMode));
+	} else {
+		return author$project$Main$toNarrowScreenMode(
+			elm$core$Basics$always(author$project$Main$ToNarrowScreenMode));
+	}
 };
 var author$project$Main$MenuClose = {$: 'MenuClose'};
 var author$project$Main$MenuOpen = {$: 'MenuOpen'};
@@ -10526,58 +10521,73 @@ var author$project$Main$update = F2(
 					elm$core$Platform$Cmd$none);
 			case 'OpenMenu':
 				return _Utils_Tuple2(
-					author$project$Main$Model(
-						_Utils_update(
-							rec,
-							{menuState: author$project$Main$MenuOpen})),
+					function () {
+						var _n2 = rec.menuState;
+						if (_n2.$ === 'Just') {
+							return author$project$Main$Model(
+								_Utils_update(
+									rec,
+									{
+										menuState: elm$core$Maybe$Just(author$project$Main$MenuOpen)
+									}));
+						} else {
+							return author$project$Main$Model(rec);
+						}
+					}(),
 					elm$core$Platform$Cmd$none);
 			case 'CloseMenu':
 				return _Utils_Tuple2(
-					author$project$Main$Model(
-						_Utils_update(
-							rec,
-							{menuState: author$project$Main$MenuClose})),
+					function () {
+						var _n3 = rec.menuState;
+						if (_n3.$ === 'Just') {
+							return author$project$Main$Model(
+								_Utils_update(
+									rec,
+									{
+										menuState: elm$core$Maybe$Just(author$project$Main$MenuClose)
+									}));
+						} else {
+							return author$project$Main$Model(rec);
+						}
+					}(),
 					elm$core$Platform$Cmd$none);
 			case 'ToWideScreenMode':
 				return _Utils_Tuple2(
 					author$project$Main$Model(
 						_Utils_update(
 							rec,
-							{wideScreenMode: true})),
+							{menuState: elm$core$Maybe$Nothing})),
 					elm$core$Platform$Cmd$none);
 			case 'ToNarrowScreenMode':
 				return _Utils_Tuple2(
 					author$project$Main$Model(
 						_Utils_update(
 							rec,
-							{wideScreenMode: false})),
+							{
+								menuState: elm$core$Maybe$Just(author$project$Main$MenuNotOpenedYet)
+							})),
 					elm$core$Platform$Cmd$none);
 			case 'UrlChange':
 				var url = msg.a;
 				return _Utils_Tuple2(
-					function () {
-						var _n2 = A2(
-							author$project$Main$urlToPage,
-							url,
-							elm$core$Maybe$Just(rec.page));
-						if (_n2.$ === 'PageExhibition') {
-							var state = _n2.a;
-							return author$project$Main$Model(
-								_Utils_update(
-									rec,
-									{
-										menuState: author$project$Main$MenuNotOpenedYet,
-										page: author$project$Main$PageExhibition(state)
-									}));
-						} else {
-							var page = _n2;
-							var _n3 = A2(elm$core$Debug$log, 'page?', page);
-							return author$project$Main$Model(
-								_Utils_update(
-									rec,
-									{menuState: author$project$Main$MenuClose, page: page}));
-						}
-					}(),
+					author$project$Main$Model(
+						_Utils_update(
+							rec,
+							{
+								menuState: function () {
+									var _n4 = rec.menuState;
+									if ((_n4.$ === 'Just') && (_n4.a.$ === 'MenuOpen')) {
+										var _n5 = _n4.a;
+										return elm$core$Maybe$Just(author$project$Main$MenuClose);
+									} else {
+										return rec.menuState;
+									}
+								}(),
+								page: A2(
+									author$project$Main$urlToPage,
+									url,
+									elm$core$Maybe$Just(rec.page))
+							})),
 					elm$core$Platform$Cmd$none);
 			case 'UrlRequest':
 				var urlRequest = msg.a;
@@ -10612,23 +10622,23 @@ var author$project$Main$update = F2(
 						}));
 			case 'Response':
 				var string = msg.a;
-				var _n5 = A2(elm$core$Debug$log, 'response', string);
+				var _n7 = A2(elm$core$Debug$log, 'response', string);
 				return _Utils_Tuple2(
 					author$project$Main$Model(rec),
 					elm$core$Platform$Cmd$none);
 			case 'SignUp':
-				var _n6 = rec.page;
-				if (_n6.$ === 'PageSignUp') {
-					var userSignUpPage = _n6.a;
+				var _n8 = rec.page;
+				if (_n8.$ === 'PageSignUp') {
+					var userSignUpPage = _n8.a;
 					return _Utils_Tuple2(
 						author$project$Main$Model(
 							_Utils_update(
 								rec,
 								{page: author$project$Main$PageSendSignUpEmail})),
 						function () {
-							var _n7 = author$project$Main$signUpJson(userSignUpPage);
-							if (_n7.$ === 'Just') {
-								var json = _n7.a;
+							var _n9 = author$project$Main$signUpJson(userSignUpPage);
+							if (_n9.$ === 'Just') {
+								var json = _n9.a;
 								return elm$http$Http$post(
 									{
 										body: elm$http$Http$jsonBody(json),
@@ -12152,15 +12162,10 @@ var elm$virtual_dom$VirtualDom$keyedNode = function (tag) {
 		_VirtualDom_noScript(tag));
 };
 var elm$html$Html$Keyed$node = elm$virtual_dom$VirtualDom$keyedNode;
-var author$project$Main$menu = F2(
-	function (isWideMode, menuState) {
-		return isWideMode ? A2(
-			elm$html$Html$div,
-			_List_fromArray(
-				[
-					elm$html$Html$Attributes$class('menu-wide')
-				]),
-			author$project$Main$menuMain) : A3(
+var author$project$Main$menuView = function (menuStateMaybe) {
+	if (menuStateMaybe.$ === 'Just') {
+		var menuState = menuStateMaybe.a;
+		return A3(
 			elm$html$Html$Keyed$node,
 			'div',
 			_List_fromArray(
@@ -12218,18 +12223,27 @@ var author$project$Main$menu = F2(
 							]);
 				}
 			}());
-	});
+	} else {
+		return A2(
+			elm$html$Html$div,
+			_List_fromArray(
+				[
+					elm$html$Html$Attributes$class('menu-wide')
+				]),
+			author$project$Main$menuMain);
+	}
+};
 var author$project$Main$view = function (_n0) {
 	var page = _n0.a.page;
 	var menuState = _n0.a.menuState;
-	var wideScreenMode = _n0.a.wideScreenMode;
+	var isWideScreen = _Utils_eq(menuState, elm$core$Maybe$Nothing);
 	return {
 		body: _List_fromArray(
 			[
-				author$project$Main$header(wideScreenMode),
-				A2(author$project$Main$mainTab, page, wideScreenMode),
-				A2(author$project$Main$menu, wideScreenMode, menuState),
-				A2(author$project$Main$mainView, page, wideScreenMode)
+				author$project$Main$header(isWideScreen),
+				A2(author$project$Main$mainTab, page, isWideScreen),
+				author$project$Main$menuView(menuState),
+				A2(author$project$Main$mainView, page, isWideScreen)
 			]),
 		title: 'つくマート'
 	};
