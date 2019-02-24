@@ -7,6 +7,8 @@ import Html.Attributes
 import Html.Events
 import Html.Keyed
 import Http
+import Json.Decode
+import Json.Encode
 import Svg
 import Svg.Attributes
 import Url
@@ -46,6 +48,7 @@ type Page
     | PageExhibitionItemList
     | PagePurchaseItemList
     | PageExhibition ExhibitionState
+    | PageSendSignUpEmail
 
 
 type UserSignUpPage
@@ -87,6 +90,14 @@ type Msg
     | UrlRequest Browser.UrlRequest
     | Request
     | Response String
+    | SignUp
+    | SignUpResponse (Result Http.Error SignUpResponseResult)
+
+
+type SignUpResponseResult
+    = SignUpResponseResultOk
+    | SignUpResponseResultAleadySignUp
+    | SignUpResponseResultError
 
 
 main : Program () Model Msg
@@ -192,6 +203,52 @@ update msg (Model rec) =
                     Debug.log "response" string
             in
             ( Model rec, Cmd.none )
+
+        SignUp ->
+            case rec.page of
+                PageSignUp userSignUpPage ->
+                    ( Model
+                        { rec
+                            | page = PageSendSignUpEmail
+                        }
+                    , case signUpJson userSignUpPage of
+                        Just json ->
+                            Http.post
+                                { url = "/signup"
+                                , body = Http.jsonBody json
+                                , expect = Http.expectJson SignUpResponse signUpResponseDecoder
+                                }
+
+                        Nothing ->
+                            Cmd.none
+                    )
+
+                _ ->
+                    ( Model rec
+                    , Cmd.none
+                    )
+
+        SignUpResponse _ ->
+            ( Model rec
+            , Cmd.none
+            )
+
+
+signUpResponseDecoder : Json.Decode.Decoder SignUpResponseResult
+signUpResponseDecoder =
+    Json.Decode.field "signUpResult" Json.Decode.string
+        |> Json.Decode.map
+            (\signUpResultValue ->
+                case signUpResultValue of
+                    "ok" ->
+                        SignUpResponseResultOk
+
+                    "alreadySignUp" ->
+                        SignUpResponseResultAleadySignUp
+
+                    _ ->
+                        SignUpResponseResultError
+            )
 
 
 urlToPage : Url.Url -> Maybe Page -> Page
@@ -652,6 +709,9 @@ mainTab page wideScreenMode =
 
                 PageExhibition _ ->
                     TabSingle "商品の情報を入力"
+
+                PageSendSignUpEmail ->
+                    TabSingle ""
     in
     Html.div
         [ Html.Attributes.classList
@@ -793,7 +853,7 @@ invalidLinkErrorMsg =
     Html.div
         [ Html.Attributes.class "invalidLinkErrorMsg"
         ]
-        [ Html.text "指定したページが見つからなかったのでホームに移動しました" ]
+        [ Html.text "指定したページが見つからないのでホームに移動しました" ]
 
 
 itemList : Bool -> Html.Html Msg
@@ -1067,7 +1127,7 @@ sAddressSelectView userSignUpPage =
     in
     Html.div
         [ Html.Attributes.class "userPage-form-select" ]
-        [ Html.button
+        [ Html.div
             ([ Html.Attributes.classList
                 [ ( "userPage-form-select-item", True )
                 , ( "userPage-form-select-itemSelect", leftSelect )
@@ -1082,7 +1142,7 @@ sAddressSelectView userSignUpPage =
                    )
             )
             [ Html.text "持っている" ]
-        , Html.button
+        , Html.div
             ([ Html.Attributes.classList
                 [ ( "userPage-form-select-item", True )
                 , ( "userPage-form-select-itemSelect", not leftSelect )
@@ -1163,28 +1223,34 @@ type StudentIdNumber
 
 newStudentFormList : List (Html.Html Msg)
 newStudentFormList =
-    [ Html.label
-        [ Html.Attributes.class "userPage-form-label"
-        , Html.Attributes.for "signUpEmail"
+    [ Html.div
+        [ Html.Attributes.class "userPage-form" ]
+        [ Html.label
+            [ Html.Attributes.class "userPage-form-label"
+            , Html.Attributes.for "signUpEmail"
+            ]
+            [ Html.text "登録用メールアドレス" ]
+        , Html.input [ Html.Attributes.class "userPage-form-input", Html.Attributes.type_ "email", Html.Attributes.id "signUpEmail" ] []
+        , Html.div
+            [ Html.Attributes.class "userPage-form-description" ]
+            [ Html.text "Sアドをつかえるまでの…" ]
         ]
-        [ Html.text "登録用メールアドレス" ]
-    , Html.input [ Html.Attributes.class "userPage-form-input", Html.Attributes.type_ "email", Html.Attributes.id "signUpEmail" ] []
     , Html.div
-        [ Html.Attributes.class "userPage-form-description" ]
-        [ Html.text "Sアドをつかえるまでの…" ]
-    , Html.label
-        [ Html.Attributes.class "userPage-form-label"
-        , Html.Attributes.for "signUpPassword"
+        [ Html.Attributes.class "userPage-form" ]
+        [ Html.label
+            [ Html.Attributes.class "userPage-form-label"
+            , Html.Attributes.for "signUpPassword"
+            ]
+            [ Html.text "学生証" ]
+        , Html.input
+            [ Html.Attributes.class "userPage-form-input"
+            , Html.Attributes.id "signUpPassword"
+            ]
+            []
+        , Html.div
+            [ Html.Attributes.class "userPage-form-description" ]
+            []
         ]
-        [ Html.text "学生証" ]
-    , Html.input
-        [ Html.Attributes.class "userPage-form-input"
-        , Html.Attributes.id "signUpPassword"
-        ]
-        []
-    , Html.div
-        [ Html.Attributes.class "userPage-form-description" ]
-        []
     ]
 
 
@@ -1217,9 +1283,21 @@ signUpSubmitButton =
     Html.div
         [ Html.Attributes.class "userPage-form" ]
         [ Html.button
-            [ Html.Attributes.class "userPage-form-signUpButton" ]
+            [ Html.Attributes.class "userPage-form-signUpButton"
+            , Html.Events.onClick SignUp
+            ]
             [ Html.text "新規登録" ]
         ]
+
+
+signUpJson : UserSignUpPage -> Maybe Json.Encode.Value
+signUpJson userSignUpPage =
+    case userSignUpPage of
+        UserSignUpPageStudentHasSAddress { studentIdOrTsukubaEmailAddress } ->
+            Nothing
+
+        UserSignUpPageNewStudent record ->
+            Nothing
 
 
 subscription : Model -> Sub Msg
