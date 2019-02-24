@@ -452,28 +452,28 @@ img {
                 Log In ログイン画面
 ===============================================*/
 
-.logIn-form {
+.logIn {
     display: grid;
     max-width: 40rem;
     gap: 1rem;
 }
 
-.logIn-form-group {
+.logIn-group {
     display: grid;
     background-color: #eee;
     gap: 1.5rem;
     padding: 1.5rem;
 }
 
-.logIn-form-item {
+.logIn-item {
     width: 100%;
 }
 
-.logIn-form-subTitle {
+.logIn-subTitle {
     font-size: 1.2rem;
 }
 
-.logIn-form-subTitle-forgotPassword {
+.logIn-subTitle-forgotPassword {
     color: rgb(25, 99, 128);
     font-size: 1rem;
     padding: 0 1rem;
@@ -482,12 +482,12 @@ img {
     cursor: pointer;
 }
 
-.logIn-form-subTitle-forgotPassword:hover {
+.logIn-subTitle-forgotPassword:hover {
     color: rgb(42, 136, 173);
     background-color: #ccc;
 }
 
-.logIn-form-input {
+.logIn-input {
     font-size: 1.2rem;
     padding: .4rem;
     width: 100%;
@@ -496,7 +496,7 @@ img {
     border-radius: .4rem;
 }
 
-.logIn-form-logInButton {
+.logIn-logInButton {
     background-color: var(--primaryColor);
     color: #ddd;
     padding: 1rem;
@@ -504,22 +504,24 @@ img {
     font-size: 1.5rem;
     border-radius: .4rem;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.18);
+    border: none;
     user-select: none;
     cursor: pointer;
+    width: 100%;
 }
 
-.logIn-form-logInButton:hover {
+.logIn-logInButton:hover {
     background-color: var(--primaryColorLight);
     color: #111;
 }
 
-.logIn-form-orLabel {
+.logIn-orLabel {
     color: #aaa;
     font-size: 1rem;
     text-align: center;
 }
 
-.logIn-form-signInButton {
+.logIn-signInButton {
     background-color: #999;
     color: #111;
     padding: 1rem;
@@ -527,11 +529,12 @@ img {
     font-size: 1.5rem;
     border-radius: .4rem;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.18);
+    border: none;
     user-select: none;
     cursor: pointer;
 }
 
-.logIn-form-signInButton:hover {
+.logIn-signInButton:hover {
     background-color: #bbb;
 }
 
@@ -539,9 +542,12 @@ img {
                 Sign Up 新規登録画面
 ===============================================*/
 
-.userPage-form {
-    padding: 1rem;
+.signUp {
+    display: grid;
     max-width: 40rem;
+    gap: 1rem;
+    padding: 1.5rem;
+    box-sizing: border-box;
 }
 
 .userPage-form-label {
@@ -618,16 +624,15 @@ img {
 
 .mainView {
     display: grid;
-    align-content: flex-start;
+    justify-content: center;
+    align-content: start;
     padding-top: 7rem;
     display: grid;
 }
 
 .mainView-wide {
     width: calc(100% - 20rem);
-    position: relative;
-    left: 20rem;
-    display: grid;
+    padding: 7rem 0 0 20rem;
 }
 
 h2 {
