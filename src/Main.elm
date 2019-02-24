@@ -1102,8 +1102,10 @@ orLabel =
 
 signUpButton : Html.Html msg
 signUpButton =
-    Html.button
-        [ Html.Attributes.class "logIn-signInButton" ]
+    Html.a
+        [ Html.Attributes.class "logIn-signInButton"
+        , Html.Attributes.href "/user-signup"
+        ]
         [ Html.text "新規登録" ]
 
 
@@ -1143,7 +1145,7 @@ sAddressView userSignUpPage =
     Html.div
         []
         [ Html.label
-            [ Html.Attributes.class "userPage-form-label" ]
+            [ Html.Attributes.class "signUp-label" ]
             [ Html.text "sアドを" ]
         , sAddressSelectView userSignUpPage
         ]
@@ -1161,11 +1163,11 @@ sAddressSelectView userSignUpPage =
                     False
     in
     Html.div
-        [ Html.Attributes.class "userPage-form-select" ]
+        [ Html.Attributes.class "signUp-select" ]
         [ Html.div
             ([ Html.Attributes.classList
-                [ ( "userPage-form-select-item", True )
-                , ( "userPage-form-select-itemSelect", leftSelect )
+                [ ( "signUp-select-item", True )
+                , ( "signUp-select-itemSelect", leftSelect )
                 ]
              , Html.Attributes.style "border-radius" ".4rem 0 0 .4rem"
              ]
@@ -1179,8 +1181,8 @@ sAddressSelectView userSignUpPage =
             [ Html.text "持っている" ]
         , Html.div
             ([ Html.Attributes.classList
-                [ ( "userPage-form-select-item", True )
-                , ( "userPage-form-select-itemSelect", not leftSelect )
+                [ ( "signUp-select-item", True )
+                , ( "signUp-select-itemSelect", not leftSelect )
                 ]
              , Html.Attributes.style "border-radius" "0 .4rem .4rem 0"
              ]
@@ -1200,18 +1202,18 @@ studentHasSAddressFormList string =
     [ Html.div
         []
         [ Html.label
-            [ Html.Attributes.class "userPage-form-label"
+            [ Html.Attributes.class "signUp-label"
             , Html.Attributes.for "signUpStudentIdOrTsukubaEmail"
             ]
             [ Html.text "学籍番号か～@～.tsukuba.ac.jpのメールアドレス" ]
         , Html.input
-            [ Html.Attributes.class "userPage-form-input"
+            [ Html.Attributes.class "signUp-input"
             , Html.Attributes.id "signUpStudentIdOrTsukubaEmail"
             , Html.Attributes.attribute "autocomplete" "username"
             ]
             []
         , Html.div
-            [ Html.Attributes.class "userPage-form-description" ]
+            [ Html.Attributes.class "signUp-description" ]
             [ Html.text
                 (case analysisStudentIdOrEmailAddress string of
                     _ ->
@@ -1266,38 +1268,38 @@ newStudentFormList =
     [ Html.div
         []
         [ Html.label
-            [ Html.Attributes.class "userPage-form-label"
+            [ Html.Attributes.class "signUp-label"
             , Html.Attributes.for "signUpEmail"
             ]
             [ Html.text "登録用メールアドレス" ]
         , Html.input
-            [ Html.Attributes.class "userPage-form-input"
+            [ Html.Attributes.class "signUp-input"
             , Html.Attributes.type_ "email"
             , Html.Attributes.id "signUpEmail"
             , Html.Attributes.attribute "autocomplete" "email"
             ]
             []
         , Html.div
-            [ Html.Attributes.class "userPage-form-description" ]
+            [ Html.Attributes.class "signUp-description" ]
             [ Html.text "Sアドをつかえるまでの…" ]
         ]
     , Html.div
         []
         [ Html.label
-            [ Html.Attributes.class "userPage-form-label"
+            [ Html.Attributes.class "signUp-label"
             , Html.Attributes.for "signUpPassword"
             ]
             [ Html.text "学生証" ]
         , Html.input
             [ Html.Attributes.type_ "file"
             , Html.Attributes.accept "image/png, image/jpeg"
-            , Html.Attributes.class "userPage-form-input"
+            , Html.Attributes.class "signUp-input"
             , Html.Attributes.id "signUpPassword"
             , Html.Attributes.attribute "autocomplete" "studentIdImage"
             ]
             []
         , Html.div
-            [ Html.Attributes.class "userPage-form-description" ]
+            [ Html.Attributes.class "signUp-description" ]
             []
         ]
     ]
@@ -1308,12 +1310,12 @@ passwordForm password =
     Html.div
         []
         [ Html.label
-            [ Html.Attributes.class "userPage-form-label"
+            [ Html.Attributes.class "signUp-label"
             , Html.Attributes.for "password"
             ]
             [ Html.text "パスワード" ]
         , Html.input
-            [ Html.Attributes.class "userPage-form-input"
+            [ Html.Attributes.class "signUp-input"
             , Html.Attributes.id "password"
             , Html.Attributes.type_ "password"
             , Html.Attributes.minlength 9
@@ -1322,7 +1324,7 @@ passwordForm password =
             ]
             []
         , Html.div
-            [ Html.Attributes.class "userPage-form-description" ]
+            [ Html.Attributes.class "signUp-description" ]
             [ Html.text "9文字以上…" ]
         ]
 
@@ -1330,9 +1332,9 @@ passwordForm password =
 signUpSubmitButton : Html.Html Msg
 signUpSubmitButton =
     Html.div
-        [ Html.Attributes.class "userPage-form" ]
+        [ Html.Attributes.class "SignUp" ]
         [ Html.button
-            [ Html.Attributes.class "userPage-form-signUpButton"
+            [ Html.Attributes.class "signUp-signUpButton"
             , Html.Events.onClick SignUp
             ]
             [ Html.text "新規登録" ]

@@ -532,6 +532,7 @@ img {
     border: none;
     user-select: none;
     cursor: pointer;
+    text-decoration: none;
 }
 
 .logIn-signInButton:hover {
@@ -550,11 +551,11 @@ img {
     box-sizing: border-box;
 }
 
-.userPage-form-label {
+.signUp-label {
     font-size: 1.5rem;
 }
 
-.userPage-form-select {
+.signUp-select {
     width: 100%;
     padding: .5rem;
     display: grid;
@@ -562,7 +563,7 @@ img {
     box-sizing: border-box;
 }
 
-.userPage-form-select-item {
+.signUp-select-item {
     background-color: #999;
     padding: .5rem;
     text-align: center;
@@ -572,26 +573,26 @@ img {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.18);
 }
 
-.userPage-form-select-item:hover {
+.signUp-select-item:hover {
     background-color: #bbb;
     color: #111;
 }
 
-.userPage-form-select-itemSelect {
+.signUp-select-itemSelect {
     background-color: var(--primaryColor);
     color: white;
 }
 
-.userPage-form-select-itemSelect:hover {
+.signUp-select-itemSelect:hover {
     background-color: var(--primaryColorLight);
     color: #111;
 }
 
-.userPage-form-description {
+.signUp-description {
     font-size: 1rem;
 }
 
-.userPage-form-input {
+.signUp-input {
     font-size: 1.2rem;
     padding: .4rem;
     width: 100%;
@@ -600,7 +601,7 @@ img {
     border-radius: .4rem;
 }
 
-.userPage-form-signUpButton {
+.signUp-signUpButton {
     background-color: var(--primaryColor);
     color: #ddd;
     padding: 1rem;
@@ -613,7 +614,7 @@ img {
     cursor: pointer;
 }
 
-.userPage-form-signUpButton:hover {
+.signUp-signUpButton:hover {
     background-color: var(--primaryColorLight);
     color: #111;
 }

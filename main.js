@@ -11657,10 +11657,11 @@ var author$project$Main$orLabel = A2(
 			elm$html$Html$text('or')
 		]));
 var author$project$Main$signUpButton = A2(
-	elm$html$Html$button,
+	elm$html$Html$a,
 	_List_fromArray(
 		[
-			elm$html$Html$Attributes$class('logIn-signInButton')
+			elm$html$Html$Attributes$class('logIn-signInButton'),
+			elm$html$Html$Attributes$href('/user-signup')
 		]),
 	_List_fromArray(
 		[
@@ -11714,7 +11715,7 @@ var author$project$Main$newStudentFormList = _List_fromArray(
 				elm$html$Html$label,
 				_List_fromArray(
 					[
-						elm$html$Html$Attributes$class('userPage-form-label'),
+						elm$html$Html$Attributes$class('signUp-label'),
 						elm$html$Html$Attributes$for('signUpEmail')
 					]),
 				_List_fromArray(
@@ -11725,7 +11726,7 @@ var author$project$Main$newStudentFormList = _List_fromArray(
 				elm$html$Html$input,
 				_List_fromArray(
 					[
-						elm$html$Html$Attributes$class('userPage-form-input'),
+						elm$html$Html$Attributes$class('signUp-input'),
 						elm$html$Html$Attributes$type_('email'),
 						elm$html$Html$Attributes$id('signUpEmail'),
 						A2(elm$html$Html$Attributes$attribute, 'autocomplete', 'email')
@@ -11735,7 +11736,7 @@ var author$project$Main$newStudentFormList = _List_fromArray(
 				elm$html$Html$div,
 				_List_fromArray(
 					[
-						elm$html$Html$Attributes$class('userPage-form-description')
+						elm$html$Html$Attributes$class('signUp-description')
 					]),
 				_List_fromArray(
 					[
@@ -11751,7 +11752,7 @@ var author$project$Main$newStudentFormList = _List_fromArray(
 				elm$html$Html$label,
 				_List_fromArray(
 					[
-						elm$html$Html$Attributes$class('userPage-form-label'),
+						elm$html$Html$Attributes$class('signUp-label'),
 						elm$html$Html$Attributes$for('signUpPassword')
 					]),
 				_List_fromArray(
@@ -11764,7 +11765,7 @@ var author$project$Main$newStudentFormList = _List_fromArray(
 					[
 						elm$html$Html$Attributes$type_('file'),
 						elm$html$Html$Attributes$accept('image/png, image/jpeg'),
-						elm$html$Html$Attributes$class('userPage-form-input'),
+						elm$html$Html$Attributes$class('signUp-input'),
 						elm$html$Html$Attributes$id('signUpPassword'),
 						A2(elm$html$Html$Attributes$attribute, 'autocomplete', 'studentIdImage')
 					]),
@@ -11773,7 +11774,7 @@ var author$project$Main$newStudentFormList = _List_fromArray(
 				elm$html$Html$div,
 				_List_fromArray(
 					[
-						elm$html$Html$Attributes$class('userPage-form-description')
+						elm$html$Html$Attributes$class('signUp-description')
 					]),
 				_List_Nil)
 			]))
@@ -11788,7 +11789,7 @@ var author$project$Main$passwordForm = function (password) {
 				elm$html$Html$label,
 				_List_fromArray(
 					[
-						elm$html$Html$Attributes$class('userPage-form-label'),
+						elm$html$Html$Attributes$class('signUp-label'),
 						elm$html$Html$Attributes$for('password')
 					]),
 				_List_fromArray(
@@ -11799,7 +11800,7 @@ var author$project$Main$passwordForm = function (password) {
 				elm$html$Html$input,
 				_List_fromArray(
 					[
-						elm$html$Html$Attributes$class('userPage-form-input'),
+						elm$html$Html$Attributes$class('signUp-input'),
 						elm$html$Html$Attributes$id('password'),
 						elm$html$Html$Attributes$type_('password'),
 						elm$html$Html$Attributes$minlength(9),
@@ -11811,7 +11812,7 @@ var author$project$Main$passwordForm = function (password) {
 				elm$html$Html$div,
 				_List_fromArray(
 					[
-						elm$html$Html$Attributes$class('userPage-form-description')
+						elm$html$Html$Attributes$class('signUp-description')
 					]),
 				_List_fromArray(
 					[
@@ -11834,7 +11835,7 @@ var author$project$Main$sAddressSelectView = function (userSignUpPage) {
 		elm$html$Html$div,
 		_List_fromArray(
 			[
-				elm$html$Html$Attributes$class('userPage-form-select')
+				elm$html$Html$Attributes$class('signUp-select')
 			]),
 		_List_fromArray(
 			[
@@ -11846,8 +11847,8 @@ var author$project$Main$sAddressSelectView = function (userSignUpPage) {
 							elm$html$Html$Attributes$classList(
 							_List_fromArray(
 								[
-									_Utils_Tuple2('userPage-form-select-item', true),
-									_Utils_Tuple2('userPage-form-select-itemSelect', leftSelect)
+									_Utils_Tuple2('signUp-select-item', true),
+									_Utils_Tuple2('signUp-select-itemSelect', leftSelect)
 								])),
 							A2(elm$html$Html$Attributes$style, 'border-radius', '.4rem 0 0 .4rem')
 						]),
@@ -11871,8 +11872,8 @@ var author$project$Main$sAddressSelectView = function (userSignUpPage) {
 							elm$html$Html$Attributes$classList(
 							_List_fromArray(
 								[
-									_Utils_Tuple2('userPage-form-select-item', true),
-									_Utils_Tuple2('userPage-form-select-itemSelect', !leftSelect)
+									_Utils_Tuple2('signUp-select-item', true),
+									_Utils_Tuple2('signUp-select-itemSelect', !leftSelect)
 								])),
 							A2(elm$html$Html$Attributes$style, 'border-radius', '0 .4rem .4rem 0')
 						]),
@@ -11900,7 +11901,7 @@ var author$project$Main$sAddressView = function (userSignUpPage) {
 				elm$html$Html$label,
 				_List_fromArray(
 					[
-						elm$html$Html$Attributes$class('userPage-form-label')
+						elm$html$Html$Attributes$class('signUp-label')
 					]),
 				_List_fromArray(
 					[
@@ -11914,7 +11915,7 @@ var author$project$Main$signUpSubmitButton = A2(
 	elm$html$Html$div,
 	_List_fromArray(
 		[
-			elm$html$Html$Attributes$class('userPage-form')
+			elm$html$Html$Attributes$class('SignUp')
 		]),
 	_List_fromArray(
 		[
@@ -11922,7 +11923,7 @@ var author$project$Main$signUpSubmitButton = A2(
 			elm$html$Html$button,
 			_List_fromArray(
 				[
-					elm$html$Html$Attributes$class('userPage-form-signUpButton'),
+					elm$html$Html$Attributes$class('signUp-signUpButton'),
 					elm$html$Html$Events$onClick(author$project$Main$SignUp)
 				]),
 			_List_fromArray(
@@ -11946,7 +11947,7 @@ var author$project$Main$studentHasSAddressFormList = function (string) {
 					elm$html$Html$label,
 					_List_fromArray(
 						[
-							elm$html$Html$Attributes$class('userPage-form-label'),
+							elm$html$Html$Attributes$class('signUp-label'),
 							elm$html$Html$Attributes$for('signUpStudentIdOrTsukubaEmail')
 						]),
 					_List_fromArray(
@@ -11957,7 +11958,7 @@ var author$project$Main$studentHasSAddressFormList = function (string) {
 					elm$html$Html$input,
 					_List_fromArray(
 						[
-							elm$html$Html$Attributes$class('userPage-form-input'),
+							elm$html$Html$Attributes$class('signUp-input'),
 							elm$html$Html$Attributes$id('signUpStudentIdOrTsukubaEmail'),
 							A2(elm$html$Html$Attributes$attribute, 'autocomplete', 'username')
 						]),
@@ -11966,7 +11967,7 @@ var author$project$Main$studentHasSAddressFormList = function (string) {
 					elm$html$Html$div,
 					_List_fromArray(
 						[
-							elm$html$Html$Attributes$class('userPage-form-description')
+							elm$html$Html$Attributes$class('signUp-description')
 						]),
 					_List_fromArray(
 						[
