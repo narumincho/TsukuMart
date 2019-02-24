@@ -55,7 +55,7 @@ type UserSignUpPage
 
 type LogInPage
     = LogInPage
-        { nextPage : Page
+        { nextPage : Maybe Page
         , studentIdOrEmailAddress : String
         , password : String
         }
@@ -68,7 +68,7 @@ type alias ExhibitionState =
 
 type Home
     = Recent
-    | Recommend
+    | Recommend { valid : Bool } -- 不正なURLで飛んだかどうか
     | Free
 
 
@@ -96,31 +96,21 @@ main =
         , update = update
         , view = view
         , subscriptions = subscription
-        , onUrlRequest = onUrlRequest
-        , onUrlChange = onUrlChange
+        , onUrlRequest = UrlRequest
+        , onUrlChange = UrlChange
         }
 
 
 init : () -> Url.Url -> Browser.Navigation.Key -> ( Model, Cmd Msg )
 init _ url key =
     ( Model
-        { page = urlToPage url Nothing |> Maybe.withDefault (PageHome Recommend)
+        { page = urlToPage url Nothing
         , menuState = MenuNotOpenedYet
         , wideScreenMode = False
         , key = key
         }
     , Cmd.none
     )
-
-
-onUrlRequest : Browser.UrlRequest -> Msg
-onUrlRequest =
-    UrlRequest
-
-
-onUrlChange : Url.Url -> Msg
-onUrlChange =
-    UrlChange
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -164,14 +154,15 @@ update msg (Model rec) =
 
         UrlChange url ->
             ( case urlToPage url (Just rec.page) of
-                Just (PageExhibition state) ->
+                PageExhibition state ->
                     Model { rec | page = PageExhibition state, menuState = MenuNotOpenedYet }
 
-                Just page ->
+                page ->
+                    let
+                        _ =
+                            Debug.log "page?" page
+                    in
                     Model { rec | page = page, menuState = MenuClose }
-
-                Nothing ->
-                    Model { rec | menuState = MenuClose }
             , Cmd.none
             )
 
@@ -203,19 +194,20 @@ update msg (Model rec) =
             ( Model rec, Cmd.none )
 
 
-urlToPage : Url.Url -> Maybe Page -> Maybe Page
+urlToPage : Url.Url -> Maybe Page -> Page
 urlToPage url beforePageMaybe =
     Url.Parser.parse (urlParser beforePageMaybe) url
+        |> Maybe.withDefault (PageHome (Recommend { valid = False }))
 
 
 urlParser : Maybe Page -> Url.Parser.Parser (Page -> a) a
 urlParser beforePageMaybe =
     Url.Parser.oneOf
         [ Url.Parser.map
-            (PageHome Recommend)
+            (PageHome (Recommend { valid = True }))
             Url.Parser.top
         , Url.Parser.map
-            (PageHome Recommend)
+            (PageHome (Recommend { valid = True }))
             (Url.Parser.s "index.html")
         , Url.Parser.map
             (PageSignUp (UserSignUpPageStudentHasSAddress { studentIdOrTsukubaEmailAddress = "", password = "" }))
@@ -223,7 +215,7 @@ urlParser beforePageMaybe =
         , Url.Parser.map
             (PageLogIn
                 (LogInPage
-                    { nextPage = beforePageMaybe |> Maybe.withDefault (PageHome Recommend), studentIdOrEmailAddress = "", password = "" }
+                    { nextPage = beforePageMaybe, studentIdOrEmailAddress = "", password = "" }
                 )
             )
             (Url.Parser.s "user-login")
@@ -242,6 +234,8 @@ urlParser beforePageMaybe =
         ]
 
 
+{-| 見た目を決める
+-}
 view : Model -> { title : String, body : List (Html.Html Msg) }
 view (Model { page, menuState, wideScreenMode }) =
     { title = "つくマート"
@@ -268,7 +262,11 @@ header wideMode =
           else
             [ menuButton ]
          )
-            ++ [ Html.h1 [] [ logo ]
+            ++ [ Html.a
+                    [ Html.Attributes.class "h1Link"
+                    , Html.Attributes.href "/"
+                    ]
+                    [ Html.h1 [] [ logo ] ]
                , searchButton
                , notificationsButton
                ]
@@ -630,7 +628,7 @@ mainTab page wideScreenMode =
                 PageHome _ ->
                     TabMulti
                         [ ( PageHome Recent, "新着" )
-                        , ( PageHome Recommend, "おすすめ" )
+                        , ( PageHome (Recommend { valid = True }), "おすすめ" )
                         , ( PageHome Free, "0円" )
                         ]
 
@@ -778,9 +776,24 @@ mainView page isWideScreenMode =
             PageLogIn logInPage ->
                 userLogInView logInPage
 
+            PageHome (Recommend { valid }) ->
+                if valid then
+                    [ itemList isWideScreenMode, exhibitButton ]
+
+                else
+                    [ invalidLinkErrorMsg, itemList isWideScreenMode, exhibitButton ]
+
             _ ->
                 [ itemList isWideScreenMode, exhibitButton ]
         )
+
+
+invalidLinkErrorMsg : Html.Html msg
+invalidLinkErrorMsg =
+    Html.div
+        [ Html.Attributes.class "invalidLinkErrorMsg"
+        ]
+        [ Html.text "指定したページが見つからなかったのでホームに移動しました" ]
 
 
 itemList : Bool -> Html.Html Msg
@@ -1012,30 +1025,33 @@ signUpButton =
 -}
 userSignUpView : UserSignUpPage -> List (Html.Html Msg)
 userSignUpView userSignUpPage =
-    [ Html.div
-        [ Html.Attributes.class "userPage-form" ]
-        [ Html.div
-            [ Html.Attributes.class "userPage-form-title" ]
-            [ Html.text "sアドを" ]
-        , sAddressSelectView userSignUpPage
-        ]
+    [ Html.form []
+        ([ Html.div
+            [ Html.Attributes.class "userPage-form" ]
+            [ Html.label
+                [ Html.Attributes.class "userPage-form-label" ]
+                [ Html.text "sアドを" ]
+            , sAddressSelectView userSignUpPage
+            ]
+         ]
+            ++ (case userSignUpPage of
+                    UserSignUpPageStudentHasSAddress { studentIdOrTsukubaEmailAddress } ->
+                        studentHasSAddressFormList studentIdOrTsukubaEmailAddress
+
+                    UserSignUpPageNewStudent _ ->
+                        newStudentFormList
+               )
+            ++ passwordForm
+                (case userSignUpPage of
+                    UserSignUpPageStudentHasSAddress { password } ->
+                        password
+
+                    UserSignUpPageNewStudent { password } ->
+                        password
+                )
+            ++ [ signUpSubmitButton ]
+        )
     ]
-        ++ (case userSignUpPage of
-                UserSignUpPageStudentHasSAddress { studentIdOrTsukubaEmailAddress } ->
-                    studentHasSAddressFormList studentIdOrTsukubaEmailAddress
-
-                UserSignUpPageNewStudent _ ->
-                    newStudentFormList
-           )
-        ++ passwordForm
-            (case userSignUpPage of
-                UserSignUpPageStudentHasSAddress { password } ->
-                    password
-
-                UserSignUpPageNewStudent { password } ->
-                    password
-            )
-        ++ [ signUpSubmitButton ]
 
 
 sAddressSelectView : UserSignUpPage -> Html.Html Msg
@@ -1088,8 +1104,8 @@ studentHasSAddressFormList : String -> List (Html.Html Msg)
 studentHasSAddressFormList string =
     [ Html.div
         [ Html.Attributes.class "userPage-form" ]
-        [ Html.div
-            [ Html.Attributes.class "userPage-form-title" ]
+        [ Html.label
+            [ Html.Attributes.class "userPage-form-label" ]
             [ Html.text "学籍番号か～@～.tsukuba.ac.jpのメールアドレス" ]
         , Html.input
             [ Html.Attributes.class "userPage-form-input" ]
@@ -1147,26 +1163,28 @@ type StudentIdNumber
 
 newStudentFormList : List (Html.Html Msg)
 newStudentFormList =
-    [ Html.div
-        [ Html.Attributes.class "userPage-form" ]
-        [ Html.div
-            [ Html.Attributes.class "userPage-form-title" ]
-            [ Html.text "登録用メールアドレス" ]
-        , Html.input [ Html.Attributes.class "userPage-form-input" ] []
-        , Html.div
-            [ Html.Attributes.class "userPage-form-description" ]
-            [ Html.text "Sアドをつかえるまでの…" ]
+    [ Html.label
+        [ Html.Attributes.class "userPage-form-label"
+        , Html.Attributes.for "signUpEmail"
         ]
+        [ Html.text "登録用メールアドレス" ]
+    , Html.input [ Html.Attributes.class "userPage-form-input", Html.Attributes.type_ "email", Html.Attributes.id "signUpEmail" ] []
     , Html.div
-        [ Html.Attributes.class "userPage-form" ]
-        [ Html.div
-            [ Html.Attributes.class "userPage-form-title" ]
-            [ Html.text "学生証" ]
-        , Html.input [ Html.Attributes.class "userPage-form-input" ] []
-        , Html.div
-            [ Html.Attributes.class "userPage-form-description" ]
-            []
+        [ Html.Attributes.class "userPage-form-description" ]
+        [ Html.text "Sアドをつかえるまでの…" ]
+    , Html.label
+        [ Html.Attributes.class "userPage-form-label"
+        , Html.Attributes.for "signUpPassword"
         ]
+        [ Html.text "学生証" ]
+    , Html.input
+        [ Html.Attributes.class "userPage-form-input"
+        , Html.Attributes.id "signUpPassword"
+        ]
+        []
+    , Html.div
+        [ Html.Attributes.class "userPage-form-description" ]
+        []
     ]
 
 
@@ -1174,11 +1192,14 @@ passwordForm : String -> List (Html.Html Msg)
 passwordForm password =
     [ Html.div
         [ Html.Attributes.class "userPage-form" ]
-        [ Html.div
-            [ Html.Attributes.class "userPage-form-title" ]
+        [ Html.label
+            [ Html.Attributes.class "userPage-form-label"
+            , Html.Attributes.for "password"
+            ]
             [ Html.text "パスワード" ]
         , Html.input
             [ Html.Attributes.class "userPage-form-input"
+            , Html.Attributes.id "password"
             , Html.Attributes.type_ "password"
             , Html.Attributes.minlength 9
             , Html.Attributes.maxlength 50

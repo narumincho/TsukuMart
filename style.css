@@ -35,12 +35,14 @@ header {
     z-index: 2;
 }
 
+.h1Link {
+    flex-grow: 1;
+}
+
 h1 {
     padding: .5rem;
     flex-grow: 1;
     margin: 0;
-    cursor: pointer;
-    transition: all 300ms 0s ease;
 }
 
 h1:hover {
@@ -64,6 +66,29 @@ h1:hover {
 .headerButton:hover {
     background-color: rgba(0, 0, 0, 0.4);
     border-radius: 50%;
+}
+
+.invalidLinkErrorMsg {
+    position: absolute;
+    top: 8rem;
+    z-index: 2;
+    background-color: #ddd;
+    color: #111;
+    border: solid 2px #111;
+    border-radius: .4rem;
+    font-size: 1.3rem;
+    padding: 2rem;
+    pointer-events: none;
+    animation: invalidLinkErrorMsgAnimation 10s ease 2s 1 normal forwards;
+}
+
+@keyframes invalidLinkErrorMsgAnimation {
+    0% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+    }
 }
 
 /*=====================================
@@ -519,8 +544,8 @@ img {
     max-width: 40rem;
 }
 
-.userPage-form-title {
-    font-size: 2rem;
+.userPage-form-label {
+    font-size: 1.5rem;
 }
 
 .userPage-form-select {
