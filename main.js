@@ -11971,8 +11971,30 @@ var author$project$Main$InputStudentIdOrEmailAddress = function (a) {
 	return {$: 'InputStudentIdOrEmailAddress', a: a};
 };
 var author$project$Main$ANone = {$: 'ANone'};
+var author$project$Main$APartStudentId = function (a) {
+	return {$: 'APartStudentId', a: a};
+};
 var author$project$Main$AStudentId = function (a) {
 	return {$: 'AStudentId', a: a};
+};
+var author$project$Main$PartStudentId0 = {$: 'PartStudentId0'};
+var author$project$Main$PartStudentId1 = function (a) {
+	return {$: 'PartStudentId1', a: a};
+};
+var author$project$Main$PartStudentId2 = function (a) {
+	return {$: 'PartStudentId2', a: a};
+};
+var author$project$Main$PartStudentId3 = function (a) {
+	return {$: 'PartStudentId3', a: a};
+};
+var author$project$Main$PartStudentId4 = function (a) {
+	return {$: 'PartStudentId4', a: a};
+};
+var author$project$Main$PartStudentId5 = function (a) {
+	return {$: 'PartStudentId5', a: a};
+};
+var author$project$Main$PartStudentId6 = function (a) {
+	return {$: 'PartStudentId6', a: a};
 };
 var author$project$Main$SI0 = {$: 'SI0'};
 var author$project$Main$SI1 = {$: 'SI1'};
@@ -12032,22 +12054,134 @@ var author$project$Main$charToStudentIdNumber = function (_char) {
 };
 var author$project$Main$isStudentIdHead = F2(
 	function (c0, c1) {
-		return (_Utils_eq(
-			c0,
-			_Utils_chr('2')) || _Utils_eq(
-			c0,
-			_Utils_chr('２'))) && (_Utils_eq(
-			c1,
-			_Utils_chr('0')) || _Utils_eq(
-			c1,
-			_Utils_chr('０')));
+		var _n0 = _Utils_Tuple2(
+			author$project$Main$charToStudentIdNumber(c0),
+			author$project$Main$charToStudentIdNumber(c1));
+		if ((((_n0.a.$ === 'Just') && (_n0.a.a.$ === 'SI2')) && (_n0.b.$ === 'Just')) && (_n0.b.a.$ === 'SI0')) {
+			var _n1 = _n0.a.a;
+			var _n2 = _n0.b.a;
+			return true;
+		} else {
+			return false;
+		}
 	});
-var elm$core$String$foldr = _String_foldr;
-var elm$core$String$toList = function (string) {
-	return A3(elm$core$String$foldr, elm$core$List$cons, _List_Nil, string);
+var author$project$Main$charListToPartStudentId = function (charList) {
+	if (charList.b && charList.b.b) {
+		var h0 = charList.a;
+		var _n1 = charList.b;
+		var h1 = _n1.a;
+		var hs = _n1.b;
+		if (A2(author$project$Main$isStudentIdHead, h0, h1)) {
+			var _n2 = A2(elm$core$List$map, author$project$Main$charToStudentIdNumber, hs);
+			_n2$7:
+			while (true) {
+				if (!_n2.b) {
+					return elm$core$Maybe$Just(author$project$Main$PartStudentId0);
+				} else {
+					if (_n2.a.$ === 'Just') {
+						if (!_n2.b.b) {
+							var i0 = _n2.a.a;
+							return elm$core$Maybe$Just(
+								author$project$Main$PartStudentId1(
+									{i0: i0}));
+						} else {
+							if (_n2.b.a.$ === 'Just') {
+								if (!_n2.b.b.b) {
+									var i0 = _n2.a.a;
+									var _n3 = _n2.b;
+									var i1 = _n3.a.a;
+									return elm$core$Maybe$Just(
+										author$project$Main$PartStudentId2(
+											{i0: i0, i1: i1}));
+								} else {
+									if (_n2.b.b.a.$ === 'Just') {
+										if (!_n2.b.b.b.b) {
+											var i0 = _n2.a.a;
+											var _n4 = _n2.b;
+											var i1 = _n4.a.a;
+											var _n5 = _n4.b;
+											var i2 = _n5.a.a;
+											return elm$core$Maybe$Just(
+												author$project$Main$PartStudentId3(
+													{i0: i0, i1: i1, i2: i2}));
+										} else {
+											if (_n2.b.b.b.a.$ === 'Just') {
+												if (!_n2.b.b.b.b.b) {
+													var i0 = _n2.a.a;
+													var _n6 = _n2.b;
+													var i1 = _n6.a.a;
+													var _n7 = _n6.b;
+													var i2 = _n7.a.a;
+													var _n8 = _n7.b;
+													var i3 = _n8.a.a;
+													return elm$core$Maybe$Just(
+														author$project$Main$PartStudentId4(
+															{i0: i0, i1: i1, i2: i2, i3: i3}));
+												} else {
+													if (_n2.b.b.b.b.a.$ === 'Just') {
+														if (!_n2.b.b.b.b.b.b) {
+															var i0 = _n2.a.a;
+															var _n9 = _n2.b;
+															var i1 = _n9.a.a;
+															var _n10 = _n9.b;
+															var i2 = _n10.a.a;
+															var _n11 = _n10.b;
+															var i3 = _n11.a.a;
+															var _n12 = _n11.b;
+															var i4 = _n12.a.a;
+															return elm$core$Maybe$Just(
+																author$project$Main$PartStudentId5(
+																	{i0: i0, i1: i1, i2: i2, i3: i3, i4: i4}));
+														} else {
+															if ((_n2.b.b.b.b.b.a.$ === 'Just') && (!_n2.b.b.b.b.b.b.b)) {
+																var i0 = _n2.a.a;
+																var _n13 = _n2.b;
+																var i1 = _n13.a.a;
+																var _n14 = _n13.b;
+																var i2 = _n14.a.a;
+																var _n15 = _n14.b;
+																var i3 = _n15.a.a;
+																var _n16 = _n15.b;
+																var i4 = _n16.a.a;
+																var _n17 = _n16.b;
+																var i5 = _n17.a.a;
+																return elm$core$Maybe$Just(
+																	author$project$Main$PartStudentId6(
+																		{i0: i0, i1: i1, i2: i2, i3: i3, i4: i4, i5: i5}));
+															} else {
+																break _n2$7;
+															}
+														}
+													} else {
+														break _n2$7;
+													}
+												}
+											} else {
+												break _n2$7;
+											}
+										}
+									} else {
+										break _n2$7;
+									}
+								}
+							} else {
+								break _n2$7;
+							}
+						}
+					} else {
+						break _n2$7;
+					}
+				}
+			}
+			return elm$core$Maybe$Nothing;
+		} else {
+			return elm$core$Maybe$Nothing;
+		}
+	} else {
+		return elm$core$Maybe$Nothing;
+	}
 };
-var author$project$Main$analysisStudentIdOrEmailAddress = function (string) {
-	var charList = elm$core$String$toList(string);
+var author$project$Main$charListToStudentId = function (charList) {
 	if (charList.b && charList.b.b) {
 		var h0 = charList.a;
 		var _n1 = charList.b;
@@ -12069,18 +12203,176 @@ var author$project$Main$analysisStudentIdOrEmailAddress = function (string) {
 				var i5 = _n7.a.a;
 				var _n8 = _n7.b;
 				var i6 = _n8.a.a;
-				return author$project$Main$AStudentId(
+				return elm$core$Maybe$Just(
 					{i0: i0, i1: i1, i2: i2, i3: i3, i4: i4, i5: i5, i6: i6});
 			} else {
-				return author$project$Main$ANone;
+				return elm$core$Maybe$Nothing;
 			}
+		} else {
+			return elm$core$Maybe$Nothing;
+		}
+	} else {
+		return elm$core$Maybe$Nothing;
+	}
+};
+var elm$core$String$foldr = _String_foldr;
+var elm$core$String$toList = function (string) {
+	return A3(elm$core$String$foldr, elm$core$List$cons, _List_Nil, string);
+};
+var elm$core$String$trim = _String_trim;
+var author$project$Main$analysisStudentIdOrEmailAddress = function (string) {
+	var charList = elm$core$String$toList(
+		elm$core$String$trim(string));
+	var _n0 = author$project$Main$charListToStudentId(charList);
+	if (_n0.$ === 'Just') {
+		var studentId = _n0.a;
+		return author$project$Main$AStudentId(studentId);
+	} else {
+		var _n1 = author$project$Main$charListToPartStudentId(charList);
+		if (_n1.$ === 'Just') {
+			var partStudentId = _n1.a;
+			return author$project$Main$APartStudentId(partStudentId);
 		} else {
 			return author$project$Main$ANone;
 		}
-	} else {
-		return author$project$Main$ANone;
 	}
 };
+var elm$core$List$takeReverse = F3(
+	function (n, list, kept) {
+		takeReverse:
+		while (true) {
+			if (n <= 0) {
+				return kept;
+			} else {
+				if (!list.b) {
+					return kept;
+				} else {
+					var x = list.a;
+					var xs = list.b;
+					var $temp$n = n - 1,
+						$temp$list = xs,
+						$temp$kept = A2(elm$core$List$cons, x, kept);
+					n = $temp$n;
+					list = $temp$list;
+					kept = $temp$kept;
+					continue takeReverse;
+				}
+			}
+		}
+	});
+var elm$core$List$takeTailRec = F2(
+	function (n, list) {
+		return elm$core$List$reverse(
+			A3(elm$core$List$takeReverse, n, list, _List_Nil));
+	});
+var elm$core$List$takeFast = F3(
+	function (ctr, n, list) {
+		if (n <= 0) {
+			return _List_Nil;
+		} else {
+			var _n0 = _Utils_Tuple2(n, list);
+			_n0$1:
+			while (true) {
+				_n0$5:
+				while (true) {
+					if (!_n0.b.b) {
+						return list;
+					} else {
+						if (_n0.b.b.b) {
+							switch (_n0.a) {
+								case 1:
+									break _n0$1;
+								case 2:
+									var _n2 = _n0.b;
+									var x = _n2.a;
+									var _n3 = _n2.b;
+									var y = _n3.a;
+									return _List_fromArray(
+										[x, y]);
+								case 3:
+									if (_n0.b.b.b.b) {
+										var _n4 = _n0.b;
+										var x = _n4.a;
+										var _n5 = _n4.b;
+										var y = _n5.a;
+										var _n6 = _n5.b;
+										var z = _n6.a;
+										return _List_fromArray(
+											[x, y, z]);
+									} else {
+										break _n0$5;
+									}
+								default:
+									if (_n0.b.b.b.b && _n0.b.b.b.b.b) {
+										var _n7 = _n0.b;
+										var x = _n7.a;
+										var _n8 = _n7.b;
+										var y = _n8.a;
+										var _n9 = _n8.b;
+										var z = _n9.a;
+										var _n10 = _n9.b;
+										var w = _n10.a;
+										var tl = _n10.b;
+										return (ctr > 1000) ? A2(
+											elm$core$List$cons,
+											x,
+											A2(
+												elm$core$List$cons,
+												y,
+												A2(
+													elm$core$List$cons,
+													z,
+													A2(
+														elm$core$List$cons,
+														w,
+														A2(elm$core$List$takeTailRec, n - 4, tl))))) : A2(
+											elm$core$List$cons,
+											x,
+											A2(
+												elm$core$List$cons,
+												y,
+												A2(
+													elm$core$List$cons,
+													z,
+													A2(
+														elm$core$List$cons,
+														w,
+														A3(elm$core$List$takeFast, ctr + 1, n - 4, tl)))));
+									} else {
+										break _n0$5;
+									}
+							}
+						} else {
+							if (_n0.a === 1) {
+								break _n0$1;
+							} else {
+								break _n0$5;
+							}
+						}
+					}
+				}
+				return list;
+			}
+			var _n1 = _n0.b;
+			var x = _n1.a;
+			return _List_fromArray(
+				[x]);
+		}
+	});
+var elm$core$List$take = F2(
+	function (n, list) {
+		return A3(elm$core$List$takeFast, 0, n, list);
+	});
+var author$project$Main$listGrow = F2(
+	function (length, list) {
+		var listLength = elm$core$List$length(list);
+		return (_Utils_cmp(length, listLength) < 0) ? A2(
+			elm$core$List$map,
+			elm$core$Maybe$Just,
+			A2(elm$core$List$take, length, list)) : _Utils_ap(
+			A2(elm$core$List$map, elm$core$Maybe$Just, list),
+			A2(elm$core$List$repeat, length - listLength, elm$core$Maybe$Nothing));
+	});
 var author$project$Main$studentIdNumberToChar = function (i) {
 	switch (i.$) {
 		case 'SI0':
@@ -12106,6 +12398,65 @@ var author$project$Main$studentIdNumberToChar = function (i) {
 	}
 };
 var elm$core$String$fromList = _String_fromList;
+var author$project$Main$partStudentIdToString = function (partStudentId) {
+	return elm$core$String$fromList(
+		A2(
+			elm$core$List$map,
+			function (numMaybe) {
+				return A2(
+					elm$core$Maybe$withDefault,
+					_Utils_chr('?'),
+					A2(elm$core$Maybe$map, author$project$Main$studentIdNumberToChar, numMaybe));
+			},
+			A2(
+				author$project$Main$listGrow,
+				7,
+				function () {
+					switch (partStudentId.$) {
+						case 'PartStudentId0':
+							return _List_Nil;
+						case 'PartStudentId1':
+							var i0 = partStudentId.a.i0;
+							return _List_fromArray(
+								[i0]);
+						case 'PartStudentId2':
+							var i0 = partStudentId.a.i0;
+							var i1 = partStudentId.a.i1;
+							return _List_fromArray(
+								[i0, i1]);
+						case 'PartStudentId3':
+							var i0 = partStudentId.a.i0;
+							var i1 = partStudentId.a.i1;
+							var i2 = partStudentId.a.i2;
+							return _List_fromArray(
+								[i0, i1, i2]);
+						case 'PartStudentId4':
+							var i0 = partStudentId.a.i0;
+							var i1 = partStudentId.a.i1;
+							var i2 = partStudentId.a.i2;
+							var i3 = partStudentId.a.i3;
+							return _List_fromArray(
+								[i0, i1, i2, i3]);
+						case 'PartStudentId5':
+							var i0 = partStudentId.a.i0;
+							var i1 = partStudentId.a.i1;
+							var i2 = partStudentId.a.i2;
+							var i3 = partStudentId.a.i3;
+							var i4 = partStudentId.a.i4;
+							return _List_fromArray(
+								[i0, i1, i2, i3, i4]);
+						default:
+							var i0 = partStudentId.a.i0;
+							var i1 = partStudentId.a.i1;
+							var i2 = partStudentId.a.i2;
+							var i3 = partStudentId.a.i3;
+							var i4 = partStudentId.a.i4;
+							var i5 = partStudentId.a.i5;
+							return _List_fromArray(
+								[i0, i1, i2, i3, i4, i5]);
+					}
+				}())));
+};
 var elm$html$Html$Events$alwaysStop = function (x) {
 	return _Utils_Tuple2(x, true);
 };
@@ -12199,6 +12550,9 @@ var author$project$Main$studentHasSAddressFormList = function (string) {
 													author$project$Main$studentIdNumberToChar(i5),
 													author$project$Main$studentIdNumberToChar(i6)
 												]));
+									case 'APartStudentId':
+										var partStudentId = _n0.a;
+										return '学籍番号 20' + author$project$Main$partStudentIdToString(partStudentId);
 									default:
 										return '';
 								}

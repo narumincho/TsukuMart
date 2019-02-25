@@ -1256,6 +1256,10 @@ studentHasSAddressFormList string =
                                 , studentIdNumberToChar i6
                                 ]
 
+                    APartStudentId partStudentId ->
+                        "学籍番号 20"
+                            ++ partStudentIdToString partStudentId
+
                     _ ->
                         ""
                 )
@@ -1268,29 +1272,104 @@ analysisStudentIdOrEmailAddress : String -> AnalysisStudentIdOrEmailAddressResul
 analysisStudentIdOrEmailAddress string =
     let
         charList =
-            String.toList string
+            String.toList (String.trim string)
     in
+    case charListToStudentId charList of
+        Just studentId ->
+            AStudentId studentId
+
+        Nothing ->
+            case charListToPartStudentId charList of
+                Just partStudentId ->
+                    APartStudentId partStudentId
+
+                Nothing ->
+                    ANone
+
+
+charListToStudentId : List Char -> Maybe StudentId
+charListToStudentId charList =
     case charList of
         h0 :: h1 :: hs ->
             if isStudentIdHead h0 h1 then
                 case hs |> List.map charToStudentIdNumber of
                     (Just i0) :: (Just i1) :: (Just i2) :: (Just i3) :: (Just i4) :: (Just i5) :: (Just i6) :: [] ->
-                        AStudentId
+                        Just
                             { i0 = i0, i1 = i1, i2 = i2, i3 = i3, i4 = i4, i5 = i5, i6 = i6 }
 
                     _ ->
-                        ANone
+                        Nothing
 
             else
-                ANone
+                Nothing
 
         _ ->
-            ANone
+            Nothing
+
+
+charListToPartStudentId : List Char -> Maybe PartStudentId
+charListToPartStudentId charList =
+    case charList of
+        h0 :: h1 :: hs ->
+            if isStudentIdHead h0 h1 then
+                case hs |> List.map charToStudentIdNumber of
+                    [] ->
+                        Just PartStudentId0
+
+                    (Just i0) :: [] ->
+                        Just (PartStudentId1 { i0 = i0 })
+
+                    (Just i0) :: (Just i1) :: [] ->
+                        Just (PartStudentId2 { i0 = i0, i1 = i1 })
+
+                    (Just i0) :: (Just i1) :: (Just i2) :: [] ->
+                        Just (PartStudentId3 { i0 = i0, i1 = i1, i2 = i2 })
+
+                    (Just i0) :: (Just i1) :: (Just i2) :: (Just i3) :: [] ->
+                        Just (PartStudentId4 { i0 = i0, i1 = i1, i2 = i2, i3 = i3 })
+
+                    (Just i0) :: (Just i1) :: (Just i2) :: (Just i3) :: (Just i4) :: [] ->
+                        Just (PartStudentId5 { i0 = i0, i1 = i1, i2 = i2, i3 = i3, i4 = i4 })
+
+                    (Just i0) :: (Just i1) :: (Just i2) :: (Just i3) :: (Just i4) :: (Just i5) :: [] ->
+                        Just (PartStudentId6 { i0 = i0, i1 = i1, i2 = i2, i3 = i3, i4 = i4, i5 = i5 })
+
+                    _ ->
+                        Nothing
+
+            else
+                Nothing
+
+        _ ->
+            Nothing
+
+
+allJustAndTake : List (Maybe a) -> Maybe (List a)
+allJustAndTake list =
+    case list of
+        (Just e) :: xs ->
+            case allJustAndTake xs of
+                Just ex ->
+                    Just (e :: ex)
+
+                Nothing ->
+                    Nothing
+
+        Nothing :: _ ->
+            Nothing
+
+        [] ->
+            Just []
 
 
 isStudentIdHead : Char -> Char -> Bool
 isStudentIdHead c0 c1 =
-    (c0 == '2' || c0 == '２') && (c1 == '0' || c1 == '０')
+    case ( charToStudentIdNumber c0, charToStudentIdNumber c1 ) of
+        ( Just SI2, Just SI0 ) ->
+            True
+
+        ( _, _ ) ->
+            False
 
 
 charToStudentIdNumber : Char -> Maybe StudentIdNumber
@@ -1398,8 +1477,95 @@ type AnalysisStudentIdOrEmailAddressResult
     = ANone
     | AStudentId StudentId
     | ATsukubaEmailAddress
-    | APartStudentId (List StudentIdNumber)
+    | APartStudentId PartStudentId
     | AEmailButIsNotTsukuba
+
+
+type PartStudentId
+    = PartStudentId0
+    | PartStudentId1 { i0 : StudentIdNumber }
+    | PartStudentId2
+        { i0 : StudentIdNumber
+        , i1 : StudentIdNumber
+        }
+    | PartStudentId3
+        { i0 : StudentIdNumber
+        , i1 : StudentIdNumber
+        , i2 : StudentIdNumber
+        }
+    | PartStudentId4
+        { i0 : StudentIdNumber
+        , i1 : StudentIdNumber
+        , i2 : StudentIdNumber
+        , i3 : StudentIdNumber
+        }
+    | PartStudentId5
+        { i0 : StudentIdNumber
+        , i1 : StudentIdNumber
+        , i2 : StudentIdNumber
+        , i3 : StudentIdNumber
+        , i4 : StudentIdNumber
+        }
+    | PartStudentId6
+        { i0 : StudentIdNumber
+        , i1 : StudentIdNumber
+        , i2 : StudentIdNumber
+        , i3 : StudentIdNumber
+        , i4 : StudentIdNumber
+        , i5 : StudentIdNumber
+        }
+
+
+partStudentIdToString : PartStudentId -> String
+partStudentIdToString partStudentId =
+    (case partStudentId of
+        PartStudentId0 ->
+            []
+
+        PartStudentId1 { i0 } ->
+            [ i0 ]
+
+        PartStudentId2 { i0, i1 } ->
+            [ i0, i1 ]
+
+        PartStudentId3 { i0, i1, i2 } ->
+            [ i0, i1, i2 ]
+
+        PartStudentId4 { i0, i1, i2, i3 } ->
+            [ i0, i1, i2, i3 ]
+
+        PartStudentId5 { i0, i1, i2, i3, i4 } ->
+            [ i0, i1, i2, i3, i4 ]
+
+        PartStudentId6 { i0, i1, i2, i3, i4, i5 } ->
+            [ i0, i1, i2, i3, i4, i5 ]
+    )
+        |> listGrow 7
+        |> List.map
+            (\numMaybe ->
+                numMaybe |> Maybe.map studentIdNumberToChar |> Maybe.withDefault '?'
+            )
+        |> String.fromList
+
+
+{-| 指定した長さのListにする。足りないところはNothingで埋める
+-}
+listGrow : Int -> List a -> List (Maybe a)
+listGrow length list =
+    let
+        listLength =
+            List.length list
+    in
+    if length < listLength then
+        list
+            |> List.take length
+            |> List.map Just
+
+    else
+        (list
+            |> List.map Just
+        )
+            ++ List.repeat (length - listLength) Nothing
 
 
 type alias StudentId =
