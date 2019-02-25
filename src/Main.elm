@@ -91,6 +91,7 @@ type Msg
     | Response String
     | SignUp
     | SignUpResponse (Result Http.Error SignUpResponseResult)
+    | InputStudentIdOrEmailAddress String
 
 
 type SignUpResponseResult
@@ -239,6 +240,29 @@ update msg (Model rec) =
 
         SignUpResponse _ ->
             ( Model rec
+            , Cmd.none
+            )
+
+        InputStudentIdOrEmailAddress string ->
+            ( case rec.page of
+                PageSignUp (UserSignUpPageStudentHasSAddress r) ->
+                    Model
+                        { rec
+                            | page =
+                                PageSignUp
+                                    (UserSignUpPageStudentHasSAddress { r | studentIdOrTsukubaEmailAddress = string })
+                        }
+
+                PageSignUp (UserSignUpPageNewStudent r) ->
+                    Model
+                        { rec
+                            | page =
+                                PageSignUp
+                                    (UserSignUpPageNewStudent { r | emailAddress = string })
+                        }
+
+                _ ->
+                    Model rec
             , Cmd.none
             )
 
@@ -1210,14 +1234,30 @@ studentHasSAddressFormList string =
             [ Html.Attributes.class "signUp-input"
             , Html.Attributes.id "signUpStudentIdOrTsukubaEmail"
             , Html.Attributes.attribute "autocomplete" "username"
+            , Html.Events.onInput InputStudentIdOrEmailAddress
             ]
             []
         , Html.div
             [ Html.Attributes.class "signUp-description" ]
             [ Html.text
                 (case analysisStudentIdOrEmailAddress string of
+                    ANone ->
+                        ""
+
+                    AStudentId { i0, i1, i2, i3, i4, i5, i6 } ->
+                        "学籍番号 20"
+                            ++ String.fromList
+                                [ studentIdNumberToChar i0
+                                , studentIdNumberToChar i1
+                                , studentIdNumberToChar i2
+                                , studentIdNumberToChar i3
+                                , studentIdNumberToChar i4
+                                , studentIdNumberToChar i5
+                                , studentIdNumberToChar i6
+                                ]
+
                     _ ->
-                        "解析結果"
+                        ""
                 )
             ]
         ]
@@ -1226,7 +1266,132 @@ studentHasSAddressFormList string =
 
 analysisStudentIdOrEmailAddress : String -> AnalysisStudentIdOrEmailAddressResult
 analysisStudentIdOrEmailAddress string =
-    ANone
+    let
+        charList =
+            String.toList string
+    in
+    case charList of
+        h0 :: h1 :: hs ->
+            if isStudentIdHead h0 h1 then
+                case hs |> List.map charToStudentIdNumber of
+                    (Just i0) :: (Just i1) :: (Just i2) :: (Just i3) :: (Just i4) :: (Just i5) :: (Just i6) :: [] ->
+                        AStudentId
+                            { i0 = i0, i1 = i1, i2 = i2, i3 = i3, i4 = i4, i5 = i5, i6 = i6 }
+
+                    _ ->
+                        ANone
+
+            else
+                ANone
+
+        _ ->
+            ANone
+
+
+isStudentIdHead : Char -> Char -> Bool
+isStudentIdHead c0 c1 =
+    (c0 == '2' || c0 == '２') && (c1 == '0' || c1 == '０')
+
+
+charToStudentIdNumber : Char -> Maybe StudentIdNumber
+charToStudentIdNumber char =
+    case char of
+        '0' ->
+            Just SI0
+
+        '０' ->
+            Just SI0
+
+        '1' ->
+            Just SI1
+
+        '１' ->
+            Just SI1
+
+        '2' ->
+            Just SI2
+
+        '２' ->
+            Just SI2
+
+        '3' ->
+            Just SI3
+
+        '３' ->
+            Just SI3
+
+        '4' ->
+            Just SI4
+
+        '４' ->
+            Just SI4
+
+        '5' ->
+            Just SI5
+
+        '５' ->
+            Just SI5
+
+        '6' ->
+            Just SI6
+
+        '６' ->
+            Just SI6
+
+        '7' ->
+            Just SI7
+
+        '７' ->
+            Just SI7
+
+        '8' ->
+            Just SI8
+
+        '８' ->
+            Just SI8
+
+        '9' ->
+            Just SI9
+
+        '９' ->
+            Just SI9
+
+        _ ->
+            Nothing
+
+
+studentIdNumberToChar : StudentIdNumber -> Char
+studentIdNumberToChar i =
+    case i of
+        SI0 ->
+            '0'
+
+        SI1 ->
+            '1'
+
+        SI2 ->
+            '2'
+
+        SI3 ->
+            '3'
+
+        SI4 ->
+            '4'
+
+        SI5 ->
+            '5'
+
+        SI6 ->
+            '6'
+
+        SI7 ->
+            '7'
+
+        SI8 ->
+            '8'
+
+        SI9 ->
+            '9'
 
 
 type AnalysisStudentIdOrEmailAddressResult
@@ -1234,19 +1399,17 @@ type AnalysisStudentIdOrEmailAddressResult
     | AStudentId StudentId
     | ATsukubaEmailAddress
     | APartStudentId (List StudentIdNumber)
-    | AErrorStudentIdLong
     | AEmailButIsNotTsukuba
 
 
 type alias StudentId =
-    { year : ( StudentIdNumber, StudentIdNumber )
-    , id :
-        { i0 : StudentIdNumber
-        , i1 : StudentIdNumber
-        , i2 : StudentIdNumber
-        , i3 : StudentIdNumber
-        , i4 : StudentIdNumber
-        }
+    { i0 : StudentIdNumber
+    , i1 : StudentIdNumber
+    , i2 : StudentIdNumber
+    , i3 : StudentIdNumber
+    , i4 : StudentIdNumber
+    , i5 : StudentIdNumber
+    , i6 : StudentIdNumber
     }
 
 
