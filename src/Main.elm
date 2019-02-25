@@ -1244,7 +1244,7 @@ studentHasSAddressFormList string =
                     ANone ->
                         ""
 
-                    AStudentId { i0, i1, i2, i3, i4, i5, i6 } ->
+                    AStudentId (StudentId { i0, i1, i2, i3, i4, i5, i6 }) ->
                         "学籍番号 20"
                             ++ String.fromList
                                 [ studentIdNumberToChar i0
@@ -1259,6 +1259,9 @@ studentHasSAddressFormList string =
                     APartStudentId partStudentId ->
                         "学籍番号 20"
                             ++ partStudentIdToString partStudentId
+
+                    ASAddress sAddress ->
+                        "筑波大学のメールアドレス " ++ sAddressToEmailAddressString sAddress
 
                     _ ->
                         ""
@@ -1284,7 +1287,12 @@ analysisStudentIdOrEmailAddress string =
                     APartStudentId partStudentId
 
                 Nothing ->
-                    ANone
+                    case charListToTsukubaEmailAddress charList of
+                        Just sAddress ->
+                            ASAddress sAddress
+
+                        Nothing ->
+                            ANone
 
 
 charListToStudentId : List Char -> Maybe StudentId
@@ -1295,7 +1303,7 @@ charListToStudentId charList =
                 case hs |> List.map charToStudentIdNumber of
                     (Just i0) :: (Just i1) :: (Just i2) :: (Just i3) :: (Just i4) :: (Just i5) :: (Just i6) :: [] ->
                         Just
-                            { i0 = i0, i1 = i1, i2 = i2, i3 = i3, i4 = i4, i5 = i5, i6 = i6 }
+                            (StudentId { i0 = i0, i1 = i1, i2 = i2, i3 = i3, i4 = i4, i5 = i5, i6 = i6 })
 
                     _ ->
                         Nothing
@@ -1344,22 +1352,45 @@ charListToPartStudentId charList =
             Nothing
 
 
-allJustAndTake : List (Maybe a) -> Maybe (List a)
-allJustAndTake list =
-    case list of
-        (Just e) :: xs ->
-            case allJustAndTake xs of
-                Just ex ->
-                    Just (e :: ex)
+charListToTsukubaEmailAddress : List Char -> Maybe SAddress
+charListToTsukubaEmailAddress charList =
+    case charList of
+        s :: i0 :: i1 :: i2 :: i3 :: i4 :: i5 :: i6 :: at :: rest ->
+            if (s == 's' || s == 'S') && (at == '@') then
+                case charListToStudentId [ '2', '0', i0, i1, i2, i3, i4, i5, i6 ] of
+                    Just studentId ->
+                        let
+                            restString =
+                                String.fromList rest
+                        in
+                        if
+                            (restString |> String.right 14 |> String.toLower)
+                                == ".tsukuba.ac.jp"
+                                && ((restString |> String.dropRight 14) /= "")
+                                && (restString |> String.dropRight 14 |> String.toList |> List.all Char.isAlphaNum)
+                        then
+                            Just (SAddress studentId (restString |> String.dropRight 14 |> String.toLower))
 
-                Nothing ->
-                    Nothing
+                        else
+                            Nothing
 
-        Nothing :: _ ->
+                    _ ->
+                        Nothing
+
+            else
+                Nothing
+
+        _ ->
             Nothing
 
-        [] ->
-            Just []
+
+sAddressToEmailAddressString : SAddress -> String
+sAddressToEmailAddressString (SAddress studentId subDomain) =
+    "s"
+        ++ studentIdToString studentId
+        ++ "@"
+        ++ subDomain
+        ++ ".tsukuba.ac.jp"
 
 
 isStudentIdHead : Char -> Char -> Bool
@@ -1476,7 +1507,7 @@ studentIdNumberToChar i =
 type AnalysisStudentIdOrEmailAddressResult
     = ANone
     | AStudentId StudentId
-    | ATsukubaEmailAddress
+    | ASAddress SAddress
     | APartStudentId PartStudentId
     | AEmailButIsNotTsukuba
 
@@ -1516,6 +1547,12 @@ type PartStudentId
         }
 
 
+type SAddress
+    = SAddress StudentId String
+
+
+{-| 入力途中の学籍番号を文字列にする 先頭の20は含まない
+-}
 partStudentIdToString : PartStudentId -> String
 partStudentIdToString partStudentId =
     (case partStudentId of
@@ -1548,6 +1585,15 @@ partStudentIdToString partStudentId =
         |> String.fromList
 
 
+{-| 学籍番号を文字列にする 先頭の20は含まない
+-}
+studentIdToString : StudentId -> String
+studentIdToString (StudentId { i0, i1, i2, i3, i4, i5, i6 }) =
+    [ i0, i1, i2, i3, i4, i5, i6 ]
+        |> List.map studentIdNumberToChar
+        |> String.fromList
+
+
 {-| 指定した長さのListにする。足りないところはNothingで埋める
 -}
 listGrow : Int -> List a -> List (Maybe a)
@@ -1568,15 +1614,16 @@ listGrow length list =
             ++ List.repeat (length - listLength) Nothing
 
 
-type alias StudentId =
-    { i0 : StudentIdNumber
-    , i1 : StudentIdNumber
-    , i2 : StudentIdNumber
-    , i3 : StudentIdNumber
-    , i4 : StudentIdNumber
-    , i5 : StudentIdNumber
-    , i6 : StudentIdNumber
-    }
+type StudentId
+    = StudentId
+        { i0 : StudentIdNumber
+        , i1 : StudentIdNumber
+        , i2 : StudentIdNumber
+        , i3 : StudentIdNumber
+        , i4 : StudentIdNumber
+        , i5 : StudentIdNumber
+        , i6 : StudentIdNumber
+        }
 
 
 type StudentIdNumber

@@ -11974,6 +11974,9 @@ var author$project$Main$ANone = {$: 'ANone'};
 var author$project$Main$APartStudentId = function (a) {
 	return {$: 'APartStudentId', a: a};
 };
+var author$project$Main$ASAddress = function (a) {
+	return {$: 'ASAddress', a: a};
+};
 var author$project$Main$AStudentId = function (a) {
 	return {$: 'AStudentId', a: a};
 };
@@ -12181,6 +12184,9 @@ var author$project$Main$charListToPartStudentId = function (charList) {
 		return elm$core$Maybe$Nothing;
 	}
 };
+var author$project$Main$StudentId = function (a) {
+	return {$: 'StudentId', a: a};
+};
 var author$project$Main$charListToStudentId = function (charList) {
 	if (charList.b && charList.b.b) {
 		var h0 = charList.a;
@@ -12204,7 +12210,8 @@ var author$project$Main$charListToStudentId = function (charList) {
 				var _n8 = _n7.b;
 				var i6 = _n8.a.a;
 				return elm$core$Maybe$Just(
-					{i0: i0, i1: i1, i2: i2, i3: i3, i4: i4, i5: i5, i6: i6});
+					author$project$Main$StudentId(
+						{i0: i0, i1: i1, i2: i2, i3: i3, i4: i4, i5: i5, i6: i6}));
 			} else {
 				return elm$core$Maybe$Nothing;
 			}
@@ -12215,9 +12222,111 @@ var author$project$Main$charListToStudentId = function (charList) {
 		return elm$core$Maybe$Nothing;
 	}
 };
+var author$project$Main$SAddress = F2(
+	function (a, b) {
+		return {$: 'SAddress', a: a, b: b};
+	});
+var elm$core$List$any = F2(
+	function (isOkay, list) {
+		any:
+		while (true) {
+			if (!list.b) {
+				return false;
+			} else {
+				var x = list.a;
+				var xs = list.b;
+				if (isOkay(x)) {
+					return true;
+				} else {
+					var $temp$isOkay = isOkay,
+						$temp$list = xs;
+					isOkay = $temp$isOkay;
+					list = $temp$list;
+					continue any;
+				}
+			}
+		}
+	});
+var elm$core$List$all = F2(
+	function (isOkay, list) {
+		return !A2(
+			elm$core$List$any,
+			A2(elm$core$Basics$composeL, elm$core$Basics$not, isOkay),
+			list);
+	});
+var elm$core$String$dropRight = F2(
+	function (n, string) {
+		return (n < 1) ? string : A3(elm$core$String$slice, 0, -n, string);
+	});
+var elm$core$String$fromList = _String_fromList;
 var elm$core$String$foldr = _String_foldr;
 var elm$core$String$toList = function (string) {
 	return A3(elm$core$String$foldr, elm$core$List$cons, _List_Nil, string);
+};
+var elm$core$String$toLower = _String_toLower;
+var author$project$Main$charListToTsukubaEmailAddress = function (charList) {
+	if ((((((((charList.b && charList.b.b) && charList.b.b.b) && charList.b.b.b.b) && charList.b.b.b.b.b) && charList.b.b.b.b.b.b) && charList.b.b.b.b.b.b.b) && charList.b.b.b.b.b.b.b.b) && charList.b.b.b.b.b.b.b.b.b) {
+		var s = charList.a;
+		var _n1 = charList.b;
+		var i0 = _n1.a;
+		var _n2 = _n1.b;
+		var i1 = _n2.a;
+		var _n3 = _n2.b;
+		var i2 = _n3.a;
+		var _n4 = _n3.b;
+		var i3 = _n4.a;
+		var _n5 = _n4.b;
+		var i4 = _n5.a;
+		var _n6 = _n5.b;
+		var i5 = _n6.a;
+		var _n7 = _n6.b;
+		var i6 = _n7.a;
+		var _n8 = _n7.b;
+		var at = _n8.a;
+		var rest = _n8.b;
+		if ((_Utils_eq(
+			s,
+			_Utils_chr('s')) || _Utils_eq(
+			s,
+			_Utils_chr('S'))) && _Utils_eq(
+			at,
+			_Utils_chr('@'))) {
+			var _n9 = author$project$Main$charListToStudentId(
+				_List_fromArray(
+					[
+						_Utils_chr('2'),
+						_Utils_chr('0'),
+						i0,
+						i1,
+						i2,
+						i3,
+						i4,
+						i5,
+						i6
+					]));
+			if (_n9.$ === 'Just') {
+				var studentId = _n9.a;
+				var restString = elm$core$String$fromList(rest);
+				return ((elm$core$String$toLower(
+					A2(elm$core$String$right, 14, restString)) === '.tsukuba.ac.jp') && ((A2(elm$core$String$dropRight, 14, restString) !== '') && A2(
+					elm$core$List$all,
+					elm$core$Char$isAlphaNum,
+					elm$core$String$toList(
+						A2(elm$core$String$dropRight, 14, restString))))) ? elm$core$Maybe$Just(
+					A2(
+						author$project$Main$SAddress,
+						studentId,
+						elm$core$String$toLower(
+							A2(elm$core$String$dropRight, 14, restString)))) : elm$core$Maybe$Nothing;
+			} else {
+				return elm$core$Maybe$Nothing;
+			}
+		} else {
+			return elm$core$Maybe$Nothing;
+		}
+	} else {
+		return elm$core$Maybe$Nothing;
+	}
 };
 var elm$core$String$trim = _String_trim;
 var author$project$Main$analysisStudentIdOrEmailAddress = function (string) {
@@ -12233,7 +12342,13 @@ var author$project$Main$analysisStudentIdOrEmailAddress = function (string) {
 			var partStudentId = _n1.a;
 			return author$project$Main$APartStudentId(partStudentId);
 		} else {
-			return author$project$Main$ANone;
+			var _n2 = author$project$Main$charListToTsukubaEmailAddress(charList);
+			if (_n2.$ === 'Just') {
+				var sAddress = _n2.a;
+				return author$project$Main$ASAddress(sAddress);
+			} else {
+				return author$project$Main$ANone;
+			}
 		}
 	}
 };
@@ -12397,7 +12512,6 @@ var author$project$Main$studentIdNumberToChar = function (i) {
 			return _Utils_chr('9');
 	}
 };
-var elm$core$String$fromList = _String_fromList;
 var author$project$Main$partStudentIdToString = function (partStudentId) {
 	return elm$core$String$fromList(
 		A2(
@@ -12456,6 +12570,26 @@ var author$project$Main$partStudentIdToString = function (partStudentId) {
 								[i0, i1, i2, i3, i4, i5]);
 					}
 				}())));
+};
+var author$project$Main$studentIdToString = function (_n0) {
+	var i0 = _n0.a.i0;
+	var i1 = _n0.a.i1;
+	var i2 = _n0.a.i2;
+	var i3 = _n0.a.i3;
+	var i4 = _n0.a.i4;
+	var i5 = _n0.a.i5;
+	var i6 = _n0.a.i6;
+	return elm$core$String$fromList(
+		A2(
+			elm$core$List$map,
+			author$project$Main$studentIdNumberToChar,
+			_List_fromArray(
+				[i0, i1, i2, i3, i4, i5, i6])));
+};
+var author$project$Main$sAddressToEmailAddressString = function (_n0) {
+	var studentId = _n0.a;
+	var subDomain = _n0.b;
+	return 's' + (author$project$Main$studentIdToString(studentId) + ('@' + (subDomain + '.tsukuba.ac.jp')));
 };
 var elm$html$Html$Events$alwaysStop = function (x) {
 	return _Utils_Tuple2(x, true);
@@ -12532,13 +12666,13 @@ var author$project$Main$studentHasSAddressFormList = function (string) {
 									case 'ANone':
 										return '';
 									case 'AStudentId':
-										var i0 = _n0.a.i0;
-										var i1 = _n0.a.i1;
-										var i2 = _n0.a.i2;
-										var i3 = _n0.a.i3;
-										var i4 = _n0.a.i4;
-										var i5 = _n0.a.i5;
-										var i6 = _n0.a.i6;
+										var i0 = _n0.a.a.i0;
+										var i1 = _n0.a.a.i1;
+										var i2 = _n0.a.a.i2;
+										var i3 = _n0.a.a.i3;
+										var i4 = _n0.a.a.i4;
+										var i5 = _n0.a.a.i5;
+										var i6 = _n0.a.a.i6;
 										return '学籍番号 20' + elm$core$String$fromList(
 											_List_fromArray(
 												[
@@ -12553,6 +12687,9 @@ var author$project$Main$studentHasSAddressFormList = function (string) {
 									case 'APartStudentId':
 										var partStudentId = _n0.a;
 										return '学籍番号 20' + author$project$Main$partStudentIdToString(partStudentId);
+									case 'ASAddress':
+										var sAddress = _n0.a;
+										return '筑波大学のメールアドレス ' + author$project$Main$sAddressToEmailAddressString(sAddress);
 									default:
 										return '';
 								}
