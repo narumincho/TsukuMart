@@ -66,7 +66,7 @@ type UserSignUpPage
         , password : Result Password.Error Password.Password
         }
     | UserSignUpPageNewStudent
-        { emailAddress : String
+        { emailAddress : Maybe EmailAddress.EmailAddress
         , imageUrl : Maybe String
         , password : Result Password.Error Password.Password
         }
@@ -280,7 +280,15 @@ update msg (Model rec) =
                         { rec
                             | page =
                                 PageSignUp
-                                    (UserSignUpPageNewStudent { r | emailAddress = string })
+                                    (UserSignUpPageNewStudent
+                                        { r
+                                            | emailAddress =
+                                                string
+                                                    |> String.trim
+                                                    |> String.toList
+                                                    |> EmailAddress.fromCharList
+                                        }
+                                    )
                         }
 
                 _ ->
@@ -1290,7 +1298,7 @@ sAddressSelectView userSignUpPage =
                             (ChangePage
                                 (PageSignUp
                                     (UserSignUpPageNewStudent
-                                        { emailAddress = "", imageUrl = Nothing, password = Password.passwordFromString "" }
+                                        { emailAddress = [] |> EmailAddress.fromCharList, imageUrl = Nothing, password = Password.passwordFromString "" }
                                     )
                                 )
                             )
@@ -1325,11 +1333,14 @@ studentHasSAddressFormList analysisStudentIdOrEmailAddressResult password =
             [ Html.text
                 (case analysisStudentIdOrEmailAddressResult of
                     ANone ->
-                        "学籍番号は20から始まる9桁の数字、筑波大学のメールアドレスはs201234567@s.tsukuba.ac.jpのような形のメールアドレス"
+                        "学籍番号は20から始まる9桁の数字、筑波大学のメールアドレスはs1234567@s.tsukuba.ac.jpのような形のメールアドレス"
 
                     AStudentId studentId ->
                         "学籍番号 "
                             ++ StudentId.toStringWith20 studentId
+                            ++ " "
+                            ++ StudentId.toEmailAddressString studentId
+                            ++ "にメールを送信します"
 
                     APartStudentId partStudentId ->
                         "学籍番号 "
@@ -1460,8 +1471,8 @@ passwordForm passwordResult =
             [ Html.Attributes.class "signUp-description" ]
             [ Html.text
                 (case passwordResult of
-                    Ok _ ->
-                        ""
+                    Ok password ->
+                        Password.toString password
 
                     Err error ->
                         Password.errorMessage error
@@ -1482,13 +1493,63 @@ signUpSubmitButton =
         ]
 
 
+{-| 新規登録のJSONを生成
+-}
 signUpJson : UserSignUpPage -> Maybe Json.Encode.Value
 signUpJson userSignUpPage =
-    case userSignUpPage of
-        UserSignUpPageStudentHasSAddress { studentIdOrTsukubaEmailAddress } ->
-            Nothing
+    let
+        signUpData : Maybe { emailAddress : String, pass : Password.Password, image : Maybe String }
+        signUpData =
+            case userSignUpPage of
+                UserSignUpPageStudentHasSAddress { studentIdOrTsukubaEmailAddress, password } ->
+                    case ( studentIdOrTsukubaEmailAddress, password ) of
+                        ( AStudentId studentId, Ok pass ) ->
+                            Just
+                                { emailAddress = StudentId.toEmailAddressString studentId
+                                , pass = pass
+                                , image = Nothing
+                                }
 
-        UserSignUpPageNewStudent record ->
+                        ( ASAddress sAddress, Ok pass ) ->
+                            Just
+                                { emailAddress = SAddress.toEmailAddressString sAddress
+                                , pass = pass
+                                , image = Nothing
+                                }
+
+                        _ ->
+                            Nothing
+
+                UserSignUpPageNewStudent { emailAddress, password, imageUrl } ->
+                    case ( emailAddress, password, imageUrl ) of
+                        ( Just address, Ok pass, Just image ) ->
+                            Just
+                                { emailAddress = EmailAddress.toString address
+                                , pass = pass
+                                , image = Just image
+                                }
+
+                        ( _, _, _ ) ->
+                            Nothing
+    in
+    case signUpData of
+        Just { emailAddress, pass, image } ->
+            Just
+                (Json.Encode.object
+                    ([ ( "email", Json.Encode.string emailAddress )
+                     , ( "password", Json.Encode.string (Password.toString pass) )
+                     ]
+                        ++ (case image of
+                                Just imageDataUrl ->
+                                    [ ( "image", Json.Encode.string imageDataUrl ) ]
+
+                                Nothing ->
+                                    []
+                           )
+                    )
+                )
+
+        Nothing ->
             Nothing
 
 

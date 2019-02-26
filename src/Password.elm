@@ -1,6 +1,7 @@
-module Password exposing (Error, Password, errorMessage, passwordFromString)
+module Password exposing (Error, Password, errorMessage, passwordFromString, toString)
 
 import Set exposing (Set)
+
 
 {-| パスワード
 制約: 数字だけは不可。長さは9文字以上50文字以内
@@ -849,3 +850,296 @@ invalidCharErrorMessage (InvalidCharError charSet) =
     "使えない文字"
         ++ String.fromList (Set.toList charSet)
         ++ "が含まれています。使える文字は英数字と記号(!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~)です。"
+
+
+toString : Password -> String
+toString (Password list) =
+    list
+        |> List.map passwordCharToString
+        |> String.fromList
+
+
+passwordCharToString : PasswordChar -> Char
+passwordCharToString passwordChar =
+    case passwordChar of
+        Pa ->
+            'a'
+
+        Pb ->
+            'b'
+
+        Pc ->
+            'c'
+
+        Pd ->
+            'd'
+
+        Pe ->
+            'e'
+
+        Pf ->
+            'f'
+
+        Pg ->
+            'g'
+
+        Ph ->
+            'h'
+
+        Pi ->
+            'i'
+
+        Pj ->
+            'j'
+
+        Pk ->
+            'k'
+
+        Pl ->
+            'l'
+
+        Pm ->
+            'm'
+
+        Pn ->
+            'n'
+
+        Po ->
+            'o'
+
+        Pp ->
+            'p'
+
+        Pq ->
+            'q'
+
+        Pr ->
+            'r'
+
+        Ps ->
+            's'
+
+        Pt ->
+            't'
+
+        Pu ->
+            'u'
+
+        Pv ->
+            'v'
+
+        Pw ->
+            'w'
+
+        Px ->
+            'x'
+
+        Py ->
+            'y'
+
+        Pz ->
+            'z'
+
+        PA ->
+            'A'
+
+        PB ->
+            'B'
+
+        PC ->
+            'C'
+
+        PD ->
+            'D'
+
+        PE ->
+            'E'
+
+        PF ->
+            'F'
+
+        PG ->
+            'G'
+
+        PH ->
+            'H'
+
+        PI ->
+            'I'
+
+        PJ ->
+            'J'
+
+        PK ->
+            'K'
+
+        PL ->
+            'L'
+
+        PM ->
+            'M'
+
+        PN ->
+            'N'
+
+        PO ->
+            'O'
+
+        PP ->
+            'P'
+
+        PQ ->
+            'Q'
+
+        PR ->
+            'R'
+
+        PS ->
+            'S'
+
+        PT ->
+            'T'
+
+        PU ->
+            'U'
+
+        PV ->
+            'V'
+
+        PW ->
+            'W'
+
+        PX ->
+            'X'
+
+        PY ->
+            'Y'
+
+        PZ ->
+            'Z'
+
+        P0 ->
+            '0'
+
+        P1 ->
+            '1'
+
+        P2 ->
+            '2'
+
+        P3 ->
+            '3'
+
+        P4 ->
+            '4'
+
+        P5 ->
+            '5'
+
+        P6 ->
+            '6'
+
+        P7 ->
+            '7'
+
+        P8 ->
+            '8'
+
+        P9 ->
+            '9'
+
+        ExclamationMark ->
+            '!'
+
+        QuotationMark ->
+            '"'
+
+        NumberSign ->
+            '#'
+
+        DollarSign ->
+            '$'
+
+        PercentSign ->
+            '%'
+
+        Ampersand ->
+            '&'
+
+        Apostrophe ->
+            '\''
+
+        LeftParenthesis ->
+            '('
+
+        RightParenthesis ->
+            ')'
+
+        Asterisk ->
+            '*'
+
+        PlusSign ->
+            '+'
+
+        Comma ->
+            ','
+
+        HyphenMinus ->
+            '-'
+
+        FullStop ->
+            '.'
+
+        Solidus ->
+            '/'
+
+        Colon ->
+            ':'
+
+        Semicolon ->
+            ';'
+
+        LessThanSign ->
+            '<'
+
+        EqualsSign ->
+            '='
+
+        GreaterThanSign ->
+            '>'
+
+        QuestionMark ->
+            '?'
+
+        CommercialAt ->
+            '@'
+
+        LeftSquareBracket ->
+            '['
+
+        ReverseSolidus ->
+            '\\'
+
+        RightSquareBracket ->
+            ']'
+
+        CircumflexAccent ->
+            '^'
+
+        LowLine ->
+            '_'
+
+        GraveAccent ->
+            '`'
+
+        LeftCurlyBracket ->
+            '{'
+
+        VerticalLine ->
+            '|'
+
+        RightCurlyBracket ->
+            '}'
+
+        Tilde ->
+            '~'

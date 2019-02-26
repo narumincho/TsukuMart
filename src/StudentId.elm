@@ -2,12 +2,13 @@ module StudentId exposing
     ( PartStudentId
     , StudentId
     , fromCharList
+    , fromCharListNo20Head
     , partStudentIdFromCharList
     , partStudentIdToString
     , partStudentIdToStringWith20
     , toString
     , toStringWith20
-    , fromCharListNo20Head)
+    , toEmailAddressString)
 
 {-| 学籍番号
 201712345のようなもの
@@ -298,3 +299,9 @@ digitToChar i =
 
         D9 ->
             '9'
+
+{-| s1712345@s.tsukuba.ac.jpのようなメールアドレスを生成する
+-}
+toEmailAddressString : StudentId -> String
+toEmailAddressString studentId =
+    "s" ++ toString studentId ++ "s@tsukuba.ac.jp"
