@@ -10,6 +10,7 @@ import Http
 import Json.Decode
 import Json.Encode
 import Password
+import StudentId exposing (StudentId)
 import Svg
 import Svg.Attributes
 import Url
@@ -495,7 +496,7 @@ tsukuMartFontColor =
 
 tsukuBird : List (Svg.Svg msg)
 tsukuBird =
-    [ tuskuBirdShadow
+    [ tsukuBirdShadow
     , Svg.image
         [ Svg.Attributes.xlinkHref "assets/logoBird.png"
         , Svg.Attributes.width "370"
@@ -506,8 +507,8 @@ tsukuBird =
     ]
 
 
-tuskuBirdShadow : Svg.Svg msg
-tuskuBirdShadow =
+tsukuBirdShadow : Svg.Svg msg
+tsukuBirdShadow =
     Svg.ellipse
         [ Svg.Attributes.cx "383.22"
         , Svg.Attributes.cy "93.55"
@@ -1128,7 +1129,7 @@ logInIdView =
         , Html.input
             [ Html.Attributes.class "logIn-input"
             , Html.Attributes.id "logInId"
-            , Html.Attributes.attribute "autocomplete" "username"
+            , Html.Attributes.attribute "autocomplete" "email"
             ]
             []
         ]
@@ -1312,21 +1313,13 @@ studentHasSAddressFormList string password =
                     ANone ->
                         "学籍番号は20から始まる9桁の数字、筑波大学のメールアドレスはs201234567@s.tsukuba.ac.jpのような形のメールアドレス"
 
-                    AStudentId (StudentId { i0, i1, i2, i3, i4, i5, i6 }) ->
-                        "学籍番号 20"
-                            ++ String.fromList
-                                [ studentIdNumberToChar i0
-                                , studentIdNumberToChar i1
-                                , studentIdNumberToChar i2
-                                , studentIdNumberToChar i3
-                                , studentIdNumberToChar i4
-                                , studentIdNumberToChar i5
-                                , studentIdNumberToChar i6
-                                ]
+                    AStudentId studentId ->
+                        "学籍番号 "
+                            ++ StudentId.toStringWith20 studentId
 
                     APartStudentId partStudentId ->
-                        "学籍番号 20"
-                            ++ partStudentIdToString partStudentId
+                        "学籍番号 "
+                            ++ StudentId.partStudentIdToStringWith20 partStudentId
 
                     ASAddress sAddress ->
                         "筑波大学のメールアドレス " ++ sAddressToEmailAddressString sAddress
@@ -1346,12 +1339,12 @@ analysisStudentIdOrEmailAddress string =
         charList =
             String.toList (String.trim string)
     in
-    case charListToStudentId charList of
+    case StudentId.fromCharList charList of
         Just studentId ->
             AStudentId studentId
 
         Nothing ->
-            case charListToPartStudentId charList of
+            case StudentId.partStudentIdFromCharList charList of
                 Just partStudentId ->
                     APartStudentId partStudentId
 
@@ -1364,69 +1357,12 @@ analysisStudentIdOrEmailAddress string =
                             ANone
 
 
-charListToStudentId : List Char -> Maybe StudentId
-charListToStudentId charList =
-    case charList of
-        h0 :: h1 :: hs ->
-            if isStudentIdHead h0 h1 then
-                case hs |> List.map charToStudentIdNumber of
-                    (Just i0) :: (Just i1) :: (Just i2) :: (Just i3) :: (Just i4) :: (Just i5) :: (Just i6) :: [] ->
-                        Just
-                            (StudentId { i0 = i0, i1 = i1, i2 = i2, i3 = i3, i4 = i4, i5 = i5, i6 = i6 })
-
-                    _ ->
-                        Nothing
-
-            else
-                Nothing
-
-        _ ->
-            Nothing
-
-
-charListToPartStudentId : List Char -> Maybe PartStudentId
-charListToPartStudentId charList =
-    case charList of
-        h0 :: h1 :: hs ->
-            if isStudentIdHead h0 h1 then
-                case hs |> List.map charToStudentIdNumber of
-                    [] ->
-                        Just PartStudentId0
-
-                    (Just i0) :: [] ->
-                        Just (PartStudentId1 { i0 = i0 })
-
-                    (Just i0) :: (Just i1) :: [] ->
-                        Just (PartStudentId2 { i0 = i0, i1 = i1 })
-
-                    (Just i0) :: (Just i1) :: (Just i2) :: [] ->
-                        Just (PartStudentId3 { i0 = i0, i1 = i1, i2 = i2 })
-
-                    (Just i0) :: (Just i1) :: (Just i2) :: (Just i3) :: [] ->
-                        Just (PartStudentId4 { i0 = i0, i1 = i1, i2 = i2, i3 = i3 })
-
-                    (Just i0) :: (Just i1) :: (Just i2) :: (Just i3) :: (Just i4) :: [] ->
-                        Just (PartStudentId5 { i0 = i0, i1 = i1, i2 = i2, i3 = i3, i4 = i4 })
-
-                    (Just i0) :: (Just i1) :: (Just i2) :: (Just i3) :: (Just i4) :: (Just i5) :: [] ->
-                        Just (PartStudentId6 { i0 = i0, i1 = i1, i2 = i2, i3 = i3, i4 = i4, i5 = i5 })
-
-                    _ ->
-                        Nothing
-
-            else
-                Nothing
-
-        _ ->
-            Nothing
-
-
 charListToTsukubaEmailAddress : List Char -> Maybe SAddress
 charListToTsukubaEmailAddress charList =
     case charList of
         s :: i0 :: i1 :: i2 :: i3 :: i4 :: i5 :: i6 :: at :: rest ->
             if (s == 's' || s == 'S') && (at == '@') then
-                case charListToStudentId [ '2', '0', i0, i1, i2, i3, i4, i5, i6 ] of
+                case StudentId.fromCharList [ '2', '0', i0, i1, i2, i3, i4, i5, i6 ] of
                     Just studentId ->
                         let
                             restString =
@@ -1456,256 +1392,22 @@ charListToTsukubaEmailAddress charList =
 sAddressToEmailAddressString : SAddress -> String
 sAddressToEmailAddressString (SAddress studentId subDomain) =
     "s"
-        ++ studentIdToString studentId
+        ++ StudentId.toString studentId
         ++ "@"
         ++ subDomain
         ++ ".tsukuba.ac.jp"
-
-
-isStudentIdHead : Char -> Char -> Bool
-isStudentIdHead c0 c1 =
-    case ( charToStudentIdNumber c0, charToStudentIdNumber c1 ) of
-        ( Just SI2, Just SI0 ) ->
-            True
-
-        ( _, _ ) ->
-            False
-
-
-charToStudentIdNumber : Char -> Maybe StudentIdNumber
-charToStudentIdNumber char =
-    case char of
-        '0' ->
-            Just SI0
-
-        '０' ->
-            Just SI0
-
-        '1' ->
-            Just SI1
-
-        '１' ->
-            Just SI1
-
-        '2' ->
-            Just SI2
-
-        '２' ->
-            Just SI2
-
-        '3' ->
-            Just SI3
-
-        '３' ->
-            Just SI3
-
-        '4' ->
-            Just SI4
-
-        '４' ->
-            Just SI4
-
-        '5' ->
-            Just SI5
-
-        '５' ->
-            Just SI5
-
-        '6' ->
-            Just SI6
-
-        '６' ->
-            Just SI6
-
-        '7' ->
-            Just SI7
-
-        '７' ->
-            Just SI7
-
-        '8' ->
-            Just SI8
-
-        '８' ->
-            Just SI8
-
-        '9' ->
-            Just SI9
-
-        '９' ->
-            Just SI9
-
-        _ ->
-            Nothing
-
-
-studentIdNumberToChar : StudentIdNumber -> Char
-studentIdNumberToChar i =
-    case i of
-        SI0 ->
-            '0'
-
-        SI1 ->
-            '1'
-
-        SI2 ->
-            '2'
-
-        SI3 ->
-            '3'
-
-        SI4 ->
-            '4'
-
-        SI5 ->
-            '5'
-
-        SI6 ->
-            '6'
-
-        SI7 ->
-            '7'
-
-        SI8 ->
-            '8'
-
-        SI9 ->
-            '9'
 
 
 type AnalysisStudentIdOrEmailAddressResult
     = ANone
     | AStudentId StudentId
     | ASAddress SAddress
-    | APartStudentId PartStudentId
+    | APartStudentId StudentId.PartStudentId
     | AEmailButIsNotTsukuba
-
-
-type PartStudentId
-    = PartStudentId0
-    | PartStudentId1 { i0 : StudentIdNumber }
-    | PartStudentId2
-        { i0 : StudentIdNumber
-        , i1 : StudentIdNumber
-        }
-    | PartStudentId3
-        { i0 : StudentIdNumber
-        , i1 : StudentIdNumber
-        , i2 : StudentIdNumber
-        }
-    | PartStudentId4
-        { i0 : StudentIdNumber
-        , i1 : StudentIdNumber
-        , i2 : StudentIdNumber
-        , i3 : StudentIdNumber
-        }
-    | PartStudentId5
-        { i0 : StudentIdNumber
-        , i1 : StudentIdNumber
-        , i2 : StudentIdNumber
-        , i3 : StudentIdNumber
-        , i4 : StudentIdNumber
-        }
-    | PartStudentId6
-        { i0 : StudentIdNumber
-        , i1 : StudentIdNumber
-        , i2 : StudentIdNumber
-        , i3 : StudentIdNumber
-        , i4 : StudentIdNumber
-        , i5 : StudentIdNumber
-        }
 
 
 type SAddress
     = SAddress StudentId String
-
-
-{-| 入力途中の学籍番号を文字列にする 先頭の20は含まない
--}
-partStudentIdToString : PartStudentId -> String
-partStudentIdToString partStudentId =
-    (case partStudentId of
-        PartStudentId0 ->
-            []
-
-        PartStudentId1 { i0 } ->
-            [ i0 ]
-
-        PartStudentId2 { i0, i1 } ->
-            [ i0, i1 ]
-
-        PartStudentId3 { i0, i1, i2 } ->
-            [ i0, i1, i2 ]
-
-        PartStudentId4 { i0, i1, i2, i3 } ->
-            [ i0, i1, i2, i3 ]
-
-        PartStudentId5 { i0, i1, i2, i3, i4 } ->
-            [ i0, i1, i2, i3, i4 ]
-
-        PartStudentId6 { i0, i1, i2, i3, i4, i5 } ->
-            [ i0, i1, i2, i3, i4, i5 ]
-    )
-        |> listGrow 7
-        |> List.map
-            (\numMaybe ->
-                numMaybe |> Maybe.map studentIdNumberToChar |> Maybe.withDefault '?'
-            )
-        |> String.fromList
-
-
-{-| 学籍番号を文字列にする 先頭の20は含まない
--}
-studentIdToString : StudentId -> String
-studentIdToString (StudentId { i0, i1, i2, i3, i4, i5, i6 }) =
-    [ i0, i1, i2, i3, i4, i5, i6 ]
-        |> List.map studentIdNumberToChar
-        |> String.fromList
-
-
-{-| 指定した長さのListにする。足りないところはNothingで埋める
--}
-listGrow : Int -> List a -> List (Maybe a)
-listGrow length list =
-    let
-        listLength =
-            List.length list
-    in
-    if length < listLength then
-        list
-            |> List.take length
-            |> List.map Just
-
-    else
-        (list
-            |> List.map Just
-        )
-            ++ List.repeat (length - listLength) Nothing
-
-
-type StudentId
-    = StudentId
-        { i0 : StudentIdNumber
-        , i1 : StudentIdNumber
-        , i2 : StudentIdNumber
-        , i3 : StudentIdNumber
-        , i4 : StudentIdNumber
-        , i5 : StudentIdNumber
-        , i6 : StudentIdNumber
-        }
-
-
-type StudentIdNumber
-    = SI0
-    | SI1
-    | SI2
-    | SI3
-    | SI4
-    | SI5
-    | SI6
-    | SI7
-    | SI8
-    | SI9
 
 
 newStudentFormList : Maybe String -> Result Password.Error Password.Password -> List (Html.Html Msg)

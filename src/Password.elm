@@ -2,7 +2,9 @@ module Password exposing (Error, Password, errorMessage, passwordFromString)
 
 import Set exposing (Set)
 
-
+{-| パスワード
+制約: 数字だけは不可。長さは9文字以上50文字以内
+-}
 type Password
     = Password (List PasswordChar)
 
