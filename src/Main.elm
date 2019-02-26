@@ -57,7 +57,7 @@ type Page
     | PageExhibitionItemList
     | PagePurchaseItemList
     | PageExhibition ExhibitionState
-    | PageSendSignUpEmail
+    | PageSendSignUpEmail EmailAddress.EmailAddress (Maybe (Result Http.Error SignUpResponse))
 
 
 type UserSignUpPage
@@ -104,20 +104,18 @@ type Msg
     | ToNarrowScreenMode
     | UrlChange Url.Url
     | UrlRequest Browser.UrlRequest
-    | Request
-    | Response String
-    | SignUp
-    | SignUpResponse (Result Http.Error SignUpResponseResult)
+    | SignUp EmailAddress.EmailAddress
+    | SignUpResponse (Result Http.Error SignUpResponse)
     | InputStudentIdOrEmailAddress String
     | InputStudentImage String
     | ReceiveImageDataUrl String
     | InputPassword String
 
 
-type SignUpResponseResult
-    = SignUpResponseResultOk
-    | SignUpResponseResultAleadySignUp
-    | SignUpResponseResultError
+type SignUpResponse
+    = SignUpResponseOk
+    | SignUpResponseResultSignUp
+    | SignUpResponseError
 
 
 main : Program () Model Msg
@@ -219,25 +217,12 @@ update msg (Model rec) =
                     , Browser.Navigation.load string
                     )
 
-        Request ->
-            ( Model rec
-            , Http.get
-                { url = "https://elm-lang.org/assets/public-opinion.txt"
-                , expect = Http.expectString (Result.withDefault "" >> Response)
-                }
-            )
-
-        Response string ->
-            ( Model rec
-            , Cmd.none
-            )
-
-        SignUp ->
+        SignUp emailAddress ->
             case rec.page of
                 PageSignUp userSignUpPage ->
                     ( Model
                         { rec
-                            | page = PageSendSignUpEmail
+                            | page = PageSendSignUpEmail emailAddress Nothing
                         }
                     , case signUpJson userSignUpPage of
                         Just json ->
@@ -342,20 +327,20 @@ update msg (Model rec) =
             )
 
 
-signUpResponseDecoder : Json.Decode.Decoder SignUpResponseResult
+signUpResponseDecoder : Json.Decode.Decoder SignUpResponse
 signUpResponseDecoder =
-    Json.Decode.field "signUpResult" Json.Decode.string
+    Json.Decode.field "result" Json.Decode.string
         |> Json.Decode.map
             (\signUpResultValue ->
                 case signUpResultValue of
                     "ok" ->
-                        SignUpResponseResultOk
+                        SignUpResponseOk
 
                     "alreadySignUp" ->
-                        SignUpResponseResultAleadySignUp
+                        SignUpResponseResultSignUp
 
                     _ ->
-                        SignUpResponseResultError
+                        SignUpResponseError
             )
 
 
@@ -829,23 +814,31 @@ mainTab page wideScreenMode =
                 PageExhibition _ ->
                     TabSingle "商品の情報を入力"
 
-                PageSendSignUpEmail ->
-                    TabSingle ""
+                PageSendSignUpEmail _ _ ->
+                    TabNone
     in
     Html.div
-        [ Html.Attributes.classList
+        ([ Html.Attributes.classList
             [ ( "mainTab", True ), ( "mainTab-wide", wideScreenMode ) ]
-        , Html.Attributes.style
-            "grid-template-columns"
-            (List.repeat (tabTypeToCount tabData) "1fr" |> String.join " ")
-        , Html.Attributes.style "height" "3rem"
-        ]
+         ]
+            ++ (case tabData of
+                    TabNone ->
+                        [ Html.Attributes.style "height" "0" ]
+
+                    _ ->
+                        [ Html.Attributes.style "grid-template-columns"
+                            (List.repeat (tabTypeToCount tabData) "1fr" |> String.join " ")
+                        , Html.Attributes.style "height" "3rem"
+                        ]
+               )
+        )
         (mainTabItemList page tabData)
 
 
 type TabType
     = TabMulti (List ( Page, String ))
     | TabSingle String
+    | TabNone
 
 
 tabTypeToCount : TabType -> Int
@@ -856,6 +849,9 @@ tabTypeToCount tabType =
 
         TabSingle _ ->
             1
+
+        TabNone ->
+            0
 
 
 mainTabItemList : Page -> TabType -> List (Html.Html Msg)
@@ -882,6 +878,9 @@ mainTabItemList selectedPage tabData =
                 Nothing
             , mainTabSelectLine 0 1
             ]
+
+        TabNone ->
+            []
 
 
 firstElementIndex : a -> List a -> Maybe Int
@@ -961,6 +960,9 @@ mainView page isWideScreenMode =
 
                 else
                     [ invalidLinkErrorMsg, itemList isWideScreenMode, exhibitButton ]
+
+            PageSendSignUpEmail emailAddress response ->
+                sendSignUpEmailView emailAddress response
 
             _ ->
                 [ itemList isWideScreenMode, exhibitButton ]
@@ -1226,10 +1228,10 @@ userSignUpView userSignUpPage =
                     UserSignUpPageStudentHasSAddress { studentIdOrTsukubaEmailAddress, password } ->
                         studentHasSAddressFormList studentIdOrTsukubaEmailAddress password
 
-                    UserSignUpPageNewStudent { imageUrl, password } ->
-                        newStudentFormList imageUrl password
+                    UserSignUpPageNewStudent { emailAddress, imageUrl, password } ->
+                        newStudentFormList emailAddress imageUrl password
                )
-            ++ [ signUpSubmitButton (getSignUpData userSignUpPage /= Nothing)
+            ++ [ signUpSubmitButton (getSignUpData userSignUpPage |> Maybe.map .emailAddress)
                ]
         )
     ]
@@ -1344,7 +1346,11 @@ studentHasSAddressFormList analysisStudentIdOrEmailAddressResult password =
                         "学籍番号 "
                             ++ StudentId.toStringWith20 studentId
                             ++ " "
-                            ++ StudentId.toEmailAddressString studentId
+                            ++ (studentId
+                                    |> SAddress.fromStundetId
+                                    |> EmailAddress.fromSAddress
+                                    |> EmailAddress.toString
+                               )
                             ++ "にメールを送信します"
 
                     APartStudentId partStudentId ->
@@ -1400,8 +1406,8 @@ type AnalysisStudentIdOrEmailAddressResult
     | AEmailButIsNotTsukuba
 
 
-newStudentFormList : Maybe String -> Result Password.Error Password.Password -> List (Html.Html Msg)
-newStudentFormList imageUrlMaybe password =
+newStudentFormList : Maybe EmailAddress.EmailAddress -> Maybe String -> Result Password.Error Password.Password -> List (Html.Html Msg)
+newStudentFormList emailAddress imageUrlMaybe password =
     [ Html.div
         []
         [ Html.label
@@ -1414,11 +1420,21 @@ newStudentFormList imageUrlMaybe password =
             , Html.Attributes.type_ "email"
             , Html.Attributes.id "signUpEmail"
             , Html.Attributes.attribute "autocomplete" "email"
+            , Html.Events.onInput InputStudentIdOrEmailAddress
             ]
             []
         , Html.div
             [ Html.Attributes.class "signUp-description" ]
-            [ Html.text "Sアドをつかえるまでの…" ]
+            [ Html.text
+                (case emailAddress of
+                    Just address ->
+                        EmailAddress.toString address
+                            ++ "に登録メールを送信します"
+
+                    Nothing ->
+                        "メールアドレスを入力してください"
+                )
+            ]
         ]
     , passwordForm password
     , Html.div
@@ -1486,15 +1502,22 @@ passwordForm passwordResult =
         ]
 
 
-signUpSubmitButton : Bool -> Html.Html Msg
-signUpSubmitButton isActive =
+signUpSubmitButton : Maybe EmailAddress.EmailAddress -> Html.Html Msg
+signUpSubmitButton emailAddressMaybe =
     Html.div
         []
         [ Html.button
-            [ Html.Attributes.class "signUp-signUpButton"
-            , Html.Attributes.disabled (not isActive)
-            , Html.Events.stopPropagationOn "click" (Json.Decode.succeed ( SignUp, True ))
-            ]
+            ([ Html.Attributes.class "signUp-signUpButton"
+             , Html.Attributes.disabled (emailAddressMaybe == Nothing)
+             ]
+                ++ (case emailAddressMaybe of
+                        Just emailAddress ->
+                            [ Html.Events.stopPropagationOn "click" (Json.Decode.succeed ( SignUp emailAddress, True )) ]
+
+                        Nothing ->
+                            []
+                   )
+            )
             [ Html.text "新規登録" ]
         ]
 
@@ -1507,7 +1530,7 @@ signUpJson userSignUpPage =
         Just { emailAddress, pass, image } ->
             Just
                 (Json.Encode.object
-                    ([ ( "email", Json.Encode.string emailAddress )
+                    ([ ( "email", Json.Encode.string (EmailAddress.toString emailAddress) )
                      , ( "password", Json.Encode.string (Password.toString pass) )
                      ]
                         ++ (case image of
@@ -1524,21 +1547,21 @@ signUpJson userSignUpPage =
             Nothing
 
 
-getSignUpData : UserSignUpPage -> Maybe { emailAddress : String, pass : Password.Password, image : Maybe String }
+getSignUpData : UserSignUpPage -> Maybe { emailAddress : EmailAddress.EmailAddress, pass : Password.Password, image : Maybe String }
 getSignUpData userSignUpPage =
     case userSignUpPage of
         UserSignUpPageStudentHasSAddress { studentIdOrTsukubaEmailAddress, password } ->
             case ( studentIdOrTsukubaEmailAddress, password ) of
                 ( AStudentId studentId, Ok pass ) ->
                     Just
-                        { emailAddress = StudentId.toEmailAddressString studentId
+                        { emailAddress = EmailAddress.fromSAddress (SAddress.fromStundetId studentId)
                         , pass = pass
                         , image = Nothing
                         }
 
                 ( ASAddress sAddress, Ok pass ) ->
                     Just
-                        { emailAddress = SAddress.toEmailAddressString sAddress
+                        { emailAddress = EmailAddress.fromSAddress sAddress
                         , pass = pass
                         , image = Nothing
                         }
@@ -1550,13 +1573,64 @@ getSignUpData userSignUpPage =
             case ( emailAddress, password, imageUrl ) of
                 ( Just address, Ok pass, Just image ) ->
                     Just
-                        { emailAddress = EmailAddress.toString address
+                        { emailAddress = address
                         , pass = pass
                         , image = Just image
                         }
 
                 ( _, _, _ ) ->
                     Nothing
+
+
+sendSignUpEmailView : EmailAddress.EmailAddress -> Maybe (Result Http.Error SignUpResponse) -> List (Html.Html msg)
+sendSignUpEmailView emailAddress response =
+    [ Html.div [ Html.Attributes.class "mainView-simpleText" ]
+        [ Html.text
+            (case response of
+                Just (Ok signUpResponse) ->
+                    signUpResponseToString emailAddress signUpResponse
+
+                Just (Err (Http.BadUrl _)) ->
+                    "正しいURLが指定されなかった"
+
+                Just (Err Http.Timeout) ->
+                    "タイムアウトエラー。回線が混雑していると見られます"
+
+                Just (Err Http.NetworkError) ->
+                    "ネットワークエラー。接続が切れている可能性があります"
+
+                Just (Err (Http.BadStatus code)) ->
+                    "バッドステータス " ++ String.fromInt code
+
+                Just (Err (Http.BadBody string)) ->
+                    case Json.Decode.decodeString signUpResponseDecoder string of
+                        Ok signUpResponse ->
+                            "エラー"
+                                ++ signUpResponseToString emailAddress signUpResponse
+
+                        Err _ ->
+                            "エラー。不明なエラー"
+
+                Nothing ->
+                    "新規登録の情報を送信中"
+            )
+        ]
+    ]
+
+
+signUpResponseToString : EmailAddress.EmailAddress -> SignUpResponse -> String
+signUpResponseToString emailAddress signUpResponse =
+    case signUpResponse of
+        SignUpResponseOk ->
+            "送信完了。"
+                ++ EmailAddress.toString emailAddress
+                ++ "にメールを送信しました。届いたメールのリンクをクリックして認証をしてください"
+
+        SignUpResponseResultSignUp ->
+            "すでにあなたは登録されています"
+
+        SignUpResponseError ->
+            "送信データが条件を満たしていませんでした"
 
 
 subscription : Model -> Sub Msg

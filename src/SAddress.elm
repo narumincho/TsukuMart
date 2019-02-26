@@ -1,4 +1,4 @@
-module SAddress exposing (SAddress, fromCharList, toEmailAddressString)
+module SAddress exposing (SAddress, fromCharList, toEmailAddressString, fromStundetId)
 
 import StudentId exposing (StudentId)
 
@@ -56,3 +56,10 @@ fromCharList charList =
 
         _ ->
             Nothing
+
+{-| 学籍番号をsアドのsに変換する
+201712345 → s1712345@s.tsukuba.ac.jp
+-}
+fromStundetId : StudentId -> SAddress
+fromStundetId studentId =
+    SAddress studentId "s"

@@ -619,7 +619,6 @@ img {
     border-radius: .4rem;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.18);
     user-select: none;
-    cursor: pointer;
 }
 
 .signUp-signUpButton:hover {
@@ -648,6 +647,10 @@ img {
 .mainView-wide {
     width: calc(100% - 20rem);
     padding: 7rem 0 0 20rem;
+}
+
+.mainView-simpleText {
+    font-size: 1.5rem;
 }
 
 h2 {

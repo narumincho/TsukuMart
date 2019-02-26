@@ -1,7 +1,7 @@
-module EmailAddress exposing (EmailAddress(..), fromCharList, toString)
+module EmailAddress exposing (EmailAddress(..), fromCharList, toString, fromSAddress)
 
 import Regex
-
+import SAddress exposing (SAddress)
 
 {-| メールアドレス
 制約: メールアドレスの文字列であること
@@ -24,6 +24,9 @@ emailRegex =
     Regex.fromString "^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$"
         |> Maybe.withDefault Regex.never
 
+fromSAddress : SAddress -> EmailAddress
+fromSAddress sAddress =
+    EmailAddress (SAddress.toEmailAddressString sAddress)
 
 toString : EmailAddress -> String
 toString (EmailAddress string) =

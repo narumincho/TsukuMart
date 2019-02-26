@@ -8,7 +8,7 @@ module StudentId exposing
     , partStudentIdToStringWith20
     , toString
     , toStringWith20
-    , toEmailAddressString)
+    )
 
 {-| 学籍番号
 201712345のようなもの
@@ -299,9 +299,3 @@ digitToChar i =
 
         D9 ->
             '9'
-
-{-| s1712345@s.tsukuba.ac.jpのようなメールアドレスを生成する
--}
-toEmailAddressString : StudentId -> String
-toEmailAddressString studentId =
-    "s" ++ toString studentId ++ "s@tsukuba.ac.jp"
