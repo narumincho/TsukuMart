@@ -12844,7 +12844,7 @@ var author$project$Main$ASAddress = function (a) {
 var author$project$Main$AStudentId = function (a) {
 	return {$: 'AStudentId', a: a};
 };
-var author$project$Main$SAddress = F2(
+var author$project$SAddress$SAddress = F2(
 	function (a, b) {
 		return {$: 'SAddress', a: a, b: b};
 	});
@@ -12862,7 +12862,7 @@ var author$project$StudentId$D6 = {$: 'D6'};
 var author$project$StudentId$D7 = {$: 'D7'};
 var author$project$StudentId$D8 = {$: 'D8'};
 var author$project$StudentId$D9 = {$: 'D9'};
-var author$project$StudentId$studentIdNumberFromChar = function (_char) {
+var author$project$StudentId$digitFromChar = function (_char) {
 	switch (_char.valueOf()) {
 		case '0':
 			return elm$core$Maybe$Just(author$project$StudentId$D0);
@@ -12908,49 +12908,24 @@ var author$project$StudentId$studentIdNumberFromChar = function (_char) {
 			return elm$core$Maybe$Nothing;
 	}
 };
-var author$project$StudentId$is20 = F2(
-	function (c0, c1) {
-		var _n0 = _Utils_Tuple2(
-			author$project$StudentId$studentIdNumberFromChar(c0),
-			author$project$StudentId$studentIdNumberFromChar(c1));
-		if ((((_n0.a.$ === 'Just') && (_n0.a.a.$ === 'D2')) && (_n0.b.$ === 'Just')) && (_n0.b.a.$ === 'D0')) {
-			var _n1 = _n0.a.a;
-			var _n2 = _n0.b.a;
-			return true;
-		} else {
-			return false;
-		}
-	});
-var author$project$StudentId$fromCharList = function (charList) {
-	if (charList.b && charList.b.b) {
-		var h0 = charList.a;
-		var _n1 = charList.b;
-		var h1 = _n1.a;
-		var hs = _n1.b;
-		if (A2(author$project$StudentId$is20, h0, h1)) {
-			var _n2 = A2(elm$core$List$map, author$project$StudentId$studentIdNumberFromChar, hs);
-			if ((((((((((((((_n2.b && (_n2.a.$ === 'Just')) && _n2.b.b) && (_n2.b.a.$ === 'Just')) && _n2.b.b.b) && (_n2.b.b.a.$ === 'Just')) && _n2.b.b.b.b) && (_n2.b.b.b.a.$ === 'Just')) && _n2.b.b.b.b.b) && (_n2.b.b.b.b.a.$ === 'Just')) && _n2.b.b.b.b.b.b) && (_n2.b.b.b.b.b.a.$ === 'Just')) && _n2.b.b.b.b.b.b.b) && (_n2.b.b.b.b.b.b.a.$ === 'Just')) && (!_n2.b.b.b.b.b.b.b.b)) {
-				var i0 = _n2.a.a;
-				var _n3 = _n2.b;
-				var i1 = _n3.a.a;
-				var _n4 = _n3.b;
-				var i2 = _n4.a.a;
-				var _n5 = _n4.b;
-				var i3 = _n5.a.a;
-				var _n6 = _n5.b;
-				var i4 = _n6.a.a;
-				var _n7 = _n6.b;
-				var i5 = _n7.a.a;
-				var _n8 = _n7.b;
-				var i6 = _n8.a.a;
-				return elm$core$Maybe$Just(
-					A7(author$project$StudentId$StudentId, i0, i1, i2, i3, i4, i5, i6));
-			} else {
-				return elm$core$Maybe$Nothing;
-			}
-		} else {
-			return elm$core$Maybe$Nothing;
-		}
+var author$project$StudentId$fromCharListNo20Head = function (charList) {
+	var _n0 = A2(elm$core$List$map, author$project$StudentId$digitFromChar, charList);
+	if ((((((((((((((_n0.b && (_n0.a.$ === 'Just')) && _n0.b.b) && (_n0.b.a.$ === 'Just')) && _n0.b.b.b) && (_n0.b.b.a.$ === 'Just')) && _n0.b.b.b.b) && (_n0.b.b.b.a.$ === 'Just')) && _n0.b.b.b.b.b) && (_n0.b.b.b.b.a.$ === 'Just')) && _n0.b.b.b.b.b.b) && (_n0.b.b.b.b.b.a.$ === 'Just')) && _n0.b.b.b.b.b.b.b) && (_n0.b.b.b.b.b.b.a.$ === 'Just')) && (!_n0.b.b.b.b.b.b.b.b)) {
+		var i0 = _n0.a.a;
+		var _n1 = _n0.b;
+		var i1 = _n1.a.a;
+		var _n2 = _n1.b;
+		var i2 = _n2.a.a;
+		var _n3 = _n2.b;
+		var i3 = _n3.a.a;
+		var _n4 = _n3.b;
+		var i4 = _n4.a.a;
+		var _n5 = _n4.b;
+		var i5 = _n5.a.a;
+		var _n6 = _n5.b;
+		var i6 = _n6.a.a;
+		return elm$core$Maybe$Just(
+			A7(author$project$StudentId$StudentId, i0, i1, i2, i3, i4, i5, i6));
 	} else {
 		return elm$core$Maybe$Nothing;
 	}
@@ -12960,7 +12935,7 @@ var elm$core$String$dropRight = F2(
 		return (n < 1) ? string : A3(elm$core$String$slice, 0, -n, string);
 	});
 var elm$core$String$toLower = _String_toLower;
-var author$project$Main$charListToTsukubaEmailAddress = function (charList) {
+var author$project$SAddress$fromCharList = function (charList) {
 	if ((((((((charList.b && charList.b.b) && charList.b.b.b) && charList.b.b.b.b) && charList.b.b.b.b.b) && charList.b.b.b.b.b.b) && charList.b.b.b.b.b.b.b) && charList.b.b.b.b.b.b.b.b) && charList.b.b.b.b.b.b.b.b.b) {
 		var s = charList.a;
 		var _n1 = charList.b;
@@ -12987,19 +12962,9 @@ var author$project$Main$charListToTsukubaEmailAddress = function (charList) {
 			_Utils_chr('S'))) && _Utils_eq(
 			at,
 			_Utils_chr('@'))) {
-			var _n9 = author$project$StudentId$fromCharList(
+			var _n9 = author$project$StudentId$fromCharListNo20Head(
 				_List_fromArray(
-					[
-						_Utils_chr('2'),
-						_Utils_chr('0'),
-						i0,
-						i1,
-						i2,
-						i3,
-						i4,
-						i5,
-						i6
-					]));
+					[i0, i1, i2, i3, i4, i5, i6]));
 			if (_n9.$ === 'Just') {
 				var studentId = _n9.a;
 				var restString = elm$core$String$fromList(rest);
@@ -13010,7 +12975,7 @@ var author$project$Main$charListToTsukubaEmailAddress = function (charList) {
 					elm$core$String$toList(
 						A2(elm$core$String$dropRight, 14, restString))))) ? elm$core$Maybe$Just(
 					A2(
-						author$project$Main$SAddress,
+						author$project$SAddress$SAddress,
 						studentId,
 						elm$core$String$toLower(
 							A2(elm$core$String$dropRight, 14, restString)))) : elm$core$Maybe$Nothing;
@@ -13020,6 +12985,30 @@ var author$project$Main$charListToTsukubaEmailAddress = function (charList) {
 		} else {
 			return elm$core$Maybe$Nothing;
 		}
+	} else {
+		return elm$core$Maybe$Nothing;
+	}
+};
+var author$project$StudentId$is20 = F2(
+	function (c0, c1) {
+		var _n0 = _Utils_Tuple2(
+			author$project$StudentId$digitFromChar(c0),
+			author$project$StudentId$digitFromChar(c1));
+		if ((((_n0.a.$ === 'Just') && (_n0.a.a.$ === 'D2')) && (_n0.b.$ === 'Just')) && (_n0.b.a.$ === 'D0')) {
+			var _n1 = _n0.a.a;
+			var _n2 = _n0.b.a;
+			return true;
+		} else {
+			return false;
+		}
+	});
+var author$project$StudentId$fromCharList = function (charList) {
+	if (charList.b && charList.b.b) {
+		var h0 = charList.a;
+		var _n1 = charList.b;
+		var h1 = _n1.a;
+		var hs = _n1.b;
+		return A2(author$project$StudentId$is20, h0, h1) ? author$project$StudentId$fromCharListNo20Head(hs) : elm$core$Maybe$Nothing;
 	} else {
 		return elm$core$Maybe$Nothing;
 	}
@@ -13055,7 +13044,7 @@ var author$project$StudentId$partStudentIdFromCharList = function (charList) {
 		var h1 = _n1.a;
 		var hs = _n1.b;
 		if (A2(author$project$StudentId$is20, h0, h1)) {
-			var _n2 = A2(elm$core$List$map, author$project$StudentId$studentIdNumberFromChar, hs);
+			var _n2 = A2(elm$core$List$map, author$project$StudentId$digitFromChar, hs);
 			_n2$7:
 			while (true) {
 				if (!_n2.b) {
@@ -13171,7 +13160,7 @@ var author$project$Main$analysisStudentIdOrEmailAddress = function (string) {
 			var partStudentId = _n1.a;
 			return author$project$Main$APartStudentId(partStudentId);
 		} else {
-			var _n2 = author$project$Main$charListToTsukubaEmailAddress(charList);
+			var _n2 = author$project$SAddress$fromCharList(charList);
 			if (_n2.$ === 'Just') {
 				var sAddress = _n2.a;
 				return author$project$Main$ASAddress(sAddress);
@@ -13181,7 +13170,7 @@ var author$project$Main$analysisStudentIdOrEmailAddress = function (string) {
 		}
 	}
 };
-var author$project$StudentId$studentIdNumberToChar = function (i) {
+var author$project$StudentId$digitToChar = function (i) {
 	switch (i.$) {
 		case 'D0':
 			return _Utils_chr('0');
@@ -13216,11 +13205,11 @@ var author$project$StudentId$toString = function (_n0) {
 	return elm$core$String$fromList(
 		A2(
 			elm$core$List$map,
-			author$project$StudentId$studentIdNumberToChar,
+			author$project$StudentId$digitToChar,
 			_List_fromArray(
 				[i0, i1, i2, i3, i4, i5, i6])));
 };
-var author$project$Main$sAddressToEmailAddressString = function (_n0) {
+var author$project$SAddress$toEmailAddressString = function (_n0) {
 	var studentId = _n0.a;
 	var subDomain = _n0.b;
 	return 's' + (author$project$StudentId$toString(studentId) + ('@' + (subDomain + '.tsukuba.ac.jp')));
@@ -13369,7 +13358,7 @@ var author$project$StudentId$partStudentIdToString = function (partStudentId) {
 				return A2(
 					elm$core$Maybe$withDefault,
 					_Utils_chr('?'),
-					A2(elm$core$Maybe$map, author$project$StudentId$studentIdNumberToChar, numMaybe));
+					A2(elm$core$Maybe$map, author$project$StudentId$digitToChar, numMaybe));
 			},
 			A2(
 				author$project$StudentId$listGrow,
@@ -13479,7 +13468,7 @@ var author$project$Main$studentHasSAddressFormList = F2(
 												return '学籍番号 ' + author$project$StudentId$partStudentIdToStringWith20(partStudentId);
 											case 'ASAddress':
 												var sAddress = _n0.a;
-												return '筑波大学のメールアドレス ' + author$project$Main$sAddressToEmailAddressString(sAddress);
+												return '筑波大学のメールアドレス ' + author$project$SAddress$toEmailAddressString(sAddress);
 											default:
 												return '筑波大学のメールアドレスではありません';
 										}

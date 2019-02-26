@@ -7,7 +7,7 @@ module StudentId exposing
     , partStudentIdToStringWith20
     , toString
     , toStringWith20
-    )
+    , fromCharListNo20Head)
 
 {-| 学籍番号
 201712345のようなもの

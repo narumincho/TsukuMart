@@ -10,6 +10,7 @@ import Http
 import Json.Decode
 import Json.Encode
 import Password
+import SAddress exposing (SAddress)
 import StudentId exposing (StudentId)
 import Svg
 import Svg.Attributes
@@ -1322,7 +1323,7 @@ studentHasSAddressFormList string password =
                             ++ StudentId.partStudentIdToStringWith20 partStudentId
 
                     ASAddress sAddress ->
-                        "筑波大学のメールアドレス " ++ sAddressToEmailAddressString sAddress
+                        "筑波大学のメールアドレス " ++ SAddress.toEmailAddressString sAddress
 
                     AEmailButIsNotTsukuba ->
                         "筑波大学のメールアドレスではありません"
@@ -1349,7 +1350,7 @@ analysisStudentIdOrEmailAddress string =
                     APartStudentId partStudentId
 
                 Nothing ->
-                    case charListToTsukubaEmailAddress charList of
+                    case SAddress.fromCharList charList of
                         Just sAddress ->
                             ASAddress sAddress
 
@@ -1357,45 +1358,6 @@ analysisStudentIdOrEmailAddress string =
                             ANone
 
 
-charListToTsukubaEmailAddress : List Char -> Maybe SAddress
-charListToTsukubaEmailAddress charList =
-    case charList of
-        s :: i0 :: i1 :: i2 :: i3 :: i4 :: i5 :: i6 :: at :: rest ->
-            if (s == 's' || s == 'S') && (at == '@') then
-                case StudentId.fromCharList [ '2', '0', i0, i1, i2, i3, i4, i5, i6 ] of
-                    Just studentId ->
-                        let
-                            restString =
-                                String.fromList rest
-                        in
-                        if
-                            (restString |> String.right 14 |> String.toLower)
-                                == ".tsukuba.ac.jp"
-                                && ((restString |> String.dropRight 14) /= "")
-                                && (restString |> String.dropRight 14 |> String.toList |> List.all Char.isAlphaNum)
-                        then
-                            Just (SAddress studentId (restString |> String.dropRight 14 |> String.toLower))
-
-                        else
-                            Nothing
-
-                    _ ->
-                        Nothing
-
-            else
-                Nothing
-
-        _ ->
-            Nothing
-
-
-sAddressToEmailAddressString : SAddress -> String
-sAddressToEmailAddressString (SAddress studentId subDomain) =
-    "s"
-        ++ StudentId.toString studentId
-        ++ "@"
-        ++ subDomain
-        ++ ".tsukuba.ac.jp"
 
 
 type AnalysisStudentIdOrEmailAddressResult
@@ -1404,10 +1366,6 @@ type AnalysisStudentIdOrEmailAddressResult
     | ASAddress SAddress
     | APartStudentId StudentId.PartStudentId
     | AEmailButIsNotTsukuba
-
-
-type SAddress
-    = SAddress StudentId String
 
 
 newStudentFormList : Maybe String -> Result Password.Error Password.Password -> List (Html.Html Msg)
