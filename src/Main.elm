@@ -2,6 +2,7 @@ port module Main exposing (main)
 
 import Browser
 import Browser.Navigation
+import EmailAddress
 import Html
 import Html.Attributes
 import Html.Events
@@ -61,7 +62,7 @@ type Page
 
 type UserSignUpPage
     = UserSignUpPageStudentHasSAddress
-        { studentIdOrTsukubaEmailAddress : String
+        { studentIdOrTsukubaEmailAddress : AnalysisStudentIdOrEmailAddressResult
         , password : Result Password.Error Password.Password
         }
     | UserSignUpPageNewStudent
@@ -267,7 +268,11 @@ update msg (Model rec) =
                         { rec
                             | page =
                                 PageSignUp
-                                    (UserSignUpPageStudentHasSAddress { r | studentIdOrTsukubaEmailAddress = string })
+                                    (UserSignUpPageStudentHasSAddress
+                                        { r
+                                            | studentIdOrTsukubaEmailAddress = analysisStudentIdOrEmailAddress string
+                                        }
+                                    )
                         }
 
                 PageSignUp (UserSignUpPageNewStudent r) ->
@@ -362,7 +367,13 @@ urlParser beforePageMaybe =
             (PageHome (Recommend { valid = True }))
             (Url.Parser.s "index.html")
         , Url.Parser.map
-            (PageSignUp (UserSignUpPageStudentHasSAddress { studentIdOrTsukubaEmailAddress = "", password = Password.passwordFromString "" }))
+            (PageSignUp
+                (UserSignUpPageStudentHasSAddress
+                    { studentIdOrTsukubaEmailAddress = analysisStudentIdOrEmailAddress ""
+                    , password = Password.passwordFromString ""
+                    }
+                )
+            )
             (Url.Parser.s "user-signup")
         , Url.Parser.map
             (PageLogIn
@@ -1257,7 +1268,9 @@ sAddressSelectView userSignUpPage =
                             (ChangePage
                                 (PageSignUp
                                     (UserSignUpPageStudentHasSAddress
-                                        { studentIdOrTsukubaEmailAddress = "", password = Password.passwordFromString "" }
+                                        { studentIdOrTsukubaEmailAddress = analysisStudentIdOrEmailAddress ""
+                                        , password = Password.passwordFromString ""
+                                        }
                                     )
                                 )
                             )
@@ -1291,8 +1304,8 @@ sAddressSelectView userSignUpPage =
         ]
 
 
-studentHasSAddressFormList : String -> Result Password.Error Password.Password -> List (Html.Html Msg)
-studentHasSAddressFormList string password =
+studentHasSAddressFormList : AnalysisStudentIdOrEmailAddressResult -> Result Password.Error Password.Password -> List (Html.Html Msg)
+studentHasSAddressFormList analysisStudentIdOrEmailAddressResult password =
     [ Html.div
         []
         [ Html.label
@@ -1310,7 +1323,7 @@ studentHasSAddressFormList string password =
         , Html.div
             [ Html.Attributes.class "signUp-description" ]
             [ Html.text
-                (case analysisStudentIdOrEmailAddress string of
+                (case analysisStudentIdOrEmailAddressResult of
                     ANone ->
                         "学籍番号は20から始まる9桁の数字、筑波大学のメールアドレスはs201234567@s.tsukuba.ac.jpのような形のメールアドレス"
 
@@ -1355,9 +1368,12 @@ analysisStudentIdOrEmailAddress string =
                             ASAddress sAddress
 
                         Nothing ->
-                            ANone
+                            case EmailAddress.fromCharList charList of
+                                Just _ ->
+                                    AEmailButIsNotTsukuba
 
-
+                                Nothing ->
+                                    ANone
 
 
 type AnalysisStudentIdOrEmailAddressResult
