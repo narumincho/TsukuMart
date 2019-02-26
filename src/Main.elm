@@ -1202,21 +1202,13 @@ userSignUpView userSignUpPage =
         ([ sAddressView userSignUpPage
          ]
             ++ (case userSignUpPage of
-                    UserSignUpPageStudentHasSAddress { studentIdOrTsukubaEmailAddress } ->
-                        studentHasSAddressFormList studentIdOrTsukubaEmailAddress
+                    UserSignUpPageStudentHasSAddress { studentIdOrTsukubaEmailAddress, password } ->
+                        studentHasSAddressFormList studentIdOrTsukubaEmailAddress password
 
-                    UserSignUpPageNewStudent { imageUrl } ->
-                        newStudentFormList imageUrl
+                    UserSignUpPageNewStudent { imageUrl, password } ->
+                        newStudentFormList imageUrl password
                )
-            ++ [ passwordForm
-                    (case userSignUpPage of
-                        UserSignUpPageStudentHasSAddress { password } ->
-                            password
-
-                        UserSignUpPageNewStudent { password } ->
-                            password
-                    )
-               , signUpSubmitButton
+            ++ [ signUpSubmitButton
                ]
         )
     ]
@@ -1297,8 +1289,8 @@ sAddressSelectView userSignUpPage =
         ]
 
 
-studentHasSAddressFormList : String -> List (Html.Html Msg)
-studentHasSAddressFormList string =
+studentHasSAddressFormList : String -> Result Password.Error Password.Password -> List (Html.Html Msg)
+studentHasSAddressFormList string password =
     [ Html.div
         []
         [ Html.label
@@ -1345,6 +1337,7 @@ studentHasSAddressFormList string =
             ]
         ]
     ]
+        ++ [ passwordForm password ]
 
 
 analysisStudentIdOrEmailAddress : String -> AnalysisStudentIdOrEmailAddressResult
@@ -1715,8 +1708,8 @@ type StudentIdNumber
     | SI9
 
 
-newStudentFormList : Maybe String -> List (Html.Html Msg)
-newStudentFormList imageUrlMaybe =
+newStudentFormList : Maybe String -> Result Password.Error Password.Password -> List (Html.Html Msg)
+newStudentFormList imageUrlMaybe password =
     [ Html.div
         []
         [ Html.label
@@ -1735,6 +1728,7 @@ newStudentFormList imageUrlMaybe =
             [ Html.Attributes.class "signUp-description" ]
             [ Html.text "Sアドをつかえるまでの…" ]
         ]
+    , passwordForm password
     , Html.div
         []
         [ Html.label
