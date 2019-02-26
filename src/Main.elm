@@ -25,6 +25,12 @@ port toWideScreenMode : (Int -> msg) -> Sub msg
 port toNarrowScreenMode : (Int -> msg) -> Sub msg
 
 
+port receiveImageDataUrl : (String -> msg) -> Sub msg
+
+
+port studentImageChange : String -> Cmd msg
+
+
 type Model
     = Model
         { page : Page
@@ -51,8 +57,15 @@ type Page
 
 
 type UserSignUpPage
-    = UserSignUpPageStudentHasSAddress { studentIdOrTsukubaEmailAddress : String, password : String }
-    | UserSignUpPageNewStudent { emailAddress : String, password : String }
+    = UserSignUpPageStudentHasSAddress
+        { studentIdOrTsukubaEmailAddress : String
+        , password : String
+        }
+    | UserSignUpPageNewStudent
+        { emailAddress : String
+        , imageUrl : Maybe String
+        , password : String
+        }
 
 
 type LogInPage
@@ -92,6 +105,8 @@ type Msg
     | SignUp
     | SignUpResponse (Result Http.Error SignUpResponseResult)
     | InputStudentIdOrEmailAddress String
+    | InputStudentImage String
+    | ReciveImageDataUrl String
 
 
 type SignUpResponseResult
@@ -208,11 +223,9 @@ update msg (Model rec) =
             )
 
         Response string ->
-            let
-                _ =
-                    Debug.log "response" string
-            in
-            ( Model rec, Cmd.none )
+            ( Model rec
+            , Cmd.none
+            )
 
         SignUp ->
             case rec.page of
@@ -259,6 +272,26 @@ update msg (Model rec) =
                             | page =
                                 PageSignUp
                                     (UserSignUpPageNewStudent { r | emailAddress = string })
+                        }
+
+                _ ->
+                    Model rec
+            , Cmd.none
+            )
+
+        InputStudentImage idString ->
+            ( Model rec
+            , studentImageChange idString
+            )
+
+        ReciveImageDataUrl urlString ->
+            ( case rec.page of
+                PageSignUp (UserSignUpPageNewStudent r) ->
+                    Model
+                        { rec
+                            | page =
+                                PageSignUp
+                                    (UserSignUpPageNewStudent { r | imageUrl = Just urlString })
                         }
 
                 _ ->
@@ -1145,8 +1178,8 @@ userSignUpView userSignUpPage =
                     UserSignUpPageStudentHasSAddress { studentIdOrTsukubaEmailAddress } ->
                         studentHasSAddressFormList studentIdOrTsukubaEmailAddress
 
-                    UserSignUpPageNewStudent _ ->
-                        newStudentFormList
+                    UserSignUpPageNewStudent { imageUrl } ->
+                        newStudentFormList imageUrl
                )
             ++ [ passwordForm
                     (case userSignUpPage of
@@ -1199,7 +1232,15 @@ sAddressSelectView userSignUpPage =
                         []
 
                     else
-                        [ Html.Events.onClick (ChangePage (PageSignUp (UserSignUpPageStudentHasSAddress { studentIdOrTsukubaEmailAddress = "", password = "" }))) ]
+                        [ Html.Events.onClick
+                            (ChangePage
+                                (PageSignUp
+                                    (UserSignUpPageStudentHasSAddress
+                                        { studentIdOrTsukubaEmailAddress = "", password = "" }
+                                    )
+                                )
+                            )
+                        ]
                    )
             )
             [ Html.text "持っている" ]
@@ -1211,7 +1252,15 @@ sAddressSelectView userSignUpPage =
              , Html.Attributes.style "border-radius" "0 .4rem .4rem 0"
              ]
                 ++ (if leftSelect then
-                        [ Html.Events.onClick (ChangePage (PageSignUp (UserSignUpPageNewStudent { emailAddress = "", password = "" }))) ]
+                        [ Html.Events.onClick
+                            (ChangePage
+                                (PageSignUp
+                                    (UserSignUpPageNewStudent
+                                        { emailAddress = "", imageUrl = Nothing, password = "" }
+                                    )
+                                )
+                            )
+                        ]
 
                     else
                         []
@@ -1229,7 +1278,7 @@ studentHasSAddressFormList string =
             [ Html.Attributes.class "signUp-label"
             , Html.Attributes.for "signUpStudentIdOrTsukubaEmail"
             ]
-            [ Html.text "学籍番号か～@～.tsukuba.ac.jpのメールアドレス" ]
+            [ Html.text "学籍番号か ～@～.tsukuba.ac.jpのメールアドレス" ]
         , Html.input
             [ Html.Attributes.class "signUp-input"
             , Html.Attributes.id "signUpStudentIdOrTsukubaEmail"
@@ -1242,7 +1291,7 @@ studentHasSAddressFormList string =
             [ Html.text
                 (case analysisStudentIdOrEmailAddress string of
                     ANone ->
-                        ""
+                        "学籍番号は20から始まる9桁の数字、筑波大学のメールアドレスはs201234567@s.tsukuba.ac.jpのような形のメールアドレス"
 
                     AStudentId (StudentId { i0, i1, i2, i3, i4, i5, i6 }) ->
                         "学籍番号 20"
@@ -1263,8 +1312,8 @@ studentHasSAddressFormList string =
                     ASAddress sAddress ->
                         "筑波大学のメールアドレス " ++ sAddressToEmailAddressString sAddress
 
-                    _ ->
-                        ""
+                    AEmailButIsNotTsukuba ->
+                        "筑波大学のメールアドレスではありません"
                 )
             ]
         ]
@@ -1639,8 +1688,8 @@ type StudentIdNumber
     | SI9
 
 
-newStudentFormList : List (Html.Html Msg)
-newStudentFormList =
+newStudentFormList : Maybe String -> List (Html.Html Msg)
+newStudentFormList imageUrlMaybe =
     [ Html.div
         []
         [ Html.label
@@ -1663,19 +1712,29 @@ newStudentFormList =
         []
         [ Html.label
             [ Html.Attributes.class "signUp-label"
-            , Html.Attributes.for "signUpPassword"
+            , Html.Attributes.for "signUpImage"
             ]
-            [ Html.text "学生証" ]
+            [ Html.text "学生証の写真" ]
         , Html.input
             [ Html.Attributes.type_ "file"
             , Html.Attributes.accept "image/png, image/jpeg"
             , Html.Attributes.class "signUp-input"
-            , Html.Attributes.id "signUpPassword"
+            , Html.Attributes.id "signUpImage"
             , Html.Attributes.attribute "autocomplete" "studentIdImage"
+            , Html.Events.on "change" (Json.Decode.succeed (InputStudentImage "signUpImage"))
             ]
             []
-        , Html.div
-            [ Html.Attributes.class "signUp-description" ]
+        , Html.img
+            ([ Html.Attributes.class "signUp-image"
+             ]
+                ++ (case imageUrlMaybe of
+                        Just imageUrl ->
+                            [ Html.Attributes.src imageUrl ]
+
+                        Nothing ->
+                            []
+                   )
+            )
             []
         ]
     ]
@@ -1708,13 +1767,109 @@ passwordForm password =
 signUpSubmitButton : Html.Html Msg
 signUpSubmitButton =
     Html.div
-        [ Html.Attributes.class "SignUp" ]
+        []
         [ Html.button
             [ Html.Attributes.class "signUp-signUpButton"
             , Html.Events.onClick SignUp
             ]
             [ Html.text "新規登録" ]
         ]
+
+{-| パスワードに使える文字
+-}
+type PassWordChar
+    = Pa
+    | Pb
+    | Pc
+    | Pd
+    | Pe
+    | Pf
+    | Pg
+    | Ph
+    | Pi
+    | Pj
+    | Pk
+    | Pl
+    | Pm
+    | Pn
+    | Po
+    | Pp
+    | Pq
+    | Pr
+    | Ps
+    | Pt
+    | Pu
+    | Pv
+    | Pw
+    | Px
+    | Py
+    | Pz
+    | PA
+    | PB
+    | PC
+    | PD
+    | PE
+    | PF
+    | PG
+    | PH
+    | PI
+    | PJ
+    | PK
+    | PL
+    | PM
+    | PN
+    | PO
+    | PP
+    | PQ
+    | PR
+    | PS
+    | PU
+    | PV
+    | PW
+    | PX
+    | PY
+    | PZ
+    | P0
+    | P1
+    | P2
+    | P3
+    | P4
+    | P5
+    | P6
+    | P7
+    | P8
+    | P9
+    | PExclamationMark -- !
+    | PQuotationMark -- "
+    | PNumberSign -- #
+    | PDollarSign -- $
+    | PercentSign -- %
+    | PAmpersand -- &
+    | PApostrophe -- '
+    | PLeftParenthesis -- (
+    | PRightParenthesis -- )
+    | PAsterisk -- *
+    | PPlusSign -- +
+    | PComma -- ,
+    | PHyphenMinus -- -
+    | PFullStop -- .
+    | PSolidus -- /
+    | PColon -- :
+    | PLessThanSign -- <
+    | PEqualsSign -- =
+    | PGreaterThanSign -- >
+    | PQuestionMark -- ?
+    | PCommercialAt -- @
+    | PLeftSquareBracket -- [
+    | PReverseSolidus -- \
+    | PRightSquareBracket -- ]
+    | PCircumflexAccent -- ^
+    | PLowLine -- _
+    | PGraveAccent -- `
+    | PLeftCurlyBracket -- {
+    | PVerticalLine -- |
+    | PRightCurlyBracket -- }
+    | PTilde -- ~
 
 
 signUpJson : UserSignUpPage -> Maybe Json.Encode.Value
@@ -1729,9 +1884,12 @@ signUpJson userSignUpPage =
 
 subscription : Model -> Sub Msg
 subscription (Model { menuState }) =
-    case menuState of
-        Just _ ->
-            toWideScreenMode (always ToWideScreenMode)
+    Sub.batch
+        [ receiveImageDataUrl ReciveImageDataUrl
+        , case menuState of
+            Just _ ->
+                toWideScreenMode (always ToWideScreenMode)
 
-        Nothing ->
-            toNarrowScreenMode (always ToNarrowScreenMode)
+            Nothing ->
+                toNarrowScreenMode (always ToNarrowScreenMode)
+        ]

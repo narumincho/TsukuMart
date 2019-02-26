@@ -6455,8 +6455,13 @@ var author$project$Main$init = F3(
 				}),
 			elm$core$Platform$Cmd$none);
 	});
+var author$project$Main$ReciveImageDataUrl = function (a) {
+	return {$: 'ReciveImageDataUrl', a: a};
+};
 var author$project$Main$ToNarrowScreenMode = {$: 'ToNarrowScreenMode'};
 var author$project$Main$ToWideScreenMode = {$: 'ToWideScreenMode'};
+var elm$json$Json$Decode$string = _Json_decodeString;
+var author$project$Main$receiveImageDataUrl = _Platform_incomingPort('receiveImageDataUrl', elm$json$Json$Decode$string);
 var elm$json$Json$Decode$int = _Json_decodeInt;
 var author$project$Main$toNarrowScreenMode = _Platform_incomingPort('toNarrowScreenMode', elm$json$Json$Decode$int);
 var author$project$Main$toWideScreenMode = _Platform_incomingPort('toWideScreenMode', elm$json$Json$Decode$int);
@@ -6464,15 +6469,23 @@ var elm$core$Basics$always = F2(
 	function (a, _n0) {
 		return a;
 	});
+var elm$core$Platform$Sub$batch = _Platform_batch;
 var author$project$Main$subscription = function (_n0) {
 	var menuState = _n0.a.menuState;
-	if (menuState.$ === 'Just') {
-		return author$project$Main$toWideScreenMode(
-			elm$core$Basics$always(author$project$Main$ToWideScreenMode));
-	} else {
-		return author$project$Main$toNarrowScreenMode(
-			elm$core$Basics$always(author$project$Main$ToNarrowScreenMode));
-	}
+	return elm$core$Platform$Sub$batch(
+		_List_fromArray(
+			[
+				author$project$Main$receiveImageDataUrl(author$project$Main$ReciveImageDataUrl),
+				function () {
+				if (menuState.$ === 'Just') {
+					return author$project$Main$toWideScreenMode(
+						elm$core$Basics$always(author$project$Main$ToWideScreenMode));
+				} else {
+					return author$project$Main$toNarrowScreenMode(
+						elm$core$Basics$always(author$project$Main$ToNarrowScreenMode));
+				}
+			}()
+			]));
 };
 var author$project$Main$MenuClose = {$: 'MenuClose'};
 var author$project$Main$MenuOpen = {$: 'MenuOpen'};
@@ -6500,7 +6513,6 @@ var author$project$Main$SignUpResponseResultError = {$: 'SignUpResponseResultErr
 var author$project$Main$SignUpResponseResultOk = {$: 'SignUpResponseResultOk'};
 var elm$json$Json$Decode$field = _Json_decodeField;
 var elm$json$Json$Decode$map = _Json_map1;
-var elm$json$Json$Decode$string = _Json_decodeString;
 var author$project$Main$signUpResponseDecoder = A2(
 	elm$json$Json$Decode$map,
 	function (signUpResultValue) {
@@ -6514,6 +6526,8 @@ var author$project$Main$signUpResponseDecoder = A2(
 		}
 	},
 	A2(elm$json$Json$Decode$field, 'signUpResult', elm$json$Json$Decode$string));
+var elm$json$Json$Encode$string = _Json_wrap;
+var author$project$Main$studentImageChange = _Platform_outgoingPort('studentImageChange', elm$json$Json$Encode$string);
 var elm$browser$Browser$External = function (a) {
 	return {$: 'External', a: a};
 };
@@ -6759,7 +6773,6 @@ var elm$browser$Debugger$Overlay$viewProblemType = function (_n0) {
 var elm$html$Html$a = _VirtualDom_node('a');
 var elm$html$Html$p = _VirtualDom_node('p');
 var elm$html$Html$ul = _VirtualDom_node('ul');
-var elm$json$Json$Encode$string = _Json_wrap;
 var elm$html$Html$Attributes$stringProperty = F2(
 	function (key, string) {
 		return A2(
@@ -10181,7 +10194,6 @@ var elm$core$Basics$composeR = F3(
 		return g(
 			f(x));
 	});
-var elm$core$Debug$log = _Debug_log;
 var elm$core$Result$withDefault = F2(
 	function (def, result) {
 		if (result.$ === 'Ok') {
@@ -10625,23 +10637,22 @@ var author$project$Main$update = F2(
 						}));
 			case 'Response':
 				var string = msg.a;
-				var _n7 = A2(elm$core$Debug$log, 'response', string);
 				return _Utils_Tuple2(
 					author$project$Main$Model(rec),
 					elm$core$Platform$Cmd$none);
 			case 'SignUp':
-				var _n8 = rec.page;
-				if (_n8.$ === 'PageSignUp') {
-					var userSignUpPage = _n8.a;
+				var _n7 = rec.page;
+				if (_n7.$ === 'PageSignUp') {
+					var userSignUpPage = _n7.a;
 					return _Utils_Tuple2(
 						author$project$Main$Model(
 							_Utils_update(
 								rec,
 								{page: author$project$Main$PageSendSignUpEmail})),
 						function () {
-							var _n9 = author$project$Main$signUpJson(userSignUpPage);
-							if (_n9.$ === 'Just') {
-								var json = _n9.a;
+							var _n8 = author$project$Main$signUpJson(userSignUpPage);
+							if (_n8.$ === 'Just') {
+								var json = _n8.a;
 								return elm$http$Http$post(
 									{
 										body: elm$http$Http$jsonBody(json),
@@ -10661,14 +10672,14 @@ var author$project$Main$update = F2(
 				return _Utils_Tuple2(
 					author$project$Main$Model(rec),
 					elm$core$Platform$Cmd$none);
-			default:
+			case 'InputStudentIdOrEmailAddress':
 				var string = msg.a;
 				return _Utils_Tuple2(
 					function () {
-						var _n10 = rec.page;
-						if (_n10.$ === 'PageSignUp') {
-							if (_n10.a.$ === 'UserSignUpPageStudentHasSAddress') {
-								var r = _n10.a.a;
+						var _n9 = rec.page;
+						if (_n9.$ === 'PageSignUp') {
+							if (_n9.a.$ === 'UserSignUpPageStudentHasSAddress') {
+								var r = _n9.a.a;
 								return author$project$Main$Model(
 									_Utils_update(
 										rec,
@@ -10680,7 +10691,7 @@ var author$project$Main$update = F2(
 														{studentIdOrTsukubaEmailAddress: string})))
 										}));
 							} else {
-								var r = _n10.a.a;
+								var r = _n9.a.a;
 								return author$project$Main$Model(
 									_Utils_update(
 										rec,
@@ -10692,6 +10703,35 @@ var author$project$Main$update = F2(
 														{emailAddress: string})))
 										}));
 							}
+						} else {
+							return author$project$Main$Model(rec);
+						}
+					}(),
+					elm$core$Platform$Cmd$none);
+			case 'InputStudentImage':
+				var idString = msg.a;
+				return _Utils_Tuple2(
+					author$project$Main$Model(rec),
+					author$project$Main$studentImageChange(idString));
+			default:
+				var urlString = msg.a;
+				return _Utils_Tuple2(
+					function () {
+						var _n10 = rec.page;
+						if ((_n10.$ === 'PageSignUp') && (_n10.a.$ === 'UserSignUpPageNewStudent')) {
+							var r = _n10.a.a;
+							return author$project$Main$Model(
+								_Utils_update(
+									rec,
+									{
+										page: author$project$Main$PageSignUp(
+											author$project$Main$UserSignUpPageNewStudent(
+												_Utils_update(
+													r,
+													{
+														imageUrl: elm$core$Maybe$Just(urlString)
+													})))
+									}));
 						} else {
 							return author$project$Main$Model(rec);
 						}
@@ -11743,81 +11783,103 @@ var author$project$Main$userLogInView = function (logInPage) {
 		return author$project$Main$forgotPasswordView;
 	}
 };
-var author$project$Main$newStudentFormList = _List_fromArray(
-	[
-		A2(
-		elm$html$Html$div,
-		_List_Nil,
-		_List_fromArray(
-			[
-				A2(
-				elm$html$Html$label,
-				_List_fromArray(
-					[
-						elm$html$Html$Attributes$class('signUp-label'),
-						elm$html$Html$Attributes$for('signUpEmail')
-					]),
-				_List_fromArray(
-					[
-						elm$html$Html$text('登録用メールアドレス')
-					])),
-				A2(
-				elm$html$Html$input,
-				_List_fromArray(
-					[
-						elm$html$Html$Attributes$class('signUp-input'),
-						elm$html$Html$Attributes$type_('email'),
-						elm$html$Html$Attributes$id('signUpEmail'),
-						A2(elm$html$Html$Attributes$attribute, 'autocomplete', 'email')
-					]),
-				_List_Nil),
-				A2(
-				elm$html$Html$div,
-				_List_fromArray(
-					[
-						elm$html$Html$Attributes$class('signUp-description')
-					]),
-				_List_fromArray(
-					[
-						elm$html$Html$text('Sアドをつかえるまでの…')
-					]))
-			])),
-		A2(
-		elm$html$Html$div,
-		_List_Nil,
-		_List_fromArray(
-			[
-				A2(
-				elm$html$Html$label,
-				_List_fromArray(
-					[
-						elm$html$Html$Attributes$class('signUp-label'),
-						elm$html$Html$Attributes$for('signUpPassword')
-					]),
-				_List_fromArray(
-					[
-						elm$html$Html$text('学生証')
-					])),
-				A2(
-				elm$html$Html$input,
-				_List_fromArray(
-					[
-						elm$html$Html$Attributes$type_('file'),
-						elm$html$Html$Attributes$accept('image/png, image/jpeg'),
-						elm$html$Html$Attributes$class('signUp-input'),
-						elm$html$Html$Attributes$id('signUpPassword'),
-						A2(elm$html$Html$Attributes$attribute, 'autocomplete', 'studentIdImage')
-					]),
-				_List_Nil),
-				A2(
-				elm$html$Html$div,
-				_List_fromArray(
-					[
-						elm$html$Html$Attributes$class('signUp-description')
-					]),
-				_List_Nil)
-			]))
-	]);
+var author$project$Main$InputStudentImage = function (a) {
+	return {$: 'InputStudentImage', a: a};
+};
+var author$project$Main$newStudentFormList = function (imageUrlMaybe) {
+	return _List_fromArray(
+		[
+			A2(
+			elm$html$Html$div,
+			_List_Nil,
+			_List_fromArray(
+				[
+					A2(
+					elm$html$Html$label,
+					_List_fromArray(
+						[
+							elm$html$Html$Attributes$class('signUp-label'),
+							elm$html$Html$Attributes$for('signUpEmail')
+						]),
+					_List_fromArray(
+						[
+							elm$html$Html$text('登録用メールアドレス')
+						])),
+					A2(
+					elm$html$Html$input,
+					_List_fromArray(
+						[
+							elm$html$Html$Attributes$class('signUp-input'),
+							elm$html$Html$Attributes$type_('email'),
+							elm$html$Html$Attributes$id('signUpEmail'),
+							A2(elm$html$Html$Attributes$attribute, 'autocomplete', 'email')
+						]),
+					_List_Nil),
+					A2(
+					elm$html$Html$div,
+					_List_fromArray(
+						[
+							elm$html$Html$Attributes$class('signUp-description')
+						]),
+					_List_fromArray(
+						[
+							elm$html$Html$text('Sアドをつかえるまでの…')
+						]))
+				])),
+			A2(
+			elm$html$Html$div,
+			_List_Nil,
+			_List_fromArray(
+				[
+					A2(
+					elm$html$Html$label,
+					_List_fromArray(
+						[
+							elm$html$Html$Attributes$class('signUp-label'),
+							elm$html$Html$Attributes$for('signUpImage')
+						]),
+					_List_fromArray(
+						[
+							elm$html$Html$text('学生証の写真')
+						])),
+					A2(
+					elm$html$Html$input,
+					_List_fromArray(
+						[
+							elm$html$Html$Attributes$type_('file'),
+							elm$html$Html$Attributes$accept('image/png, image/jpeg'),
+							elm$html$Html$Attributes$class('signUp-input'),
+							elm$html$Html$Attributes$id('signUpImage'),
+							A2(elm$html$Html$Attributes$attribute, 'autocomplete', 'studentIdImage'),
+							A2(
+							elm$html$Html$Events$on,
+							'change',
+							elm$json$Json$Decode$succeed(
+								author$project$Main$InputStudentImage('signUpImage')))
+						]),
+					_List_Nil),
+					A2(
+					elm$html$Html$img,
+					_Utils_ap(
+						_List_fromArray(
+							[
+								elm$html$Html$Attributes$class('signUp-image')
+							]),
+						function () {
+							if (imageUrlMaybe.$ === 'Just') {
+								var imageUrl = imageUrlMaybe.a;
+								return _List_fromArray(
+									[
+										elm$html$Html$Attributes$src(imageUrl)
+									]);
+							} else {
+								return _List_Nil;
+							}
+						}()),
+					_List_Nil)
+				]))
+		]);
+};
 var author$project$Main$passwordForm = function (password) {
 	return A2(
 		elm$html$Html$div,
@@ -11919,7 +11981,7 @@ var author$project$Main$sAddressSelectView = function (userSignUpPage) {
 							author$project$Main$ChangePage(
 								author$project$Main$PageSignUp(
 									author$project$Main$UserSignUpPageNewStudent(
-										{emailAddress: '', password: ''}))))
+										{emailAddress: '', imageUrl: elm$core$Maybe$Nothing, password: ''}))))
 						]) : _List_Nil),
 				_List_fromArray(
 					[
@@ -11949,10 +12011,7 @@ var author$project$Main$sAddressView = function (userSignUpPage) {
 var author$project$Main$SignUp = {$: 'SignUp'};
 var author$project$Main$signUpSubmitButton = A2(
 	elm$html$Html$div,
-	_List_fromArray(
-		[
-			elm$html$Html$Attributes$class('SignUp')
-		]),
+	_List_Nil,
 	_List_fromArray(
 		[
 			A2(
@@ -12639,7 +12698,7 @@ var author$project$Main$studentHasSAddressFormList = function (string) {
 						]),
 					_List_fromArray(
 						[
-							elm$html$Html$text('学籍番号か～@～.tsukuba.ac.jpのメールアドレス')
+							elm$html$Html$text('学籍番号か ～@～.tsukuba.ac.jpのメールアドレス')
 						])),
 					A2(
 					elm$html$Html$input,
@@ -12664,7 +12723,7 @@ var author$project$Main$studentHasSAddressFormList = function (string) {
 								var _n0 = author$project$Main$analysisStudentIdOrEmailAddress(string);
 								switch (_n0.$) {
 									case 'ANone':
-										return '';
+										return '学籍番号は20から始まる9桁の数字、筑波大学のメールアドレスはs201234567@s.tsukuba.ac.jpのような形のメールアドレス';
 									case 'AStudentId':
 										var i0 = _n0.a.a.i0;
 										var i1 = _n0.a.a.i1;
@@ -12691,7 +12750,7 @@ var author$project$Main$studentHasSAddressFormList = function (string) {
 										var sAddress = _n0.a;
 										return '筑波大学のメールアドレス ' + author$project$Main$sAddressToEmailAddressString(sAddress);
 									default:
-										return '';
+										return '筑波大学のメールアドレスではありません';
 								}
 							}())
 						]))
@@ -12718,7 +12777,8 @@ var author$project$Main$userSignUpView = function (userSignUpPage) {
 							var studentIdOrTsukubaEmailAddress = userSignUpPage.a.studentIdOrTsukubaEmailAddress;
 							return author$project$Main$studentHasSAddressFormList(studentIdOrTsukubaEmailAddress);
 						} else {
-							return author$project$Main$newStudentFormList;
+							var imageUrl = userSignUpPage.a.imageUrl;
+							return author$project$Main$newStudentFormList(imageUrl);
 						}
 					}(),
 					_List_fromArray(
@@ -12986,4 +13046,4 @@ var elm$browser$Browser$application = _Browser_application;
 var author$project$Main$main = elm$browser$Browser$application(
 	{init: author$project$Main$init, onUrlChange: author$project$Main$UrlChange, onUrlRequest: author$project$Main$UrlRequest, subscriptions: author$project$Main$subscription, update: author$project$Main$update, view: author$project$Main$view});
 _Platform_export({'Main':{'init':author$project$Main$main(
-	elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.0"},"types":{"message":"Main.Msg","aliases":{"Url.Url":{"args":[],"type":"{ protocol : Url.Protocol, host : String.String, port_ : Maybe.Maybe Basics.Int, path : String.String, query : Maybe.Maybe String.String, fragment : Maybe.Maybe String.String }"},"Main.ExhibitionState":{"args":[],"type":"{ title : String.String, description : String.String, price : Maybe.Maybe Basics.Int }"}},"unions":{"Main.Msg":{"args":[],"tags":{"ChangePage":["Main.Page"],"OpenMenu":[],"CloseMenu":[],"ToWideScreenMode":[],"ToNarrowScreenMode":[],"UrlChange":["Url.Url"],"UrlRequest":["Browser.UrlRequest"],"Request":[],"Response":["String.String"],"SignUp":[],"SignUpResponse":["Result.Result Http.Error Main.SignUpResponseResult"],"InputStudentIdOrEmailAddress":["String.String"]}},"Main.Page":{"args":[],"tags":{"PageHome":["Main.Home"],"PageSignUp":["Main.UserSignUpPage"],"PageLogIn":["Main.LogInPage"],"PageLikeAndHistory":["Main.LikeAndHistory"],"PageExhibitionItemList":[],"PagePurchaseItemList":[],"PageExhibition":["Main.ExhibitionState"],"PageSendSignUpEmail":[]}},"Main.SignUpResponseResult":{"args":[],"tags":{"SignUpResponseResultOk":[],"SignUpResponseResultAleadySignUp":[],"SignUpResponseResultError":[]}},"Browser.UrlRequest":{"args":[],"tags":{"Internal":["Url.Url"],"External":["String.String"]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"Result.Result":{"args":["error","value"],"tags":{"Ok":["value"],"Err":["error"]}},"String.String":{"args":[],"tags":{"String":[]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String.String"],"Timeout":[],"NetworkError":[],"BadStatus":["Basics.Int"],"BadBody":["String.String"]}},"Url.Protocol":{"args":[],"tags":{"Http":[],"Https":[]}},"Main.Home":{"args":[],"tags":{"Recent":[],"Recommend":["{ valid : Basics.Bool }"],"Free":[]}},"Main.LikeAndHistory":{"args":[],"tags":{"Like":[],"History":[]}},"Main.LogInPage":{"args":[],"tags":{"LogInPage":["{ nextPage : Maybe.Maybe Main.Page, studentIdOrEmailAddress : String.String, password : String.String }"],"ForgotPassword":[]}},"Main.UserSignUpPage":{"args":[],"tags":{"UserSignUpPageStudentHasSAddress":["{ studentIdOrTsukubaEmailAddress : String.String, password : String.String }"],"UserSignUpPageNewStudent":["{ emailAddress : String.String, password : String.String }"]}},"Basics.Bool":{"args":[],"tags":{"True":[],"False":[]}}}}})}});}(this));
+	elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.0"},"types":{"message":"Main.Msg","aliases":{"Url.Url":{"args":[],"type":"{ protocol : Url.Protocol, host : String.String, port_ : Maybe.Maybe Basics.Int, path : String.String, query : Maybe.Maybe String.String, fragment : Maybe.Maybe String.String }"},"Main.ExhibitionState":{"args":[],"type":"{ title : String.String, description : String.String, price : Maybe.Maybe Basics.Int }"}},"unions":{"Main.Msg":{"args":[],"tags":{"ChangePage":["Main.Page"],"OpenMenu":[],"CloseMenu":[],"ToWideScreenMode":[],"ToNarrowScreenMode":[],"UrlChange":["Url.Url"],"UrlRequest":["Browser.UrlRequest"],"Request":[],"Response":["String.String"],"SignUp":[],"SignUpResponse":["Result.Result Http.Error Main.SignUpResponseResult"],"InputStudentIdOrEmailAddress":["String.String"],"InputStudentImage":["String.String"],"ReciveImageDataUrl":["String.String"]}},"Main.Page":{"args":[],"tags":{"PageHome":["Main.Home"],"PageSignUp":["Main.UserSignUpPage"],"PageLogIn":["Main.LogInPage"],"PageLikeAndHistory":["Main.LikeAndHistory"],"PageExhibitionItemList":[],"PagePurchaseItemList":[],"PageExhibition":["Main.ExhibitionState"],"PageSendSignUpEmail":[]}},"Main.SignUpResponseResult":{"args":[],"tags":{"SignUpResponseResultOk":[],"SignUpResponseResultAleadySignUp":[],"SignUpResponseResultError":[]}},"Browser.UrlRequest":{"args":[],"tags":{"Internal":["Url.Url"],"External":["String.String"]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"Result.Result":{"args":["error","value"],"tags":{"Ok":["value"],"Err":["error"]}},"String.String":{"args":[],"tags":{"String":[]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String.String"],"Timeout":[],"NetworkError":[],"BadStatus":["Basics.Int"],"BadBody":["String.String"]}},"Url.Protocol":{"args":[],"tags":{"Http":[],"Https":[]}},"Main.Home":{"args":[],"tags":{"Recent":[],"Recommend":["{ valid : Basics.Bool }"],"Free":[]}},"Main.LikeAndHistory":{"args":[],"tags":{"Like":[],"History":[]}},"Main.LogInPage":{"args":[],"tags":{"LogInPage":["{ nextPage : Maybe.Maybe Main.Page, studentIdOrEmailAddress : String.String, password : String.String }"],"ForgotPassword":[]}},"Main.UserSignUpPage":{"args":[],"tags":{"UserSignUpPageStudentHasSAddress":["{ studentIdOrTsukubaEmailAddress : String.String, password : String.String }"],"UserSignUpPageNewStudent":["{ emailAddress : String.String, imageUrl : Maybe.Maybe String.String, password : String.String }"]}},"Basics.Bool":{"args":[],"tags":{"True":[],"False":[]}}}}})}});}(this));

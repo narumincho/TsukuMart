@@ -13,6 +13,7 @@
     <div id="root"></div>
     <script src="main.js"></script>
     <script>
+        "use strict";
         /* Elmを起動!! */
         const app = Elm.Main.init({ node: document.getElementById("root") });
         const windowResizeListener = (e) => {
@@ -22,6 +23,18 @@
                 app.ports.toNarrowScreenMode.send(0);
             }
         }
+        app.ports.studentImageChange.subscribe((id) => {
+            const fileInputElement = document.getElementById(id);
+            const imageFile = fileInputElement.files[0]
+            if (imageFile === undefined) {
+                return;
+            }
+            const fileReader = new FileReader();
+            fileReader.addEventListener("load", (e) => {
+                app.ports.receiveImageDataUrl.send(fileReader.result)
+            })
+            fileReader.readAsDataURL(imageFile);
+        })
         addEventListener("resize", windowResizeListener);
         windowResizeListener();
         // addEventListener("touchmove", (e) => {
