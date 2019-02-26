@@ -1229,7 +1229,7 @@ userSignUpView userSignUpPage =
                     UserSignUpPageNewStudent { imageUrl, password } ->
                         newStudentFormList imageUrl password
                )
-            ++ [ signUpSubmitButton
+            ++ [ signUpSubmitButton (getSignUpData userSignUpPage /= Nothing)
                ]
         )
     ]
@@ -1268,21 +1268,22 @@ sAddressSelectView userSignUpPage =
                 ]
              , Html.Attributes.style "border-radius" ".4rem 0 0 .4rem"
              ]
-                ++ (if leftSelect then
-                        []
+                ++ (case userSignUpPage of
+                        UserSignUpPageStudentHasSAddress _ ->
+                            []
 
-                    else
-                        [ Html.Events.onClick
-                            (ChangePage
-                                (PageSignUp
-                                    (UserSignUpPageStudentHasSAddress
-                                        { studentIdOrTsukubaEmailAddress = analysisStudentIdOrEmailAddress ""
-                                        , password = Password.passwordFromString ""
-                                        }
+                        UserSignUpPageNewStudent { password } ->
+                            [ Html.Events.onClick
+                                (ChangePage
+                                    (PageSignUp
+                                        (UserSignUpPageStudentHasSAddress
+                                            { studentIdOrTsukubaEmailAddress = analysisStudentIdOrEmailAddress ""
+                                            , password = password
+                                            }
+                                        )
                                     )
                                 )
-                            )
-                        ]
+                            ]
                    )
             )
             [ Html.text "持っている" ]
@@ -1293,19 +1294,23 @@ sAddressSelectView userSignUpPage =
                 ]
              , Html.Attributes.style "border-radius" "0 .4rem .4rem 0"
              ]
-                ++ (if leftSelect then
-                        [ Html.Events.onClick
-                            (ChangePage
-                                (PageSignUp
-                                    (UserSignUpPageNewStudent
-                                        { emailAddress = [] |> EmailAddress.fromCharList, imageUrl = Nothing, password = Password.passwordFromString "" }
+                ++ (case userSignUpPage of
+                        UserSignUpPageStudentHasSAddress { password } ->
+                            [ Html.Events.onClick
+                                (ChangePage
+                                    (PageSignUp
+                                        (UserSignUpPageNewStudent
+                                            { emailAddress = [] |> EmailAddress.fromCharList
+                                            , imageUrl = Nothing
+                                            , password = password
+                                            }
+                                        )
                                     )
                                 )
-                            )
-                        ]
+                            ]
 
-                    else
-                        []
+                        UserSignUpPageNewStudent _ ->
+                            []
                    )
             )
             [ Html.text "持っていない" ]
@@ -1481,13 +1486,14 @@ passwordForm passwordResult =
         ]
 
 
-signUpSubmitButton : Html.Html Msg
-signUpSubmitButton =
+signUpSubmitButton : Bool -> Html.Html Msg
+signUpSubmitButton isActive =
     Html.div
         []
         [ Html.button
             [ Html.Attributes.class "signUp-signUpButton"
-            , Html.Events.onClick SignUp
+            , Html.Attributes.disabled (not isActive)
+            , Html.Events.stopPropagationOn "click" (Json.Decode.succeed ( SignUp, True ))
             ]
             [ Html.text "新規登録" ]
         ]
@@ -1497,42 +1503,7 @@ signUpSubmitButton =
 -}
 signUpJson : UserSignUpPage -> Maybe Json.Encode.Value
 signUpJson userSignUpPage =
-    let
-        signUpData : Maybe { emailAddress : String, pass : Password.Password, image : Maybe String }
-        signUpData =
-            case userSignUpPage of
-                UserSignUpPageStudentHasSAddress { studentIdOrTsukubaEmailAddress, password } ->
-                    case ( studentIdOrTsukubaEmailAddress, password ) of
-                        ( AStudentId studentId, Ok pass ) ->
-                            Just
-                                { emailAddress = StudentId.toEmailAddressString studentId
-                                , pass = pass
-                                , image = Nothing
-                                }
-
-                        ( ASAddress sAddress, Ok pass ) ->
-                            Just
-                                { emailAddress = SAddress.toEmailAddressString sAddress
-                                , pass = pass
-                                , image = Nothing
-                                }
-
-                        _ ->
-                            Nothing
-
-                UserSignUpPageNewStudent { emailAddress, password, imageUrl } ->
-                    case ( emailAddress, password, imageUrl ) of
-                        ( Just address, Ok pass, Just image ) ->
-                            Just
-                                { emailAddress = EmailAddress.toString address
-                                , pass = pass
-                                , image = Just image
-                                }
-
-                        ( _, _, _ ) ->
-                            Nothing
-    in
-    case signUpData of
+    case getSignUpData userSignUpPage of
         Just { emailAddress, pass, image } ->
             Just
                 (Json.Encode.object
@@ -1551,6 +1522,41 @@ signUpJson userSignUpPage =
 
         Nothing ->
             Nothing
+
+
+getSignUpData : UserSignUpPage -> Maybe { emailAddress : String, pass : Password.Password, image : Maybe String }
+getSignUpData userSignUpPage =
+    case userSignUpPage of
+        UserSignUpPageStudentHasSAddress { studentIdOrTsukubaEmailAddress, password } ->
+            case ( studentIdOrTsukubaEmailAddress, password ) of
+                ( AStudentId studentId, Ok pass ) ->
+                    Just
+                        { emailAddress = StudentId.toEmailAddressString studentId
+                        , pass = pass
+                        , image = Nothing
+                        }
+
+                ( ASAddress sAddress, Ok pass ) ->
+                    Just
+                        { emailAddress = SAddress.toEmailAddressString sAddress
+                        , pass = pass
+                        , image = Nothing
+                        }
+
+                _ ->
+                    Nothing
+
+        UserSignUpPageNewStudent { emailAddress, password, imageUrl } ->
+            case ( emailAddress, password, imageUrl ) of
+                ( Just address, Ok pass, Just image ) ->
+                    Just
+                        { emailAddress = EmailAddress.toString address
+                        , pass = pass
+                        , image = Just image
+                        }
+
+                ( _, _, _ ) ->
+                    Nothing
 
 
 subscription : Model -> Sub Msg

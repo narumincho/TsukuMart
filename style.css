@@ -627,6 +627,12 @@ img {
     color: #111;
 }
 
+.signUp-signUpButton:disabled {
+    background-color: #aaa;
+    color: #ddd;
+}
+
+
 /*===============================================
            Main View 画面に主に表示する場所
 ===============================================*/
