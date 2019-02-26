@@ -1,4 +1,4 @@
-module Password exposing (Password, errorMessage, passwordFromString)
+module Password exposing (Error, Password, errorMessage, passwordFromString)
 
 import Set exposing (Set)
 
@@ -72,49 +72,46 @@ type PasswordChar
     | P7
     | P8
     | P9
-    | PExclamationMark -- !
-    | PQuotationMark -- "
-    | PNumberSign -- #
-    | PDollarSign -- $
+    | ExclamationMark -- !
+    | QuotationMark -- "
+    | NumberSign -- #
+    | DollarSign -- $
     | PercentSign -- %
-    | PAmpersand -- &
-    | PApostrophe -- '
-    | PLeftParenthesis -- (
-    | PRightParenthesis -- )
-    | PAsterisk -- *
-    | PPlusSign -- +
-    | PComma -- ,
-    | PHyphenMinus -- -
-    | PFullStop -- .
-    | PSolidus -- /
-    | PColon -- :
-    | PSemicolon -- ;
-    | PLessThanSign -- <
-    | PEqualsSign -- =
-    | PGreaterThanSign -- >
-    | PQuestionMark -- ?
-    | PCommercialAt -- @
-    | PLeftSquareBracket -- [
-    | PReverseSolidus -- \
-    | PRightSquareBracket -- ]
-    | PCircumflexAccent -- ^
-    | PLowLine -- _
-    | PGraveAccent -- `
-    | PLeftCurlyBracket -- {
-    | PVerticalLine -- |
-    | PRightCurlyBracket -- }
-    | PTilde -- ~
+    | Ampersand -- &
+    | Apostrophe -- '
+    | LeftParenthesis -- (
+    | RightParenthesis -- )
+    | Asterisk -- *
+    | PlusSign -- +
+    | Comma -- ,
+    | HyphenMinus -- -
+    | FullStop -- .
+    | Solidus -- /
+    | Colon -- :
+    | Semicolon -- ;
+    | LessThanSign -- <
+    | EqualsSign -- =
+    | GreaterThanSign -- >
+    | QuestionMark -- ?
+    | CommercialAt -- @
+    | LeftSquareBracket -- [
+    | ReverseSolidus -- \
+    | RightSquareBracket -- ]
+    | CircumflexAccent -- ^
+    | LowLine -- _
+    | GraveAccent -- `
+    | LeftCurlyBracket -- {
+    | VerticalLine -- |
+    | RightCurlyBracket -- }
+    | Tilde -- ~
 
 
 type Error
-    = GeneralError GeneralError
-    | AllNumberError
-
-
-type GeneralError
-    = GLengthError LengthError
-    | GInvalidCharError InvalidCharError
-    | GBoth LengthError InvalidCharError
+    = EAllNumberError
+    | EInvalidCharError InvalidCharError
+    | ELengthError LengthError
+    | EInvalidAndLengthError InvalidCharError LengthError
+    | EAllNumberAndLengthError LengthError
 
 
 type LengthError
@@ -139,13 +136,18 @@ passwordFromString string =
     in
     case result of
         Ok passwordCharList ->
-            if passwordCharList |> List.all passwordCharIsNumber then
-                Err AllNumberError
+            if passwordCharList /= [] && (passwordCharList |> List.all passwordCharIsNumber) then
+                case lengthErrorFromLength (passwordCharList |> List.length) of
+                    Just lengthError ->
+                        Err (EAllNumberAndLengthError lengthError)
+
+                    Nothing ->
+                        Err EAllNumberError
 
             else
                 case lengthErrorFromLength (passwordCharList |> List.length) of
                     Just lengthError ->
-                        Err (GeneralError (GLengthError lengthError))
+                        Err (ELengthError lengthError)
 
                     Nothing ->
                         Ok (Password passwordCharList)
@@ -153,10 +155,10 @@ passwordFromString string =
         Err invalidCharError ->
             case lengthErrorFromLength (charList |> List.length) of
                 Just lengthError ->
-                    Err (GeneralError (GBoth lengthError invalidCharError))
+                    Err (EInvalidAndLengthError invalidCharError lengthError)
 
                 Nothing ->
-                    Err (GeneralError (GInvalidCharError invalidCharError))
+                    Err (EInvalidCharError invalidCharError)
 
 
 {-| 文字のListをパスワードの文字のListか、エラーの文字のSetを返す
@@ -169,14 +171,14 @@ charListToPasswordCharList list =
                 ( Just pChar, Ok passwordCharList ) ->
                     Ok (pChar :: passwordCharList)
 
-                ( Just _, Err invalidCharList ) ->
-                    Err invalidCharList
+                ( Just _, Err invalidCharSet ) ->
+                    Err invalidCharSet
 
                 ( Nothing, Ok _ ) ->
-                    Err (Set.singleton x)
+                    Err (InvalidCharError (Set.singleton x))
 
-                ( Nothing, Err invalidCharList ) ->
-                    Err (invalidCharList |> Set.insert x)
+                ( Nothing, Err (InvalidCharError invalidCharSet) ) ->
+                    Err (InvalidCharError (invalidCharSet |> Set.insert x))
 
         [] ->
             Ok []
@@ -186,184 +188,196 @@ passwordCharFromChar : Char -> Maybe PasswordChar
 passwordCharFromChar char =
     case char of
         '!' ->
-            Just PExclamationMark
+            Just ExclamationMark
 
         '！' ->
-            Just PExclamationMark
+            Just ExclamationMark
 
         '"' ->
-            Just PQuotationMark
+            Just QuotationMark
 
         '”' ->
-            Just PQuotationMark
+            Just QuotationMark
 
         '#' ->
-            Just PNumberSign
+            Just NumberSign
 
         '＃' ->
-            Just PNumberSign
+            Just NumberSign
 
         '$' ->
-            Just PDollarSign
+            Just DollarSign
 
         '＄' ->
-            Just PDollarSign
+            Just DollarSign
+
+        '%' ->
+            Just PercentSign
+
+        '％' ->
+            Just PercentSign
 
         '&' ->
-            Just PAmpersand
+            Just Ampersand
 
         '＆' ->
-            Just PAmpersand
+            Just Ampersand
 
         '\'' ->
-            Just PApostrophe
+            Just Apostrophe
 
         '’' ->
-            Just PApostrophe
+            Just Apostrophe
 
         '(' ->
-            Just PLeftParenthesis
+            Just LeftParenthesis
 
         '（' ->
-            Just PLeftParenthesis
+            Just LeftParenthesis
 
         ')' ->
-            Just PRightParenthesis
+            Just RightParenthesis
 
         '）' ->
-            Just PRightParenthesis
+            Just RightParenthesis
 
         '*' ->
-            Just PAsterisk
+            Just Asterisk
 
         '＊' ->
-            Just PAsterisk
+            Just Asterisk
 
         '+' ->
-            Just PPlusSign
+            Just PlusSign
 
         '＋' ->
-            Just PPlusSign
+            Just PlusSign
 
         ',' ->
-            Just PComma
+            Just Comma
 
         '、' ->
-            Just PComma
+            Just Comma
 
         '，' ->
-            Just PComma
+            Just Comma
 
         '-' ->
-            Just PHyphenMinus
+            Just HyphenMinus
 
         'ー' ->
-            Just PHyphenMinus
+            Just HyphenMinus
 
         '.' ->
-            Just PFullStop
+            Just FullStop
 
         '．' ->
-            Just PFullStop
+            Just FullStop
 
         '/' ->
-            Just PSolidus
+            Just Solidus
 
         '／' ->
-            Just PSolidus
+            Just Solidus
 
         ':' ->
-            Just PColon
+            Just Colon
 
         '：' ->
-            Just PColon
+            Just Colon
 
         ';' ->
-            Just PSemicolon
+            Just Semicolon
 
         '；' ->
-            Just PSemicolon
+            Just Semicolon
 
         '<' ->
-            Just PLessThanSign
+            Just LessThanSign
 
         '＜' ->
-            Just PLessThanSign
+            Just LessThanSign
 
         '=' ->
-            Just PEqualsSign
+            Just EqualsSign
 
         '＝' ->
-            Just PEqualsSign
+            Just EqualsSign
 
         '>' ->
-            Just PGreaterThanSign
+            Just GreaterThanSign
 
         '＞' ->
-            Just PGreaterThanSign
+            Just GreaterThanSign
 
         '?' ->
-            Just PQuestionMark
+            Just QuestionMark
 
         '？' ->
-            Just PQuestionMark
+            Just QuestionMark
 
         '@' ->
-            Just PCommercialAt
+            Just CommercialAt
 
         '＠' ->
-            Just PCommercialAt
+            Just CommercialAt
 
         '[' ->
-            Just PLeftSquareBracket
+            Just LeftSquareBracket
 
         '［' ->
-            Just PLeftSquareBracket
+            Just LeftSquareBracket
 
         '\\' ->
-            Just PReverseSolidus
+            Just ReverseSolidus
 
         '￥' ->
-            Just PReverseSolidus
+            Just ReverseSolidus
 
         ']' ->
-            Just PRightSquareBracket
+            Just RightSquareBracket
 
         '］' ->
-            Just PRightSquareBracket
+            Just RightSquareBracket
 
         '^' ->
-            Just PCircumflexAccent
+            Just CircumflexAccent
 
         '＾' ->
-            Just PCircumflexAccent
+            Just CircumflexAccent
 
         '_' ->
-            Just PLowLine
+            Just LowLine
 
         '＿' ->
-            Just PLowLine
+            Just LowLine
 
         '`' ->
-            Just PGraveAccent
+            Just GraveAccent
 
         '{' ->
-            Just PLeftCurlyBracket
+            Just LeftCurlyBracket
 
         '｛' ->
-            Just PLeftCurlyBracket
+            Just LeftCurlyBracket
 
         '|' ->
-            Just PVerticalLine
+            Just VerticalLine
 
         '｜' ->
-            Just PVerticalLine
+            Just VerticalLine
 
         '}' ->
-            Just PRightCurlyBracket
+            Just RightCurlyBracket
 
         '｝' ->
-            Just PRightCurlyBracket
+            Just RightCurlyBracket
+
+        '~' ->
+            Just Tilde
+
+        '～' ->
+            Just Tilde
 
         'a' ->
             Just Pa
@@ -792,27 +806,28 @@ lengthErrorFromLength length =
 
 errorMessage : Error -> String
 errorMessage error =
-    case error of
-        GeneralError generalError ->
-            generalErrorMessage generalError
+    (case error of
+        EAllNumberError ->
+            [ allNumberErrorMessage ]
 
-        AllNumberError ->
-            "数字のみは不可"
+        EInvalidCharError invalidCharError ->
+            [ invalidCharErrorMessage invalidCharError ]
+
+        ELengthError lengthError ->
+            [ lengthErrorMessage lengthError ]
+
+        EInvalidAndLengthError invalidCharError lengthError ->
+            [ invalidCharErrorMessage invalidCharError, lengthErrorMessage lengthError ]
+
+        EAllNumberAndLengthError lengthError ->
+            [ lengthErrorMessage lengthError, allNumberErrorMessage ]
+    )
+        |> String.concat
 
 
-generalErrorMessage : GeneralError -> String
-generalErrorMessage generalError =
-    case generalError of
-        GLengthError lengthError ->
-            lengthErrorMessage lengthError
-
-        GInvalidCharError invalidCharError ->
-            invalidCharErrorMessage invalidCharError
-
-        GBoth lengthError invalidCharError ->
-            lengthErrorMessage lengthError
-                ++ " "
-                ++ invalidCharErrorMessage invalidCharError
+allNumberErrorMessage : String
+allNumberErrorMessage =
+    "数字のみは不可"
 
 
 lengthErrorMessage : LengthError -> String
@@ -824,11 +839,11 @@ lengthErrorMessage lengthError =
         Long ->
             "文字数が多いです。"
     )
-        ++ "文字数は9文字以上50文字以内である必要があります"
+        ++ "文字数は9文字以上50文字以内である必要があります。"
 
 
 invalidCharErrorMessage : InvalidCharError -> String
 invalidCharErrorMessage (InvalidCharError charSet) =
     "使えない文字"
         ++ String.fromList (Set.toList charSet)
-        ++ "が含まれています。使える文字は英数字と記号(!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~)です"
+        ++ "が含まれています。使える文字は英数字と記号(!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~)です。"

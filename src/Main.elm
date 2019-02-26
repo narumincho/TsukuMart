@@ -9,6 +9,7 @@ import Html.Keyed
 import Http
 import Json.Decode
 import Json.Encode
+import Password
 import Svg
 import Svg.Attributes
 import Url
@@ -59,12 +60,12 @@ type Page
 type UserSignUpPage
     = UserSignUpPageStudentHasSAddress
         { studentIdOrTsukubaEmailAddress : String
-        , password : String
+        , password : Result Password.Error Password.Password
         }
     | UserSignUpPageNewStudent
         { emailAddress : String
         , imageUrl : Maybe String
-        , password : String
+        , password : Result Password.Error Password.Password
         }
 
 
@@ -106,7 +107,8 @@ type Msg
     | SignUpResponse (Result Http.Error SignUpResponseResult)
     | InputStudentIdOrEmailAddress String
     | InputStudentImage String
-    | ReciveImageDataUrl String
+    | ReceiveImageDataUrl String
+    | InputPassword String
 
 
 type SignUpResponseResult
@@ -284,7 +286,7 @@ update msg (Model rec) =
             , studentImageChange idString
             )
 
-        ReciveImageDataUrl urlString ->
+        ReceiveImageDataUrl urlString ->
             ( case rec.page of
                 PageSignUp (UserSignUpPageNewStudent r) ->
                     Model
@@ -292,6 +294,31 @@ update msg (Model rec) =
                             | page =
                                 PageSignUp
                                     (UserSignUpPageNewStudent { r | imageUrl = Just urlString })
+                        }
+
+                _ ->
+                    Model rec
+            , Cmd.none
+            )
+
+        InputPassword string ->
+            ( case rec.page of
+                PageSignUp (UserSignUpPageNewStudent r) ->
+                    Model
+                        { rec
+                            | page =
+                                PageSignUp
+                                    (UserSignUpPageNewStudent { r | password = Password.passwordFromString string })
+                        }
+
+                PageSignUp (UserSignUpPageStudentHasSAddress r) ->
+                    Model
+                        { rec
+                            | page =
+                                PageSignUp
+                                    (UserSignUpPageStudentHasSAddress
+                                        { r | password = Password.passwordFromString string }
+                                    )
                         }
 
                 _ ->
@@ -333,7 +360,7 @@ urlParser beforePageMaybe =
             (PageHome (Recommend { valid = True }))
             (Url.Parser.s "index.html")
         , Url.Parser.map
-            (PageSignUp (UserSignUpPageStudentHasSAddress { studentIdOrTsukubaEmailAddress = "", password = "" }))
+            (PageSignUp (UserSignUpPageStudentHasSAddress { studentIdOrTsukubaEmailAddress = "", password = Password.passwordFromString "" }))
             (Url.Parser.s "user-signup")
         , Url.Parser.map
             (PageLogIn
@@ -1236,7 +1263,7 @@ sAddressSelectView userSignUpPage =
                             (ChangePage
                                 (PageSignUp
                                     (UserSignUpPageStudentHasSAddress
-                                        { studentIdOrTsukubaEmailAddress = "", password = "" }
+                                        { studentIdOrTsukubaEmailAddress = "", password = Password.passwordFromString "" }
                                     )
                                 )
                             )
@@ -1256,7 +1283,7 @@ sAddressSelectView userSignUpPage =
                             (ChangePage
                                 (PageSignUp
                                     (UserSignUpPageNewStudent
-                                        { emailAddress = "", imageUrl = Nothing, password = "" }
+                                        { emailAddress = "", imageUrl = Nothing, password = Password.passwordFromString "" }
                                     )
                                 )
                             )
@@ -1740,8 +1767,8 @@ newStudentFormList imageUrlMaybe =
     ]
 
 
-passwordForm : String -> Html.Html Msg
-passwordForm password =
+passwordForm : Result Password.Error Password.Password -> Html.Html Msg
+passwordForm passwordResult =
     Html.div
         []
         [ Html.label
@@ -1756,11 +1783,20 @@ passwordForm password =
             , Html.Attributes.minlength 9
             , Html.Attributes.maxlength 50
             , Html.Attributes.attribute "autocomplete" "new-password"
+            , Html.Events.onInput InputPassword
             ]
             []
         , Html.div
             [ Html.Attributes.class "signUp-description" ]
-            [ Html.text "9文字以上…" ]
+            [ Html.text
+                (case passwordResult of
+                    Ok _ ->
+                        ""
+
+                    Err error ->
+                        Password.errorMessage error
+                )
+            ]
         ]
 
 
@@ -1789,7 +1825,7 @@ signUpJson userSignUpPage =
 subscription : Model -> Sub Msg
 subscription (Model { menuState }) =
     Sub.batch
-        [ receiveImageDataUrl ReciveImageDataUrl
+        [ receiveImageDataUrl ReceiveImageDataUrl
         , case menuState of
             Just _ ->
                 toWideScreenMode (always ToWideScreenMode)

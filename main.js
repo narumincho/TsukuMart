@@ -5099,8 +5099,513 @@ var author$project$Main$PageSignUp = function (a) {
 var author$project$Main$UserSignUpPageStudentHasSAddress = function (a) {
 	return {$: 'UserSignUpPageStudentHasSAddress', a: a};
 };
-var elm$core$Basics$True = {$: 'True'};
+var author$project$Password$EAllNumberAndLengthError = function (a) {
+	return {$: 'EAllNumberAndLengthError', a: a};
+};
+var author$project$Password$EAllNumberError = {$: 'EAllNumberError'};
+var author$project$Password$EInvalidAndLengthError = F2(
+	function (a, b) {
+		return {$: 'EInvalidAndLengthError', a: a, b: b};
+	});
+var author$project$Password$EInvalidCharError = function (a) {
+	return {$: 'EInvalidCharError', a: a};
+};
+var author$project$Password$ELengthError = function (a) {
+	return {$: 'ELengthError', a: a};
+};
+var author$project$Password$Password = function (a) {
+	return {$: 'Password', a: a};
+};
+var author$project$Password$InvalidCharError = function (a) {
+	return {$: 'InvalidCharError', a: a};
+};
+var author$project$Password$Ampersand = {$: 'Ampersand'};
+var author$project$Password$Apostrophe = {$: 'Apostrophe'};
+var author$project$Password$Asterisk = {$: 'Asterisk'};
+var author$project$Password$CircumflexAccent = {$: 'CircumflexAccent'};
+var author$project$Password$Colon = {$: 'Colon'};
+var author$project$Password$Comma = {$: 'Comma'};
+var author$project$Password$CommercialAt = {$: 'CommercialAt'};
+var author$project$Password$DollarSign = {$: 'DollarSign'};
+var author$project$Password$EqualsSign = {$: 'EqualsSign'};
+var author$project$Password$ExclamationMark = {$: 'ExclamationMark'};
+var author$project$Password$FullStop = {$: 'FullStop'};
+var author$project$Password$GraveAccent = {$: 'GraveAccent'};
+var author$project$Password$GreaterThanSign = {$: 'GreaterThanSign'};
+var author$project$Password$HyphenMinus = {$: 'HyphenMinus'};
+var author$project$Password$LeftCurlyBracket = {$: 'LeftCurlyBracket'};
+var author$project$Password$LeftParenthesis = {$: 'LeftParenthesis'};
+var author$project$Password$LeftSquareBracket = {$: 'LeftSquareBracket'};
+var author$project$Password$LessThanSign = {$: 'LessThanSign'};
+var author$project$Password$LowLine = {$: 'LowLine'};
+var author$project$Password$NumberSign = {$: 'NumberSign'};
+var author$project$Password$P0 = {$: 'P0'};
+var author$project$Password$P1 = {$: 'P1'};
+var author$project$Password$P2 = {$: 'P2'};
+var author$project$Password$P3 = {$: 'P3'};
+var author$project$Password$P4 = {$: 'P4'};
+var author$project$Password$P5 = {$: 'P5'};
+var author$project$Password$P6 = {$: 'P6'};
+var author$project$Password$P7 = {$: 'P7'};
+var author$project$Password$P8 = {$: 'P8'};
+var author$project$Password$P9 = {$: 'P9'};
+var author$project$Password$PA = {$: 'PA'};
+var author$project$Password$PB = {$: 'PB'};
+var author$project$Password$PC = {$: 'PC'};
+var author$project$Password$PD = {$: 'PD'};
+var author$project$Password$PE = {$: 'PE'};
+var author$project$Password$PF = {$: 'PF'};
+var author$project$Password$PG = {$: 'PG'};
+var author$project$Password$PH = {$: 'PH'};
+var author$project$Password$PI = {$: 'PI'};
+var author$project$Password$PJ = {$: 'PJ'};
+var author$project$Password$PK = {$: 'PK'};
+var author$project$Password$PL = {$: 'PL'};
+var author$project$Password$PM = {$: 'PM'};
+var author$project$Password$PN = {$: 'PN'};
+var author$project$Password$PO = {$: 'PO'};
+var author$project$Password$PP = {$: 'PP'};
+var author$project$Password$PQ = {$: 'PQ'};
+var author$project$Password$PR = {$: 'PR'};
+var author$project$Password$PS = {$: 'PS'};
+var author$project$Password$PT = {$: 'PT'};
+var author$project$Password$PU = {$: 'PU'};
+var author$project$Password$PV = {$: 'PV'};
+var author$project$Password$PW = {$: 'PW'};
+var author$project$Password$PX = {$: 'PX'};
+var author$project$Password$PY = {$: 'PY'};
+var author$project$Password$PZ = {$: 'PZ'};
+var author$project$Password$Pa = {$: 'Pa'};
+var author$project$Password$Pb = {$: 'Pb'};
+var author$project$Password$Pc = {$: 'Pc'};
+var author$project$Password$Pd = {$: 'Pd'};
+var author$project$Password$Pe = {$: 'Pe'};
+var author$project$Password$PercentSign = {$: 'PercentSign'};
+var author$project$Password$Pf = {$: 'Pf'};
+var author$project$Password$Pg = {$: 'Pg'};
+var author$project$Password$Ph = {$: 'Ph'};
+var author$project$Password$Pi = {$: 'Pi'};
+var author$project$Password$Pj = {$: 'Pj'};
+var author$project$Password$Pk = {$: 'Pk'};
+var author$project$Password$Pl = {$: 'Pl'};
+var author$project$Password$PlusSign = {$: 'PlusSign'};
+var author$project$Password$Pm = {$: 'Pm'};
+var author$project$Password$Pn = {$: 'Pn'};
+var author$project$Password$Po = {$: 'Po'};
+var author$project$Password$Pp = {$: 'Pp'};
+var author$project$Password$Pq = {$: 'Pq'};
+var author$project$Password$Pr = {$: 'Pr'};
+var author$project$Password$Ps = {$: 'Ps'};
+var author$project$Password$Pt = {$: 'Pt'};
+var author$project$Password$Pu = {$: 'Pu'};
+var author$project$Password$Pv = {$: 'Pv'};
+var author$project$Password$Pw = {$: 'Pw'};
+var author$project$Password$Px = {$: 'Px'};
+var author$project$Password$Py = {$: 'Py'};
+var author$project$Password$Pz = {$: 'Pz'};
+var author$project$Password$QuestionMark = {$: 'QuestionMark'};
+var author$project$Password$QuotationMark = {$: 'QuotationMark'};
+var author$project$Password$ReverseSolidus = {$: 'ReverseSolidus'};
+var author$project$Password$RightCurlyBracket = {$: 'RightCurlyBracket'};
+var author$project$Password$RightParenthesis = {$: 'RightParenthesis'};
+var author$project$Password$RightSquareBracket = {$: 'RightSquareBracket'};
+var author$project$Password$Semicolon = {$: 'Semicolon'};
+var author$project$Password$Solidus = {$: 'Solidus'};
+var author$project$Password$Tilde = {$: 'Tilde'};
+var author$project$Password$VerticalLine = {$: 'VerticalLine'};
+var elm$core$Maybe$Just = function (a) {
+	return {$: 'Just', a: a};
+};
 var elm$core$Maybe$Nothing = {$: 'Nothing'};
+var author$project$Password$passwordCharFromChar = function (_char) {
+	switch (_char.valueOf()) {
+		case '!':
+			return elm$core$Maybe$Just(author$project$Password$ExclamationMark);
+		case '！':
+			return elm$core$Maybe$Just(author$project$Password$ExclamationMark);
+		case '\"':
+			return elm$core$Maybe$Just(author$project$Password$QuotationMark);
+		case '”':
+			return elm$core$Maybe$Just(author$project$Password$QuotationMark);
+		case '#':
+			return elm$core$Maybe$Just(author$project$Password$NumberSign);
+		case '＃':
+			return elm$core$Maybe$Just(author$project$Password$NumberSign);
+		case '$':
+			return elm$core$Maybe$Just(author$project$Password$DollarSign);
+		case '＄':
+			return elm$core$Maybe$Just(author$project$Password$DollarSign);
+		case '%':
+			return elm$core$Maybe$Just(author$project$Password$PercentSign);
+		case '％':
+			return elm$core$Maybe$Just(author$project$Password$PercentSign);
+		case '&':
+			return elm$core$Maybe$Just(author$project$Password$Ampersand);
+		case '＆':
+			return elm$core$Maybe$Just(author$project$Password$Ampersand);
+		case '\'':
+			return elm$core$Maybe$Just(author$project$Password$Apostrophe);
+		case '’':
+			return elm$core$Maybe$Just(author$project$Password$Apostrophe);
+		case '(':
+			return elm$core$Maybe$Just(author$project$Password$LeftParenthesis);
+		case '（':
+			return elm$core$Maybe$Just(author$project$Password$LeftParenthesis);
+		case ')':
+			return elm$core$Maybe$Just(author$project$Password$RightParenthesis);
+		case '）':
+			return elm$core$Maybe$Just(author$project$Password$RightParenthesis);
+		case '*':
+			return elm$core$Maybe$Just(author$project$Password$Asterisk);
+		case '＊':
+			return elm$core$Maybe$Just(author$project$Password$Asterisk);
+		case '+':
+			return elm$core$Maybe$Just(author$project$Password$PlusSign);
+		case '＋':
+			return elm$core$Maybe$Just(author$project$Password$PlusSign);
+		case ',':
+			return elm$core$Maybe$Just(author$project$Password$Comma);
+		case '、':
+			return elm$core$Maybe$Just(author$project$Password$Comma);
+		case '，':
+			return elm$core$Maybe$Just(author$project$Password$Comma);
+		case '-':
+			return elm$core$Maybe$Just(author$project$Password$HyphenMinus);
+		case 'ー':
+			return elm$core$Maybe$Just(author$project$Password$HyphenMinus);
+		case '.':
+			return elm$core$Maybe$Just(author$project$Password$FullStop);
+		case '．':
+			return elm$core$Maybe$Just(author$project$Password$FullStop);
+		case '/':
+			return elm$core$Maybe$Just(author$project$Password$Solidus);
+		case '／':
+			return elm$core$Maybe$Just(author$project$Password$Solidus);
+		case ':':
+			return elm$core$Maybe$Just(author$project$Password$Colon);
+		case '：':
+			return elm$core$Maybe$Just(author$project$Password$Colon);
+		case ';':
+			return elm$core$Maybe$Just(author$project$Password$Semicolon);
+		case '；':
+			return elm$core$Maybe$Just(author$project$Password$Semicolon);
+		case '<':
+			return elm$core$Maybe$Just(author$project$Password$LessThanSign);
+		case '＜':
+			return elm$core$Maybe$Just(author$project$Password$LessThanSign);
+		case '=':
+			return elm$core$Maybe$Just(author$project$Password$EqualsSign);
+		case '＝':
+			return elm$core$Maybe$Just(author$project$Password$EqualsSign);
+		case '>':
+			return elm$core$Maybe$Just(author$project$Password$GreaterThanSign);
+		case '＞':
+			return elm$core$Maybe$Just(author$project$Password$GreaterThanSign);
+		case '?':
+			return elm$core$Maybe$Just(author$project$Password$QuestionMark);
+		case '？':
+			return elm$core$Maybe$Just(author$project$Password$QuestionMark);
+		case '@':
+			return elm$core$Maybe$Just(author$project$Password$CommercialAt);
+		case '＠':
+			return elm$core$Maybe$Just(author$project$Password$CommercialAt);
+		case '[':
+			return elm$core$Maybe$Just(author$project$Password$LeftSquareBracket);
+		case '［':
+			return elm$core$Maybe$Just(author$project$Password$LeftSquareBracket);
+		case '\\':
+			return elm$core$Maybe$Just(author$project$Password$ReverseSolidus);
+		case '￥':
+			return elm$core$Maybe$Just(author$project$Password$ReverseSolidus);
+		case ']':
+			return elm$core$Maybe$Just(author$project$Password$RightSquareBracket);
+		case '］':
+			return elm$core$Maybe$Just(author$project$Password$RightSquareBracket);
+		case '^':
+			return elm$core$Maybe$Just(author$project$Password$CircumflexAccent);
+		case '＾':
+			return elm$core$Maybe$Just(author$project$Password$CircumflexAccent);
+		case '_':
+			return elm$core$Maybe$Just(author$project$Password$LowLine);
+		case '＿':
+			return elm$core$Maybe$Just(author$project$Password$LowLine);
+		case '`':
+			return elm$core$Maybe$Just(author$project$Password$GraveAccent);
+		case '{':
+			return elm$core$Maybe$Just(author$project$Password$LeftCurlyBracket);
+		case '｛':
+			return elm$core$Maybe$Just(author$project$Password$LeftCurlyBracket);
+		case '|':
+			return elm$core$Maybe$Just(author$project$Password$VerticalLine);
+		case '｜':
+			return elm$core$Maybe$Just(author$project$Password$VerticalLine);
+		case '}':
+			return elm$core$Maybe$Just(author$project$Password$RightCurlyBracket);
+		case '｝':
+			return elm$core$Maybe$Just(author$project$Password$RightCurlyBracket);
+		case '~':
+			return elm$core$Maybe$Just(author$project$Password$Tilde);
+		case '～':
+			return elm$core$Maybe$Just(author$project$Password$Tilde);
+		case 'a':
+			return elm$core$Maybe$Just(author$project$Password$Pa);
+		case 'ａ':
+			return elm$core$Maybe$Just(author$project$Password$Pa);
+		case 'b':
+			return elm$core$Maybe$Just(author$project$Password$Pb);
+		case 'ｂ':
+			return elm$core$Maybe$Just(author$project$Password$Pb);
+		case 'c':
+			return elm$core$Maybe$Just(author$project$Password$Pc);
+		case 'ｃ':
+			return elm$core$Maybe$Just(author$project$Password$Pc);
+		case 'd':
+			return elm$core$Maybe$Just(author$project$Password$Pd);
+		case 'ｄ':
+			return elm$core$Maybe$Just(author$project$Password$Pd);
+		case 'e':
+			return elm$core$Maybe$Just(author$project$Password$Pe);
+		case 'ｅ':
+			return elm$core$Maybe$Just(author$project$Password$Pe);
+		case 'f':
+			return elm$core$Maybe$Just(author$project$Password$Pf);
+		case 'ｆ':
+			return elm$core$Maybe$Just(author$project$Password$Pf);
+		case 'g':
+			return elm$core$Maybe$Just(author$project$Password$Pg);
+		case 'ｇ':
+			return elm$core$Maybe$Just(author$project$Password$Pg);
+		case 'h':
+			return elm$core$Maybe$Just(author$project$Password$Ph);
+		case 'ｈ':
+			return elm$core$Maybe$Just(author$project$Password$Ph);
+		case 'i':
+			return elm$core$Maybe$Just(author$project$Password$Pi);
+		case 'ｉ':
+			return elm$core$Maybe$Just(author$project$Password$Pi);
+		case 'j':
+			return elm$core$Maybe$Just(author$project$Password$Pj);
+		case 'ｊ':
+			return elm$core$Maybe$Just(author$project$Password$Pj);
+		case 'k':
+			return elm$core$Maybe$Just(author$project$Password$Pk);
+		case 'ｋ':
+			return elm$core$Maybe$Just(author$project$Password$Pk);
+		case 'l':
+			return elm$core$Maybe$Just(author$project$Password$Pl);
+		case 'ｌ':
+			return elm$core$Maybe$Just(author$project$Password$Pl);
+		case 'm':
+			return elm$core$Maybe$Just(author$project$Password$Pm);
+		case 'ｍ':
+			return elm$core$Maybe$Just(author$project$Password$Pm);
+		case 'n':
+			return elm$core$Maybe$Just(author$project$Password$Pn);
+		case 'ｎ':
+			return elm$core$Maybe$Just(author$project$Password$Pn);
+		case 'o':
+			return elm$core$Maybe$Just(author$project$Password$Po);
+		case 'ｏ':
+			return elm$core$Maybe$Just(author$project$Password$Po);
+		case 'p':
+			return elm$core$Maybe$Just(author$project$Password$Pp);
+		case 'ｐ':
+			return elm$core$Maybe$Just(author$project$Password$Pp);
+		case 'q':
+			return elm$core$Maybe$Just(author$project$Password$Pq);
+		case 'ｑ':
+			return elm$core$Maybe$Just(author$project$Password$Pq);
+		case 'r':
+			return elm$core$Maybe$Just(author$project$Password$Pr);
+		case 'ｒ':
+			return elm$core$Maybe$Just(author$project$Password$Pr);
+		case 's':
+			return elm$core$Maybe$Just(author$project$Password$Ps);
+		case 'ｓ':
+			return elm$core$Maybe$Just(author$project$Password$Ps);
+		case 't':
+			return elm$core$Maybe$Just(author$project$Password$Pt);
+		case 'ｔ':
+			return elm$core$Maybe$Just(author$project$Password$Pt);
+		case 'u':
+			return elm$core$Maybe$Just(author$project$Password$Pu);
+		case 'ｕ':
+			return elm$core$Maybe$Just(author$project$Password$Pu);
+		case 'v':
+			return elm$core$Maybe$Just(author$project$Password$Pv);
+		case 'ｖ':
+			return elm$core$Maybe$Just(author$project$Password$Pv);
+		case 'w':
+			return elm$core$Maybe$Just(author$project$Password$Pw);
+		case 'ｗ':
+			return elm$core$Maybe$Just(author$project$Password$Pw);
+		case 'x':
+			return elm$core$Maybe$Just(author$project$Password$Px);
+		case 'ｘ':
+			return elm$core$Maybe$Just(author$project$Password$Px);
+		case 'y':
+			return elm$core$Maybe$Just(author$project$Password$Py);
+		case 'ｙ':
+			return elm$core$Maybe$Just(author$project$Password$Py);
+		case 'z':
+			return elm$core$Maybe$Just(author$project$Password$Pz);
+		case 'ｚ':
+			return elm$core$Maybe$Just(author$project$Password$Pz);
+		case 'A':
+			return elm$core$Maybe$Just(author$project$Password$PA);
+		case 'Ａ':
+			return elm$core$Maybe$Just(author$project$Password$PA);
+		case 'B':
+			return elm$core$Maybe$Just(author$project$Password$PB);
+		case 'Ｂ':
+			return elm$core$Maybe$Just(author$project$Password$PB);
+		case 'C':
+			return elm$core$Maybe$Just(author$project$Password$PC);
+		case 'Ｃ':
+			return elm$core$Maybe$Just(author$project$Password$PC);
+		case 'D':
+			return elm$core$Maybe$Just(author$project$Password$PD);
+		case 'Ｄ':
+			return elm$core$Maybe$Just(author$project$Password$PD);
+		case 'E':
+			return elm$core$Maybe$Just(author$project$Password$PE);
+		case 'Ｅ':
+			return elm$core$Maybe$Just(author$project$Password$PE);
+		case 'F':
+			return elm$core$Maybe$Just(author$project$Password$PF);
+		case 'Ｆ':
+			return elm$core$Maybe$Just(author$project$Password$PF);
+		case 'G':
+			return elm$core$Maybe$Just(author$project$Password$PG);
+		case 'Ｇ':
+			return elm$core$Maybe$Just(author$project$Password$PG);
+		case 'H':
+			return elm$core$Maybe$Just(author$project$Password$PH);
+		case 'Ｈ':
+			return elm$core$Maybe$Just(author$project$Password$PH);
+		case 'I':
+			return elm$core$Maybe$Just(author$project$Password$PI);
+		case 'Ｉ':
+			return elm$core$Maybe$Just(author$project$Password$PI);
+		case 'J':
+			return elm$core$Maybe$Just(author$project$Password$PJ);
+		case 'Ｊ':
+			return elm$core$Maybe$Just(author$project$Password$PJ);
+		case 'K':
+			return elm$core$Maybe$Just(author$project$Password$PK);
+		case 'Ｋ':
+			return elm$core$Maybe$Just(author$project$Password$PK);
+		case 'L':
+			return elm$core$Maybe$Just(author$project$Password$PL);
+		case 'Ｌ':
+			return elm$core$Maybe$Just(author$project$Password$PL);
+		case 'M':
+			return elm$core$Maybe$Just(author$project$Password$PM);
+		case 'Ｍ':
+			return elm$core$Maybe$Just(author$project$Password$PM);
+		case 'N':
+			return elm$core$Maybe$Just(author$project$Password$PN);
+		case 'Ｎ':
+			return elm$core$Maybe$Just(author$project$Password$PN);
+		case 'O':
+			return elm$core$Maybe$Just(author$project$Password$PO);
+		case 'Ｏ':
+			return elm$core$Maybe$Just(author$project$Password$PO);
+		case 'P':
+			return elm$core$Maybe$Just(author$project$Password$PP);
+		case 'Ｐ':
+			return elm$core$Maybe$Just(author$project$Password$PP);
+		case 'Q':
+			return elm$core$Maybe$Just(author$project$Password$PQ);
+		case 'Ｑ':
+			return elm$core$Maybe$Just(author$project$Password$PQ);
+		case 'R':
+			return elm$core$Maybe$Just(author$project$Password$PR);
+		case 'Ｒ':
+			return elm$core$Maybe$Just(author$project$Password$PR);
+		case 'S':
+			return elm$core$Maybe$Just(author$project$Password$PS);
+		case 'Ｓ':
+			return elm$core$Maybe$Just(author$project$Password$PS);
+		case 'T':
+			return elm$core$Maybe$Just(author$project$Password$PT);
+		case 'Ｔ':
+			return elm$core$Maybe$Just(author$project$Password$PT);
+		case 'U':
+			return elm$core$Maybe$Just(author$project$Password$PU);
+		case 'Ｕ':
+			return elm$core$Maybe$Just(author$project$Password$PU);
+		case 'V':
+			return elm$core$Maybe$Just(author$project$Password$PV);
+		case 'Ｖ':
+			return elm$core$Maybe$Just(author$project$Password$PV);
+		case 'W':
+			return elm$core$Maybe$Just(author$project$Password$PW);
+		case 'Ｗ':
+			return elm$core$Maybe$Just(author$project$Password$PW);
+		case 'X':
+			return elm$core$Maybe$Just(author$project$Password$PX);
+		case 'Ｘ':
+			return elm$core$Maybe$Just(author$project$Password$PX);
+		case 'Y':
+			return elm$core$Maybe$Just(author$project$Password$PY);
+		case 'Ｙ':
+			return elm$core$Maybe$Just(author$project$Password$PY);
+		case 'Z':
+			return elm$core$Maybe$Just(author$project$Password$PZ);
+		case 'Ｚ':
+			return elm$core$Maybe$Just(author$project$Password$PZ);
+		case '0':
+			return elm$core$Maybe$Just(author$project$Password$P0);
+		case '０':
+			return elm$core$Maybe$Just(author$project$Password$P0);
+		case '1':
+			return elm$core$Maybe$Just(author$project$Password$P1);
+		case '１':
+			return elm$core$Maybe$Just(author$project$Password$P1);
+		case '2':
+			return elm$core$Maybe$Just(author$project$Password$P2);
+		case '２':
+			return elm$core$Maybe$Just(author$project$Password$P2);
+		case '3':
+			return elm$core$Maybe$Just(author$project$Password$P3);
+		case '３':
+			return elm$core$Maybe$Just(author$project$Password$P3);
+		case '4':
+			return elm$core$Maybe$Just(author$project$Password$P4);
+		case '４':
+			return elm$core$Maybe$Just(author$project$Password$P4);
+		case '5':
+			return elm$core$Maybe$Just(author$project$Password$P5);
+		case '５':
+			return elm$core$Maybe$Just(author$project$Password$P5);
+		case '6':
+			return elm$core$Maybe$Just(author$project$Password$P6);
+		case '６':
+			return elm$core$Maybe$Just(author$project$Password$P6);
+		case '7':
+			return elm$core$Maybe$Just(author$project$Password$P7);
+		case '７':
+			return elm$core$Maybe$Just(author$project$Password$P7);
+		case '8':
+			return elm$core$Maybe$Just(author$project$Password$P8);
+		case '８':
+			return elm$core$Maybe$Just(author$project$Password$P8);
+		case '9':
+			return elm$core$Maybe$Just(author$project$Password$P9);
+		case '９':
+			return elm$core$Maybe$Just(author$project$Password$P9);
+		default:
+			return elm$core$Maybe$Nothing;
+	}
+};
+var elm$core$Basics$apR = F2(
+	function (x, f) {
+		return f(x);
+	});
+var elm$core$Basics$identity = function (x) {
+	return x;
+};
 var elm$core$Basics$EQ = {$: 'EQ'};
 var elm$core$Basics$LT = {$: 'LT'};
 var elm$core$Elm$JsArray$foldr = _JsArray_foldr;
@@ -5124,7 +5629,6 @@ var elm$core$Array$foldr = F3(
 			A3(elm$core$Elm$JsArray$foldr, func, baseCase, tail),
 			tree);
 	});
-var elm$core$List$cons = _List_cons;
 var elm$core$Array$toList = function (array) {
 	return A3(elm$core$Array$foldr, elm$core$List$cons, _List_Nil, array);
 };
@@ -5181,15 +5685,246 @@ var elm$core$Set$toList = function (_n0) {
 	var dict = _n0.a;
 	return elm$core$Dict$keys(dict);
 };
-var elm$core$Basics$apL = F2(
-	function (f, x) {
-		return f(x);
-	});
-var elm$core$Basics$identity = function (x) {
-	return x;
+var elm$core$List$cons = _List_cons;
+var elm$core$Result$Err = function (a) {
+	return {$: 'Err', a: a};
 };
+var elm$core$Result$Ok = function (a) {
+	return {$: 'Ok', a: a};
+};
+var elm$core$Dict$Black = {$: 'Black'};
+var elm$core$Dict$RBNode_elm_builtin = F5(
+	function (a, b, c, d, e) {
+		return {$: 'RBNode_elm_builtin', a: a, b: b, c: c, d: d, e: e};
+	});
+var elm$core$Basics$compare = _Utils_compare;
+var elm$core$Dict$RBEmpty_elm_builtin = {$: 'RBEmpty_elm_builtin'};
+var elm$core$Dict$Red = {$: 'Red'};
+var elm$core$Dict$balance = F5(
+	function (color, key, value, left, right) {
+		if ((right.$ === 'RBNode_elm_builtin') && (right.a.$ === 'Red')) {
+			var _n1 = right.a;
+			var rK = right.b;
+			var rV = right.c;
+			var rLeft = right.d;
+			var rRight = right.e;
+			if ((left.$ === 'RBNode_elm_builtin') && (left.a.$ === 'Red')) {
+				var _n3 = left.a;
+				var lK = left.b;
+				var lV = left.c;
+				var lLeft = left.d;
+				var lRight = left.e;
+				return A5(
+					elm$core$Dict$RBNode_elm_builtin,
+					elm$core$Dict$Red,
+					key,
+					value,
+					A5(elm$core$Dict$RBNode_elm_builtin, elm$core$Dict$Black, lK, lV, lLeft, lRight),
+					A5(elm$core$Dict$RBNode_elm_builtin, elm$core$Dict$Black, rK, rV, rLeft, rRight));
+			} else {
+				return A5(
+					elm$core$Dict$RBNode_elm_builtin,
+					color,
+					rK,
+					rV,
+					A5(elm$core$Dict$RBNode_elm_builtin, elm$core$Dict$Red, key, value, left, rLeft),
+					rRight);
+			}
+		} else {
+			if ((((left.$ === 'RBNode_elm_builtin') && (left.a.$ === 'Red')) && (left.d.$ === 'RBNode_elm_builtin')) && (left.d.a.$ === 'Red')) {
+				var _n5 = left.a;
+				var lK = left.b;
+				var lV = left.c;
+				var _n6 = left.d;
+				var _n7 = _n6.a;
+				var llK = _n6.b;
+				var llV = _n6.c;
+				var llLeft = _n6.d;
+				var llRight = _n6.e;
+				var lRight = left.e;
+				return A5(
+					elm$core$Dict$RBNode_elm_builtin,
+					elm$core$Dict$Red,
+					lK,
+					lV,
+					A5(elm$core$Dict$RBNode_elm_builtin, elm$core$Dict$Black, llK, llV, llLeft, llRight),
+					A5(elm$core$Dict$RBNode_elm_builtin, elm$core$Dict$Black, key, value, lRight, right));
+			} else {
+				return A5(elm$core$Dict$RBNode_elm_builtin, color, key, value, left, right);
+			}
+		}
+	});
+var elm$core$Dict$insertHelp = F3(
+	function (key, value, dict) {
+		if (dict.$ === 'RBEmpty_elm_builtin') {
+			return A5(elm$core$Dict$RBNode_elm_builtin, elm$core$Dict$Red, key, value, elm$core$Dict$RBEmpty_elm_builtin, elm$core$Dict$RBEmpty_elm_builtin);
+		} else {
+			var nColor = dict.a;
+			var nKey = dict.b;
+			var nValue = dict.c;
+			var nLeft = dict.d;
+			var nRight = dict.e;
+			var _n1 = A2(elm$core$Basics$compare, key, nKey);
+			switch (_n1.$) {
+				case 'LT':
+					return A5(
+						elm$core$Dict$balance,
+						nColor,
+						nKey,
+						nValue,
+						A3(elm$core$Dict$insertHelp, key, value, nLeft),
+						nRight);
+				case 'EQ':
+					return A5(elm$core$Dict$RBNode_elm_builtin, nColor, nKey, value, nLeft, nRight);
+				default:
+					return A5(
+						elm$core$Dict$balance,
+						nColor,
+						nKey,
+						nValue,
+						nLeft,
+						A3(elm$core$Dict$insertHelp, key, value, nRight));
+			}
+		}
+	});
+var elm$core$Dict$insert = F3(
+	function (key, value, dict) {
+		var _n0 = A3(elm$core$Dict$insertHelp, key, value, dict);
+		if ((_n0.$ === 'RBNode_elm_builtin') && (_n0.a.$ === 'Red')) {
+			var _n1 = _n0.a;
+			var k = _n0.b;
+			var v = _n0.c;
+			var l = _n0.d;
+			var r = _n0.e;
+			return A5(elm$core$Dict$RBNode_elm_builtin, elm$core$Dict$Black, k, v, l, r);
+		} else {
+			var x = _n0;
+			return x;
+		}
+	});
+var elm$core$Set$Set_elm_builtin = function (a) {
+	return {$: 'Set_elm_builtin', a: a};
+};
+var elm$core$Set$insert = F2(
+	function (key, _n0) {
+		var dict = _n0.a;
+		return elm$core$Set$Set_elm_builtin(
+			A3(elm$core$Dict$insert, key, _Utils_Tuple0, dict));
+	});
+var elm$core$Dict$singleton = F2(
+	function (key, value) {
+		return A5(elm$core$Dict$RBNode_elm_builtin, elm$core$Dict$Black, key, value, elm$core$Dict$RBEmpty_elm_builtin, elm$core$Dict$RBEmpty_elm_builtin);
+	});
+var elm$core$Set$singleton = function (key) {
+	return elm$core$Set$Set_elm_builtin(
+		A2(elm$core$Dict$singleton, key, _Utils_Tuple0));
+};
+var author$project$Password$charListToPasswordCharList = function (list) {
+	if (list.b) {
+		var x = list.a;
+		var xs = list.b;
+		var _n1 = _Utils_Tuple2(
+			author$project$Password$passwordCharFromChar(x),
+			author$project$Password$charListToPasswordCharList(xs));
+		if (_n1.a.$ === 'Just') {
+			if (_n1.b.$ === 'Ok') {
+				var pChar = _n1.a.a;
+				var passwordCharList = _n1.b.a;
+				return elm$core$Result$Ok(
+					A2(elm$core$List$cons, pChar, passwordCharList));
+			} else {
+				var invalidCharSet = _n1.b.a;
+				return elm$core$Result$Err(invalidCharSet);
+			}
+		} else {
+			if (_n1.b.$ === 'Ok') {
+				var _n2 = _n1.a;
+				return elm$core$Result$Err(
+					author$project$Password$InvalidCharError(
+						elm$core$Set$singleton(x)));
+			} else {
+				var _n3 = _n1.a;
+				var invalidCharSet = _n1.b.a.a;
+				return elm$core$Result$Err(
+					author$project$Password$InvalidCharError(
+						A2(elm$core$Set$insert, x, invalidCharSet)));
+			}
+		}
+	} else {
+		return elm$core$Result$Ok(_List_Nil);
+	}
+};
+var author$project$Password$Long = {$: 'Long'};
+var author$project$Password$Short = {$: 'Short'};
+var elm$core$Basics$lt = _Utils_lt;
+var author$project$Password$lengthErrorFromLength = function (length) {
+	return (length < 9) ? elm$core$Maybe$Just(author$project$Password$Short) : ((50 < length) ? elm$core$Maybe$Just(author$project$Password$Long) : elm$core$Maybe$Nothing);
+};
+var elm$core$Basics$False = {$: 'False'};
+var elm$core$Basics$True = {$: 'True'};
+var author$project$Password$passwordCharIsNumber = function (passwordChar) {
+	switch (passwordChar.$) {
+		case 'P0':
+			return true;
+		case 'P1':
+			return true;
+		case 'P2':
+			return true;
+		case 'P3':
+			return true;
+		case 'P4':
+			return true;
+		case 'P5':
+			return true;
+		case 'P6':
+			return true;
+		case 'P7':
+			return true;
+		case 'P8':
+			return true;
+		case 'P9':
+			return true;
+		default:
+			return false;
+	}
+};
+var elm$core$Basics$and = _Basics_and;
+var elm$core$Basics$neq = _Utils_notEqual;
+var elm$core$Basics$composeL = F3(
+	function (g, f, x) {
+		return g(
+			f(x));
+	});
+var elm$core$Basics$not = _Basics_not;
+var elm$core$List$any = F2(
+	function (isOkay, list) {
+		any:
+		while (true) {
+			if (!list.b) {
+				return false;
+			} else {
+				var x = list.a;
+				var xs = list.b;
+				if (isOkay(x)) {
+					return true;
+				} else {
+					var $temp$isOkay = isOkay,
+						$temp$list = xs;
+					isOkay = $temp$isOkay;
+					list = $temp$list;
+					continue any;
+				}
+			}
+		}
+	});
+var elm$core$List$all = F2(
+	function (isOkay, list) {
+		return !A2(
+			elm$core$List$any,
+			A2(elm$core$Basics$composeL, elm$core$Basics$not, isOkay),
+			list);
+	});
 var elm$core$Basics$add = _Basics_add;
-var elm$core$Basics$gt = _Utils_gt;
 var elm$core$List$foldl = F3(
 	function (func, acc, list) {
 		foldl:
@@ -5209,6 +5944,68 @@ var elm$core$List$foldl = F3(
 			}
 		}
 	});
+var elm$core$List$length = function (xs) {
+	return A3(
+		elm$core$List$foldl,
+		F2(
+			function (_n0, i) {
+				return i + 1;
+			}),
+		0,
+		xs);
+};
+var elm$core$String$foldr = _String_foldr;
+var elm$core$String$toList = function (string) {
+	return A3(elm$core$String$foldr, elm$core$List$cons, _List_Nil, string);
+};
+var elm$core$String$trim = _String_trim;
+var author$project$Password$passwordFromString = function (string) {
+	var charList = elm$core$String$toList(
+		elm$core$String$trim(string));
+	var result = author$project$Password$charListToPasswordCharList(charList);
+	if (result.$ === 'Ok') {
+		var passwordCharList = result.a;
+		if ((!_Utils_eq(passwordCharList, _List_Nil)) && A2(elm$core$List$all, author$project$Password$passwordCharIsNumber, passwordCharList)) {
+			var _n1 = author$project$Password$lengthErrorFromLength(
+				elm$core$List$length(passwordCharList));
+			if (_n1.$ === 'Just') {
+				var lengthError = _n1.a;
+				return elm$core$Result$Err(
+					author$project$Password$EAllNumberAndLengthError(lengthError));
+			} else {
+				return elm$core$Result$Err(author$project$Password$EAllNumberError);
+			}
+		} else {
+			var _n2 = author$project$Password$lengthErrorFromLength(
+				elm$core$List$length(passwordCharList));
+			if (_n2.$ === 'Just') {
+				var lengthError = _n2.a;
+				return elm$core$Result$Err(
+					author$project$Password$ELengthError(lengthError));
+			} else {
+				return elm$core$Result$Ok(
+					author$project$Password$Password(passwordCharList));
+			}
+		}
+	} else {
+		var invalidCharError = result.a;
+		var _n3 = author$project$Password$lengthErrorFromLength(
+			elm$core$List$length(charList));
+		if (_n3.$ === 'Just') {
+			var lengthError = _n3.a;
+			return elm$core$Result$Err(
+				A2(author$project$Password$EInvalidAndLengthError, invalidCharError, lengthError));
+		} else {
+			return elm$core$Result$Err(
+				author$project$Password$EInvalidCharError(invalidCharError));
+		}
+	}
+};
+var elm$core$Basics$apL = F2(
+	function (f, x) {
+		return f(x);
+	});
+var elm$core$Basics$gt = _Utils_gt;
 var elm$core$List$reverse = function (list) {
 	return A3(elm$core$List$foldl, elm$core$List$cons, _List_Nil, list);
 };
@@ -5400,7 +6197,10 @@ var author$project$Main$urlParser = function (beforePageMaybe) {
 				elm$url$Url$Parser$map,
 				author$project$Main$PageSignUp(
 					author$project$Main$UserSignUpPageStudentHasSAddress(
-						{password: '', studentIdOrTsukubaEmailAddress: ''})),
+						{
+							password: author$project$Password$passwordFromString(''),
+							studentIdOrTsukubaEmailAddress: ''
+						})),
 				elm$url$Url$Parser$s('user-signup')),
 				A2(
 				elm$url$Url$Parser$map,
@@ -5427,11 +6227,6 @@ var author$project$Main$urlParser = function (beforePageMaybe) {
 				elm$url$Url$Parser$s('exhibition'))
 			]));
 };
-var elm$core$Basics$False = {$: 'False'};
-var elm$core$Basics$apR = F2(
-	function (x, f) {
-		return f(x);
-	});
 var elm$core$Maybe$withDefault = F2(
 	function (_default, maybe) {
 		if (maybe.$ === 'Just') {
@@ -5441,9 +6236,6 @@ var elm$core$Maybe$withDefault = F2(
 			return _default;
 		}
 	});
-var elm$core$Maybe$Just = function (a) {
-	return {$: 'Just', a: a};
-};
 var elm$url$Url$Parser$getFirstMatch = function (states) {
 	getFirstMatch:
 	while (true) {
@@ -5498,9 +6290,7 @@ var elm$url$Url$Parser$preparePath = function (path) {
 		return elm$url$Url$Parser$removeFinalEmpty(segments);
 	}
 };
-var elm$core$Dict$RBEmpty_elm_builtin = {$: 'RBEmpty_elm_builtin'};
 var elm$core$Dict$empty = elm$core$Dict$RBEmpty_elm_builtin;
-var elm$core$Basics$compare = _Utils_compare;
 var elm$core$Dict$get = F2(
 	function (targetKey, dict) {
 		get:
@@ -5532,115 +6322,6 @@ var elm$core$Dict$get = F2(
 			}
 		}
 	});
-var elm$core$Dict$Black = {$: 'Black'};
-var elm$core$Dict$RBNode_elm_builtin = F5(
-	function (a, b, c, d, e) {
-		return {$: 'RBNode_elm_builtin', a: a, b: b, c: c, d: d, e: e};
-	});
-var elm$core$Dict$Red = {$: 'Red'};
-var elm$core$Dict$balance = F5(
-	function (color, key, value, left, right) {
-		if ((right.$ === 'RBNode_elm_builtin') && (right.a.$ === 'Red')) {
-			var _n1 = right.a;
-			var rK = right.b;
-			var rV = right.c;
-			var rLeft = right.d;
-			var rRight = right.e;
-			if ((left.$ === 'RBNode_elm_builtin') && (left.a.$ === 'Red')) {
-				var _n3 = left.a;
-				var lK = left.b;
-				var lV = left.c;
-				var lLeft = left.d;
-				var lRight = left.e;
-				return A5(
-					elm$core$Dict$RBNode_elm_builtin,
-					elm$core$Dict$Red,
-					key,
-					value,
-					A5(elm$core$Dict$RBNode_elm_builtin, elm$core$Dict$Black, lK, lV, lLeft, lRight),
-					A5(elm$core$Dict$RBNode_elm_builtin, elm$core$Dict$Black, rK, rV, rLeft, rRight));
-			} else {
-				return A5(
-					elm$core$Dict$RBNode_elm_builtin,
-					color,
-					rK,
-					rV,
-					A5(elm$core$Dict$RBNode_elm_builtin, elm$core$Dict$Red, key, value, left, rLeft),
-					rRight);
-			}
-		} else {
-			if ((((left.$ === 'RBNode_elm_builtin') && (left.a.$ === 'Red')) && (left.d.$ === 'RBNode_elm_builtin')) && (left.d.a.$ === 'Red')) {
-				var _n5 = left.a;
-				var lK = left.b;
-				var lV = left.c;
-				var _n6 = left.d;
-				var _n7 = _n6.a;
-				var llK = _n6.b;
-				var llV = _n6.c;
-				var llLeft = _n6.d;
-				var llRight = _n6.e;
-				var lRight = left.e;
-				return A5(
-					elm$core$Dict$RBNode_elm_builtin,
-					elm$core$Dict$Red,
-					lK,
-					lV,
-					A5(elm$core$Dict$RBNode_elm_builtin, elm$core$Dict$Black, llK, llV, llLeft, llRight),
-					A5(elm$core$Dict$RBNode_elm_builtin, elm$core$Dict$Black, key, value, lRight, right));
-			} else {
-				return A5(elm$core$Dict$RBNode_elm_builtin, color, key, value, left, right);
-			}
-		}
-	});
-var elm$core$Dict$insertHelp = F3(
-	function (key, value, dict) {
-		if (dict.$ === 'RBEmpty_elm_builtin') {
-			return A5(elm$core$Dict$RBNode_elm_builtin, elm$core$Dict$Red, key, value, elm$core$Dict$RBEmpty_elm_builtin, elm$core$Dict$RBEmpty_elm_builtin);
-		} else {
-			var nColor = dict.a;
-			var nKey = dict.b;
-			var nValue = dict.c;
-			var nLeft = dict.d;
-			var nRight = dict.e;
-			var _n1 = A2(elm$core$Basics$compare, key, nKey);
-			switch (_n1.$) {
-				case 'LT':
-					return A5(
-						elm$core$Dict$balance,
-						nColor,
-						nKey,
-						nValue,
-						A3(elm$core$Dict$insertHelp, key, value, nLeft),
-						nRight);
-				case 'EQ':
-					return A5(elm$core$Dict$RBNode_elm_builtin, nColor, nKey, value, nLeft, nRight);
-				default:
-					return A5(
-						elm$core$Dict$balance,
-						nColor,
-						nKey,
-						nValue,
-						nLeft,
-						A3(elm$core$Dict$insertHelp, key, value, nRight));
-			}
-		}
-	});
-var elm$core$Dict$insert = F3(
-	function (key, value, dict) {
-		var _n0 = A3(elm$core$Dict$insertHelp, key, value, dict);
-		if ((_n0.$ === 'RBNode_elm_builtin') && (_n0.a.$ === 'Red')) {
-			var _n1 = _n0.a;
-			var k = _n0.b;
-			var v = _n0.c;
-			var l = _n0.d;
-			var r = _n0.e;
-			return A5(elm$core$Dict$RBNode_elm_builtin, elm$core$Dict$Black, k, v, l, r);
-		} else {
-			var x = _n0;
-			return x;
-		}
-	});
-var elm$core$Basics$lt = _Utils_lt;
 var elm$core$Dict$getMin = function (dict) {
 	getMin:
 	while (true) {
@@ -6236,12 +6917,6 @@ var elm$core$Array$initialize = F2(
 			return A5(elm$core$Array$initializeHelp, fn, initialFromIndex, len, _List_Nil, tail);
 		}
 	});
-var elm$core$Result$Err = function (a) {
-	return {$: 'Err', a: a};
-};
-var elm$core$Result$Ok = function (a) {
-	return {$: 'Ok', a: a};
-};
 var elm$json$Json$Decode$Failure = F2(
 	function (a, b) {
 		return {$: 'Failure', a: a, b: b};
@@ -6257,7 +6932,6 @@ var elm$json$Json$Decode$Index = F2(
 var elm$json$Json$Decode$OneOf = function (a) {
 	return {$: 'OneOf', a: a};
 };
-var elm$core$Basics$and = _Basics_and;
 var elm$core$Basics$append = _Utils_append;
 var elm$core$Basics$or = _Basics_or;
 var elm$core$Char$toCode = _Char_toCode;
@@ -6278,16 +6952,6 @@ var elm$core$Char$isDigit = function (_char) {
 };
 var elm$core$Char$isAlphaNum = function (_char) {
 	return elm$core$Char$isLower(_char) || (elm$core$Char$isUpper(_char) || elm$core$Char$isDigit(_char));
-};
-var elm$core$List$length = function (xs) {
-	return A3(
-		elm$core$List$foldl,
-		F2(
-			function (_n0, i) {
-				return i + 1;
-			}),
-		0,
-		xs);
 };
 var elm$core$List$map2 = _List_map2;
 var elm$core$List$rangeHelp = F3(
@@ -6455,8 +7119,8 @@ var author$project$Main$init = F3(
 				}),
 			elm$core$Platform$Cmd$none);
 	});
-var author$project$Main$ReciveImageDataUrl = function (a) {
-	return {$: 'ReciveImageDataUrl', a: a};
+var author$project$Main$ReceiveImageDataUrl = function (a) {
+	return {$: 'ReceiveImageDataUrl', a: a};
 };
 var author$project$Main$ToNarrowScreenMode = {$: 'ToNarrowScreenMode'};
 var author$project$Main$ToWideScreenMode = {$: 'ToWideScreenMode'};
@@ -6475,7 +7139,7 @@ var author$project$Main$subscription = function (_n0) {
 	return elm$core$Platform$Sub$batch(
 		_List_fromArray(
 			[
-				author$project$Main$receiveImageDataUrl(author$project$Main$ReciveImageDataUrl),
+				author$project$Main$receiveImageDataUrl(author$project$Main$ReceiveImageDataUrl),
 				function () {
 				if (menuState.$ === 'Just') {
 					return author$project$Main$toWideScreenMode(
@@ -7627,11 +8291,6 @@ var elm$browser$Debugger$Expando$viewTinyRecordHelp = F3(
 									otherHtmls)))));
 			}
 		}
-	});
-var elm$core$Basics$composeL = F3(
-	function (g, f, x) {
-		return g(
-			f(x));
 	});
 var elm$core$Tuple$second = function (_n0) {
 	var y = _n0.b;
@@ -8902,7 +9561,6 @@ var elm$browser$Debugger$Expando$updateIndex = F3(
 				A3(elm$browser$Debugger$Expando$updateIndex, n - 1, func, xs));
 		}
 	});
-var elm$core$Basics$not = _Basics_not;
 var elm$browser$Debugger$Expando$update = F2(
 	function (msg, value) {
 		switch (value.$) {
@@ -9715,7 +10373,6 @@ var elm$browser$Debugger$Report$MessageChanged = F2(
 var elm$browser$Debugger$Report$SomethingChanged = function (a) {
 	return {$: 'SomethingChanged', a: a};
 };
-var elm$core$Basics$neq = _Utils_notEqual;
 var elm$browser$Debugger$Metadata$checkTypes = F2(
 	function (old, _new) {
 		return (!_Utils_eq(old.message, _new.message)) ? A2(elm$browser$Debugger$Report$MessageChanged, old.message, _new.message) : elm$browser$Debugger$Report$SomethingChanged(
@@ -10713,7 +11370,7 @@ var author$project$Main$update = F2(
 				return _Utils_Tuple2(
 					author$project$Main$Model(rec),
 					author$project$Main$studentImageChange(idString));
-			default:
+			case 'ReceiveImageDataUrl':
 				var urlString = msg.a;
 				return _Utils_Tuple2(
 					function () {
@@ -10732,6 +11389,46 @@ var author$project$Main$update = F2(
 														imageUrl: elm$core$Maybe$Just(urlString)
 													})))
 									}));
+						} else {
+							return author$project$Main$Model(rec);
+						}
+					}(),
+					elm$core$Platform$Cmd$none);
+			default:
+				var string = msg.a;
+				return _Utils_Tuple2(
+					function () {
+						var _n11 = rec.page;
+						if (_n11.$ === 'PageSignUp') {
+							if (_n11.a.$ === 'UserSignUpPageNewStudent') {
+								var r = _n11.a.a;
+								return author$project$Main$Model(
+									_Utils_update(
+										rec,
+										{
+											page: author$project$Main$PageSignUp(
+												author$project$Main$UserSignUpPageNewStudent(
+													_Utils_update(
+														r,
+														{
+															password: author$project$Password$passwordFromString(string)
+														})))
+										}));
+							} else {
+								var r = _n11.a.a;
+								return author$project$Main$Model(
+									_Utils_update(
+										rec,
+										{
+											page: author$project$Main$PageSignUp(
+												author$project$Main$UserSignUpPageStudentHasSAddress(
+													_Utils_update(
+														r,
+														{
+															password: author$project$Password$passwordFromString(string)
+														})))
+										}));
+							}
 						} else {
 							return author$project$Main$Model(rec);
 						}
@@ -11880,7 +12577,97 @@ var author$project$Main$newStudentFormList = function (imageUrlMaybe) {
 				]))
 		]);
 };
-var author$project$Main$passwordForm = function (password) {
+var author$project$Main$InputPassword = function (a) {
+	return {$: 'InputPassword', a: a};
+};
+var author$project$Password$allNumberErrorMessage = '数字のみは不可';
+var elm$core$String$fromList = _String_fromList;
+var author$project$Password$invalidCharErrorMessage = function (_n0) {
+	var charSet = _n0.a;
+	return '使えない文字' + (elm$core$String$fromList(
+		elm$core$Set$toList(charSet)) + 'が含まれています。使える文字は英数字と記号(!\"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~)です。');
+};
+var author$project$Password$lengthErrorMessage = function (lengthError) {
+	return function () {
+		if (lengthError.$ === 'Short') {
+			return '文字数が足りません。';
+		} else {
+			return '文字数が多いです。';
+		}
+	}() + '文字数は9文字以上50文字以内である必要があります。';
+};
+var elm$core$String$concat = function (strings) {
+	return A2(elm$core$String$join, '', strings);
+};
+var author$project$Password$errorMessage = function (error) {
+	return elm$core$String$concat(
+		function () {
+			switch (error.$) {
+				case 'EAllNumberError':
+					return _List_fromArray(
+						[author$project$Password$allNumberErrorMessage]);
+				case 'EInvalidCharError':
+					var invalidCharError = error.a;
+					return _List_fromArray(
+						[
+							author$project$Password$invalidCharErrorMessage(invalidCharError)
+						]);
+				case 'ELengthError':
+					var lengthError = error.a;
+					return _List_fromArray(
+						[
+							author$project$Password$lengthErrorMessage(lengthError)
+						]);
+				case 'EInvalidAndLengthError':
+					var invalidCharError = error.a;
+					var lengthError = error.b;
+					return _List_fromArray(
+						[
+							author$project$Password$invalidCharErrorMessage(invalidCharError),
+							author$project$Password$lengthErrorMessage(lengthError)
+						]);
+				default:
+					var lengthError = error.a;
+					return _List_fromArray(
+						[
+							author$project$Password$lengthErrorMessage(lengthError),
+							author$project$Password$allNumberErrorMessage
+						]);
+			}
+		}());
+};
+var elm$html$Html$Events$alwaysStop = function (x) {
+	return _Utils_Tuple2(x, true);
+};
+var elm$virtual_dom$VirtualDom$MayStopPropagation = function (a) {
+	return {$: 'MayStopPropagation', a: a};
+};
+var elm$html$Html$Events$stopPropagationOn = F2(
+	function (event, decoder) {
+		return A2(
+			elm$virtual_dom$VirtualDom$on,
+			event,
+			elm$virtual_dom$VirtualDom$MayStopPropagation(decoder));
+	});
+var elm$json$Json$Decode$at = F2(
+	function (fields, decoder) {
+		return A3(elm$core$List$foldr, elm$json$Json$Decode$field, decoder, fields);
+	});
+var elm$html$Html$Events$targetValue = A2(
+	elm$json$Json$Decode$at,
+	_List_fromArray(
+		['target', 'value']),
+	elm$json$Json$Decode$string);
+var elm$html$Html$Events$onInput = function (tagger) {
+	return A2(
+		elm$html$Html$Events$stopPropagationOn,
+		'input',
+		A2(
+			elm$json$Json$Decode$map,
+			elm$html$Html$Events$alwaysStop,
+			A2(elm$json$Json$Decode$map, tagger, elm$html$Html$Events$targetValue)));
+};
+var author$project$Main$passwordForm = function (passwordResult) {
 	return A2(
 		elm$html$Html$div,
 		_List_Nil,
@@ -11906,7 +12693,8 @@ var author$project$Main$passwordForm = function (password) {
 						elm$html$Html$Attributes$type_('password'),
 						elm$html$Html$Attributes$minlength(9),
 						elm$html$Html$Attributes$maxlength(50),
-						A2(elm$html$Html$Attributes$attribute, 'autocomplete', 'new-password')
+						A2(elm$html$Html$Attributes$attribute, 'autocomplete', 'new-password'),
+						elm$html$Html$Events$onInput(author$project$Main$InputPassword)
 					]),
 				_List_Nil),
 				A2(
@@ -11917,7 +12705,15 @@ var author$project$Main$passwordForm = function (password) {
 					]),
 				_List_fromArray(
 					[
-						elm$html$Html$text('9文字以上…')
+						elm$html$Html$text(
+						function () {
+							if (passwordResult.$ === 'Ok') {
+								return '';
+							} else {
+								var error = passwordResult.a;
+								return author$project$Password$errorMessage(error);
+							}
+						}())
 					]))
 			]));
 };
@@ -11956,7 +12752,10 @@ var author$project$Main$sAddressSelectView = function (userSignUpPage) {
 							author$project$Main$ChangePage(
 								author$project$Main$PageSignUp(
 									author$project$Main$UserSignUpPageStudentHasSAddress(
-										{password: '', studentIdOrTsukubaEmailAddress: ''}))))
+										{
+											password: author$project$Password$passwordFromString(''),
+											studentIdOrTsukubaEmailAddress: ''
+										}))))
 						])),
 				_List_fromArray(
 					[
@@ -11981,7 +12780,11 @@ var author$project$Main$sAddressSelectView = function (userSignUpPage) {
 							author$project$Main$ChangePage(
 								author$project$Main$PageSignUp(
 									author$project$Main$UserSignUpPageNewStudent(
-										{emailAddress: '', imageUrl: elm$core$Maybe$Nothing, password: ''}))))
+										{
+											emailAddress: '',
+											imageUrl: elm$core$Maybe$Nothing,
+											password: author$project$Password$passwordFromString('')
+										}))))
 						]) : _List_Nil),
 				_List_fromArray(
 					[
@@ -12285,43 +13088,10 @@ var author$project$Main$SAddress = F2(
 	function (a, b) {
 		return {$: 'SAddress', a: a, b: b};
 	});
-var elm$core$List$any = F2(
-	function (isOkay, list) {
-		any:
-		while (true) {
-			if (!list.b) {
-				return false;
-			} else {
-				var x = list.a;
-				var xs = list.b;
-				if (isOkay(x)) {
-					return true;
-				} else {
-					var $temp$isOkay = isOkay,
-						$temp$list = xs;
-					isOkay = $temp$isOkay;
-					list = $temp$list;
-					continue any;
-				}
-			}
-		}
-	});
-var elm$core$List$all = F2(
-	function (isOkay, list) {
-		return !A2(
-			elm$core$List$any,
-			A2(elm$core$Basics$composeL, elm$core$Basics$not, isOkay),
-			list);
-	});
 var elm$core$String$dropRight = F2(
 	function (n, string) {
 		return (n < 1) ? string : A3(elm$core$String$slice, 0, -n, string);
 	});
-var elm$core$String$fromList = _String_fromList;
-var elm$core$String$foldr = _String_foldr;
-var elm$core$String$toList = function (string) {
-	return A3(elm$core$String$foldr, elm$core$List$cons, _List_Nil, string);
-};
 var elm$core$String$toLower = _String_toLower;
 var author$project$Main$charListToTsukubaEmailAddress = function (charList) {
 	if ((((((((charList.b && charList.b.b) && charList.b.b.b) && charList.b.b.b.b) && charList.b.b.b.b.b) && charList.b.b.b.b.b.b) && charList.b.b.b.b.b.b.b) && charList.b.b.b.b.b.b.b.b) && charList.b.b.b.b.b.b.b.b.b) {
@@ -12387,7 +13157,6 @@ var author$project$Main$charListToTsukubaEmailAddress = function (charList) {
 		return elm$core$Maybe$Nothing;
 	}
 };
-var elm$core$String$trim = _String_trim;
 var author$project$Main$analysisStudentIdOrEmailAddress = function (string) {
 	var charList = elm$core$String$toList(
 		elm$core$String$trim(string));
@@ -12649,37 +13418,6 @@ var author$project$Main$sAddressToEmailAddressString = function (_n0) {
 	var studentId = _n0.a;
 	var subDomain = _n0.b;
 	return 's' + (author$project$Main$studentIdToString(studentId) + ('@' + (subDomain + '.tsukuba.ac.jp')));
-};
-var elm$html$Html$Events$alwaysStop = function (x) {
-	return _Utils_Tuple2(x, true);
-};
-var elm$virtual_dom$VirtualDom$MayStopPropagation = function (a) {
-	return {$: 'MayStopPropagation', a: a};
-};
-var elm$html$Html$Events$stopPropagationOn = F2(
-	function (event, decoder) {
-		return A2(
-			elm$virtual_dom$VirtualDom$on,
-			event,
-			elm$virtual_dom$VirtualDom$MayStopPropagation(decoder));
-	});
-var elm$json$Json$Decode$at = F2(
-	function (fields, decoder) {
-		return A3(elm$core$List$foldr, elm$json$Json$Decode$field, decoder, fields);
-	});
-var elm$html$Html$Events$targetValue = A2(
-	elm$json$Json$Decode$at,
-	_List_fromArray(
-		['target', 'value']),
-	elm$json$Json$Decode$string);
-var elm$html$Html$Events$onInput = function (tagger) {
-	return A2(
-		elm$html$Html$Events$stopPropagationOn,
-		'input',
-		A2(
-			elm$json$Json$Decode$map,
-			elm$html$Html$Events$alwaysStop,
-			A2(elm$json$Json$Decode$map, tagger, elm$html$Html$Events$targetValue)));
 };
 var author$project$Main$studentHasSAddressFormList = function (string) {
 	return _List_fromArray(
@@ -13046,4 +13784,4 @@ var elm$browser$Browser$application = _Browser_application;
 var author$project$Main$main = elm$browser$Browser$application(
 	{init: author$project$Main$init, onUrlChange: author$project$Main$UrlChange, onUrlRequest: author$project$Main$UrlRequest, subscriptions: author$project$Main$subscription, update: author$project$Main$update, view: author$project$Main$view});
 _Platform_export({'Main':{'init':author$project$Main$main(
-	elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.0"},"types":{"message":"Main.Msg","aliases":{"Url.Url":{"args":[],"type":"{ protocol : Url.Protocol, host : String.String, port_ : Maybe.Maybe Basics.Int, path : String.String, query : Maybe.Maybe String.String, fragment : Maybe.Maybe String.String }"},"Main.ExhibitionState":{"args":[],"type":"{ title : String.String, description : String.String, price : Maybe.Maybe Basics.Int }"}},"unions":{"Main.Msg":{"args":[],"tags":{"ChangePage":["Main.Page"],"OpenMenu":[],"CloseMenu":[],"ToWideScreenMode":[],"ToNarrowScreenMode":[],"UrlChange":["Url.Url"],"UrlRequest":["Browser.UrlRequest"],"Request":[],"Response":["String.String"],"SignUp":[],"SignUpResponse":["Result.Result Http.Error Main.SignUpResponseResult"],"InputStudentIdOrEmailAddress":["String.String"],"InputStudentImage":["String.String"],"ReciveImageDataUrl":["String.String"]}},"Main.Page":{"args":[],"tags":{"PageHome":["Main.Home"],"PageSignUp":["Main.UserSignUpPage"],"PageLogIn":["Main.LogInPage"],"PageLikeAndHistory":["Main.LikeAndHistory"],"PageExhibitionItemList":[],"PagePurchaseItemList":[],"PageExhibition":["Main.ExhibitionState"],"PageSendSignUpEmail":[]}},"Main.SignUpResponseResult":{"args":[],"tags":{"SignUpResponseResultOk":[],"SignUpResponseResultAleadySignUp":[],"SignUpResponseResultError":[]}},"Browser.UrlRequest":{"args":[],"tags":{"Internal":["Url.Url"],"External":["String.String"]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"Result.Result":{"args":["error","value"],"tags":{"Ok":["value"],"Err":["error"]}},"String.String":{"args":[],"tags":{"String":[]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String.String"],"Timeout":[],"NetworkError":[],"BadStatus":["Basics.Int"],"BadBody":["String.String"]}},"Url.Protocol":{"args":[],"tags":{"Http":[],"Https":[]}},"Main.Home":{"args":[],"tags":{"Recent":[],"Recommend":["{ valid : Basics.Bool }"],"Free":[]}},"Main.LikeAndHistory":{"args":[],"tags":{"Like":[],"History":[]}},"Main.LogInPage":{"args":[],"tags":{"LogInPage":["{ nextPage : Maybe.Maybe Main.Page, studentIdOrEmailAddress : String.String, password : String.String }"],"ForgotPassword":[]}},"Main.UserSignUpPage":{"args":[],"tags":{"UserSignUpPageStudentHasSAddress":["{ studentIdOrTsukubaEmailAddress : String.String, password : String.String }"],"UserSignUpPageNewStudent":["{ emailAddress : String.String, imageUrl : Maybe.Maybe String.String, password : String.String }"]}},"Basics.Bool":{"args":[],"tags":{"True":[],"False":[]}}}}})}});}(this));
+	elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.0"},"types":{"message":"Main.Msg","aliases":{"Url.Url":{"args":[],"type":"{ protocol : Url.Protocol, host : String.String, port_ : Maybe.Maybe Basics.Int, path : String.String, query : Maybe.Maybe String.String, fragment : Maybe.Maybe String.String }"},"Main.ExhibitionState":{"args":[],"type":"{ title : String.String, description : String.String, price : Maybe.Maybe Basics.Int }"}},"unions":{"Main.Msg":{"args":[],"tags":{"ChangePage":["Main.Page"],"OpenMenu":[],"CloseMenu":[],"ToWideScreenMode":[],"ToNarrowScreenMode":[],"UrlChange":["Url.Url"],"UrlRequest":["Browser.UrlRequest"],"Request":[],"Response":["String.String"],"SignUp":[],"SignUpResponse":["Result.Result Http.Error Main.SignUpResponseResult"],"InputStudentIdOrEmailAddress":["String.String"],"InputStudentImage":["String.String"],"ReceiveImageDataUrl":["String.String"],"InputPassword":["String.String"]}},"Main.Page":{"args":[],"tags":{"PageHome":["Main.Home"],"PageSignUp":["Main.UserSignUpPage"],"PageLogIn":["Main.LogInPage"],"PageLikeAndHistory":["Main.LikeAndHistory"],"PageExhibitionItemList":[],"PagePurchaseItemList":[],"PageExhibition":["Main.ExhibitionState"],"PageSendSignUpEmail":[]}},"Main.SignUpResponseResult":{"args":[],"tags":{"SignUpResponseResultOk":[],"SignUpResponseResultAleadySignUp":[],"SignUpResponseResultError":[]}},"Browser.UrlRequest":{"args":[],"tags":{"Internal":["Url.Url"],"External":["String.String"]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"Result.Result":{"args":["error","value"],"tags":{"Ok":["value"],"Err":["error"]}},"String.String":{"args":[],"tags":{"String":[]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String.String"],"Timeout":[],"NetworkError":[],"BadStatus":["Basics.Int"],"BadBody":["String.String"]}},"Url.Protocol":{"args":[],"tags":{"Http":[],"Https":[]}},"Main.Home":{"args":[],"tags":{"Recent":[],"Recommend":["{ valid : Basics.Bool }"],"Free":[]}},"Main.LikeAndHistory":{"args":[],"tags":{"Like":[],"History":[]}},"Main.LogInPage":{"args":[],"tags":{"LogInPage":["{ nextPage : Maybe.Maybe Main.Page, studentIdOrEmailAddress : String.String, password : String.String }"],"ForgotPassword":[]}},"Main.UserSignUpPage":{"args":[],"tags":{"UserSignUpPageStudentHasSAddress":["{ studentIdOrTsukubaEmailAddress : String.String, password : Result.Result Password.Error Password.Password }"],"UserSignUpPageNewStudent":["{ emailAddress : String.String, imageUrl : Maybe.Maybe String.String, password : Result.Result Password.Error Password.Password }"]}},"Password.Error":{"args":[],"tags":{"EAllNumberError":[],"EInvalidCharError":["Password.InvalidCharError"],"ELengthError":["Password.LengthError"],"EInvalidAndLengthError":["Password.InvalidCharError","Password.LengthError"],"EAllNumberAndLengthError":["Password.LengthError"]}},"Password.Password":{"args":[],"tags":{"Password":["List.List Password.PasswordChar"]}},"Basics.Bool":{"args":[],"tags":{"True":[],"False":[]}},"Password.InvalidCharError":{"args":[],"tags":{"InvalidCharError":["Set.Set Char.Char"]}},"Password.LengthError":{"args":[],"tags":{"Short":[],"Long":[]}},"Password.PasswordChar":{"args":[],"tags":{"Pa":[],"Pb":[],"Pc":[],"Pd":[],"Pe":[],"Pf":[],"Pg":[],"Ph":[],"Pi":[],"Pj":[],"Pk":[],"Pl":[],"Pm":[],"Pn":[],"Po":[],"Pp":[],"Pq":[],"Pr":[],"Ps":[],"Pt":[],"Pu":[],"Pv":[],"Pw":[],"Px":[],"Py":[],"Pz":[],"PA":[],"PB":[],"PC":[],"PD":[],"PE":[],"PF":[],"PG":[],"PH":[],"PI":[],"PJ":[],"PK":[],"PL":[],"PM":[],"PN":[],"PO":[],"PP":[],"PQ":[],"PR":[],"PS":[],"PT":[],"PU":[],"PV":[],"PW":[],"PX":[],"PY":[],"PZ":[],"P0":[],"P1":[],"P2":[],"P3":[],"P4":[],"P5":[],"P6":[],"P7":[],"P8":[],"P9":[],"ExclamationMark":[],"QuotationMark":[],"NumberSign":[],"DollarSign":[],"PercentSign":[],"Ampersand":[],"Apostrophe":[],"LeftParenthesis":[],"RightParenthesis":[],"Asterisk":[],"PlusSign":[],"Comma":[],"HyphenMinus":[],"FullStop":[],"Solidus":[],"Colon":[],"Semicolon":[],"LessThanSign":[],"EqualsSign":[],"GreaterThanSign":[],"QuestionMark":[],"CommercialAt":[],"LeftSquareBracket":[],"ReverseSolidus":[],"RightSquareBracket":[],"CircumflexAccent":[],"LowLine":[],"GraveAccent":[],"LeftCurlyBracket":[],"VerticalLine":[],"RightCurlyBracket":[],"Tilde":[]}},"List.List":{"args":["a"],"tags":{}},"Char.Char":{"args":[],"tags":{"Char":[]}},"Set.Set":{"args":["t"],"tags":{"Set_elm_builtin":["Dict.Dict t ()"]}},"Dict.Dict":{"args":["k","v"],"tags":{"RBNode_elm_builtin":["Dict.NColor","k","v","Dict.Dict k v","Dict.Dict k v"],"RBEmpty_elm_builtin":[]}},"Dict.NColor":{"args":[],"tags":{"Red":[],"Black":[]}}}}})}});}(this));
