@@ -1065,7 +1065,7 @@ exhibitionViewPhoto =
         [ Html.Attributes.class "exhibitionView-photo"
         , Html.Attributes.type_ "file"
         , Html.Attributes.multiple True
-        , Html.Attributes.accept "image/*"
+        , Html.Attributes.accept "image/png,image/jpeg"
         ]
         [ Html.img
             [ Html.Attributes.src "assets/add_a_photo.svg"
