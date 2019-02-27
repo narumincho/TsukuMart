@@ -62,7 +62,7 @@ type Page
 
 type UserSignUpPage
     = UserSignUpPageStudentHasSAddress
-        { studentIdOrTsukubaEmailAddress : AnalysisStudentIdOrEmailAddressResult
+        { studentIdOrTsukubaEmailAddress : AnalysisStudentIdOrSAddressResult
         , password : Result Password.Error Password.Password
         }
     | UserSignUpPageNewStudent
@@ -75,8 +75,8 @@ type UserSignUpPage
 type LogInPage
     = LogInPage
         { nextPage : Maybe Page
-        , studentIdOrEmailAddress : String
-        , password : String
+        , studentIdOrEmailAddress : AnalysisStudentIdOrEmailAddressResult
+        , password : Maybe Password.Password
         }
     | ForgotPassword
 
@@ -255,7 +255,7 @@ update msg (Model rec) =
                                 PageSignUp
                                     (UserSignUpPageStudentHasSAddress
                                         { r
-                                            | studentIdOrTsukubaEmailAddress = analysisStudentIdOrEmailAddress string
+                                            | studentIdOrTsukubaEmailAddress = analysisStudentIdOrSAddress string
                                         }
                                     )
                         }
@@ -267,13 +267,17 @@ update msg (Model rec) =
                                 PageSignUp
                                     (UserSignUpPageNewStudent
                                         { r
-                                            | emailAddress =
-                                                string
-                                                    |> String.trim
-                                                    |> String.toList
-                                                    |> EmailAddress.fromCharList
+                                            | emailAddress = analysisEmailAddress string
                                         }
                                     )
+                        }
+
+                PageLogIn (LogInPage r) ->
+                    Model
+                        { rec
+                            | page =
+                                PageLogIn
+                                    (LogInPage { r | studentIdOrEmailAddress = analysisStudentIdOrEmailAddress string })
                         }
 
                 _ ->
@@ -321,6 +325,14 @@ update msg (Model rec) =
                                     )
                         }
 
+                PageLogIn (LogInPage r) ->
+                    Model
+                        { rec
+                            | page =
+                                PageLogIn
+                                    (LogInPage { r | password = Password.passwordFromString string |> Result.toMaybe })
+                        }
+
                 _ ->
                     Model rec
             , Cmd.none
@@ -362,7 +374,7 @@ urlParser beforePageMaybe =
         , Url.Parser.map
             (PageSignUp
                 (UserSignUpPageStudentHasSAddress
-                    { studentIdOrTsukubaEmailAddress = analysisStudentIdOrEmailAddress ""
+                    { studentIdOrTsukubaEmailAddress = analysisStudentIdOrSAddress ""
                     , password = Password.passwordFromString ""
                     }
                 )
@@ -371,7 +383,10 @@ urlParser beforePageMaybe =
         , Url.Parser.map
             (PageLogIn
                 (LogInPage
-                    { nextPage = beforePageMaybe, studentIdOrEmailAddress = "", password = "" }
+                    { nextPage = beforePageMaybe
+                    , studentIdOrEmailAddress = analysisStudentIdOrEmailAddress ""
+                    , password = Nothing
+                    }
                 )
             )
             (Url.Parser.s "user-login")
@@ -1116,22 +1131,22 @@ sendEmailView =
 userLogInView : LogInPage -> List (Html.Html Msg)
 userLogInView logInPage =
     case logInPage of
-        LogInPage _ ->
-            logInPageView
+        LogInPage { studentIdOrEmailAddress, password } ->
+            logInView studentIdOrEmailAddress password
 
         ForgotPassword ->
             forgotPasswordView
 
 
-logInPageView : List (Html.Html Msg)
-logInPageView =
+logInView : AnalysisStudentIdOrEmailAddressResult -> Maybe Password.Password -> List (Html.Html Msg)
+logInView analysisStudentIdOrEmailAddressResult password =
     [ Html.div
         [ Html.Attributes.class "logIn" ]
         [ Html.form
             [ Html.Attributes.class "logIn-group" ]
-            [ logInIdView
+            [ logInIdView analysisStudentIdOrEmailAddressResult
             , logInPasswordView
-            , logInButton
+            , logInButton (getLogInData analysisStudentIdOrEmailAddressResult password /= Nothing)
             ]
         , orLabel
         , Html.div
@@ -1141,8 +1156,8 @@ logInPageView =
     ]
 
 
-logInIdView : Html.Html msg
-logInIdView =
+logInIdView : AnalysisStudentIdOrEmailAddressResult -> Html.Html Msg
+logInIdView analysisStudentIdOrEmailAddressResult =
     Html.div
         []
         [ Html.label
@@ -1152,8 +1167,23 @@ logInIdView =
             [ Html.Attributes.class "logIn-input"
             , Html.Attributes.id "logInId"
             , Html.Attributes.attribute "autocomplete" "email"
+            , Html.Events.onInput InputStudentIdOrEmailAddress
             ]
             []
+        , Html.div
+            []
+            [ Html.text
+                (case analysisStudentIdOrEmailAddressResult of
+                    AENone ->
+                        ""
+
+                    AEStudentId studentId ->
+                        "学籍番号" ++ StudentId.toStringWith20 studentId
+
+                    AEEmailAddress emailAddress ->
+                        "メールアドレス" ++ EmailAddress.toString emailAddress
+                )
+            ]
         ]
 
 
@@ -1179,6 +1209,7 @@ logInPasswordView =
             , Html.Attributes.minlength 9
             , Html.Attributes.maxlength 50
             , Html.Attributes.attribute "autocomplete" "current-password"
+            , Html.Events.onInput InputPassword
             ]
             []
         ]
@@ -1191,12 +1222,14 @@ forgotPasswordView =
     [ Html.text "パスワードを忘れたら。登録している学籍番号かメールアドレスを入力してください。パスワードを再発行します。" ]
 
 
-logInButton : Html.Html msg
-logInButton =
+logInButton : Bool -> Html.Html msg
+logInButton isValid =
     Html.div
         []
         [ Html.button
-            [ Html.Attributes.class "logIn-logInButton" ]
+            [ Html.Attributes.class "logIn-logInButton"
+            , Html.Attributes.disabled (not isValid)
+            ]
             [ Html.text "ログイン" ]
         ]
 
@@ -1279,7 +1312,7 @@ sAddressSelectView userSignUpPage =
                                 (ChangePage
                                     (PageSignUp
                                         (UserSignUpPageStudentHasSAddress
-                                            { studentIdOrTsukubaEmailAddress = analysisStudentIdOrEmailAddress ""
+                                            { studentIdOrTsukubaEmailAddress = analysisStudentIdOrSAddress ""
                                             , password = password
                                             }
                                         )
@@ -1319,7 +1352,7 @@ sAddressSelectView userSignUpPage =
         ]
 
 
-studentHasSAddressFormList : AnalysisStudentIdOrEmailAddressResult -> Result Password.Error Password.Password -> List (Html.Html Msg)
+studentHasSAddressFormList : AnalysisStudentIdOrSAddressResult -> Result Password.Error Password.Password -> List (Html.Html Msg)
 studentHasSAddressFormList analysisStudentIdOrEmailAddressResult password =
     [ Html.div
         []
@@ -1369,8 +1402,10 @@ studentHasSAddressFormList analysisStudentIdOrEmailAddressResult password =
         ++ [ passwordForm password ]
 
 
-analysisStudentIdOrEmailAddress : String -> AnalysisStudentIdOrEmailAddressResult
-analysisStudentIdOrEmailAddress string =
+{-| 新規登録画面のsアドを持っているひとの入力の解析
+-}
+analysisStudentIdOrSAddress : String -> AnalysisStudentIdOrSAddressResult
+analysisStudentIdOrSAddress string =
     let
         charList =
             String.toList (String.trim string)
@@ -1398,12 +1433,47 @@ analysisStudentIdOrEmailAddress string =
                                     ANone
 
 
-type AnalysisStudentIdOrEmailAddressResult
+type AnalysisStudentIdOrSAddressResult
     = ANone
     | AStudentId StudentId
     | ASAddress SAddress
     | APartStudentId StudentId.PartStudentId
     | AEmailButIsNotTsukuba
+
+
+analysisEmailAddress : String -> Maybe EmailAddress.EmailAddress
+analysisEmailAddress string =
+    string
+        |> String.trim
+        |> String.toList
+        |> EmailAddress.fromCharList
+
+
+{-| ログイン画面で使う入力の解析
+-}
+analysisStudentIdOrEmailAddress : String -> AnalysisStudentIdOrEmailAddressResult
+analysisStudentIdOrEmailAddress string =
+    let
+        charList =
+            String.toList (String.trim string)
+    in
+    case StudentId.fromCharList charList of
+        Just studentId ->
+            AEStudentId studentId
+
+        Nothing ->
+            case EmailAddress.fromCharList charList of
+                Just emailAddress ->
+                    AEEmailAddress emailAddress
+
+                Nothing ->
+                    AENone
+
+
+type AnalysisStudentIdOrEmailAddressResult
+    = AENone
+    | AEStudentId StudentId
+    | AEEmailAddress EmailAddress.EmailAddress
 
 
 newStudentFormList : Maybe EmailAddress.EmailAddress -> Maybe String -> Result Password.Error Password.Password -> List (Html.Html Msg)
@@ -1544,6 +1614,25 @@ signUpJson userSignUpPage =
                 )
 
         Nothing ->
+            Nothing
+
+
+getLogInData : AnalysisStudentIdOrEmailAddressResult -> Maybe Password.Password -> Maybe { emailAddress : EmailAddress.EmailAddress, pass : Password.Password }
+getLogInData studentIdOrEmailAddress passwordMaybe =
+    case ( studentIdOrEmailAddress, passwordMaybe ) of
+        ( AEStudentId studentId, Just password ) ->
+            Just
+                { emailAddress = EmailAddress.fromSAddress (SAddress.fromStundetId studentId)
+                , pass = password
+                }
+
+        ( AEEmailAddress emailAddress, Just password ) ->
+            Just
+                { emailAddress = emailAddress
+                , pass = password
+                }
+
+        ( _, _ ) ->
             Nothing
 
 

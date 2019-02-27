@@ -506,13 +506,18 @@ img {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.18);
     border: none;
     user-select: none;
-    cursor: pointer;
     width: 100%;
 }
 
 .logIn-logInButton:hover {
     background-color: var(--primaryColorLight);
     color: #111;
+    cursor: pointer;
+}
+
+.logIn-logInButton:disabled {
+    background-color: #aaa;
+    color: #ddd;
 }
 
 .logIn-orLabel {
@@ -533,6 +538,7 @@ img {
     user-select: none;
     cursor: pointer;
     text-decoration: none;
+    cursor: pointer;
 }
 
 .logIn-signInButton:hover {
@@ -624,13 +630,13 @@ img {
 .signUp-signUpButton:hover {
     background-color: var(--primaryColorLight);
     color: #111;
+    cursor: pointer;
 }
 
 .signUp-signUpButton:disabled {
     background-color: #aaa;
     color: #ddd;
 }
-
 
 /*===============================================
            Main View 画面に主に表示する場所
