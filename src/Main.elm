@@ -57,7 +57,7 @@ type Page
     | PageLikeAndHistory LikeAndHistory
     | PageExhibitionItemList
     | PagePurchaseItemList
-    | PageExhibition ExhibitionState
+    | PageExhibition ExhibitionPage
     | PageSendSignUpEmail EmailAddress.EmailAddress (Maybe (Result SignUpResponseError ()))
 
 
@@ -82,8 +82,8 @@ type LogInPage
     | ForgotPassword
 
 
-type alias ExhibitionState =
-    { title : String, description : String, price : Maybe Int }
+type ExhibitionPage
+    = ExhibitionPage { title : String, description : String, price : Maybe Int, image : Maybe String }
 
 
 type Home
@@ -354,6 +354,14 @@ update msg (Model rec) =
                                     (UserSignUpPageNewStudent { r | imageUrl = Just urlString })
                         }
 
+                PageExhibition (ExhibitionPage r) ->
+                    Model
+                        { rec
+                            | page =
+                                PageExhibition
+                                    (ExhibitionPage { r | image = Just urlString })
+                        }
+
                 _ ->
                     Model rec
             , Cmd.none
@@ -540,7 +548,7 @@ urlParser beforePageMaybe =
             PagePurchaseItemList
             (Url.Parser.s "purchase-item")
         , Url.Parser.map
-            (PageExhibition { title = "", description = "", price = Nothing })
+            (PageExhibition (ExhibitionPage { title = "", description = "", price = Nothing, image = Nothing }))
             (Url.Parser.s "exhibition")
         ]
 
@@ -1208,28 +1216,41 @@ exhibitButton =
         [ Html.text "出品" ]
 
 
-exhibitionView : ExhibitionState -> Html.Html Msg
-exhibitionView { title, description, price } =
+exhibitionView : ExhibitionPage -> Html.Html Msg
+exhibitionView (ExhibitionPage { title, description, price, image }) =
     Html.div
         [ Html.Attributes.class "exhibitionView" ]
-        [ exhibitionViewPhoto
+        [ exhibitionViewPhoto image
         , exhibitionViewItemTitleAndDescription
         , exhibitionViewItemPrice price
         ]
 
 
-exhibitionViewPhoto : Html.Html Msg
-exhibitionViewPhoto =
-    Html.input
-        [ Html.Attributes.class "exhibitionView-photo"
-        , Html.Attributes.type_ "file"
-        , Html.Attributes.multiple True
-        , Html.Attributes.accept "image/png,image/jpeg"
-        ]
-        [ Html.img
-            [ Html.Attributes.src "assets/add_a_photo.svg"
-            , Html.Attributes.class "exhibitionView-photo-icon"
+exhibitionViewPhoto : Maybe String -> Html.Html Msg
+exhibitionViewPhoto imageUrlMaybe =
+    Html.div
+        [ Html.Attributes.class "exhibitionView-photo" ]
+        [ Html.input
+            [ Html.Attributes.class "exhibitionView-photo-input"
+            , Html.Attributes.id "exhibitionView-photo-input"
+            , Html.Attributes.type_ "file"
+            , Html.Attributes.multiple True
+            , Html.Attributes.accept "image/png,image/jpeg"
+            , Html.Events.on "change" (Json.Decode.succeed (InputStudentImage "exhibitionView-photo-input"))
             ]
+            []
+        , Html.img
+            (case imageUrlMaybe of
+                Just imageUrl ->
+                    [ Html.Attributes.src imageUrl
+                    , Html.Attributes.class "exhibitionView-photo-image"
+                    ]
+
+                Nothing ->
+                    [ Html.Attributes.src "assets/add_a_photo.svg"
+                    , Html.Attributes.class "exhibitionView-photo-icon"
+                    ]
+            )
             []
         ]
 

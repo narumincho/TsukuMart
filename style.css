@@ -375,7 +375,6 @@ img {
 ===============================*/
 
 .exhibitionView-photo {
-    height: 9rem;
     width: 100%;
     background-color: gray;
     display: flex;
@@ -383,9 +382,19 @@ img {
     justify-content: center;
 }
 
+.exhibitionView-photo-input {
+    width: 100%;
+}
+
 .exhibitionView-photo-icon {
     width: 3rem;
     height: 3rem;
+}
+
+.exhibitionView-photo-image {
+    width: 10rem;
+    height: 10rem;
+    object-fit: contain;
 }
 
 .exhibitionView-itemTitleAndDescription {
