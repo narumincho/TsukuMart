@@ -4310,7 +4310,7 @@ function _Browser_getViewport()
 			W: _Browser_window.pageXOffset,
 			X: _Browser_window.pageYOffset,
 			K: _Browser_doc.documentElement.clientWidth,
-			E: _Browser_doc.documentElement.clientHeight
+			F: _Browser_doc.documentElement.clientHeight
 		}
 	};
 }
@@ -4321,7 +4321,7 @@ function _Browser_getScene()
 	var elem = _Browser_doc.documentElement;
 	return {
 		K: Math.max(body.scrollWidth, body.offsetWidth, elem.scrollWidth, elem.offsetWidth, elem.clientWidth),
-		E: Math.max(body.scrollHeight, body.offsetHeight, elem.scrollHeight, elem.offsetHeight, elem.clientHeight)
+		F: Math.max(body.scrollHeight, body.offsetHeight, elem.scrollHeight, elem.offsetHeight, elem.clientHeight)
 	};
 }
 
@@ -4346,13 +4346,13 @@ function _Browser_getViewportOf(id)
 		return {
 			aD: {
 				K: node.scrollWidth,
-				E: node.scrollHeight
+				F: node.scrollHeight
 			},
 			aH: {
 				W: node.scrollLeft,
 				X: node.scrollTop,
 				K: node.clientWidth,
-				E: node.clientHeight
+				F: node.clientHeight
 			}
 		};
 	});
@@ -4387,13 +4387,13 @@ function _Browser_getElement(id)
 				W: x,
 				X: y,
 				K: _Browser_doc.documentElement.clientWidth,
-				E: _Browser_doc.documentElement.clientHeight
+				F: _Browser_doc.documentElement.clientHeight
 			},
 			aL: {
 				W: x + rect.left,
 				X: y + rect.top,
 				K: rect.width,
-				E: rect.height
+				F: rect.height
 			}
 		};
 	});
@@ -4448,7 +4448,7 @@ var _Http_toTask = F3(function(router, toTask, request)
 		elm$core$Maybe$isJust(request.q) && _Http_track(router, xhr, request.q.a);
 
 		try {
-			xhr.open(request.n, request.a5, true);
+			xhr.open(request.o, request.a5, true);
 		} catch (e) {
 			return done(elm$http$Http$BadUrl_(request.a5));
 		}
@@ -4471,9 +4471,9 @@ function _Http_configureRequest(xhr, request)
 	{
 		xhr.setRequestHeader(headers.a.a, headers.a.b);
 	}
-	xhr.timeout = request.o.a || 0;
+	xhr.timeout = request.p.a || 0;
 	xhr.responseType = request.aM.d;
-	xhr.withCredentials = request.C;
+	xhr.withCredentials = request.D;
 }
 
 
@@ -6068,11 +6068,11 @@ var elm$core$Basics$apL = F2(
 var elm$url$Url$Parser$Parser = elm$core$Basics$identity;
 var elm$url$Url$Parser$State = F5(
 	function (visited, unvisited, params, frag, value) {
-		return {y: frag, A: params, x: unvisited, t: value, B: visited};
+		return {y: frag, A: params, x: unvisited, t: value, C: visited};
 	});
 var elm$url$Url$Parser$mapState = F2(
 	function (func, _n0) {
-		var visited = _n0.B;
+		var visited = _n0.C;
 		var unvisited = _n0.x;
 		var params = _n0.A;
 		var frag = _n0.y;
@@ -6089,7 +6089,7 @@ var elm$url$Url$Parser$map = F2(
 	function (subValue, _n0) {
 		var parseArg = _n0;
 		return function (_n1) {
-			var visited = _n1.B;
+			var visited = _n1.C;
 			var unvisited = _n1.x;
 			var params = _n1.A;
 			var frag = _n1.y;
@@ -6130,7 +6130,7 @@ var elm$url$Url$Parser$oneOf = function (parsers) {
 };
 var elm$url$Url$Parser$s = function (str) {
 	return function (_n0) {
-		var visited = _n0.B;
+		var visited = _n0.C;
 		var unvisited = _n0.x;
 		var params = _n0.A;
 		var frag = _n0.y;
@@ -7070,7 +7070,7 @@ var author$project$Main$init = F3(
 		return _Utils_Tuple2(
 			{
 				ao: key,
-				m: elm$core$Maybe$Just(0),
+				n: elm$core$Maybe$Just(0),
 				e: A2(author$project$Main$urlToPage, url, elm$core$Maybe$Nothing)
 			},
 			elm$core$Platform$Cmd$none);
@@ -7091,7 +7091,7 @@ var elm$core$Basics$always = F2(
 	});
 var elm$core$Platform$Sub$batch = _Platform_batch;
 var author$project$Main$subscription = function (_n0) {
-	var menuState = _n0.m;
+	var menuState = _n0.n;
 	return elm$core$Platform$Sub$batch(
 		_List_fromArray(
 			[
@@ -7127,112 +7127,6 @@ var author$project$Main$analysisEmailAddress = function (string) {
 var author$project$EmailAddress$toString = function (_n0) {
 	var string = _n0;
 	return elm$core$String$toLower(string);
-};
-var author$project$StudentId$digitToChar = function (i) {
-	switch (i) {
-		case 0:
-			return '0';
-		case 1:
-			return '1';
-		case 2:
-			return '2';
-		case 3:
-			return '3';
-		case 4:
-			return '4';
-		case 5:
-			return '5';
-		case 6:
-			return '6';
-		case 7:
-			return '7';
-		case 8:
-			return '8';
-		default:
-			return '9';
-	}
-};
-var author$project$StudentId$toString = function (_n0) {
-	var i0 = _n0.a;
-	var i1 = _n0.b;
-	var i2 = _n0.c;
-	var i3 = _n0.d;
-	var i4 = _n0.e;
-	var i5 = _n0.f;
-	var i6 = _n0.g;
-	return elm$core$String$fromList(
-		A2(
-			elm$core$List$map,
-			author$project$StudentId$digitToChar,
-			_List_fromArray(
-				[i0, i1, i2, i3, i4, i5, i6])));
-};
-var author$project$SAddress$toEmailAddressString = function (_n0) {
-	var studentId = _n0.a;
-	var subDomain = _n0.b;
-	return 's' + (author$project$StudentId$toString(studentId) + ('@' + (subDomain + '.tsukuba.ac.jp')));
-};
-var author$project$EmailAddress$fromSAddress = function (sAddress) {
-	return author$project$SAddress$toEmailAddressString(sAddress);
-};
-var author$project$SAddress$fromStundetId = function (studentId) {
-	return A2(author$project$SAddress$SAddress, studentId, 's');
-};
-var author$project$Main$getSignUpData = function (userSignUpPage) {
-	if (!userSignUpPage.$) {
-		var studentIdOrTsukubaEmailAddress = userSignUpPage.a.O;
-		var password = userSignUpPage.a.h;
-		var _n1 = _Utils_Tuple2(studentIdOrTsukubaEmailAddress, password);
-		_n1$2:
-		while (true) {
-			if (!_n1.b.$) {
-				switch (_n1.a.$) {
-					case 1:
-						var studentId = _n1.a.a;
-						var pass = _n1.b.a;
-						return elm$core$Maybe$Just(
-							{
-								p: author$project$EmailAddress$fromSAddress(
-									author$project$SAddress$fromStundetId(studentId)),
-								U: elm$core$Maybe$Nothing,
-								F: pass
-							});
-					case 2:
-						var sAddress = _n1.a.a;
-						var pass = _n1.b.a;
-						return elm$core$Maybe$Just(
-							{
-								p: author$project$EmailAddress$fromSAddress(sAddress),
-								U: elm$core$Maybe$Nothing,
-								F: pass
-							});
-					default:
-						break _n1$2;
-				}
-			} else {
-				break _n1$2;
-			}
-		}
-		return elm$core$Maybe$Nothing;
-	} else {
-		var emailAddress = userSignUpPage.a.p;
-		var password = userSignUpPage.a.h;
-		var imageUrl = userSignUpPage.a.V;
-		var _n2 = _Utils_Tuple3(emailAddress, password, imageUrl);
-		if (((!_n2.a.$) && (!_n2.b.$)) && (!_n2.c.$)) {
-			var address = _n2.a.a;
-			var pass = _n2.b.a;
-			var image = _n2.c.a;
-			return elm$core$Maybe$Just(
-				{
-					p: address,
-					U: elm$core$Maybe$Just(image),
-					F: pass
-				});
-		} else {
-			return elm$core$Maybe$Nothing;
-		}
-	}
 };
 var author$project$Password$passwordCharToString = function (passwordChar) {
 	switch (passwordChar) {
@@ -7445,42 +7339,36 @@ var elm$json$Json$Encode$object = function (pairs) {
 			pairs));
 };
 var elm$json$Json$Encode$string = _Json_wrap;
-var author$project$Main$signUpJson = function (userSignUpPage) {
-	var _n0 = author$project$Main$getSignUpData(userSignUpPage);
-	if (!_n0.$) {
-		var emailAddress = _n0.a.p;
-		var pass = _n0.a.F;
-		var image = _n0.a.U;
-		return elm$core$Maybe$Just(
-			elm$json$Json$Encode$object(
-				_Utils_ap(
-					_List_fromArray(
+var author$project$Main$signUpJson = function (_n0) {
+	var emailAddress = _n0.l;
+	var pass = _n0.B;
+	var image = _n0.U;
+	return elm$json$Json$Encode$object(
+		_Utils_ap(
+			_List_fromArray(
+				[
+					_Utils_Tuple2(
+					'email',
+					elm$json$Json$Encode$string(
+						author$project$EmailAddress$toString(emailAddress))),
+					_Utils_Tuple2(
+					'password',
+					elm$json$Json$Encode$string(
+						author$project$Password$toString(pass)))
+				]),
+			function () {
+				if (!image.$) {
+					var imageDataUrl = image.a;
+					return _List_fromArray(
 						[
 							_Utils_Tuple2(
-							'email',
-							elm$json$Json$Encode$string(
-								author$project$EmailAddress$toString(emailAddress))),
-							_Utils_Tuple2(
-							'password',
-							elm$json$Json$Encode$string(
-								author$project$Password$toString(pass)))
-						]),
-					function () {
-						if (!image.$) {
-							var imageDataUrl = image.a;
-							return _List_fromArray(
-								[
-									_Utils_Tuple2(
-									'image',
-									elm$json$Json$Encode$string(imageDataUrl))
-								]);
-						} else {
-							return _List_Nil;
-						}
-					}())));
-	} else {
-		return elm$core$Maybe$Nothing;
-	}
+							'image',
+							elm$json$Json$Encode$string(imageDataUrl))
+						]);
+				} else {
+					return _List_Nil;
+				}
+			}()));
 };
 var author$project$Main$SignUpResponseError = 2;
 var author$project$Main$SignUpResponseOk = 0;
@@ -7990,12 +7878,12 @@ var elm$http$Http$cmdMap = F2(
 			var r = cmd.a;
 			return elm$http$Http$Request(
 				{
-					C: r.C,
+					D: r.D,
 					ag: r.ag,
 					aM: A2(_Http_mapExpect, func, r.aM),
 					i: r.i,
-					n: r.n,
 					o: r.o,
+					p: r.p,
 					q: r.q,
 					a5: r.a5
 				});
@@ -8020,11 +7908,11 @@ var elm$http$Http$subscription = _Platform_leaf('Http');
 var elm$http$Http$request = function (r) {
 	return elm$http$Http$command(
 		elm$http$Http$Request(
-			{C: false, ag: r.ag, aM: r.aM, i: r.i, n: r.n, o: r.o, q: r.q, a5: r.a5}));
+			{D: false, ag: r.ag, aM: r.aM, i: r.i, o: r.o, p: r.p, q: r.q, a5: r.a5}));
 };
 var elm$http$Http$post = function (r) {
 	return elm$http$Http$request(
-		{ag: r.ag, aM: r.aM, i: _List_Nil, n: 'POST', o: elm$core$Maybe$Nothing, q: elm$core$Maybe$Nothing, a5: r.a5});
+		{ag: r.ag, aM: r.aM, i: _List_Nil, o: 'POST', p: elm$core$Maybe$Nothing, q: elm$core$Maybe$Nothing, a5: r.a5});
 };
 var elm$url$Url$addPort = F2(
 	function (maybePort, starter) {
@@ -8084,12 +7972,12 @@ var author$project$Main$update = F2(
 			case 1:
 				return _Utils_Tuple2(
 					function () {
-						var _n2 = rec.m;
+						var _n2 = rec.n;
 						if (!_n2.$) {
 							return _Utils_update(
 								rec,
 								{
-									m: elm$core$Maybe$Just(2)
+									n: elm$core$Maybe$Just(2)
 								});
 						} else {
 							return rec;
@@ -8099,12 +7987,12 @@ var author$project$Main$update = F2(
 			case 2:
 				return _Utils_Tuple2(
 					function () {
-						var _n3 = rec.m;
+						var _n3 = rec.n;
 						if (!_n3.$) {
 							return _Utils_update(
 								rec,
 								{
-									m: elm$core$Maybe$Just(1)
+									n: elm$core$Maybe$Just(1)
 								});
 						} else {
 							return rec;
@@ -8115,14 +8003,14 @@ var author$project$Main$update = F2(
 				return _Utils_Tuple2(
 					_Utils_update(
 						rec,
-						{m: elm$core$Maybe$Nothing}),
+						{n: elm$core$Maybe$Nothing}),
 					elm$core$Platform$Cmd$none);
 			case 4:
 				return _Utils_Tuple2(
 					_Utils_update(
 						rec,
 						{
-							m: elm$core$Maybe$Just(0)
+							n: elm$core$Maybe$Just(0)
 						}),
 					elm$core$Platform$Cmd$none);
 			case 5:
@@ -8131,13 +8019,13 @@ var author$project$Main$update = F2(
 					_Utils_update(
 						rec,
 						{
-							m: function () {
-								var _n4 = rec.m;
+							n: function () {
+								var _n4 = rec.n;
 								if ((!_n4.$) && (_n4.a === 2)) {
 									var _n5 = _n4.a;
 									return elm$core$Maybe$Just(1);
 								} else {
-									return rec.m;
+									return rec.n;
 								}
 							}(),
 							e: A2(
@@ -8166,7 +8054,7 @@ var author$project$Main$update = F2(
 						elm$browser$Browser$Navigation$load(string));
 				}
 			case 7:
-				var emailAddress = msg.a;
+				var signUpData = msg.a;
 				var _n7 = rec.e;
 				if (_n7.$ === 1) {
 					var userSignUpPage = _n7.a;
@@ -8174,22 +8062,15 @@ var author$project$Main$update = F2(
 						_Utils_update(
 							rec,
 							{
-								e: A2(author$project$Main$PageSendSignUpEmail, emailAddress, elm$core$Maybe$Nothing)
+								e: A2(author$project$Main$PageSendSignUpEmail, signUpData.l, elm$core$Maybe$Nothing)
 							}),
-						function () {
-							var _n8 = author$project$Main$signUpJson(userSignUpPage);
-							if (!_n8.$) {
-								var json = _n8.a;
-								return elm$http$Http$post(
-									{
-										ag: elm$http$Http$jsonBody(json),
-										aM: A2(elm$http$Http$expectJson, author$project$Main$SignUpResponse, author$project$Main$signUpResponseDecoder),
-										a5: '/signup'
-									});
-							} else {
-								return elm$core$Platform$Cmd$none;
-							}
-						}());
+						elm$http$Http$post(
+							{
+								ag: elm$http$Http$jsonBody(
+									author$project$Main$signUpJson(signUpData)),
+								aM: A2(elm$http$Http$expectJson, author$project$Main$SignUpResponse, author$project$Main$signUpResponseDecoder),
+								a5: '/signup'
+							}));
 				} else {
 					return _Utils_Tuple2(rec, elm$core$Platform$Cmd$none);
 				}
@@ -8199,13 +8080,13 @@ var author$project$Main$update = F2(
 				var string = msg.a;
 				return _Utils_Tuple2(
 					function () {
-						var _n9 = rec.e;
-						_n9$3:
+						var _n8 = rec.e;
+						_n8$3:
 						while (true) {
-							switch (_n9.$) {
+							switch (_n8.$) {
 								case 1:
-									if (!_n9.a.$) {
-										var r = _n9.a.a;
+									if (!_n8.a.$) {
+										var r = _n8.a.a;
 										return _Utils_update(
 											rec,
 											{
@@ -8218,7 +8099,7 @@ var author$project$Main$update = F2(
 															})))
 											});
 									} else {
-										var r = _n9.a.a;
+										var r = _n8.a.a;
 										return _Utils_update(
 											rec,
 											{
@@ -8227,13 +8108,13 @@ var author$project$Main$update = F2(
 														_Utils_update(
 															r,
 															{
-																p: author$project$Main$analysisEmailAddress(string)
+																l: author$project$Main$analysisEmailAddress(string)
 															})))
 											});
 									}
 								case 2:
-									if (!_n9.a.$) {
-										var r = _n9.a.a;
+									if (!_n8.a.$) {
+										var r = _n8.a.a;
 										return _Utils_update(
 											rec,
 											{
@@ -8246,10 +8127,10 @@ var author$project$Main$update = F2(
 															})))
 											});
 									} else {
-										break _n9$3;
+										break _n8$3;
 									}
 								default:
-									break _n9$3;
+									break _n8$3;
 							}
 						}
 						return rec;
@@ -8264,9 +8145,9 @@ var author$project$Main$update = F2(
 				var urlString = msg.a;
 				return _Utils_Tuple2(
 					function () {
-						var _n10 = rec.e;
-						if ((_n10.$ === 1) && (_n10.a.$ === 1)) {
-							var r = _n10.a.a;
+						var _n9 = rec.e;
+						if ((_n9.$ === 1) && (_n9.a.$ === 1)) {
+							var r = _n9.a.a;
 							return _Utils_update(
 								rec,
 								{
@@ -8287,13 +8168,13 @@ var author$project$Main$update = F2(
 				var string = msg.a;
 				return _Utils_Tuple2(
 					function () {
-						var _n11 = rec.e;
-						_n11$3:
+						var _n10 = rec.e;
+						_n10$3:
 						while (true) {
-							switch (_n11.$) {
+							switch (_n10.$) {
 								case 1:
-									if (_n11.a.$ === 1) {
-										var r = _n11.a.a;
+									if (_n10.a.$ === 1) {
+										var r = _n10.a.a;
 										return _Utils_update(
 											rec,
 											{
@@ -8306,7 +8187,7 @@ var author$project$Main$update = F2(
 															})))
 											});
 									} else {
-										var r = _n11.a.a;
+										var r = _n10.a.a;
 										return _Utils_update(
 											rec,
 											{
@@ -8320,8 +8201,8 @@ var author$project$Main$update = F2(
 											});
 									}
 								case 2:
-									if (!_n11.a.$) {
-										var r = _n11.a.a;
+									if (!_n10.a.$) {
+										var r = _n10.a.a;
 										return _Utils_update(
 											rec,
 											{
@@ -8335,10 +8216,10 @@ var author$project$Main$update = F2(
 															})))
 											});
 									} else {
-										break _n11$3;
+										break _n10$3;
 									}
 								default:
-									break _n11$3;
+									break _n10$3;
 							}
 						}
 						return rec;
@@ -9156,7 +9037,7 @@ var author$project$Main$exhibitionViewPhoto = A2(
 			elm$html$Html$Attributes$class('exhibitionView-photo'),
 			elm$html$Html$Attributes$type_('file'),
 			elm$html$Html$Attributes$multiple(true),
-			elm$html$Html$Attributes$accept('image/*')
+			elm$html$Html$Attributes$accept('image/png,image/jpeg')
 		]),
 	_List_fromArray(
 		[
@@ -9342,6 +9223,56 @@ var author$project$Main$forgotPasswordView = _List_fromArray(
 	[
 		elm$html$Html$text('パスワードを忘れたら。登録している学籍番号かメールアドレスを入力してください。パスワードを再発行します。')
 	]);
+var author$project$StudentId$digitToChar = function (i) {
+	switch (i) {
+		case 0:
+			return '0';
+		case 1:
+			return '1';
+		case 2:
+			return '2';
+		case 3:
+			return '3';
+		case 4:
+			return '4';
+		case 5:
+			return '5';
+		case 6:
+			return '6';
+		case 7:
+			return '7';
+		case 8:
+			return '8';
+		default:
+			return '9';
+	}
+};
+var author$project$StudentId$toString = function (_n0) {
+	var i0 = _n0.a;
+	var i1 = _n0.b;
+	var i2 = _n0.c;
+	var i3 = _n0.d;
+	var i4 = _n0.e;
+	var i5 = _n0.f;
+	var i6 = _n0.g;
+	return elm$core$String$fromList(
+		A2(
+			elm$core$List$map,
+			author$project$StudentId$digitToChar,
+			_List_fromArray(
+				[i0, i1, i2, i3, i4, i5, i6])));
+};
+var author$project$SAddress$toEmailAddressString = function (_n0) {
+	var studentId = _n0.a;
+	var subDomain = _n0.b;
+	return 's' + (author$project$StudentId$toString(studentId) + ('@' + (subDomain + '.tsukuba.ac.jp')));
+};
+var author$project$EmailAddress$fromSAddress = function (sAddress) {
+	return author$project$SAddress$toEmailAddressString(sAddress);
+};
+var author$project$SAddress$fromStundetId = function (studentId) {
+	return A2(author$project$SAddress$SAddress, studentId, 's');
+};
 var author$project$Main$getLogInData = F2(
 	function (studentIdOrEmailAddress, passwordMaybe) {
 		var _n0 = _Utils_Tuple2(studentIdOrEmailAddress, passwordMaybe);
@@ -9354,15 +9285,15 @@ var author$project$Main$getLogInData = F2(
 						var password = _n0.b.a;
 						return elm$core$Maybe$Just(
 							{
-								p: author$project$EmailAddress$fromSAddress(
+								l: author$project$EmailAddress$fromSAddress(
 									author$project$SAddress$fromStundetId(studentId)),
-								F: password
+								B: password
 							});
 					case 2:
 						var emailAddress = _n0.a.a;
 						var password = _n0.b.a;
 						return elm$core$Maybe$Just(
-							{p: emailAddress, F: password});
+							{l: emailAddress, B: password});
 					default:
 						break _n0$2;
 				}
@@ -9611,6 +9542,62 @@ var author$project$Main$userLogInView = function (logInPage) {
 		return A2(author$project$Main$logInView, studentIdOrEmailAddress, password);
 	} else {
 		return author$project$Main$forgotPasswordView;
+	}
+};
+var author$project$Main$getSignUpData = function (userSignUpPage) {
+	if (!userSignUpPage.$) {
+		var studentIdOrTsukubaEmailAddress = userSignUpPage.a.O;
+		var password = userSignUpPage.a.h;
+		var _n1 = _Utils_Tuple2(studentIdOrTsukubaEmailAddress, password);
+		_n1$2:
+		while (true) {
+			if (!_n1.b.$) {
+				switch (_n1.a.$) {
+					case 1:
+						var studentId = _n1.a.a;
+						var pass = _n1.b.a;
+						return elm$core$Maybe$Just(
+							{
+								l: author$project$EmailAddress$fromSAddress(
+									author$project$SAddress$fromStundetId(studentId)),
+								U: elm$core$Maybe$Nothing,
+								B: pass
+							});
+					case 2:
+						var sAddress = _n1.a.a;
+						var pass = _n1.b.a;
+						return elm$core$Maybe$Just(
+							{
+								l: author$project$EmailAddress$fromSAddress(sAddress),
+								U: elm$core$Maybe$Nothing,
+								B: pass
+							});
+					default:
+						break _n1$2;
+				}
+			} else {
+				break _n1$2;
+			}
+		}
+		return elm$core$Maybe$Nothing;
+	} else {
+		var emailAddress = userSignUpPage.a.l;
+		var password = userSignUpPage.a.h;
+		var imageUrl = userSignUpPage.a.V;
+		var _n2 = _Utils_Tuple3(emailAddress, password, imageUrl);
+		if (((!_n2.a.$) && (!_n2.b.$)) && (!_n2.c.$)) {
+			var address = _n2.a.a;
+			var pass = _n2.b.a;
+			var image = _n2.c.a;
+			return elm$core$Maybe$Just(
+				{
+					l: address,
+					U: elm$core$Maybe$Just(image),
+					B: pass
+				});
+		} else {
+			return elm$core$Maybe$Nothing;
+		}
 	}
 };
 var author$project$Main$InputStudentImage = function (a) {
@@ -9901,7 +9888,7 @@ var author$project$Main$sAddressSelectView = function (userSignUpPage) {
 										author$project$Main$PageSignUp(
 											author$project$Main$UserSignUpPageNewStudent(
 												{
-													p: author$project$EmailAddress$fromCharList(_List_Nil),
+													l: author$project$EmailAddress$fromCharList(_List_Nil),
 													V: elm$core$Maybe$Nothing,
 													h: password
 												}))))
@@ -9938,7 +9925,7 @@ var author$project$Main$sAddressView = function (userSignUpPage) {
 var author$project$Main$SignUp = function (a) {
 	return {$: 7, a: a};
 };
-var author$project$Main$signUpSubmitButton = function (emailAddressMaybe) {
+var author$project$Main$signUpSubmitButton = function (signUpDataMaybe) {
 	return A2(
 		elm$html$Html$div,
 		_List_Nil,
@@ -9951,11 +9938,11 @@ var author$project$Main$signUpSubmitButton = function (emailAddressMaybe) {
 						[
 							elm$html$Html$Attributes$class('signUp-signUpButton'),
 							elm$html$Html$Attributes$disabled(
-							_Utils_eq(emailAddressMaybe, elm$core$Maybe$Nothing))
+							_Utils_eq(signUpDataMaybe, elm$core$Maybe$Nothing))
 						]),
 					function () {
-						if (!emailAddressMaybe.$) {
-							var emailAddress = emailAddressMaybe.a;
+						if (!signUpDataMaybe.$) {
+							var signUpData = signUpDataMaybe.a;
 							return _List_fromArray(
 								[
 									A2(
@@ -9963,7 +9950,7 @@ var author$project$Main$signUpSubmitButton = function (emailAddressMaybe) {
 									'click',
 									elm$json$Json$Decode$succeed(
 										_Utils_Tuple2(
-											author$project$Main$SignUp(emailAddress),
+											author$project$Main$SignUp(signUpData),
 											true)))
 								]);
 						} else {
@@ -10262,7 +10249,7 @@ var author$project$Main$userSignUpView = function (userSignUpPage) {
 							var password = userSignUpPage.a.h;
 							return A2(author$project$Main$studentHasSAddressFormList, studentIdOrTsukubaEmailAddress, password);
 						} else {
-							var emailAddress = userSignUpPage.a.p;
+							var emailAddress = userSignUpPage.a.l;
 							var imageUrl = userSignUpPage.a.V;
 							var password = userSignUpPage.a.h;
 							return A3(author$project$Main$newStudentFormList, emailAddress, imageUrl, password);
@@ -10271,12 +10258,7 @@ var author$project$Main$userSignUpView = function (userSignUpPage) {
 					_List_fromArray(
 						[
 							author$project$Main$signUpSubmitButton(
-							A2(
-								elm$core$Maybe$map,
-								function ($) {
-									return $.p;
-								},
-								author$project$Main$getSignUpData(userSignUpPage)))
+							author$project$Main$getSignUpData(userSignUpPage))
 						]))))
 		]);
 };
@@ -10516,7 +10498,7 @@ var author$project$Main$menuView = function (menuStateMaybe) {
 };
 var author$project$Main$view = function (_n0) {
 	var page = _n0.e;
-	var menuState = _n0.m;
+	var menuState = _n0.n;
 	var isWideScreen = _Utils_eq(menuState, elm$core$Maybe$Nothing);
 	return {
 		ag: _List_fromArray(

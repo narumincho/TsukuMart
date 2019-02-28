@@ -104,7 +104,7 @@ type Msg
     | ToNarrowScreenMode
     | UrlChange Url.Url
     | UrlRequest Browser.UrlRequest
-    | SignUp EmailAddress.EmailAddress
+    | SignUp { emailAddress : EmailAddress.EmailAddress, pass : Password.Password, image : Maybe String }
     | SignUpResponse (Result Http.Error SignUpResponse)
     | InputStudentIdOrEmailAddress String
     | InputStudentImage String
@@ -217,23 +217,18 @@ update msg (Model rec) =
                     , Browser.Navigation.load string
                     )
 
-        SignUp emailAddress ->
+        SignUp signUpData ->
             case rec.page of
                 PageSignUp userSignUpPage ->
                     ( Model
                         { rec
-                            | page = PageSendSignUpEmail emailAddress Nothing
+                            | page = PageSendSignUpEmail signUpData.emailAddress Nothing
                         }
-                    , case signUpJson userSignUpPage of
-                        Just json ->
-                            Http.post
-                                { url = "/signup"
-                                , body = Http.jsonBody json
-                                , expect = Http.expectJson SignUpResponse signUpResponseDecoder
-                                }
-
-                        Nothing ->
-                            Cmd.none
+                    , Http.post
+                        { url = "/signup"
+                        , body = Http.jsonBody (signUpJson signUpData)
+                        , expect = Http.expectJson SignUpResponse signUpResponseDecoder
+                        }
                     )
 
                 _ ->
@@ -1264,8 +1259,7 @@ userSignUpView userSignUpPage =
                     UserSignUpPageNewStudent { emailAddress, imageUrl, password } ->
                         newStudentFormList emailAddress imageUrl password
                )
-            ++ [ signUpSubmitButton (getSignUpData userSignUpPage |> Maybe.map .emailAddress)
-               ]
+            ++ [ signUpSubmitButton (getSignUpData userSignUpPage) ]
         )
     ]
 
@@ -1572,17 +1566,17 @@ passwordForm passwordResult =
         ]
 
 
-signUpSubmitButton : Maybe EmailAddress.EmailAddress -> Html.Html Msg
-signUpSubmitButton emailAddressMaybe =
+signUpSubmitButton : Maybe { emailAddress : EmailAddress.EmailAddress, pass : Password.Password, image : Maybe String } -> Html.Html Msg
+signUpSubmitButton signUpDataMaybe =
     Html.div
         []
         [ Html.button
             ([ Html.Attributes.class "signUp-signUpButton"
-             , Html.Attributes.disabled (emailAddressMaybe == Nothing)
+             , Html.Attributes.disabled (signUpDataMaybe == Nothing)
              ]
-                ++ (case emailAddressMaybe of
-                        Just emailAddress ->
-                            [ Html.Events.stopPropagationOn "click" (Json.Decode.succeed ( SignUp emailAddress, True )) ]
+                ++ (case signUpDataMaybe of
+                        Just signUpData ->
+                            [ Html.Events.stopPropagationOn "click" (Json.Decode.succeed ( SignUp signUpData, True )) ]
 
                         Nothing ->
                             []
@@ -1590,31 +1584,6 @@ signUpSubmitButton emailAddressMaybe =
             )
             [ Html.text "新規登録" ]
         ]
-
-
-{-| 新規登録のJSONを生成
--}
-signUpJson : UserSignUpPage -> Maybe Json.Encode.Value
-signUpJson userSignUpPage =
-    case getSignUpData userSignUpPage of
-        Just { emailAddress, pass, image } ->
-            Just
-                (Json.Encode.object
-                    ([ ( "email", Json.Encode.string (EmailAddress.toString emailAddress) )
-                     , ( "password", Json.Encode.string (Password.toString pass) )
-                     ]
-                        ++ (case image of
-                                Just imageDataUrl ->
-                                    [ ( "image", Json.Encode.string imageDataUrl ) ]
-
-                                Nothing ->
-                                    []
-                           )
-                    )
-                )
-
-        Nothing ->
-            Nothing
 
 
 getLogInData : AnalysisStudentIdOrEmailAddressResult -> Maybe Password.Password -> Maybe { emailAddress : EmailAddress.EmailAddress, pass : Password.Password }
@@ -1636,6 +1605,18 @@ getLogInData studentIdOrEmailAddress passwordMaybe =
             Nothing
 
 
+{-| logInのJSONを作成
+-}
+logInJson : { emailAddress : EmailAddress.EmailAddress, pass : Password.Password } -> Json.Encode.Value
+logInJson { emailAddress, pass } =
+    Json.Encode.object
+        [ ( "email", Json.Encode.string (EmailAddress.toString emailAddress) )
+        , ( "password", Json.Encode.string (Password.toString pass) )
+        ]
+
+
+{-| 画面の情報から新規登録できる情報を入力しているかと、新規登録に必要なデータを取りだす
+-}
 getSignUpData : UserSignUpPage -> Maybe { emailAddress : EmailAddress.EmailAddress, pass : Password.Password, image : Maybe String }
 getSignUpData userSignUpPage =
     case userSignUpPage of
@@ -1669,6 +1650,24 @@ getSignUpData userSignUpPage =
 
                 ( _, _, _ ) ->
                     Nothing
+
+
+{-| 新規登録のJSONを生成
+-}
+signUpJson : { emailAddress : EmailAddress.EmailAddress, pass : Password.Password, image : Maybe String } -> Json.Encode.Value
+signUpJson { emailAddress, pass, image } =
+    Json.Encode.object
+        ([ ( "email", Json.Encode.string (EmailAddress.toString emailAddress) )
+         , ( "password", Json.Encode.string (Password.toString pass) )
+         ]
+            ++ (case image of
+                    Just imageDataUrl ->
+                        [ ( "image", Json.Encode.string imageDataUrl ) ]
+
+                    Nothing ->
+                        []
+               )
+        )
 
 
 sendSignUpEmailView : EmailAddress.EmailAddress -> Maybe (Result Http.Error SignUpResponse) -> List (Html.Html msg)
