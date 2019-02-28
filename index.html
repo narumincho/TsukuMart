@@ -35,6 +35,23 @@
             })
             fileReader.readAsDataURL(imageFile);
         })
+        app.ports.exhibitionImageChange.subscribe((id) => {
+            const fileInputElement = document.getElementById(id);
+            const imageFiles = fileInputElement.files;
+            const fileCount = imageFiles.length;
+            const encodedFiles = [];
+            for (const imageFile of imageFiles) {
+                const fileReader = new FileReader();
+                fileReader.addEventListener("load", (e) => {
+                    encodedFiles.push(fileReader.result);
+                    if (fileCount <= encodedFiles.length) {
+                        console.log(encodedFiles);
+                        app.ports.receiveImageDataUrlMulti.send(encodedFiles);
+                    }
+                })
+                fileReader.readAsDataURL(imageFile);
+            }
+        })
         addEventListener("resize", windowResizeListener);
         windowResizeListener();
         // addEventListener("touchmove", (e) => {

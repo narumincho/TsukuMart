@@ -33,6 +33,12 @@ port toNarrowScreenMode : (Int -> msg) -> Sub msg
 port receiveImageDataUrl : (String -> msg) -> Sub msg
 
 
+port receiveImageDataUrlMulti : (List String -> msg) -> Sub msg
+
+
+port exhibitionImageChange : String -> Cmd msg
+
+
 port studentImageChange : String -> Cmd msg
 
 
@@ -83,7 +89,7 @@ type LogInPage
 
 
 type ExhibitionPage
-    = ExhibitionPage { title : String, description : String, price : Maybe Int, image : Maybe String }
+    = ExhibitionPage { title : String, description : String, price : Maybe Int, image : List String }
 
 
 type Home
@@ -112,7 +118,9 @@ type Msg
     | LogInResponse (Result LogInResponseError LogInResponseOk)
     | InputStudentIdOrEmailAddress String
     | InputStudentImage String
+    | InputExhibitionImage String
     | ReceiveImageDataUrl String
+    | ReceiveImageDataUrlMulti (List String)
     | InputPassword String
 
 
@@ -344,6 +352,11 @@ update msg (Model rec) =
             , studentImageChange idString
             )
 
+        InputExhibitionImage idString ->
+            ( Model rec
+            , exhibitionImageChange idString
+            )
+
         ReceiveImageDataUrl urlString ->
             ( case rec.page of
                 PageSignUp (UserSignUpPageNewStudent r) ->
@@ -359,7 +372,22 @@ update msg (Model rec) =
                         { rec
                             | page =
                                 PageExhibition
-                                    (ExhibitionPage { r | image = Just urlString })
+                                    (ExhibitionPage { r | image = [ urlString ] })
+                        }
+
+                _ ->
+                    Model rec
+            , Cmd.none
+            )
+
+        ReceiveImageDataUrlMulti urlStringList ->
+            ( case rec.page of
+                PageExhibition (ExhibitionPage r) ->
+                    Model
+                        { rec
+                            | page =
+                                PageExhibition
+                                    (ExhibitionPage { r | image = urlStringList })
                         }
 
                 _ ->
@@ -548,7 +576,7 @@ urlParser beforePageMaybe =
             PagePurchaseItemList
             (Url.Parser.s "purchase-item")
         , Url.Parser.map
-            (PageExhibition (ExhibitionPage { title = "", description = "", price = Nothing, image = Nothing }))
+            (PageExhibition (ExhibitionPage { title = "", description = "", price = Nothing, image = [] }))
             (Url.Parser.s "exhibition")
         ]
 
@@ -1226,33 +1254,41 @@ exhibitionView (ExhibitionPage { title, description, price, image }) =
         ]
 
 
-exhibitionViewPhoto : Maybe String -> Html.Html Msg
-exhibitionViewPhoto imageUrlMaybe =
+exhibitionViewPhoto : List String -> Html.Html Msg
+exhibitionViewPhoto imageUrlList =
     Html.div
         [ Html.Attributes.class "exhibitionView-photo" ]
-        [ Html.input
+        ([ Html.input
             [ Html.Attributes.class "exhibitionView-photo-input"
             , Html.Attributes.id "exhibitionView-photo-input"
             , Html.Attributes.type_ "file"
             , Html.Attributes.multiple True
             , Html.Attributes.accept "image/png,image/jpeg"
-            , Html.Events.on "change" (Json.Decode.succeed (InputStudentImage "exhibitionView-photo-input"))
+            , Html.Events.on "change" (Json.Decode.succeed (InputExhibitionImage "exhibitionView-photo-input"))
             ]
             []
-        , Html.img
-            (case imageUrlMaybe of
-                Just imageUrl ->
-                    [ Html.Attributes.src imageUrl
-                    , Html.Attributes.class "exhibitionView-photo-image"
-                    ]
+         ]
+            ++ (case imageUrlList of
+                    _ :: _ ->
+                        imageUrlList
+                            |> List.map
+                                (\imageUrl ->
+                                    Html.img
+                                        [ Html.Attributes.src imageUrl
+                                        , Html.Attributes.class "exhibitionView-photo-image"
+                                        ]
+                                        []
+                                )
 
-                Nothing ->
-                    [ Html.Attributes.src "assets/add_a_photo.svg"
-                    , Html.Attributes.class "exhibitionView-photo-icon"
-                    ]
-            )
-            []
-        ]
+                    [] ->
+                        [ Html.img
+                            [ Html.Attributes.src "assets/add_a_photo.svg"
+                            , Html.Attributes.class "exhibitionView-photo-icon"
+                            ]
+                            []
+                        ]
+               )
+        )
 
 
 exhibitionViewItemTitleAndDescription : Html.Html Msg
@@ -1909,6 +1945,7 @@ subscription : Model -> Sub Msg
 subscription (Model { menuState }) =
     Sub.batch
         [ receiveImageDataUrl ReceiveImageDataUrl
+        , receiveImageDataUrlMulti ReceiveImageDataUrlMulti
         , case menuState of
             Just _ ->
                 toWideScreenMode (always ToWideScreenMode)
