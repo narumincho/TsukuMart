@@ -2,6 +2,7 @@ port module Main exposing (main)
 
 import Browser
 import Browser.Navigation
+import Dict
 import EmailAddress
 import Html
 import Html.Attributes
@@ -57,7 +58,7 @@ type Page
     | PageExhibitionItemList
     | PagePurchaseItemList
     | PageExhibition ExhibitionState
-    | PageSendSignUpEmail EmailAddress.EmailAddress (Maybe (Result Http.Error SignUpResponse))
+    | PageSendSignUpEmail EmailAddress.EmailAddress (Maybe (Result SignUpResponseError ()))
 
 
 type UserSignUpPage
@@ -106,23 +107,38 @@ type Msg
     | UrlRequest Browser.UrlRequest
     | SignUp { emailAddress : EmailAddress.EmailAddress, pass : Password.Password, image : Maybe String }
     | LogIn { emailAddress : EmailAddress.EmailAddress, pass : Password.Password }
-    | SignUpResponse (Result Http.Error SignUpResponse)
-    | LogInResponse (Result Http.Error LogInResponse)
+    | Response { id : String, header : List ( String, String ), body : String }
+    | SignUpResponse (Result SignUpResponseError ())
+    | LogInResponse (Result LogInResponseError LogInResponseOk)
     | InputStudentIdOrEmailAddress String
     | InputStudentImage String
     | ReceiveImageDataUrl String
     | InputPassword String
 
 
-type SignUpResponse
-    = SignUpResponseOk
-    | SignUpResponseResultSignUp
-    | SignUpResponseError
+type SignUpResponseError
+    = SignUpErrorAlreadySignUp
+    | SignUpErrorBadUrl
+    | SignUpErrorTimeout
+    | SignUpErrorNetworkError
+    | SignUpErrorInvalidRequest
+    | SignUpError
 
 
-type LogInResponse
-    = LogInSuccess
-    | LogInMistakePasswordOrEmail
+type LogInResponseOk
+    = LogInOk Token
+
+
+type Token
+    = Token String
+
+
+type LogInResponseError
+    = LogInErrorMistakePasswordOrEmail
+    | LogInErrorNoToken
+    | LogInErrorBadUrl
+    | LogInErrorTimeout
+    | LogInErrorNetworkError
     | LogInError
 
 
@@ -233,7 +249,10 @@ update msg (Model rec) =
             , Http.post
                 { url = "/signup"
                 , body = Http.jsonBody (signUpJson signUpData)
-                , expect = Http.expectJson SignUpResponse signUpResponseDecoder
+                , expect =
+                    Http.expectStringResponse
+                        SignUpResponse
+                        signUpResponseToResult
                 }
             )
 
@@ -255,8 +274,17 @@ update msg (Model rec) =
             , Http.post
                 { url = "/logIn"
                 , body = Http.jsonBody (logInJson logInData)
-                , expect = Http.expectJson LogInResponse logInResponseDecoder
+                , expect = Http.expectStringResponse LogInResponse logInResponseToResult
                 }
+            )
+
+        Response response ->
+            let
+                _ =
+                    Debug.log "response" response
+            in
+            ( Model rec
+            , Cmd.none
             )
 
         SignUpResponse response ->
@@ -368,43 +396,106 @@ update msg (Model rec) =
             )
 
 
-signUpResponseDecoder : Json.Decode.Decoder SignUpResponse
-signUpResponseDecoder =
+signUpResponseToResult : Http.Response String -> Result SignUpResponseError ()
+signUpResponseToResult response =
+    case response of
+        Http.BadUrl_ _ ->
+            Err SignUpErrorBadUrl
+
+        Http.Timeout_ ->
+            Err SignUpErrorTimeout
+
+        Http.NetworkError_ ->
+            Err SignUpErrorNetworkError
+
+        Http.BadStatus_ metadata body ->
+            let
+                _ =
+                    Debug.log "signUp GoodStatus Matadata" metadata
+            in
+            Json.Decode.decodeString signUpResponseBodyDecoder body
+                |> Result.withDefault (Err SignUpError)
+
+        Http.GoodStatus_ metadata body ->
+            let
+                _ =
+                    Debug.log "signUp BadStatus Matadata" metadata
+            in
+            Json.Decode.decodeString signUpResponseBodyDecoder body
+                |> Result.withDefault (Err SignUpError)
+
+
+signUpResponseBodyDecoder : Json.Decode.Decoder (Result SignUpResponseError ())
+signUpResponseBodyDecoder =
     Json.Decode.field "result" Json.Decode.string
         |> Json.Decode.map
             (\signUpResultValue ->
                 case signUpResultValue of
                     "ok" ->
-                        SignUpResponseOk
+                        Ok ()
 
                     "alreadySignUp" ->
-                        SignUpResponseResultSignUp
+                        Err SignUpErrorAlreadySignUp
 
                     "error" ->
-                        SignUpResponseError
+                        Err SignUpErrorInvalidRequest
 
                     _ ->
-                        SignUpResponseError
+                        Err SignUpError
             )
 
 
-logInResponseDecoder : Json.Decode.Decoder LogInResponse
-logInResponseDecoder =
+logInResponseToResult : Http.Response String -> Result LogInResponseError LogInResponseOk
+logInResponseToResult response =
+    case response of
+        Http.BadUrl_ _ ->
+            Err LogInErrorBadUrl
+
+        Http.Timeout_ ->
+            Err LogInErrorTimeout
+
+        Http.NetworkError_ ->
+            Err LogInErrorNetworkError
+
+        Http.BadStatus_ metadata body ->
+            let
+                _ =
+                    Debug.log "goodStatus Matadata" metadata
+            in
+            Json.Decode.decodeString (logInResponseBodyDecoder metadata) body
+                |> Result.withDefault (Err LogInError)
+
+        Http.GoodStatus_ metadata body ->
+            let
+                _ =
+                    Debug.log "goodStatus Matadata" metadata
+            in
+            Json.Decode.decodeString (logInResponseBodyDecoder metadata) body
+                |> Result.withDefault (Err LogInError)
+
+
+logInResponseBodyDecoder : Http.Metadata -> Json.Decode.Decoder (Result LogInResponseError LogInResponseOk)
+logInResponseBodyDecoder { headers } =
     Json.Decode.field "result" Json.Decode.string
         |> Json.Decode.map
             (\result ->
                 case result of
                     "ok" ->
-                        LogInSuccess
+                        case Dict.get "token" headers of
+                            Just token ->
+                                Ok (LogInOk (Token token))
+
+                            Nothing ->
+                                Err LogInErrorNoToken
 
                     "mistake" ->
-                        LogInMistakePasswordOrEmail
+                        Err LogInErrorMistakePasswordOrEmail
 
                     "error" ->
-                        LogInError
+                        Err LogInError
 
                     _ ->
-                        LogInError
+                        Err LogInError
             )
 
 
@@ -1735,34 +1826,13 @@ signUpJson { emailAddress, pass, image } =
         )
 
 
-sendSignUpEmailView : EmailAddress.EmailAddress -> Maybe (Result Http.Error SignUpResponse) -> List (Html.Html msg)
-sendSignUpEmailView emailAddress response =
+sendSignUpEmailView : EmailAddress.EmailAddress -> Maybe (Result SignUpResponseError ()) -> List (Html.Html msg)
+sendSignUpEmailView emailAddress signUpResultMaybe =
     [ Html.div [ Html.Attributes.class "mainView-simpleText" ]
         [ Html.text
-            (case response of
-                Just (Ok signUpResponse) ->
-                    signUpResponseToString emailAddress signUpResponse
-
-                Just (Err (Http.BadUrl _)) ->
-                    "正しいURLが指定されなかった"
-
-                Just (Err Http.Timeout) ->
-                    "タイムアウトエラー。回線が混雑していると見られます"
-
-                Just (Err Http.NetworkError) ->
-                    "ネットワークエラー。接続が切れている可能性があります"
-
-                Just (Err (Http.BadStatus code)) ->
-                    "バッドステータス " ++ String.fromInt code
-
-                Just (Err (Http.BadBody string)) ->
-                    case Json.Decode.decodeString signUpResponseDecoder string of
-                        Ok signUpResponse ->
-                            "エラー"
-                                ++ signUpResponseToString emailAddress signUpResponse
-
-                        Err _ ->
-                            "エラー。不明なエラー"
+            (case signUpResultMaybe of
+                Just signUpResult ->
+                    signUpResultToString emailAddress signUpResult
 
                 Nothing ->
                     "新規登録の情報を送信中"
@@ -1771,19 +1841,31 @@ sendSignUpEmailView emailAddress response =
     ]
 
 
-signUpResponseToString : EmailAddress.EmailAddress -> SignUpResponse -> String
-signUpResponseToString emailAddress signUpResponse =
-    case signUpResponse of
-        SignUpResponseOk ->
+signUpResultToString : EmailAddress.EmailAddress -> Result SignUpResponseError () -> String
+signUpResultToString emailAddress signUpResult =
+    case signUpResult of
+        Ok () ->
             "送信完了。"
                 ++ EmailAddress.toString emailAddress
                 ++ "にメールを送信しました。届いたメールのリンクをクリックして認証をしてください"
 
-        SignUpResponseResultSignUp ->
+        Err SignUpErrorAlreadySignUp ->
             "すでにあなたは登録されています"
 
-        SignUpResponseError ->
+        Err SignUpErrorBadUrl ->
+            "正しいURLが指定されなかった"
+
+        Err SignUpErrorTimeout ->
+            "タイムアウトエラー。回線が混雑していると見られます"
+
+        Err SignUpErrorInvalidRequest ->
             "送信データが条件を満たしていませんでした"
+
+        Err SignUpErrorNetworkError ->
+            "ネットワークエラー。接続が切れている可能性があります"
+
+        Err SignUpError ->
+            "サーバーの回答を理解することができませんでした"
 
 
 subscription : Model -> Sub Msg
