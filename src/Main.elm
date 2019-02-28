@@ -105,7 +105,9 @@ type Msg
     | UrlChange Url.Url
     | UrlRequest Browser.UrlRequest
     | SignUp { emailAddress : EmailAddress.EmailAddress, pass : Password.Password, image : Maybe String }
+    | LogIn { emailAddress : EmailAddress.EmailAddress, pass : Password.Password }
     | SignUpResponse (Result Http.Error SignUpResponse)
+    | LogInResponse (Result Http.Error LogInResponse)
     | InputStudentIdOrEmailAddress String
     | InputStudentImage String
     | ReceiveImageDataUrl String
@@ -116,6 +118,12 @@ type SignUpResponse
     = SignUpResponseOk
     | SignUpResponseResultSignUp
     | SignUpResponseError
+
+
+type LogInResponse
+    = LogInSuccess
+    | LogInMistakePasswordOrEmail
+    | LogInError
 
 
 main : Program () Model Msg
@@ -218,25 +226,51 @@ update msg (Model rec) =
                     )
 
         SignUp signUpData ->
-            case rec.page of
-                PageSignUp userSignUpPage ->
-                    ( Model
-                        { rec
-                            | page = PageSendSignUpEmail signUpData.emailAddress Nothing
-                        }
-                    , Http.post
-                        { url = "/signup"
-                        , body = Http.jsonBody (signUpJson signUpData)
-                        , expect = Http.expectJson SignUpResponse signUpResponseDecoder
-                        }
-                    )
+            ( Model
+                { rec
+                    | page = PageSendSignUpEmail signUpData.emailAddress Nothing
+                }
+            , Http.post
+                { url = "/signup"
+                , body = Http.jsonBody (signUpJson signUpData)
+                , expect = Http.expectJson SignUpResponse signUpResponseDecoder
+                }
+            )
+
+        LogIn logInData ->
+            ( case rec.page of
+                PageLogIn (LogInPage { nextPage }) ->
+                    case nextPage of
+                        Just next ->
+                            Model
+                                { rec
+                                    | page = next
+                                }
+
+                        Nothing ->
+                            Model rec
 
                 _ ->
-                    ( Model rec
-                    , Cmd.none
-                    )
+                    Model rec
+            , Http.post
+                { url = "/logIn"
+                , body = Http.jsonBody (logInJson logInData)
+                , expect = Http.expectJson LogInResponse logInResponseDecoder
+                }
+            )
 
-        SignUpResponse _ ->
+        SignUpResponse response ->
+            ( case rec.page of
+                PageSendSignUpEmail emailAddress _ ->
+                    Model
+                        { rec | page = PageSendSignUpEmail emailAddress (Just response) }
+
+                _ ->
+                    Model rec
+            , Cmd.none
+            )
+
+        LogInResponse _ ->
             ( Model rec
             , Cmd.none
             )
@@ -346,8 +380,31 @@ signUpResponseDecoder =
                     "alreadySignUp" ->
                         SignUpResponseResultSignUp
 
+                    "error" ->
+                        SignUpResponseError
+
                     _ ->
                         SignUpResponseError
+            )
+
+
+logInResponseDecoder : Json.Decode.Decoder LogInResponse
+logInResponseDecoder =
+    Json.Decode.field "result" Json.Decode.string
+        |> Json.Decode.map
+            (\result ->
+                case result of
+                    "ok" ->
+                        LogInSuccess
+
+                    "mistake" ->
+                        LogInMistakePasswordOrEmail
+
+                    "error" ->
+                        LogInError
+
+                    _ ->
+                        LogInError
             )
 
 
@@ -1141,7 +1198,7 @@ logInView analysisStudentIdOrEmailAddressResult password =
             [ Html.Attributes.class "logIn-group" ]
             [ logInIdView analysisStudentIdOrEmailAddressResult
             , logInPasswordView
-            , logInButton (getLogInData analysisStudentIdOrEmailAddressResult password /= Nothing)
+            , logInButton (getLogInData analysisStudentIdOrEmailAddressResult password)
             ]
         , orLabel
         , Html.div
@@ -1210,23 +1267,31 @@ logInPasswordView =
         ]
 
 
+logInButton : Maybe { emailAddress : EmailAddress.EmailAddress, pass : Password.Password } -> Html.Html Msg
+logInButton logInDataMaybe =
+    Html.div
+        []
+        [ Html.button
+            ([ Html.Attributes.class "logIn-logInButton"
+             , Html.Attributes.disabled (logInDataMaybe == Nothing)
+             ]
+                ++ (case logInDataMaybe of
+                        Just logInData ->
+                            [ Html.Events.stopPropagationOn "click" (Json.Decode.succeed ( LogIn logInData, True )) ]
+
+                        Nothing ->
+                            []
+                   )
+            )
+            [ Html.text "ログイン" ]
+        ]
+
+
 {-| パスワードを忘れた画面
 -}
 forgotPasswordView : List (Html.Html msg)
 forgotPasswordView =
     [ Html.text "パスワードを忘れたら。登録している学籍番号かメールアドレスを入力してください。パスワードを再発行します。" ]
-
-
-logInButton : Bool -> Html.Html msg
-logInButton isValid =
-    Html.div
-        []
-        [ Html.button
-            [ Html.Attributes.class "logIn-logInButton"
-            , Html.Attributes.disabled (not isValid)
-            ]
-            [ Html.text "ログイン" ]
-        ]
 
 
 orLabel : Html.Html msg
