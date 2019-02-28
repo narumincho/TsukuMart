@@ -13143,6 +13143,84 @@ var author$project$Main$itemImage = A2(
 			elm$html$Html$Attributes$src('assets/itemDummy.png')
 		]),
 	_List_Nil);
+var elm$core$Basics$modBy = _Basics_modBy;
+var elm$core$String$cons = _String_cons;
+var elm$core$String$fromChar = function (_char) {
+	return A2(elm$core$String$cons, _char, '');
+};
+var elm$core$Bitwise$shiftRightBy = _Bitwise_shiftRightBy;
+var elm$core$String$repeatHelp = F3(
+	function (n, chunk, result) {
+		return (n <= 0) ? result : A3(
+			elm$core$String$repeatHelp,
+			n >> 1,
+			_Utils_ap(chunk, chunk),
+			(!(n & 1)) ? result : _Utils_ap(result, chunk));
+	});
+var elm$core$String$repeat = F2(
+	function (n, chunk) {
+		return A3(elm$core$String$repeatHelp, n, chunk, '');
+	});
+var elm$core$String$padLeft = F3(
+	function (n, _char, string) {
+		return _Utils_ap(
+			A2(
+				elm$core$String$repeat,
+				n - elm$core$String$length(string),
+				elm$core$String$fromChar(_char)),
+			string);
+	});
+var elm$core$Tuple$mapFirst = F2(
+	function (func, _n0) {
+		var x = _n0.a;
+		var y = _n0.b;
+		return _Utils_Tuple2(
+			func(x),
+			y);
+	});
+var elm$core$Tuple$mapSecond = F2(
+	function (func, _n0) {
+		var x = _n0.a;
+		var y = _n0.b;
+		return _Utils_Tuple2(
+			x,
+			func(y));
+	});
+var author$project$Main$priceToString = function (price) {
+	return A2(
+		elm$core$String$join,
+		',',
+		function (_n0) {
+			var a = _n0.a;
+			var b = _n0.b;
+			return A2(elm$core$List$cons, a, b);
+		}(
+			A2(
+				elm$core$Tuple$mapSecond,
+				elm$core$List$map(
+					A2(
+						elm$core$Basics$composeR,
+						elm$core$String$fromInt,
+						A2(
+							elm$core$String$padLeft,
+							3,
+							_Utils_chr('0')))),
+				A2(
+					elm$core$Tuple$mapFirst,
+					elm$core$String$fromInt,
+					(price < 1000) ? _Utils_Tuple2(price, _List_Nil) : ((price < 1000000) ? _Utils_Tuple2(
+						(price / 1000) | 0,
+						_List_fromArray(
+							[
+								A2(elm$core$Basics$modBy, 1000, price)
+							])) : _Utils_Tuple2(
+						(price / 1000000) | 0,
+						_List_fromArray(
+							[
+								A2(elm$core$Basics$modBy, 1000, (price / 1000) | 0),
+								A2(elm$core$Basics$modBy, 1000, price)
+							]))))))) + '円';
+};
 var author$project$Main$item = function (_n0) {
 	var title = _n0.title;
 	var price = _n0.price;
@@ -13175,7 +13253,7 @@ var author$project$Main$item = function (_n0) {
 				_List_fromArray(
 					[
 						elm$html$Html$text(
-						elm$core$String$fromInt(price) + '円')
+						author$project$Main$priceToString(price))
 					])),
 				A2(
 				elm$html$Html$div,

@@ -249,10 +249,7 @@ update msg (Model rec) =
             , Http.post
                 { url = "/signup"
                 , body = Http.jsonBody (signUpJson signUpData)
-                , expect =
-                    Http.expectStringResponse
-                        SignUpResponse
-                        signUpResponseToResult
+                , expect = Http.expectStringResponse SignUpResponse signUpResponseToResult
                 }
             )
 
@@ -1169,9 +1166,28 @@ item { title, price, like } =
     Html.div [ Html.Attributes.class "item" ]
         [ itemImage
         , Html.div [ Html.Attributes.class "itemTitle" ] [ Html.text title ]
-        , Html.div [ Html.Attributes.class "itemPrice" ] [ Html.text (String.fromInt price ++ "円") ]
+        , Html.div [ Html.Attributes.class "itemPrice" ] [ Html.text (priceToString price) ]
         , Html.div [] [ Html.text ("いいね" ++ String.fromInt like) ]
         ]
+
+
+priceToString : Int -> String
+priceToString price =
+    ((if price < 1000 then
+        ( price, [] )
+
+      else if price < 1000000 then
+        ( price // 1000, [ price |> modBy 1000 ] )
+
+      else
+        ( price // 1000000, [ price // 1000 |> modBy 1000, price |> modBy 1000 ] )
+     )
+        |> Tuple.mapFirst String.fromInt
+        |> Tuple.mapSecond (List.map (String.fromInt >> String.padLeft 3 '0'))
+        |> (\( a, b ) -> a :: b)
+        |> String.join ","
+    )
+        ++ "円"
 
 
 itemImage : Html.Html Msg
