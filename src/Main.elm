@@ -1,9 +1,11 @@
 port module Main exposing (main)
 
+import Api
 import Browser
 import Browser.Navigation
 import Dict
 import EmailAddress
+import Goods
 import Html
 import Html.Attributes
 import Html.Events
@@ -64,8 +66,8 @@ type Page
     | PageExhibitionItemList
     | PagePurchaseItemList
     | PageExhibition ExhibitionPage
-    | PageSendSignUpEmail EmailAddress.EmailAddress (Maybe (Result SignUpResponseError SignUpResponseOk))
-    | PageGoods
+    | PageSendSignUpEmail EmailAddress.EmailAddress (Maybe (Result Api.SignUpResponseError Api.SignUpResponseOk))
+    | PageGoods Goods.Goods
 
 
 type UserSignUpPage
@@ -114,7 +116,7 @@ type Msg
     | UrlRequest Browser.UrlRequest
     | SignUp { emailAddress : EmailAddress.EmailAddress, pass : Password.Password, image : Maybe String }
     | LogIn { emailAddress : EmailAddress.EmailAddress, pass : Password.Password }
-    | SignUpResponse (Result SignUpResponseError SignUpResponseOk)
+    | SignUpResponse (Result Api.SignUpResponseError Api.SignUpResponseOk)
     | SignUpConfirmResponse (Result () ())
     | LogInResponse (Result LogInResponseError LogInResponseOk)
     | InputStudentIdOrEmailAddress String
@@ -124,22 +126,6 @@ type Msg
     | ReceiveImageDataUrlMulti (List String)
     | InputPassword String
     | SendConfirmToken
-
-
-type SignUpResponseOk
-    = SignUpResponseOk ConfirmToken
-
-
-type ConfirmToken
-    = ConfirmToken String
-
-
-type SignUpResponseError
-    = SignUpErrorAlreadySignUp
-    | SignUpErrorBadUrl
-    | SignUpErrorTimeout
-    | SignUpErrorNetworkError
-    | SignUpError
 
 
 type LogInResponseOk
@@ -263,11 +249,7 @@ update msg (Model rec) =
                 { rec
                     | page = PageSendSignUpEmail signUpData.emailAddress Nothing
                 }
-            , Http.post
-                { url = "http://tsukumart.com/auth/signup/"
-                , body = Http.jsonBody (signUpJson signUpData)
-                , expect = Http.expectStringResponse SignUpResponse signUpResponseToResult
-                }
+            , Api.signUp signUpData SignUpResponse
             )
 
         LogIn logInData ->
@@ -435,7 +417,7 @@ update msg (Model rec) =
 
         SendConfirmToken ->
             case rec.page of
-                PageSendSignUpEmail _ (Just (Ok (SignUpResponseOk (ConfirmToken token)))) ->
+                PageSendSignUpEmail _ (Just (Ok (Api.SignUpResponseOk (Api.ConfirmToken token)))) ->
                     ( Model rec
                     , Http.request
                         { method = "POST"
@@ -452,45 +434,6 @@ update msg (Model rec) =
                     ( Model rec
                     , Cmd.none
                     )
-
-
-signUpResponseToResult : Http.Response String -> Result SignUpResponseError SignUpResponseOk
-signUpResponseToResult response =
-    case response of
-        Http.BadUrl_ _ ->
-            Err SignUpErrorBadUrl
-
-        Http.Timeout_ ->
-            Err SignUpErrorTimeout
-
-        Http.NetworkError_ ->
-            Err SignUpErrorNetworkError
-
-        Http.BadStatus_ _ body ->
-            Json.Decode.decodeString signUpResponseBodyDecoder body
-                |> Result.withDefault (Err SignUpError)
-
-        Http.GoodStatus_ _ body ->
-            Json.Decode.decodeString signUpResponseBodyDecoder body
-                |> Result.withDefault (Err SignUpError)
-
-
-signUpResponseBodyDecoder : Json.Decode.Decoder (Result SignUpResponseError SignUpResponseOk)
-signUpResponseBodyDecoder =
-    Json.Decode.oneOf
-        [ Json.Decode.field "confirm_token" Json.Decode.string
-            |> Json.Decode.map (\token -> Ok (SignUpResponseOk (ConfirmToken token)))
-        , Json.Decode.field "reason" Json.Decode.string
-            |> Json.Decode.map
-                (\reason ->
-                    case reason of
-                        "Email already exists" ->
-                            Err SignUpErrorAlreadySignUp
-
-                        _ ->
-                            Err SignUpError
-                )
-        ]
 
 
 logInResponseToResult : Http.Response String -> Result LogInResponseError LogInResponseOk
@@ -605,7 +548,7 @@ urlParser beforePageMaybe =
             (PageExhibition (ExhibitionPage { title = "", description = "", price = Nothing, image = [] }))
             (Url.Parser.s "exhibition")
         , Url.Parser.map
-            PageGoods
+            (PageGoods Goods.none)
             (Url.Parser.s "goods" </> Url.Parser.s "00000000")
         ]
 
@@ -1037,7 +980,7 @@ mainTab page wideScreenMode =
                 PageSendSignUpEmail _ _ ->
                     TabNone
 
-                PageGoods ->
+                PageGoods _ ->
                     TabNone
     in
     Html.div
@@ -1187,7 +1130,7 @@ mainView page isWideScreenMode =
             PageSendSignUpEmail emailAddress response ->
                 sendSignUpEmailView emailAddress response
 
-            PageGoods ->
+            PageGoods _ ->
                 [ Html.text "アイテム詳細ページ" ]
 
             _ ->
@@ -1926,25 +1869,7 @@ getSignUpData userSignUpPage =
                     Nothing
 
 
-{-| 新規登録のJSONを生成
--}
-signUpJson : { emailAddress : EmailAddress.EmailAddress, pass : Password.Password, image : Maybe String } -> Json.Encode.Value
-signUpJson { emailAddress, pass, image } =
-    Json.Encode.object
-        ([ ( "email", Json.Encode.string (EmailAddress.toString emailAddress) )
-         , ( "password", Json.Encode.string (Password.toString pass) )
-         ]
-            ++ (case image of
-                    Just imageDataUrl ->
-                        [ ( "image", Json.Encode.string imageDataUrl ) ]
-
-                    Nothing ->
-                        []
-               )
-        )
-
-
-sendSignUpEmailView : EmailAddress.EmailAddress -> Maybe (Result SignUpResponseError SignUpResponseOk) -> List (Html.Html Msg)
+sendSignUpEmailView : EmailAddress.EmailAddress -> Maybe (Result Api.SignUpResponseError Api.SignUpResponseOk) -> List (Html.Html Msg)
 sendSignUpEmailView emailAddress signUpResultMaybe =
     [ Html.div [ Html.Attributes.class "signUp-resultMsg" ]
         (case signUpResultMaybe of
@@ -1957,10 +1882,10 @@ sendSignUpEmailView emailAddress signUpResultMaybe =
     ]
 
 
-signUpResultToString : EmailAddress.EmailAddress -> Result SignUpResponseError SignUpResponseOk -> List (Html.Html Msg)
+signUpResultToString : EmailAddress.EmailAddress -> Result Api.SignUpResponseError Api.SignUpResponseOk -> List (Html.Html Msg)
 signUpResultToString emailAddress signUpResult =
     case signUpResult of
-        Ok (SignUpResponseOk (ConfirmToken token)) ->
+        Ok (Api.SignUpResponseOk (Api.ConfirmToken token)) ->
             [ Html.text
                 ("送信完了。"
                     ++ EmailAddress.toString emailAddress
@@ -1976,19 +1901,19 @@ signUpResultToString emailAddress signUpResult =
                 [ Html.text "confirm_tokenを送信" ]
             ]
 
-        Err SignUpErrorAlreadySignUp ->
+        Err Api.SignUpErrorAlreadySignUp ->
             [ Html.text "すでにあなたは登録されています" ]
 
-        Err SignUpErrorBadUrl ->
+        Err Api.SignUpErrorBadUrl ->
             [ Html.text "正しいURLが指定されなかった" ]
 
-        Err SignUpErrorTimeout ->
+        Err Api.SignUpErrorTimeout ->
             [ Html.text "タイムアウトエラー。回線が混雑しています" ]
 
-        Err SignUpErrorNetworkError ->
+        Err Api.SignUpErrorNetworkError ->
             [ Html.text "ネットワークエラー。接続が切れている可能性があります" ]
 
-        Err SignUpError ->
+        Err Api.SignUpError ->
             [ Html.text "サーバーの回答を理解することができませんでした" ]
 
 
