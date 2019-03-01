@@ -115,6 +115,7 @@ type Msg
     | SignUp { emailAddress : EmailAddress.EmailAddress, pass : Password.Password, image : Maybe String }
     | LogIn { emailAddress : EmailAddress.EmailAddress, pass : Password.Password }
     | SignUpResponse (Result SignUpResponseError SignUpResponseOk)
+    | SignUpConfirmResponse (Result () ())
     | LogInResponse (Result LogInResponseError LogInResponseOk)
     | InputStudentIdOrEmailAddress String
     | InputStudentImage String
@@ -122,6 +123,7 @@ type Msg
     | ReceiveImageDataUrl String
     | ReceiveImageDataUrlMulti (List String)
     | InputPassword String
+    | SendConfirmToken
 
 
 type SignUpResponseOk
@@ -307,6 +309,11 @@ update msg (Model rec) =
             , Cmd.none
             )
 
+        SignUpConfirmResponse _ ->
+            ( Model rec
+            , Cmd.none
+            )
+
         InputStudentIdOrEmailAddress string ->
             ( case rec.page of
                 PageSignUp (UserSignUpPageStudentHasSAddress r) ->
@@ -427,6 +434,26 @@ update msg (Model rec) =
             , Cmd.none
             )
 
+        SendConfirmToken ->
+            case rec.page of
+                PageSendSignUpEmail _ (Just (Ok (SignUpResponseOk (ConfirmToken token)))) ->
+                    ( Model rec
+                    , Http.request
+                        { method = "POST"
+                        , headers = [ Http.header "Authorization" token ]
+                        , url = "http://tsukumart.com/auth/signup/confirm/"
+                        , body = Http.emptyBody
+                        , expect = Http.expectStringResponse SignUpConfirmResponse signUpConfirmResponseToResult
+                        , timeout = Nothing
+                        , tracker = Nothing
+                        }
+                    )
+
+                _ ->
+                    ( Model rec
+                    , Cmd.none
+                    )
+
 
 signUpResponseToResult : Http.Response String -> Result SignUpResponseError SignUpResponseOk
 signUpResponseToResult response =
@@ -499,6 +526,25 @@ logInResponseBodyDecoder { headers } =
                     _ ->
                         Err LogInError
             )
+
+
+signUpConfirmResponseToResult : Http.Response String -> Result () ()
+signUpConfirmResponseToResult response =
+    case response of
+        Http.BadUrl_ _ ->
+            Err ()
+
+        Http.Timeout_ ->
+            Err ()
+
+        Http.NetworkError_ ->
+            Err ()
+
+        Http.BadStatus_ _ _ ->
+            Err ()
+
+        Http.GoodStatus_ _ _ ->
+            Ok ()
 
 
 urlToPage : Url.Url -> Maybe Page -> Page
@@ -1887,49 +1933,55 @@ signUpJson { emailAddress, pass, image } =
         )
 
 
-sendSignUpEmailView : EmailAddress.EmailAddress -> Maybe (Result SignUpResponseError SignUpResponseOk) -> List (Html.Html msg)
+sendSignUpEmailView : EmailAddress.EmailAddress -> Maybe (Result SignUpResponseError SignUpResponseOk) -> List (Html.Html Msg)
 sendSignUpEmailView emailAddress signUpResultMaybe =
     [ Html.div [ Html.Attributes.class "signUp-resultMsg" ]
-        [ Html.text
-            (case signUpResultMaybe of
-                Just signUpResult ->
-                    signUpResultToString emailAddress signUpResult
+        (case signUpResultMaybe of
+            Just signUpResult ->
+                signUpResultToString emailAddress signUpResult
 
-                Nothing ->
-                    "新規登録の情報を送信中"
-            )
-        ]
+            Nothing ->
+                [ Html.text "新規登録の情報を送信中" ]
+        )
     ]
 
 
-signUpResultToString : EmailAddress.EmailAddress -> Result SignUpResponseError SignUpResponseOk -> String
+signUpResultToString : EmailAddress.EmailAddress -> Result SignUpResponseError SignUpResponseOk -> List (Html.Html Msg)
 signUpResultToString emailAddress signUpResult =
     case signUpResult of
         Ok (SignUpResponseOk (ConfirmToken token)) ->
-            "送信完了。"
-                ++ EmailAddress.toString emailAddress
-                ++ "にメールを送信しました。届いたメールのリンクをクリックして認証をしてください"
-                ++ "token = \""
-                ++ token
-                ++ "\""
+            [ Html.text
+                ("送信完了。"
+                    ++ EmailAddress.toString emailAddress
+                    ++ "にメールを送信しました。届いたメールのリンクをクリックして認証をしてください"
+                    ++ "token = \""
+                    ++ token
+                    ++ "\""
+                )
+            , Html.div
+                [ Html.Events.onClick SendConfirmToken
+                , Html.Attributes.style "border" "solid 2px black"
+                ]
+                [ Html.text "confirm_tokenを送信" ]
+            ]
 
         Err SignUpErrorAlreadySignUp ->
-            "すでにあなたは登録されています"
+            [ Html.text "すでにあなたは登録されています" ]
 
         Err SignUpErrorBadUrl ->
-            "正しいURLが指定されなかった"
+            [ Html.text "正しいURLが指定されなかった" ]
 
         Err SignUpErrorTimeout ->
-            "タイムアウトエラー。回線が混雑していると見られます"
+            [ Html.text "タイムアウトエラー。回線が混雑していると見られます" ]
 
         Err SignUpErrorInvalidRequest ->
-            "送信データが条件を満たしていませんでした"
+            [ Html.text "送信データが条件を満たしていませんでした" ]
 
         Err SignUpErrorNetworkError ->
-            "ネットワークエラー。接続が切れている可能性があります"
+            [ Html.text "ネットワークエラー。接続が切れている可能性があります" ]
 
         Err SignUpError ->
-            "サーバーの回答を理解することができませんでした"
+            [ Html.text "サーバーの回答を理解することができませんでした" ]
 
 
 subscription : Model -> Sub Msg
