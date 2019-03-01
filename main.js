@@ -8019,7 +8019,6 @@ var author$project$Main$logInResponseBodyDecoder = function (_n0) {
 		},
 		A2(elm$json$Json$Decode$field, 'result', elm$json$Json$Decode$string));
 };
-var elm$core$Debug$log = _Debug_log;
 var elm$core$Result$withDefault = F2(
 	function (def, result) {
 		if (result.$ === 'Ok') {
@@ -8041,7 +8040,6 @@ var author$project$Main$logInResponseToResult = function (response) {
 		case 'BadStatus_':
 			var metadata = response.a;
 			var body = response.b;
-			var _n1 = A2(elm$core$Debug$log, 'goodStatus Matadata', metadata);
 			return A2(
 				elm$core$Result$withDefault,
 				elm$core$Result$Err(author$project$Main$LogInError),
@@ -8052,7 +8050,6 @@ var author$project$Main$logInResponseToResult = function (response) {
 		default:
 			var metadata = response.a;
 			var body = response.b;
-			var _n2 = A2(elm$core$Debug$log, 'goodStatus Matadata', metadata);
 			return A2(
 				elm$core$Result$withDefault,
 				elm$core$Result$Err(author$project$Main$LogInError),
@@ -8097,23 +8094,20 @@ var author$project$Main$SignUpError = {$: 'SignUpError'};
 var author$project$Main$SignUpErrorBadUrl = {$: 'SignUpErrorBadUrl'};
 var author$project$Main$SignUpErrorNetworkError = {$: 'SignUpErrorNetworkError'};
 var author$project$Main$SignUpErrorTimeout = {$: 'SignUpErrorTimeout'};
-var author$project$Main$SignUpErrorAlreadySignUp = {$: 'SignUpErrorAlreadySignUp'};
-var author$project$Main$SignUpErrorInvalidRequest = {$: 'SignUpErrorInvalidRequest'};
+var author$project$Main$ConfirmToken = function (a) {
+	return {$: 'ConfirmToken', a: a};
+};
+var author$project$Main$SignUpResponseOk = function (a) {
+	return {$: 'SignUpResponseOk', a: a};
+};
 var author$project$Main$signUpResponseBodyDecoder = A2(
 	elm$json$Json$Decode$map,
-	function (signUpResultValue) {
-		switch (signUpResultValue) {
-			case 'ok':
-				return elm$core$Result$Ok(_Utils_Tuple0);
-			case 'alreadySignUp':
-				return elm$core$Result$Err(author$project$Main$SignUpErrorAlreadySignUp);
-			case 'error':
-				return elm$core$Result$Err(author$project$Main$SignUpErrorInvalidRequest);
-			default:
-				return elm$core$Result$Err(author$project$Main$SignUpError);
-		}
+	function (token) {
+		return elm$core$Result$Ok(
+			author$project$Main$SignUpResponseOk(
+				author$project$Main$ConfirmToken(token)));
 	},
-	A2(elm$json$Json$Decode$field, 'result', elm$json$Json$Decode$string));
+	A2(elm$json$Json$Decode$field, 'confirm_token', elm$json$Json$Decode$string));
 var author$project$Main$signUpResponseToResult = function (response) {
 	switch (response.$) {
 		case 'BadUrl_':
@@ -8125,7 +8119,6 @@ var author$project$Main$signUpResponseToResult = function (response) {
 		case 'BadStatus_':
 			var metadata = response.a;
 			var body = response.b;
-			var _n1 = A2(elm$core$Debug$log, 'signUp GoodStatus Matadata', metadata);
 			return A2(
 				elm$core$Result$withDefault,
 				elm$core$Result$Err(author$project$Main$SignUpError),
@@ -8133,7 +8126,6 @@ var author$project$Main$signUpResponseToResult = function (response) {
 		default:
 			var metadata = response.a;
 			var body = response.b;
-			var _n2 = A2(elm$core$Debug$log, 'signUp BadStatus Matadata', metadata);
 			return A2(
 				elm$core$Result$withDefault,
 				elm$core$Result$Err(author$project$Main$SignUpError),
@@ -12140,7 +12132,7 @@ var author$project$Main$update = F2(
 							body: elm$http$Http$jsonBody(
 								author$project$Main$signUpJson(signUpData)),
 							expect: A2(elm$http$Http$expectStringResponse, author$project$Main$SignUpResponse, author$project$Main$signUpResponseToResult),
-							url: '/signup'
+							url: 'http://tsukumart.com/auth/signup/'
 						}));
 			case 'LogIn':
 				var logInData = msg.a;
@@ -12167,21 +12159,15 @@ var author$project$Main$update = F2(
 							body: elm$http$Http$jsonBody(
 								author$project$Main$logInJson(logInData)),
 							expect: A2(elm$http$Http$expectStringResponse, author$project$Main$LogInResponse, author$project$Main$logInResponseToResult),
-							url: '/logIn'
+							url: 'http://tsukumart.com/auth/token/'
 						}));
-			case 'Response':
-				var response = msg.a;
-				var _n9 = A2(elm$core$Debug$log, 'response', response);
-				return _Utils_Tuple2(
-					author$project$Main$Model(rec),
-					elm$core$Platform$Cmd$none);
 			case 'SignUpResponse':
 				var response = msg.a;
 				return _Utils_Tuple2(
 					function () {
-						var _n10 = rec.page;
-						if (_n10.$ === 'PageSendSignUpEmail') {
-							var emailAddress = _n10.a;
+						var _n9 = rec.page;
+						if (_n9.$ === 'PageSendSignUpEmail') {
+							var emailAddress = _n9.a;
 							return author$project$Main$Model(
 								_Utils_update(
 									rec,
@@ -12204,13 +12190,13 @@ var author$project$Main$update = F2(
 				var string = msg.a;
 				return _Utils_Tuple2(
 					function () {
-						var _n11 = rec.page;
-						_n11$3:
+						var _n10 = rec.page;
+						_n10$3:
 						while (true) {
-							switch (_n11.$) {
+							switch (_n10.$) {
 								case 'PageSignUp':
-									if (_n11.a.$ === 'UserSignUpPageStudentHasSAddress') {
-										var r = _n11.a.a;
+									if (_n10.a.$ === 'UserSignUpPageStudentHasSAddress') {
+										var r = _n10.a.a;
 										return author$project$Main$Model(
 											_Utils_update(
 												rec,
@@ -12224,7 +12210,7 @@ var author$project$Main$update = F2(
 																})))
 												}));
 									} else {
-										var r = _n11.a.a;
+										var r = _n10.a.a;
 										return author$project$Main$Model(
 											_Utils_update(
 												rec,
@@ -12239,8 +12225,8 @@ var author$project$Main$update = F2(
 												}));
 									}
 								case 'PageLogIn':
-									if (_n11.a.$ === 'LogInPage') {
-										var r = _n11.a.a;
+									if (_n10.a.$ === 'LogInPage') {
+										var r = _n10.a.a;
 										return author$project$Main$Model(
 											_Utils_update(
 												rec,
@@ -12254,10 +12240,10 @@ var author$project$Main$update = F2(
 																})))
 												}));
 									} else {
-										break _n11$3;
+										break _n10$3;
 									}
 								default:
-									break _n11$3;
+									break _n10$3;
 							}
 						}
 						return author$project$Main$Model(rec);
@@ -12277,13 +12263,13 @@ var author$project$Main$update = F2(
 				var urlString = msg.a;
 				return _Utils_Tuple2(
 					function () {
-						var _n12 = rec.page;
-						_n12$2:
+						var _n11 = rec.page;
+						_n11$2:
 						while (true) {
-							switch (_n12.$) {
+							switch (_n11.$) {
 								case 'PageSignUp':
-									if (_n12.a.$ === 'UserSignUpPageNewStudent') {
-										var r = _n12.a.a;
+									if (_n11.a.$ === 'UserSignUpPageNewStudent') {
+										var r = _n11.a.a;
 										return author$project$Main$Model(
 											_Utils_update(
 												rec,
@@ -12297,10 +12283,10 @@ var author$project$Main$update = F2(
 																})))
 												}));
 									} else {
-										break _n12$2;
+										break _n11$2;
 									}
 								case 'PageExhibition':
-									var r = _n12.a.a;
+									var r = _n11.a.a;
 									return author$project$Main$Model(
 										_Utils_update(
 											rec,
@@ -12315,7 +12301,7 @@ var author$project$Main$update = F2(
 															})))
 											}));
 								default:
-									break _n12$2;
+									break _n11$2;
 							}
 						}
 						return author$project$Main$Model(rec);
@@ -12325,9 +12311,9 @@ var author$project$Main$update = F2(
 				var urlStringList = msg.a;
 				return _Utils_Tuple2(
 					function () {
-						var _n13 = rec.page;
-						if (_n13.$ === 'PageExhibition') {
-							var r = _n13.a.a;
+						var _n12 = rec.page;
+						if (_n12.$ === 'PageExhibition') {
+							var r = _n12.a.a;
 							return author$project$Main$Model(
 								_Utils_update(
 									rec,
@@ -12347,13 +12333,13 @@ var author$project$Main$update = F2(
 				var string = msg.a;
 				return _Utils_Tuple2(
 					function () {
-						var _n14 = rec.page;
-						_n14$3:
+						var _n13 = rec.page;
+						_n13$3:
 						while (true) {
-							switch (_n14.$) {
+							switch (_n13.$) {
 								case 'PageSignUp':
-									if (_n14.a.$ === 'UserSignUpPageNewStudent') {
-										var r = _n14.a.a;
+									if (_n13.a.$ === 'UserSignUpPageNewStudent') {
+										var r = _n13.a.a;
 										return author$project$Main$Model(
 											_Utils_update(
 												rec,
@@ -12367,7 +12353,7 @@ var author$project$Main$update = F2(
 																})))
 												}));
 									} else {
-										var r = _n14.a.a;
+										var r = _n13.a.a;
 										return author$project$Main$Model(
 											_Utils_update(
 												rec,
@@ -12382,8 +12368,8 @@ var author$project$Main$update = F2(
 												}));
 									}
 								case 'PageLogIn':
-									if (_n14.a.$ === 'LogInPage') {
-										var r = _n14.a.a;
+									if (_n13.a.$ === 'LogInPage') {
+										var r = _n13.a.a;
 										return author$project$Main$Model(
 											_Utils_update(
 												rec,
@@ -12398,10 +12384,10 @@ var author$project$Main$update = F2(
 																})))
 												}));
 									} else {
-										break _n14$3;
+										break _n13$3;
 									}
 								default:
-									break _n14$3;
+									break _n13$3;
 							}
 						}
 						return author$project$Main$Model(rec);
@@ -13425,7 +13411,8 @@ var author$project$Main$itemList = function (isWideMode) {
 var author$project$Main$signUpResultToString = F2(
 	function (emailAddress, signUpResult) {
 		if (signUpResult.$ === 'Ok') {
-			return '送信完了。' + (author$project$EmailAddress$toString(emailAddress) + 'にメールを送信しました。届いたメールのリンクをクリックして認証をしてください');
+			var token = signUpResult.a.a.a;
+			return '送信完了。' + (author$project$EmailAddress$toString(emailAddress) + ('にメールを送信しました。届いたメールのリンクをクリックして認証をしてください' + ('token = \"' + (token + '\"'))));
 		} else {
 			switch (signUpResult.a.$) {
 				case 'SignUpErrorAlreadySignUp':
@@ -13457,7 +13444,7 @@ var author$project$Main$sendSignUpEmailView = F2(
 				elm$html$Html$div,
 				_List_fromArray(
 					[
-						elm$html$Html$Attributes$class('mainView-simpleText')
+						elm$html$Html$Attributes$class('signUp-resultMsg')
 					]),
 				_List_fromArray(
 					[
@@ -13808,13 +13795,24 @@ var author$project$Main$logInView = F2(
 			]);
 	});
 var author$project$Main$userLogInView = function (logInPage) {
-	if (logInPage.$ === 'LogInPage') {
-		var studentIdOrEmailAddress = logInPage.a.studentIdOrEmailAddress;
-		var password = logInPage.a.password;
-		return A2(author$project$Main$logInView, studentIdOrEmailAddress, password);
-	} else {
-		return author$project$Main$forgotPasswordView;
-	}
+	return _List_fromArray(
+		[
+			A2(
+			elm$html$Html$div,
+			_List_fromArray(
+				[
+					elm$html$Html$Attributes$class('logIn-Container')
+				]),
+			function () {
+				if (logInPage.$ === 'LogInPage') {
+					var studentIdOrEmailAddress = logInPage.a.studentIdOrEmailAddress;
+					var password = logInPage.a.password;
+					return A2(author$project$Main$logInView, studentIdOrEmailAddress, password);
+				} else {
+					return author$project$Main$forgotPasswordView;
+				}
+			}())
+		]);
 };
 var author$project$Main$getSignUpData = function (userSignUpPage) {
 	if (userSignUpPage.$ === 'UserSignUpPageStudentHasSAddress') {
@@ -14504,34 +14502,43 @@ var author$project$Main$userSignUpView = function (userSignUpPage) {
 	return _List_fromArray(
 		[
 			A2(
-			elm$html$Html$form,
+			elm$html$Html$div,
 			_List_fromArray(
 				[
-					elm$html$Html$Attributes$class('signUp')
+					elm$html$Html$Attributes$class('signUpContainer')
 				]),
-			_Utils_ap(
-				_List_fromArray(
-					[
-						author$project$Main$sAddressView(userSignUpPage)
-					]),
-				_Utils_ap(
-					function () {
-						if (userSignUpPage.$ === 'UserSignUpPageStudentHasSAddress') {
-							var studentIdOrTsukubaEmailAddress = userSignUpPage.a.studentIdOrTsukubaEmailAddress;
-							var password = userSignUpPage.a.password;
-							return A2(author$project$Main$studentHasSAddressFormList, studentIdOrTsukubaEmailAddress, password);
-						} else {
-							var emailAddress = userSignUpPage.a.emailAddress;
-							var imageUrl = userSignUpPage.a.imageUrl;
-							var password = userSignUpPage.a.password;
-							return A3(author$project$Main$newStudentFormList, emailAddress, imageUrl, password);
-						}
-					}(),
+			_List_fromArray(
+				[
+					A2(
+					elm$html$Html$form,
 					_List_fromArray(
 						[
-							author$project$Main$signUpSubmitButton(
-							author$project$Main$getSignUpData(userSignUpPage))
-						]))))
+							elm$html$Html$Attributes$class('signUp')
+						]),
+					_Utils_ap(
+						_List_fromArray(
+							[
+								author$project$Main$sAddressView(userSignUpPage)
+							]),
+						_Utils_ap(
+							function () {
+								if (userSignUpPage.$ === 'UserSignUpPageStudentHasSAddress') {
+									var studentIdOrTsukubaEmailAddress = userSignUpPage.a.studentIdOrTsukubaEmailAddress;
+									var password = userSignUpPage.a.password;
+									return A2(author$project$Main$studentHasSAddressFormList, studentIdOrTsukubaEmailAddress, password);
+								} else {
+									var emailAddress = userSignUpPage.a.emailAddress;
+									var imageUrl = userSignUpPage.a.imageUrl;
+									var password = userSignUpPage.a.password;
+									return A3(author$project$Main$newStudentFormList, emailAddress, imageUrl, password);
+								}
+							}(),
+							_List_fromArray(
+								[
+									author$project$Main$signUpSubmitButton(
+									author$project$Main$getSignUpData(userSignUpPage))
+								]))))
+				]))
 		]);
 };
 var author$project$Main$mainView = F2(
@@ -14792,4 +14799,4 @@ var elm$browser$Browser$application = _Browser_application;
 var author$project$Main$main = elm$browser$Browser$application(
 	{init: author$project$Main$init, onUrlChange: author$project$Main$UrlChange, onUrlRequest: author$project$Main$UrlRequest, subscriptions: author$project$Main$subscription, update: author$project$Main$update, view: author$project$Main$view});
 _Platform_export({'Main':{'init':author$project$Main$main(
-	elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.0"},"types":{"message":"Main.Msg","aliases":{"Url.Url":{"args":[],"type":"{ protocol : Url.Protocol, host : String.String, port_ : Maybe.Maybe Basics.Int, path : String.String, query : Maybe.Maybe String.String, fragment : Maybe.Maybe String.String }"}},"unions":{"Main.Msg":{"args":[],"tags":{"ChangePage":["Main.Page"],"OpenMenu":[],"CloseMenu":[],"ToWideScreenMode":[],"ToNarrowScreenMode":[],"UrlChange":["Url.Url"],"UrlRequest":["Browser.UrlRequest"],"SignUp":["{ emailAddress : EmailAddress.EmailAddress, pass : Password.Password, image : Maybe.Maybe String.String }"],"LogIn":["{ emailAddress : EmailAddress.EmailAddress, pass : Password.Password }"],"Response":["{ id : String.String, header : List.List ( String.String, String.String ), body : String.String }"],"SignUpResponse":["Result.Result Main.SignUpResponseError ()"],"LogInResponse":["Result.Result Main.LogInResponseError Main.LogInResponseOk"],"InputStudentIdOrEmailAddress":["String.String"],"InputStudentImage":["String.String"],"InputExhibitionImage":["String.String"],"ReceiveImageDataUrl":["String.String"],"ReceiveImageDataUrlMulti":["List.List String.String"],"InputPassword":["String.String"]}},"EmailAddress.EmailAddress":{"args":[],"tags":{"EmailAddress":["String.String"]}},"Main.LogInResponseError":{"args":[],"tags":{"LogInErrorMistakePasswordOrEmail":[],"LogInErrorNoToken":[],"LogInErrorBadUrl":[],"LogInErrorTimeout":[],"LogInErrorNetworkError":[],"LogInError":[]}},"Main.LogInResponseOk":{"args":[],"tags":{"LogInOk":["Main.Token"]}},"Main.Page":{"args":[],"tags":{"PageHome":["Main.Home"],"PageSignUp":["Main.UserSignUpPage"],"PageLogIn":["Main.LogInPage"],"PageLikeAndHistory":["Main.LikeAndHistory"],"PageExhibitionItemList":[],"PagePurchaseItemList":[],"PageExhibition":["Main.ExhibitionPage"],"PageSendSignUpEmail":["EmailAddress.EmailAddress","Maybe.Maybe (Result.Result Main.SignUpResponseError ())"],"PageGoods":[]}},"Main.SignUpResponseError":{"args":[],"tags":{"SignUpErrorAlreadySignUp":[],"SignUpErrorBadUrl":[],"SignUpErrorTimeout":[],"SignUpErrorNetworkError":[],"SignUpErrorInvalidRequest":[],"SignUpError":[]}},"Password.Password":{"args":[],"tags":{"Password":["List.List Password.PasswordChar"]}},"Browser.UrlRequest":{"args":[],"tags":{"Internal":["Url.Url"],"External":["String.String"]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"List.List":{"args":["a"],"tags":{}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"Result.Result":{"args":["error","value"],"tags":{"Ok":["value"],"Err":["error"]}},"String.String":{"args":[],"tags":{"String":[]}},"Url.Protocol":{"args":[],"tags":{"Http":[],"Https":[]}},"Main.ExhibitionPage":{"args":[],"tags":{"ExhibitionPage":["{ title : String.String, description : String.String, price : Maybe.Maybe Basics.Int, image : List.List String.String }"]}},"Main.Home":{"args":[],"tags":{"Recent":[],"Recommend":["{ valid : Basics.Bool }"],"Free":[]}},"Main.LikeAndHistory":{"args":[],"tags":{"Like":[],"History":[]}},"Main.LogInPage":{"args":[],"tags":{"LogInPage":["{ nextPage : Maybe.Maybe Main.Page, studentIdOrEmailAddress : Main.AnalysisStudentIdOrEmailAddressResult, password : Maybe.Maybe Password.Password }"],"ForgotPassword":[]}},"Main.Token":{"args":[],"tags":{"Token":["String.String"]}},"Main.UserSignUpPage":{"args":[],"tags":{"UserSignUpPageStudentHasSAddress":["{ studentIdOrTsukubaEmailAddress : Main.AnalysisStudentIdOrSAddressResult, password : Result.Result Password.Error Password.Password }"],"UserSignUpPageNewStudent":["{ emailAddress : Maybe.Maybe EmailAddress.EmailAddress, imageUrl : Maybe.Maybe String.String, password : Result.Result Password.Error Password.Password }"]}},"Password.PasswordChar":{"args":[],"tags":{"Pa":[],"Pb":[],"Pc":[],"Pd":[],"Pe":[],"Pf":[],"Pg":[],"Ph":[],"Pi":[],"Pj":[],"Pk":[],"Pl":[],"Pm":[],"Pn":[],"Po":[],"Pp":[],"Pq":[],"Pr":[],"Ps":[],"Pt":[],"Pu":[],"Pv":[],"Pw":[],"Px":[],"Py":[],"Pz":[],"PA":[],"PB":[],"PC":[],"PD":[],"PE":[],"PF":[],"PG":[],"PH":[],"PI":[],"PJ":[],"PK":[],"PL":[],"PM":[],"PN":[],"PO":[],"PP":[],"PQ":[],"PR":[],"PS":[],"PT":[],"PU":[],"PV":[],"PW":[],"PX":[],"PY":[],"PZ":[],"P0":[],"P1":[],"P2":[],"P3":[],"P4":[],"P5":[],"P6":[],"P7":[],"P8":[],"P9":[],"ExclamationMark":[],"QuotationMark":[],"NumberSign":[],"DollarSign":[],"PercentSign":[],"Ampersand":[],"Apostrophe":[],"LeftParenthesis":[],"RightParenthesis":[],"Asterisk":[],"PlusSign":[],"Comma":[],"HyphenMinus":[],"FullStop":[],"Solidus":[],"Colon":[],"Semicolon":[],"LessThanSign":[],"EqualsSign":[],"GreaterThanSign":[],"QuestionMark":[],"CommercialAt":[],"LeftSquareBracket":[],"ReverseSolidus":[],"RightSquareBracket":[],"CircumflexAccent":[],"LowLine":[],"GraveAccent":[],"LeftCurlyBracket":[],"VerticalLine":[],"RightCurlyBracket":[],"Tilde":[]}},"Main.AnalysisStudentIdOrEmailAddressResult":{"args":[],"tags":{"AENone":[],"AEStudentId":["StudentId.StudentId"],"AEEmailAddress":["EmailAddress.EmailAddress"]}},"Main.AnalysisStudentIdOrSAddressResult":{"args":[],"tags":{"ANone":[],"AStudentId":["StudentId.StudentId"],"ASAddress":["SAddress.SAddress"],"APartStudentId":["StudentId.PartStudentId"],"AEmailButIsNotTsukuba":[]}},"Password.Error":{"args":[],"tags":{"EAllNumberError":[],"EInvalidCharError":["Password.InvalidCharError"],"ELengthError":["Password.LengthError"],"EInvalidAndLengthError":["Password.InvalidCharError","Password.LengthError"],"EAllNumberAndLengthError":["Password.LengthError"]}},"Basics.Bool":{"args":[],"tags":{"True":[],"False":[]}},"Password.InvalidCharError":{"args":[],"tags":{"InvalidCharError":["Set.Set Char.Char"]}},"Password.LengthError":{"args":[],"tags":{"Short":[],"Long":[]}},"SAddress.SAddress":{"args":[],"tags":{"SAddress":["StudentId.StudentId","String.String"]}},"StudentId.PartStudentId":{"args":[],"tags":{"P0":[],"P1":["StudentId.Digit"],"P2":["StudentId.Digit","StudentId.Digit"],"P3":["StudentId.Digit","StudentId.Digit","StudentId.Digit"],"P4":["StudentId.Digit","StudentId.Digit","StudentId.Digit","StudentId.Digit"],"P5":["StudentId.Digit","StudentId.Digit","StudentId.Digit","StudentId.Digit","StudentId.Digit"],"P6":["StudentId.Digit","StudentId.Digit","StudentId.Digit","StudentId.Digit","StudentId.Digit","StudentId.Digit"]}},"StudentId.StudentId":{"args":[],"tags":{"StudentId":["StudentId.Digit","StudentId.Digit","StudentId.Digit","StudentId.Digit","StudentId.Digit","StudentId.Digit","StudentId.Digit"]}},"StudentId.Digit":{"args":[],"tags":{"D0":[],"D1":[],"D2":[],"D3":[],"D4":[],"D5":[],"D6":[],"D7":[],"D8":[],"D9":[]}},"Char.Char":{"args":[],"tags":{"Char":[]}},"Set.Set":{"args":["t"],"tags":{"Set_elm_builtin":["Dict.Dict t ()"]}},"Dict.Dict":{"args":["k","v"],"tags":{"RBNode_elm_builtin":["Dict.NColor","k","v","Dict.Dict k v","Dict.Dict k v"],"RBEmpty_elm_builtin":[]}},"Dict.NColor":{"args":[],"tags":{"Red":[],"Black":[]}}}}})}});}(this));
+	elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.0"},"types":{"message":"Main.Msg","aliases":{"Url.Url":{"args":[],"type":"{ protocol : Url.Protocol, host : String.String, port_ : Maybe.Maybe Basics.Int, path : String.String, query : Maybe.Maybe String.String, fragment : Maybe.Maybe String.String }"}},"unions":{"Main.Msg":{"args":[],"tags":{"ChangePage":["Main.Page"],"OpenMenu":[],"CloseMenu":[],"ToWideScreenMode":[],"ToNarrowScreenMode":[],"UrlChange":["Url.Url"],"UrlRequest":["Browser.UrlRequest"],"SignUp":["{ emailAddress : EmailAddress.EmailAddress, pass : Password.Password, image : Maybe.Maybe String.String }"],"LogIn":["{ emailAddress : EmailAddress.EmailAddress, pass : Password.Password }"],"SignUpResponse":["Result.Result Main.SignUpResponseError Main.SignUpResponseOk"],"LogInResponse":["Result.Result Main.LogInResponseError Main.LogInResponseOk"],"InputStudentIdOrEmailAddress":["String.String"],"InputStudentImage":["String.String"],"InputExhibitionImage":["String.String"],"ReceiveImageDataUrl":["String.String"],"ReceiveImageDataUrlMulti":["List.List String.String"],"InputPassword":["String.String"]}},"EmailAddress.EmailAddress":{"args":[],"tags":{"EmailAddress":["String.String"]}},"Main.LogInResponseError":{"args":[],"tags":{"LogInErrorMistakePasswordOrEmail":[],"LogInErrorNoToken":[],"LogInErrorBadUrl":[],"LogInErrorTimeout":[],"LogInErrorNetworkError":[],"LogInError":[]}},"Main.LogInResponseOk":{"args":[],"tags":{"LogInOk":["Main.Token"]}},"Main.Page":{"args":[],"tags":{"PageHome":["Main.Home"],"PageSignUp":["Main.UserSignUpPage"],"PageLogIn":["Main.LogInPage"],"PageLikeAndHistory":["Main.LikeAndHistory"],"PageExhibitionItemList":[],"PagePurchaseItemList":[],"PageExhibition":["Main.ExhibitionPage"],"PageSendSignUpEmail":["EmailAddress.EmailAddress","Maybe.Maybe (Result.Result Main.SignUpResponseError Main.SignUpResponseOk)"],"PageGoods":[]}},"Main.SignUpResponseError":{"args":[],"tags":{"SignUpErrorAlreadySignUp":[],"SignUpErrorBadUrl":[],"SignUpErrorTimeout":[],"SignUpErrorNetworkError":[],"SignUpErrorInvalidRequest":[],"SignUpError":[]}},"Main.SignUpResponseOk":{"args":[],"tags":{"SignUpResponseOk":["Main.ConfirmToken"]}},"Password.Password":{"args":[],"tags":{"Password":["List.List Password.PasswordChar"]}},"Browser.UrlRequest":{"args":[],"tags":{"Internal":["Url.Url"],"External":["String.String"]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"List.List":{"args":["a"],"tags":{}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"Result.Result":{"args":["error","value"],"tags":{"Ok":["value"],"Err":["error"]}},"String.String":{"args":[],"tags":{"String":[]}},"Url.Protocol":{"args":[],"tags":{"Http":[],"Https":[]}},"Main.ConfirmToken":{"args":[],"tags":{"ConfirmToken":["String.String"]}},"Main.ExhibitionPage":{"args":[],"tags":{"ExhibitionPage":["{ title : String.String, description : String.String, price : Maybe.Maybe Basics.Int, image : List.List String.String }"]}},"Main.Home":{"args":[],"tags":{"Recent":[],"Recommend":["{ valid : Basics.Bool }"],"Free":[]}},"Main.LikeAndHistory":{"args":[],"tags":{"Like":[],"History":[]}},"Main.LogInPage":{"args":[],"tags":{"LogInPage":["{ nextPage : Maybe.Maybe Main.Page, studentIdOrEmailAddress : Main.AnalysisStudentIdOrEmailAddressResult, password : Maybe.Maybe Password.Password }"],"ForgotPassword":[]}},"Main.Token":{"args":[],"tags":{"Token":["String.String"]}},"Main.UserSignUpPage":{"args":[],"tags":{"UserSignUpPageStudentHasSAddress":["{ studentIdOrTsukubaEmailAddress : Main.AnalysisStudentIdOrSAddressResult, password : Result.Result Password.Error Password.Password }"],"UserSignUpPageNewStudent":["{ emailAddress : Maybe.Maybe EmailAddress.EmailAddress, imageUrl : Maybe.Maybe String.String, password : Result.Result Password.Error Password.Password }"]}},"Password.PasswordChar":{"args":[],"tags":{"Pa":[],"Pb":[],"Pc":[],"Pd":[],"Pe":[],"Pf":[],"Pg":[],"Ph":[],"Pi":[],"Pj":[],"Pk":[],"Pl":[],"Pm":[],"Pn":[],"Po":[],"Pp":[],"Pq":[],"Pr":[],"Ps":[],"Pt":[],"Pu":[],"Pv":[],"Pw":[],"Px":[],"Py":[],"Pz":[],"PA":[],"PB":[],"PC":[],"PD":[],"PE":[],"PF":[],"PG":[],"PH":[],"PI":[],"PJ":[],"PK":[],"PL":[],"PM":[],"PN":[],"PO":[],"PP":[],"PQ":[],"PR":[],"PS":[],"PT":[],"PU":[],"PV":[],"PW":[],"PX":[],"PY":[],"PZ":[],"P0":[],"P1":[],"P2":[],"P3":[],"P4":[],"P5":[],"P6":[],"P7":[],"P8":[],"P9":[],"ExclamationMark":[],"QuotationMark":[],"NumberSign":[],"DollarSign":[],"PercentSign":[],"Ampersand":[],"Apostrophe":[],"LeftParenthesis":[],"RightParenthesis":[],"Asterisk":[],"PlusSign":[],"Comma":[],"HyphenMinus":[],"FullStop":[],"Solidus":[],"Colon":[],"Semicolon":[],"LessThanSign":[],"EqualsSign":[],"GreaterThanSign":[],"QuestionMark":[],"CommercialAt":[],"LeftSquareBracket":[],"ReverseSolidus":[],"RightSquareBracket":[],"CircumflexAccent":[],"LowLine":[],"GraveAccent":[],"LeftCurlyBracket":[],"VerticalLine":[],"RightCurlyBracket":[],"Tilde":[]}},"Main.AnalysisStudentIdOrEmailAddressResult":{"args":[],"tags":{"AENone":[],"AEStudentId":["StudentId.StudentId"],"AEEmailAddress":["EmailAddress.EmailAddress"]}},"Main.AnalysisStudentIdOrSAddressResult":{"args":[],"tags":{"ANone":[],"AStudentId":["StudentId.StudentId"],"ASAddress":["SAddress.SAddress"],"APartStudentId":["StudentId.PartStudentId"],"AEmailButIsNotTsukuba":[]}},"Password.Error":{"args":[],"tags":{"EAllNumberError":[],"EInvalidCharError":["Password.InvalidCharError"],"ELengthError":["Password.LengthError"],"EInvalidAndLengthError":["Password.InvalidCharError","Password.LengthError"],"EAllNumberAndLengthError":["Password.LengthError"]}},"Basics.Bool":{"args":[],"tags":{"True":[],"False":[]}},"Password.InvalidCharError":{"args":[],"tags":{"InvalidCharError":["Set.Set Char.Char"]}},"Password.LengthError":{"args":[],"tags":{"Short":[],"Long":[]}},"SAddress.SAddress":{"args":[],"tags":{"SAddress":["StudentId.StudentId","String.String"]}},"StudentId.PartStudentId":{"args":[],"tags":{"P0":[],"P1":["StudentId.Digit"],"P2":["StudentId.Digit","StudentId.Digit"],"P3":["StudentId.Digit","StudentId.Digit","StudentId.Digit"],"P4":["StudentId.Digit","StudentId.Digit","StudentId.Digit","StudentId.Digit"],"P5":["StudentId.Digit","StudentId.Digit","StudentId.Digit","StudentId.Digit","StudentId.Digit"],"P6":["StudentId.Digit","StudentId.Digit","StudentId.Digit","StudentId.Digit","StudentId.Digit","StudentId.Digit"]}},"StudentId.StudentId":{"args":[],"tags":{"StudentId":["StudentId.Digit","StudentId.Digit","StudentId.Digit","StudentId.Digit","StudentId.Digit","StudentId.Digit","StudentId.Digit"]}},"StudentId.Digit":{"args":[],"tags":{"D0":[],"D1":[],"D2":[],"D3":[],"D4":[],"D5":[],"D6":[],"D7":[],"D8":[],"D9":[]}},"Char.Char":{"args":[],"tags":{"Char":[]}},"Set.Set":{"args":["t"],"tags":{"Set_elm_builtin":["Dict.Dict t ()"]}},"Dict.Dict":{"args":["k","v"],"tags":{"RBNode_elm_builtin":["Dict.NColor","k","v","Dict.Dict k v","Dict.Dict k v"],"RBEmpty_elm_builtin":[]}},"Dict.NColor":{"args":[],"tags":{"Red":[],"Black":[]}}}}})}});}(this));

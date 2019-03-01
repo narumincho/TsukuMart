@@ -330,12 +330,12 @@ h1:hover {
     box-shadow: #000 0 1px 3px;
     padding: .5rem;
     text-decoration: none;
+    color: black;
 }
 
 .item:hover {
     background-color: #ccc;
 }
-
 
 .itemTitle {
     font-size: 1.5rem;
@@ -468,6 +468,12 @@ img {
                 Log In ログイン画面
 ===============================================*/
 
+.logIn-Container {
+    display: flex;
+    justify-content: center;
+}
+
+
 .logIn {
     display: grid;
     max-width: 40rem;
@@ -565,6 +571,11 @@ img {
                 Sign Up 新規登録画面
 ===============================================*/
 
+.signUpContainer {
+    display: flex;
+    justify-content: center;
+}
+
 .signUp {
     display: grid;
     max-width: 40rem;
@@ -654,21 +665,25 @@ img {
     color: #ddd;
 }
 
+.signUp-resultMsg {
+    padding: 1rem;
+}
+
 /*===============================================
            Main View 画面に主に表示する場所
 ===============================================*/
 
 .mainView {
-    display: grid;
-    justify-content: center;
-    align-content: start;
+    display: block;
+    width: 100%;
     padding-top: 7rem;
-    display: grid;
+    word-wrap: break-word;
+    overflow: hidden;
 }
 
 .mainView-wide {
-    width: calc(100% - 20rem);
     padding: 7rem 0 0 20rem;
+    box-sizing: border-box;
 }
 
 .mainView-simpleText {

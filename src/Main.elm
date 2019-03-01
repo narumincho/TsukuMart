@@ -64,7 +64,7 @@ type Page
     | PageExhibitionItemList
     | PagePurchaseItemList
     | PageExhibition ExhibitionPage
-    | PageSendSignUpEmail EmailAddress.EmailAddress (Maybe (Result SignUpResponseError ()))
+    | PageSendSignUpEmail EmailAddress.EmailAddress (Maybe (Result SignUpResponseError SignUpResponseOk))
     | PageGoods
 
 
@@ -114,8 +114,7 @@ type Msg
     | UrlRequest Browser.UrlRequest
     | SignUp { emailAddress : EmailAddress.EmailAddress, pass : Password.Password, image : Maybe String }
     | LogIn { emailAddress : EmailAddress.EmailAddress, pass : Password.Password }
-    | Response { id : String, header : List ( String, String ), body : String }
-    | SignUpResponse (Result SignUpResponseError ())
+    | SignUpResponse (Result SignUpResponseError SignUpResponseOk)
     | LogInResponse (Result LogInResponseError LogInResponseOk)
     | InputStudentIdOrEmailAddress String
     | InputStudentImage String
@@ -123,6 +122,14 @@ type Msg
     | ReceiveImageDataUrl String
     | ReceiveImageDataUrlMulti (List String)
     | InputPassword String
+
+
+type SignUpResponseOk
+    = SignUpResponseOk ConfirmToken
+
+
+type ConfirmToken
+    = ConfirmToken String
 
 
 type SignUpResponseError
@@ -256,7 +263,7 @@ update msg (Model rec) =
                     | page = PageSendSignUpEmail signUpData.emailAddress Nothing
                 }
             , Http.post
-                { url = "/signup"
+                { url = "http://tsukumart.com/auth/signup/"
                 , body = Http.jsonBody (signUpJson signUpData)
                 , expect = Http.expectStringResponse SignUpResponse signUpResponseToResult
                 }
@@ -278,19 +285,10 @@ update msg (Model rec) =
                 _ ->
                     Model rec
             , Http.post
-                { url = "/logIn"
+                { url = "http://tsukumart.com/auth/token/"
                 , body = Http.jsonBody (logInJson logInData)
                 , expect = Http.expectStringResponse LogInResponse logInResponseToResult
                 }
-            )
-
-        Response response ->
-            let
-                _ =
-                    Debug.log "response" response
-            in
-            ( Model rec
-            , Cmd.none
             )
 
         SignUpResponse response ->
@@ -430,7 +428,7 @@ update msg (Model rec) =
             )
 
 
-signUpResponseToResult : Http.Response String -> Result SignUpResponseError ()
+signUpResponseToResult : Http.Response String -> Result SignUpResponseError SignUpResponseOk
 signUpResponseToResult response =
     case response of
         Http.BadUrl_ _ ->
@@ -443,40 +441,18 @@ signUpResponseToResult response =
             Err SignUpErrorNetworkError
 
         Http.BadStatus_ metadata body ->
-            let
-                _ =
-                    Debug.log "signUp GoodStatus Matadata" metadata
-            in
             Json.Decode.decodeString signUpResponseBodyDecoder body
                 |> Result.withDefault (Err SignUpError)
 
         Http.GoodStatus_ metadata body ->
-            let
-                _ =
-                    Debug.log "signUp BadStatus Matadata" metadata
-            in
             Json.Decode.decodeString signUpResponseBodyDecoder body
                 |> Result.withDefault (Err SignUpError)
 
 
-signUpResponseBodyDecoder : Json.Decode.Decoder (Result SignUpResponseError ())
+signUpResponseBodyDecoder : Json.Decode.Decoder (Result SignUpResponseError SignUpResponseOk)
 signUpResponseBodyDecoder =
-    Json.Decode.field "result" Json.Decode.string
-        |> Json.Decode.map
-            (\signUpResultValue ->
-                case signUpResultValue of
-                    "ok" ->
-                        Ok ()
-
-                    "alreadySignUp" ->
-                        Err SignUpErrorAlreadySignUp
-
-                    "error" ->
-                        Err SignUpErrorInvalidRequest
-
-                    _ ->
-                        Err SignUpError
-            )
+    Json.Decode.field "confirm_token" Json.Decode.string
+        |> Json.Decode.map (\token -> Ok (SignUpResponseOk (ConfirmToken token)))
 
 
 logInResponseToResult : Http.Response String -> Result LogInResponseError LogInResponseOk
@@ -492,18 +468,10 @@ logInResponseToResult response =
             Err LogInErrorNetworkError
 
         Http.BadStatus_ metadata body ->
-            let
-                _ =
-                    Debug.log "goodStatus Matadata" metadata
-            in
             Json.Decode.decodeString (logInResponseBodyDecoder metadata) body
                 |> Result.withDefault (Err LogInError)
 
         Http.GoodStatus_ metadata body ->
-            let
-                _ =
-                    Debug.log "goodStatus Matadata" metadata
-            in
             Json.Decode.decodeString (logInResponseBodyDecoder metadata) body
                 |> Result.withDefault (Err LogInError)
 
@@ -1359,12 +1327,16 @@ sendEmailView =
 -}
 userLogInView : LogInPage -> List (Html.Html Msg)
 userLogInView logInPage =
-    case logInPage of
-        LogInPage { studentIdOrEmailAddress, password } ->
-            logInView studentIdOrEmailAddress password
+    [ Html.div
+        [ Html.Attributes.class "logIn-Container" ]
+        (case logInPage of
+            LogInPage { studentIdOrEmailAddress, password } ->
+                logInView studentIdOrEmailAddress password
 
-        ForgotPassword ->
-            forgotPasswordView
+            ForgotPassword ->
+                forgotPasswordView
+        )
+    ]
 
 
 logInView : AnalysisStudentIdOrEmailAddressResult -> Maybe Password.Password -> List (Html.Html Msg)
@@ -1490,19 +1462,22 @@ signUpButton =
 -}
 userSignUpView : UserSignUpPage -> List (Html.Html Msg)
 userSignUpView userSignUpPage =
-    [ Html.form
-        [ Html.Attributes.class "signUp" ]
-        ([ sAddressView userSignUpPage
-         ]
-            ++ (case userSignUpPage of
-                    UserSignUpPageStudentHasSAddress { studentIdOrTsukubaEmailAddress, password } ->
-                        studentHasSAddressFormList studentIdOrTsukubaEmailAddress password
+    [ Html.div
+        [ Html.Attributes.class "signUpContainer" ]
+        [ Html.form
+            [ Html.Attributes.class "signUp" ]
+            ([ sAddressView userSignUpPage
+             ]
+                ++ (case userSignUpPage of
+                        UserSignUpPageStudentHasSAddress { studentIdOrTsukubaEmailAddress, password } ->
+                            studentHasSAddressFormList studentIdOrTsukubaEmailAddress password
 
-                    UserSignUpPageNewStudent { emailAddress, imageUrl, password } ->
-                        newStudentFormList emailAddress imageUrl password
-               )
-            ++ [ signUpSubmitButton (getSignUpData userSignUpPage) ]
-        )
+                        UserSignUpPageNewStudent { emailAddress, imageUrl, password } ->
+                            newStudentFormList emailAddress imageUrl password
+                   )
+                ++ [ signUpSubmitButton (getSignUpData userSignUpPage) ]
+            )
+        ]
     ]
 
 
@@ -1912,9 +1887,9 @@ signUpJson { emailAddress, pass, image } =
         )
 
 
-sendSignUpEmailView : EmailAddress.EmailAddress -> Maybe (Result SignUpResponseError ()) -> List (Html.Html msg)
+sendSignUpEmailView : EmailAddress.EmailAddress -> Maybe (Result SignUpResponseError SignUpResponseOk) -> List (Html.Html msg)
 sendSignUpEmailView emailAddress signUpResultMaybe =
-    [ Html.div [ Html.Attributes.class "mainView-simpleText" ]
+    [ Html.div [ Html.Attributes.class "signUp-resultMsg" ]
         [ Html.text
             (case signUpResultMaybe of
                 Just signUpResult ->
@@ -1927,13 +1902,16 @@ sendSignUpEmailView emailAddress signUpResultMaybe =
     ]
 
 
-signUpResultToString : EmailAddress.EmailAddress -> Result SignUpResponseError () -> String
+signUpResultToString : EmailAddress.EmailAddress -> Result SignUpResponseError SignUpResponseOk -> String
 signUpResultToString emailAddress signUpResult =
     case signUpResult of
-        Ok () ->
+        Ok (SignUpResponseOk (ConfirmToken token)) ->
             "送信完了。"
                 ++ EmailAddress.toString emailAddress
                 ++ "にメールを送信しました。届いたメールのリンクをクリックして認証をしてください"
+                ++ "token = \""
+                ++ token
+                ++ "\""
 
         Err SignUpErrorAlreadySignUp ->
             "すでにあなたは登録されています"
