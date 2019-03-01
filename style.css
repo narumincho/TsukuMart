@@ -380,10 +380,11 @@ img {
     display: flex;
     align-items: center;
     justify-content: center;
+    overflow-x: auto;
 }
 
 .exhibitionView-photo-input {
-    width: 100%;
+    min-width: 10rem;
 }
 
 .exhibitionView-photo-icon {
