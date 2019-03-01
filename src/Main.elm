@@ -3,16 +3,13 @@ port module Main exposing (main)
 import Api
 import Browser
 import Browser.Navigation
-import Dict
 import EmailAddress
 import Goods
 import Html
 import Html.Attributes
 import Html.Events
 import Html.Keyed
-import Http
 import Json.Decode
-import Json.Encode
 import Password
 import SAddress exposing (SAddress)
 import StudentId exposing (StudentId)
@@ -114,11 +111,11 @@ type Msg
     | ToNarrowScreenMode
     | UrlChange Url.Url
     | UrlRequest Browser.UrlRequest
-    | SignUp { emailAddress : EmailAddress.EmailAddress, pass : Password.Password, image : Maybe String }
-    | LogIn { emailAddress : EmailAddress.EmailAddress, pass : Password.Password }
+    | SignUp Api.SignUpRequest
+    | LogIn Api.LogInRequest
     | SignUpResponse (Result Api.SignUpResponseError Api.SignUpResponseOk)
-    | SignUpConfirmResponse (Result () ())
-    | LogInResponse (Result LogInResponseError LogInResponseOk)
+    | SignUpConfirmResponse (Result Api.SignUpConfirmResponseError Api.SignUpConfirmResponseOk)
+    | LogInResponse (Result Api.LogInResponseError Api.LogInResponseOk)
     | InputStudentIdOrEmailAddress String
     | InputStudentImage String
     | InputExhibitionImage String
@@ -126,23 +123,6 @@ type Msg
     | ReceiveImageDataUrlMulti (List String)
     | InputPassword String
     | SendConfirmToken
-
-
-type LogInResponseOk
-    = LogInOk Token
-
-
-type Token
-    = Token String
-
-
-type LogInResponseError
-    = LogInErrorMistakePasswordOrEmail
-    | LogInErrorNoToken
-    | LogInErrorBadUrl
-    | LogInErrorTimeout
-    | LogInErrorNetworkError
-    | LogInError
 
 
 main : Program () Model Msg
@@ -267,11 +247,7 @@ update msg (Model rec) =
 
                 _ ->
                     Model rec
-            , Http.post
-                { url = "http://tsukumart.com/auth/token/"
-                , body = Http.jsonBody (logInJson logInData)
-                , expect = Http.expectStringResponse LogInResponse logInResponseToResult
-                }
+            , Api.logIn logInData LogInResponse
             )
 
         SignUpResponse response ->
@@ -417,88 +393,15 @@ update msg (Model rec) =
 
         SendConfirmToken ->
             case rec.page of
-                PageSendSignUpEmail _ (Just (Ok (Api.SignUpResponseOk (Api.ConfirmToken token)))) ->
+                PageSendSignUpEmail _ (Just (Ok (Api.SignUpResponseOk token))) ->
                     ( Model rec
-                    , Http.request
-                        { method = "POST"
-                        , headers = [ Http.header "Authorization" ("Bearer " ++ token) ]
-                        , url = "http://tsukumart.com/auth/signup/confirm/"
-                        , body = Http.emptyBody
-                        , expect = Http.expectStringResponse SignUpConfirmResponse signUpConfirmResponseToResult
-                        , timeout = Nothing
-                        , tracker = Nothing
-                        }
+                    , Api.signUpConfirm { confirmToken = token } SignUpConfirmResponse
                     )
 
                 _ ->
                     ( Model rec
                     , Cmd.none
                     )
-
-
-logInResponseToResult : Http.Response String -> Result LogInResponseError LogInResponseOk
-logInResponseToResult response =
-    case response of
-        Http.BadUrl_ _ ->
-            Err LogInErrorBadUrl
-
-        Http.Timeout_ ->
-            Err LogInErrorTimeout
-
-        Http.NetworkError_ ->
-            Err LogInErrorNetworkError
-
-        Http.BadStatus_ metadata body ->
-            Json.Decode.decodeString (logInResponseBodyDecoder metadata) body
-                |> Result.withDefault (Err LogInError)
-
-        Http.GoodStatus_ metadata body ->
-            Json.Decode.decodeString (logInResponseBodyDecoder metadata) body
-                |> Result.withDefault (Err LogInError)
-
-
-logInResponseBodyDecoder : Http.Metadata -> Json.Decode.Decoder (Result LogInResponseError LogInResponseOk)
-logInResponseBodyDecoder { headers } =
-    Json.Decode.field "result" Json.Decode.string
-        |> Json.Decode.map
-            (\result ->
-                case result of
-                    "ok" ->
-                        case Dict.get "token" headers of
-                            Just token ->
-                                Ok (LogInOk (Token token))
-
-                            Nothing ->
-                                Err LogInErrorNoToken
-
-                    "mistake" ->
-                        Err LogInErrorMistakePasswordOrEmail
-
-                    "error" ->
-                        Err LogInError
-
-                    _ ->
-                        Err LogInError
-            )
-
-
-signUpConfirmResponseToResult : Http.Response String -> Result () ()
-signUpConfirmResponseToResult response =
-    case response of
-        Http.BadUrl_ _ ->
-            Err ()
-
-        Http.Timeout_ ->
-            Err ()
-
-        Http.NetworkError_ ->
-            Err ()
-
-        Http.BadStatus_ _ _ ->
-            Err ()
-
-        Http.GoodStatus_ _ _ ->
-            Ok ()
 
 
 urlToPage : Url.Url -> Maybe Page -> Page
@@ -1820,16 +1723,6 @@ getLogInData studentIdOrEmailAddress passwordMaybe =
 
         ( _, _ ) ->
             Nothing
-
-
-{-| logInのJSONを作成
--}
-logInJson : { emailAddress : EmailAddress.EmailAddress, pass : Password.Password } -> Json.Encode.Value
-logInJson { emailAddress, pass } =
-    Json.Encode.object
-        [ ( "email", Json.Encode.string (EmailAddress.toString emailAddress) )
-        , ( "password", Json.Encode.string (Password.toString pass) )
-        ]
 
 
 {-| 画面の情報から新規登録できる情報を入力しているかと、新規登録に必要なデータを取りだす
