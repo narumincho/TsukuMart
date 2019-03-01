@@ -58,7 +58,7 @@ confirmTokenToHeader (ConfirmToken token) =
 signUp : SignUpRequest -> (Result SignUpResponseError SignUpResponseOk -> msg) -> Cmd msg
 signUp signUpData msg =
     Http.post
-        { url = "http://tsukumart.com/auth/signup/"
+        { url = "http://api.tsukumart.com/auth/signup/"
         , body = Http.jsonBody (signUpJson signUpData)
         , expect = Http.expectStringResponse msg signUpResponseToResult
         }
@@ -145,7 +145,7 @@ signUpConfirm { confirmToken } msg =
     Http.request
         { method = "POST"
         , headers = [ confirmTokenToHeader confirmToken ]
-        , url = "http://tsukumart.com/auth/signup/confirm/"
+        , url = "http://api.tsukumart.com/auth/signup/confirm/"
         , body = Http.emptyBody
         , expect = Http.expectStringResponse msg signUpConfirmResponseToResult
         , timeout = Nothing
@@ -209,7 +209,7 @@ type Token
 logIn : LogInRequest -> (Result LogInResponseError LogInResponseOk -> msg) -> Cmd msg
 logIn logInData msg =
     Http.post
-        { url = "http://tsukumart.com/auth/token/"
+        { url = "http://api.tsukumart.com/auth/token/"
         , body = Http.jsonBody (logInRequestToJson logInData)
         , expect = Http.expectStringResponse msg logInResponseToResult
         }
@@ -259,3 +259,61 @@ logInResponseBodyDecoder =
         )
         (Json.Decode.field "access" Json.Decode.string)
         (Json.Decode.field "refresh" Json.Decode.string)
+
+
+
+{- =================================================
+           Token Refresh /auth/token/refresh/
+   =================================================
+-}
+
+
+type alias TokenRefreshRequest =
+    { refresh : Token }
+
+
+type TokenRefreshResponseOk
+    = TokenRefreshResponseOk { access : Token }
+
+
+type TokenRefreshResponseError
+    = TokenRefreshResponseError
+
+
+tokenRefresh : TokenRefreshRequest -> (Result TokenRefreshResponseError TokenRefreshResponseOk -> msg) -> Cmd msg
+tokenRefresh { refresh } msg =
+    Http.post
+        { url = "http://api.tsukumart.com/auth/token/refresh/"
+        , body = Http.emptyBody
+        , expect = Http.expectStringResponse msg tokenRefreshResponseToResult
+        }
+
+
+tokenRefreshResponseToResult : Http.Response String -> Result TokenRefreshResponseError TokenRefreshResponseOk
+tokenRefreshResponseToResult response =
+    case response of
+        Http.BadUrl_ _ ->
+            Err TokenRefreshResponseError
+
+        Http.Timeout_ ->
+            Err TokenRefreshResponseError
+
+        Http.NetworkError_ ->
+            Err TokenRefreshResponseError
+
+        Http.BadStatus_ _ body ->
+            Json.Decode.decodeString tokenRefreshBodyStringDecoder body
+                |> Result.withDefault (Err TokenRefreshResponseError)
+
+        Http.GoodStatus_ _ body ->
+            Json.Decode.decodeString tokenRefreshBodyStringDecoder body
+                |> Result.withDefault (Err TokenRefreshResponseError)
+
+
+tokenRefreshBodyStringDecoder : Json.Decode.Decoder (Result TokenRefreshResponseError TokenRefreshResponseOk)
+tokenRefreshBodyStringDecoder =
+    Json.Decode.field "access" Json.Decode.string
+        |> Json.Decode.map
+            (\access ->
+                Ok (TokenRefreshResponseOk { access = Token access })
+            )
