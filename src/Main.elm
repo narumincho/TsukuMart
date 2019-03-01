@@ -139,7 +139,6 @@ type SignUpResponseError
     | SignUpErrorBadUrl
     | SignUpErrorTimeout
     | SignUpErrorNetworkError
-    | SignUpErrorInvalidRequest
     | SignUpError
 
 
@@ -440,7 +439,7 @@ update msg (Model rec) =
                     ( Model rec
                     , Http.request
                         { method = "POST"
-                        , headers = [ Http.header "Authorization" token ]
+                        , headers = [ Http.header "Authorization" ("Bearer " ++ token) ]
                         , url = "http://tsukumart.com/auth/signup/confirm/"
                         , body = Http.emptyBody
                         , expect = Http.expectStringResponse SignUpConfirmResponse signUpConfirmResponseToResult
@@ -467,19 +466,31 @@ signUpResponseToResult response =
         Http.NetworkError_ ->
             Err SignUpErrorNetworkError
 
-        Http.BadStatus_ metadata body ->
+        Http.BadStatus_ _ body ->
             Json.Decode.decodeString signUpResponseBodyDecoder body
                 |> Result.withDefault (Err SignUpError)
 
-        Http.GoodStatus_ metadata body ->
+        Http.GoodStatus_ _ body ->
             Json.Decode.decodeString signUpResponseBodyDecoder body
                 |> Result.withDefault (Err SignUpError)
 
 
 signUpResponseBodyDecoder : Json.Decode.Decoder (Result SignUpResponseError SignUpResponseOk)
 signUpResponseBodyDecoder =
-    Json.Decode.field "confirm_token" Json.Decode.string
-        |> Json.Decode.map (\token -> Ok (SignUpResponseOk (ConfirmToken token)))
+    Json.Decode.oneOf
+        [ Json.Decode.field "confirm_token" Json.Decode.string
+            |> Json.Decode.map (\token -> Ok (SignUpResponseOk (ConfirmToken token)))
+        , Json.Decode.field "reason" Json.Decode.string
+            |> Json.Decode.map
+                (\reason ->
+                    case reason of
+                        "Email already exists" ->
+                            Err SignUpErrorAlreadySignUp
+
+                        _ ->
+                            Err SignUpError
+                )
+        ]
 
 
 logInResponseToResult : Http.Response String -> Result LogInResponseError LogInResponseOk
@@ -1972,10 +1983,7 @@ signUpResultToString emailAddress signUpResult =
             [ Html.text "正しいURLが指定されなかった" ]
 
         Err SignUpErrorTimeout ->
-            [ Html.text "タイムアウトエラー。回線が混雑していると見られます" ]
-
-        Err SignUpErrorInvalidRequest ->
-            [ Html.text "送信データが条件を満たしていませんでした" ]
+            [ Html.text "タイムアウトエラー。回線が混雑しています" ]
 
         Err SignUpErrorNetworkError ->
             [ Html.text "ネットワークエラー。接続が切れている可能性があります" ]

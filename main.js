@@ -7546,18 +7546,34 @@ var author$project$Main$signUpJson = function (_n0) {
 				}
 			}()));
 };
-var author$project$Main$SignUpError = 5;
+var author$project$Main$SignUpError = 4;
 var author$project$Main$SignUpErrorBadUrl = 1;
 var author$project$Main$SignUpErrorNetworkError = 3;
 var author$project$Main$SignUpErrorTimeout = 2;
 var author$project$Main$ConfirmToken = elm$core$Basics$identity;
+var author$project$Main$SignUpErrorAlreadySignUp = 0;
 var author$project$Main$SignUpResponseOk = elm$core$Basics$identity;
-var author$project$Main$signUpResponseBodyDecoder = A2(
-	elm$json$Json$Decode$map,
-	function (token) {
-		return elm$core$Result$Ok(token);
-	},
-	A2(elm$json$Json$Decode$field, 'confirm_token', elm$json$Json$Decode$string));
+var elm$json$Json$Decode$oneOf = _Json_oneOf;
+var author$project$Main$signUpResponseBodyDecoder = elm$json$Json$Decode$oneOf(
+	_List_fromArray(
+		[
+			A2(
+			elm$json$Json$Decode$map,
+			function (token) {
+				return elm$core$Result$Ok(token);
+			},
+			A2(elm$json$Json$Decode$field, 'confirm_token', elm$json$Json$Decode$string)),
+			A2(
+			elm$json$Json$Decode$map,
+			function (reason) {
+				if (reason === 'Email already exists') {
+					return elm$core$Result$Err(0);
+				} else {
+					return elm$core$Result$Err(4);
+				}
+			},
+			A2(elm$json$Json$Decode$field, 'reason', elm$json$Json$Decode$string))
+		]));
 var author$project$Main$signUpResponseToResult = function (response) {
 	switch (response.$) {
 		case 0:
@@ -7567,18 +7583,16 @@ var author$project$Main$signUpResponseToResult = function (response) {
 		case 2:
 			return elm$core$Result$Err(3);
 		case 3:
-			var metadata = response.a;
 			var body = response.b;
 			return A2(
 				elm$core$Result$withDefault,
-				elm$core$Result$Err(5),
+				elm$core$Result$Err(4),
 				A2(elm$json$Json$Decode$decodeString, author$project$Main$signUpResponseBodyDecoder, body));
 		default:
-			var metadata = response.a;
 			var body = response.b;
 			return A2(
 				elm$core$Result$withDefault,
-				elm$core$Result$Err(5),
+				elm$core$Result$Err(4),
 				A2(elm$json$Json$Decode$decodeString, author$project$Main$signUpResponseBodyDecoder, body));
 	}
 };
@@ -8467,7 +8481,7 @@ var author$project$Main$update = F2(
 								V: A2(elm$http$Http$expectStringResponse, author$project$Main$SignUpConfirmResponse, author$project$Main$signUpConfirmResponseToResult),
 								al: _List_fromArray(
 									[
-										A2(elm$http$Http$header, 'Authorization', token)
+										A2(elm$http$Http$header, 'Authorization', 'Bearer ' + token)
 									]),
 								aT: 'POST',
 								a3: elm$core$Maybe$Nothing,
@@ -9571,22 +9585,16 @@ var author$project$Main$signUpResultToString = F2(
 					var _n3 = signUpResult.a;
 					return _List_fromArray(
 						[
-							elm$html$Html$text('タイムアウトエラー。回線が混雑していると見られます')
-						]);
-				case 4:
-					var _n4 = signUpResult.a;
-					return _List_fromArray(
-						[
-							elm$html$Html$text('送信データが条件を満たしていませんでした')
+							elm$html$Html$text('タイムアウトエラー。回線が混雑しています')
 						]);
 				case 3:
-					var _n5 = signUpResult.a;
+					var _n4 = signUpResult.a;
 					return _List_fromArray(
 						[
 							elm$html$Html$text('ネットワークエラー。接続が切れている可能性があります')
 						]);
 				default:
-					var _n6 = signUpResult.a;
+					var _n5 = signUpResult.a;
 					return _List_fromArray(
 						[
 							elm$html$Html$text('サーバーの回答を理解することができませんでした')
