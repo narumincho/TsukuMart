@@ -17,7 +17,7 @@ import StudentId exposing (StudentId)
 import Svg
 import Svg.Attributes
 import Url
-import Url.Parser
+import Url.Parser exposing ((</>))
 
 
 
@@ -65,6 +65,7 @@ type Page
     | PagePurchaseItemList
     | PageExhibition ExhibitionPage
     | PageSendSignUpEmail EmailAddress.EmailAddress (Maybe (Result SignUpResponseError ()))
+    | PageGoods
 
 
 type UserSignUpPage
@@ -578,6 +579,9 @@ urlParser beforePageMaybe =
         , Url.Parser.map
             (PageExhibition (ExhibitionPage { title = "", description = "", price = Nothing, image = [] }))
             (Url.Parser.s "exhibition")
+        , Url.Parser.map
+            PageGoods
+            (Url.Parser.s "goods" </> Url.Parser.s "00000000")
         ]
 
 
@@ -1007,6 +1011,9 @@ mainTab page wideScreenMode =
 
                 PageSendSignUpEmail _ _ ->
                     TabNone
+
+                PageGoods ->
+                    TabNone
     in
     Html.div
         ([ Html.Attributes.classList
@@ -1155,6 +1162,9 @@ mainView page isWideScreenMode =
             PageSendSignUpEmail emailAddress response ->
                 sendSignUpEmailView emailAddress response
 
+            PageGoods ->
+                [ Html.text "アイテム詳細ページ" ]
+
             _ ->
                 [ itemList isWideScreenMode, exhibitButton ]
         )
@@ -1199,7 +1209,10 @@ itemList isWideMode =
 
 item : { title : String, price : Int, like : Int } -> Html.Html Msg
 item { title, price, like } =
-    Html.div [ Html.Attributes.class "item" ]
+    Html.a
+        [ Html.Attributes.class "item"
+        , Html.Attributes.href "/goods/00000000"
+        ]
         [ itemImage
         , Html.div [ Html.Attributes.class "itemTitle" ] [ Html.text title ]
         , Html.div [ Html.Attributes.class "itemPrice" ] [ Html.text (priceToString price) ]

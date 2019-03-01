@@ -5190,6 +5190,7 @@ var author$project$Main$PageExhibition = function (a) {
 	return {$: 'PageExhibition', a: a};
 };
 var author$project$Main$PageExhibitionItemList = {$: 'PageExhibitionItemList'};
+var author$project$Main$PageGoods = {$: 'PageGoods'};
 var author$project$Main$PageLikeAndHistory = function (a) {
 	return {$: 'PageLikeAndHistory', a: a};
 };
@@ -6742,6 +6743,18 @@ var elm$url$Url$Parser$s = function (str) {
 			}
 		});
 };
+var elm$url$Url$Parser$slash = F2(
+	function (_n0, _n1) {
+		var parseBefore = _n0.a;
+		var parseAfter = _n1.a;
+		return elm$url$Url$Parser$Parser(
+			function (state) {
+				return A2(
+					elm$core$List$concatMap,
+					parseAfter,
+					parseBefore(state));
+			});
+	});
 var elm$url$Url$Parser$top = elm$url$Url$Parser$Parser(
 	function (state) {
 		return _List_fromArray(
@@ -6799,7 +6812,14 @@ var author$project$Main$urlParser = function (beforePageMaybe) {
 				author$project$Main$PageExhibition(
 					author$project$Main$ExhibitionPage(
 						{description: '', image: _List_Nil, price: elm$core$Maybe$Nothing, title: ''})),
-				elm$url$Url$Parser$s('exhibition'))
+				elm$url$Url$Parser$s('exhibition')),
+				A2(
+				elm$url$Url$Parser$map,
+				author$project$Main$PageGoods,
+				A2(
+					elm$url$Url$Parser$slash,
+					elm$url$Url$Parser$s('goods'),
+					elm$url$Url$Parser$s('00000000')))
 			]));
 };
 var elm$url$Url$Parser$getFirstMatch = function (states) {
@@ -13001,6 +13021,8 @@ var author$project$Main$mainTab = F2(
 					return author$project$Main$TabSingle('ログイン');
 				case 'PageExhibition':
 					return author$project$Main$TabSingle('商品の情報を入力');
+				case 'PageSendSignUpEmail':
+					return author$project$Main$TabNone;
 				default:
 					return author$project$Main$TabNone;
 			}
@@ -13330,10 +13352,11 @@ var author$project$Main$item = function (_n0) {
 	var price = _n0.price;
 	var like = _n0.like;
 	return A2(
-		elm$html$Html$div,
+		elm$html$Html$a,
 		_List_fromArray(
 			[
-				elm$html$Html$Attributes$class('item')
+				elm$html$Html$Attributes$class('item'),
+				elm$html$Html$Attributes$href('/goods/00000000')
 			]),
 		_List_fromArray(
 			[
@@ -14525,7 +14548,7 @@ var author$project$Main$mainView = F2(
 						]))
 				]),
 			function () {
-				_n0$5:
+				_n0$6:
 				while (true) {
 					switch (page.$) {
 						case 'PageExhibition':
@@ -14554,14 +14577,19 @@ var author$project$Main$mainView = F2(
 										author$project$Main$exhibitButton
 									]);
 							} else {
-								break _n0$5;
+								break _n0$6;
 							}
 						case 'PageSendSignUpEmail':
 							var emailAddress = page.a;
 							var response = page.b;
 							return A2(author$project$Main$sendSignUpEmailView, emailAddress, response);
+						case 'PageGoods':
+							return _List_fromArray(
+								[
+									elm$html$Html$text('アイテム詳細ページ')
+								]);
 						default:
-							break _n0$5;
+							break _n0$6;
 					}
 				}
 				return _List_fromArray(
@@ -14764,4 +14792,4 @@ var elm$browser$Browser$application = _Browser_application;
 var author$project$Main$main = elm$browser$Browser$application(
 	{init: author$project$Main$init, onUrlChange: author$project$Main$UrlChange, onUrlRequest: author$project$Main$UrlRequest, subscriptions: author$project$Main$subscription, update: author$project$Main$update, view: author$project$Main$view});
 _Platform_export({'Main':{'init':author$project$Main$main(
-	elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.0"},"types":{"message":"Main.Msg","aliases":{"Url.Url":{"args":[],"type":"{ protocol : Url.Protocol, host : String.String, port_ : Maybe.Maybe Basics.Int, path : String.String, query : Maybe.Maybe String.String, fragment : Maybe.Maybe String.String }"}},"unions":{"Main.Msg":{"args":[],"tags":{"ChangePage":["Main.Page"],"OpenMenu":[],"CloseMenu":[],"ToWideScreenMode":[],"ToNarrowScreenMode":[],"UrlChange":["Url.Url"],"UrlRequest":["Browser.UrlRequest"],"SignUp":["{ emailAddress : EmailAddress.EmailAddress, pass : Password.Password, image : Maybe.Maybe String.String }"],"LogIn":["{ emailAddress : EmailAddress.EmailAddress, pass : Password.Password }"],"Response":["{ id : String.String, header : List.List ( String.String, String.String ), body : String.String }"],"SignUpResponse":["Result.Result Main.SignUpResponseError ()"],"LogInResponse":["Result.Result Main.LogInResponseError Main.LogInResponseOk"],"InputStudentIdOrEmailAddress":["String.String"],"InputStudentImage":["String.String"],"InputExhibitionImage":["String.String"],"ReceiveImageDataUrl":["String.String"],"ReceiveImageDataUrlMulti":["List.List String.String"],"InputPassword":["String.String"]}},"EmailAddress.EmailAddress":{"args":[],"tags":{"EmailAddress":["String.String"]}},"Main.LogInResponseError":{"args":[],"tags":{"LogInErrorMistakePasswordOrEmail":[],"LogInErrorNoToken":[],"LogInErrorBadUrl":[],"LogInErrorTimeout":[],"LogInErrorNetworkError":[],"LogInError":[]}},"Main.LogInResponseOk":{"args":[],"tags":{"LogInOk":["Main.Token"]}},"Main.Page":{"args":[],"tags":{"PageHome":["Main.Home"],"PageSignUp":["Main.UserSignUpPage"],"PageLogIn":["Main.LogInPage"],"PageLikeAndHistory":["Main.LikeAndHistory"],"PageExhibitionItemList":[],"PagePurchaseItemList":[],"PageExhibition":["Main.ExhibitionPage"],"PageSendSignUpEmail":["EmailAddress.EmailAddress","Maybe.Maybe (Result.Result Main.SignUpResponseError ())"]}},"Main.SignUpResponseError":{"args":[],"tags":{"SignUpErrorAlreadySignUp":[],"SignUpErrorBadUrl":[],"SignUpErrorTimeout":[],"SignUpErrorNetworkError":[],"SignUpErrorInvalidRequest":[],"SignUpError":[]}},"Password.Password":{"args":[],"tags":{"Password":["List.List Password.PasswordChar"]}},"Browser.UrlRequest":{"args":[],"tags":{"Internal":["Url.Url"],"External":["String.String"]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"List.List":{"args":["a"],"tags":{}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"Result.Result":{"args":["error","value"],"tags":{"Ok":["value"],"Err":["error"]}},"String.String":{"args":[],"tags":{"String":[]}},"Url.Protocol":{"args":[],"tags":{"Http":[],"Https":[]}},"Main.ExhibitionPage":{"args":[],"tags":{"ExhibitionPage":["{ title : String.String, description : String.String, price : Maybe.Maybe Basics.Int, image : List.List String.String }"]}},"Main.Home":{"args":[],"tags":{"Recent":[],"Recommend":["{ valid : Basics.Bool }"],"Free":[]}},"Main.LikeAndHistory":{"args":[],"tags":{"Like":[],"History":[]}},"Main.LogInPage":{"args":[],"tags":{"LogInPage":["{ nextPage : Maybe.Maybe Main.Page, studentIdOrEmailAddress : Main.AnalysisStudentIdOrEmailAddressResult, password : Maybe.Maybe Password.Password }"],"ForgotPassword":[]}},"Main.Token":{"args":[],"tags":{"Token":["String.String"]}},"Main.UserSignUpPage":{"args":[],"tags":{"UserSignUpPageStudentHasSAddress":["{ studentIdOrTsukubaEmailAddress : Main.AnalysisStudentIdOrSAddressResult, password : Result.Result Password.Error Password.Password }"],"UserSignUpPageNewStudent":["{ emailAddress : Maybe.Maybe EmailAddress.EmailAddress, imageUrl : Maybe.Maybe String.String, password : Result.Result Password.Error Password.Password }"]}},"Password.PasswordChar":{"args":[],"tags":{"Pa":[],"Pb":[],"Pc":[],"Pd":[],"Pe":[],"Pf":[],"Pg":[],"Ph":[],"Pi":[],"Pj":[],"Pk":[],"Pl":[],"Pm":[],"Pn":[],"Po":[],"Pp":[],"Pq":[],"Pr":[],"Ps":[],"Pt":[],"Pu":[],"Pv":[],"Pw":[],"Px":[],"Py":[],"Pz":[],"PA":[],"PB":[],"PC":[],"PD":[],"PE":[],"PF":[],"PG":[],"PH":[],"PI":[],"PJ":[],"PK":[],"PL":[],"PM":[],"PN":[],"PO":[],"PP":[],"PQ":[],"PR":[],"PS":[],"PT":[],"PU":[],"PV":[],"PW":[],"PX":[],"PY":[],"PZ":[],"P0":[],"P1":[],"P2":[],"P3":[],"P4":[],"P5":[],"P6":[],"P7":[],"P8":[],"P9":[],"ExclamationMark":[],"QuotationMark":[],"NumberSign":[],"DollarSign":[],"PercentSign":[],"Ampersand":[],"Apostrophe":[],"LeftParenthesis":[],"RightParenthesis":[],"Asterisk":[],"PlusSign":[],"Comma":[],"HyphenMinus":[],"FullStop":[],"Solidus":[],"Colon":[],"Semicolon":[],"LessThanSign":[],"EqualsSign":[],"GreaterThanSign":[],"QuestionMark":[],"CommercialAt":[],"LeftSquareBracket":[],"ReverseSolidus":[],"RightSquareBracket":[],"CircumflexAccent":[],"LowLine":[],"GraveAccent":[],"LeftCurlyBracket":[],"VerticalLine":[],"RightCurlyBracket":[],"Tilde":[]}},"Main.AnalysisStudentIdOrEmailAddressResult":{"args":[],"tags":{"AENone":[],"AEStudentId":["StudentId.StudentId"],"AEEmailAddress":["EmailAddress.EmailAddress"]}},"Main.AnalysisStudentIdOrSAddressResult":{"args":[],"tags":{"ANone":[],"AStudentId":["StudentId.StudentId"],"ASAddress":["SAddress.SAddress"],"APartStudentId":["StudentId.PartStudentId"],"AEmailButIsNotTsukuba":[]}},"Password.Error":{"args":[],"tags":{"EAllNumberError":[],"EInvalidCharError":["Password.InvalidCharError"],"ELengthError":["Password.LengthError"],"EInvalidAndLengthError":["Password.InvalidCharError","Password.LengthError"],"EAllNumberAndLengthError":["Password.LengthError"]}},"Basics.Bool":{"args":[],"tags":{"True":[],"False":[]}},"Password.InvalidCharError":{"args":[],"tags":{"InvalidCharError":["Set.Set Char.Char"]}},"Password.LengthError":{"args":[],"tags":{"Short":[],"Long":[]}},"SAddress.SAddress":{"args":[],"tags":{"SAddress":["StudentId.StudentId","String.String"]}},"StudentId.PartStudentId":{"args":[],"tags":{"P0":[],"P1":["StudentId.Digit"],"P2":["StudentId.Digit","StudentId.Digit"],"P3":["StudentId.Digit","StudentId.Digit","StudentId.Digit"],"P4":["StudentId.Digit","StudentId.Digit","StudentId.Digit","StudentId.Digit"],"P5":["StudentId.Digit","StudentId.Digit","StudentId.Digit","StudentId.Digit","StudentId.Digit"],"P6":["StudentId.Digit","StudentId.Digit","StudentId.Digit","StudentId.Digit","StudentId.Digit","StudentId.Digit"]}},"StudentId.StudentId":{"args":[],"tags":{"StudentId":["StudentId.Digit","StudentId.Digit","StudentId.Digit","StudentId.Digit","StudentId.Digit","StudentId.Digit","StudentId.Digit"]}},"StudentId.Digit":{"args":[],"tags":{"D0":[],"D1":[],"D2":[],"D3":[],"D4":[],"D5":[],"D6":[],"D7":[],"D8":[],"D9":[]}},"Char.Char":{"args":[],"tags":{"Char":[]}},"Set.Set":{"args":["t"],"tags":{"Set_elm_builtin":["Dict.Dict t ()"]}},"Dict.Dict":{"args":["k","v"],"tags":{"RBNode_elm_builtin":["Dict.NColor","k","v","Dict.Dict k v","Dict.Dict k v"],"RBEmpty_elm_builtin":[]}},"Dict.NColor":{"args":[],"tags":{"Red":[],"Black":[]}}}}})}});}(this));
+	elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.0"},"types":{"message":"Main.Msg","aliases":{"Url.Url":{"args":[],"type":"{ protocol : Url.Protocol, host : String.String, port_ : Maybe.Maybe Basics.Int, path : String.String, query : Maybe.Maybe String.String, fragment : Maybe.Maybe String.String }"}},"unions":{"Main.Msg":{"args":[],"tags":{"ChangePage":["Main.Page"],"OpenMenu":[],"CloseMenu":[],"ToWideScreenMode":[],"ToNarrowScreenMode":[],"UrlChange":["Url.Url"],"UrlRequest":["Browser.UrlRequest"],"SignUp":["{ emailAddress : EmailAddress.EmailAddress, pass : Password.Password, image : Maybe.Maybe String.String }"],"LogIn":["{ emailAddress : EmailAddress.EmailAddress, pass : Password.Password }"],"Response":["{ id : String.String, header : List.List ( String.String, String.String ), body : String.String }"],"SignUpResponse":["Result.Result Main.SignUpResponseError ()"],"LogInResponse":["Result.Result Main.LogInResponseError Main.LogInResponseOk"],"InputStudentIdOrEmailAddress":["String.String"],"InputStudentImage":["String.String"],"InputExhibitionImage":["String.String"],"ReceiveImageDataUrl":["String.String"],"ReceiveImageDataUrlMulti":["List.List String.String"],"InputPassword":["String.String"]}},"EmailAddress.EmailAddress":{"args":[],"tags":{"EmailAddress":["String.String"]}},"Main.LogInResponseError":{"args":[],"tags":{"LogInErrorMistakePasswordOrEmail":[],"LogInErrorNoToken":[],"LogInErrorBadUrl":[],"LogInErrorTimeout":[],"LogInErrorNetworkError":[],"LogInError":[]}},"Main.LogInResponseOk":{"args":[],"tags":{"LogInOk":["Main.Token"]}},"Main.Page":{"args":[],"tags":{"PageHome":["Main.Home"],"PageSignUp":["Main.UserSignUpPage"],"PageLogIn":["Main.LogInPage"],"PageLikeAndHistory":["Main.LikeAndHistory"],"PageExhibitionItemList":[],"PagePurchaseItemList":[],"PageExhibition":["Main.ExhibitionPage"],"PageSendSignUpEmail":["EmailAddress.EmailAddress","Maybe.Maybe (Result.Result Main.SignUpResponseError ())"],"PageGoods":[]}},"Main.SignUpResponseError":{"args":[],"tags":{"SignUpErrorAlreadySignUp":[],"SignUpErrorBadUrl":[],"SignUpErrorTimeout":[],"SignUpErrorNetworkError":[],"SignUpErrorInvalidRequest":[],"SignUpError":[]}},"Password.Password":{"args":[],"tags":{"Password":["List.List Password.PasswordChar"]}},"Browser.UrlRequest":{"args":[],"tags":{"Internal":["Url.Url"],"External":["String.String"]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"List.List":{"args":["a"],"tags":{}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"Result.Result":{"args":["error","value"],"tags":{"Ok":["value"],"Err":["error"]}},"String.String":{"args":[],"tags":{"String":[]}},"Url.Protocol":{"args":[],"tags":{"Http":[],"Https":[]}},"Main.ExhibitionPage":{"args":[],"tags":{"ExhibitionPage":["{ title : String.String, description : String.String, price : Maybe.Maybe Basics.Int, image : List.List String.String }"]}},"Main.Home":{"args":[],"tags":{"Recent":[],"Recommend":["{ valid : Basics.Bool }"],"Free":[]}},"Main.LikeAndHistory":{"args":[],"tags":{"Like":[],"History":[]}},"Main.LogInPage":{"args":[],"tags":{"LogInPage":["{ nextPage : Maybe.Maybe Main.Page, studentIdOrEmailAddress : Main.AnalysisStudentIdOrEmailAddressResult, password : Maybe.Maybe Password.Password }"],"ForgotPassword":[]}},"Main.Token":{"args":[],"tags":{"Token":["String.String"]}},"Main.UserSignUpPage":{"args":[],"tags":{"UserSignUpPageStudentHasSAddress":["{ studentIdOrTsukubaEmailAddress : Main.AnalysisStudentIdOrSAddressResult, password : Result.Result Password.Error Password.Password }"],"UserSignUpPageNewStudent":["{ emailAddress : Maybe.Maybe EmailAddress.EmailAddress, imageUrl : Maybe.Maybe String.String, password : Result.Result Password.Error Password.Password }"]}},"Password.PasswordChar":{"args":[],"tags":{"Pa":[],"Pb":[],"Pc":[],"Pd":[],"Pe":[],"Pf":[],"Pg":[],"Ph":[],"Pi":[],"Pj":[],"Pk":[],"Pl":[],"Pm":[],"Pn":[],"Po":[],"Pp":[],"Pq":[],"Pr":[],"Ps":[],"Pt":[],"Pu":[],"Pv":[],"Pw":[],"Px":[],"Py":[],"Pz":[],"PA":[],"PB":[],"PC":[],"PD":[],"PE":[],"PF":[],"PG":[],"PH":[],"PI":[],"PJ":[],"PK":[],"PL":[],"PM":[],"PN":[],"PO":[],"PP":[],"PQ":[],"PR":[],"PS":[],"PT":[],"PU":[],"PV":[],"PW":[],"PX":[],"PY":[],"PZ":[],"P0":[],"P1":[],"P2":[],"P3":[],"P4":[],"P5":[],"P6":[],"P7":[],"P8":[],"P9":[],"ExclamationMark":[],"QuotationMark":[],"NumberSign":[],"DollarSign":[],"PercentSign":[],"Ampersand":[],"Apostrophe":[],"LeftParenthesis":[],"RightParenthesis":[],"Asterisk":[],"PlusSign":[],"Comma":[],"HyphenMinus":[],"FullStop":[],"Solidus":[],"Colon":[],"Semicolon":[],"LessThanSign":[],"EqualsSign":[],"GreaterThanSign":[],"QuestionMark":[],"CommercialAt":[],"LeftSquareBracket":[],"ReverseSolidus":[],"RightSquareBracket":[],"CircumflexAccent":[],"LowLine":[],"GraveAccent":[],"LeftCurlyBracket":[],"VerticalLine":[],"RightCurlyBracket":[],"Tilde":[]}},"Main.AnalysisStudentIdOrEmailAddressResult":{"args":[],"tags":{"AENone":[],"AEStudentId":["StudentId.StudentId"],"AEEmailAddress":["EmailAddress.EmailAddress"]}},"Main.AnalysisStudentIdOrSAddressResult":{"args":[],"tags":{"ANone":[],"AStudentId":["StudentId.StudentId"],"ASAddress":["SAddress.SAddress"],"APartStudentId":["StudentId.PartStudentId"],"AEmailButIsNotTsukuba":[]}},"Password.Error":{"args":[],"tags":{"EAllNumberError":[],"EInvalidCharError":["Password.InvalidCharError"],"ELengthError":["Password.LengthError"],"EInvalidAndLengthError":["Password.InvalidCharError","Password.LengthError"],"EAllNumberAndLengthError":["Password.LengthError"]}},"Basics.Bool":{"args":[],"tags":{"True":[],"False":[]}},"Password.InvalidCharError":{"args":[],"tags":{"InvalidCharError":["Set.Set Char.Char"]}},"Password.LengthError":{"args":[],"tags":{"Short":[],"Long":[]}},"SAddress.SAddress":{"args":[],"tags":{"SAddress":["StudentId.StudentId","String.String"]}},"StudentId.PartStudentId":{"args":[],"tags":{"P0":[],"P1":["StudentId.Digit"],"P2":["StudentId.Digit","StudentId.Digit"],"P3":["StudentId.Digit","StudentId.Digit","StudentId.Digit"],"P4":["StudentId.Digit","StudentId.Digit","StudentId.Digit","StudentId.Digit"],"P5":["StudentId.Digit","StudentId.Digit","StudentId.Digit","StudentId.Digit","StudentId.Digit"],"P6":["StudentId.Digit","StudentId.Digit","StudentId.Digit","StudentId.Digit","StudentId.Digit","StudentId.Digit"]}},"StudentId.StudentId":{"args":[],"tags":{"StudentId":["StudentId.Digit","StudentId.Digit","StudentId.Digit","StudentId.Digit","StudentId.Digit","StudentId.Digit","StudentId.Digit"]}},"StudentId.Digit":{"args":[],"tags":{"D0":[],"D1":[],"D2":[],"D3":[],"D4":[],"D5":[],"D6":[],"D7":[],"D8":[],"D9":[]}},"Char.Char":{"args":[],"tags":{"Char":[]}},"Set.Set":{"args":["t"],"tags":{"Set_elm_builtin":["Dict.Dict t ()"]}},"Dict.Dict":{"args":["k","v"],"tags":{"RBNode_elm_builtin":["Dict.NColor","k","v","Dict.Dict k v","Dict.Dict k v"],"RBEmpty_elm_builtin":[]}},"Dict.NColor":{"args":[],"tags":{"Red":[],"Black":[]}}}}})}});}(this));
