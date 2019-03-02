@@ -1,4 +1,15 @@
-module Goods exposing (Goods, none)
+module Goods exposing
+    ( Condition(..)
+    , Goods
+    , getComplete
+    , getCondition
+    , getDescription
+    , getImage
+    , getLocation
+    , getName
+    , getPrice
+    , none
+    )
 
 {-| 商品
 -}
@@ -22,6 +33,55 @@ type Condition
     | VeryGood
     | Good
     | Acceptable
+
+
+{-| 商品の名前を取得する
+-}
+getName : Goods -> String
+getName (Goods { name }) =
+    name
+
+
+{-| 商品の説明を取得する
+-}
+getDescription : Goods -> String
+getDescription (Goods { description }) =
+    description
+
+
+{-| 商品の価格を取得する
+-}
+getPrice : Goods -> Int
+getPrice (Goods { price }) =
+    price
+
+
+{-| 商品の状態を取得する
+-}
+getCondition : Goods -> Condition
+getCondition (Goods { condition }) =
+    condition
+
+
+{-| 商品の取引場所を取得する
+-}
+getLocation : Goods -> String
+getLocation (Goods { location }) =
+    location
+
+
+{-| 商品がすでに売られているかを取得する
+-}
+getComplete : Goods -> Bool
+getComplete (Goods { complete }) =
+    complete
+
+
+{-| 商品の画像を取得する
+-}
+getImage : Goods -> String
+getImage (Goods { image }) =
+    image
 
 
 {-| 仮の商品

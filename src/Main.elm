@@ -1033,8 +1033,8 @@ mainView page isWideScreenMode =
             PageSendSignUpEmail emailAddress response ->
                 sendSignUpEmailView emailAddress response
 
-            PageGoods _ ->
-                [ Html.text "アイテム詳細ページ" ]
+            PageGoods goods ->
+                goodsView goods
 
             _ ->
                 [ itemList isWideScreenMode, exhibitButton ]
@@ -1117,6 +1117,44 @@ itemImage =
         , Html.Attributes.src "assets/itemDummy.png"
         ]
         []
+
+
+goodsView : Goods.Goods -> List (Html.Html Msg)
+goodsView goods =
+    [ Html.div [] [ Html.text "アイテム詳細表示" ]
+    , Html.div [] [ Html.text ("商品名" ++ Goods.getName goods) ]
+    , Html.div [] [ Html.text ("商品の説明" ++ Goods.getDescription goods) ]
+    , Html.div [] [ Html.text ("商品の価格" ++ priceToString (Goods.getPrice goods)) ]
+    , Html.div []
+        [ Html.text
+            ("商品の状態"
+                ++ (case Goods.getCondition goods of
+                        Goods.LikeNew ->
+                            "新品同様"
+
+                        Goods.VeryGood ->
+                            "とても良い"
+
+                        Goods.Good ->
+                            "良い"
+
+                        Goods.Acceptable ->
+                            "OK"
+                   )
+            )
+        ]
+    , Html.div [] [ Html.text ("取引場所" ++ Goods.getLocation goods) ]
+    , Html.div []
+        [ Html.text
+            (if Goods.getComplete goods then
+                "売却済み"
+
+             else
+                "まだ売れていない"
+            )
+        ]
+    , Html.img [ Html.Attributes.src (Goods.getImage goods) ] []
+    ]
 
 
 exhibitButton : Html.Html Msg
