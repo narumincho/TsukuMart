@@ -56,7 +56,7 @@ type MenuState
 
 
 type Page
-    = PageHome Home
+    = PageHome HomePage
     | PageSignUp UserSignUpPage
     | PageLogIn LogInPage
     | PageLikeAndHistory LikeAndHistory
@@ -92,10 +92,10 @@ type ExhibitionPage
     = ExhibitionPage { title : String, description : String, price : Maybe Int, image : List String }
 
 
-type Home
-    = Recent
-    | Recommend { valid : Bool } -- 不正なURLで飛んだかどうか
-    | Free
+type HomePage
+    = HomePageRecent
+    | HomePageRecommend { valid : Bool } -- 不正なURLで飛んだかどうか
+    | HomePageFree
 
 
 type LikeAndHistory
@@ -407,17 +407,17 @@ update msg (Model rec) =
 urlToPage : Url.Url -> Maybe Page -> Page
 urlToPage url beforePageMaybe =
     Url.Parser.parse (urlParser beforePageMaybe) url
-        |> Maybe.withDefault (PageHome (Recommend { valid = False }))
+        |> Maybe.withDefault (PageHome (HomePageRecommend { valid = False }))
 
 
 urlParser : Maybe Page -> Url.Parser.Parser (Page -> a) a
 urlParser beforePageMaybe =
     Url.Parser.oneOf
         [ Url.Parser.map
-            (PageHome (Recommend { valid = True }))
+            (PageHome (HomePageRecommend { valid = True }))
             Url.Parser.top
         , Url.Parser.map
-            (PageHome (Recommend { valid = True }))
+            (PageHome (HomePageRecommend { valid = True }))
             (Url.Parser.s "index.html")
         , Url.Parser.map
             (PageSignUp
@@ -467,10 +467,9 @@ view (Model { page, menuState }) =
     { title = "つくマート"
     , body =
         [ header isWideScreen
-        , mainTab page isWideScreen
         , menuView menuState
-        , mainView page isWideScreen
         ]
+            ++ mainViewAndMainTab page isWideScreen
     }
 
 
@@ -842,53 +841,100 @@ menuMain =
     ]
 
 
-
-{- Main Tab -}
-
-
-mainTab : Page -> Bool -> Html.Html Msg
-mainTab page wideScreenMode =
+mainViewAndMainTab : Page -> Bool -> List (Html.Html Msg)
+mainViewAndMainTab page isWideScreenMode =
     let
-        tabData : TabType
-        tabData =
+        { tabData, mainView } =
             case page of
-                PageHome _ ->
-                    TabMulti
-                        [ ( PageHome Recent, "新着" )
-                        , ( PageHome (Recommend { valid = True }), "おすすめ" )
-                        , ( PageHome Free, "0円" )
-                        ]
+                PageHome subPage ->
+                    { tabData =
+                        TabMulti
+                            [ ( PageHome HomePageRecent, "新着" )
+                            , ( PageHome (HomePageRecommend { valid = True }), "おすすめ" )
+                            , ( PageHome HomePageFree, "0円" )
+                            ]
+                            (case subPage of
+                                HomePageRecent ->
+                                    0
 
-                PageLikeAndHistory _ ->
-                    TabMulti
-                        [ ( PageLikeAndHistory Like, "いいね" )
-                        , ( PageLikeAndHistory History, "閲覧履歴" )
-                        ]
+                                HomePageRecommend _ ->
+                                    1
+
+                                HomePageFree ->
+                                    2
+                            )
+                    , mainView =
+                        case subPage of
+                            HomePageRecommend { valid } ->
+                                if valid then
+                                    [ itemList isWideScreenMode, exhibitButton ]
+
+                                else
+                                    [ invalidLinkErrorMsg, itemList isWideScreenMode, exhibitButton ]
+
+                            _ ->
+                                [ itemList isWideScreenMode, exhibitButton ]
+                    }
+
+                PageExhibition subPage ->
+                    { tabData =
+                        TabSingle "商品の情報を入力"
+                    , mainView =
+                        [ exhibitionView subPage ]
+                    }
+
+                PageLikeAndHistory subPage ->
+                    { tabData =
+                        TabMulti
+                            [ ( PageLikeAndHistory Like, "いいね" )
+                            , ( PageLikeAndHistory History, "閲覧履歴" )
+                            ]
+                            (case subPage of
+                                Like ->
+                                    0
+
+                                History ->
+                                    1
+                            )
+                    , mainView =
+                        [ itemList isWideScreenMode ]
+                    }
 
                 PagePurchaseItemList ->
-                    TabSingle "購入した商品"
+                    { tabData = TabSingle "購入した商品"
+                    , mainView =
+                        [ itemList isWideScreenMode ]
+                    }
 
                 PageExhibitionItemList ->
-                    TabSingle "出品した商品"
+                    { tabData = TabSingle "出品した商品"
+                    , mainView =
+                        [ itemList isWideScreenMode ]
+                    }
 
-                PageSignUp _ ->
-                    TabSingle "新規登録"
+                PageSignUp subPage ->
+                    { tabData = TabSingle "新規登録"
+                    , mainView = userSignUpView subPage
+                    }
 
-                PageLogIn _ ->
-                    TabSingle "ログイン"
+                PageLogIn subPage ->
+                    { tabData = TabSingle "ログイン"
+                    , mainView = userLogInView subPage
+                    }
 
-                PageExhibition _ ->
-                    TabSingle "商品の情報を入力"
+                PageSendSignUpEmail emailAddress response ->
+                    { tabData = TabNone
+                    , mainView = sendSignUpEmailView emailAddress response
+                    }
 
-                PageSendSignUpEmail _ _ ->
-                    TabNone
-
-                PageGoods _ ->
-                    TabNone
+                PageGoods goods ->
+                    { tabData = TabNone
+                    , mainView = goodsView goods
+                    }
     in
-    Html.div
+    [ Html.div
         ([ Html.Attributes.classList
-            [ ( "mainTab", True ), ( "mainTab-wide", wideScreenMode ) ]
+            [ ( "mainTab", True ), ( "mainTab-wide", isWideScreenMode ) ]
          ]
             ++ (case tabData of
                     TabNone ->
@@ -896,24 +942,30 @@ mainTab page wideScreenMode =
 
                     _ ->
                         [ Html.Attributes.style "grid-template-columns"
-                            (List.repeat (tabTypeToCount tabData) "1fr" |> String.join " ")
+                            (List.repeat (tabDataToCount tabData) "1fr" |> String.join " ")
                         , Html.Attributes.style "height" "3rem"
                         ]
                )
         )
         (mainTabItemList page tabData)
+    , Html.div
+        [ Html.Attributes.classList
+            [ ( "mainView", True ), ( "mainView-wide", isWideScreenMode ) ]
+        ]
+        mainView
+    ]
 
 
-type TabType
-    = TabMulti (List ( Page, String ))
+type TabData
+    = TabMulti (List ( Page, String )) Int
     | TabSingle String
     | TabNone
 
 
-tabTypeToCount : TabType -> Int
-tabTypeToCount tabType =
+tabDataToCount : TabData -> Int
+tabDataToCount tabType =
     case tabType of
-        TabMulti list ->
+        TabMulti list _ ->
             List.length list
 
         TabSingle _ ->
@@ -923,10 +975,10 @@ tabTypeToCount tabType =
             0
 
 
-mainTabItemList : Page -> TabType -> List (Html.Html Msg)
+mainTabItemList : Page -> TabData -> List (Html.Html Msg)
 mainTabItemList selectedPage tabData =
     case tabData of
-        TabMulti tabList ->
+        TabMulti tabList selectIndex ->
             (tabList
                 |> List.map
                     (\( tab, label ) ->
@@ -936,7 +988,7 @@ mainTabItemList selectedPage tabData =
                     )
             )
                 ++ [ mainTabSelectLine
-                        (firstElementIndex selectedPage (List.map Tuple.first tabList) |> Maybe.withDefault 0)
+                        selectIndex
                         (List.length tabList)
                    ]
 
@@ -1003,42 +1055,6 @@ mainTabSelectLine index count =
             ]
             []
         ]
-
-
-{-| 主に表示する内容
--}
-mainView : Page -> Bool -> Html.Html Msg
-mainView page isWideScreenMode =
-    Html.div
-        [ Html.Attributes.classList
-            [ ( "mainView", True ), ( "mainView-wide", isWideScreenMode ) ]
-        ]
-        (case page of
-            PageExhibition exhibitionState ->
-                [ exhibitionView exhibitionState ]
-
-            PageSignUp userPage ->
-                userSignUpView userPage
-
-            PageLogIn logInPage ->
-                userLogInView logInPage
-
-            PageHome (Recommend { valid }) ->
-                if valid then
-                    [ itemList isWideScreenMode, exhibitButton ]
-
-                else
-                    [ invalidLinkErrorMsg, itemList isWideScreenMode, exhibitButton ]
-
-            PageSendSignUpEmail emailAddress response ->
-                sendSignUpEmailView emailAddress response
-
-            PageGoods goods ->
-                goodsView goods
-
-            _ ->
-                [ itemList isWideScreenMode, exhibitButton ]
-        )
 
 
 invalidLinkErrorMsg : Html.Html msg

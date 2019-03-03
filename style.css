@@ -676,7 +676,15 @@ img {
 .mainView {
     display: block;
     width: 100%;
-    padding-top: 7rem;
+    padding: 7rem 0 0 0;
+    word-wrap: break-word;
+    overflow: hidden;
+}
+
+.mainView-noMainTab {
+    display: block;
+    width: 100%;
+    padding: 4rem 0 0 0;
     word-wrap: break-word;
     overflow: hidden;
 }
@@ -686,6 +694,10 @@ img {
     box-sizing: border-box;
 }
 
+.mainView-wide-noMainTab {
+    padding: 4rem 0 0 20rem;
+    box-sizing: border-box;
+}
 .mainView-simpleText {
     font-size: 1.5rem;
 }
