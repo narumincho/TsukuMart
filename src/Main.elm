@@ -12,11 +12,13 @@ import Html.Keyed
 import Json.Decode
 import Password
 import SAddress exposing (SAddress)
+import SiteMap
 import StudentId exposing (StudentId)
 import Svg
 import Svg.Attributes
 import Url
 import Url.Parser exposing ((</>))
+import XmlParser
 
 
 
@@ -60,11 +62,12 @@ type Page
     | PageSignUp UserSignUpPage
     | PageLogIn LogInPage
     | PageLikeAndHistory LikeAndHistory
-    | PageExhibitionItemList
-    | PagePurchaseItemList
+    | PageExhibitionGoodsList
+    | PagePurchaseGoodsList
     | PageExhibition ExhibitionPage
     | PageSendSignUpEmail EmailAddress.EmailAddress (Maybe (Result Api.SignUpResponseError Api.SignUpResponseOk))
     | PageGoods Goods.Goods
+    | PageSiteMapXml
 
 
 type UserSignUpPage
@@ -413,46 +416,40 @@ urlToPage url beforePageMaybe =
 urlParser : Maybe Page -> Url.Parser.Parser (Page -> a) a
 urlParser beforePageMaybe =
     Url.Parser.oneOf
-        [ Url.Parser.map
-            (PageHome (HomePageRecommend { valid = True }))
-            Url.Parser.top
-        , Url.Parser.map
-            (PageHome (HomePageRecommend { valid = True }))
-            (Url.Parser.s "index.html")
-        , Url.Parser.map
-            (PageSignUp
-                (UserSignUpPageStudentHasSAddress
-                    { studentIdOrTsukubaEmailAddress = analysisStudentIdOrSAddress ""
-                    , password = Password.passwordFromString ""
-                    }
+        [ SiteMap.homeParser
+            |> Url.Parser.map (PageHome (HomePageRecommend { valid = True }))
+        , SiteMap.signUpParser
+            |> Url.Parser.map
+                (PageSignUp
+                    (UserSignUpPageStudentHasSAddress
+                        { studentIdOrTsukubaEmailAddress = analysisStudentIdOrSAddress ""
+                        , password = Password.passwordFromString ""
+                        }
+                    )
                 )
-            )
-            (Url.Parser.s "user-signup")
-        , Url.Parser.map
-            (PageLogIn
-                (LogInPage
-                    { nextPage = beforePageMaybe
-                    , studentIdOrEmailAddress = analysisStudentIdOrEmailAddress ""
-                    , password = Nothing
-                    }
+        , SiteMap.logInParser
+            |> Url.Parser.map
+                (PageLogIn
+                    (LogInPage
+                        { nextPage = beforePageMaybe
+                        , studentIdOrEmailAddress = analysisStudentIdOrEmailAddress ""
+                        , password = Nothing
+                        }
+                    )
                 )
-            )
-            (Url.Parser.s "user-login")
-        , Url.Parser.map
-            (PageLikeAndHistory Like)
-            (Url.Parser.s "like-history")
-        , Url.Parser.map
-            PageExhibitionItemList
-            (Url.Parser.s "exhibition-item")
-        , Url.Parser.map
-            PagePurchaseItemList
-            (Url.Parser.s "purchase-item")
-        , Url.Parser.map
-            (PageExhibition (ExhibitionPage { title = "", description = "", price = Nothing, image = [] }))
-            (Url.Parser.s "exhibition")
-        , Url.Parser.map
-            (PageGoods Goods.none)
-            (Url.Parser.s "goods" </> Url.Parser.s "00000000")
+        , SiteMap.likeHistoryParser
+            |> Url.Parser.map (PageLikeAndHistory Like)
+        , SiteMap.exhibitionGoodsParser
+            |> Url.Parser.map PageExhibitionGoodsList
+        , SiteMap.purchaseGoodsParser
+            |> Url.Parser.map PagePurchaseGoodsList
+        , SiteMap.exhibitionParser
+            |> Url.Parser.map
+                (PageExhibition (ExhibitionPage { title = "", description = "", price = Nothing, image = [] }))
+        , SiteMap.goodsParser
+            |> Url.Parser.map (\_ -> PageGoods Goods.none)
+        , SiteMap.siteMapParser
+            |> Url.Parser.map PageSiteMapXml
         ]
 
 
@@ -489,7 +486,7 @@ header wideMode =
          )
             ++ [ Html.a
                     [ Html.Attributes.class "h1Link"
-                    , Html.Attributes.href "/"
+                    , Html.Attributes.href SiteMap.homeUrl
                     ]
                     [ Html.h1 [] [ logo ] ]
                , searchButton
@@ -808,34 +805,34 @@ menuMain =
         , Html.div [ Html.Attributes.class "menu-logInsignUpButtonContainer" ]
             [ Html.a
                 [ Html.Attributes.class "menu-logInButton"
-                , Html.Attributes.href "/user-login"
+                , Html.Attributes.href SiteMap.logInUrl
                 ]
                 [ Html.text "ログイン" ]
             , Html.a
                 [ Html.Attributes.class "menu-signUpButton"
-                , Html.Attributes.href "/user-signup"
+                , Html.Attributes.href SiteMap.signUpUrl
                 ]
                 [ Html.text "新規登録" ]
             ]
         ]
     , Html.a
         [ Html.Attributes.class "menu-item"
-        , Html.Attributes.href "/"
+        , Html.Attributes.href SiteMap.homeUrl
         ]
         [ Html.text "ホーム" ]
     , Html.a
         [ Html.Attributes.class "menu-item"
-        , Html.Attributes.href "/like-history"
+        , Html.Attributes.href SiteMap.likeHistoryUrl
         ]
         [ Html.text "いいね・閲覧した商品" ]
     , Html.a
         [ Html.Attributes.class "menu-item"
-        , Html.Attributes.href "exhibition-item"
+        , Html.Attributes.href SiteMap.exhibitionGoodsUrl
         ]
         [ Html.text "出品した商品" ]
     , Html.a
         [ Html.Attributes.class "menu-item"
-        , Html.Attributes.href "purchase-item"
+        , Html.Attributes.href SiteMap.purchaseGoodsUrl
         ]
         [ Html.text "購入した商品" ]
     ]
@@ -877,11 +874,7 @@ mainViewAndMainTab page isWideScreenMode =
                     }
 
                 PageExhibition subPage ->
-                    { tabData =
-                        TabSingle "商品の情報を入力"
-                    , mainView =
-                        [ exhibitionView subPage ]
-                    }
+                    exhibitionView subPage
 
                 PageLikeAndHistory subPage ->
                     { tabData =
@@ -900,13 +893,13 @@ mainViewAndMainTab page isWideScreenMode =
                         [ itemList isWideScreenMode ]
                     }
 
-                PagePurchaseItemList ->
+                PagePurchaseGoodsList ->
                     { tabData = TabSingle "購入した商品"
                     , mainView =
                         [ itemList isWideScreenMode ]
                     }
 
-                PageExhibitionItemList ->
+                PageExhibitionGoodsList ->
                     { tabData = TabSingle "出品した商品"
                     , mainView =
                         [ itemList isWideScreenMode ]
@@ -931,6 +924,9 @@ mainViewAndMainTab page isWideScreenMode =
                     { tabData = TabNone
                     , mainView = goodsView goods
                     }
+
+                PageSiteMapXml ->
+                    siteMapXmlView
     in
     [ Html.div
         ([ Html.Attributes.classList
@@ -1098,7 +1094,7 @@ item : { title : String, price : Int, like : Int } -> Html.Html Msg
 item { title, price, like } =
     Html.a
         [ Html.Attributes.class "item"
-        , Html.Attributes.href "/goods/00000000"
+        , Html.Attributes.href (SiteMap.goodsUrl 0)
         ]
         [ itemImage
         , Html.div [ Html.Attributes.class "itemTitle" ] [ Html.text title ]
@@ -1177,19 +1173,24 @@ exhibitButton : Html.Html Msg
 exhibitButton =
     Html.a
         [ Html.Attributes.class "exhibitButton"
-        , Html.Attributes.href "/exhibition"
+        , Html.Attributes.href SiteMap.exhibitionUrl
         ]
         [ Html.text "出品" ]
 
 
-exhibitionView : ExhibitionPage -> Html.Html Msg
+exhibitionView : ExhibitionPage -> { tabData : TabData, mainView : List (Html.Html Msg) }
 exhibitionView (ExhibitionPage { title, description, price, image }) =
-    Html.div
-        [ Html.Attributes.class "exhibitionView" ]
-        [ exhibitionViewPhoto image
-        , exhibitionViewItemTitleAndDescription
-        , exhibitionViewItemPrice price
+    { tabData =
+        TabSingle "商品の情報を入力"
+    , mainView =
+        [ Html.div
+            [ Html.Attributes.class "exhibitionView" ]
+            [ exhibitionViewPhoto image
+            , exhibitionViewItemTitleAndDescription
+            , exhibitionViewItemPrice price
+            ]
         ]
+    }
 
 
 exhibitionViewPhoto : List String -> Html.Html Msg
@@ -1410,7 +1411,7 @@ signUpButton : Html.Html msg
 signUpButton =
     Html.a
         [ Html.Attributes.class "logIn-signInButton"
-        , Html.Attributes.href "/user-signup"
+        , Html.Attributes.href SiteMap.signUpUrl
         ]
         [ Html.text "新規登録" ]
 
@@ -1862,6 +1863,24 @@ signUpResultToString emailAddress signUpResult =
 
         Err Api.SignUpError ->
             [ Html.text "サーバーの回答を理解することができませんでした" ]
+
+
+siteMapXmlView : { tabData : TabData, mainView : List (Html.Html msg) }
+siteMapXmlView =
+    { tabData = TabSingle "sitemap.xml"
+    , mainView =
+        [ Html.div
+            []
+            [ Html.text
+                (XmlParser.format
+                    { processingInstructions = []
+                    , docType = Nothing
+                    , root = XmlParser.Element "urlset" [] []
+                    }
+                )
+            ]
+        ]
+    }
 
 
 subscription : Model -> Sub Msg
