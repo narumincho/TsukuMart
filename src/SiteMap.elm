@@ -1,4 +1,4 @@
-module SiteMap exposing (exhibitionGoodsParser, exhibitionGoodsUrl, exhibitionParser, exhibitionUrl, goodsParser, goodsUrl, homeParser, homeUrl, likeHistoryParser, likeHistoryUrl, logInParser, logInUrl, purchaseGoodsParser, purchaseGoodsUrl, signUpParser, signUpUrl, siteMapParser, siteMapUrl)
+module SiteMap exposing (exhibitionGoodsParser, exhibitionGoodsUrl, exhibitionParser, exhibitionUrl, goodsParser, goodsUrl, homeParser, homeUrl, likeHistoryParser, likeHistoryUrl, logInParser, logInUrl, purchaseGoodsParser, purchaseGoodsUrl, signUpParser, signUpUrl, siteMapParser, siteMapUrl, siteMapXml)
 
 import Url.Parser exposing ((</>))
 
@@ -80,7 +80,7 @@ goodsParser =
 
 goodsUrl : Int -> String
 goodsUrl index =
-    "/goods/" ++ String.fromInt index
+    "/goods/" ++ (index |> String.fromInt |> String.padLeft 10 '0')
 
 
 siteMapParser : Url.Parser.Parser a a
@@ -91,3 +91,25 @@ siteMapParser =
 siteMapUrl : String
 siteMapUrl =
     "/sitemap"
+
+
+siteMapXml : String
+siteMapXml =
+    ([ "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+     , "<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n"
+     ]
+        ++ (([ homeUrl ] ++ (List.range 0 99 |> List.map goodsUrl))
+                |> List.map urlNode
+           )
+        ++ [ "</urlset>\n" ]
+    )
+        |> String.concat
+
+
+urlNode : String -> String
+urlNode string =
+    "  <url>\n"
+        ++ "    <loc>http://tsukumart.com"
+        ++ string
+        ++ "</loc>\n"
+        ++ "  </url>\n"

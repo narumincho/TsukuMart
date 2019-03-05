@@ -1870,15 +1870,8 @@ siteMapXmlView =
     { tabData = TabSingle "sitemap.xml"
     , mainView =
         [ Html.div
-            []
-            [ Html.text
-                (XmlParser.format
-                    { processingInstructions = []
-                    , docType = Nothing
-                    , root = XmlParser.Element "urlset" [] []
-                    }
-                )
-            ]
+            [ Html.Attributes.style "white-space" "pre-wrap" ]
+            [ Html.text SiteMap.siteMapXml ]
         ]
     }
 
