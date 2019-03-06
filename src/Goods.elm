@@ -5,6 +5,7 @@ module Goods exposing
     , getCondition
     , getDescription
     , getImage
+    , getLike
     , getLocation
     , getName
     , getPrice
@@ -19,6 +20,7 @@ type Goods
     = Goods
         { id : Int
         , name : String -- 長さは1～255文字
+        , like : Int
         , description : String
         , price : Int
         , condition : Condition
@@ -40,6 +42,13 @@ type Condition
 getName : Goods -> String
 getName (Goods { name }) =
     name
+
+
+{-| 商品のいいねの数を取得する
+-}
+getLike : Goods -> Int
+getLike (Goods { like }) =
+    like
 
 
 {-| 商品の説明を取得する
@@ -91,6 +100,7 @@ none =
     Goods
         { id = 0
         , name = "仮"
+        , like = 3
         , description = "説明文"
         , price = 99
         , condition = LikeNew

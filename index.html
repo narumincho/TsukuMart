@@ -18,9 +18,9 @@
         const app = Elm.Main.init({ node: document.getElementById("root") });
         const windowResizeListener = (e) => {
             if (1000 < innerWidth) {
-                app.ports.toWideScreenMode.send(0);
+                app.ports.toWideScreenMode.send(null);
             } else {
-                app.ports.toNarrowScreenMode.send(0);
+                app.ports.toNarrowScreenMode.send(null);
             }
         }
         /* ウィンドウサイズのリサイズ情報をElmに送信 */

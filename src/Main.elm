@@ -17,18 +17,17 @@ import StudentId exposing (StudentId)
 import Svg
 import Svg.Attributes
 import Url
-import Url.Parser exposing ((</>))
-import XmlParser
+import Url.Parser
 
 
 
 {- Intは意味のない値 -}
 
 
-port toWideScreenMode : (Int -> msg) -> Sub msg
+port toWideScreenMode : (() -> msg) -> Sub msg
 
 
-port toNarrowScreenMode : (Int -> msg) -> Sub msg
+port toNarrowScreenMode : (() -> msg) -> Sub msg
 
 
 port receiveImageDataUrl : (String -> msg) -> Sub msg
@@ -1133,8 +1132,9 @@ itemImage =
 
 goodsView : Goods.Goods -> List (Html.Html Msg)
 goodsView goods =
-    [ Html.div [] [ Html.text "アイテム詳細表示" ]
-    , Html.div [] [ Html.text ("商品名" ++ Goods.getName goods) ]
+    [ goodsViewImage (Goods.getImage goods)
+    , goodsViewName (Goods.getName goods)
+    , goodsViewLike (Goods.getLike goods)
     , Html.div [] [ Html.text ("商品の説明" ++ Goods.getDescription goods) ]
     , Html.div [] [ Html.text ("商品の価格" ++ priceToString (Goods.getPrice goods)) ]
     , Html.div []
@@ -1165,8 +1165,30 @@ goodsView goods =
                 "まだ売れていない"
             )
         ]
-    , Html.img [ Html.Attributes.src (Goods.getImage goods) ] []
     ]
+
+
+goodsViewImage : String -> Html.Html msg
+goodsViewImage dataUrl =
+    Html.img
+        [ Html.Attributes.class "goods-image"
+        , Html.Attributes.src dataUrl
+        ]
+        []
+
+
+goodsViewName : String -> Html.Html msg
+goodsViewName name =
+    Html.div
+        [ Html.Attributes.class "goods-name" ]
+        [ Html.text name ]
+
+
+goodsViewLike : Int -> Html.Html msg
+goodsViewLike likeCount =
+    Html.div
+        []
+        [ Html.text (String.fromInt likeCount) ]
 
 
 exhibitButton : Html.Html Msg
