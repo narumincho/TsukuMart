@@ -479,6 +479,24 @@ img {
 .goods-name {
     font-size: 1.5rem;
 }
+
+.goods-description-label {
+    background-color: #ddd;
+}
+
+.goods-priceAndBuyButton {
+    position: fixed;
+    display: flex;
+    width: 100%;
+    padding: .5rem;
+    justify-content: space-between;
+    bottom: 0;
+    background-color: var(--primaryColor);
+}
+
+.goods-location-label {
+    background-color: #ddd;
+}
 /*===============================================
                 Log In ログイン画面
 ===============================================*/

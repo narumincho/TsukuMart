@@ -1,6 +1,7 @@
 module Goods exposing
     ( Condition(..)
     , Goods
+    , Location
     , getComplete
     , getCondition
     , getDescription
@@ -24,7 +25,7 @@ type Goods
         , description : String
         , price : Int
         , condition : Condition
-        , location : String
+        , location : Location
         , complete : Bool
         , image : String
         }
@@ -35,6 +36,10 @@ type Condition
     | VeryGood
     | Good
     | Acceptable
+
+
+type alias Location =
+    String
 
 
 {-| 商品の名前を取得する
@@ -74,7 +79,7 @@ getCondition (Goods { condition }) =
 
 {-| 商品の取引場所を取得する
 -}
-getLocation : Goods -> String
+getLocation : Goods -> Location
 getLocation (Goods { location }) =
     location
 

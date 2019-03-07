@@ -9188,6 +9188,55 @@ var author$project$Goods$getPrice = function (_n0) {
 	var price = _n0.aC;
 	return price;
 };
+var author$project$Main$goodsViewCondition = function (condition) {
+	return A2(
+		elm$html$Html$div,
+		_List_Nil,
+		_List_fromArray(
+			[
+				elm$html$Html$text(
+				'商品の状態' + function () {
+					switch (condition) {
+						case 0:
+							return '新品同様';
+						case 1:
+							return 'とても良い';
+						case 2:
+							return '良い';
+						default:
+							return 'OK';
+					}
+				}())
+			]));
+};
+var author$project$Main$goodsViewDescription = function (description) {
+	return A2(
+		elm$html$Html$div,
+		_List_fromArray(
+			[
+				elm$html$Html$Attributes$class('goods-description')
+			]),
+		_List_fromArray(
+			[
+				A2(
+				elm$html$Html$div,
+				_List_fromArray(
+					[
+						elm$html$Html$Attributes$class('goods-description-label')
+					]),
+				_List_fromArray(
+					[
+						elm$html$Html$text('商品の説明')
+					])),
+				A2(
+				elm$html$Html$div,
+				_List_Nil,
+				_List_fromArray(
+					[
+						elm$html$Html$text(description)
+					]))
+			]));
+};
 var author$project$Main$goodsViewImage = function (dataUrl) {
 	return A2(
 		elm$html$Html$img,
@@ -9206,6 +9255,34 @@ var author$project$Main$goodsViewLike = function (likeCount) {
 			[
 				elm$html$Html$text(
 				elm$core$String$fromInt(likeCount))
+			]));
+};
+var author$project$Main$goodsViewLocation = function (location) {
+	return A2(
+		elm$html$Html$div,
+		_List_fromArray(
+			[
+				elm$html$Html$Attributes$class('goods-location')
+			]),
+		_List_fromArray(
+			[
+				A2(
+				elm$html$Html$div,
+				_List_fromArray(
+					[
+						elm$html$Html$Attributes$class('goods-location-label')
+					]),
+				_List_fromArray(
+					[
+						elm$html$Html$text('取引場所')
+					])),
+				A2(
+				elm$html$Html$div,
+				_List_Nil,
+				_List_fromArray(
+					[
+						elm$html$Html$text(location)
+					]))
 			]));
 };
 var author$project$Main$goodsViewName = function (name) {
@@ -9296,6 +9373,33 @@ var author$project$Main$priceToString = function (price) {
 								A2(elm$core$Basics$modBy, 1000, price)
 							]))))))) + '円';
 };
+var elm$html$Html$button = _VirtualDom_node('button');
+var author$project$Main$goodsViewPriceAndBuyButton = function (price) {
+	return A2(
+		elm$html$Html$div,
+		_List_fromArray(
+			[
+				elm$html$Html$Attributes$class('goods-priceAndBuyButton')
+			]),
+		_List_fromArray(
+			[
+				A2(
+				elm$html$Html$div,
+				_List_Nil,
+				_List_fromArray(
+					[
+						elm$html$Html$text(
+						author$project$Main$priceToString(price))
+					])),
+				A2(
+				elm$html$Html$button,
+				_List_Nil,
+				_List_fromArray(
+					[
+						elm$html$Html$text('購入手続きへ')
+					]))
+			]));
+};
 var author$project$Main$goodsView = function (goods) {
 	return _List_fromArray(
 		[
@@ -9305,51 +9409,14 @@ var author$project$Main$goodsView = function (goods) {
 			author$project$Goods$getName(goods)),
 			author$project$Main$goodsViewLike(
 			author$project$Goods$getLike(goods)),
-			A2(
-			elm$html$Html$div,
-			_List_Nil,
-			_List_fromArray(
-				[
-					elm$html$Html$text(
-					'商品の説明' + author$project$Goods$getDescription(goods))
-				])),
-			A2(
-			elm$html$Html$div,
-			_List_Nil,
-			_List_fromArray(
-				[
-					elm$html$Html$text(
-					'商品の価格' + author$project$Main$priceToString(
-						author$project$Goods$getPrice(goods)))
-				])),
-			A2(
-			elm$html$Html$div,
-			_List_Nil,
-			_List_fromArray(
-				[
-					elm$html$Html$text(
-					'商品の状態' + function () {
-						var _n0 = author$project$Goods$getCondition(goods);
-						switch (_n0) {
-							case 0:
-								return '新品同様';
-							case 1:
-								return 'とても良い';
-							case 2:
-								return '良い';
-							default:
-								return 'OK';
-						}
-					}())
-				])),
-			A2(
-			elm$html$Html$div,
-			_List_Nil,
-			_List_fromArray(
-				[
-					elm$html$Html$text(
-					'取引場所' + author$project$Goods$getLocation(goods))
-				])),
+			author$project$Main$goodsViewDescription(
+			author$project$Goods$getDescription(goods)),
+			author$project$Main$goodsViewPriceAndBuyButton(
+			author$project$Goods$getPrice(goods)),
+			author$project$Main$goodsViewCondition(
+			author$project$Goods$getCondition(goods)),
+			author$project$Main$goodsViewLocation(
+			author$project$Goods$getLocation(goods)),
 			A2(
 			elm$html$Html$div,
 			_List_Nil,
@@ -9788,7 +9855,6 @@ var author$project$Main$getLogInData = F2(
 var author$project$Main$LogIn = function (a) {
 	return {$: 8, a: a};
 };
-var elm$html$Html$button = _VirtualDom_node('button');
 var elm$html$Html$Attributes$disabled = elm$html$Html$Attributes$boolProperty('disabled');
 var elm$virtual_dom$VirtualDom$MayStopPropagation = function (a) {
 	return {$: 1, a: a};
@@ -10998,15 +11064,29 @@ var author$project$Main$mainViewAndMainTab = F2(
 				A2(author$project$Main$mainTabItemList, page, tabData)),
 				A2(
 				elm$html$Html$div,
-				_List_fromArray(
-					[
-						elm$html$Html$Attributes$classList(
-						_List_fromArray(
+				function () {
+					if (tabData.$ === 2) {
+						return _List_fromArray(
 							[
-								_Utils_Tuple2('mainView', true),
-								_Utils_Tuple2('mainView-wide', isWideScreenMode)
-							]))
-					]),
+								elm$html$Html$Attributes$classList(
+								_List_fromArray(
+									[
+										_Utils_Tuple2('mainView-noMainTab', true),
+										_Utils_Tuple2('mainView-wide-noMainTab', isWideScreenMode)
+									]))
+							]);
+					} else {
+						return _List_fromArray(
+							[
+								elm$html$Html$Attributes$classList(
+								_List_fromArray(
+									[
+										_Utils_Tuple2('mainView', true),
+										_Utils_Tuple2('mainView-wide', isWideScreenMode)
+									]))
+							]);
+					}
+				}(),
 				mainView)
 			]);
 	});

@@ -944,9 +944,17 @@ mainViewAndMainTab page isWideScreenMode =
         )
         (mainTabItemList page tabData)
     , Html.div
-        [ Html.Attributes.classList
-            [ ( "mainView", True ), ( "mainView-wide", isWideScreenMode ) ]
-        ]
+        (case tabData of
+            TabNone ->
+                [ Html.Attributes.classList
+                    [ ( "mainView-noMainTab", True ), ( "mainView-wide-noMainTab", isWideScreenMode ) ]
+                ]
+
+            _ ->
+                [ Html.Attributes.classList
+                    [ ( "mainView", True ), ( "mainView-wide", isWideScreenMode ) ]
+                ]
+        )
         mainView
     ]
 
@@ -1135,27 +1143,10 @@ goodsView goods =
     [ goodsViewImage (Goods.getImage goods)
     , goodsViewName (Goods.getName goods)
     , goodsViewLike (Goods.getLike goods)
-    , Html.div [] [ Html.text ("商品の説明" ++ Goods.getDescription goods) ]
-    , Html.div [] [ Html.text ("商品の価格" ++ priceToString (Goods.getPrice goods)) ]
-    , Html.div []
-        [ Html.text
-            ("商品の状態"
-                ++ (case Goods.getCondition goods of
-                        Goods.LikeNew ->
-                            "新品同様"
-
-                        Goods.VeryGood ->
-                            "とても良い"
-
-                        Goods.Good ->
-                            "良い"
-
-                        Goods.Acceptable ->
-                            "OK"
-                   )
-            )
-        ]
-    , Html.div [] [ Html.text ("取引場所" ++ Goods.getLocation goods) ]
+    , goodsViewDescription (Goods.getDescription goods)
+    , goodsViewPriceAndBuyButton (Goods.getPrice goods)
+    , goodsViewCondition (Goods.getCondition goods)
+    , goodsViewLocation (Goods.getLocation goods)
     , Html.div []
         [ Html.text
             (if Goods.getComplete goods then
@@ -1189,6 +1180,54 @@ goodsViewLike likeCount =
     Html.div
         []
         [ Html.text (String.fromInt likeCount) ]
+
+
+goodsViewDescription : String -> Html.Html msg
+goodsViewDescription description =
+    Html.div
+        [ Html.Attributes.class "goods-description" ]
+        [ Html.div [ Html.Attributes.class "goods-description-label" ] [ Html.text "商品の説明" ]
+        , Html.div [] [ Html.text description ]
+        ]
+
+
+goodsViewPriceAndBuyButton : Int -> Html.Html msg
+goodsViewPriceAndBuyButton price =
+    Html.div
+        [ Html.Attributes.class "goods-priceAndBuyButton" ]
+        [ Html.div [] [ Html.text (priceToString price) ]
+        , Html.button [] [ Html.text "購入手続きへ" ]
+        ]
+
+
+goodsViewCondition : Goods.Condition -> Html.Html msg
+goodsViewCondition condition =
+    Html.div []
+        [ Html.text
+            ("商品の状態"
+                ++ (case condition of
+                        Goods.LikeNew ->
+                            "新品同様"
+
+                        Goods.VeryGood ->
+                            "とても良い"
+
+                        Goods.Good ->
+                            "良い"
+
+                        Goods.Acceptable ->
+                            "OK"
+                   )
+            )
+        ]
+
+
+goodsViewLocation : Goods.Location -> Html.Html msg
+goodsViewLocation location =
+    Html.div [ Html.Attributes.class "goods-location" ]
+        [ Html.div [ Html.Attributes.class "goods-location-label" ] [ Html.text "取引場所" ]
+        , Html.div [] [ Html.text location ]
+        ]
 
 
 exhibitButton : Html.Html Msg
