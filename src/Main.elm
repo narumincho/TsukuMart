@@ -12,6 +12,7 @@ import Html.Keyed
 import Json.Decode
 import Password
 import SAddress exposing (SAddress)
+import School
 import SiteMap
 import StudentId exposing (StudentId)
 import Svg
@@ -70,6 +71,18 @@ type Page
 
 
 type UserSignUpPage
+    = UserSignUpPage
+        { sAddressAndPassword : UserSignUpSAddressAndPassword
+        , school : SignUpSchool
+        }
+
+
+type SignUpSchool
+    = SignUpSchoolSchool (Maybe School.SchoolAndDepartment)
+    | SignUpSchoolGraduate (Maybe School.Graduate)
+
+
+type UserSignUpSAddressAndPassword
     = UserSignUpPageStudentHasSAddress
         { studentIdOrTsukubaEmailAddress : AnalysisStudentIdOrSAddressResult
         , password : Result Password.Error Password.Password
@@ -275,29 +288,39 @@ update msg (Model rec) =
 
         InputStudentIdOrEmailAddress string ->
             ( case rec.page of
-                PageSignUp (UserSignUpPageStudentHasSAddress r) ->
-                    Model
-                        { rec
-                            | page =
-                                PageSignUp
-                                    (UserSignUpPageStudentHasSAddress
-                                        { r
-                                            | studentIdOrTsukubaEmailAddress = analysisStudentIdOrSAddress string
-                                        }
-                                    )
-                        }
+                PageSignUp (UserSignUpPage { sAddressAndPassword, school }) ->
+                    case sAddressAndPassword of
+                        UserSignUpPageStudentHasSAddress r ->
+                            Model
+                                { rec
+                                    | page =
+                                        PageSignUp
+                                            (UserSignUpPage
+                                                { sAddressAndPassword =
+                                                    UserSignUpPageStudentHasSAddress
+                                                        { r
+                                                            | studentIdOrTsukubaEmailAddress = analysisStudentIdOrSAddress string
+                                                        }
+                                                , school = school
+                                                }
+                                            )
+                                }
 
-                PageSignUp (UserSignUpPageNewStudent r) ->
-                    Model
-                        { rec
-                            | page =
-                                PageSignUp
-                                    (UserSignUpPageNewStudent
-                                        { r
-                                            | emailAddress = analysisEmailAddress string
-                                        }
-                                    )
-                        }
+                        UserSignUpPageNewStudent r ->
+                            Model
+                                { rec
+                                    | page =
+                                        PageSignUp
+                                            (UserSignUpPage
+                                                { sAddressAndPassword =
+                                                    UserSignUpPageNewStudent
+                                                        { r
+                                                            | emailAddress = analysisEmailAddress string
+                                                        }
+                                                , school = school
+                                                }
+                                            )
+                                }
 
                 PageLogIn (LogInPage r) ->
                     Model
@@ -324,13 +347,22 @@ update msg (Model rec) =
 
         ReceiveImageDataUrl urlString ->
             ( case rec.page of
-                PageSignUp (UserSignUpPageNewStudent r) ->
-                    Model
-                        { rec
-                            | page =
-                                PageSignUp
-                                    (UserSignUpPageNewStudent { r | imageUrl = Just urlString })
-                        }
+                PageSignUp (UserSignUpPage { sAddressAndPassword, school }) ->
+                    case sAddressAndPassword of
+                        UserSignUpPageNewStudent r ->
+                            Model
+                                { rec
+                                    | page =
+                                        PageSignUp
+                                            (UserSignUpPage
+                                                { sAddressAndPassword = UserSignUpPageNewStudent { r | imageUrl = Just urlString }
+                                                , school = school
+                                                }
+                                            )
+                                }
+
+                        _ ->
+                            Model rec
 
                 PageExhibition (ExhibitionPage r) ->
                     Model
@@ -362,21 +394,23 @@ update msg (Model rec) =
 
         InputPassword string ->
             ( case rec.page of
-                PageSignUp (UserSignUpPageNewStudent r) ->
+                PageSignUp (UserSignUpPage { sAddressAndPassword, school }) ->
                     Model
                         { rec
                             | page =
                                 PageSignUp
-                                    (UserSignUpPageNewStudent { r | password = Password.passwordFromString string })
-                        }
+                                    (UserSignUpPage
+                                        { sAddressAndPassword =
+                                            case sAddressAndPassword of
+                                                UserSignUpPageNewStudent r ->
+                                                    UserSignUpPageNewStudent
+                                                        { r | password = Password.passwordFromString string }
 
-                PageSignUp (UserSignUpPageStudentHasSAddress r) ->
-                    Model
-                        { rec
-                            | page =
-                                PageSignUp
-                                    (UserSignUpPageStudentHasSAddress
-                                        { r | password = Password.passwordFromString string }
+                                                UserSignUpPageStudentHasSAddress r ->
+                                                    UserSignUpPageStudentHasSAddress
+                                                        { r | password = Password.passwordFromString string }
+                                        , school = school
+                                        }
                                     )
                         }
 
@@ -420,9 +454,13 @@ urlParser beforePageMaybe =
         , SiteMap.signUpParser
             |> Url.Parser.map
                 (PageSignUp
-                    (UserSignUpPageStudentHasSAddress
-                        { studentIdOrTsukubaEmailAddress = analysisStudentIdOrSAddress ""
-                        , password = Password.passwordFromString ""
+                    (UserSignUpPage
+                        { sAddressAndPassword =
+                            UserSignUpPageStudentHasSAddress
+                                { studentIdOrTsukubaEmailAddress = analysisStudentIdOrSAddress ""
+                                , password = Password.passwordFromString ""
+                                }
+                        , school = SignUpSchoolSchool Nothing
                         }
                     )
                 )
@@ -906,7 +944,7 @@ mainViewAndMainTab page isWideScreenMode =
 
                 PageSignUp subPage ->
                     { tabData = TabSingle "新規登録"
-                    , mainView = userSignUpView subPage
+                    , mainView = signUpView subPage
                     }
 
                 PageLogIn subPage ->
@@ -1206,17 +1244,23 @@ goodsViewCondition condition =
         [ Html.text
             ("商品の状態"
                 ++ (case condition of
+                        Goods.New ->
+                            "新品・未使用"
+
                         Goods.LikeNew ->
-                            "新品同様"
+                            "ほぼ未使用"
 
                         Goods.VeryGood ->
-                            "とても良い"
+                            "目立った傷や汚れなし"
 
                         Goods.Good ->
-                            "良い"
+                            "多少の傷や汚れあり"
 
                         Goods.Acceptable ->
-                            "OK"
+                            "目立つ傷や汚れあり"
+
+                        Goods.Junk ->
+                            "状態が悪い・ジャンク"
                    )
             )
         ]
@@ -1479,45 +1523,51 @@ signUpButton =
 
 {-| Sign Up 新規登録画面
 -}
-userSignUpView : UserSignUpPage -> List (Html.Html Msg)
-userSignUpView userSignUpPage =
-    [ Html.div
-        [ Html.Attributes.class "signUpContainer" ]
-        [ Html.form
-            [ Html.Attributes.class "signUp" ]
-            ([ sAddressView userSignUpPage
-             ]
-                ++ (case userSignUpPage of
-                        UserSignUpPageStudentHasSAddress { studentIdOrTsukubaEmailAddress, password } ->
-                            studentHasSAddressFormList studentIdOrTsukubaEmailAddress password
+signUpView : UserSignUpPage -> List (Html.Html Msg)
+signUpView userSignUpPage =
+    case userSignUpPage of
+        UserSignUpPage { sAddressAndPassword, school } ->
+            [ Html.div
+                [ Html.Attributes.class "signUpContainer" ]
+                [ Html.form
+                    [ Html.Attributes.class "signUp" ]
+                    ([ sAddressView sAddressAndPassword
+                        |> Html.map (\s -> ChangePage (PageSignUp (UserSignUpPage { sAddressAndPassword = s, school = school })))
+                     ]
+                        ++ (case sAddressAndPassword of
+                                UserSignUpPageStudentHasSAddress { studentIdOrTsukubaEmailAddress, password } ->
+                                    studentHasSAddressFormList studentIdOrTsukubaEmailAddress password
 
-                        UserSignUpPageNewStudent { emailAddress, imageUrl, password } ->
-                            newStudentFormList emailAddress imageUrl password
-                   )
-                ++ [ signUpSubmitButton (getSignUpData userSignUpPage) ]
-            )
-        ]
-    ]
+                                UserSignUpPageNewStudent { emailAddress, imageUrl, password } ->
+                                    newStudentFormList emailAddress imageUrl password
+                           )
+                        ++ [ signUpSchoolView school
+                                |> Html.map (\s -> ChangePage (PageSignUp (UserSignUpPage { sAddressAndPassword = sAddressAndPassword, school = s })))
+                           , signUpSubmitButton (getSignUpData userSignUpPage)
+                           ]
+                    )
+                ]
+            ]
 
 
 {-| sアドを持っているか持っていないかを選択するフォーム
 -}
-sAddressView : UserSignUpPage -> Html.Html Msg
-sAddressView userSignUpPage =
+sAddressView : UserSignUpSAddressAndPassword -> Html.Html UserSignUpSAddressAndPassword
+sAddressView userSignUpSAddressAndPassword =
     Html.div
         []
         [ Html.label
             [ Html.Attributes.class "signUp-label" ]
             [ Html.text "sアドを" ]
-        , sAddressSelectView userSignUpPage
+        , sAddressSelectView userSignUpSAddressAndPassword
         ]
 
 
-sAddressSelectView : UserSignUpPage -> Html.Html Msg
-sAddressSelectView userSignUpPage =
+sAddressSelectView : UserSignUpSAddressAndPassword -> Html.Html UserSignUpSAddressAndPassword
+sAddressSelectView userSignUpSAddressAndPassword =
     let
         leftSelect =
-            case userSignUpPage of
+            case userSignUpSAddressAndPassword of
                 UserSignUpPageStudentHasSAddress _ ->
                     True
 
@@ -1533,20 +1583,16 @@ sAddressSelectView userSignUpPage =
                 ]
              , Html.Attributes.style "border-radius" ".4rem 0 0 .4rem"
              ]
-                ++ (case userSignUpPage of
+                ++ (case userSignUpSAddressAndPassword of
                         UserSignUpPageStudentHasSAddress _ ->
                             []
 
                         UserSignUpPageNewStudent { password } ->
                             [ Html.Events.onClick
-                                (ChangePage
-                                    (PageSignUp
-                                        (UserSignUpPageStudentHasSAddress
-                                            { studentIdOrTsukubaEmailAddress = analysisStudentIdOrSAddress ""
-                                            , password = password
-                                            }
-                                        )
-                                    )
+                                (UserSignUpPageStudentHasSAddress
+                                    { studentIdOrTsukubaEmailAddress = analysisStudentIdOrSAddress ""
+                                    , password = password
+                                    }
                                 )
                             ]
                    )
@@ -1559,18 +1605,14 @@ sAddressSelectView userSignUpPage =
                 ]
              , Html.Attributes.style "border-radius" "0 .4rem .4rem 0"
              ]
-                ++ (case userSignUpPage of
+                ++ (case userSignUpSAddressAndPassword of
                         UserSignUpPageStudentHasSAddress { password } ->
                             [ Html.Events.onClick
-                                (ChangePage
-                                    (PageSignUp
-                                        (UserSignUpPageNewStudent
-                                            { emailAddress = [] |> EmailAddress.fromCharList
-                                            , imageUrl = Nothing
-                                            , password = password
-                                            }
-                                        )
-                                    )
+                                (UserSignUpPageNewStudent
+                                    { emailAddress = [] |> EmailAddress.fromCharList
+                                    , imageUrl = Nothing
+                                    , password = password
+                                    }
                                 )
                             ]
 
@@ -1802,6 +1844,55 @@ passwordForm passwordResult =
         ]
 
 
+signUpSchoolView : SignUpSchool -> Html.Html SignUpSchool
+signUpSchoolView signUpSchool =
+    let
+        leftSelect =
+            case signUpSchool of
+                SignUpSchoolSchool _ ->
+                    True
+
+                SignUpSchoolGraduate _ ->
+                    False
+    in
+    Html.div
+        [ Html.Attributes.class "signUp-select" ]
+        [ Html.div
+            ([ Html.Attributes.classList
+                [ ( "signUp-select-item", True )
+                , ( "signUp-select-itemSelect", leftSelect )
+                ]
+             , Html.Attributes.style "border-radius" ".4rem 0 0 .4rem"
+             ]
+                ++ (case signUpSchool of
+                        SignUpSchoolSchool _ ->
+                            []
+
+                        SignUpSchoolGraduate _ ->
+                            [ Html.Events.onClick (SignUpSchoolSchool Nothing) ]
+                   )
+            )
+            [ Html.text "学群生" ]
+        , Html.div
+            ([ Html.Attributes.classList
+                [ ( "signUp-select-item", True )
+                , ( "signUp-select-itemSelect", not leftSelect )
+                ]
+             , Html.Attributes.style "border-radius" "0 .4rem .4rem 0"
+             ]
+                ++ (case signUpSchool of
+                        SignUpSchoolSchool _ ->
+                            [ Html.Events.onClick (SignUpSchoolGraduate Nothing)
+                            ]
+
+                        SignUpSchoolGraduate _ ->
+                            []
+                   )
+            )
+            [ Html.text "院生" ]
+        ]
+
+
 signUpSubmitButton : Maybe { emailAddress : EmailAddress.EmailAddress, pass : Password.Password, image : Maybe String } -> Html.Html Msg
 signUpSubmitButton signUpDataMaybe =
     Html.div
@@ -1844,8 +1935,8 @@ getLogInData studentIdOrEmailAddress passwordMaybe =
 {-| 画面の情報から新規登録できる情報を入力しているかと、新規登録に必要なデータを取りだす
 -}
 getSignUpData : UserSignUpPage -> Maybe { emailAddress : EmailAddress.EmailAddress, pass : Password.Password, image : Maybe String }
-getSignUpData userSignUpPage =
-    case userSignUpPage of
+getSignUpData (UserSignUpPage { sAddressAndPassword, school }) =
+    case sAddressAndPassword of
         UserSignUpPageStudentHasSAddress { studentIdOrTsukubaEmailAddress, password } ->
             case ( studentIdOrTsukubaEmailAddress, password ) of
                 ( AStudentId studentId, Ok pass ) ->

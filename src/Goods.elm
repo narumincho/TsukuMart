@@ -19,7 +19,7 @@ module Goods exposing
 
 type Goods
     = Goods
-        { id : String
+        { id : String -- 形式はサーバー任せだが、/とかは入らなさそう
         , name : String -- 長さは1～255文字
         , like : Int
         , description : String
@@ -32,10 +32,12 @@ type Goods
 
 
 type Condition
-    = LikeNew
+    = New
+    | LikeNew
     | VeryGood
     | Good
     | Acceptable
+    | Junk
 
 
 type alias Location =

@@ -1,4 +1,4 @@
-module School exposing (School, SchoolAndDepartment)
+module School exposing (Graduate, School, SchoolAndDepartment, departmentAllValue)
 
 {-| 学群
 -}
