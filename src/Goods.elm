@@ -19,7 +19,7 @@ module Goods exposing
 
 type Goods
     = Goods
-        { id : Int
+        { id : String
         , name : String -- 長さは1～255文字
         , like : Int
         , description : String
@@ -103,7 +103,7 @@ getImage (Goods { image }) =
 none : Goods
 none =
     Goods
-        { id = 0
+        { id = "id"
         , name = "仮"
         , like = 3
         , description = "説明文"

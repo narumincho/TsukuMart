@@ -482,6 +482,7 @@ img {
 
 .goods-description-label {
     background-color: #ddd;
+    padding: .2rem .5rem;
 }
 
 .goods-priceAndBuyButton {
@@ -490,12 +491,14 @@ img {
     width: 100%;
     padding: .5rem;
     justify-content: space-between;
+    box-sizing: border-box;
     bottom: 0;
     background-color: var(--primaryColor);
 }
 
 .goods-location-label {
     background-color: #ddd;
+    padding: .2rem .5rem;
 }
 /*===============================================
                 Log In ログイン画面

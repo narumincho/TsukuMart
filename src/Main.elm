@@ -1101,7 +1101,7 @@ item : { title : String, price : Int, like : Int } -> Html.Html Msg
 item { title, price, like } =
     Html.a
         [ Html.Attributes.class "item"
-        , Html.Attributes.href (SiteMap.goodsUrl 0)
+        , Html.Attributes.href (SiteMap.goodsUrl "id")
         ]
         [ itemImage
         , Html.div [ Html.Attributes.class "itemTitle" ] [ Html.text title ]
