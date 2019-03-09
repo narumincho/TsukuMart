@@ -1536,10 +1536,12 @@ signUpView userSignUpPage =
         UserSignUpPage { sAddressAndPassword, school } ->
             [ Html.div
                 [ Html.Attributes.class "signUpContainer" ]
-                [ Html.form
+                [ Html.Keyed.node "form"
                     [ Html.Attributes.class "signUp" ]
-                    ([ sAddressView sAddressAndPassword
-                        |> Html.map (\s -> ChangePage (PageSignUp (UserSignUpPage { sAddressAndPassword = s, school = school })))
+                    ([ ( "s_or_nos"
+                       , sAddressView sAddressAndPassword
+                            |> Html.map (\s -> ChangePage (PageSignUp (UserSignUpPage { sAddressAndPassword = s, school = school })))
+                       )
                      ]
                         ++ (case sAddressAndPassword of
                                 UserSignUpPageStudentHasSAddress { studentIdOrTsukubaEmailAddress, password } ->
@@ -1550,9 +1552,15 @@ signUpView userSignUpPage =
                            )
                         ++ (signUpSchoolView school
                                 |> List.map
-                                    (Html.map (\s -> ChangePage (PageSignUp (UserSignUpPage { sAddressAndPassword = sAddressAndPassword, school = s }))))
+                                    (Tuple.mapSecond
+                                        (Html.map
+                                            (\s ->
+                                                ChangePage (PageSignUp (UserSignUpPage { sAddressAndPassword = sAddressAndPassword, school = s }))
+                                            )
+                                        )
+                                    )
                            )
-                        ++ [ signUpSubmitButton (getSignUpData userSignUpPage)
+                        ++ [ ( "submit", signUpSubmitButton (getSignUpData userSignUpPage) )
                            ]
                     )
                 ]
@@ -1633,54 +1641,56 @@ sAddressSelectView userSignUpSAddressAndPassword =
         ]
 
 
-studentHasSAddressFormList : AnalysisStudentIdOrSAddressResult -> Result Password.Error Password.Password -> List (Html.Html Msg)
+studentHasSAddressFormList : AnalysisStudentIdOrSAddressResult -> Result Password.Error Password.Password -> List ( String, Html.Html Msg )
 studentHasSAddressFormList analysisStudentIdOrEmailAddressResult password =
-    [ Html.div
-        []
-        [ Html.label
-            [ Html.Attributes.class "signUp-label"
-            , Html.Attributes.for "signUpStudentIdOrTsukubaEmail"
-            ]
-            [ Html.text "学籍番号か ～@～.tsukuba.ac.jpのメールアドレス" ]
-        , Html.input
-            [ Html.Attributes.class "signUp-input"
-            , Html.Attributes.id "signUpStudentIdOrTsukubaEmail"
-            , Html.Attributes.attribute "autocomplete" "username"
-            , Html.Events.onInput InputStudentIdOrEmailAddress
-            ]
+    [ ( "sAddressFrom"
+      , Html.div
             []
-        , Html.div
-            [ Html.Attributes.class "signUp-description" ]
-            [ Html.text
-                (case analysisStudentIdOrEmailAddressResult of
-                    ANone ->
-                        "学籍番号は20から始まる9桁の数字、筑波大学のメールアドレスはs1234567@s.tsukuba.ac.jpのような形のメールアドレス"
+            [ Html.label
+                [ Html.Attributes.class "signUp-label"
+                , Html.Attributes.for "signUpStudentIdOrTsukubaEmail"
+                ]
+                [ Html.text "学籍番号か ～@～.tsukuba.ac.jpのメールアドレス" ]
+            , Html.input
+                [ Html.Attributes.class "signUp-input"
+                , Html.Attributes.id "signUpStudentIdOrTsukubaEmail"
+                , Html.Attributes.attribute "autocomplete" "username"
+                , Html.Events.onInput InputStudentIdOrEmailAddress
+                ]
+                []
+            , Html.div
+                [ Html.Attributes.class "signUp-description" ]
+                [ Html.text
+                    (case analysisStudentIdOrEmailAddressResult of
+                        ANone ->
+                            "学籍番号は20から始まる9桁の数字、筑波大学のメールアドレスはs1234567@s.tsukuba.ac.jpのような形のメールアドレス"
 
-                    AStudentId studentId ->
-                        "学籍番号 "
-                            ++ StudentId.toStringWith20 studentId
-                            ++ " "
-                            ++ (studentId
-                                    |> SAddress.fromStundetId
-                                    |> EmailAddress.fromSAddress
-                                    |> EmailAddress.toString
-                               )
-                            ++ "にメールを送信します"
+                        AStudentId studentId ->
+                            "学籍番号 "
+                                ++ StudentId.toStringWith20 studentId
+                                ++ " "
+                                ++ (studentId
+                                        |> SAddress.fromStundetId
+                                        |> EmailAddress.fromSAddress
+                                        |> EmailAddress.toString
+                                   )
+                                ++ "にメールを送信します"
 
-                    APartStudentId partStudentId ->
-                        "学籍番号 "
-                            ++ StudentId.partStudentIdToStringWith20 partStudentId
+                        APartStudentId partStudentId ->
+                            "学籍番号 "
+                                ++ StudentId.partStudentIdToStringWith20 partStudentId
 
-                    ASAddress sAddress ->
-                        "筑波大学のメールアドレス " ++ SAddress.toEmailAddressString sAddress
+                        ASAddress sAddress ->
+                            "筑波大学のメールアドレス " ++ SAddress.toEmailAddressString sAddress
 
-                    AEmailButIsNotTsukuba ->
-                        "筑波大学のメールアドレスではありません"
-                )
+                        AEmailButIsNotTsukuba ->
+                            "筑波大学のメールアドレスではありません"
+                    )
+                ]
             ]
-        ]
+      )
+    , ( "sAddressPassword", passwordForm password )
     ]
-        ++ [ passwordForm password ]
 
 
 {-| 新規登録画面のsアドを持っているひとの入力の解析
@@ -1757,66 +1767,70 @@ type AnalysisStudentIdOrEmailAddressResult
     | AEEmailAddress EmailAddress.EmailAddress
 
 
-newStudentFormList : Maybe EmailAddress.EmailAddress -> Maybe String -> Result Password.Error Password.Password -> List (Html.Html Msg)
+newStudentFormList : Maybe EmailAddress.EmailAddress -> Maybe String -> Result Password.Error Password.Password -> List ( String, Html.Html Msg )
 newStudentFormList emailAddress imageUrlMaybe password =
-    [ Html.div
-        []
-        [ Html.label
-            [ Html.Attributes.class "signUp-label"
-            , Html.Attributes.for "signUpEmail"
-            ]
-            [ Html.text "登録用メールアドレス" ]
-        , Html.input
-            [ Html.Attributes.class "signUp-input"
-            , Html.Attributes.type_ "email"
-            , Html.Attributes.id "signUpEmail"
-            , Html.Attributes.attribute "autocomplete" "email"
-            , Html.Events.onInput InputStudentIdOrEmailAddress
-            ]
+    [ ( "addressForm"
+      , Html.div
             []
-        , Html.div
-            [ Html.Attributes.class "signUp-description" ]
-            [ Html.text
-                (case emailAddress of
-                    Just address ->
-                        EmailAddress.toString address
-                            ++ "に登録メールを送信します"
-
-                    Nothing ->
-                        "メールアドレスを入力してください"
-                )
-            ]
-        ]
-    , passwordForm password
-    , Html.div
-        []
-        [ Html.label
-            [ Html.Attributes.class "signUp-label"
-            , Html.Attributes.for "signUpImage"
-            ]
-            [ Html.text "学生証の写真" ]
-        , Html.input
-            [ Html.Attributes.type_ "file"
-            , Html.Attributes.accept "image/png, image/jpeg"
-            , Html.Attributes.class "signUp-input"
-            , Html.Attributes.id "signUpImage"
-            , Html.Attributes.attribute "autocomplete" "studentIdImage"
-            , Html.Events.on "change" (Json.Decode.succeed (InputStudentImage "signUpImage"))
-            ]
-            []
-        , Html.img
-            ([ Html.Attributes.class "signUp-image"
-             ]
-                ++ (case imageUrlMaybe of
-                        Just imageUrl ->
-                            [ Html.Attributes.src imageUrl ]
+            [ Html.label
+                [ Html.Attributes.class "signUp-label"
+                , Html.Attributes.for "signUpEmail"
+                ]
+                [ Html.text "登録用メールアドレス" ]
+            , Html.input
+                [ Html.Attributes.class "signUp-input"
+                , Html.Attributes.type_ "email"
+                , Html.Attributes.id "signUpEmail"
+                , Html.Attributes.attribute "autocomplete" "email"
+                , Html.Events.onInput InputStudentIdOrEmailAddress
+                ]
+                []
+            , Html.div
+                [ Html.Attributes.class "signUp-description" ]
+                [ Html.text
+                    (case emailAddress of
+                        Just address ->
+                            EmailAddress.toString address
+                                ++ "に登録メールを送信します"
 
                         Nothing ->
-                            []
-                   )
-            )
+                            "メールアドレスを入力してください"
+                    )
+                ]
+            ]
+      )
+    , ( "passwordEmail", passwordForm password )
+    , ( "cardImage"
+      , Html.div
             []
-        ]
+            [ Html.label
+                [ Html.Attributes.class "signUp-label"
+                , Html.Attributes.for "signUpImage"
+                ]
+                [ Html.text "学生証の写真" ]
+            , Html.input
+                [ Html.Attributes.type_ "file"
+                , Html.Attributes.accept "image/png, image/jpeg"
+                , Html.Attributes.class "signUp-input"
+                , Html.Attributes.id "signUpImage"
+                , Html.Attributes.attribute "autocomplete" "studentIdImage"
+                , Html.Events.on "change" (Json.Decode.succeed (InputStudentImage "signUpImage"))
+                ]
+                []
+            , Html.img
+                ([ Html.Attributes.class "signUp-image"
+                 ]
+                    ++ (case imageUrlMaybe of
+                            Just imageUrl ->
+                                [ Html.Attributes.src imageUrl ]
+
+                            Nothing ->
+                                []
+                       )
+                )
+                []
+            ]
+      )
     ]
 
 
@@ -1853,24 +1867,26 @@ passwordForm passwordResult =
         ]
 
 
-signUpSchoolView : SignUpSchool -> List (Html.Html SignUpSchool)
+signUpSchoolView : SignUpSchool -> List ( String, Html.Html SignUpSchool )
 signUpSchoolView signUpSchool =
-    [ signUpSchoolViewSchoolOrGraduate signUpSchool
+    [ ( "schoolOrGraduate", signUpSchoolViewSchoolOrGraduate signUpSchool )
     ]
         ++ (case signUpSchool of
                 SignUpSchoolSchool schoolSelect ->
-                    [ signUpSchoolViewSelectSchool
-                        |> Html.map
-                            (\m ->
-                                SignUpSchoolSchool
-                                    (case m of
-                                        Just z ->
-                                            SignUpSchoolSchoolSelectSchool z
+                    [ ( "selectSchool"
+                      , signUpSchoolViewSelectSchool
+                            |> Html.map
+                                (\m ->
+                                    SignUpSchoolSchool
+                                        (case m of
+                                            Just z ->
+                                                SignUpSchoolSchoolSelectSchool z
 
-                                        Nothing ->
-                                            SignUpSchoolSchoolNone
-                                    )
-                            )
+                                            Nothing ->
+                                                SignUpSchoolSchoolNone
+                                        )
+                                )
+                      )
                     ]
                         ++ (case schoolSelect of
                                 SignUpSchoolSchoolNone ->
@@ -1891,11 +1907,32 @@ signUpSchoolView signUpSchool =
                                                         )
                                                 )
                                             )
+                                        |> Maybe.map (\e -> ( "s=" ++ School.schoolToIdString school, e ))
                                         |> Maybe.map List.singleton
                                         |> Maybe.withDefault []
 
-                                SignUpSchoolSchoolSelectSchoolAndDepartment _ ->
-                                    []
+                                SignUpSchoolSchoolSelectSchoolAndDepartment department ->
+                                    let
+                                        school =
+                                            School.departmentToSchool department
+                                    in
+                                    signUpSchoolViewSelectDepartment school
+                                        |> Maybe.map
+                                            (Html.map
+                                                (\m ->
+                                                    SignUpSchoolSchool
+                                                        (case m of
+                                                            Just z ->
+                                                                SignUpSchoolSchoolSelectSchoolAndDepartment z
+
+                                                            Nothing ->
+                                                                SignUpSchoolSchoolSelectSchool school
+                                                        )
+                                                )
+                                            )
+                                        |> Maybe.map (\e -> ( "s=" ++ School.schoolToIdString school, e ))
+                                        |> Maybe.map List.singleton
+                                        |> Maybe.withDefault []
                            )
 
                 SignUpSchoolGraduate _ ->
@@ -1972,11 +2009,13 @@ signUpSchoolViewSelectSchool =
             , Html.Attributes.id "signUp-selectSchool"
             , Html.Events.on "change" selectSchoolDecoder
             ]
-            (School.schoolAllValue
-                |> List.map
-                    (\s ->
-                        Html.option [] [ Html.text (School.schoolToJapaneseString s) ]
-                    )
+            ([ Html.option [] [ Html.text "--選択してください--" ] ]
+                ++ (School.schoolAllValue
+                        |> List.map
+                            (\s ->
+                                Html.option [] [ Html.text (School.schoolToJapaneseString s) ]
+                            )
+                   )
             )
         ]
 
@@ -1986,7 +2025,7 @@ selectSchoolDecoder =
     Json.Decode.at
         [ "target", "selectedIndex" ]
         Json.Decode.int
-        |> Json.Decode.map (\index -> School.schoolAllValue |> Array.fromList |> Array.get index)
+        |> Json.Decode.map (\index -> School.schoolAllValue |> Array.fromList |> Array.get (index - 1))
 
 
 signUpSchoolViewSelectDepartment : School.School -> Maybe (Html.Html (Maybe School.SchoolAndDepartment))
@@ -2009,11 +2048,13 @@ signUpSchoolViewSelectDepartment school =
                         , Html.Attributes.id "signUp-selectDepartment"
                         , Html.Events.on "change" (selectDepartmentDecoder school)
                         ]
-                        (departmentList
-                            |> List.map
-                                (\s ->
-                                    Html.option [] [ Html.text (School.departmentToJapaneseString s |> Maybe.withDefault "?") ]
-                                )
+                        ([ Html.option [] [ Html.text "--選択してください--" ] ]
+                            ++ (departmentList
+                                    |> List.map
+                                        (\s ->
+                                            Html.option [] [ Html.text (School.departmentToJapaneseString s |> Maybe.withDefault "?") ]
+                                        )
+                               )
                         )
                     ]
                 )
@@ -2022,10 +2063,10 @@ signUpSchoolViewSelectDepartment school =
 selectDepartmentDecoder : School.School -> Json.Decode.Decoder (Maybe School.SchoolAndDepartment)
 selectDepartmentDecoder school =
     Json.Decode.at
-        [ "target", "selectIndex" ]
+        [ "target", "selectedIndex" ]
         Json.Decode.int
         |> Json.Decode.map
-            (\index -> School.departmentAllValue school |> Array.fromList |> Array.get index)
+            (\index -> School.departmentAllValue school |> Array.fromList |> Array.get (index - 1))
 
 
 signUpSubmitButton : Maybe { emailAddress : EmailAddress.EmailAddress, pass : Password.Password, image : Maybe String } -> Html.Html Msg

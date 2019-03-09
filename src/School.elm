@@ -1,4 +1,4 @@
-module School exposing (Graduate, School, SchoolAndDepartment, departmentAllValue, departmentToJapaneseString, schoolAllValue, schoolAndDepartmentToJapaneseString, schoolToJapaneseString)
+module School exposing (Graduate, School, SchoolAndDepartment, departmentAllValue, departmentToJapaneseString, departmentToSchool, schoolAllValue, schoolAndDepartmentToJapaneseString, schoolToIdString, schoolToJapaneseString)
 
 {-| 学群
 -}
@@ -241,59 +241,35 @@ schoolToJapaneseString school =
             "体育専門学群"
 
 
-schoolAndDepartmentToIdString : SchoolAndDepartment -> { school : String, department : Maybe String }
-schoolAndDepartmentToIdString schoolAndDepartment =
-    (case schoolAndDepartment of
-        DHumcul humculDepartment ->
-            ( SHumcul
-            , Just (humculDepartmentToIdString humculDepartment)
-            )
+departmentToSchool : SchoolAndDepartment -> School
+departmentToSchool schoolAndDepartment =
+    case schoolAndDepartment of
+        DHumcul _ ->
+            SHumcul
 
-        DSocint socintDepartment ->
-            ( SSocint
-            , Just (socintDepartmentToIdString socintDepartment)
-            )
+        DSocint _ ->
+            SSocint
 
-        DHuman humanDepartment ->
-            ( SHuman
-            , Just (humanDepartmentToIdString humanDepartment)
-            )
+        DHuman _ ->
+            SHuman
 
-        DLife lifeDepartment ->
-            ( SLife
-            , Just (lifeDepartmentToIdString lifeDepartment)
-            )
+        DLife _ ->
+            SLife
 
-        DSse sseDepartment ->
-            ( SSse
-            , Just (sseDepartmentToIdString sseDepartment)
-            )
+        DSse _ ->
+            SSse
 
-        DInfo infoDepartment ->
-            ( SInfo
-            , Just (infoDepartmentToIdString infoDepartment)
-            )
+        DInfo _ ->
+            SInfo
 
-        DMed medDepartment ->
-            ( SMed
-            , Just (medDepartmentToIdString medDepartment)
-            )
+        DMed _ ->
+            SMed
 
         DAandd ->
-            ( SAandd
-            , Nothing
-            )
+            SAandd
 
         DSport ->
-            ( SSport
-            , Nothing
-            )
-    )
-        |> (\( s, d ) ->
-                { school = schoolToIdString s
-                , department = d
-                }
-           )
+            SSport
 
 
 departmentToJapaneseString : SchoolAndDepartment -> Maybe String
