@@ -1,4 +1,4 @@
-module School exposing (Graduate, School, SchoolAndDepartment, departmentAllValue)
+module School exposing (Graduate, School, SchoolAndDepartment, departmentAllValue, departmentToJapaneseString, schoolAllValue, schoolAndDepartmentToJapaneseString, schoolToJapaneseString)
 
 {-| 学群
 -}
@@ -294,6 +294,11 @@ schoolAndDepartmentToIdString schoolAndDepartment =
                 , department = d
                 }
            )
+
+
+departmentToJapaneseString : SchoolAndDepartment -> Maybe String
+departmentToJapaneseString =
+    schoolAndDepartmentToJapaneseString >> .department
 
 
 schoolAndDepartmentToJapaneseString : SchoolAndDepartment -> { school : String, department : Maybe String }

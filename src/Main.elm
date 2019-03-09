@@ -1,6 +1,7 @@
 port module Main exposing (main)
 
 import Api
+import Array
 import Browser
 import Browser.Navigation
 import EmailAddress
@@ -78,8 +79,14 @@ type UserSignUpPage
 
 
 type SignUpSchool
-    = SignUpSchoolSchool (Maybe School.SchoolAndDepartment)
-    | SignUpSchoolGraduate (Maybe School.Graduate)
+    = SignUpSchoolSchool SignUpSchoolSchool
+    | SignUpSchoolGraduate (Maybe School.Graduate) -- TODO
+
+
+type SignUpSchoolSchool
+    = SignUpSchoolSchoolNone
+    | SignUpSchoolSchoolSelectSchool School.School
+    | SignUpSchoolSchoolSelectSchoolAndDepartment School.SchoolAndDepartment
 
 
 type UserSignUpSAddressAndPassword
@@ -460,7 +467,7 @@ urlParser beforePageMaybe =
                                 { studentIdOrTsukubaEmailAddress = analysisStudentIdOrSAddress ""
                                 , password = Password.passwordFromString ""
                                 }
-                        , school = SignUpSchoolSchool Nothing
+                        , school = SignUpSchoolSchool SignUpSchoolSchoolNone
                         }
                     )
                 )
@@ -1541,9 +1548,11 @@ signUpView userSignUpPage =
                                 UserSignUpPageNewStudent { emailAddress, imageUrl, password } ->
                                     newStudentFormList emailAddress imageUrl password
                            )
-                        ++ [ signUpSchoolView school
-                                |> Html.map (\s -> ChangePage (PageSignUp (UserSignUpPage { sAddressAndPassword = sAddressAndPassword, school = s })))
-                           , signUpSubmitButton (getSignUpData userSignUpPage)
+                        ++ (signUpSchoolView school
+                                |> List.map
+                                    (Html.map (\s -> ChangePage (PageSignUp (UserSignUpPage { sAddressAndPassword = sAddressAndPassword, school = s }))))
+                           )
+                        ++ [ signUpSubmitButton (getSignUpData userSignUpPage)
                            ]
                     )
                 ]
@@ -1844,8 +1853,58 @@ passwordForm passwordResult =
         ]
 
 
-signUpSchoolView : SignUpSchool -> Html.Html SignUpSchool
+signUpSchoolView : SignUpSchool -> List (Html.Html SignUpSchool)
 signUpSchoolView signUpSchool =
+    [ signUpSchoolViewSchoolOrGraduate signUpSchool
+    ]
+        ++ (case signUpSchool of
+                SignUpSchoolSchool schoolSelect ->
+                    [ signUpSchoolViewSelectSchool
+                        |> Html.map
+                            (\m ->
+                                SignUpSchoolSchool
+                                    (case m of
+                                        Just z ->
+                                            SignUpSchoolSchoolSelectSchool z
+
+                                        Nothing ->
+                                            SignUpSchoolSchoolNone
+                                    )
+                            )
+                    ]
+                        ++ (case schoolSelect of
+                                SignUpSchoolSchoolNone ->
+                                    []
+
+                                SignUpSchoolSchoolSelectSchool school ->
+                                    signUpSchoolViewSelectDepartment school
+                                        |> Maybe.map
+                                            (Html.map
+                                                (\m ->
+                                                    SignUpSchoolSchool
+                                                        (case m of
+                                                            Just z ->
+                                                                SignUpSchoolSchoolSelectSchoolAndDepartment z
+
+                                                            Nothing ->
+                                                                SignUpSchoolSchoolSelectSchool school
+                                                        )
+                                                )
+                                            )
+                                        |> Maybe.map List.singleton
+                                        |> Maybe.withDefault []
+
+                                SignUpSchoolSchoolSelectSchoolAndDepartment _ ->
+                                    []
+                           )
+
+                SignUpSchoolGraduate _ ->
+                    []
+           )
+
+
+signUpSchoolViewSchoolOrGraduate : SignUpSchool -> Html.Html SignUpSchool
+signUpSchoolViewSchoolOrGraduate signUpSchool =
     let
         leftSelect =
             case signUpSchool of
@@ -1856,41 +1915,117 @@ signUpSchoolView signUpSchool =
                     False
     in
     Html.div
-        [ Html.Attributes.class "signUp-select" ]
-        [ Html.div
-            ([ Html.Attributes.classList
-                [ ( "signUp-select-item", True )
-                , ( "signUp-select-itemSelect", leftSelect )
-                ]
-             , Html.Attributes.style "border-radius" ".4rem 0 0 .4rem"
-             ]
-                ++ (case signUpSchool of
-                        SignUpSchoolSchool _ ->
-                            []
-
-                        SignUpSchoolGraduate _ ->
-                            [ Html.Events.onClick (SignUpSchoolSchool Nothing) ]
-                   )
-            )
-            [ Html.text "学群生" ]
+        []
+        [ Html.label
+            [ Html.Attributes.class "signUp-label" ]
+            [ Html.text "所属" ]
         , Html.div
-            ([ Html.Attributes.classList
-                [ ( "signUp-select-item", True )
-                , ( "signUp-select-itemSelect", not leftSelect )
-                ]
-             , Html.Attributes.style "border-radius" "0 .4rem .4rem 0"
-             ]
-                ++ (case signUpSchool of
-                        SignUpSchoolSchool _ ->
-                            [ Html.Events.onClick (SignUpSchoolGraduate Nothing)
-                            ]
+            [ Html.Attributes.class "signUp-select" ]
+            [ Html.div
+                ([ Html.Attributes.classList
+                    [ ( "signUp-select-item", True )
+                    , ( "signUp-select-itemSelect", leftSelect )
+                    ]
+                 , Html.Attributes.style "border-radius" ".4rem 0 0 .4rem"
+                 ]
+                    ++ (case signUpSchool of
+                            SignUpSchoolSchool _ ->
+                                []
 
-                        SignUpSchoolGraduate _ ->
-                            []
-                   )
-            )
-            [ Html.text "院生" ]
+                            SignUpSchoolGraduate _ ->
+                                [ Html.Events.onClick (SignUpSchoolSchool SignUpSchoolSchoolNone) ]
+                       )
+                )
+                [ Html.text "学群生" ]
+            , Html.div
+                ([ Html.Attributes.classList
+                    [ ( "signUp-select-item", True )
+                    , ( "signUp-select-itemSelect", not leftSelect )
+                    ]
+                 , Html.Attributes.style "border-radius" "0 .4rem .4rem 0"
+                 ]
+                    ++ (case signUpSchool of
+                            SignUpSchoolSchool _ ->
+                                [ Html.Events.onClick (SignUpSchoolGraduate Nothing)
+                                ]
+
+                            SignUpSchoolGraduate _ ->
+                                []
+                       )
+                )
+                [ Html.text "院生" ]
+            ]
         ]
+
+
+signUpSchoolViewSelectSchool : Html.Html (Maybe School.School)
+signUpSchoolViewSelectSchool =
+    Html.div
+        []
+        [ Html.label
+            [ Html.Attributes.class "signUp-label"
+            , Html.Attributes.for "signUp-selectSchool"
+            ]
+            [ Html.text "学群" ]
+        , Html.select
+            [ Html.Attributes.class "signUp-menu"
+            , Html.Attributes.id "signUp-selectSchool"
+            , Html.Events.on "change" selectSchoolDecoder
+            ]
+            (School.schoolAllValue
+                |> List.map
+                    (\s ->
+                        Html.option [] [ Html.text (School.schoolToJapaneseString s) ]
+                    )
+            )
+        ]
+
+
+selectSchoolDecoder : Json.Decode.Decoder (Maybe School.School)
+selectSchoolDecoder =
+    Json.Decode.at
+        [ "target", "selectedIndex" ]
+        Json.Decode.int
+        |> Json.Decode.map (\index -> School.schoolAllValue |> Array.fromList |> Array.get index)
+
+
+signUpSchoolViewSelectDepartment : School.School -> Maybe (Html.Html (Maybe School.SchoolAndDepartment))
+signUpSchoolViewSelectDepartment school =
+    case School.departmentAllValue school of
+        [] ->
+            Nothing
+
+        departmentList ->
+            Just
+                (Html.div
+                    []
+                    [ Html.label
+                        [ Html.Attributes.class "signUp-label"
+                        , Html.Attributes.for "signUp-selectDepartment"
+                        ]
+                        [ Html.text "学類" ]
+                    , Html.select
+                        [ Html.Attributes.class "signUp-menu"
+                        , Html.Attributes.id "signUp-selectDepartment"
+                        , Html.Events.on "change" (selectDepartmentDecoder school)
+                        ]
+                        (departmentList
+                            |> List.map
+                                (\s ->
+                                    Html.option [] [ Html.text (School.departmentToJapaneseString s |> Maybe.withDefault "?") ]
+                                )
+                        )
+                    ]
+                )
+
+
+selectDepartmentDecoder : School.School -> Json.Decode.Decoder (Maybe School.SchoolAndDepartment)
+selectDepartmentDecoder school =
+    Json.Decode.at
+        [ "target", "selectIndex" ]
+        Json.Decode.int
+        |> Json.Decode.map
+            (\index -> School.departmentAllValue school |> Array.fromList |> Array.get index)
 
 
 signUpSubmitButton : Maybe { emailAddress : EmailAddress.EmailAddress, pass : Password.Password, image : Maybe String } -> Html.Html Msg

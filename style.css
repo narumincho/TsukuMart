@@ -678,6 +678,16 @@ img {
     border: solid 1px #111;
 }
 
+.signUp-menu {
+    display: block;
+    width: 100%;
+    height: 4rem;
+    border: solid 2px #000;
+    box-sizing: border-box;
+    border-radius: .4rem;
+    font-size: 1.5rem;
+}
+
 .signUp-signUpButton {
     background-color: var(--primaryColor);
     color: #ddd;
