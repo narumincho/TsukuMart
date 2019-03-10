@@ -90,9 +90,8 @@ type SignUpSchoolSchool
 
 
 type SignUpSchoolGraduate
-    = SignUpSchoolGraduateNone
-    | SignUpSchoolGraduateSelectGraduateNoSchool School.Graduate
-    | SignUpSchoolGraduateSelectGraduateYesSchool School.Graduate
+    = SignUpSchoolGraduateNone Bool
+    | SignUpSchoolGraduateSelectGraduate School.Graduate Bool
     | SignUpSchoolGraduateSelectGraduateAndSchool School.Graduate School.School
     | SignUpSchoolGraduateSelectGraduateAndSchoolAndDepartment School.SchoolAndDepartment
 
@@ -1939,7 +1938,7 @@ signUpSchoolViewSchoolOrGraduate signUpSchool =
                  ]
                     ++ (case signUpSchool of
                             SignUpSchoolSchool _ ->
-                                [ Html.Events.onClick (SignUpSchoolGraduate SignUpSchoolGraduateNone)
+                                [ Html.Events.onClick (SignUpSchoolGraduate (SignUpSchoolGraduateNone True))
                                 ]
 
                             SignUpSchoolGraduate _ ->
@@ -2016,21 +2015,131 @@ signUpSchoolViewSchool signUpSchoolSchool =
 -}
 signUpSchoolViewGraduate : SignUpSchoolGraduate -> List ( String, Html.Html SignUpSchoolGraduate )
 signUpSchoolViewGraduate signUpSchoolGraduate =
-    case signUpSchoolGraduate of
-        SignUpSchoolGraduateNone ->
-            []
+    let
+        tsukubaUniversity =
+            case signUpSchoolGraduate of
+                SignUpSchoolGraduateNone t ->
+                    t
 
-        SignUpSchoolGraduateSelectGraduateNoSchool graduate ->
-            []
+                SignUpSchoolGraduateSelectGraduate _ t ->
+                    t
 
-        SignUpSchoolGraduateSelectGraduateYesSchool graduate ->
-            []
+                _ ->
+                    True
+    in
+    [ ( "selectGraduate"
+      , signUpSchoolViewSelectGraduate
+            |> Html.map
+                (\g ->
+                    case g of
+                        Just z ->
+                            SignUpSchoolGraduateSelectGraduate z tsukubaUniversity
 
-        SignUpSchoolGraduateSelectGraduateAndSchool graduate school ->
-            []
+                        Nothing ->
+                            SignUpSchoolGraduateNone tsukubaUniversity
+                )
+      )
+    ]
+        ++ (case signUpSchoolGraduate of
+                SignUpSchoolGraduateNone t ->
+                    [ ( "tsukubaUniversityOrNo"
+                      , signUpSchoolViewGraduateYesNoUniversity t
+                            |> Html.map (always (SignUpSchoolGraduateNone (not t)))
+                      )
+                    ]
 
-        SignUpSchoolGraduateSelectGraduateAndSchoolAndDepartment schoolAndDepartment ->
-            []
+                SignUpSchoolGraduateSelectGraduate graduate t ->
+                    [ ( "tsukubaUniversityOrNo"
+                      , signUpSchoolViewGraduateYesNoUniversity t
+                            |> Html.map (always (SignUpSchoolGraduateSelectGraduate graduate (not t)))
+                      )
+                    ]
+
+                SignUpSchoolGraduateSelectGraduateAndSchool graduate school ->
+                    []
+
+                SignUpSchoolGraduateSelectGraduateAndSchoolAndDepartment schoolAndDepartment ->
+                    []
+           )
+
+
+signUpSchoolViewSelectGraduate : Html.Html (Maybe School.Graduate)
+signUpSchoolViewSelectGraduate =
+    Html.div
+        []
+        [ Html.label
+            [ Html.Attributes.class "signUp-label"
+            , Html.Attributes.for "signUp-selectGraduate"
+            ]
+            [ Html.text "学群" ]
+        , Html.select
+            [ Html.Attributes.class "signUp-menu"
+            , Html.Attributes.id "signUp-selectGraduate"
+            , Html.Events.on "change" selectGraduateDecoder
+            ]
+            ([ Html.option [] [ Html.text "--選択してください--" ] ]
+                ++ (School.graduateAllValue
+                        |> List.map
+                            (\s ->
+                                Html.option [] [ Html.text (School.graduateToJapaneseString s) ]
+                            )
+                   )
+            )
+        ]
+
+
+selectGraduateDecoder : Json.Decode.Decoder (Maybe School.Graduate)
+selectGraduateDecoder =
+    Json.Decode.at
+        [ "target", "selectedIndex" ]
+        Json.Decode.int
+        |> Json.Decode.map (\index -> School.graduateAllValue |> Array.fromList |> Array.get (index - 1))
+
+
+{-| 筑波大学に所属していたかしていなかったか
+Boolは左(筑波大学所属していた)を選択しているか
+-}
+signUpSchoolViewGraduateYesNoUniversity : Bool -> Html.Html ()
+signUpSchoolViewGraduateYesNoUniversity leftSelect =
+    Html.div
+        []
+        [ Html.label
+            [ Html.Attributes.class "signUp-label" ]
+            [ Html.text "大学での所属" ]
+        , Html.div
+            [ Html.Attributes.class "signUp-select" ]
+            [ Html.div
+                ([ Html.Attributes.classList
+                    [ ( "signUp-select-item", True )
+                    , ( "signUp-select-itemSelect", leftSelect )
+                    ]
+                 , Html.Attributes.style "border-radius" ".4rem 0 0 .4rem"
+                 ]
+                    ++ (if leftSelect then
+                            []
+
+                        else
+                            [ Html.Events.onClick () ]
+                       )
+                )
+                [ Html.text "筑波大学に所属していた" ]
+            , Html.div
+                ([ Html.Attributes.classList
+                    [ ( "signUp-select-item", True )
+                    , ( "signUp-select-itemSelect", not leftSelect )
+                    ]
+                 , Html.Attributes.style "border-radius" "0 .4rem .4rem 0"
+                 ]
+                    ++ (if leftSelect then
+                            [ Html.Events.onClick () ]
+
+                        else
+                            []
+                       )
+                )
+                [ Html.text "筑波大学に所属していなかった" ]
+            ]
+        ]
 
 
 signUpSchoolViewSelectSchool : Html.Html (Maybe School.School)

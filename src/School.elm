@@ -1,4 +1,4 @@
-module School exposing (Graduate, School, SchoolAndDepartment, departmentAllValue, departmentToJapaneseString, departmentToSchool, schoolAllValue, schoolAndDepartmentToJapaneseString, schoolToIdString, schoolToJapaneseString)
+module School exposing (Graduate, School, SchoolAndDepartment, departmentAllValue, departmentToJapaneseString, departmentToSchool, graduateAllValue, graduateToJapaneseString, schoolAllValue, schoolAndDepartmentToJapaneseString, schoolToIdString, schoolToJapaneseString)
 
 {-| 学群
 -}
@@ -177,6 +177,20 @@ departmentAllValue school =
 
         SSport ->
             []
+
+
+graduateAllValue : List Graduate
+graduateAllValue =
+    [ GEducation
+    , GHass
+    , GGabs
+    , GPas
+    , GSie
+    , GLife
+    , GChs
+    , GSlis
+    , GGlobal
+    ]
 
 
 schoolToIdString : School -> String
@@ -524,3 +538,34 @@ medDepartmentToJapaneseString department =
 
         MedMs ->
             "医療科学類"
+
+
+graduateToJapaneseString : Graduate -> String
+graduateToJapaneseString gradate =
+    case gradate of
+        GEducation ->
+            "教育研究科"
+
+        GHass ->
+            "人文社会科学研究科"
+
+        GGabs ->
+            "ビジネス科学研究科"
+
+        GPas ->
+            "数理物質科学研究科"
+
+        GSie ->
+            "システム情報工学研究科"
+
+        GLife ->
+            "生命環境科学研究科"
+
+        GChs ->
+            "人間総合科学研究科"
+
+        GSlis ->
+            "図書館情報メディア研究科"
+
+        GGlobal ->
+            "グローバル研究院"
