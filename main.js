@@ -1976,8 +1976,8 @@ var _Platform_worker = F4(function(impl, flagDecoder, debugMetadata, args)
 		flagDecoder,
 		args,
 		impl.a2,
-		impl.bh,
-		impl.be,
+		impl.bi,
+		impl.bf,
 		function() { return function() {} }
 	);
 });
@@ -2446,7 +2446,7 @@ var _Http_toTask = F3(function(router, toTask, request)
 		xhr.addEventListener('error', function() { done(elm$http$Http$NetworkError_); });
 		xhr.addEventListener('timeout', function() { done(elm$http$Http$Timeout_); });
 		xhr.addEventListener('load', function() { done(_Http_toResponse(request.R.b, xhr)); });
-		elm$core$Maybe$isJust(request.bg) && _Http_track(router, xhr, request.bg.a);
+		elm$core$Maybe$isJust(request.bh) && _Http_track(router, xhr, request.bh.a);
 
 		try {
 			xhr.open(request.a4, request.U, true);
@@ -2472,7 +2472,7 @@ function _Http_configureRequest(xhr, request)
 	{
 		xhr.setRequestHeader(headers.a.a, headers.a.b);
 	}
-	xhr.timeout = request.bf.a || 0;
+	xhr.timeout = request.bg.a || 0;
 	xhr.responseType = request.R.d;
 	xhr.withCredentials = request.z;
 }
@@ -2497,7 +2497,7 @@ function _Http_toMetadata(xhr)
 	return {
 		U: xhr.responseURL,
 		aP: xhr.status,
-		bc: xhr.statusText,
+		bd: xhr.statusText,
 		aZ: _Http_parseHeaders(xhr.getAllResponseHeaders())
 	};
 }
@@ -2593,7 +2593,7 @@ function _Http_track(router, xhr, tracker)
 	xhr.upload.addEventListener('progress', function(event) {
 		if (xhr.c) { return; }
 		_Scheduler_rawSpawn(A2(elm$core$Platform$sendToSelf, router, _Utils_Tuple2(tracker, elm$http$Http$Sending({
-			bb: event.loaded,
+			bc: event.loaded,
 			ab: event.total
 		}))));
 	});
@@ -4177,10 +4177,10 @@ var _Browser_element = _Debugger_element || F4(function(impl, flagDecoder, debug
 		flagDecoder,
 		args,
 		impl.a2,
-		impl.bh,
-		impl.be,
+		impl.bi,
+		impl.bf,
 		function(sendToApp, initialModel) {
-			var view = impl.bi;
+			var view = impl.bj;
 			/**/
 			var domNode = args['node'];
 			//*/
@@ -4213,11 +4213,11 @@ var _Browser_document = _Debugger_document || F4(function(impl, flagDecoder, deb
 		flagDecoder,
 		args,
 		impl.a2,
-		impl.bh,
-		impl.be,
+		impl.bi,
+		impl.bf,
 		function(sendToApp, initialModel) {
 			var divertHrefToApp = impl.J && impl.J(sendToApp)
-			var view = impl.bi;
+			var view = impl.bj;
 			var title = _VirtualDom_doc.title;
 			var bodyNode = _VirtualDom_doc.body;
 			var currNode = _VirtualDom_virtualize(bodyNode);
@@ -4321,9 +4321,9 @@ function _Browser_application(impl)
 		{
 			return A3(impl.a2, flags, _Browser_getUrl(), key);
 		},
+		bj: impl.bj,
 		bi: impl.bi,
-		bh: impl.bh,
-		be: impl.be
+		bf: impl.bf
 	});
 }
 
@@ -4684,11 +4684,11 @@ var author$project$Main$PageSignUp = function (a) {
 	return {$: 1, a: a};
 };
 var author$project$Main$PageSiteMapXml = {$: 9};
-var author$project$Main$SignUpSchoolSchool = function (a) {
+var author$project$Main$SignUpPage = elm$core$Basics$identity;
+var author$project$Main$SignUpUniversitySchool = function (a) {
 	return {$: 0, a: a};
 };
-var author$project$Main$SignUpSchoolSchoolNone = {$: 0};
-var author$project$Main$UserSignUpPage = elm$core$Basics$identity;
+var author$project$Main$SignUpUniversitySchoolNone = {$: 0};
 var author$project$Main$UserSignUpPageStudentHasSAddress = function (a) {
 	return {$: 0, a: a};
 };
@@ -4792,7 +4792,7 @@ var elm$core$Set$toList = function (_n0) {
 };
 var elm$regex$Regex$Match = F4(
 	function (match, index, number, submatches) {
-		return {a1: index, a3: match, a5: number, bd: submatches};
+		return {a1: index, a3: match, a5: number, be: submatches};
 	});
 var elm$regex$Regex$fromStringWith = _Regex_fromStringWith;
 var elm$regex$Regex$fromString = function (string) {
@@ -6282,7 +6282,7 @@ var author$project$Main$urlParser = function (beforePageMaybe) {
 								g: author$project$Password$passwordFromString(''),
 								K: author$project$Main$analysisStudentIdOrSAddress('')
 							}),
-						l: author$project$Main$SignUpSchoolSchool(author$project$Main$SignUpSchoolSchoolNone)
+						l: author$project$Main$SignUpUniversitySchool(author$project$Main$SignUpUniversitySchoolNone)
 					}),
 				author$project$SiteMap$signUpParser),
 				A2(
@@ -7607,7 +7607,7 @@ var elm$http$Http$updateReqs = F3(
 					return A2(
 						elm$core$Task$andThen,
 						function (pid) {
-							var _n4 = req.bg;
+							var _n4 = req.bh;
 							if (_n4.$ === 1) {
 								return A3(elm$http$Http$updateReqs, router, otherCmds, reqs);
 							} else {
@@ -7721,8 +7721,8 @@ var elm$http$Http$cmdMap = F2(
 					R: A2(_Http_mapExpect, func, r.R),
 					aZ: r.aZ,
 					a4: r.a4,
-					bf: r.bf,
 					bg: r.bg,
+					bh: r.bh,
 					U: r.U
 				});
 		}
@@ -7746,11 +7746,11 @@ var elm$http$Http$subscription = _Platform_leaf('Http');
 var elm$http$Http$request = function (r) {
 	return elm$http$Http$command(
 		elm$http$Http$Request(
-			{z: false, P: r.P, R: r.R, aZ: r.aZ, a4: r.a4, bf: r.bf, bg: r.bg, U: r.U}));
+			{z: false, P: r.P, R: r.R, aZ: r.aZ, a4: r.a4, bg: r.bg, bh: r.bh, U: r.U}));
 };
 var elm$http$Http$post = function (r) {
 	return elm$http$Http$request(
-		{P: r.P, R: r.R, aZ: _List_Nil, a4: 'POST', bf: elm$core$Maybe$Nothing, bg: elm$core$Maybe$Nothing, U: r.U});
+		{P: r.P, R: r.R, aZ: _List_Nil, a4: 'POST', bg: elm$core$Maybe$Nothing, bh: elm$core$Maybe$Nothing, U: r.U});
 };
 var author$project$Api$logIn = F2(
 	function (logInData, msg) {
@@ -7892,8 +7892,8 @@ var author$project$Api$signUpConfirm = F2(
 						author$project$Api$confirmTokenToHeader(confirmToken)
 					]),
 				a4: 'POST',
-				bf: elm$core$Maybe$Nothing,
 				bg: elm$core$Maybe$Nothing,
+				bh: elm$core$Maybe$Nothing,
 				U: 'http://api.tsukumart.com/auth/signup/confirm/'
 			});
 	});
@@ -8340,7 +8340,7 @@ var author$project$Main$update = F2(
 							switch (_n10.$) {
 								case 1:
 									var sAddressAndPassword = _n10.a.k;
-									var school = _n10.a.l;
+									var university = _n10.a.l;
 									if (!sAddressAndPassword.$) {
 										var r = sAddressAndPassword.a;
 										return _Utils_update(
@@ -8354,7 +8354,7 @@ var author$project$Main$update = F2(
 																{
 																	K: author$project$Main$analysisStudentIdOrSAddress(string)
 																})),
-														l: school
+														l: university
 													})
 											});
 									} else {
@@ -8370,7 +8370,7 @@ var author$project$Main$update = F2(
 																{
 																	Q: author$project$Main$analysisEmailAddress(string)
 																})),
-														l: school
+														l: university
 													})
 											});
 									}
@@ -8416,7 +8416,7 @@ var author$project$Main$update = F2(
 						switch (_n12.$) {
 							case 1:
 								var sAddressAndPassword = _n12.a.k;
-								var school = _n12.a.l;
+								var university = _n12.a.l;
 								if (sAddressAndPassword.$ === 1) {
 									var r = sAddressAndPassword.a;
 									return _Utils_update(
@@ -8430,7 +8430,7 @@ var author$project$Main$update = F2(
 															{
 																S: elm$core$Maybe$Just(urlString)
 															})),
-													l: school
+													l: university
 												})
 										});
 								} else {
@@ -8484,7 +8484,7 @@ var author$project$Main$update = F2(
 							switch (_n15.$) {
 								case 1:
 									var sAddressAndPassword = _n15.a.k;
-									var school = _n15.a.l;
+									var university = _n15.a.l;
 									return _Utils_update(
 										rec,
 										{
@@ -8509,7 +8509,7 @@ var author$project$Main$update = F2(
 																	}));
 														}
 													}(),
-													l: school
+													l: university
 												})
 										});
 								case 2:
@@ -9789,7 +9789,7 @@ var author$project$SAddress$fromStundetId = function (studentId) {
 };
 var author$project$Main$getSignUpData = function (_n0) {
 	var sAddressAndPassword = _n0.k;
-	var school = _n0.l;
+	var university = _n0.l;
 	if (!sAddressAndPassword.$) {
 		var studentIdOrTsukubaEmailAddress = sAddressAndPassword.a.K;
 		var password = sAddressAndPassword.a.g;
@@ -10167,7 +10167,7 @@ var author$project$Main$sAddressSelectView = function (userSignUpSAddressAndPass
 							elm$html$Html$Attributes$classList(
 							_List_fromArray(
 								[
-									_Utils_Tuple2('signUp-select-item', true),
+									_Utils_Tuple2('signUp-select-item', !leftSelect),
 									_Utils_Tuple2('signUp-select-itemSelect', leftSelect)
 								])),
 							A2(elm$html$Html$Attributes$style, 'border-radius', '.4rem 0 0 .4rem')
@@ -10200,7 +10200,7 @@ var author$project$Main$sAddressSelectView = function (userSignUpSAddressAndPass
 							elm$html$Html$Attributes$classList(
 							_List_fromArray(
 								[
-									_Utils_Tuple2('signUp-select-item', true),
+									_Utils_Tuple2('signUp-select-item', leftSelect),
 									_Utils_Tuple2('signUp-select-itemSelect', !leftSelect)
 								])),
 							A2(elm$html$Html$Attributes$style, 'border-radius', '0 .4rem .4rem 0')
@@ -10247,17 +10247,56 @@ var author$project$Main$sAddressView = function (userSignUpSAddressAndPassword) 
 				author$project$Main$sAddressSelectView(userSignUpSAddressAndPassword)
 			]));
 };
-var author$project$Main$SignUpSchoolGraduate = function (a) {
+var author$project$Main$SignUp = function (a) {
+	return {$: 7, a: a};
+};
+var elm$html$Html$Attributes$disabled = elm$html$Html$Attributes$boolProperty('disabled');
+var author$project$Main$signUpSubmitButton = function (signUpDataMaybe) {
+	return A2(
+		elm$html$Html$div,
+		_List_Nil,
+		_List_fromArray(
+			[
+				A2(
+				elm$html$Html$button,
+				_Utils_ap(
+					_List_fromArray(
+						[
+							elm$html$Html$Attributes$class('signUp-signUpButton'),
+							elm$html$Html$Attributes$disabled(
+							_Utils_eq(signUpDataMaybe, elm$core$Maybe$Nothing))
+						]),
+					function () {
+						if (!signUpDataMaybe.$) {
+							var signUpData = signUpDataMaybe.a;
+							return _List_fromArray(
+								[
+									A2(
+									elm$html$Html$Events$stopPropagationOn,
+									'click',
+									elm$json$Json$Decode$succeed(
+										_Utils_Tuple2(
+											author$project$Main$SignUp(signUpData),
+											true)))
+								]);
+						} else {
+							return _List_Nil;
+						}
+					}()),
+				_List_fromArray(
+					[
+						elm$html$Html$text('新規登録')
+					]))
+			]));
+};
+var author$project$Main$SignUpUniversityGraduate = function (a) {
 	return {$: 1, a: a};
 };
-var author$project$Main$SignUpSchoolGraduateNone = function (a) {
-	return {$: 0, a: a};
-};
-var author$project$Main$SignUpSchoolGraduateSelectGraduate = F2(
+var author$project$Main$SignUpUniversityGraduateSelect = F2(
 	function (a, b) {
-		return {$: 1, a: a, b: b};
+		return {$: 0, a: a, b: b};
 	});
-var author$project$Main$signUpSchoolViewGraduateYesNoUniversity = function (leftSelect) {
+var author$project$Main$signUpUniversityViewGraduateYesNoTsukuba = function (leftSelect) {
 	return A2(
 		elm$html$Html$div,
 		_List_Nil,
@@ -10271,7 +10310,7 @@ var author$project$Main$signUpSchoolViewGraduateYesNoUniversity = function (left
 					]),
 				_List_fromArray(
 					[
-						elm$html$Html$text('大学での所属')
+						elm$html$Html$text('院進前の所属')
 					])),
 				A2(
 				elm$html$Html$div,
@@ -10289,7 +10328,7 @@ var author$project$Main$signUpSchoolViewGraduateYesNoUniversity = function (left
 									elm$html$Html$Attributes$classList(
 									_List_fromArray(
 										[
-											_Utils_Tuple2('signUp-select-item', true),
+											_Utils_Tuple2('signUp-select-item', !leftSelect),
 											_Utils_Tuple2('signUp-select-itemSelect', leftSelect)
 										])),
 									A2(elm$html$Html$Attributes$style, 'border-radius', '.4rem 0 0 .4rem')
@@ -10310,7 +10349,7 @@ var author$project$Main$signUpSchoolViewGraduateYesNoUniversity = function (left
 									elm$html$Html$Attributes$classList(
 									_List_fromArray(
 										[
-											_Utils_Tuple2('signUp-select-item', true),
+											_Utils_Tuple2('signUp-select-item', leftSelect),
 											_Utils_Tuple2('signUp-select-itemSelect', !leftSelect)
 										])),
 									A2(elm$html$Html$Attributes$style, 'border-radius', '0 .4rem .4rem 0')
@@ -10326,253 +10365,10 @@ var author$project$Main$signUpSchoolViewGraduateYesNoUniversity = function (left
 					]))
 			]));
 };
-var author$project$School$GChs = 6;
-var author$project$School$GEducation = 0;
-var author$project$School$GGabs = 2;
-var author$project$School$GGlobal = 8;
-var author$project$School$GHass = 1;
-var author$project$School$GLife = 5;
-var author$project$School$GPas = 3;
-var author$project$School$GSie = 4;
-var author$project$School$GSlis = 7;
-var author$project$School$graduateAllValue = _List_fromArray(
-	[0, 1, 2, 3, 4, 5, 6, 7, 8]);
-var elm$core$Array$fromListHelp = F3(
-	function (list, nodeList, nodeListSize) {
-		fromListHelp:
-		while (true) {
-			var _n0 = A2(elm$core$Elm$JsArray$initializeFromList, elm$core$Array$branchFactor, list);
-			var jsArray = _n0.a;
-			var remainingItems = _n0.b;
-			if (_Utils_cmp(
-				elm$core$Elm$JsArray$length(jsArray),
-				elm$core$Array$branchFactor) < 0) {
-				return A2(
-					elm$core$Array$builderToArray,
-					true,
-					{e: nodeList, b: nodeListSize, d: jsArray});
-			} else {
-				var $temp$list = remainingItems,
-					$temp$nodeList = A2(
-					elm$core$List$cons,
-					elm$core$Array$Leaf(jsArray),
-					nodeList),
-					$temp$nodeListSize = nodeListSize + 1;
-				list = $temp$list;
-				nodeList = $temp$nodeList;
-				nodeListSize = $temp$nodeListSize;
-				continue fromListHelp;
-			}
-		}
-	});
-var elm$core$Array$fromList = function (list) {
-	if (!list.b) {
-		return elm$core$Array$empty;
-	} else {
-		return A3(elm$core$Array$fromListHelp, list, _List_Nil, 0);
-	}
-};
-var elm$core$Bitwise$shiftRightZfBy = _Bitwise_shiftRightZfBy;
-var elm$core$Array$bitMask = 4294967295 >>> (32 - elm$core$Array$shiftStep);
-var elm$core$Elm$JsArray$unsafeGet = _JsArray_unsafeGet;
-var elm$core$Array$getHelp = F3(
-	function (shift, index, tree) {
-		getHelp:
-		while (true) {
-			var pos = elm$core$Array$bitMask & (index >>> shift);
-			var _n0 = A2(elm$core$Elm$JsArray$unsafeGet, pos, tree);
-			if (!_n0.$) {
-				var subTree = _n0.a;
-				var $temp$shift = shift - elm$core$Array$shiftStep,
-					$temp$index = index,
-					$temp$tree = subTree;
-				shift = $temp$shift;
-				index = $temp$index;
-				tree = $temp$tree;
-				continue getHelp;
-			} else {
-				var values = _n0.a;
-				return A2(elm$core$Elm$JsArray$unsafeGet, elm$core$Array$bitMask & index, values);
-			}
-		}
-	});
-var elm$core$Bitwise$shiftLeftBy = _Bitwise_shiftLeftBy;
-var elm$core$Array$tailIndex = function (len) {
-	return (len >>> 5) << 5;
-};
-var elm$core$Basics$ge = _Utils_ge;
-var elm$core$Array$get = F2(
-	function (index, _n0) {
-		var len = _n0.a;
-		var startShift = _n0.b;
-		var tree = _n0.c;
-		var tail = _n0.d;
-		return ((index < 0) || (_Utils_cmp(index, len) > -1)) ? elm$core$Maybe$Nothing : ((_Utils_cmp(
-			index,
-			elm$core$Array$tailIndex(len)) > -1) ? elm$core$Maybe$Just(
-			A2(elm$core$Elm$JsArray$unsafeGet, elm$core$Array$bitMask & index, tail)) : elm$core$Maybe$Just(
-			A3(elm$core$Array$getHelp, startShift, index, tree)));
-	});
-var elm$json$Json$Decode$int = _Json_decodeInt;
-var author$project$Main$selectGraduateDecoder = A2(
-	elm$json$Json$Decode$map,
-	function (index) {
-		return A2(
-			elm$core$Array$get,
-			index - 1,
-			elm$core$Array$fromList(author$project$School$graduateAllValue));
-	},
-	A2(
-		elm$json$Json$Decode$at,
-		_List_fromArray(
-			['target', 'selectedIndex']),
-		elm$json$Json$Decode$int));
-var author$project$School$graduateToJapaneseString = function (gradate) {
-	switch (gradate) {
-		case 0:
-			return '教育研究科';
-		case 1:
-			return '人文社会科学研究科';
-		case 2:
-			return 'ビジネス科学研究科';
-		case 3:
-			return '数理物質科学研究科';
-		case 4:
-			return 'システム情報工学研究科';
-		case 5:
-			return '生命環境科学研究科';
-		case 6:
-			return '人間総合科学研究科';
-		case 7:
-			return '図書館情報メディア研究科';
-		default:
-			return 'グローバル研究院';
-	}
-};
-var elm$html$Html$option = _VirtualDom_node('option');
-var elm$html$Html$select = _VirtualDom_node('select');
-var author$project$Main$signUpSchoolViewSelectGraduate = A2(
-	elm$html$Html$div,
-	_List_Nil,
-	_List_fromArray(
-		[
-			A2(
-			elm$html$Html$label,
-			_List_fromArray(
-				[
-					elm$html$Html$Attributes$class('signUp-label'),
-					elm$html$Html$Attributes$for('signUp-selectGraduate')
-				]),
-			_List_fromArray(
-				[
-					elm$html$Html$text('研究科')
-				])),
-			A2(
-			elm$html$Html$select,
-			_List_fromArray(
-				[
-					elm$html$Html$Attributes$class('signUp-menu'),
-					elm$html$Html$Attributes$id('signUp-selectGraduate'),
-					A2(elm$html$Html$Events$on, 'change', author$project$Main$selectGraduateDecoder)
-				]),
-			_Utils_ap(
-				_List_fromArray(
-					[
-						A2(
-						elm$html$Html$option,
-						_List_Nil,
-						_List_fromArray(
-							[
-								elm$html$Html$text('--選択してください--')
-							]))
-					]),
-				A2(
-					elm$core$List$map,
-					function (s) {
-						return A2(
-							elm$html$Html$option,
-							_List_Nil,
-							_List_fromArray(
-								[
-									elm$html$Html$text(
-									author$project$School$graduateToJapaneseString(s))
-								]));
-					},
-					author$project$School$graduateAllValue)))
-		]));
-var elm$virtual_dom$VirtualDom$map = _VirtualDom_map;
-var elm$html$Html$map = elm$virtual_dom$VirtualDom$map;
-var author$project$Main$signUpSchoolViewGraduate = function (signUpSchoolGraduate) {
-	var tsukubaUniversity = function () {
-		switch (signUpSchoolGraduate.$) {
-			case 0:
-				var t = signUpSchoolGraduate.a;
-				return t;
-			case 1:
-				var t = signUpSchoolGraduate.b;
-				return t;
-			default:
-				return true;
-		}
-	}();
-	return _Utils_ap(
-		_List_fromArray(
-			[
-				_Utils_Tuple2(
-				'selectGraduate',
-				A2(
-					elm$html$Html$map,
-					function (g) {
-						if (!g.$) {
-							var z = g.a;
-							return A2(author$project$Main$SignUpSchoolGraduateSelectGraduate, z, tsukubaUniversity);
-						} else {
-							return author$project$Main$SignUpSchoolGraduateNone(tsukubaUniversity);
-						}
-					},
-					author$project$Main$signUpSchoolViewSelectGraduate))
-			]),
-		function () {
-			switch (signUpSchoolGraduate.$) {
-				case 0:
-					var t = signUpSchoolGraduate.a;
-					return _List_fromArray(
-						[
-							_Utils_Tuple2(
-							'tsukubaUniversityOrNo',
-							A2(
-								elm$html$Html$map,
-								elm$core$Basics$always(
-									author$project$Main$SignUpSchoolGraduateNone(!t)),
-								author$project$Main$signUpSchoolViewGraduateYesNoUniversity(t)))
-						]);
-				case 1:
-					var graduate = signUpSchoolGraduate.a;
-					var t = signUpSchoolGraduate.b;
-					return _List_fromArray(
-						[
-							_Utils_Tuple2(
-							'tsukubaUniversityOrNo',
-							A2(
-								elm$html$Html$map,
-								elm$core$Basics$always(
-									A2(author$project$Main$SignUpSchoolGraduateSelectGraduate, graduate, !t)),
-								author$project$Main$signUpSchoolViewGraduateYesNoUniversity(t)))
-						]);
-				case 2:
-					var graduate = signUpSchoolGraduate.a;
-					var school = signUpSchoolGraduate.b;
-					return _List_Nil;
-				default:
-					var schoolAndDepartment = signUpSchoolGraduate.a;
-					return _List_Nil;
-			}
-		}());
-};
-var author$project$Main$SignUpSchoolSchoolSelectSchool = function (a) {
+var author$project$Main$SignUpUniversitySchoolSelectSchool = function (a) {
 	return {$: 1, a: a};
 };
-var author$project$Main$SignUpSchoolSchoolSelectSchoolAndDepartment = function (a) {
+var author$project$Main$SignUpUniversitySchoolSelectSchoolAndDepartment = function (a) {
 	return {$: 2, a: a};
 };
 var author$project$School$DHuman = function (a) {
@@ -10669,6 +10465,83 @@ var author$project$School$departmentAllValue = function (school) {
 			return _List_Nil;
 	}
 };
+var elm$core$Array$fromListHelp = F3(
+	function (list, nodeList, nodeListSize) {
+		fromListHelp:
+		while (true) {
+			var _n0 = A2(elm$core$Elm$JsArray$initializeFromList, elm$core$Array$branchFactor, list);
+			var jsArray = _n0.a;
+			var remainingItems = _n0.b;
+			if (_Utils_cmp(
+				elm$core$Elm$JsArray$length(jsArray),
+				elm$core$Array$branchFactor) < 0) {
+				return A2(
+					elm$core$Array$builderToArray,
+					true,
+					{e: nodeList, b: nodeListSize, d: jsArray});
+			} else {
+				var $temp$list = remainingItems,
+					$temp$nodeList = A2(
+					elm$core$List$cons,
+					elm$core$Array$Leaf(jsArray),
+					nodeList),
+					$temp$nodeListSize = nodeListSize + 1;
+				list = $temp$list;
+				nodeList = $temp$nodeList;
+				nodeListSize = $temp$nodeListSize;
+				continue fromListHelp;
+			}
+		}
+	});
+var elm$core$Array$fromList = function (list) {
+	if (!list.b) {
+		return elm$core$Array$empty;
+	} else {
+		return A3(elm$core$Array$fromListHelp, list, _List_Nil, 0);
+	}
+};
+var elm$core$Bitwise$shiftRightZfBy = _Bitwise_shiftRightZfBy;
+var elm$core$Array$bitMask = 4294967295 >>> (32 - elm$core$Array$shiftStep);
+var elm$core$Elm$JsArray$unsafeGet = _JsArray_unsafeGet;
+var elm$core$Array$getHelp = F3(
+	function (shift, index, tree) {
+		getHelp:
+		while (true) {
+			var pos = elm$core$Array$bitMask & (index >>> shift);
+			var _n0 = A2(elm$core$Elm$JsArray$unsafeGet, pos, tree);
+			if (!_n0.$) {
+				var subTree = _n0.a;
+				var $temp$shift = shift - elm$core$Array$shiftStep,
+					$temp$index = index,
+					$temp$tree = subTree;
+				shift = $temp$shift;
+				index = $temp$index;
+				tree = $temp$tree;
+				continue getHelp;
+			} else {
+				var values = _n0.a;
+				return A2(elm$core$Elm$JsArray$unsafeGet, elm$core$Array$bitMask & index, values);
+			}
+		}
+	});
+var elm$core$Bitwise$shiftLeftBy = _Bitwise_shiftLeftBy;
+var elm$core$Array$tailIndex = function (len) {
+	return (len >>> 5) << 5;
+};
+var elm$core$Basics$ge = _Utils_ge;
+var elm$core$Array$get = F2(
+	function (index, _n0) {
+		var len = _n0.a;
+		var startShift = _n0.b;
+		var tree = _n0.c;
+		var tail = _n0.d;
+		return ((index < 0) || (_Utils_cmp(index, len) > -1)) ? elm$core$Maybe$Nothing : ((_Utils_cmp(
+			index,
+			elm$core$Array$tailIndex(len)) > -1) ? elm$core$Maybe$Just(
+			A2(elm$core$Elm$JsArray$unsafeGet, elm$core$Array$bitMask & index, tail)) : elm$core$Maybe$Just(
+			A3(elm$core$Array$getHelp, startShift, index, tree)));
+	});
+var elm$json$Json$Decode$int = _Json_decodeInt;
 var author$project$Main$selectDepartmentDecoder = function (school) {
 	return A2(
 		elm$json$Json$Decode$map,
@@ -10795,7 +10668,7 @@ var author$project$School$schoolAndDepartmentToJapaneseString = function (school
 		var d = _n1.b;
 		return {
 			an: d,
-			l: author$project$School$schoolToJapaneseString(s)
+			bb: author$project$School$schoolToJapaneseString(s)
 		};
 	}(
 		function () {
@@ -10855,7 +10728,9 @@ var author$project$School$departmentToJapaneseString = A2(
 	function ($) {
 		return $.an;
 	});
-var author$project$Main$signUpSchoolViewSelectDepartment = function (school) {
+var elm$html$Html$option = _VirtualDom_node('option');
+var elm$html$Html$select = _VirtualDom_node('select');
+var author$project$Main$signUpUniversityViewSelectDepartment = function (school) {
 	var _n0 = author$project$School$departmentAllValue(school);
 	if (!_n0.b) {
 		return elm$core$Maybe$Nothing;
@@ -10934,7 +10809,7 @@ var author$project$Main$selectSchoolDecoder = A2(
 		_List_fromArray(
 			['target', 'selectedIndex']),
 		elm$json$Json$Decode$int));
-var author$project$Main$signUpSchoolViewSelectSchool = A2(
+var author$project$Main$signUpUniversityViewSelectSchool = A2(
 	elm$html$Html$div,
 	_List_Nil,
 	_List_fromArray(
@@ -11031,7 +10906,9 @@ var elm$core$List$singleton = function (value) {
 	return _List_fromArray(
 		[value]);
 };
-var author$project$Main$signUpSchoolViewSchool = function (signUpSchoolSchool) {
+var elm$virtual_dom$VirtualDom$map = _VirtualDom_map;
+var elm$html$Html$map = elm$virtual_dom$VirtualDom$map;
+var author$project$Main$signUpUniversityViewSchool = function (signUpSchoolSchool) {
 	return _Utils_ap(
 		_List_fromArray(
 			[
@@ -11042,12 +10919,12 @@ var author$project$Main$signUpSchoolViewSchool = function (signUpSchoolSchool) {
 					function (m) {
 						if (!m.$) {
 							var z = m.a;
-							return author$project$Main$SignUpSchoolSchoolSelectSchool(z);
+							return author$project$Main$SignUpUniversitySchoolSelectSchool(z);
 						} else {
-							return author$project$Main$SignUpSchoolSchoolNone;
+							return author$project$Main$SignUpUniversitySchoolNone;
 						}
 					},
-					author$project$Main$signUpSchoolViewSelectSchool))
+					author$project$Main$signUpUniversityViewSelectSchool))
 			]),
 		function () {
 			switch (signUpSchoolSchool.$) {
@@ -11074,12 +10951,12 @@ var author$project$Main$signUpSchoolViewSchool = function (signUpSchoolSchool) {
 										function (m) {
 											if (!m.$) {
 												var z = m.a;
-												return author$project$Main$SignUpSchoolSchoolSelectSchoolAndDepartment(z);
+												return author$project$Main$SignUpUniversitySchoolSelectSchoolAndDepartment(z);
 											} else {
-												return author$project$Main$SignUpSchoolSchoolSelectSchool(school);
+												return author$project$Main$SignUpUniversitySchoolSelectSchool(school);
 											}
 										}),
-									author$project$Main$signUpSchoolViewSelectDepartment(school)))));
+									author$project$Main$signUpUniversityViewSelectDepartment(school)))));
 				default:
 					var department = signUpSchoolSchool.a;
 					var school = author$project$School$departmentToSchool(department);
@@ -11102,18 +10979,165 @@ var author$project$Main$signUpSchoolViewSchool = function (signUpSchoolSchool) {
 										function (m) {
 											if (!m.$) {
 												var z = m.a;
-												return author$project$Main$SignUpSchoolSchoolSelectSchoolAndDepartment(z);
+												return author$project$Main$SignUpUniversitySchoolSelectSchoolAndDepartment(z);
 											} else {
-												return author$project$Main$SignUpSchoolSchoolSelectSchool(school);
+												return author$project$Main$SignUpUniversitySchoolSelectSchool(school);
 											}
 										}),
-									author$project$Main$signUpSchoolViewSelectDepartment(school)))));
+									author$project$Main$signUpUniversityViewSelectDepartment(school)))));
 			}
 		}());
 };
-var author$project$Main$signUpSchoolViewSchoolOrGraduate = function (signUpSchool) {
+var author$project$School$GChs = 6;
+var author$project$School$GEducation = 0;
+var author$project$School$GGabs = 2;
+var author$project$School$GGlobal = 8;
+var author$project$School$GHass = 1;
+var author$project$School$GLife = 5;
+var author$project$School$GPas = 3;
+var author$project$School$GSie = 4;
+var author$project$School$GSlis = 7;
+var author$project$School$graduateAllValue = _List_fromArray(
+	[0, 1, 2, 3, 4, 5, 6, 7, 8]);
+var author$project$Main$selectGraduateDecoder = A2(
+	elm$json$Json$Decode$map,
+	function (index) {
+		return A2(
+			elm$core$Array$get,
+			index - 1,
+			elm$core$Array$fromList(author$project$School$graduateAllValue));
+	},
+	A2(
+		elm$json$Json$Decode$at,
+		_List_fromArray(
+			['target', 'selectedIndex']),
+		elm$json$Json$Decode$int));
+var author$project$School$graduateToJapaneseString = function (gradate) {
+	switch (gradate) {
+		case 0:
+			return '教育研究科';
+		case 1:
+			return '人文社会科学研究科';
+		case 2:
+			return 'ビジネス科学研究科';
+		case 3:
+			return '数理物質科学研究科';
+		case 4:
+			return 'システム情報工学研究科';
+		case 5:
+			return '生命環境科学研究科';
+		case 6:
+			return '人間総合科学研究科';
+		case 7:
+			return '図書館情報メディア研究科';
+		default:
+			return 'グローバル研究院';
+	}
+};
+var author$project$Main$signUpUniversityViewSelectGraduate = A2(
+	elm$html$Html$div,
+	_List_Nil,
+	_List_fromArray(
+		[
+			A2(
+			elm$html$Html$label,
+			_List_fromArray(
+				[
+					elm$html$Html$Attributes$class('signUp-label'),
+					elm$html$Html$Attributes$for('signUp-selectGraduate')
+				]),
+			_List_fromArray(
+				[
+					elm$html$Html$text('研究科')
+				])),
+			A2(
+			elm$html$Html$select,
+			_List_fromArray(
+				[
+					elm$html$Html$Attributes$class('signUp-menu'),
+					elm$html$Html$Attributes$id('signUp-selectGraduate'),
+					A2(elm$html$Html$Events$on, 'change', author$project$Main$selectGraduateDecoder)
+				]),
+			_Utils_ap(
+				_List_fromArray(
+					[
+						A2(
+						elm$html$Html$option,
+						_List_Nil,
+						_List_fromArray(
+							[
+								elm$html$Html$text('--選択してください--')
+							]))
+					]),
+				A2(
+					elm$core$List$map,
+					function (s) {
+						return A2(
+							elm$html$Html$option,
+							_List_Nil,
+							_List_fromArray(
+								[
+									elm$html$Html$text(
+									author$project$School$graduateToJapaneseString(s))
+								]));
+					},
+					author$project$School$graduateAllValue)))
+		]));
+var author$project$Main$signUpUniversityViewGraduate = function (univAndGraduateSelect) {
+	var _n0 = univAndGraduateSelect;
+	var graduateSelect = _n0.a;
+	var schoolSelect = _n0.b;
+	return _Utils_ap(
+		_List_fromArray(
+			[
+				_Utils_Tuple2(
+				'selectGraduate',
+				A2(
+					elm$html$Html$map,
+					function (g) {
+						return A2(author$project$Main$SignUpUniversityGraduateSelect, g, schoolSelect);
+					},
+					author$project$Main$signUpUniversityViewSelectGraduate)),
+				_Utils_Tuple2(
+				'tsukubaUniversitySchoolOrNo',
+				A2(
+					elm$html$Html$map,
+					elm$core$Basics$always(
+						A2(
+							author$project$Main$SignUpUniversityGraduateSelect,
+							graduateSelect,
+							function () {
+								if (!schoolSelect.$) {
+									return elm$core$Maybe$Nothing;
+								} else {
+									return elm$core$Maybe$Just(author$project$Main$SignUpUniversitySchoolNone);
+								}
+							}())),
+					author$project$Main$signUpUniversityViewGraduateYesNoTsukuba(
+						!_Utils_eq(schoolSelect, elm$core$Maybe$Nothing))))
+			]),
+		function () {
+			if (!schoolSelect.$) {
+				var school = schoolSelect.a;
+				return A2(
+					elm$core$List$map,
+					elm$core$Tuple$mapSecond(
+						elm$html$Html$map(
+							function (s) {
+								return A2(
+									author$project$Main$SignUpUniversityGraduateSelect,
+									graduateSelect,
+									elm$core$Maybe$Just(s));
+							})),
+					author$project$Main$signUpUniversityViewSchool(school));
+			} else {
+				return _List_Nil;
+			}
+		}());
+};
+var author$project$Main$signUpUniversityViewSchoolOrGraduate = function (university) {
 	var leftSelect = function () {
-		if (!signUpSchool.$) {
+		if (!university.$) {
 			return true;
 		} else {
 			return false;
@@ -11150,19 +11174,19 @@ var author$project$Main$signUpSchoolViewSchoolOrGraduate = function (signUpSchoo
 									elm$html$Html$Attributes$classList(
 									_List_fromArray(
 										[
-											_Utils_Tuple2('signUp-select-item', true),
+											_Utils_Tuple2('signUp-select-item', !leftSelect),
 											_Utils_Tuple2('signUp-select-itemSelect', leftSelect)
 										])),
 									A2(elm$html$Html$Attributes$style, 'border-radius', '.4rem 0 0 .4rem')
 								]),
 							function () {
-								if (!signUpSchool.$) {
+								if (!university.$) {
 									return _List_Nil;
 								} else {
 									return _List_fromArray(
 										[
 											elm$html$Html$Events$onClick(
-											author$project$Main$SignUpSchoolSchool(author$project$Main$SignUpSchoolSchoolNone))
+											author$project$Main$SignUpUniversitySchool(author$project$Main$SignUpUniversitySchoolNone))
 										]);
 								}
 							}()),
@@ -11178,18 +11202,21 @@ var author$project$Main$signUpSchoolViewSchoolOrGraduate = function (signUpSchoo
 									elm$html$Html$Attributes$classList(
 									_List_fromArray(
 										[
-											_Utils_Tuple2('signUp-select-item', true),
+											_Utils_Tuple2('signUp-select-item', leftSelect),
 											_Utils_Tuple2('signUp-select-itemSelect', !leftSelect)
 										])),
 									A2(elm$html$Html$Attributes$style, 'border-radius', '0 .4rem .4rem 0')
 								]),
 							function () {
-								if (!signUpSchool.$) {
+								if (!university.$) {
 									return _List_fromArray(
 										[
 											elm$html$Html$Events$onClick(
-											author$project$Main$SignUpSchoolGraduate(
-												author$project$Main$SignUpSchoolGraduateNone(true)))
+											author$project$Main$SignUpUniversityGraduate(
+												A2(
+													author$project$Main$SignUpUniversityGraduateSelect,
+													elm$core$Maybe$Nothing,
+													elm$core$Maybe$Just(author$project$Main$SignUpUniversitySchoolNone))))
 										]);
 								} else {
 									return _List_Nil;
@@ -11202,13 +11229,13 @@ var author$project$Main$signUpSchoolViewSchoolOrGraduate = function (signUpSchoo
 					]))
 			]));
 };
-var author$project$Main$signUpSchoolView = function (signUpSchool) {
+var author$project$Main$signUpUniversityView = function (signUpSchool) {
 	return _Utils_ap(
 		_List_fromArray(
 			[
 				_Utils_Tuple2(
 				'schoolOrGraduate',
-				author$project$Main$signUpSchoolViewSchoolOrGraduate(signUpSchool))
+				author$project$Main$signUpUniversityViewSchoolOrGraduate(signUpSchool))
 			]),
 		function () {
 			if (!signUpSchool.$) {
@@ -11216,59 +11243,17 @@ var author$project$Main$signUpSchoolView = function (signUpSchool) {
 				return A2(
 					elm$core$List$map,
 					elm$core$Tuple$mapSecond(
-						elm$html$Html$map(author$project$Main$SignUpSchoolSchool)),
-					author$project$Main$signUpSchoolViewSchool(schoolSelect));
+						elm$html$Html$map(author$project$Main$SignUpUniversitySchool)),
+					author$project$Main$signUpUniversityViewSchool(schoolSelect));
 			} else {
 				var graduateSelect = signUpSchool.a;
 				return A2(
 					elm$core$List$map,
 					elm$core$Tuple$mapSecond(
-						elm$html$Html$map(author$project$Main$SignUpSchoolGraduate)),
-					author$project$Main$signUpSchoolViewGraduate(graduateSelect));
+						elm$html$Html$map(author$project$Main$SignUpUniversityGraduate)),
+					author$project$Main$signUpUniversityViewGraduate(graduateSelect));
 			}
 		}());
-};
-var author$project$Main$SignUp = function (a) {
-	return {$: 7, a: a};
-};
-var elm$html$Html$Attributes$disabled = elm$html$Html$Attributes$boolProperty('disabled');
-var author$project$Main$signUpSubmitButton = function (signUpDataMaybe) {
-	return A2(
-		elm$html$Html$div,
-		_List_Nil,
-		_List_fromArray(
-			[
-				A2(
-				elm$html$Html$button,
-				_Utils_ap(
-					_List_fromArray(
-						[
-							elm$html$Html$Attributes$class('signUp-signUpButton'),
-							elm$html$Html$Attributes$disabled(
-							_Utils_eq(signUpDataMaybe, elm$core$Maybe$Nothing))
-						]),
-					function () {
-						if (!signUpDataMaybe.$) {
-							var signUpData = signUpDataMaybe.a;
-							return _List_fromArray(
-								[
-									A2(
-									elm$html$Html$Events$stopPropagationOn,
-									'click',
-									elm$json$Json$Decode$succeed(
-										_Utils_Tuple2(
-											author$project$Main$SignUp(signUpData),
-											true)))
-								]);
-						} else {
-							return _List_Nil;
-						}
-					}()),
-				_List_fromArray(
-					[
-						elm$html$Html$text('新規登録')
-					]))
-			]));
 };
 var elm$core$List$repeatHelp = F3(
 	function (result, n, value) {
@@ -11566,7 +11551,7 @@ var elm$virtual_dom$VirtualDom$keyedNode = function (tag) {
 var elm$html$Html$Keyed$node = elm$virtual_dom$VirtualDom$keyedNode;
 var author$project$Main$signUpView = function (userSignUpPage) {
 	var sAddressAndPassword = userSignUpPage.k;
-	var school = userSignUpPage.l;
+	var university = userSignUpPage.l;
 	return _List_fromArray(
 		[
 			A2(
@@ -11594,7 +11579,7 @@ var author$project$Main$signUpView = function (userSignUpPage) {
 									function (s) {
 										return author$project$Main$ChangePage(
 											author$project$Main$PageSignUp(
-												{k: s, l: school}));
+												{k: s, l: university}));
 									},
 									author$project$Main$sAddressView(sAddressAndPassword)))
 							]),
@@ -11621,7 +11606,7 @@ var author$project$Main$signUpView = function (userSignUpPage) {
 													author$project$Main$PageSignUp(
 														{k: sAddressAndPassword, l: s}));
 											})),
-									author$project$Main$signUpSchoolView(school)),
+									author$project$Main$signUpUniversityView(university)),
 								_List_fromArray(
 									[
 										_Utils_Tuple2(
@@ -12314,6 +12299,6 @@ var author$project$Main$view = function (_n0) {
 };
 var elm$browser$Browser$application = _Browser_application;
 var author$project$Main$main = elm$browser$Browser$application(
-	{a2: author$project$Main$init, a6: author$project$Main$UrlChange, a7: author$project$Main$UrlRequest, be: author$project$Main$subscription, bh: author$project$Main$update, bi: author$project$Main$view});
+	{a2: author$project$Main$init, a6: author$project$Main$UrlChange, a7: author$project$Main$UrlRequest, bf: author$project$Main$subscription, bi: author$project$Main$update, bj: author$project$Main$view});
 _Platform_export({'Main':{'init':author$project$Main$main(
 	elm$json$Json$Decode$succeed(0))(0)}});}(this));

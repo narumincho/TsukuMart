@@ -649,12 +649,13 @@ img {
 
 .signUp-select-itemSelect {
     background-color: var(--primaryColor);
+    padding: .5rem;
+    text-align: center;
+    user-select: none;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.18);
     color: white;
-}
-
-.signUp-select-itemSelect:hover {
-    background-color: var(--primaryColorLight);
-    color: #111;
 }
 
 .signUp-description {

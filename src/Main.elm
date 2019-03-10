@@ -69,7 +69,7 @@ type MenuState
 
 type Page
     = PageHome HomePage
-    | PageSignUp UserSignUpPage
+    | PageSignUp SignUpPage
     | PageLogIn LogInPage
     | PageLikeAndHistory LikeAndHistory
     | PageExhibitionGoodsList
@@ -80,32 +80,29 @@ type Page
     | PageSiteMapXml
 
 
-type UserSignUpPage
-    = UserSignUpPage
-        { sAddressAndPassword : UserSignUpSAddressAndPassword
-        , school : SignUpSchool
+type SignUpPage
+    = SignUpPage
+        { sAddressAndPassword : SignUpSAddressAndPassword
+        , university : SignUpUniversity
         }
 
 
-type SignUpSchool
-    = SignUpSchoolSchool SignUpSchoolSchool
-    | SignUpSchoolGraduate SignUpSchoolGraduate
+type SignUpUniversity
+    = SignUpUniversitySchool SignUpUniversitySchool
+    | SignUpUniversityGraduate SignUpUniversityGraduate
 
 
-type SignUpSchoolSchool
-    = SignUpSchoolSchoolNone
-    | SignUpSchoolSchoolSelectSchool School.School
-    | SignUpSchoolSchoolSelectSchoolAndDepartment School.SchoolAndDepartment
+type SignUpUniversitySchool
+    = SignUpUniversitySchoolNone
+    | SignUpUniversitySchoolSelectSchool School.School
+    | SignUpUniversitySchoolSelectSchoolAndDepartment School.SchoolAndDepartment
 
 
-type SignUpSchoolGraduate
-    = SignUpSchoolGraduateNone Bool
-    | SignUpSchoolGraduateSelectGraduate School.Graduate Bool
-    | SignUpSchoolGraduateSelectGraduateAndSchool School.Graduate School.School
-    | SignUpSchoolGraduateSelectGraduateAndSchoolAndDepartment School.SchoolAndDepartment
+type SignUpUniversityGraduate
+    = SignUpUniversityGraduateSelect (Maybe School.Graduate) (Maybe SignUpUniversitySchool)
 
 
-type UserSignUpSAddressAndPassword
+type SignUpSAddressAndPassword
     = UserSignUpPageStudentHasSAddress
         { studentIdOrTsukubaEmailAddress : AnalysisStudentIdOrSAddressResult
         , password : Result Password.Error Password.Password
@@ -311,20 +308,20 @@ update msg (Model rec) =
 
         InputStudentIdOrEmailAddress string ->
             ( case rec.page of
-                PageSignUp (UserSignUpPage { sAddressAndPassword, school }) ->
+                PageSignUp (SignUpPage { sAddressAndPassword, university }) ->
                     case sAddressAndPassword of
                         UserSignUpPageStudentHasSAddress r ->
                             Model
                                 { rec
                                     | page =
                                         PageSignUp
-                                            (UserSignUpPage
+                                            (SignUpPage
                                                 { sAddressAndPassword =
                                                     UserSignUpPageStudentHasSAddress
                                                         { r
                                                             | studentIdOrTsukubaEmailAddress = analysisStudentIdOrSAddress string
                                                         }
-                                                , school = school
+                                                , university = university
                                                 }
                                             )
                                 }
@@ -334,13 +331,13 @@ update msg (Model rec) =
                                 { rec
                                     | page =
                                         PageSignUp
-                                            (UserSignUpPage
+                                            (SignUpPage
                                                 { sAddressAndPassword =
                                                     UserSignUpPageNewStudent
                                                         { r
                                                             | emailAddress = analysisEmailAddress string
                                                         }
-                                                , school = school
+                                                , university = university
                                                 }
                                             )
                                 }
@@ -370,16 +367,16 @@ update msg (Model rec) =
 
         ReceiveImageDataUrl urlString ->
             ( case rec.page of
-                PageSignUp (UserSignUpPage { sAddressAndPassword, school }) ->
+                PageSignUp (SignUpPage { sAddressAndPassword, university }) ->
                     case sAddressAndPassword of
                         UserSignUpPageNewStudent r ->
                             Model
                                 { rec
                                     | page =
                                         PageSignUp
-                                            (UserSignUpPage
+                                            (SignUpPage
                                                 { sAddressAndPassword = UserSignUpPageNewStudent { r | imageUrl = Just urlString }
-                                                , school = school
+                                                , university = university
                                                 }
                                             )
                                 }
@@ -417,12 +414,12 @@ update msg (Model rec) =
 
         InputPassword string ->
             ( case rec.page of
-                PageSignUp (UserSignUpPage { sAddressAndPassword, school }) ->
+                PageSignUp (SignUpPage { sAddressAndPassword, university }) ->
                     Model
                         { rec
                             | page =
                                 PageSignUp
-                                    (UserSignUpPage
+                                    (SignUpPage
                                         { sAddressAndPassword =
                                             case sAddressAndPassword of
                                                 UserSignUpPageNewStudent r ->
@@ -432,7 +429,7 @@ update msg (Model rec) =
                                                 UserSignUpPageStudentHasSAddress r ->
                                                     UserSignUpPageStudentHasSAddress
                                                         { r | password = Password.passwordFromString string }
-                                        , school = school
+                                        , university = university
                                         }
                                     )
                         }
@@ -477,13 +474,13 @@ urlParser beforePageMaybe =
         , SiteMap.signUpParser
             |> Url.Parser.map
                 (PageSignUp
-                    (UserSignUpPage
+                    (SignUpPage
                         { sAddressAndPassword =
                             UserSignUpPageStudentHasSAddress
                                 { studentIdOrTsukubaEmailAddress = analysisStudentIdOrSAddress ""
                                 , password = Password.passwordFromString ""
                                 }
-                        , school = SignUpSchoolSchool SignUpSchoolSchoolNone
+                        , university = SignUpUniversitySchool SignUpUniversitySchoolNone
                         }
                     )
                 )
@@ -1546,17 +1543,17 @@ signUpButton =
 
 {-| Sign Up 新規登録画面
 -}
-signUpView : UserSignUpPage -> List (Html.Html Msg)
+signUpView : SignUpPage -> List (Html.Html Msg)
 signUpView userSignUpPage =
     case userSignUpPage of
-        UserSignUpPage { sAddressAndPassword, school } ->
+        SignUpPage { sAddressAndPassword, university } ->
             [ Html.div
                 [ Html.Attributes.class "signUpContainer" ]
                 [ Html.Keyed.node "form"
                     [ Html.Attributes.class "signUp" ]
                     ([ ( "s_or_nos"
                        , sAddressView sAddressAndPassword
-                            |> Html.map (\s -> ChangePage (PageSignUp (UserSignUpPage { sAddressAndPassword = s, school = school })))
+                            |> Html.map (\s -> ChangePage (PageSignUp (SignUpPage { sAddressAndPassword = s, university = university })))
                        )
                      ]
                         ++ (case sAddressAndPassword of
@@ -1566,12 +1563,12 @@ signUpView userSignUpPage =
                                 UserSignUpPageNewStudent { emailAddress, imageUrl, password } ->
                                     newStudentFormList emailAddress imageUrl password
                            )
-                        ++ (signUpSchoolView school
+                        ++ (signUpUniversityView university
                                 |> List.map
                                     (Tuple.mapSecond
                                         (Html.map
                                             (\s ->
-                                                ChangePage (PageSignUp (UserSignUpPage { sAddressAndPassword = sAddressAndPassword, school = s }))
+                                                ChangePage (PageSignUp (SignUpPage { sAddressAndPassword = sAddressAndPassword, university = s }))
                                             )
                                         )
                                     )
@@ -1585,7 +1582,7 @@ signUpView userSignUpPage =
 
 {-| sアドを持っているか持っていないかを選択するフォーム
 -}
-sAddressView : UserSignUpSAddressAndPassword -> Html.Html UserSignUpSAddressAndPassword
+sAddressView : SignUpSAddressAndPassword -> Html.Html SignUpSAddressAndPassword
 sAddressView userSignUpSAddressAndPassword =
     Html.div
         []
@@ -1596,7 +1593,7 @@ sAddressView userSignUpSAddressAndPassword =
         ]
 
 
-sAddressSelectView : UserSignUpSAddressAndPassword -> Html.Html UserSignUpSAddressAndPassword
+sAddressSelectView : SignUpSAddressAndPassword -> Html.Html SignUpSAddressAndPassword
 sAddressSelectView userSignUpSAddressAndPassword =
     let
         leftSelect =
@@ -1611,7 +1608,7 @@ sAddressSelectView userSignUpSAddressAndPassword =
         [ Html.Attributes.class "signUp-select" ]
         [ Html.div
             ([ Html.Attributes.classList
-                [ ( "signUp-select-item", True )
+                [ ( "signUp-select-item", not leftSelect )
                 , ( "signUp-select-itemSelect", leftSelect )
                 ]
              , Html.Attributes.style "border-radius" ".4rem 0 0 .4rem"
@@ -1633,7 +1630,7 @@ sAddressSelectView userSignUpSAddressAndPassword =
             [ Html.text "持っている" ]
         , Html.div
             ([ Html.Attributes.classList
-                [ ( "signUp-select-item", True )
+                [ ( "signUp-select-item", leftSelect )
                 , ( "signUp-select-itemSelect", not leftSelect )
                 ]
              , Html.Attributes.style "border-radius" "0 .4rem .4rem 0"
@@ -1887,32 +1884,32 @@ passwordForm passwordResult =
 
 {-| 新規登録の研究科学群学類入力フォーム
 -}
-signUpSchoolView : SignUpSchool -> List ( String, Html.Html SignUpSchool )
-signUpSchoolView signUpSchool =
-    [ ( "schoolOrGraduate", signUpSchoolViewSchoolOrGraduate signUpSchool )
+signUpUniversityView : SignUpUniversity -> List ( String, Html.Html SignUpUniversity )
+signUpUniversityView signUpSchool =
+    [ ( "schoolOrGraduate", signUpUniversityViewSchoolOrGraduate signUpSchool )
     ]
         ++ (case signUpSchool of
-                SignUpSchoolSchool schoolSelect ->
-                    signUpSchoolViewSchool schoolSelect
-                        |> List.map (Tuple.mapSecond (Html.map SignUpSchoolSchool))
+                SignUpUniversitySchool schoolSelect ->
+                    signUpUniversityViewSchool schoolSelect
+                        |> List.map (Tuple.mapSecond (Html.map SignUpUniversitySchool))
 
-                SignUpSchoolGraduate graduateSelect ->
-                    signUpSchoolViewGraduate graduateSelect
-                        |> List.map (Tuple.mapSecond (Html.map SignUpSchoolGraduate))
+                SignUpUniversityGraduate graduateSelect ->
+                    signUpUniversityViewGraduate graduateSelect
+                        |> List.map (Tuple.mapSecond (Html.map SignUpUniversityGraduate))
            )
 
 
 {-| 研究科に所属しているかしていないか?
 -}
-signUpSchoolViewSchoolOrGraduate : SignUpSchool -> Html.Html SignUpSchool
-signUpSchoolViewSchoolOrGraduate signUpSchool =
+signUpUniversityViewSchoolOrGraduate : SignUpUniversity -> Html.Html SignUpUniversity
+signUpUniversityViewSchoolOrGraduate university =
     let
         leftSelect =
-            case signUpSchool of
-                SignUpSchoolSchool _ ->
+            case university of
+                SignUpUniversitySchool _ ->
                     True
 
-                SignUpSchoolGraduate _ ->
+                SignUpUniversityGraduate _ ->
                     False
     in
     Html.div
@@ -1924,33 +1921,39 @@ signUpSchoolViewSchoolOrGraduate signUpSchool =
             [ Html.Attributes.class "signUp-select" ]
             [ Html.div
                 ([ Html.Attributes.classList
-                    [ ( "signUp-select-item", True )
+                    [ ( "signUp-select-item", not leftSelect )
                     , ( "signUp-select-itemSelect", leftSelect )
                     ]
                  , Html.Attributes.style "border-radius" ".4rem 0 0 .4rem"
                  ]
-                    ++ (case signUpSchool of
-                            SignUpSchoolSchool _ ->
+                    ++ (case university of
+                            SignUpUniversitySchool _ ->
                                 []
 
-                            SignUpSchoolGraduate _ ->
-                                [ Html.Events.onClick (SignUpSchoolSchool SignUpSchoolSchoolNone) ]
+                            SignUpUniversityGraduate _ ->
+                                [ Html.Events.onClick (SignUpUniversitySchool SignUpUniversitySchoolNone) ]
                        )
                 )
                 [ Html.text "学群生" ]
             , Html.div
                 ([ Html.Attributes.classList
-                    [ ( "signUp-select-item", True )
+                    [ ( "signUp-select-item", leftSelect )
                     , ( "signUp-select-itemSelect", not leftSelect )
                     ]
                  , Html.Attributes.style "border-radius" "0 .4rem .4rem 0"
                  ]
-                    ++ (case signUpSchool of
-                            SignUpSchoolSchool _ ->
-                                [ Html.Events.onClick (SignUpSchoolGraduate (SignUpSchoolGraduateNone True))
+                    ++ (case university of
+                            SignUpUniversitySchool _ ->
+                                [ Html.Events.onClick
+                                    (SignUpUniversityGraduate
+                                        (SignUpUniversityGraduateSelect
+                                            Nothing
+                                            (Just SignUpUniversitySchoolNone)
+                                        )
+                                    )
                                 ]
 
-                            SignUpSchoolGraduate _ ->
+                            SignUpUniversityGraduate _ ->
                                 []
                        )
                 )
@@ -1961,57 +1964,57 @@ signUpSchoolViewSchoolOrGraduate signUpSchool =
 
 {-| 研究科に所属していない人のフォーム
 -}
-signUpSchoolViewSchool : SignUpSchoolSchool -> List ( String, Html.Html SignUpSchoolSchool )
-signUpSchoolViewSchool signUpSchoolSchool =
+signUpUniversityViewSchool : SignUpUniversitySchool -> List ( String, Html.Html SignUpUniversitySchool )
+signUpUniversityViewSchool signUpSchoolSchool =
     [ ( "selectSchool"
-      , signUpSchoolViewSelectSchool
+      , signUpUniversityViewSelectSchool
             |> Html.map
                 (\m ->
                     case m of
                         Just z ->
-                            SignUpSchoolSchoolSelectSchool z
+                            SignUpUniversitySchoolSelectSchool z
 
                         Nothing ->
-                            SignUpSchoolSchoolNone
+                            SignUpUniversitySchoolNone
                 )
       )
     ]
         ++ (case signUpSchoolSchool of
-                SignUpSchoolSchoolNone ->
+                SignUpUniversitySchoolNone ->
                     []
 
-                SignUpSchoolSchoolSelectSchool school ->
-                    signUpSchoolViewSelectDepartment school
+                SignUpUniversitySchoolSelectSchool school ->
+                    signUpUniversityViewSelectDepartment school
                         |> Maybe.map
                             (Html.map
                                 (\m ->
                                     case m of
                                         Just z ->
-                                            SignUpSchoolSchoolSelectSchoolAndDepartment z
+                                            SignUpUniversitySchoolSelectSchoolAndDepartment z
 
                                         Nothing ->
-                                            SignUpSchoolSchoolSelectSchool school
+                                            SignUpUniversitySchoolSelectSchool school
                                 )
                             )
                         |> Maybe.map (\e -> ( "s=" ++ School.schoolToIdString school, e ))
                         |> Maybe.map List.singleton
                         |> Maybe.withDefault []
 
-                SignUpSchoolSchoolSelectSchoolAndDepartment department ->
+                SignUpUniversitySchoolSelectSchoolAndDepartment department ->
                     let
                         school =
                             School.departmentToSchool department
                     in
-                    signUpSchoolViewSelectDepartment school
+                    signUpUniversityViewSelectDepartment school
                         |> Maybe.map
                             (Html.map
                                 (\m ->
                                     case m of
                                         Just z ->
-                                            SignUpSchoolSchoolSelectSchoolAndDepartment z
+                                            SignUpUniversitySchoolSelectSchoolAndDepartment z
 
                                         Nothing ->
-                                            SignUpSchoolSchoolSelectSchool school
+                                            SignUpUniversitySchoolSelectSchool school
                                 )
                             )
                         |> Maybe.map (\e -> ( "s=" ++ School.schoolToIdString school, e ))
@@ -2022,58 +2025,44 @@ signUpSchoolViewSchool signUpSchoolSchool =
 
 {-| 研究科に所属している人のフォーム
 -}
-signUpSchoolViewGraduate : SignUpSchoolGraduate -> List ( String, Html.Html SignUpSchoolGraduate )
-signUpSchoolViewGraduate signUpSchoolGraduate =
+signUpUniversityViewGraduate : SignUpUniversityGraduate -> List ( String, Html.Html SignUpUniversityGraduate )
+signUpUniversityViewGraduate univAndGraduateSelect =
     let
-        tsukubaUniversity =
-            case signUpSchoolGraduate of
-                SignUpSchoolGraduateNone t ->
-                    t
-
-                SignUpSchoolGraduateSelectGraduate _ t ->
-                    t
-
-                _ ->
-                    True
+        (SignUpUniversityGraduateSelect graduateSelect schoolSelect) =
+            univAndGraduateSelect
     in
     [ ( "selectGraduate"
-      , signUpSchoolViewSelectGraduate
+      , signUpUniversityViewSelectGraduate
+            |> Html.map (\g -> SignUpUniversityGraduateSelect g schoolSelect)
+      )
+    , ( "tsukubaUniversitySchoolOrNo"
+      , signUpUniversityViewGraduateYesNoTsukuba (schoolSelect /= Nothing)
             |> Html.map
-                (\g ->
-                    case g of
-                        Just z ->
-                            SignUpSchoolGraduateSelectGraduate z tsukubaUniversity
+                (always
+                    (SignUpUniversityGraduateSelect graduateSelect
+                        (case schoolSelect of
+                            Just _ ->
+                                Nothing
 
-                        Nothing ->
-                            SignUpSchoolGraduateNone tsukubaUniversity
+                            Nothing ->
+                                Just SignUpUniversitySchoolNone
+                        )
+                    )
                 )
       )
     ]
-        ++ (case signUpSchoolGraduate of
-                SignUpSchoolGraduateNone t ->
-                    [ ( "tsukubaUniversityOrNo"
-                      , signUpSchoolViewGraduateYesNoUniversity t
-                            |> Html.map (always (SignUpSchoolGraduateNone (not t)))
-                      )
-                    ]
+        ++ (case schoolSelect of
+                Just school ->
+                    signUpUniversityViewSchool school
+                        |> List.map (Tuple.mapSecond (Html.map (\s -> SignUpUniversityGraduateSelect graduateSelect (Just s))))
 
-                SignUpSchoolGraduateSelectGraduate graduate t ->
-                    [ ( "tsukubaUniversityOrNo"
-                      , signUpSchoolViewGraduateYesNoUniversity t
-                            |> Html.map (always (SignUpSchoolGraduateSelectGraduate graduate (not t)))
-                      )
-                    ]
-
-                SignUpSchoolGraduateSelectGraduateAndSchool graduate school ->
-                    []
-
-                SignUpSchoolGraduateSelectGraduateAndSchoolAndDepartment schoolAndDepartment ->
+                Nothing ->
                     []
            )
 
 
-signUpSchoolViewSelectGraduate : Html.Html (Maybe School.Graduate)
-signUpSchoolViewSelectGraduate =
+signUpUniversityViewSelectGraduate : Html.Html (Maybe School.Graduate)
+signUpUniversityViewSelectGraduate =
     Html.div
         []
         [ Html.label
@@ -2108,18 +2097,18 @@ selectGraduateDecoder =
 {-| 筑波大学に所属していたかしていなかったか
 Boolは左(筑波大学所属していた)を選択しているか
 -}
-signUpSchoolViewGraduateYesNoUniversity : Bool -> Html.Html ()
-signUpSchoolViewGraduateYesNoUniversity leftSelect =
+signUpUniversityViewGraduateYesNoTsukuba : Bool -> Html.Html ()
+signUpUniversityViewGraduateYesNoTsukuba leftSelect =
     Html.div
         []
         [ Html.label
             [ Html.Attributes.class "signUp-label" ]
-            [ Html.text "大学での所属" ]
+            [ Html.text "院進前の所属" ]
         , Html.div
             [ Html.Attributes.class "signUp-select" ]
             [ Html.div
                 ([ Html.Attributes.classList
-                    [ ( "signUp-select-item", True )
+                    [ ( "signUp-select-item", not leftSelect )
                     , ( "signUp-select-itemSelect", leftSelect )
                     ]
                  , Html.Attributes.style "border-radius" ".4rem 0 0 .4rem"
@@ -2134,7 +2123,7 @@ signUpSchoolViewGraduateYesNoUniversity leftSelect =
                 [ Html.text "筑波大学に所属していた" ]
             , Html.div
                 ([ Html.Attributes.classList
-                    [ ( "signUp-select-item", True )
+                    [ ( "signUp-select-item", leftSelect )
                     , ( "signUp-select-itemSelect", not leftSelect )
                     ]
                  , Html.Attributes.style "border-radius" "0 .4rem .4rem 0"
@@ -2151,8 +2140,10 @@ signUpSchoolViewGraduateYesNoUniversity leftSelect =
         ]
 
 
-signUpSchoolViewSelectSchool : Html.Html (Maybe School.School)
-signUpSchoolViewSelectSchool =
+{-| 学群の選択
+-}
+signUpUniversityViewSelectSchool : Html.Html (Maybe School.School)
+signUpUniversityViewSelectSchool =
     Html.div
         []
         [ Html.label
@@ -2184,8 +2175,10 @@ selectSchoolDecoder =
         |> Json.Decode.map (\index -> School.schoolAllValue |> Array.fromList |> Array.get (index - 1))
 
 
-signUpSchoolViewSelectDepartment : School.School -> Maybe (Html.Html (Maybe School.SchoolAndDepartment))
-signUpSchoolViewSelectDepartment school =
+{-| 学類の選択
+-}
+signUpUniversityViewSelectDepartment : School.School -> Maybe (Html.Html (Maybe School.SchoolAndDepartment))
+signUpUniversityViewSelectDepartment school =
     case School.departmentAllValue school of
         [] ->
             Nothing
@@ -2266,8 +2259,8 @@ getLogInData studentIdOrEmailAddress passwordMaybe =
 
 {-| 画面の情報から新規登録できる情報を入力しているかと、新規登録に必要なデータを取りだす
 -}
-getSignUpData : UserSignUpPage -> Maybe { emailAddress : EmailAddress.EmailAddress, pass : Password.Password, image : Maybe String }
-getSignUpData (UserSignUpPage { sAddressAndPassword, school }) =
+getSignUpData : SignUpPage -> Maybe { emailAddress : EmailAddress.EmailAddress, pass : Password.Password, image : Maybe String }
+getSignUpData (SignUpPage { sAddressAndPassword, university }) =
     case sAddressAndPassword of
         UserSignUpPageStudentHasSAddress { studentIdOrTsukubaEmailAddress, password } ->
             case ( studentIdOrTsukubaEmailAddress, password ) of
