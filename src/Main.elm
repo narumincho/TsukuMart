@@ -23,7 +23,16 @@ import Url.Parser
 
 
 
-{- Intは意味のない値 -}
+{-
+   ローカルホストで動作を試す
+   npmにあるlocal-web-serverを使います
+   Windows PowerSellを起動して
+
+   Set-Location D:/tsukumart | ws --spa index.html
+   を入力する
+
+   ブラウザのアドレスバーに http://127.0.0.1:8000 を入力するとページを見ることができる
+-}
 
 
 port toWideScreenMode : (() -> msg) -> Sub msg
@@ -549,7 +558,7 @@ header wideMode =
 menuButton : Html.Html Msg
 menuButton =
     Html.img
-        [ Html.Attributes.src "assets/menu.svg"
+        [ Html.Attributes.src "/assets/menu.svg"
         , Html.Attributes.alt "メニュー"
         , headerButton
         , Html.Events.onClick OpenMenu
@@ -616,7 +625,7 @@ tsukuBird : List (Svg.Svg msg)
 tsukuBird =
     [ tsukuBirdShadow
     , Svg.image
-        [ Svg.Attributes.xlinkHref "assets/logoBird.png"
+        [ Svg.Attributes.xlinkHref "/assets/logoBird.png"
         , Svg.Attributes.width "370"
         , Svg.Attributes.height "320"
         , Svg.Attributes.transform "translate(307.49) scale(0.36)"
@@ -776,7 +785,7 @@ logoSubTextFontColor =
 searchButton : Html.Html Msg
 searchButton =
     Html.img
-        [ Html.Attributes.src "assets/search.svg"
+        [ Html.Attributes.src "/assets/search.svg"
         , Html.Attributes.alt "探す"
         , headerButton
         ]
@@ -786,7 +795,7 @@ searchButton =
 notificationsButton : Html.Html Msg
 notificationsButton =
     Html.img
-        [ Html.Attributes.src "assets/notifications.svg"
+        [ Html.Attributes.src "/assets/notifications.svg"
         , Html.Attributes.alt "通知"
         , headerButton
         ]
@@ -1185,7 +1194,7 @@ itemImage : Html.Html Msg
 itemImage =
     Html.img
         [ Html.Attributes.class "itemImage"
-        , Html.Attributes.src "assets/itemDummy.png"
+        , Html.Attributes.src "/assets/itemDummy.png"
         ]
         []
 
@@ -1340,7 +1349,7 @@ exhibitionViewPhoto imageUrlList =
 
                     [] ->
                         [ Html.img
-                            [ Html.Attributes.src "assets/add_a_photo.svg"
+                            [ Html.Attributes.src "/assets/add_a_photo.svg"
                             , Html.Attributes.class "exhibitionView-photo-icon"
                             ]
                             []
@@ -2071,7 +2080,7 @@ signUpSchoolViewSelectGraduate =
             [ Html.Attributes.class "signUp-label"
             , Html.Attributes.for "signUp-selectGraduate"
             ]
-            [ Html.text "学群" ]
+            [ Html.text "研究科" ]
         , Html.select
             [ Html.Attributes.class "signUp-menu"
             , Html.Attributes.id "signUp-selectGraduate"

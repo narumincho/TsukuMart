@@ -8783,7 +8783,7 @@ var author$project$Main$tsukuBird = _List_fromArray(
 		elm$svg$Svg$image,
 		_List_fromArray(
 			[
-				elm$svg$Svg$Attributes$xlinkHref('assets/logoBird.png'),
+				elm$svg$Svg$Attributes$xlinkHref('/assets/logoBird.png'),
 				elm$svg$Svg$Attributes$width('370'),
 				elm$svg$Svg$Attributes$height('320'),
 				elm$svg$Svg$Attributes$transform('translate(307.49) scale(0.36)')
@@ -8905,7 +8905,7 @@ var author$project$Main$menuButton = A2(
 	elm$html$Html$img,
 	_List_fromArray(
 		[
-			elm$html$Html$Attributes$src('assets/menu.svg'),
+			elm$html$Html$Attributes$src('/assets/menu.svg'),
 			elm$html$Html$Attributes$alt('メニュー'),
 			author$project$Main$headerButton,
 			elm$html$Html$Events$onClick(author$project$Main$OpenMenu)
@@ -8915,7 +8915,7 @@ var author$project$Main$notificationsButton = A2(
 	elm$html$Html$img,
 	_List_fromArray(
 		[
-			elm$html$Html$Attributes$src('assets/notifications.svg'),
+			elm$html$Html$Attributes$src('/assets/notifications.svg'),
 			elm$html$Html$Attributes$alt('通知'),
 			author$project$Main$headerButton
 		]),
@@ -8924,7 +8924,7 @@ var author$project$Main$searchButton = A2(
 	elm$html$Html$img,
 	_List_fromArray(
 		[
-			elm$html$Html$Attributes$src('assets/search.svg'),
+			elm$html$Html$Attributes$src('/assets/search.svg'),
 			elm$html$Html$Attributes$alt('探す'),
 			author$project$Main$headerButton
 		]),
@@ -9143,7 +9143,7 @@ var author$project$Main$exhibitionViewPhoto = function (imageUrlList) {
 							elm$html$Html$img,
 							_List_fromArray(
 								[
-									elm$html$Html$Attributes$src('assets/add_a_photo.svg'),
+									elm$html$Html$Attributes$src('/assets/add_a_photo.svg'),
 									elm$html$Html$Attributes$class('exhibitionView-photo-icon')
 								]),
 							_List_Nil)
@@ -9465,7 +9465,7 @@ var author$project$Main$itemImage = A2(
 	_List_fromArray(
 		[
 			elm$html$Html$Attributes$class('itemImage'),
-			elm$html$Html$Attributes$src('assets/itemDummy.png')
+			elm$html$Html$Attributes$src('/assets/itemDummy.png')
 		]),
 	_List_Nil);
 var author$project$SiteMap$goodsUrl = function (goodsId) {
@@ -10465,7 +10465,7 @@ var author$project$Main$signUpSchoolViewSelectGraduate = A2(
 				]),
 			_List_fromArray(
 				[
-					elm$html$Html$text('学群')
+					elm$html$Html$text('研究科')
 				])),
 			A2(
 			elm$html$Html$select,
