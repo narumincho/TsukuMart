@@ -80,13 +80,21 @@ type UserSignUpPage
 
 type SignUpSchool
     = SignUpSchoolSchool SignUpSchoolSchool
-    | SignUpSchoolGraduate (Maybe School.Graduate) -- TODO
+    | SignUpSchoolGraduate SignUpSchoolGraduate
 
 
 type SignUpSchoolSchool
     = SignUpSchoolSchoolNone
     | SignUpSchoolSchoolSelectSchool School.School
     | SignUpSchoolSchoolSelectSchoolAndDepartment School.SchoolAndDepartment
+
+
+type SignUpSchoolGraduate
+    = SignUpSchoolGraduateNone
+    | SignUpSchoolGraduateSelectGraduateNoSchool School.Graduate
+    | SignUpSchoolGraduateSelectGraduateYesSchool School.Graduate
+    | SignUpSchoolGraduateSelectGraduateAndSchool School.Graduate School.School
+    | SignUpSchoolGraduateSelectGraduateAndSchoolAndDepartment School.SchoolAndDepartment
 
 
 type UserSignUpSAddressAndPassword
@@ -1834,6 +1842,8 @@ newStudentFormList emailAddress imageUrlMaybe password =
     ]
 
 
+{-| 新規登録のパスワード入力フォーム
+-}
 passwordForm : Result Password.Error Password.Password -> Html.Html Msg
 passwordForm passwordResult =
     Html.div
@@ -1867,79 +1877,25 @@ passwordForm passwordResult =
         ]
 
 
+{-| 新規登録の研究科学群学類入力フォーム
+-}
 signUpSchoolView : SignUpSchool -> List ( String, Html.Html SignUpSchool )
 signUpSchoolView signUpSchool =
     [ ( "schoolOrGraduate", signUpSchoolViewSchoolOrGraduate signUpSchool )
     ]
         ++ (case signUpSchool of
                 SignUpSchoolSchool schoolSelect ->
-                    [ ( "selectSchool"
-                      , signUpSchoolViewSelectSchool
-                            |> Html.map
-                                (\m ->
-                                    SignUpSchoolSchool
-                                        (case m of
-                                            Just z ->
-                                                SignUpSchoolSchoolSelectSchool z
+                    signUpSchoolViewSchool schoolSelect
+                        |> List.map (Tuple.mapSecond (Html.map SignUpSchoolSchool))
 
-                                            Nothing ->
-                                                SignUpSchoolSchoolNone
-                                        )
-                                )
-                      )
-                    ]
-                        ++ (case schoolSelect of
-                                SignUpSchoolSchoolNone ->
-                                    []
-
-                                SignUpSchoolSchoolSelectSchool school ->
-                                    signUpSchoolViewSelectDepartment school
-                                        |> Maybe.map
-                                            (Html.map
-                                                (\m ->
-                                                    SignUpSchoolSchool
-                                                        (case m of
-                                                            Just z ->
-                                                                SignUpSchoolSchoolSelectSchoolAndDepartment z
-
-                                                            Nothing ->
-                                                                SignUpSchoolSchoolSelectSchool school
-                                                        )
-                                                )
-                                            )
-                                        |> Maybe.map (\e -> ( "s=" ++ School.schoolToIdString school, e ))
-                                        |> Maybe.map List.singleton
-                                        |> Maybe.withDefault []
-
-                                SignUpSchoolSchoolSelectSchoolAndDepartment department ->
-                                    let
-                                        school =
-                                            School.departmentToSchool department
-                                    in
-                                    signUpSchoolViewSelectDepartment school
-                                        |> Maybe.map
-                                            (Html.map
-                                                (\m ->
-                                                    SignUpSchoolSchool
-                                                        (case m of
-                                                            Just z ->
-                                                                SignUpSchoolSchoolSelectSchoolAndDepartment z
-
-                                                            Nothing ->
-                                                                SignUpSchoolSchoolSelectSchool school
-                                                        )
-                                                )
-                                            )
-                                        |> Maybe.map (\e -> ( "s=" ++ School.schoolToIdString school, e ))
-                                        |> Maybe.map List.singleton
-                                        |> Maybe.withDefault []
-                           )
-
-                SignUpSchoolGraduate _ ->
-                    []
+                SignUpSchoolGraduate graduateSelect ->
+                    signUpSchoolViewGraduate graduateSelect
+                        |> List.map (Tuple.mapSecond (Html.map SignUpSchoolGraduate))
            )
 
 
+{-| 研究科に所属しているかしていないか?
+-}
 signUpSchoolViewSchoolOrGraduate : SignUpSchool -> Html.Html SignUpSchool
 signUpSchoolViewSchoolOrGraduate signUpSchool =
     let
@@ -1983,7 +1939,7 @@ signUpSchoolViewSchoolOrGraduate signUpSchool =
                  ]
                     ++ (case signUpSchool of
                             SignUpSchoolSchool _ ->
-                                [ Html.Events.onClick (SignUpSchoolGraduate Nothing)
+                                [ Html.Events.onClick (SignUpSchoolGraduate SignUpSchoolGraduateNone)
                                 ]
 
                             SignUpSchoolGraduate _ ->
@@ -1993,6 +1949,88 @@ signUpSchoolViewSchoolOrGraduate signUpSchool =
                 [ Html.text "院生" ]
             ]
         ]
+
+
+{-| 研究科に所属していない人のフォーム
+-}
+signUpSchoolViewSchool : SignUpSchoolSchool -> List ( String, Html.Html SignUpSchoolSchool )
+signUpSchoolViewSchool signUpSchoolSchool =
+    [ ( "selectSchool"
+      , signUpSchoolViewSelectSchool
+            |> Html.map
+                (\m ->
+                    case m of
+                        Just z ->
+                            SignUpSchoolSchoolSelectSchool z
+
+                        Nothing ->
+                            SignUpSchoolSchoolNone
+                )
+      )
+    ]
+        ++ (case signUpSchoolSchool of
+                SignUpSchoolSchoolNone ->
+                    []
+
+                SignUpSchoolSchoolSelectSchool school ->
+                    signUpSchoolViewSelectDepartment school
+                        |> Maybe.map
+                            (Html.map
+                                (\m ->
+                                    case m of
+                                        Just z ->
+                                            SignUpSchoolSchoolSelectSchoolAndDepartment z
+
+                                        Nothing ->
+                                            SignUpSchoolSchoolSelectSchool school
+                                )
+                            )
+                        |> Maybe.map (\e -> ( "s=" ++ School.schoolToIdString school, e ))
+                        |> Maybe.map List.singleton
+                        |> Maybe.withDefault []
+
+                SignUpSchoolSchoolSelectSchoolAndDepartment department ->
+                    let
+                        school =
+                            School.departmentToSchool department
+                    in
+                    signUpSchoolViewSelectDepartment school
+                        |> Maybe.map
+                            (Html.map
+                                (\m ->
+                                    case m of
+                                        Just z ->
+                                            SignUpSchoolSchoolSelectSchoolAndDepartment z
+
+                                        Nothing ->
+                                            SignUpSchoolSchoolSelectSchool school
+                                )
+                            )
+                        |> Maybe.map (\e -> ( "s=" ++ School.schoolToIdString school, e ))
+                        |> Maybe.map List.singleton
+                        |> Maybe.withDefault []
+           )
+
+
+{-| 研究科に所属している人のフォーム
+-}
+signUpSchoolViewGraduate : SignUpSchoolGraduate -> List ( String, Html.Html SignUpSchoolGraduate )
+signUpSchoolViewGraduate signUpSchoolGraduate =
+    case signUpSchoolGraduate of
+        SignUpSchoolGraduateNone ->
+            []
+
+        SignUpSchoolGraduateSelectGraduateNoSchool graduate ->
+            []
+
+        SignUpSchoolGraduateSelectGraduateYesSchool graduate ->
+            []
+
+        SignUpSchoolGraduateSelectGraduateAndSchool graduate school ->
+            []
+
+        SignUpSchoolGraduateSelectGraduateAndSchoolAndDepartment schoolAndDepartment ->
+            []
 
 
 signUpSchoolViewSelectSchool : Html.Html (Maybe School.School)

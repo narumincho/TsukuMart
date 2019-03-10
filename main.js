@@ -10247,104 +10247,33 @@ var author$project$Main$sAddressView = function (userSignUpSAddressAndPassword) 
 				author$project$Main$sAddressSelectView(userSignUpSAddressAndPassword)
 			]));
 };
+var author$project$Main$SignUpSchoolGraduate = function (a) {
+	return {$: 1, a: a};
+};
+var author$project$Main$signUpSchoolViewGraduate = function (signUpSchoolGraduate) {
+	switch (signUpSchoolGraduate.$) {
+		case 0:
+			return _List_Nil;
+		case 1:
+			var graduate = signUpSchoolGraduate.a;
+			return _List_Nil;
+		case 2:
+			var graduate = signUpSchoolGraduate.a;
+			return _List_Nil;
+		case 3:
+			var graduate = signUpSchoolGraduate.a;
+			var school = signUpSchoolGraduate.b;
+			return _List_Nil;
+		default:
+			var schoolAndDepartment = signUpSchoolGraduate.a;
+			return _List_Nil;
+	}
+};
 var author$project$Main$SignUpSchoolSchoolSelectSchool = function (a) {
 	return {$: 1, a: a};
 };
 var author$project$Main$SignUpSchoolSchoolSelectSchoolAndDepartment = function (a) {
 	return {$: 2, a: a};
-};
-var author$project$Main$SignUpSchoolGraduate = function (a) {
-	return {$: 1, a: a};
-};
-var author$project$Main$signUpSchoolViewSchoolOrGraduate = function (signUpSchool) {
-	var leftSelect = function () {
-		if (!signUpSchool.$) {
-			return true;
-		} else {
-			return false;
-		}
-	}();
-	return A2(
-		elm$html$Html$div,
-		_List_Nil,
-		_List_fromArray(
-			[
-				A2(
-				elm$html$Html$label,
-				_List_fromArray(
-					[
-						elm$html$Html$Attributes$class('signUp-label')
-					]),
-				_List_fromArray(
-					[
-						elm$html$Html$text('所属')
-					])),
-				A2(
-				elm$html$Html$div,
-				_List_fromArray(
-					[
-						elm$html$Html$Attributes$class('signUp-select')
-					]),
-				_List_fromArray(
-					[
-						A2(
-						elm$html$Html$div,
-						_Utils_ap(
-							_List_fromArray(
-								[
-									elm$html$Html$Attributes$classList(
-									_List_fromArray(
-										[
-											_Utils_Tuple2('signUp-select-item', true),
-											_Utils_Tuple2('signUp-select-itemSelect', leftSelect)
-										])),
-									A2(elm$html$Html$Attributes$style, 'border-radius', '.4rem 0 0 .4rem')
-								]),
-							function () {
-								if (!signUpSchool.$) {
-									return _List_Nil;
-								} else {
-									return _List_fromArray(
-										[
-											elm$html$Html$Events$onClick(
-											author$project$Main$SignUpSchoolSchool(author$project$Main$SignUpSchoolSchoolNone))
-										]);
-								}
-							}()),
-						_List_fromArray(
-							[
-								elm$html$Html$text('学群生')
-							])),
-						A2(
-						elm$html$Html$div,
-						_Utils_ap(
-							_List_fromArray(
-								[
-									elm$html$Html$Attributes$classList(
-									_List_fromArray(
-										[
-											_Utils_Tuple2('signUp-select-item', true),
-											_Utils_Tuple2('signUp-select-itemSelect', !leftSelect)
-										])),
-									A2(elm$html$Html$Attributes$style, 'border-radius', '0 .4rem .4rem 0')
-								]),
-							function () {
-								if (!signUpSchool.$) {
-									return _List_fromArray(
-										[
-											elm$html$Html$Events$onClick(
-											author$project$Main$SignUpSchoolGraduate(elm$core$Maybe$Nothing))
-										]);
-								} else {
-									return _List_Nil;
-								}
-							}()),
-						_List_fromArray(
-							[
-								elm$html$Html$text('院生')
-							]))
-					]))
-			]));
 };
 var author$project$School$DHuman = function (a) {
 	return {$: 2, a: a};
@@ -10883,6 +10812,177 @@ var elm$core$List$singleton = function (value) {
 };
 var elm$virtual_dom$VirtualDom$map = _VirtualDom_map;
 var elm$html$Html$map = elm$virtual_dom$VirtualDom$map;
+var author$project$Main$signUpSchoolViewSchool = function (signUpSchoolSchool) {
+	return _Utils_ap(
+		_List_fromArray(
+			[
+				_Utils_Tuple2(
+				'selectSchool',
+				A2(
+					elm$html$Html$map,
+					function (m) {
+						if (!m.$) {
+							var z = m.a;
+							return author$project$Main$SignUpSchoolSchoolSelectSchool(z);
+						} else {
+							return author$project$Main$SignUpSchoolSchoolNone;
+						}
+					},
+					author$project$Main$signUpSchoolViewSelectSchool))
+			]),
+		function () {
+			switch (signUpSchoolSchool.$) {
+				case 0:
+					return _List_Nil;
+				case 1:
+					var school = signUpSchoolSchool.a;
+					return A2(
+						elm$core$Maybe$withDefault,
+						_List_Nil,
+						A2(
+							elm$core$Maybe$map,
+							elm$core$List$singleton,
+							A2(
+								elm$core$Maybe$map,
+								function (e) {
+									return _Utils_Tuple2(
+										's=' + author$project$School$schoolToIdString(school),
+										e);
+								},
+								A2(
+									elm$core$Maybe$map,
+									elm$html$Html$map(
+										function (m) {
+											if (!m.$) {
+												var z = m.a;
+												return author$project$Main$SignUpSchoolSchoolSelectSchoolAndDepartment(z);
+											} else {
+												return author$project$Main$SignUpSchoolSchoolSelectSchool(school);
+											}
+										}),
+									author$project$Main$signUpSchoolViewSelectDepartment(school)))));
+				default:
+					var department = signUpSchoolSchool.a;
+					var school = author$project$School$departmentToSchool(department);
+					return A2(
+						elm$core$Maybe$withDefault,
+						_List_Nil,
+						A2(
+							elm$core$Maybe$map,
+							elm$core$List$singleton,
+							A2(
+								elm$core$Maybe$map,
+								function (e) {
+									return _Utils_Tuple2(
+										's=' + author$project$School$schoolToIdString(school),
+										e);
+								},
+								A2(
+									elm$core$Maybe$map,
+									elm$html$Html$map(
+										function (m) {
+											if (!m.$) {
+												var z = m.a;
+												return author$project$Main$SignUpSchoolSchoolSelectSchoolAndDepartment(z);
+											} else {
+												return author$project$Main$SignUpSchoolSchoolSelectSchool(school);
+											}
+										}),
+									author$project$Main$signUpSchoolViewSelectDepartment(school)))));
+			}
+		}());
+};
+var author$project$Main$SignUpSchoolGraduateNone = {$: 0};
+var author$project$Main$signUpSchoolViewSchoolOrGraduate = function (signUpSchool) {
+	var leftSelect = function () {
+		if (!signUpSchool.$) {
+			return true;
+		} else {
+			return false;
+		}
+	}();
+	return A2(
+		elm$html$Html$div,
+		_List_Nil,
+		_List_fromArray(
+			[
+				A2(
+				elm$html$Html$label,
+				_List_fromArray(
+					[
+						elm$html$Html$Attributes$class('signUp-label')
+					]),
+				_List_fromArray(
+					[
+						elm$html$Html$text('所属')
+					])),
+				A2(
+				elm$html$Html$div,
+				_List_fromArray(
+					[
+						elm$html$Html$Attributes$class('signUp-select')
+					]),
+				_List_fromArray(
+					[
+						A2(
+						elm$html$Html$div,
+						_Utils_ap(
+							_List_fromArray(
+								[
+									elm$html$Html$Attributes$classList(
+									_List_fromArray(
+										[
+											_Utils_Tuple2('signUp-select-item', true),
+											_Utils_Tuple2('signUp-select-itemSelect', leftSelect)
+										])),
+									A2(elm$html$Html$Attributes$style, 'border-radius', '.4rem 0 0 .4rem')
+								]),
+							function () {
+								if (!signUpSchool.$) {
+									return _List_Nil;
+								} else {
+									return _List_fromArray(
+										[
+											elm$html$Html$Events$onClick(
+											author$project$Main$SignUpSchoolSchool(author$project$Main$SignUpSchoolSchoolNone))
+										]);
+								}
+							}()),
+						_List_fromArray(
+							[
+								elm$html$Html$text('学群生')
+							])),
+						A2(
+						elm$html$Html$div,
+						_Utils_ap(
+							_List_fromArray(
+								[
+									elm$html$Html$Attributes$classList(
+									_List_fromArray(
+										[
+											_Utils_Tuple2('signUp-select-item', true),
+											_Utils_Tuple2('signUp-select-itemSelect', !leftSelect)
+										])),
+									A2(elm$html$Html$Attributes$style, 'border-radius', '0 .4rem .4rem 0')
+								]),
+							function () {
+								if (!signUpSchool.$) {
+									return _List_fromArray(
+										[
+											elm$html$Html$Events$onClick(
+											author$project$Main$SignUpSchoolGraduate(author$project$Main$SignUpSchoolGraduateNone))
+										]);
+								} else {
+									return _List_Nil;
+								}
+							}()),
+						_List_fromArray(
+							[
+								elm$html$Html$text('院生')
+							]))
+					]))
+			]));
+};
 var author$project$Main$signUpSchoolView = function (signUpSchool) {
 	return _Utils_ap(
 		_List_fromArray(
@@ -10894,95 +10994,18 @@ var author$project$Main$signUpSchoolView = function (signUpSchool) {
 		function () {
 			if (!signUpSchool.$) {
 				var schoolSelect = signUpSchool.a;
-				return _Utils_ap(
-					_List_fromArray(
-						[
-							_Utils_Tuple2(
-							'selectSchool',
-							A2(
-								elm$html$Html$map,
-								function (m) {
-									return author$project$Main$SignUpSchoolSchool(
-										function () {
-											if (!m.$) {
-												var z = m.a;
-												return author$project$Main$SignUpSchoolSchoolSelectSchool(z);
-											} else {
-												return author$project$Main$SignUpSchoolSchoolNone;
-											}
-										}());
-								},
-								author$project$Main$signUpSchoolViewSelectSchool))
-						]),
-					function () {
-						switch (schoolSelect.$) {
-							case 0:
-								return _List_Nil;
-							case 1:
-								var school = schoolSelect.a;
-								return A2(
-									elm$core$Maybe$withDefault,
-									_List_Nil,
-									A2(
-										elm$core$Maybe$map,
-										elm$core$List$singleton,
-										A2(
-											elm$core$Maybe$map,
-											function (e) {
-												return _Utils_Tuple2(
-													's=' + author$project$School$schoolToIdString(school),
-													e);
-											},
-											A2(
-												elm$core$Maybe$map,
-												elm$html$Html$map(
-													function (m) {
-														return author$project$Main$SignUpSchoolSchool(
-															function () {
-																if (!m.$) {
-																	var z = m.a;
-																	return author$project$Main$SignUpSchoolSchoolSelectSchoolAndDepartment(z);
-																} else {
-																	return author$project$Main$SignUpSchoolSchoolSelectSchool(school);
-																}
-															}());
-													}),
-												author$project$Main$signUpSchoolViewSelectDepartment(school)))));
-							default:
-								var department = schoolSelect.a;
-								var school = author$project$School$departmentToSchool(department);
-								return A2(
-									elm$core$Maybe$withDefault,
-									_List_Nil,
-									A2(
-										elm$core$Maybe$map,
-										elm$core$List$singleton,
-										A2(
-											elm$core$Maybe$map,
-											function (e) {
-												return _Utils_Tuple2(
-													's=' + author$project$School$schoolToIdString(school),
-													e);
-											},
-											A2(
-												elm$core$Maybe$map,
-												elm$html$Html$map(
-													function (m) {
-														return author$project$Main$SignUpSchoolSchool(
-															function () {
-																if (!m.$) {
-																	var z = m.a;
-																	return author$project$Main$SignUpSchoolSchoolSelectSchoolAndDepartment(z);
-																} else {
-																	return author$project$Main$SignUpSchoolSchoolSelectSchool(school);
-																}
-															}());
-													}),
-												author$project$Main$signUpSchoolViewSelectDepartment(school)))));
-						}
-					}());
+				return A2(
+					elm$core$List$map,
+					elm$core$Tuple$mapSecond(
+						elm$html$Html$map(author$project$Main$SignUpSchoolSchool)),
+					author$project$Main$signUpSchoolViewSchool(schoolSelect));
 			} else {
-				return _List_Nil;
+				var graduateSelect = signUpSchool.a;
+				return A2(
+					elm$core$List$map,
+					elm$core$Tuple$mapSecond(
+						elm$html$Html$map(author$project$Main$SignUpSchoolGraduate)),
+					author$project$Main$signUpSchoolViewGraduate(graduateSelect));
 			}
 		}());
 };
