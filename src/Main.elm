@@ -1,7 +1,6 @@
 port module Main exposing (main)
 
 import Api
-import Array
 import Browser
 import Browser.Navigation
 import EmailAddress
@@ -11,9 +10,9 @@ import Html.Attributes
 import Html.Events
 import Html.Keyed
 import Json.Decode
+import Page.SignUp
 import Password
 import SAddress exposing (SAddress)
-import School
 import SiteMap
 import StudentId exposing (StudentId)
 import Svg
@@ -69,7 +68,7 @@ type MenuState
 
 type Page
     = PageHome HomePage
-    | PageSignUp SignUpPage
+    | PageSignUp Page.SignUp.Model
     | PageLogIn LogInPage
     | PageLikeAndHistory LikeAndHistory
     | PageExhibitionGoodsList
@@ -78,40 +77,6 @@ type Page
     | PageSendSignUpEmail EmailAddress.EmailAddress (Maybe (Result Api.SignUpResponseError Api.SignUpResponseOk))
     | PageGoods Goods.Goods
     | PageSiteMapXml
-
-
-type SignUpPage
-    = SignUpPage
-        { sAddressAndPassword : SignUpSAddressAndPassword
-        , university : SignUpUniversity
-        }
-
-
-type SignUpUniversity
-    = SignUpUniversitySchool SignUpUniversitySchool
-    | SignUpUniversityGraduate SignUpUniversityGraduate
-
-
-type SignUpUniversitySchool
-    = SignUpUniversitySchoolNone
-    | SignUpUniversitySchoolSelectSchool School.School
-    | SignUpUniversitySchoolSelectSchoolAndDepartment School.SchoolAndDepartment
-
-
-type SignUpUniversityGraduate
-    = SignUpUniversityGraduateSelect (Maybe School.Graduate) (Maybe SignUpUniversitySchool)
-
-
-type SignUpSAddressAndPassword
-    = UserSignUpPageStudentHasSAddress
-        { studentIdOrTsukubaEmailAddress : AnalysisStudentIdOrSAddressResult
-        , password : Result Password.Error Password.Password
-        }
-    | UserSignUpPageNewStudent
-        { emailAddress : Maybe EmailAddress.EmailAddress
-        , imageUrl : Maybe String
-        , password : Result Password.Error Password.Password
-        }
 
 
 type LogInPage
@@ -308,39 +273,16 @@ update msg (Model rec) =
 
         InputStudentIdOrEmailAddress string ->
             ( case rec.page of
-                PageSignUp (SignUpPage { sAddressAndPassword, university }) ->
-                    case sAddressAndPassword of
-                        UserSignUpPageStudentHasSAddress r ->
-                            Model
-                                { rec
-                                    | page =
-                                        PageSignUp
-                                            (SignUpPage
-                                                { sAddressAndPassword =
-                                                    UserSignUpPageStudentHasSAddress
-                                                        { r
-                                                            | studentIdOrTsukubaEmailAddress = analysisStudentIdOrSAddress string
-                                                        }
-                                                , university = university
-                                                }
-                                            )
-                                }
-
-                        UserSignUpPageNewStudent r ->
-                            Model
-                                { rec
-                                    | page =
-                                        PageSignUp
-                                            (SignUpPage
-                                                { sAddressAndPassword =
-                                                    UserSignUpPageNewStudent
-                                                        { r
-                                                            | emailAddress = analysisEmailAddress string
-                                                        }
-                                                , university = university
-                                                }
-                                            )
-                                }
+                PageSignUp signUpModel ->
+                    Model
+                        { rec
+                            | page =
+                                PageSignUp
+                                    (Page.SignUp.update
+                                        (Page.SignUp.InputStudentIdOrEmailAddress string)
+                                        signUpModel
+                                    )
+                        }
 
                 PageLogIn (LogInPage r) ->
                     Model
@@ -367,22 +309,16 @@ update msg (Model rec) =
 
         ReceiveImageDataUrl urlString ->
             ( case rec.page of
-                PageSignUp (SignUpPage { sAddressAndPassword, university }) ->
-                    case sAddressAndPassword of
-                        UserSignUpPageNewStudent r ->
-                            Model
-                                { rec
-                                    | page =
-                                        PageSignUp
-                                            (SignUpPage
-                                                { sAddressAndPassword = UserSignUpPageNewStudent { r | imageUrl = Just urlString }
-                                                , university = university
-                                                }
-                                            )
-                                }
-
-                        _ ->
-                            Model rec
+                PageSignUp signUpModel ->
+                    Model
+                        { rec
+                            | page =
+                                PageSignUp
+                                    (Page.SignUp.update
+                                        (Page.SignUp.ReceiveImageDataUrl urlString)
+                                        signUpModel
+                                    )
+                        }
 
                 PageExhibition (ExhibitionPage r) ->
                     Model
@@ -414,23 +350,14 @@ update msg (Model rec) =
 
         InputPassword string ->
             ( case rec.page of
-                PageSignUp (SignUpPage { sAddressAndPassword, university }) ->
+                PageSignUp signUpModel ->
                     Model
                         { rec
                             | page =
                                 PageSignUp
-                                    (SignUpPage
-                                        { sAddressAndPassword =
-                                            case sAddressAndPassword of
-                                                UserSignUpPageNewStudent r ->
-                                                    UserSignUpPageNewStudent
-                                                        { r | password = Password.passwordFromString string }
-
-                                                UserSignUpPageStudentHasSAddress r ->
-                                                    UserSignUpPageStudentHasSAddress
-                                                        { r | password = Password.passwordFromString string }
-                                        , university = university
-                                        }
+                                    (Page.SignUp.update
+                                        (Page.SignUp.InputPassword string)
+                                        signUpModel
                                     )
                         }
 
@@ -472,18 +399,7 @@ urlParser beforePageMaybe =
         [ SiteMap.homeParser
             |> Url.Parser.map (PageHome (HomePageRecommend { valid = True }))
         , SiteMap.signUpParser
-            |> Url.Parser.map
-                (PageSignUp
-                    (SignUpPage
-                        { sAddressAndPassword =
-                            UserSignUpPageStudentHasSAddress
-                                { studentIdOrTsukubaEmailAddress = analysisStudentIdOrSAddress ""
-                                , password = Password.passwordFromString ""
-                                }
-                        , university = SignUpUniversitySchool SignUpUniversitySchoolNone
-                        }
-                    )
-                )
+            |> Url.Parser.map (PageSignUp Page.SignUp.initModel)
         , SiteMap.logInParser
             |> Url.Parser.map
                 (PageLogIn
@@ -962,9 +878,11 @@ mainViewAndMainTab page isWideScreenMode =
                         [ itemList isWideScreenMode ]
                     }
 
-                PageSignUp subPage ->
+                PageSignUp signUpPageModel ->
                     { tabData = TabSingle "新規登録"
-                    , mainView = signUpView subPage
+                    , mainView =
+                        Page.SignUp.view signUpPageModel
+                            |> List.map (Html.map signUpPageEmitToMsg)
                     }
 
                 PageLogIn subPage ->
@@ -974,7 +892,9 @@ mainViewAndMainTab page isWideScreenMode =
 
                 PageSendSignUpEmail emailAddress response ->
                     { tabData = TabNone
-                    , mainView = sendSignUpEmailView emailAddress response
+                    , mainView =
+                        Page.SignUp.sendSignUpEmailView emailAddress response
+                            |> List.map (Html.map signUpPageEmitToMsg)
                     }
 
                 PageGoods goods ->
@@ -1126,6 +1046,30 @@ invalidLinkErrorMsg =
         [ Html.text "指定したページが見つからないのでホームに移動しました" ]
 
 
+signUpPageEmitToMsg : Page.SignUp.Emit -> Msg
+signUpPageEmitToMsg emit =
+    case emit of
+        Page.SignUp.EmitChangePage model ->
+            ChangePage (PageSignUp model)
+
+        Page.SignUp.EmitInputStudentIdOrEmailAddress string ->
+            InputStudentIdOrEmailAddress string
+
+        Page.SignUp.EmitInputStudentImage string ->
+            InputExhibitionImage string
+
+        Page.SignUp.EmitInputPassword string ->
+            InputPassword string
+
+        Page.SignUp.EmitSignUp record ->
+            SignUp record
+
+        Page.SignUp.EmitSendConfirmToken ->
+            SendConfirmToken
+
+
+{-| 商品の一覧 中身は適当
+-}
 itemList : Bool -> Html.Html Msg
 itemList isWideMode =
     Html.div
@@ -1541,218 +1485,6 @@ signUpButton =
         [ Html.text "新規登録" ]
 
 
-{-| Sign Up 新規登録画面
--}
-signUpView : SignUpPage -> List (Html.Html Msg)
-signUpView userSignUpPage =
-    case userSignUpPage of
-        SignUpPage { sAddressAndPassword, university } ->
-            [ Html.div
-                [ Html.Attributes.class "signUpContainer" ]
-                [ Html.Keyed.node "form"
-                    [ Html.Attributes.class "signUp" ]
-                    ([ ( "s_or_nos"
-                       , sAddressView sAddressAndPassword
-                            |> Html.map (\s -> ChangePage (PageSignUp (SignUpPage { sAddressAndPassword = s, university = university })))
-                       )
-                     ]
-                        ++ (case sAddressAndPassword of
-                                UserSignUpPageStudentHasSAddress { studentIdOrTsukubaEmailAddress, password } ->
-                                    studentHasSAddressFormList studentIdOrTsukubaEmailAddress password
-
-                                UserSignUpPageNewStudent { emailAddress, imageUrl, password } ->
-                                    newStudentFormList emailAddress imageUrl password
-                           )
-                        ++ (signUpUniversityView university
-                                |> List.map
-                                    (Tuple.mapSecond
-                                        (Html.map
-                                            (\s ->
-                                                ChangePage (PageSignUp (SignUpPage { sAddressAndPassword = sAddressAndPassword, university = s }))
-                                            )
-                                        )
-                                    )
-                           )
-                        ++ [ ( "submit", signUpSubmitButton (getSignUpData userSignUpPage) )
-                           ]
-                    )
-                ]
-            ]
-
-
-{-| sアドを持っているか持っていないかを選択するフォーム
--}
-sAddressView : SignUpSAddressAndPassword -> Html.Html SignUpSAddressAndPassword
-sAddressView userSignUpSAddressAndPassword =
-    Html.div
-        []
-        [ Html.label
-            [ Html.Attributes.class "signUp-label" ]
-            [ Html.text "sアドを" ]
-        , sAddressSelectView userSignUpSAddressAndPassword
-        ]
-
-
-sAddressSelectView : SignUpSAddressAndPassword -> Html.Html SignUpSAddressAndPassword
-sAddressSelectView userSignUpSAddressAndPassword =
-    let
-        leftSelect =
-            case userSignUpSAddressAndPassword of
-                UserSignUpPageStudentHasSAddress _ ->
-                    True
-
-                UserSignUpPageNewStudent _ ->
-                    False
-    in
-    Html.div
-        [ Html.Attributes.class "signUp-select" ]
-        [ Html.div
-            ([ Html.Attributes.classList
-                [ ( "signUp-select-item", not leftSelect )
-                , ( "signUp-select-itemSelect", leftSelect )
-                ]
-             , Html.Attributes.style "border-radius" ".4rem 0 0 .4rem"
-             ]
-                ++ (case userSignUpSAddressAndPassword of
-                        UserSignUpPageStudentHasSAddress _ ->
-                            []
-
-                        UserSignUpPageNewStudent { password } ->
-                            [ Html.Events.onClick
-                                (UserSignUpPageStudentHasSAddress
-                                    { studentIdOrTsukubaEmailAddress = analysisStudentIdOrSAddress ""
-                                    , password = password
-                                    }
-                                )
-                            ]
-                   )
-            )
-            [ Html.text "持っている" ]
-        , Html.div
-            ([ Html.Attributes.classList
-                [ ( "signUp-select-item", leftSelect )
-                , ( "signUp-select-itemSelect", not leftSelect )
-                ]
-             , Html.Attributes.style "border-radius" "0 .4rem .4rem 0"
-             ]
-                ++ (case userSignUpSAddressAndPassword of
-                        UserSignUpPageStudentHasSAddress { password } ->
-                            [ Html.Events.onClick
-                                (UserSignUpPageNewStudent
-                                    { emailAddress = [] |> EmailAddress.fromCharList
-                                    , imageUrl = Nothing
-                                    , password = password
-                                    }
-                                )
-                            ]
-
-                        UserSignUpPageNewStudent _ ->
-                            []
-                   )
-            )
-            [ Html.text "持っていない" ]
-        ]
-
-
-studentHasSAddressFormList : AnalysisStudentIdOrSAddressResult -> Result Password.Error Password.Password -> List ( String, Html.Html Msg )
-studentHasSAddressFormList analysisStudentIdOrEmailAddressResult password =
-    [ ( "sAddressFrom"
-      , Html.div
-            []
-            [ Html.label
-                [ Html.Attributes.class "signUp-label"
-                , Html.Attributes.for "signUpStudentIdOrTsukubaEmail"
-                ]
-                [ Html.text "学籍番号か ～@～.tsukuba.ac.jpのメールアドレス" ]
-            , Html.input
-                [ Html.Attributes.class "signUp-input"
-                , Html.Attributes.id "signUpStudentIdOrTsukubaEmail"
-                , Html.Attributes.attribute "autocomplete" "username"
-                , Html.Events.onInput InputStudentIdOrEmailAddress
-                ]
-                []
-            , Html.div
-                [ Html.Attributes.class "signUp-description" ]
-                [ Html.text
-                    (case analysisStudentIdOrEmailAddressResult of
-                        ANone ->
-                            "学籍番号は20から始まる9桁の数字、筑波大学のメールアドレスはs1234567@s.tsukuba.ac.jpのような形のメールアドレス"
-
-                        AStudentId studentId ->
-                            "学籍番号 "
-                                ++ StudentId.toStringWith20 studentId
-                                ++ " "
-                                ++ (studentId
-                                        |> SAddress.fromStundetId
-                                        |> EmailAddress.fromSAddress
-                                        |> EmailAddress.toString
-                                   )
-                                ++ "にメールを送信します"
-
-                        APartStudentId partStudentId ->
-                            "学籍番号 "
-                                ++ StudentId.partStudentIdToStringWith20 partStudentId
-
-                        ASAddress sAddress ->
-                            "筑波大学のメールアドレス " ++ SAddress.toEmailAddressString sAddress
-
-                        AEmailButIsNotTsukuba ->
-                            "筑波大学のメールアドレスではありません"
-                    )
-                ]
-            ]
-      )
-    , ( "sAddressPassword", passwordForm password )
-    ]
-
-
-{-| 新規登録画面のsアドを持っているひとの入力の解析
--}
-analysisStudentIdOrSAddress : String -> AnalysisStudentIdOrSAddressResult
-analysisStudentIdOrSAddress string =
-    let
-        charList =
-            String.toList (String.trim string)
-    in
-    case StudentId.fromCharList charList of
-        Just studentId ->
-            AStudentId studentId
-
-        Nothing ->
-            case StudentId.partStudentIdFromCharList charList of
-                Just partStudentId ->
-                    APartStudentId partStudentId
-
-                Nothing ->
-                    case SAddress.fromCharList charList of
-                        Just sAddress ->
-                            ASAddress sAddress
-
-                        Nothing ->
-                            case EmailAddress.fromCharList charList of
-                                Just _ ->
-                                    AEmailButIsNotTsukuba
-
-                                Nothing ->
-                                    ANone
-
-
-type AnalysisStudentIdOrSAddressResult
-    = ANone
-    | AStudentId StudentId
-    | ASAddress SAddress
-    | APartStudentId StudentId.PartStudentId
-    | AEmailButIsNotTsukuba
-
-
-analysisEmailAddress : String -> Maybe EmailAddress.EmailAddress
-analysisEmailAddress string =
-    string
-        |> String.trim
-        |> String.toList
-        |> EmailAddress.fromCharList
-
-
 {-| ログイン画面で使う入力の解析
 -}
 analysisStudentIdOrEmailAddress : String -> AnalysisStudentIdOrEmailAddressResult
@@ -1780,464 +1512,6 @@ type AnalysisStudentIdOrEmailAddressResult
     | AEEmailAddress EmailAddress.EmailAddress
 
 
-newStudentFormList : Maybe EmailAddress.EmailAddress -> Maybe String -> Result Password.Error Password.Password -> List ( String, Html.Html Msg )
-newStudentFormList emailAddress imageUrlMaybe password =
-    [ ( "addressForm"
-      , Html.div
-            []
-            [ Html.label
-                [ Html.Attributes.class "signUp-label"
-                , Html.Attributes.for "signUpEmail"
-                ]
-                [ Html.text "登録用メールアドレス" ]
-            , Html.input
-                [ Html.Attributes.class "signUp-input"
-                , Html.Attributes.type_ "email"
-                , Html.Attributes.id "signUpEmail"
-                , Html.Attributes.attribute "autocomplete" "email"
-                , Html.Events.onInput InputStudentIdOrEmailAddress
-                ]
-                []
-            , Html.div
-                [ Html.Attributes.class "signUp-description" ]
-                [ Html.text
-                    (case emailAddress of
-                        Just address ->
-                            EmailAddress.toString address
-                                ++ "に登録メールを送信します"
-
-                        Nothing ->
-                            "メールアドレスを入力してください"
-                    )
-                ]
-            ]
-      )
-    , ( "passwordEmail", passwordForm password )
-    , ( "cardImage"
-      , Html.div
-            []
-            [ Html.label
-                [ Html.Attributes.class "signUp-label"
-                , Html.Attributes.for "signUpImage"
-                ]
-                [ Html.text "学生証の写真" ]
-            , Html.input
-                [ Html.Attributes.type_ "file"
-                , Html.Attributes.accept "image/png, image/jpeg"
-                , Html.Attributes.class "signUp-input"
-                , Html.Attributes.id "signUpImage"
-                , Html.Attributes.attribute "autocomplete" "studentIdImage"
-                , Html.Events.on "change" (Json.Decode.succeed (InputStudentImage "signUpImage"))
-                ]
-                []
-            , Html.img
-                ([ Html.Attributes.class "signUp-image"
-                 ]
-                    ++ (case imageUrlMaybe of
-                            Just imageUrl ->
-                                [ Html.Attributes.src imageUrl ]
-
-                            Nothing ->
-                                []
-                       )
-                )
-                []
-            ]
-      )
-    ]
-
-
-{-| 新規登録のパスワード入力フォーム
--}
-passwordForm : Result Password.Error Password.Password -> Html.Html Msg
-passwordForm passwordResult =
-    Html.div
-        []
-        [ Html.label
-            [ Html.Attributes.class "signUp-label"
-            , Html.Attributes.for "password"
-            ]
-            [ Html.text "パスワード" ]
-        , Html.input
-            [ Html.Attributes.class "signUp-input"
-            , Html.Attributes.id "password"
-            , Html.Attributes.type_ "password"
-            , Html.Attributes.minlength 9
-            , Html.Attributes.maxlength 50
-            , Html.Attributes.attribute "autocomplete" "new-password"
-            , Html.Events.onInput InputPassword
-            ]
-            []
-        , Html.div
-            [ Html.Attributes.class "signUp-description" ]
-            [ Html.text
-                (case passwordResult of
-                    Ok password ->
-                        Password.toString password
-
-                    Err error ->
-                        Password.errorMessage error
-                )
-            ]
-        ]
-
-
-{-| 新規登録の研究科学群学類入力フォーム
--}
-signUpUniversityView : SignUpUniversity -> List ( String, Html.Html SignUpUniversity )
-signUpUniversityView signUpSchool =
-    [ ( "schoolOrGraduate", signUpUniversityViewSchoolOrGraduate signUpSchool )
-    ]
-        ++ (case signUpSchool of
-                SignUpUniversitySchool schoolSelect ->
-                    signUpUniversityViewSchool schoolSelect
-                        |> List.map (Tuple.mapSecond (Html.map SignUpUniversitySchool))
-
-                SignUpUniversityGraduate graduateSelect ->
-                    signUpUniversityViewGraduate graduateSelect
-                        |> List.map (Tuple.mapSecond (Html.map SignUpUniversityGraduate))
-           )
-
-
-{-| 研究科に所属しているかしていないか?
--}
-signUpUniversityViewSchoolOrGraduate : SignUpUniversity -> Html.Html SignUpUniversity
-signUpUniversityViewSchoolOrGraduate university =
-    let
-        leftSelect =
-            case university of
-                SignUpUniversitySchool _ ->
-                    True
-
-                SignUpUniversityGraduate _ ->
-                    False
-    in
-    Html.div
-        []
-        [ Html.label
-            [ Html.Attributes.class "signUp-label" ]
-            [ Html.text "所属" ]
-        , Html.div
-            [ Html.Attributes.class "signUp-select" ]
-            [ Html.div
-                ([ Html.Attributes.classList
-                    [ ( "signUp-select-item", not leftSelect )
-                    , ( "signUp-select-itemSelect", leftSelect )
-                    ]
-                 , Html.Attributes.style "border-radius" ".4rem 0 0 .4rem"
-                 ]
-                    ++ (case university of
-                            SignUpUniversitySchool _ ->
-                                []
-
-                            SignUpUniversityGraduate _ ->
-                                [ Html.Events.onClick (SignUpUniversitySchool SignUpUniversitySchoolNone) ]
-                       )
-                )
-                [ Html.text "学群生" ]
-            , Html.div
-                ([ Html.Attributes.classList
-                    [ ( "signUp-select-item", leftSelect )
-                    , ( "signUp-select-itemSelect", not leftSelect )
-                    ]
-                 , Html.Attributes.style "border-radius" "0 .4rem .4rem 0"
-                 ]
-                    ++ (case university of
-                            SignUpUniversitySchool _ ->
-                                [ Html.Events.onClick
-                                    (SignUpUniversityGraduate
-                                        (SignUpUniversityGraduateSelect
-                                            Nothing
-                                            (Just SignUpUniversitySchoolNone)
-                                        )
-                                    )
-                                ]
-
-                            SignUpUniversityGraduate _ ->
-                                []
-                       )
-                )
-                [ Html.text "院生" ]
-            ]
-        ]
-
-
-{-| 研究科に所属していない人のフォーム
--}
-signUpUniversityViewSchool : SignUpUniversitySchool -> List ( String, Html.Html SignUpUniversitySchool )
-signUpUniversityViewSchool signUpSchoolSchool =
-    [ ( "selectSchool"
-      , signUpUniversityViewSelectSchool
-            |> Html.map
-                (\m ->
-                    case m of
-                        Just z ->
-                            SignUpUniversitySchoolSelectSchool z
-
-                        Nothing ->
-                            SignUpUniversitySchoolNone
-                )
-      )
-    ]
-        ++ (case signUpSchoolSchool of
-                SignUpUniversitySchoolNone ->
-                    []
-
-                SignUpUniversitySchoolSelectSchool school ->
-                    signUpUniversityViewSelectDepartment school
-                        |> Maybe.map
-                            (Html.map
-                                (\m ->
-                                    case m of
-                                        Just z ->
-                                            SignUpUniversitySchoolSelectSchoolAndDepartment z
-
-                                        Nothing ->
-                                            SignUpUniversitySchoolSelectSchool school
-                                )
-                            )
-                        |> Maybe.map (\e -> ( "s=" ++ School.schoolToIdString school, e ))
-                        |> Maybe.map List.singleton
-                        |> Maybe.withDefault []
-
-                SignUpUniversitySchoolSelectSchoolAndDepartment department ->
-                    let
-                        school =
-                            School.departmentToSchool department
-                    in
-                    signUpUniversityViewSelectDepartment school
-                        |> Maybe.map
-                            (Html.map
-                                (\m ->
-                                    case m of
-                                        Just z ->
-                                            SignUpUniversitySchoolSelectSchoolAndDepartment z
-
-                                        Nothing ->
-                                            SignUpUniversitySchoolSelectSchool school
-                                )
-                            )
-                        |> Maybe.map (\e -> ( "s=" ++ School.schoolToIdString school, e ))
-                        |> Maybe.map List.singleton
-                        |> Maybe.withDefault []
-           )
-
-
-{-| 研究科に所属している人のフォーム
--}
-signUpUniversityViewGraduate : SignUpUniversityGraduate -> List ( String, Html.Html SignUpUniversityGraduate )
-signUpUniversityViewGraduate univAndGraduateSelect =
-    let
-        (SignUpUniversityGraduateSelect graduateSelect schoolSelect) =
-            univAndGraduateSelect
-    in
-    [ ( "selectGraduate"
-      , signUpUniversityViewSelectGraduate
-            |> Html.map (\g -> SignUpUniversityGraduateSelect g schoolSelect)
-      )
-    , ( "tsukubaUniversitySchoolOrNo"
-      , signUpUniversityViewGraduateYesNoTsukuba (schoolSelect /= Nothing)
-            |> Html.map
-                (always
-                    (SignUpUniversityGraduateSelect graduateSelect
-                        (case schoolSelect of
-                            Just _ ->
-                                Nothing
-
-                            Nothing ->
-                                Just SignUpUniversitySchoolNone
-                        )
-                    )
-                )
-      )
-    ]
-        ++ (case schoolSelect of
-                Just school ->
-                    signUpUniversityViewSchool school
-                        |> List.map (Tuple.mapSecond (Html.map (\s -> SignUpUniversityGraduateSelect graduateSelect (Just s))))
-
-                Nothing ->
-                    []
-           )
-
-
-signUpUniversityViewSelectGraduate : Html.Html (Maybe School.Graduate)
-signUpUniversityViewSelectGraduate =
-    Html.div
-        []
-        [ Html.label
-            [ Html.Attributes.class "signUp-label"
-            , Html.Attributes.for "signUp-selectGraduate"
-            ]
-            [ Html.text "研究科" ]
-        , Html.select
-            [ Html.Attributes.class "signUp-menu"
-            , Html.Attributes.id "signUp-selectGraduate"
-            , Html.Events.on "change" selectGraduateDecoder
-            ]
-            ([ Html.option [] [ Html.text "--選択してください--" ] ]
-                ++ (School.graduateAllValue
-                        |> List.map
-                            (\s ->
-                                Html.option [] [ Html.text (School.graduateToJapaneseString s) ]
-                            )
-                   )
-            )
-        ]
-
-
-selectGraduateDecoder : Json.Decode.Decoder (Maybe School.Graduate)
-selectGraduateDecoder =
-    Json.Decode.at
-        [ "target", "selectedIndex" ]
-        Json.Decode.int
-        |> Json.Decode.map (\index -> School.graduateAllValue |> Array.fromList |> Array.get (index - 1))
-
-
-{-| 筑波大学に所属していたかしていなかったか
-Boolは左(筑波大学所属していた)を選択しているか
--}
-signUpUniversityViewGraduateYesNoTsukuba : Bool -> Html.Html ()
-signUpUniversityViewGraduateYesNoTsukuba leftSelect =
-    Html.div
-        []
-        [ Html.label
-            [ Html.Attributes.class "signUp-label" ]
-            [ Html.text "院進前の所属" ]
-        , Html.div
-            [ Html.Attributes.class "signUp-select" ]
-            [ Html.div
-                ([ Html.Attributes.classList
-                    [ ( "signUp-select-item", not leftSelect )
-                    , ( "signUp-select-itemSelect", leftSelect )
-                    ]
-                 , Html.Attributes.style "border-radius" ".4rem 0 0 .4rem"
-                 ]
-                    ++ (if leftSelect then
-                            []
-
-                        else
-                            [ Html.Events.onClick () ]
-                       )
-                )
-                [ Html.text "筑波大学に所属していた" ]
-            , Html.div
-                ([ Html.Attributes.classList
-                    [ ( "signUp-select-item", leftSelect )
-                    , ( "signUp-select-itemSelect", not leftSelect )
-                    ]
-                 , Html.Attributes.style "border-radius" "0 .4rem .4rem 0"
-                 ]
-                    ++ (if leftSelect then
-                            [ Html.Events.onClick () ]
-
-                        else
-                            []
-                       )
-                )
-                [ Html.text "筑波大学に所属していなかった" ]
-            ]
-        ]
-
-
-{-| 学群の選択
--}
-signUpUniversityViewSelectSchool : Html.Html (Maybe School.School)
-signUpUniversityViewSelectSchool =
-    Html.div
-        []
-        [ Html.label
-            [ Html.Attributes.class "signUp-label"
-            , Html.Attributes.for "signUp-selectSchool"
-            ]
-            [ Html.text "学群" ]
-        , Html.select
-            [ Html.Attributes.class "signUp-menu"
-            , Html.Attributes.id "signUp-selectSchool"
-            , Html.Events.on "change" selectSchoolDecoder
-            ]
-            ([ Html.option [] [ Html.text "--選択してください--" ] ]
-                ++ (School.schoolAllValue
-                        |> List.map
-                            (\s ->
-                                Html.option [] [ Html.text (School.schoolToJapaneseString s) ]
-                            )
-                   )
-            )
-        ]
-
-
-selectSchoolDecoder : Json.Decode.Decoder (Maybe School.School)
-selectSchoolDecoder =
-    Json.Decode.at
-        [ "target", "selectedIndex" ]
-        Json.Decode.int
-        |> Json.Decode.map (\index -> School.schoolAllValue |> Array.fromList |> Array.get (index - 1))
-
-
-{-| 学類の選択
--}
-signUpUniversityViewSelectDepartment : School.School -> Maybe (Html.Html (Maybe School.SchoolAndDepartment))
-signUpUniversityViewSelectDepartment school =
-    case School.departmentAllValue school of
-        [] ->
-            Nothing
-
-        departmentList ->
-            Just
-                (Html.div
-                    []
-                    [ Html.label
-                        [ Html.Attributes.class "signUp-label"
-                        , Html.Attributes.for "signUp-selectDepartment"
-                        ]
-                        [ Html.text "学類" ]
-                    , Html.select
-                        [ Html.Attributes.class "signUp-menu"
-                        , Html.Attributes.id "signUp-selectDepartment"
-                        , Html.Events.on "change" (selectDepartmentDecoder school)
-                        ]
-                        ([ Html.option [] [ Html.text "--選択してください--" ] ]
-                            ++ (departmentList
-                                    |> List.map
-                                        (\s ->
-                                            Html.option [] [ Html.text (School.departmentToJapaneseString s |> Maybe.withDefault "?") ]
-                                        )
-                               )
-                        )
-                    ]
-                )
-
-
-selectDepartmentDecoder : School.School -> Json.Decode.Decoder (Maybe School.SchoolAndDepartment)
-selectDepartmentDecoder school =
-    Json.Decode.at
-        [ "target", "selectedIndex" ]
-        Json.Decode.int
-        |> Json.Decode.map
-            (\index -> School.departmentAllValue school |> Array.fromList |> Array.get (index - 1))
-
-
-signUpSubmitButton : Maybe { emailAddress : EmailAddress.EmailAddress, pass : Password.Password, image : Maybe String } -> Html.Html Msg
-signUpSubmitButton signUpDataMaybe =
-    Html.div
-        []
-        [ Html.button
-            ([ Html.Attributes.class "signUp-signUpButton"
-             , Html.Attributes.disabled (signUpDataMaybe == Nothing)
-             ]
-                ++ (case signUpDataMaybe of
-                        Just signUpData ->
-                            [ Html.Events.stopPropagationOn "click" (Json.Decode.succeed ( SignUp signUpData, True )) ]
-
-                        Nothing ->
-                            []
-                   )
-            )
-            [ Html.text "新規登録" ]
-        ]
-
-
 getLogInData : AnalysisStudentIdOrEmailAddressResult -> Maybe Password.Password -> Maybe { emailAddress : EmailAddress.EmailAddress, pass : Password.Password }
 getLogInData studentIdOrEmailAddress passwordMaybe =
     case ( studentIdOrEmailAddress, passwordMaybe ) of
@@ -2255,91 +1529,6 @@ getLogInData studentIdOrEmailAddress passwordMaybe =
 
         ( _, _ ) ->
             Nothing
-
-
-{-| 画面の情報から新規登録できる情報を入力しているかと、新規登録に必要なデータを取りだす
--}
-getSignUpData : SignUpPage -> Maybe { emailAddress : EmailAddress.EmailAddress, pass : Password.Password, image : Maybe String }
-getSignUpData (SignUpPage { sAddressAndPassword, university }) =
-    case sAddressAndPassword of
-        UserSignUpPageStudentHasSAddress { studentIdOrTsukubaEmailAddress, password } ->
-            case ( studentIdOrTsukubaEmailAddress, password ) of
-                ( AStudentId studentId, Ok pass ) ->
-                    Just
-                        { emailAddress = EmailAddress.fromSAddress (SAddress.fromStundetId studentId)
-                        , pass = pass
-                        , image = Nothing
-                        }
-
-                ( ASAddress sAddress, Ok pass ) ->
-                    Just
-                        { emailAddress = EmailAddress.fromSAddress sAddress
-                        , pass = pass
-                        , image = Nothing
-                        }
-
-                _ ->
-                    Nothing
-
-        UserSignUpPageNewStudent { emailAddress, password, imageUrl } ->
-            case ( emailAddress, password, imageUrl ) of
-                ( Just address, Ok pass, Just image ) ->
-                    Just
-                        { emailAddress = address
-                        , pass = pass
-                        , image = Just image
-                        }
-
-                ( _, _, _ ) ->
-                    Nothing
-
-
-sendSignUpEmailView : EmailAddress.EmailAddress -> Maybe (Result Api.SignUpResponseError Api.SignUpResponseOk) -> List (Html.Html Msg)
-sendSignUpEmailView emailAddress signUpResultMaybe =
-    [ Html.div [ Html.Attributes.class "signUp-resultMsg" ]
-        (case signUpResultMaybe of
-            Just signUpResult ->
-                signUpResultToString emailAddress signUpResult
-
-            Nothing ->
-                [ Html.text "新規登録の情報を送信中" ]
-        )
-    ]
-
-
-signUpResultToString : EmailAddress.EmailAddress -> Result Api.SignUpResponseError Api.SignUpResponseOk -> List (Html.Html Msg)
-signUpResultToString emailAddress signUpResult =
-    case signUpResult of
-        Ok (Api.SignUpResponseOk (Api.ConfirmToken token)) ->
-            [ Html.text
-                ("送信完了。"
-                    ++ EmailAddress.toString emailAddress
-                    ++ "にメールを送信しました。届いたメールのリンクをクリックして認証をしてください"
-                    ++ "token = \""
-                    ++ token
-                    ++ "\""
-                )
-            , Html.div
-                [ Html.Events.onClick SendConfirmToken
-                , Html.Attributes.style "border" "solid 2px black"
-                ]
-                [ Html.text "confirm_tokenを送信" ]
-            ]
-
-        Err Api.SignUpErrorAlreadySignUp ->
-            [ Html.text "すでにあなたは登録されています" ]
-
-        Err Api.SignUpErrorBadUrl ->
-            [ Html.text "正しいURLが指定されなかった" ]
-
-        Err Api.SignUpErrorTimeout ->
-            [ Html.text "タイムアウトエラー。回線が混雑しています" ]
-
-        Err Api.SignUpErrorNetworkError ->
-            [ Html.text "ネットワークエラー。接続が切れている可能性があります" ]
-
-        Err Api.SignUpError ->
-            [ Html.text "サーバーの回答を理解することができませんでした" ]
 
 
 siteMapXmlView : { tabData : TabData, mainView : List (Html.Html msg) }
