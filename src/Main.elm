@@ -10,11 +10,12 @@ import Html.Attributes
 import Html.Events
 import Html.Keyed
 import Json.Decode
+import Page.LogIn
 import Page.SignUp
 import Password
-import SAddress exposing (SAddress)
+import SAddress
 import SiteMap
-import StudentId exposing (StudentId)
+import StudentId
 import Svg
 import Svg.Attributes
 import Url
@@ -69,7 +70,7 @@ type MenuState
 type Page
     = PageHome HomePage
     | PageSignUp Page.SignUp.Model
-    | PageLogIn LogInPage
+    | PageLogIn ( Page.LogIn.Model, Maybe Page )
     | PageLikeAndHistory LikeAndHistory
     | PageExhibitionGoodsList
     | PagePurchaseGoodsList
@@ -77,15 +78,6 @@ type Page
     | PageSendSignUpEmail EmailAddress.EmailAddress (Maybe (Result Api.SignUpResponseError Api.SignUpResponseOk))
     | PageGoods Goods.Goods
     | PageSiteMapXml
-
-
-type LogInPage
-    = LogInPage
-        { nextPage : Maybe Page
-        , studentIdOrEmailAddress : AnalysisStudentIdOrEmailAddressResult
-        , password : Maybe Password.Password
-        }
-    | ForgotPassword
 
 
 type ExhibitionPage
@@ -234,16 +226,11 @@ update msg (Model rec) =
 
         LogIn logInData ->
             ( case rec.page of
-                PageLogIn (LogInPage { nextPage }) ->
-                    case nextPage of
-                        Just next ->
-                            Model
-                                { rec
-                                    | page = next
-                                }
-
-                        Nothing ->
-                            Model rec
+                PageLogIn ( _, Just nextPage ) ->
+                    Model
+                        { rec
+                            | page = nextPage
+                        }
 
                 _ ->
                     Model rec
@@ -284,12 +271,16 @@ update msg (Model rec) =
                                     )
                         }
 
-                PageLogIn (LogInPage r) ->
+                PageLogIn ( logInModel, pageMaybe ) ->
                     Model
                         { rec
                             | page =
                                 PageLogIn
-                                    (LogInPage { r | studentIdOrEmailAddress = analysisStudentIdOrEmailAddress string })
+                                    ( Page.LogIn.update
+                                        (Page.LogIn.InputStudentIdOrEmailAddress string)
+                                        logInModel
+                                    , pageMaybe
+                                    )
                         }
 
                 _ ->
@@ -361,12 +352,16 @@ update msg (Model rec) =
                                     )
                         }
 
-                PageLogIn (LogInPage r) ->
+                PageLogIn ( logInModel, pageMaybe ) ->
                     Model
                         { rec
                             | page =
                                 PageLogIn
-                                    (LogInPage { r | password = Password.passwordFromString string |> Result.toMaybe })
+                                    ( Page.LogIn.update
+                                        (Page.LogIn.InputPassword string)
+                                        logInModel
+                                    , pageMaybe
+                                    )
                         }
 
                 _ ->
@@ -401,15 +396,7 @@ urlParser beforePageMaybe =
         , SiteMap.signUpParser
             |> Url.Parser.map (PageSignUp Page.SignUp.initModel)
         , SiteMap.logInParser
-            |> Url.Parser.map
-                (PageLogIn
-                    (LogInPage
-                        { nextPage = beforePageMaybe
-                        , studentIdOrEmailAddress = analysisStudentIdOrEmailAddress ""
-                        , password = Nothing
-                        }
-                    )
-                )
+            |> Url.Parser.map (PageLogIn ( Page.LogIn.initModel, beforePageMaybe ))
         , SiteMap.likeHistoryParser
             |> Url.Parser.map (PageLikeAndHistory Like)
         , SiteMap.exhibitionGoodsParser
@@ -885,9 +872,11 @@ mainViewAndMainTab page isWideScreenMode =
                             |> List.map (Html.map signUpPageEmitToMsg)
                     }
 
-                PageLogIn subPage ->
+                PageLogIn ( logInPageModel, pageMaybe ) ->
                     { tabData = TabSingle "ログイン"
-                    , mainView = userLogInView subPage
+                    , mainView =
+                        Page.LogIn.view logInPageModel
+                            |> List.map (Html.map (logInPageEmitToMsg pageMaybe))
                     }
 
                 PageSendSignUpEmail emailAddress response ->
@@ -1066,6 +1055,22 @@ signUpPageEmitToMsg emit =
 
         Page.SignUp.EmitSendConfirmToken ->
             SendConfirmToken
+
+
+logInPageEmitToMsg : Maybe Page -> Page.LogIn.Emit -> Msg
+logInPageEmitToMsg pageMaybe emit =
+    case emit of
+        Page.LogIn.EmitChangePage model ->
+            ChangePage (PageLogIn ( model, pageMaybe ))
+
+        Page.LogIn.EmitInputStudentIdOrEmailAddress string ->
+            InputStudentIdOrEmailAddress string
+
+        Page.LogIn.EmitInputPassword string ->
+            InputPassword string
+
+        Page.LogIn.EmitLogIn record ->
+            LogIn record
 
 
 {-| 商品の一覧 中身は適当
@@ -1341,194 +1346,6 @@ exhibitionViewItemPrice price =
             , Html.text "円"
             ]
         ]
-
-
-sendEmailView : Html.Html Msg
-sendEmailView =
-    Html.div
-        [ Html.Attributes.class "sendEmailView" ]
-        [ Html.text "新規登録かパスワードを忘れてしまった人のためにsアドに認証メールを送る" ]
-
-
-{-| ログイン画面
--}
-userLogInView : LogInPage -> List (Html.Html Msg)
-userLogInView logInPage =
-    [ Html.div
-        [ Html.Attributes.class "logIn-Container" ]
-        (case logInPage of
-            LogInPage { studentIdOrEmailAddress, password } ->
-                logInView studentIdOrEmailAddress password
-
-            ForgotPassword ->
-                forgotPasswordView
-        )
-    ]
-
-
-logInView : AnalysisStudentIdOrEmailAddressResult -> Maybe Password.Password -> List (Html.Html Msg)
-logInView analysisStudentIdOrEmailAddressResult password =
-    [ Html.div
-        [ Html.Attributes.class "logIn" ]
-        [ Html.form
-            [ Html.Attributes.class "logIn-group" ]
-            [ logInIdView analysisStudentIdOrEmailAddressResult
-            , logInPasswordView
-            , logInButton (getLogInData analysisStudentIdOrEmailAddressResult password)
-            ]
-        , orLabel
-        , Html.div
-            [ Html.Attributes.class "logIn-group" ]
-            [ signUpButton ]
-        ]
-    ]
-
-
-logInIdView : AnalysisStudentIdOrEmailAddressResult -> Html.Html Msg
-logInIdView analysisStudentIdOrEmailAddressResult =
-    Html.div
-        []
-        [ Html.label
-            [ Html.Attributes.class "logIn-subTitle", Html.Attributes.for "logInId" ]
-            [ Html.text "学籍番号かメールアドレス" ]
-        , Html.input
-            [ Html.Attributes.class "logIn-input"
-            , Html.Attributes.id "logInId"
-            , Html.Attributes.attribute "autocomplete" "email"
-            , Html.Events.onInput InputStudentIdOrEmailAddress
-            ]
-            []
-        , Html.div
-            []
-            [ Html.text
-                (case analysisStudentIdOrEmailAddressResult of
-                    AENone ->
-                        ""
-
-                    AEStudentId studentId ->
-                        "学籍番号" ++ StudentId.toStringWith20 studentId
-
-                    AEEmailAddress emailAddress ->
-                        "メールアドレス" ++ EmailAddress.toString emailAddress
-                )
-            ]
-        ]
-
-
-logInPasswordView : Html.Html Msg
-logInPasswordView =
-    Html.div
-        []
-        [ Html.label
-            [ Html.Attributes.class "logIn-subTitle"
-            , Html.Attributes.for "logInPassword"
-            ]
-            [ Html.text "パスワード"
-            , Html.span
-                [ Html.Attributes.class "logIn-subTitle-forgotPassword"
-                , Html.Events.onClick (ChangePage (PageLogIn ForgotPassword))
-                ]
-                [ Html.text "パスワードを忘れた" ]
-            ]
-        , Html.input
-            [ Html.Attributes.type_ "password"
-            , Html.Attributes.class "logIn-input"
-            , Html.Attributes.id "logInPassword"
-            , Html.Attributes.minlength 9
-            , Html.Attributes.maxlength 50
-            , Html.Attributes.attribute "autocomplete" "current-password"
-            , Html.Events.onInput InputPassword
-            ]
-            []
-        ]
-
-
-logInButton : Maybe { emailAddress : EmailAddress.EmailAddress, pass : Password.Password } -> Html.Html Msg
-logInButton logInDataMaybe =
-    Html.div
-        []
-        [ Html.button
-            ([ Html.Attributes.class "logIn-logInButton"
-             , Html.Attributes.disabled (logInDataMaybe == Nothing)
-             ]
-                ++ (case logInDataMaybe of
-                        Just logInData ->
-                            [ Html.Events.stopPropagationOn "click" (Json.Decode.succeed ( LogIn logInData, True )) ]
-
-                        Nothing ->
-                            []
-                   )
-            )
-            [ Html.text "ログイン" ]
-        ]
-
-
-{-| パスワードを忘れた画面
--}
-forgotPasswordView : List (Html.Html msg)
-forgotPasswordView =
-    [ Html.text "パスワードを忘れたら。登録している学籍番号かメールアドレスを入力してください。パスワードを再発行します。" ]
-
-
-orLabel : Html.Html msg
-orLabel =
-    Html.div [ Html.Attributes.class "logIn-orLabel" ]
-        [ Html.text "or" ]
-
-
-signUpButton : Html.Html msg
-signUpButton =
-    Html.a
-        [ Html.Attributes.class "logIn-signInButton"
-        , Html.Attributes.href SiteMap.signUpUrl
-        ]
-        [ Html.text "新規登録" ]
-
-
-{-| ログイン画面で使う入力の解析
--}
-analysisStudentIdOrEmailAddress : String -> AnalysisStudentIdOrEmailAddressResult
-analysisStudentIdOrEmailAddress string =
-    let
-        charList =
-            String.toList (String.trim string)
-    in
-    case StudentId.fromCharList charList of
-        Just studentId ->
-            AEStudentId studentId
-
-        Nothing ->
-            case EmailAddress.fromCharList charList of
-                Just emailAddress ->
-                    AEEmailAddress emailAddress
-
-                Nothing ->
-                    AENone
-
-
-type AnalysisStudentIdOrEmailAddressResult
-    = AENone
-    | AEStudentId StudentId
-    | AEEmailAddress EmailAddress.EmailAddress
-
-
-getLogInData : AnalysisStudentIdOrEmailAddressResult -> Maybe Password.Password -> Maybe { emailAddress : EmailAddress.EmailAddress, pass : Password.Password }
-getLogInData studentIdOrEmailAddress passwordMaybe =
-    case ( studentIdOrEmailAddress, passwordMaybe ) of
-        ( AEStudentId studentId, Just password ) ->
-            Just
-                { emailAddress = EmailAddress.fromSAddress (SAddress.fromStundetId studentId)
-                , pass = password
-                }
-
-        ( AEEmailAddress emailAddress, Just password ) ->
-            Just
-                { emailAddress = emailAddress
-                , pass = password
-                }
-
-        ( _, _ ) ->
-            Nothing
 
 
 siteMapXmlView : { tabData : TabData, mainView : List (Html.Html msg) }
