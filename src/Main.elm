@@ -1147,21 +1147,27 @@ itemImage =
 
 goodsView : Goods.Goods -> List (Html.Html Msg)
 goodsView goods =
-    [ goodsViewImage (Goods.getImage goods)
-    , goodsViewName (Goods.getName goods)
-    , goodsViewLike (Goods.getLike goods)
-    , goodsViewDescription (Goods.getDescription goods)
-    , goodsViewPriceAndBuyButton (Goods.getPrice goods)
-    , goodsViewCondition (Goods.getCondition goods)
-    , goodsViewLocation (Goods.getLocation goods)
-    , Html.div []
-        [ Html.text
-            (if Goods.getComplete goods then
-                "売却済み"
+    [ Html.div
+        [ Html.Attributes.class "goodsContainer" ]
+        [ Html.div
+            [ Html.Attributes.class "goods" ]
+            [ goodsViewImage (Goods.getImage goods)
+            , goodsViewName (Goods.getName goods)
+            , goodsViewLike (Goods.getLike goods)
+            , goodsViewDescription (Goods.getDescription goods)
+            , goodsViewPriceAndBuyButton (Goods.getPrice goods)
+            , goodsViewCondition (Goods.getCondition goods)
+            , goodsViewLocation (Goods.getLocation goods)
+            , Html.div []
+                [ Html.text
+                    (if Goods.getComplete goods then
+                        "売却済み"
 
-             else
-                "まだ売れていない"
-            )
+                     else
+                        "まだ売れていない"
+                    )
+                ]
+            ]
         ]
     ]
 

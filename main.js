@@ -9473,27 +9473,45 @@ var author$project$Main$goodsViewPriceAndBuyButton = function (price) {
 var author$project$Main$goodsView = function (goods) {
 	return _List_fromArray(
 		[
-			author$project$Main$goodsViewImage(
-			author$project$Goods$getImage(goods)),
-			author$project$Main$goodsViewName(
-			author$project$Goods$getName(goods)),
-			author$project$Main$goodsViewLike(
-			author$project$Goods$getLike(goods)),
-			author$project$Main$goodsViewDescription(
-			author$project$Goods$getDescription(goods)),
-			author$project$Main$goodsViewPriceAndBuyButton(
-			author$project$Goods$getPrice(goods)),
-			author$project$Main$goodsViewCondition(
-			author$project$Goods$getCondition(goods)),
-			author$project$Main$goodsViewLocation(
-			author$project$Goods$getLocation(goods)),
 			A2(
 			elm$html$Html$div,
-			_List_Nil,
 			_List_fromArray(
 				[
-					elm$html$Html$text(
-					author$project$Goods$getComplete(goods) ? '売却済み' : 'まだ売れていない')
+					elm$html$Html$Attributes$class('goodsContainer')
+				]),
+			_List_fromArray(
+				[
+					A2(
+					elm$html$Html$div,
+					_List_fromArray(
+						[
+							elm$html$Html$Attributes$class('goods')
+						]),
+					_List_fromArray(
+						[
+							author$project$Main$goodsViewImage(
+							author$project$Goods$getImage(goods)),
+							author$project$Main$goodsViewName(
+							author$project$Goods$getName(goods)),
+							author$project$Main$goodsViewLike(
+							author$project$Goods$getLike(goods)),
+							author$project$Main$goodsViewDescription(
+							author$project$Goods$getDescription(goods)),
+							author$project$Main$goodsViewPriceAndBuyButton(
+							author$project$Goods$getPrice(goods)),
+							author$project$Main$goodsViewCondition(
+							author$project$Goods$getCondition(goods)),
+							author$project$Main$goodsViewLocation(
+							author$project$Goods$getLocation(goods)),
+							A2(
+							elm$html$Html$div,
+							_List_Nil,
+							_List_fromArray(
+								[
+									elm$html$Html$text(
+									author$project$Goods$getComplete(goods) ? '売却済み' : 'まだ売れていない')
+								]))
+						]))
 				]))
 		]);
 };

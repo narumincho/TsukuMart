@@ -471,6 +471,21 @@ img {
 /*===============================================
                 Goods 商品詳細画面
 ===============================================*/
+
+.goodsContainer {
+    display: flex;
+    justify-content: center;
+}
+
+.goods {
+    display: grid;
+    max-width: 40rem;
+    gap: 1rem;
+    padding: 1.5rem;
+    box-sizing: border-box;
+    width: 100%;
+}
+
 .goods-image {
     display: block;
     width: 100%;
@@ -500,6 +515,7 @@ img {
     background-color: #ddd;
     padding: .2rem .5rem;
 }
+
 /*===============================================
                 Log In ログイン画面
 ===============================================*/
@@ -508,7 +524,6 @@ img {
     display: flex;
     justify-content: center;
 }
-
 
 .logIn {
     display: grid;
@@ -618,6 +633,7 @@ img {
     gap: 1rem;
     padding: 1.5rem;
     box-sizing: border-box;
+    width: 100%;
 }
 
 .signUp-label {
@@ -745,6 +761,7 @@ img {
     padding: 4rem 0 0 20rem;
     box-sizing: border-box;
 }
+
 .mainView-simpleText {
     font-size: 1.5rem;
 }
