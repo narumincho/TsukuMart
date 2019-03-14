@@ -28,7 +28,7 @@ import Url.Parser
    npmにあるlocal-web-serverを使います
    Windows PowerSellを起動して
 
-   Set-Location D:/tsukumart | ws --spa index.html
+   Set-Location D:/tsukumart/hosting_root | ws --spa index.html
    を入力する
 
    ブラウザのアドレスバーに http://127.0.0.1:8000 を入力するとページを見ることができる

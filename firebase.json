@@ -1,0 +1,23 @@
+{
+    "hosting": {
+        "public": "hosting_root",
+        "rewrites": [
+            {
+                "source": "/main.js",
+                "destination": "/main.js"
+            },
+            {
+                "source": "/style.css",
+                "destination": "/style.css"
+            },
+            {
+                "source": "/assets/**",
+                "destination": "/assets/**"
+            },
+            {
+                "source": "**",
+                "destination": "/index.html"
+            }
+        ]
+    }
+}

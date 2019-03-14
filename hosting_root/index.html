@@ -7,6 +7,7 @@
     <title>つくマート 読み込み中</title>
     <link rel="stylesheet" href="/style.css">
     <link rel="icon" href="/assets/logoBird.png">
+    <link rel="manifest" href="/manifest.json">
 </head>
 
 <body>
@@ -22,7 +23,7 @@
             } else {
                 app.ports.toNarrowScreenMode.send(null);
             }
-        }
+        };
         /* ウィンドウサイズのリサイズ情報をElmに送信 */
         addEventListener("resize", windowResizeListener);
         windowResizeListener();
@@ -38,7 +39,7 @@
                 app.ports.receiveImageDataUrl.send(fileReader.result)
             })
             fileReader.readAsDataURL(imageFile);
-        })
+        });
         /* 指定されたidの<input type="file">から複数のファイルの情報を受け取りData URLに変換してElmに送信 */
         app.ports.exhibitionImageChange.subscribe((id) => {
             const fileInputElement = document.getElementById(id);
@@ -56,6 +57,8 @@
                 })
                 fileReader.readAsDataURL(imageFile);
             }
-        })
+        });
+
+        navigator.serviceWorker.register("/serviceworker.js", { scope: "/" });
     </script>
 </body>
