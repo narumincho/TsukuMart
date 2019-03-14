@@ -9,6 +9,7 @@ module Api exposing
     , SignUpRequest
     , SignUpResponseError(..)
     , SignUpResponseOk(..)
+    , UniversityData(..)
     , logIn
     , signUp
     , signUpConfirm
@@ -19,6 +20,7 @@ import Http
 import Json.Decode
 import Json.Encode
 import Password
+import School
 
 
 
@@ -28,8 +30,20 @@ import Password
 -}
 
 
+{-| 新規登録に必要な情報。この内容をサーバーに送信する
+-}
 type alias SignUpRequest =
-    { emailAddress : EmailAddress.EmailAddress, pass : Password.Password, image : Maybe String }
+    { emailAddress : EmailAddress.EmailAddress
+    , pass : Password.Password
+    , image : Maybe String
+    , university : UniversityData
+    }
+
+
+type UniversityData
+    = UniversitySchool School.SchoolAndDepartment
+    | UniversityGraduateFromTsukuba School.Graduate School.SchoolAndDepartment
+    | UniversityGraduateFromNotTsukuba School.Graduate
 
 
 type SignUpResponseError

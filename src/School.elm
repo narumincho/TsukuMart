@@ -1,4 +1,18 @@
-module School exposing (Graduate, School, SchoolAndDepartment, departmentAllValue, departmentToJapaneseString, departmentToSchool, graduateAllValue, graduateToJapaneseString, schoolAllValue, schoolAndDepartmentToJapaneseString, schoolToIdString, schoolToJapaneseString)
+module School exposing
+    ( Graduate
+    , School
+    , SchoolAndDepartment
+    , departmentAllValue
+    , departmentToJapaneseString
+    , departmentToSchool
+    , graduateAllValue
+    , graduateToJapaneseString
+    , schoolAllValue
+    , schoolAndDepartmentToJapaneseString
+    , schoolToIdString
+    , schoolToJapaneseString
+    , schoolToOnlyOneDepartment
+    )
 
 {-| 学群
 -}
@@ -191,6 +205,19 @@ graduateAllValue =
     , GSlis
     , GGlobal
     ]
+
+
+schoolToOnlyOneDepartment : School -> Maybe SchoolAndDepartment
+schoolToOnlyOneDepartment school =
+    case school of
+        SAandd ->
+            Just DAandd
+
+        SSport ->
+            Just DSport
+
+        _ ->
+            Nothing
 
 
 schoolToIdString : School -> String
