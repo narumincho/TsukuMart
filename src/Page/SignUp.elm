@@ -926,5 +926,8 @@ signUpResultToString emailAddress signUpResult =
         Err Api.SignUpErrorNetworkError ->
             [ Html.text "ネットワークエラー。接続が切れている可能性があります" ]
 
+        Err Api.SignUpInvalidData ->
+            [ Html.text "不正なリクエストをした疑いがあります" ]
+
         Err Api.SignUpError ->
             [ Html.text "サーバーの回答を理解することができませんでした" ]

@@ -51,6 +51,7 @@ type SignUpResponseError
     | SignUpErrorBadUrl
     | SignUpErrorTimeout
     | SignUpErrorNetworkError
+    | SignUpInvalidData
     | SignUpError
 
 
@@ -67,7 +68,7 @@ confirmTokenToHeader (ConfirmToken token) =
     Http.header "Authorization" ("Bearer " ++ token)
 
 
-{-| 新規登録 /auth/signup/
+{-| 新規登録のリクエスト(Cmd) /auth/signup/
 -}
 signUp : SignUpRequest -> (Result SignUpResponseError SignUpResponseOk -> msg) -> Cmd msg
 signUp signUpData msg =
@@ -133,6 +134,8 @@ universityToSimpleRecord universityData =
             }
 
 
+{-| 新規登録のサーバーからの回答(Response)を解析
+-}
 signUpResponseToResult : Http.Response String -> Result SignUpResponseError SignUpResponseOk
 signUpResponseToResult response =
     case response of
@@ -159,12 +162,15 @@ signUpResponseBodyDecoder =
     Json.Decode.oneOf
         [ Json.Decode.field "confirm_token" Json.Decode.string
             |> Json.Decode.map (\token -> Ok (SignUpResponseOk (ConfirmToken token)))
-        , Json.Decode.field "reason" Json.Decode.string
+        , Json.Decode.field "error" Json.Decode.string
             |> Json.Decode.map
                 (\reason ->
                     case reason of
-                        "Email already exists" ->
+                        "email exists" ->
                             Err SignUpErrorAlreadySignUp
+
+                        "invalid data" ->
+                            Err SignUpInvalidData
 
                         _ ->
                             Err SignUpError
@@ -173,9 +179,9 @@ signUpResponseBodyDecoder =
 
 
 
-{- =================================================
-             認証Token送信 /auth/signup/confirm/
-   =================================================
+{- ========================================================================
+     新規登録の認証トークン送信(リリース前の一時的な処置) /auth/signup/confirm/
+   ========================================================================
 -}
 
 
@@ -184,7 +190,8 @@ type alias SignUpConfirmRequest =
 
 
 type SignUpConfirmResponseError
-    = SignUpConfirmResponseError
+    = SignUpConfirmResponseErrorAlreadyConfirmed
+    | SignUpConfirmResponseError
 
 
 type SignUpConfirmResponseOk
@@ -216,11 +223,30 @@ signUpConfirmResponseToResult response =
         Http.NetworkError_ ->
             Err SignUpConfirmResponseError
 
-        Http.BadStatus_ _ _ ->
-            Err SignUpConfirmResponseError
+        Http.BadStatus_ _ body ->
+            Json.Decode.decodeString signUpConfirmResponseDecoder body
+                |> Result.withDefault (Err SignUpConfirmResponseError)
 
         Http.GoodStatus_ _ _ ->
             Ok SignUpConfirmResponseOk
+
+
+{-| 新規登録の認証トークン送信のサーバーからの回答(Response)を解析
+-}
+signUpConfirmResponseDecoder : Json.Decode.Decoder (Result SignUpConfirmResponseError SignUpConfirmResponseOk)
+signUpConfirmResponseDecoder =
+    Json.Decode.oneOf
+        [ Json.Decode.field "ok" Json.Decode.string
+            |> Json.Decode.map
+                (\ok ->
+                    case ok of
+                        "confirmed" ->
+                            Err SignUpConfirmResponseErrorAlreadyConfirmed
+
+                        _ ->
+                            Err SignUpConfirmResponseError
+                )
+        ]
 
 
 

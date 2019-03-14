@@ -7998,12 +7998,13 @@ var author$project$Api$signUpJson = function (_n0) {
 						}
 					}()))));
 };
-var author$project$Api$SignUpError = 4;
+var author$project$Api$SignUpError = 5;
 var author$project$Api$SignUpErrorBadUrl = 1;
 var author$project$Api$SignUpErrorNetworkError = 3;
 var author$project$Api$SignUpErrorTimeout = 2;
 var author$project$Api$ConfirmToken = elm$core$Basics$identity;
 var author$project$Api$SignUpErrorAlreadySignUp = 0;
+var author$project$Api$SignUpInvalidData = 4;
 var author$project$Api$SignUpResponseOk = elm$core$Basics$identity;
 var elm$json$Json$Decode$map = _Json_map1;
 var elm$json$Json$Decode$oneOf = _Json_oneOf;
@@ -8019,13 +8020,16 @@ var author$project$Api$signUpResponseBodyDecoder = elm$json$Json$Decode$oneOf(
 			A2(
 			elm$json$Json$Decode$map,
 			function (reason) {
-				if (reason === 'Email already exists') {
-					return elm$core$Result$Err(0);
-				} else {
-					return elm$core$Result$Err(4);
+				switch (reason) {
+					case 'email exists':
+						return elm$core$Result$Err(0);
+					case 'invalid data':
+						return elm$core$Result$Err(4);
+					default:
+						return elm$core$Result$Err(5);
 				}
 			},
-			A2(elm$json$Json$Decode$field, 'reason', elm$json$Json$Decode$string))
+			A2(elm$json$Json$Decode$field, 'error', elm$json$Json$Decode$string))
 		]));
 var author$project$Api$signUpResponseToResult = function (response) {
 	switch (response.$) {
@@ -8039,13 +8043,13 @@ var author$project$Api$signUpResponseToResult = function (response) {
 			var body = response.b;
 			return A2(
 				elm$core$Result$withDefault,
-				elm$core$Result$Err(4),
+				elm$core$Result$Err(5),
 				A2(elm$json$Json$Decode$decodeString, author$project$Api$signUpResponseBodyDecoder, body));
 		default:
 			var body = response.b;
 			return A2(
 				elm$core$Result$withDefault,
-				elm$core$Result$Err(4),
+				elm$core$Result$Err(5),
 				A2(elm$json$Json$Decode$decodeString, author$project$Api$signUpResponseBodyDecoder, body));
 	}
 };
@@ -8068,18 +8072,37 @@ var author$project$Api$confirmTokenToHeader = function (_n0) {
 	var token = _n0;
 	return A2(elm$http$Http$header, 'Authorization', 'Bearer ' + token);
 };
-var author$project$Api$SignUpConfirmResponseError = 0;
+var author$project$Api$SignUpConfirmResponseError = 1;
 var author$project$Api$SignUpConfirmResponseOk = 0;
+var author$project$Api$SignUpConfirmResponseErrorAlreadyConfirmed = 0;
+var author$project$Api$signUpConfirmResponseDecoder = elm$json$Json$Decode$oneOf(
+	_List_fromArray(
+		[
+			A2(
+			elm$json$Json$Decode$map,
+			function (ok) {
+				if (ok === 'confirmed') {
+					return elm$core$Result$Err(0);
+				} else {
+					return elm$core$Result$Err(1);
+				}
+			},
+			A2(elm$json$Json$Decode$field, 'ok', elm$json$Json$Decode$string))
+		]));
 var author$project$Api$signUpConfirmResponseToResult = function (response) {
 	switch (response.$) {
 		case 0:
-			return elm$core$Result$Err(0);
+			return elm$core$Result$Err(1);
 		case 1:
-			return elm$core$Result$Err(0);
+			return elm$core$Result$Err(1);
 		case 2:
-			return elm$core$Result$Err(0);
+			return elm$core$Result$Err(1);
 		case 3:
-			return elm$core$Result$Err(0);
+			var body = response.b;
+			return A2(
+				elm$core$Result$withDefault,
+				elm$core$Result$Err(1),
+				A2(elm$json$Json$Decode$decodeString, author$project$Api$signUpConfirmResponseDecoder, body));
 		default:
 			return elm$core$Result$Ok(0);
 	}
@@ -10435,8 +10458,14 @@ var author$project$Page$SignUp$signUpResultToString = F2(
 						[
 							elm$html$Html$text('ネットワークエラー。接続が切れている可能性があります')
 						]);
-				default:
+				case 4:
 					var _n5 = signUpResult.a;
+					return _List_fromArray(
+						[
+							elm$html$Html$text('不正なリクエストをした疑いがあります')
+						]);
+				default:
+					var _n6 = signUpResult.a;
 					return _List_fromArray(
 						[
 							elm$html$Html$text('サーバーの回答を理解することができませんでした')
