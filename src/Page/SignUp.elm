@@ -22,6 +22,7 @@ type Model
         { sAddressAndPassword : SAddressAndPassword
         , university : UniversitySelect
         }
+    | DeletedAllUser Bool
 
 
 type UniversitySelect
@@ -60,12 +61,14 @@ type Emit
     | EmitInputPassword String
     | EmitSignUp Api.SignUpRequest
     | EmitSendConfirmToken
+    | EmitDeleteUserAll
 
 
 type Msg
     = InputStudentIdOrEmailAddress String
     | ReceiveImageDataUrl String
     | InputPassword String
+    | DeleteUserAll (Result () ())
 
 
 initModel : Model
@@ -81,70 +84,85 @@ initModel =
 
 
 update : Msg -> Model -> Model
-update msg (Model { sAddressAndPassword, university }) =
-    case msg of
-        InputStudentIdOrEmailAddress string ->
-            case sAddressAndPassword of
-                StudentHasSAddress r ->
-                    Model
-                        { sAddressAndPassword =
-                            StudentHasSAddress
-                                { r
-                                    | studentIdOrTsukubaEmailAddress =
-                                        analysisStudentIdOrSAddress string
+update msg model =
+    case model of
+        Model { sAddressAndPassword, university } ->
+            case msg of
+                InputStudentIdOrEmailAddress string ->
+                    case sAddressAndPassword of
+                        StudentHasSAddress r ->
+                            Model
+                                { sAddressAndPassword =
+                                    StudentHasSAddress
+                                        { r
+                                            | studentIdOrTsukubaEmailAddress =
+                                                analysisStudentIdOrSAddress string
+                                        }
+                                , university = university
                                 }
-                        , university = university
-                        }
 
-                NewStudent r ->
-                    Model
-                        { sAddressAndPassword =
-                            NewStudent
-                                { r
-                                    | emailAddress = analysisEmailAddress string
+                        NewStudent r ->
+                            Model
+                                { sAddressAndPassword =
+                                    NewStudent
+                                        { r
+                                            | emailAddress = analysisEmailAddress string
+                                        }
+                                , university = university
                                 }
-                        , university = university
-                        }
 
-        ReceiveImageDataUrl dataUrlString ->
-            case sAddressAndPassword of
-                NewStudent r ->
-                    Model
-                        { sAddressAndPassword =
-                            NewStudent
-                                { r | imageUrl = Just dataUrlString }
-                        , university = university
-                        }
-
-                _ ->
-                    Model
-                        { sAddressAndPassword = sAddressAndPassword
-                        , university = university
-                        }
-
-        InputPassword string ->
-            Model
-                { sAddressAndPassword =
+                ReceiveImageDataUrl dataUrlString ->
                     case sAddressAndPassword of
                         NewStudent r ->
-                            NewStudent
-                                { r | password = Password.passwordFromString string }
+                            Model
+                                { sAddressAndPassword =
+                                    NewStudent
+                                        { r | imageUrl = Just dataUrlString }
+                                , university = university
+                                }
 
-                        StudentHasSAddress r ->
-                            StudentHasSAddress
-                                { r | password = Password.passwordFromString string }
-                , university = university
-                }
+                        _ ->
+                            Model
+                                { sAddressAndPassword = sAddressAndPassword
+                                , university = university
+                                }
+
+                InputPassword string ->
+                    Model
+                        { sAddressAndPassword =
+                            case sAddressAndPassword of
+                                NewStudent r ->
+                                    NewStudent
+                                        { r | password = Password.passwordFromString string }
+
+                                StudentHasSAddress r ->
+                                    StudentHasSAddress
+                                        { r | password = Password.passwordFromString string }
+                        , university = university
+                        }
+
+                DeleteUserAll response ->
+                    DeletedAllUser
+                        (case response of
+                            Ok () ->
+                                True
+
+                            Err () ->
+                                False
+                        )
+
+        DeletedAllUser _ ->
+            model
 
 
 {-| 新規登録画面の表示
 -}
 view : Model -> List (Html.Html Emit)
 view userSignUpPage =
-    case userSignUpPage of
-        Model { sAddressAndPassword, university } ->
-            [ Html.div
-                [ Html.Attributes.class "signUpContainer" ]
+    [ Html.div
+        [ Html.Attributes.class "signUpContainer" ]
+        (case userSignUpPage of
+            Model { sAddressAndPassword, university } ->
                 [ Html.Keyed.node "form"
                     [ Html.Attributes.class "signUp" ]
                     ([ ( "s_or_nos"
@@ -170,9 +188,30 @@ view userSignUpPage =
                                     )
                            )
                         ++ [ ( "submit", signUpSubmitButton (getSignUpRequest userSignUpPage) ) ]
+                        ++ [ ( "deleteAllUser"
+                             , Html.button
+                                [ Html.Events.preventDefaultOn "click"
+                                    (Json.Decode.succeed ( EmitDeleteUserAll, True ))
+                                ]
+                                [ Html.text "すべてのユーザーを削除" ]
+                             )
+                           ]
                     )
                 ]
-            ]
+
+            DeletedAllUser result ->
+                [ Html.text
+                    ("すべてのユーザーの削除処理を"
+                        ++ (if result then
+                                "成功した"
+
+                            else
+                                "失敗した"
+                           )
+                    )
+                ]
+        )
+    ]
 
 
 {-| sアドを持っているか持っていないかを選択するフォーム
@@ -815,17 +854,22 @@ signUpSubmitButton signUpRequestMaybe =
 {-| 画面の情報から新規登録できる情報を入力しているかと、新規登録に必要なデータを取りだす
 -}
 getSignUpRequest : Model -> Maybe Api.SignUpRequest
-getSignUpRequest (Model { sAddressAndPassword, university }) =
-    case ( getSignUpRequestEmailAddressAndPasswordAndImage sAddressAndPassword, getSignUpRequestUniversity university ) of
-        ( Just { emailAddress, password, image }, Just universityData ) ->
-            Just
-                { emailAddress = emailAddress
-                , pass = password
-                , image = image
-                , university = universityData
-                }
+getSignUpRequest model =
+    case model of
+        Model { sAddressAndPassword, university } ->
+            case ( getSignUpRequestEmailAddressAndPasswordAndImage sAddressAndPassword, getSignUpRequestUniversity university ) of
+                ( Just { emailAddress, password, image }, Just universityData ) ->
+                    Just
+                        { emailAddress = emailAddress
+                        , pass = password
+                        , image = image
+                        , university = universityData
+                        }
 
-        ( _, _ ) ->
+                ( _, _ ) ->
+                    Nothing
+
+        DeletedAllUser _ ->
             Nothing
 
 

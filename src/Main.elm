@@ -115,6 +115,8 @@ type Msg
     | ReceiveImageDataUrlMulti (List String)
     | InputPassword String
     | SendConfirmToken
+    | DeleteAllUser
+    | DeleteAllUserResponse (Result () ())
 
 
 main : Program () Model Msg
@@ -374,6 +376,24 @@ update msg (Model rec) =
                 PageSendSignUpEmail _ (Just (Ok (Api.SignUpResponseOk token))) ->
                     ( Model rec
                     , Api.signUpConfirm { confirmToken = token } SignUpConfirmResponse
+                    )
+
+                _ ->
+                    ( Model rec
+                    , Cmd.none
+                    )
+
+        DeleteAllUser ->
+            ( Model rec
+            , Api.debugDeleteAllUser DeleteAllUserResponse
+            )
+
+        DeleteAllUserResponse response ->
+            case rec.page of
+                PageSignUp signUpModel ->
+                    ( Model
+                        { rec | page = PageSignUp (Page.SignUp.update (Page.SignUp.DeleteUserAll response) signUpModel) }
+                    , Cmd.none
                     )
 
                 _ ->
@@ -1055,6 +1075,9 @@ signUpPageEmitToMsg emit =
 
         Page.SignUp.EmitSendConfirmToken ->
             SendConfirmToken
+
+        Page.SignUp.EmitDeleteUserAll ->
+            DeleteAllUser
 
 
 logInPageEmitToMsg : Maybe Page -> Page.LogIn.Emit -> Msg

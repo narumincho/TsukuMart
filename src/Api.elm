@@ -10,6 +10,7 @@ module Api exposing
     , SignUpResponseError(..)
     , SignUpResponseOk(..)
     , UniversityData(..)
+    , debugDeleteAllUser
     , logIn
     , signUp
     , signUpConfirm
@@ -394,3 +395,37 @@ tokenRefreshBodyStringDecoder =
             (\access ->
                 Ok (TokenRefreshResponseOk { access = Token access })
             )
+
+
+
+{- ===========================================================
+      debug_user_delete_list /{version}/debug/user/delete/
+   ===========================================================
+-}
+
+
+debugDeleteAllUser : (Result () () -> msg) -> Cmd msg
+debugDeleteAllUser msg =
+    Http.get
+        { url = "http://api.tsukumart.com/v1/debug/user/delete/?all=true"
+        , expect = Http.expectStringResponse msg debugDeleteAllUserResponseToResult
+        }
+
+
+debugDeleteAllUserResponseToResult : Http.Response String -> Result () ()
+debugDeleteAllUserResponseToResult response =
+    case response of
+        Http.BadUrl_ _ ->
+            Err ()
+
+        Http.Timeout_ ->
+            Err ()
+
+        Http.NetworkError_ ->
+            Err ()
+
+        Http.BadStatus_ _ _ ->
+            Ok ()
+
+        Http.GoodStatus_ _ _ ->
+            Ok ()
