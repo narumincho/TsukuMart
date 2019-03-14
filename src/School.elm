@@ -3,9 +3,11 @@ module School exposing
     , School
     , SchoolAndDepartment
     , departmentAllValue
+    , departmentToIdString
     , departmentToJapaneseString
     , departmentToSchool
     , graduateAllValue
+    , graduateToIdString
     , graduateToJapaneseString
     , schoolAllValue
     , schoolAndDepartmentToJapaneseString
@@ -318,6 +320,37 @@ departmentToJapaneseString =
     schoolAndDepartmentToJapaneseString >> .department
 
 
+departmentToIdString : SchoolAndDepartment -> String
+departmentToIdString department =
+    case department of
+        DHumcul d ->
+            humculDepartmentToIdString d
+
+        DSocint d ->
+            socintDepartmentToIdString d
+
+        DHuman d ->
+            humanDepartmentToIdString d
+
+        DLife d ->
+            lifeDepartmentToIdString d
+
+        DSse d ->
+            sseDepartmentToIdString d
+
+        DInfo d ->
+            infoDepartmentToIdString d
+
+        DMed d ->
+            medDepartmentToIdString d
+
+        DAandd ->
+            schoolToIdString SAandd
+
+        DSport ->
+            schoolToIdString SSport
+
+
 schoolAndDepartmentToJapaneseString : SchoolAndDepartment -> { school : String, department : Maybe String }
 schoolAndDepartmentToJapaneseString schoolAndDepartment =
     (case schoolAndDepartment of
@@ -596,3 +629,34 @@ graduateToJapaneseString gradate =
 
         GGlobal ->
             "グローバル研究院"
+
+
+graduateToIdString : Graduate -> String
+graduateToIdString graduate =
+    case graduate of
+        GEducation ->
+            "education"
+
+        GHass ->
+            "hass"
+
+        GGabs ->
+            "gabs"
+
+        GPas ->
+            "pas"
+
+        GSie ->
+            "sie"
+
+        GLife ->
+            "life"
+
+        GChs ->
+            "chs"
+
+        GSlis ->
+            "slis"
+
+        GGlobal ->
+            "global"

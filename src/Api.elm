@@ -81,7 +81,11 @@ signUp signUpData msg =
 {-| 新規登録のJSONを生成
 -}
 signUpJson : SignUpRequest -> Json.Encode.Value
-signUpJson { emailAddress, pass, image } =
+signUpJson { emailAddress, pass, image, university } =
+    let
+        { graduate, department } =
+            universityToSimpleRecord university
+    in
     Json.Encode.object
         ([ ( "email", Json.Encode.string (EmailAddress.toString emailAddress) )
          , ( "password", Json.Encode.string (Password.toString pass) )
@@ -93,7 +97,40 @@ signUpJson { emailAddress, pass, image } =
                     Nothing ->
                         []
                )
+            ++ (case graduate of
+                    Just g ->
+                        [ ( "graduate", Json.Encode.string (School.graduateToIdString g) ) ]
+
+                    Nothing ->
+                        []
+               )
+            ++ (case department of
+                    Just d ->
+                        [ ( "department", Json.Encode.string (School.departmentToIdString d) ) ]
+
+                    Nothing ->
+                        []
+               )
         )
+
+
+universityToSimpleRecord : UniversityData -> { graduate : Maybe School.Graduate, department : Maybe School.SchoolAndDepartment }
+universityToSimpleRecord universityData =
+    case universityData of
+        UniversitySchool schoolAndDepartment ->
+            { graduate = Nothing
+            , department = Just schoolAndDepartment
+            }
+
+        UniversityGraduateFromTsukuba graduate schoolAndDepartment ->
+            { graduate = Just graduate
+            , department = Just schoolAndDepartment
+            }
+
+        UniversityGraduateFromNotTsukuba graduate ->
+            { graduate = Just graduate
+            , department = Nothing
+            }
 
 
 signUpResponseToResult : Http.Response String -> Result SignUpResponseError SignUpResponseOk
