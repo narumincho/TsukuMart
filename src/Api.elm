@@ -42,6 +42,7 @@ type alias SignUpRequest =
     , pass : Password.Password
     , image : Maybe String
     , university : UniversityData
+    , nickName : String
     }
 
 
@@ -92,7 +93,7 @@ signUp signUpData msg =
 {-| 新規登録のJSONを生成
 -}
 signUpJson : SignUpRequest -> Json.Encode.Value
-signUpJson { emailAddress, pass, image, university } =
+signUpJson { emailAddress, pass, image, university, nickName } =
     let
         { graduate, department } =
             universityToSimpleRecord university
@@ -100,6 +101,7 @@ signUpJson { emailAddress, pass, image, university } =
     Json.Encode.object
         ([ ( "email", Json.Encode.string (EmailAddress.toString emailAddress) )
          , ( "password", Json.Encode.string (Password.toString pass) )
+         , ( "nick", Json.Encode.string nickName )
          ]
             ++ (case image of
                     Just imageDataUrl ->

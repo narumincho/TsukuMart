@@ -122,6 +122,7 @@ type Msg
     | InputStudentIdOrEmailAddress String
     | InputStudentImage String
     | InputExhibitionImage String
+    | InputNickName String
     | ReceiveImageDataUrl String
     | ReceiveImageDataUrlMulti (List String)
     | InputPassword String
@@ -383,6 +384,17 @@ update msg (Model rec) =
         InputExhibitionImage idString ->
             ( Model rec
             , exhibitionImageChange idString
+            )
+
+        InputNickName string ->
+            ( case rec.page of
+                PageSignUp signUpModel ->
+                    Model
+                        { rec | page = PageSignUp (signUpModel |> Page.SignUp.update (Page.SignUp.InputNickName string)) }
+
+                _ ->
+                    Model rec
+            , Cmd.none
             )
 
         ReceiveImageDataUrl urlString ->
@@ -1028,6 +1040,9 @@ signUpPageEmitToMsg emit =
 
         Page.SignUp.EmitDeleteUserAll ->
             DeleteAllUser
+
+        Page.SignUp.EmitInputNickName string ->
+            InputNickName string
 
 
 logInPageEmitToMsg : Maybe Page -> Page.LogIn.Emit -> Msg

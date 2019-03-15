@@ -23,6 +23,7 @@ type Model
         -- 新規登録入力フォーム
         { sAddressAndPassword : SAddressAndPassword
         , university : UniversitySelect
+        , nickName : String
         }
     | SentSingUpData EmailAddress.EmailAddress (Maybe (Result Api.SignUpResponseError Api.SignUpResponseOk))
     | SentConfirmTokenError (Maybe Api.SignUpConfirmResponseError)
@@ -66,6 +67,7 @@ type Emit
     | EmitSignUp Api.SignUpRequest
     | EmitSendConfirmToken String
     | EmitDeleteUserAll
+    | EmitInputNickName String
 
 
 type Msg
@@ -74,6 +76,7 @@ type Msg
     | InputPassword String
     | DeleteUserAll (Result () ())
     | SignUpResponse (Result Api.SignUpResponseError Api.SignUpResponseOk)
+    | InputNickName String
 
 
 {-| すべて空白の新規登録画面を表示するためのModel
@@ -87,6 +90,7 @@ initModel =
                 , password = Password.passwordFromString ""
                 }
         , university = UniversitySchool UniversitySchoolNone
+        , nickName = ""
         }
 
 
@@ -110,59 +114,56 @@ sentConfirmTokenModel signUpResponseError =
 update : Msg -> Model -> Model
 update msg model =
     case model of
-        Normal { sAddressAndPassword, university } ->
+        Normal rec ->
             case msg of
                 InputStudentIdOrEmailAddress string ->
-                    case sAddressAndPassword of
+                    case rec.sAddressAndPassword of
                         StudentHasSAddress r ->
                             Normal
-                                { sAddressAndPassword =
-                                    StudentHasSAddress
-                                        { r
-                                            | studentIdOrTsukubaEmailAddress =
-                                                analysisStudentIdOrSAddress string
-                                        }
-                                , university = university
+                                { rec
+                                    | sAddressAndPassword =
+                                        StudentHasSAddress
+                                            { r
+                                                | studentIdOrTsukubaEmailAddress =
+                                                    analysisStudentIdOrSAddress string
+                                            }
                                 }
 
                         NewStudent r ->
                             Normal
-                                { sAddressAndPassword =
-                                    NewStudent
-                                        { r
-                                            | emailAddress = analysisEmailAddress string
-                                        }
-                                , university = university
+                                { rec
+                                    | sAddressAndPassword =
+                                        NewStudent
+                                            { r
+                                                | emailAddress = analysisEmailAddress string
+                                            }
                                 }
 
                 ReceiveImageDataUrl dataUrlString ->
-                    case sAddressAndPassword of
+                    case rec.sAddressAndPassword of
                         NewStudent r ->
                             Normal
-                                { sAddressAndPassword =
-                                    NewStudent
-                                        { r | imageUrl = Just dataUrlString }
-                                , university = university
+                                { rec
+                                    | sAddressAndPassword =
+                                        NewStudent
+                                            { r | imageUrl = Just dataUrlString }
                                 }
 
                         _ ->
-                            Normal
-                                { sAddressAndPassword = sAddressAndPassword
-                                , university = university
-                                }
+                            Normal rec
 
                 InputPassword string ->
                     Normal
-                        { sAddressAndPassword =
-                            case sAddressAndPassword of
-                                NewStudent r ->
-                                    NewStudent
-                                        { r | password = Password.passwordFromString string }
+                        { rec
+                            | sAddressAndPassword =
+                                case rec.sAddressAndPassword of
+                                    NewStudent r ->
+                                        NewStudent
+                                            { r | password = Password.passwordFromString string }
 
-                                StudentHasSAddress r ->
-                                    StudentHasSAddress
-                                        { r | password = Password.passwordFromString string }
-                        , university = university
+                                    StudentHasSAddress r ->
+                                        StudentHasSAddress
+                                            { r | password = Password.passwordFromString string }
                         }
 
                 DeleteUserAll response ->
@@ -174,6 +175,12 @@ update msg model =
                             Err () ->
                                 False
                         )
+
+                InputNickName nickName ->
+                    Normal
+                        { rec
+                            | nickName = nickName
+                        }
 
                 _ ->
                     model
@@ -207,8 +214,8 @@ view userSignUpPage =
     let
         ( tabText, mainView ) =
             case userSignUpPage of
-                Normal { sAddressAndPassword, university } ->
-                    ( "新規登録", normalView sAddressAndPassword university )
+                Normal { sAddressAndPassword, university, nickName } ->
+                    ( "新規登録", normalView sAddressAndPassword university nickName )
 
                 SentSingUpData emailAddress maybe ->
                     ( "新規登録情報の送信", sentSingUpDataView emailAddress maybe )
@@ -237,13 +244,13 @@ view userSignUpPage =
     )
 
 
-normalView : SAddressAndPassword -> UniversitySelect -> Html.Html Emit
-normalView sAddressAndPassword university =
+normalView : SAddressAndPassword -> UniversitySelect -> String -> Html.Html Emit
+normalView sAddressAndPassword university nickName =
     Html.Keyed.node "form"
         [ Html.Attributes.class "signUp" ]
         ([ ( "s_or_nos"
            , sAddressView sAddressAndPassword
-                |> Html.map (\s -> EmitChangePage (Normal { sAddressAndPassword = s, university = university }))
+                |> Html.map (\s -> EmitChangePage (Normal { sAddressAndPassword = s, university = university, nickName = nickName }))
            )
          ]
             ++ (case sAddressAndPassword of
@@ -253,17 +260,24 @@ normalView sAddressAndPassword university =
                     NewStudent { emailAddress, imageUrl, password } ->
                         newStudentForm emailAddress imageUrl password
                )
+            ++ nickNameForm nickName
             ++ (signUpUniversityView university
                     |> List.map
                         (Tuple.mapSecond
                             (Html.map
                                 (\s ->
-                                    EmitChangePage (Normal { sAddressAndPassword = sAddressAndPassword, university = s })
+                                    EmitChangePage
+                                        (Normal
+                                            { sAddressAndPassword = sAddressAndPassword
+                                            , university = s
+                                            , nickName = nickName
+                                            }
+                                        )
                                 )
                             )
                         )
                )
-            ++ [ ( "submit", signUpSubmitButton (getSignUpRequest sAddressAndPassword university) ) ]
+            ++ [ ( "submit", signUpSubmitButton (getSignUpRequest sAddressAndPassword university nickName) ) ]
             ++ [ ( "deleteAllUser"
                  , Html.button
                     [ Html.Events.preventDefaultOn "click"
@@ -548,6 +562,39 @@ passwordForm passwordResult =
                 )
             ]
         ]
+
+
+{-| -}
+nickNameForm : String -> List ( String, Html.Html Emit )
+nickNameForm nickName =
+    [ ( "nickNameForm"
+      , Html.div
+            []
+            ([ Html.label
+                [ Html.Attributes.class "signUp-label"
+                , Html.Attributes.for "nickNameForm"
+                ]
+                [ Html.text "表示名" ]
+             , Html.input
+                [ Html.Attributes.class "signUp-input"
+                , Html.Attributes.id "nickNameForm"
+                , Html.Attributes.attribute "autocomplete" "nickname"
+                , Html.Events.onInput EmitInputNickName
+                ]
+                []
+             ]
+                ++ (if String.length nickName < 1 then
+                        [ Html.text "表示名は 1文字以上である必要があります" ]
+
+                    else if 50 < String.length nickName then
+                        [ Html.text "表示名は 50文字以内である必要があります" ]
+
+                    else
+                        []
+                   )
+            )
+      )
+    ]
 
 
 {-| 新規登録の研究科学群学類入力フォーム
@@ -914,16 +961,21 @@ signUpSubmitButton signUpRequestMaybe =
 
 {-| 画面の情報から新規登録できる情報を入力しているかと、新規登録に必要なデータを取りだす
 -}
-getSignUpRequest : SAddressAndPassword -> UniversitySelect -> Maybe Api.SignUpRequest
-getSignUpRequest sAddressAndPassword university =
+getSignUpRequest : SAddressAndPassword -> UniversitySelect -> String -> Maybe Api.SignUpRequest
+getSignUpRequest sAddressAndPassword university nickName =
     case ( getSignUpRequestEmailAddressAndPasswordAndImage sAddressAndPassword, getSignUpRequestUniversity university ) of
         ( Just { emailAddress, password, image }, Just universityData ) ->
-            Just
-                { emailAddress = emailAddress
-                , pass = password
-                , image = image
-                , university = universityData
-                }
+            if 1 <= String.length nickName && String.length nickName <= 50 then
+                Just
+                    { emailAddress = emailAddress
+                    , pass = password
+                    , image = image
+                    , university = universityData
+                    , nickName = nickName
+                    }
+
+            else
+                Nothing
 
         ( _, _ ) ->
             Nothing
