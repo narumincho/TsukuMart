@@ -3,7 +3,6 @@ port module Main exposing (main)
 import Api
 import Browser
 import Browser.Navigation
-import EmailAddress
 import Goods
 import Html
 import Html.Attributes
@@ -12,10 +11,7 @@ import Html.Keyed
 import Json.Decode
 import Page.LogIn
 import Page.SignUp
-import Password
-import SAddress
 import SiteMap
-import StudentId
 import Svg
 import Svg.Attributes
 import Tab
@@ -26,13 +22,16 @@ import Url.Parser
 
 {-
    ローカルホストで動作を試す
-   npmにあるlocal-web-serverを使います
+   npmにあるlocal-web-server( https://www.npmjs.com/package/local-web-server )を使います。コマンド名がwsだけど使っているのはws( https://www.npmjs.com/package/ws )ではない。
    Windows PowerSellを起動して
 
    Set-Location D:/tsukumart/hosting_root | ws --spa index.html
+
    を入力する
 
-   ブラウザのアドレスバーに http://127.0.0.1:8000 を入力するとページを見ることができる
+   ブラウザのアドレスバーに http://127.0.0.1:8000 を入力するとページを見ることができる。
+
+    https://tsukumart-demo.firebaseapp.com/ で出力結果を見ることができるが、APIのサーバーとドメインが違うせいで通信できない
 -}
 
 
@@ -86,7 +85,7 @@ type ExhibitionPage
 
 type HomePage
     = HomePageRecent
-    | HomePageRecommend { valid : Bool } -- 不正なURLで飛んだかどうか
+    | HomePageRecommend { message : Maybe String } -- 不正なURLで飛んだかどうか
     | HomePageFree
 
 
@@ -221,7 +220,7 @@ update msg (Model rec) =
         SignUp signUpData ->
             ( Model
                 { rec
-                    | page = PageSignUp (Page.SignUp.sentSignUpDataModel signUpData.emailAddress)
+                    | page = PageSignUp (Page.SignUp.sentSignUpDataInitModel signUpData.emailAddress)
                 }
             , Api.signUp signUpData SignUpResponse
             )
@@ -255,8 +254,17 @@ update msg (Model rec) =
             , Cmd.none
             )
 
-        SignUpConfirmResponse _ ->
-            ( Model rec
+        SignUpConfirmResponse response ->
+            ( Model
+                { rec
+                    | page =
+                        case response of
+                            Ok _ ->
+                                PageHome (HomePageRecommend { message = Just "新規登録できた" })
+
+                            Err e ->
+                                PageSignUp (Page.SignUp.sentConfirmTokenModel e)
+                }
             , Cmd.none
             )
 
@@ -372,7 +380,7 @@ update msg (Model rec) =
             )
 
         SendConfirmToken token ->
-            ( Model rec
+            ( Model { rec | page = PageSignUp Page.SignUp.sentConfirmTokenInitModel }
             , Api.signUpConfirm { confirmToken = token } SignUpConfirmResponse
             )
 
@@ -398,14 +406,14 @@ update msg (Model rec) =
 urlToPage : Url.Url -> Maybe Page -> Page
 urlToPage url beforePageMaybe =
     Url.Parser.parse (urlParser beforePageMaybe) url
-        |> Maybe.withDefault (PageHome (HomePageRecommend { valid = False }))
+        |> Maybe.withDefault (PageHome (HomePageRecommend { message = Just "指定したページが見つからないのでホームに移動しました" }))
 
 
 urlParser : Maybe Page -> Url.Parser.Parser (Page -> a) a
 urlParser beforePageMaybe =
     Url.Parser.oneOf
         [ SiteMap.homeParser
-            |> Url.Parser.map (PageHome (HomePageRecommend { valid = True }))
+            |> Url.Parser.map (PageHome (HomePageRecommend { message = Nothing }))
         , SiteMap.signUpParser
             |> Url.Parser.map (PageSignUp Page.SignUp.initModel)
         , SiteMap.logInParser
@@ -873,12 +881,12 @@ mainViewAndMainTab page isWideScreenMode =
     ]
 
 
-invalidLinkErrorMsg : Html.Html msg
-invalidLinkErrorMsg =
+invalidLinkErrorMsg : String -> Html.Html msg
+invalidLinkErrorMsg message =
     Html.div
         [ Html.Attributes.class "invalidLinkErrorMsg"
         ]
-        [ Html.text "指定したページが見つからないのでホームに移動しました" ]
+        [ Html.text message ]
 
 
 signUpPageEmitToMsg : Page.SignUp.Emit -> Msg
@@ -926,7 +934,7 @@ homeView : Bool -> HomePage -> ( Tab.Tab HomePage, List (Html.Html Msg) )
 homeView isWideScreenMode subPage =
     ( Tab.Multi
         [ ( HomePageRecent, "新着" )
-        , ( HomePageRecommend { valid = True }, "おすすめ" )
+        , ( HomePageRecommend { message = Nothing }, "おすすめ" )
         , ( HomePageFree, "0円" )
         ]
         (case subPage of
@@ -940,12 +948,13 @@ homeView isWideScreenMode subPage =
                 2
         )
     , case subPage of
-        HomePageRecommend { valid } ->
-            if valid then
-                [ itemList isWideScreenMode, exhibitButton ]
+        HomePageRecommend { message } ->
+            case message of
+                Just m ->
+                    [ invalidLinkErrorMsg m, itemList isWideScreenMode, exhibitButton ]
 
-            else
-                [ invalidLinkErrorMsg, itemList isWideScreenMode, exhibitButton ]
+                Nothing ->
+                    [ itemList isWideScreenMode, exhibitButton ]
 
         _ ->
             [ itemList isWideScreenMode, exhibitButton ]

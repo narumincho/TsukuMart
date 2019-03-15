@@ -4,7 +4,7 @@ module Api exposing
     , LogInResponseError
     , LogInResponseOk
     , SignUpConfirmRequest
-    , SignUpConfirmResponseError
+    , SignUpConfirmResponseError(..)
     , SignUpConfirmResponseOk
     , SignUpRequest
     , SignUpResponseError(..)
