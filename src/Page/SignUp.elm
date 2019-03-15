@@ -998,14 +998,17 @@ signUpResultToString : EmailAddress.EmailAddress -> Result Api.SignUpResponseErr
 signUpResultToString emailAddress signUpResult =
     case signUpResult of
         Ok (Api.SignUpResponseOk token) ->
-            [ Html.text
-                ("送信完了。"
-                    ++ EmailAddress.toString emailAddress
-                    ++ "にメールを送信しました。届いたメールのリンクをクリックして認証をしてください"
-                    ++ "token = \""
-                    ++ token
-                    ++ "\""
-                )
+            [ Html.div
+                []
+                [ Html.text
+                    ("送信完了。"
+                        ++ EmailAddress.toString emailAddress
+                        ++ "にメールを送信しました。届いたメールのリンクをクリックして認証をしてください"
+                        ++ "token = \""
+                        ++ token
+                        ++ "\""
+                    )
+                ]
             , Html.div
                 [ Html.Events.onClick (EmitSendConfirmToken token)
                 , Html.Attributes.style "border" "solid 2px black"
