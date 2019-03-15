@@ -15,6 +15,7 @@ type Model
     = LogInPage
         { studentIdOrEmailAddress : AnalysisStudentIdOrEmailAddressResult
         , password : Maybe Password.Password
+        , sending : Bool -- ログイン処理で送信か
         }
     | ForgotPassword
 
@@ -29,6 +30,8 @@ type Emit
 type Msg
     = InputPassword String
     | InputStudentIdOrEmailAddress String
+    | SendLogIn
+    | StopSendLogIn
 
 
 type AnalysisStudentIdOrEmailAddressResult
@@ -42,6 +45,7 @@ initModel =
     LogInPage
         { studentIdOrEmailAddress = analysisStudentIdOrEmailAddress ""
         , password = Nothing
+        , sending = False
         }
 
 
@@ -68,6 +72,23 @@ update msg model =
                 ForgotPassword ->
                     ForgotPassword
 
+        SendLogIn ->
+            case model of
+                LogInPage r ->
+                    LogInPage
+                        { r | sending = True }
+
+                ForgotPassword ->
+                    ForgotPassword
+
+        StopSendLogIn ->
+            case model of
+                LogInPage r ->
+                    LogInPage { r | sending = False }
+
+                ForgotPassword ->
+                    ForgotPassword
+
 
 {-| ログイン画面
 -}
@@ -76,8 +97,8 @@ view logInPage =
     [ Html.div
         [ Html.Attributes.class "logIn-Container" ]
         (case logInPage of
-            LogInPage { studentIdOrEmailAddress, password } ->
-                logInView studentIdOrEmailAddress password
+            LogInPage { studentIdOrEmailAddress, password, sending } ->
+                logInView studentIdOrEmailAddress password sending
 
             ForgotPassword ->
                 forgotPasswordView
@@ -85,16 +106,23 @@ view logInPage =
     ]
 
 
-logInView : AnalysisStudentIdOrEmailAddressResult -> Maybe Password.Password -> List (Html.Html Emit)
-logInView analysisStudentIdOrEmailAddressResult password =
+logInView : AnalysisStudentIdOrEmailAddressResult -> Maybe Password.Password -> Bool -> List (Html.Html Emit)
+logInView analysisStudentIdOrEmailAddressResult password sending =
     [ Html.div
         [ Html.Attributes.class "logIn" ]
         [ Html.form
             [ Html.Attributes.class "logIn-group" ]
-            [ logInIdView analysisStudentIdOrEmailAddressResult
-            , logInPasswordView
-            , logInButton (getLogInData analysisStudentIdOrEmailAddressResult password)
-            ]
+            ([ logInIdView analysisStudentIdOrEmailAddressResult
+             , logInPasswordView
+             , logInButton sending (getLogInData analysisStudentIdOrEmailAddressResult password)
+             ]
+                ++ (if sending then
+                        [ Html.text "送信中" ]
+
+                    else
+                        []
+                   )
+            )
         , orLabel
         , Html.div
             [ Html.Attributes.class "logIn-group" ]
@@ -162,26 +190,30 @@ logInPasswordView =
         ]
 
 
-logInButton : Maybe { emailAddress : EmailAddress.EmailAddress, pass : Password.Password } -> Html.Html Emit
-logInButton logInDataMaybe =
+logInButton : Bool -> Maybe { emailAddress : EmailAddress.EmailAddress, pass : Password.Password } -> Html.Html Emit
+logInButton sending logInDataMaybe =
     Html.div
         []
         [ Html.button
             ([ Html.Attributes.class "logIn-logInButton"
-             , Html.Attributes.disabled (logInDataMaybe == Nothing)
              ]
                 ++ (case logInDataMaybe of
                         Just logInData ->
-                            [ Html.Events.preventDefaultOn "click"
-                                (Json.Decode.succeed
-                                    ( EmitLogIn logInData
-                                    , True
+                            if sending then
+                                [ Html.Events.preventDefaultOn "click"
+                                    (Json.Decode.succeed
+                                        ( EmitLogIn logInData
+                                        , True
+                                        )
                                     )
-                                )
-                            ]
+                                , Html.Attributes.disabled False
+                                ]
+
+                            else
+                                [ Html.Attributes.disabled True ]
 
                         Nothing ->
-                            []
+                            [ Html.Attributes.disabled True ]
                    )
             )
             [ Html.text "ログイン" ]

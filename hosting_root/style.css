@@ -117,6 +117,7 @@ h1:hover {
     background-color: #ddd;
     position: fixed;
     top: 4rem;
+    left: 0;
 }
 
 .menu-list-open {

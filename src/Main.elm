@@ -249,12 +249,6 @@ update msg (Model rec) =
             , Api.signUp signUpData SignUpResponse
             )
 
-        LogIn logInData ->
-            ( Model rec
-              -- TODO ログイン処理中の表示
-            , Api.logIn logInData LogInResponse
-            )
-
         SignUpResponse response ->
             ( case rec.page of
                 PageSignUp singUpPageModel ->
@@ -264,6 +258,19 @@ update msg (Model rec) =
                 _ ->
                     Model rec
             , Cmd.none
+            )
+
+        LogIn logInData ->
+            ( case rec.page of
+                PageLogIn ( logInPageModel, nextPage ) ->
+                    Model
+                        { rec
+                            | page = PageLogIn ( logInPageModel |> Page.LogIn.update Page.LogIn.SendLogIn, nextPage )
+                        }
+
+                _ ->
+                    Model rec
+            , Api.logIn logInData LogInResponse
             )
 
         LogInResponse logInResponse ->
@@ -300,19 +307,33 @@ update msg (Model rec) =
                     )
 
                 Err logInResponseError ->
-                    ( Model
-                        { rec
-                            | message = Just (Api.logInResponseErrorToString logInResponseError)
-                        }
+                    ( case rec.page of
+                        PageLogIn ( logInPageModel, nextPage ) ->
+                            Model
+                                { rec
+                                    | message = Just (Api.logInResponseErrorToString logInResponseError)
+                                    , page = PageLogIn ( logInPageModel |> Page.LogIn.update Page.LogIn.StopSendLogIn, nextPage )
+                                }
+
+                        _ ->
+                            Model
+                                { rec
+                                    | message = Just (Api.logInResponseErrorToString logInResponseError)
+                                }
                     , Cmd.none
                     )
+
+        SendConfirmToken token ->
+            ( Model { rec | page = PageSignUp Page.SignUp.sentConfirmTokenInitModel }
+            , Api.signUpConfirm { confirmToken = token } SignUpConfirmResponse
+            )
 
         SignUpConfirmResponse response ->
             ( case response of
                 Ok _ ->
                     Model
                         { rec
-                            | message = Just "新規登録できました"
+                            | message = Just "新規登録完了"
                             , page = PageHome HomePageRecommend
                         }
 
@@ -433,11 +454,6 @@ update msg (Model rec) =
                 _ ->
                     Model rec
             , Cmd.none
-            )
-
-        SendConfirmToken token ->
-            ( Model { rec | page = PageSignUp Page.SignUp.sentConfirmTokenInitModel }
-            , Api.signUpConfirm { confirmToken = token } SignUpConfirmResponse
             )
 
         DeleteAllUser ->

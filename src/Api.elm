@@ -83,7 +83,7 @@ tokenToHeader token =
 signUp : SignUpRequest -> (Result SignUpResponseError SignUpResponseOk -> msg) -> Cmd msg
 signUp signUpData msg =
     Http.post
-        { url = "http://api.tsukumart.com/auth/signup/"
+        { url = "https://api.tsukumart.com/auth/signup/"
         , body = Http.jsonBody (signUpJson signUpData)
         , expect = Http.expectStringResponse msg signUpResponseToResult
         }
@@ -213,7 +213,7 @@ signUpConfirm { confirmToken } msg =
     Http.request
         { method = "POST"
         , headers = [ confirmTokenToHeader confirmToken ]
-        , url = "http://api.tsukumart.com/auth/signup/confirm/"
+        , url = "https://api.tsukumart.com/auth/signup/confirm/"
         , body = Http.emptyBody
         , expect = Http.expectStringResponse msg signUpConfirmResponseToResult
         , timeout = Nothing
@@ -292,7 +292,7 @@ type alias Token =
 logIn : LogInRequest -> (Result LogInResponseError LogInResponseOk -> msg) -> Cmd msg
 logIn logInData msg =
     Http.post
-        { url = "http://api.tsukumart.com/auth/token/"
+        { url = "https://api.tsukumart.com/auth/token/"
         , body = Http.jsonBody (logInRequestToJson logInData)
         , expect = Http.expectStringResponse msg logInResponseToResult
         }
@@ -381,7 +381,7 @@ type TokenRefreshResponseError
 tokenRefresh : TokenRefreshRequest -> (Result TokenRefreshResponseError TokenRefreshResponseOk -> msg) -> Cmd msg
 tokenRefresh { refresh } msg =
     Http.post
-        { url = "http://api.tsukumart.com/auth/token/refresh/"
+        { url = "https://api.tsukumart.com/auth/token/refresh/"
         , body = Http.emptyBody
         , expect = Http.expectStringResponse msg tokenRefreshResponseToResult
         }
@@ -433,7 +433,7 @@ getUserProfile token msg =
     Http.request
         { method = "GET"
         , headers = [ tokenToHeader token ]
-        , url = "http://api.tsukumart.com/v1/currentuser/profile/"
+        , url = "https://api.tsukumart.com/v1/currentuser/profile/"
         , body = Http.emptyBody
         , expect = Http.expectStringResponse msg getUserProfileResponseToResult
         , timeout = Nothing
@@ -487,7 +487,7 @@ getUserProfileResponeBodyDecoder =
 debugDeleteAllUser : (Result () () -> msg) -> Cmd msg
 debugDeleteAllUser msg =
     Http.get
-        { url = "http://api.tsukumart.com/v1/debug/user/delete/?all=true"
+        { url = "httpss://api.tsukumart.com/v1/debug/user/delete/?all=true"
         , expect = Http.expectStringResponse msg debugDeleteAllUserResponseToResult
         }
 
