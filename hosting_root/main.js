@@ -519,11 +519,11 @@ function _Debug_crash_UNUSED(identifier, fact1, fact2, fact3, fact4)
 
 function _Debug_regionToString(region)
 {
-	if (region.ad.J === region.ap.J)
+	if (region.ac.I === region.ap.I)
 	{
-		return 'on line ' + region.ad.J;
+		return 'on line ' + region.ac.I;
 	}
-	return 'on lines ' + region.ad.J + ' through ' + region.ap.J;
+	return 'on lines ' + region.ac.I + ' through ' + region.ap.I;
 }
 
 
@@ -2439,25 +2439,25 @@ var _Http_toTask = F3(function(router, toTask, request)
 	return _Scheduler_binding(function(callback)
 	{
 		function done(response) {
-			callback(toTask(request.x.a(response)));
+			callback(toTask(request.w.a(response)));
 		}
 
 		var xhr = new XMLHttpRequest();
 		xhr.addEventListener('error', function() { done(elm$http$Http$NetworkError_); });
 		xhr.addEventListener('timeout', function() { done(elm$http$Http$Timeout_); });
-		xhr.addEventListener('load', function() { done(_Http_toResponse(request.x.b, xhr)); });
+		xhr.addEventListener('load', function() { done(_Http_toResponse(request.w.b, xhr)); });
 		elm$core$Maybe$isJust(request.aV) && _Http_track(router, xhr, request.aV.a);
 
 		try {
-			xhr.open(request.ay, request.D, true);
+			xhr.open(request.ay, request.C, true);
 		} catch (e) {
-			return done(elm$http$Http$BadUrl_(request.D));
+			return done(elm$http$Http$BadUrl_(request.C));
 		}
 
 		_Http_configureRequest(xhr, request);
 
-		request.H.a && xhr.setRequestHeader('Content-Type', request.H.a);
-		xhr.send(request.H.b);
+		request.G.a && xhr.setRequestHeader('Content-Type', request.G.a);
+		xhr.send(request.G.b);
 
 		return function() { xhr.c = true; xhr.abort(); };
 	});
@@ -2473,8 +2473,8 @@ function _Http_configureRequest(xhr, request)
 		xhr.setRequestHeader(headers.a.a, headers.a.b);
 	}
 	xhr.timeout = request.aU.a || 0;
-	xhr.responseType = request.x.d;
-	xhr.withCredentials = request.v;
+	xhr.responseType = request.w.d;
+	xhr.withCredentials = request.u;
 }
 
 
@@ -2495,7 +2495,7 @@ function _Http_toResponse(toBody, xhr)
 function _Http_toMetadata(xhr)
 {
 	return {
-		D: xhr.responseURL,
+		C: xhr.responseURL,
 		aR: xhr.status,
 		bh: xhr.statusText,
 		as: _Http_parseHeaders(xhr.getAllResponseHeaders())
@@ -2594,14 +2594,14 @@ function _Http_track(router, xhr, tracker)
 		if (xhr.c) { return; }
 		_Scheduler_rawSpawn(A2(elm$core$Platform$sendToSelf, router, _Utils_Tuple2(tracker, elm$http$Http$Sending({
 			bg: event.loaded,
-			ac: event.total
+			ab: event.total
 		}))));
 	});
 	xhr.addEventListener('progress', function(event) {
 		if (xhr.c) { return; }
 		_Scheduler_rawSpawn(A2(elm$core$Platform$sendToSelf, router, _Utils_Tuple2(tracker, elm$http$Http$Receiving({
 			bd: event.loaded,
-			ac: event.lengthComputable ? elm$core$Maybe$Just(event.total) : elm$core$Maybe$Nothing
+			ab: event.lengthComputable ? elm$core$Maybe$Just(event.total) : elm$core$Maybe$Nothing
 		}))));
 	});
 }
@@ -2952,9 +2952,9 @@ var _VirtualDom_mapEventTuple = F2(function(func, tuple)
 var _VirtualDom_mapEventRecord = F2(function(func, record)
 {
 	return {
-		o: func(record.o),
-		ae: record.ae,
-		aa: record.aa
+		n: func(record.n),
+		ad: record.ad,
+		_: record._
 	}
 });
 
@@ -3222,11 +3222,11 @@ function _VirtualDom_makeCallback(eventNode, initialHandler)
 		// 3 = Custom
 
 		var value = result.a;
-		var message = !tag ? value : tag < 3 ? value.a : value.o;
-		var stopPropagation = tag == 1 ? value.b : tag == 3 && value.ae;
+		var message = !tag ? value : tag < 3 ? value.a : value.n;
+		var stopPropagation = tag == 1 ? value.b : tag == 3 && value.ad;
 		var currentEventNode = (
 			stopPropagation && event.stopPropagation(),
-			(tag == 2 ? value.b : tag == 3 && value.aa) && event.preventDefault(),
+			(tag == 2 ? value.b : tag == 3 && value._) && event.preventDefault(),
 			eventNode
 		);
 		var tagger;
@@ -4216,7 +4216,7 @@ var _Browser_document = _Debugger_document || F4(function(impl, flagDecoder, deb
 		impl.bk,
 		impl.bj,
 		function(sendToApp, initialModel) {
-			var divertHrefToApp = impl.K && impl.K(sendToApp)
+			var divertHrefToApp = impl.J && impl.J(sendToApp)
 			var view = impl.bl;
 			var title = _VirtualDom_doc.title;
 			var bodyNode = _VirtualDom_doc.body;
@@ -4225,12 +4225,12 @@ var _Browser_document = _Debugger_document || F4(function(impl, flagDecoder, deb
 			{
 				_VirtualDom_divertHrefToApp = divertHrefToApp;
 				var doc = view(model);
-				var nextNode = _VirtualDom_node('body')(_List_Nil)(doc.H);
+				var nextNode = _VirtualDom_node('body')(_List_Nil)(doc.G);
 				var patches = _VirtualDom_diff(currNode, nextNode);
 				bodyNode = _VirtualDom_applyPatches(bodyNode, currNode, patches, sendToApp);
 				currNode = nextNode;
 				_VirtualDom_divertHrefToApp = 0;
-				(title !== doc.f) && (_VirtualDom_doc.title = title = doc.f);
+				(title !== doc.af) && (_VirtualDom_doc.title = title = doc.af);
 			});
 		}
 	);
@@ -4291,7 +4291,7 @@ function _Browser_application(impl)
 	var key = function() { key.a(onUrlChange(_Browser_getUrl())); };
 
 	return _Browser_document({
-		K: function(sendToApp)
+		J: function(sendToApp)
 		{
 			key.a = sendToApp;
 			_Browser_window.addEventListener('popstate', key);
@@ -4482,10 +4482,10 @@ function _Browser_getViewport()
 	return {
 		aQ: _Browser_getScene(),
 		aX: {
-			W: _Browser_window.pageXOffset,
-			X: _Browser_window.pageYOffset,
-			F: _Browser_doc.documentElement.clientWidth,
-			y: _Browser_doc.documentElement.clientHeight
+			V: _Browser_window.pageXOffset,
+			W: _Browser_window.pageYOffset,
+			E: _Browser_doc.documentElement.clientWidth,
+			x: _Browser_doc.documentElement.clientHeight
 		}
 	};
 }
@@ -4495,8 +4495,8 @@ function _Browser_getScene()
 	var body = _Browser_doc.body;
 	var elem = _Browser_doc.documentElement;
 	return {
-		F: Math.max(body.scrollWidth, body.offsetWidth, elem.scrollWidth, elem.offsetWidth, elem.clientWidth),
-		y: Math.max(body.scrollHeight, body.offsetHeight, elem.scrollHeight, elem.offsetHeight, elem.clientHeight)
+		E: Math.max(body.scrollWidth, body.offsetWidth, elem.scrollWidth, elem.offsetWidth, elem.clientWidth),
+		x: Math.max(body.scrollHeight, body.offsetHeight, elem.scrollHeight, elem.offsetHeight, elem.clientHeight)
 	};
 }
 
@@ -4520,14 +4520,14 @@ function _Browser_getViewportOf(id)
 	{
 		return {
 			aQ: {
-				F: node.scrollWidth,
-				y: node.scrollHeight
+				E: node.scrollWidth,
+				x: node.scrollHeight
 			},
 			aX: {
-				W: node.scrollLeft,
-				X: node.scrollTop,
-				F: node.clientWidth,
-				y: node.clientHeight
+				V: node.scrollLeft,
+				W: node.scrollTop,
+				E: node.clientWidth,
+				x: node.clientHeight
 			}
 		};
 	});
@@ -4559,16 +4559,16 @@ function _Browser_getElement(id)
 		return {
 			aQ: _Browser_getScene(),
 			aX: {
-				W: x,
-				X: y,
-				F: _Browser_doc.documentElement.clientWidth,
-				y: _Browser_doc.documentElement.clientHeight
+				V: x,
+				W: y,
+				E: _Browser_doc.documentElement.clientWidth,
+				x: _Browser_doc.documentElement.clientHeight
 			},
 			a$: {
-				W: x + rect.left,
-				X: y + rect.top,
-				F: rect.width,
-				y: rect.height
+				V: x + rect.left,
+				W: y + rect.top,
+				E: rect.width,
+				x: rect.height
 			}
 		};
 	});
@@ -5069,9 +5069,9 @@ var author$project$Page$LogIn$analysisStudentIdOrEmailAddress = function (string
 };
 var author$project$Page$LogIn$initModel = author$project$Page$LogIn$LogInPage(
 	{
-		_: elm$core$Maybe$Nothing,
-		V: false,
-		af: author$project$Page$LogIn$analysisStudentIdOrEmailAddress('')
+		Z: elm$core$Maybe$Nothing,
+		U: false,
+		ae: author$project$Page$LogIn$analysisStudentIdOrEmailAddress('')
 	});
 var author$project$Page$SignUp$Normal = function (a) {
 	return {$: 0, a: a};
@@ -6121,10 +6121,10 @@ var author$project$Password$passwordFromString = function (string) {
 var author$project$Page$SignUp$initModel = author$project$Page$SignUp$Normal(
 	{
 		aC: '',
-		j: author$project$Page$SignUp$StudentHasSAddress(
+		i: author$project$Page$SignUp$StudentHasSAddress(
 			{
-				_: author$project$Password$passwordFromString(''),
-				L: author$project$Page$SignUp$analysisStudentIdOrSAddress('')
+				Z: author$project$Password$passwordFromString(''),
+				K: author$project$Page$SignUp$analysisStudentIdOrSAddress('')
 			}),
 		aW: author$project$Page$SignUp$UniversitySchool(author$project$Page$SignUp$UniversitySchoolNone)
 	});
@@ -6135,15 +6135,15 @@ var elm$core$Basics$apL = F2(
 var elm$url$Url$Parser$Parser = elm$core$Basics$identity;
 var elm$url$Url$Parser$State = F5(
 	function (visited, unvisited, params, frag, value) {
-		return {r: frag, t: params, q: unvisited, m: value, u: visited};
+		return {q: frag, s: params, p: unvisited, l: value, t: visited};
 	});
 var elm$url$Url$Parser$s = function (str) {
 	return function (_n0) {
-		var visited = _n0.u;
-		var unvisited = _n0.q;
-		var params = _n0.t;
-		var frag = _n0.r;
-		var value = _n0.m;
+		var visited = _n0.t;
+		var unvisited = _n0.p;
+		var params = _n0.s;
+		var frag = _n0.q;
+		var value = _n0.l;
 		if (!unvisited.b) {
 			return _List_Nil;
 		} else {
@@ -6194,11 +6194,11 @@ var elm$url$Url$Parser$slash = F2(
 var elm$url$Url$Parser$custom = F2(
 	function (tipe, stringToSomething) {
 		return function (_n0) {
-			var visited = _n0.u;
-			var unvisited = _n0.q;
-			var params = _n0.t;
-			var frag = _n0.r;
-			var value = _n0.m;
+			var visited = _n0.t;
+			var unvisited = _n0.p;
+			var params = _n0.s;
+			var frag = _n0.q;
+			var value = _n0.l;
 			if (!unvisited.b) {
 				return _List_Nil;
 			} else {
@@ -6240,11 +6240,11 @@ var author$project$SiteMap$signUpParser = elm$url$Url$Parser$s('user-signup');
 var author$project$SiteMap$siteMapParser = elm$url$Url$Parser$s('sitemap');
 var elm$url$Url$Parser$mapState = F2(
 	function (func, _n0) {
-		var visited = _n0.u;
-		var unvisited = _n0.q;
-		var params = _n0.t;
-		var frag = _n0.r;
-		var value = _n0.m;
+		var visited = _n0.t;
+		var unvisited = _n0.p;
+		var params = _n0.s;
+		var frag = _n0.q;
+		var value = _n0.l;
 		return A5(
 			elm$url$Url$Parser$State,
 			visited,
@@ -6257,11 +6257,11 @@ var elm$url$Url$Parser$map = F2(
 	function (subValue, _n0) {
 		var parseArg = _n0;
 		return function (_n1) {
-			var visited = _n1.u;
-			var unvisited = _n1.q;
-			var params = _n1.t;
-			var frag = _n1.r;
-			var value = _n1.m;
+			var visited = _n1.t;
+			var unvisited = _n1.p;
+			var params = _n1.s;
+			var frag = _n1.q;
+			var value = _n1.l;
 			return A2(
 				elm$core$List$map,
 				elm$url$Url$Parser$mapState(value),
@@ -6306,7 +6306,7 @@ var author$project$Main$urlParser = function (beforePageMaybe) {
 				A2(
 				elm$url$Url$Parser$map,
 				author$project$Main$PageExhibition(
-					{ao: '', au: _List_Nil, aH: elm$core$Maybe$Nothing, f: ''}),
+					{ao: '', au: _List_Nil, aH: elm$core$Maybe$Nothing, af: ''}),
 				author$project$SiteMap$exhibitionParser),
 				A2(
 				elm$url$Url$Parser$map,
@@ -6325,12 +6325,12 @@ var elm$url$Url$Parser$getFirstMatch = function (states) {
 		} else {
 			var state = states.a;
 			var rest = states.b;
-			var _n1 = state.q;
+			var _n1 = state.p;
 			if (!_n1.b) {
-				return elm$core$Maybe$Just(state.m);
+				return elm$core$Maybe$Just(state.l);
 			} else {
 				if ((_n1.a === '') && (!_n1.b.b)) {
-					return elm$core$Maybe$Just(state.m);
+					return elm$core$Maybe$Just(state.l);
 				} else {
 					var $temp$states = rest;
 					states = $temp$states;
@@ -7184,9 +7184,9 @@ var author$project$Main$init = F3(
 		return _Utils_Tuple2(
 			{
 				av: key,
-				z: author$project$Main$LogInStateNone,
-				i: elm$core$Maybe$Just(0),
-				o: messageMaybe,
+				y: author$project$Main$LogInStateNone,
+				h: elm$core$Maybe$Just(0),
+				n: messageMaybe,
 				a: page
 			},
 			elm$core$Platform$Cmd$none);
@@ -7218,7 +7218,7 @@ var elm$core$Basics$always = F2(
 	});
 var elm$core$Platform$Sub$batch = _Platform_batch;
 var author$project$Main$subscription = function (_n0) {
-	var menuState = _n0.i;
+	var menuState = _n0.h;
 	return elm$core$Platform$Sub$batch(
 		_List_fromArray(
 			[
@@ -7457,14 +7457,14 @@ var elm$http$Http$cmdMap = F2(
 			var r = cmd.a;
 			return elm$http$Http$Request(
 				{
-					v: r.v,
-					H: r.H,
-					x: A2(_Http_mapExpect, func, r.x),
+					u: r.u,
+					G: r.G,
+					w: A2(_Http_mapExpect, func, r.w),
 					as: r.as,
 					ay: r.ay,
 					aU: r.aU,
 					aV: r.aV,
-					D: r.D
+					C: r.C
 				});
 		}
 	});
@@ -7487,17 +7487,17 @@ var elm$http$Http$subscription = _Platform_leaf('Http');
 var elm$http$Http$request = function (r) {
 	return elm$http$Http$command(
 		elm$http$Http$Request(
-			{v: false, H: r.H, x: r.x, as: r.as, ay: r.ay, aU: r.aU, aV: r.aV, D: r.D}));
+			{u: false, G: r.G, w: r.w, as: r.as, ay: r.ay, aU: r.aU, aV: r.aV, C: r.C}));
 };
 var elm$http$Http$get = function (r) {
 	return elm$http$Http$request(
-		{H: elm$http$Http$emptyBody, x: r.x, as: _List_Nil, ay: 'GET', aU: elm$core$Maybe$Nothing, aV: elm$core$Maybe$Nothing, D: r.D});
+		{G: elm$http$Http$emptyBody, w: r.w, as: _List_Nil, ay: 'GET', aU: elm$core$Maybe$Nothing, aV: elm$core$Maybe$Nothing, C: r.C});
 };
 var author$project$Api$debugDeleteAllUser = function (msg) {
 	return elm$http$Http$get(
 		{
-			x: A2(elm$http$Http$expectStringResponse, msg, author$project$Api$debugDeleteAllUserResponseToResult),
-			D: 'httpss://api.tsukumart.com/v1/debug/user/delete/?all=true'
+			w: A2(elm$http$Http$expectStringResponse, msg, author$project$Api$debugDeleteAllUserResponseToResult),
+			C: 'httpss://api.tsukumart.com/v1/debug/user/delete/?all=true'
 		});
 };
 var author$project$Api$UserProfile = elm$core$Basics$identity;
@@ -7769,7 +7769,7 @@ var author$project$Api$getUserProfileResponeBodyDecoder = A3(
 			if (!_n0.$) {
 				var department = _n0.a;
 				return elm$core$Result$Ok(
-					{I: department, a7: introduction});
+					{H: department, a7: introduction});
 			} else {
 				return elm$core$Result$Err(0);
 			}
@@ -7816,8 +7816,8 @@ var author$project$Api$getUserProfile = F2(
 	function (token, msg) {
 		return elm$http$Http$request(
 			{
-				H: elm$http$Http$emptyBody,
-				x: A2(elm$http$Http$expectStringResponse, msg, author$project$Api$getUserProfileResponseToResult),
+				G: elm$http$Http$emptyBody,
+				w: A2(elm$http$Http$expectStringResponse, msg, author$project$Api$getUserProfileResponseToResult),
 				as: _List_fromArray(
 					[
 						author$project$Api$tokenToHeader(token)
@@ -7825,7 +7825,7 @@ var author$project$Api$getUserProfile = F2(
 				ay: 'GET',
 				aU: elm$core$Maybe$Nothing,
 				aV: elm$core$Maybe$Nothing,
-				D: 'https://api.tsukumart.com/v1/currentuser/profile/'
+				C: 'https://api.tsukumart.com/v1/currentuser/profile/'
 			});
 	});
 var author$project$EmailAddress$toString = function (_n0) {
@@ -8044,8 +8044,8 @@ var elm$json$Json$Encode$object = function (pairs) {
 };
 var elm$json$Json$Encode$string = _Json_wrap;
 var author$project$Api$logInRequestToJson = function (_n0) {
-	var emailAddress = _n0.Q;
-	var pass = _n0.T;
+	var emailAddress = _n0.P;
+	var pass = _n0.S;
 	return elm$json$Json$Encode$object(
 		_List_fromArray(
 			[
@@ -8072,7 +8072,7 @@ var author$project$Api$logInResponseBodyDecoder = elm$json$Json$Decode$oneOf(
 			F2(
 				function (access, refresh) {
 					return elm$core$Result$Ok(
-						{ag: access, ab: refresh});
+						{ag: access, aa: refresh});
 				}),
 			A2(elm$json$Json$Decode$field, 'access', elm$json$Json$Decode$string),
 			A2(elm$json$Json$Decode$field, 'refresh', elm$json$Json$Decode$string)),
@@ -8109,16 +8109,16 @@ var elm$http$Http$jsonBody = function (value) {
 };
 var elm$http$Http$post = function (r) {
 	return elm$http$Http$request(
-		{H: r.H, x: r.x, as: _List_Nil, ay: 'POST', aU: elm$core$Maybe$Nothing, aV: elm$core$Maybe$Nothing, D: r.D});
+		{G: r.G, w: r.w, as: _List_Nil, ay: 'POST', aU: elm$core$Maybe$Nothing, aV: elm$core$Maybe$Nothing, C: r.C});
 };
 var author$project$Api$logIn = F2(
 	function (logInData, msg) {
 		return elm$http$Http$post(
 			{
-				H: elm$http$Http$jsonBody(
+				G: elm$http$Http$jsonBody(
 					author$project$Api$logInRequestToJson(logInData)),
-				x: A2(elm$http$Http$expectStringResponse, msg, author$project$Api$logInResponseToResult),
-				D: 'https://api.tsukumart.com/auth/token/'
+				w: A2(elm$http$Http$expectStringResponse, msg, author$project$Api$logInResponseToResult),
+				C: 'https://api.tsukumart.com/auth/token/'
 			});
 	});
 var author$project$Api$logInResponseErrorToString = function (logInResponseError) {
@@ -8133,21 +8133,21 @@ var author$project$Api$universityToSimpleRecord = function (universityData) {
 		case 0:
 			var schoolAndDepartment = universityData.a;
 			return {
-				I: elm$core$Maybe$Just(schoolAndDepartment),
-				R: elm$core$Maybe$Nothing
+				H: elm$core$Maybe$Just(schoolAndDepartment),
+				Q: elm$core$Maybe$Nothing
 			};
 		case 1:
 			var graduate = universityData.a;
 			var schoolAndDepartment = universityData.b;
 			return {
-				I: elm$core$Maybe$Just(schoolAndDepartment),
-				R: elm$core$Maybe$Just(graduate)
+				H: elm$core$Maybe$Just(schoolAndDepartment),
+				Q: elm$core$Maybe$Just(graduate)
 			};
 		default:
 			var graduate = universityData.a;
 			return {
-				I: elm$core$Maybe$Nothing,
-				R: elm$core$Maybe$Just(graduate)
+				H: elm$core$Maybe$Nothing,
+				Q: elm$core$Maybe$Just(graduate)
 			};
 	}
 };
@@ -8174,14 +8174,14 @@ var author$project$School$graduateToIdString = function (graduate) {
 	}
 };
 var author$project$Api$signUpJson = function (_n0) {
-	var emailAddress = _n0.Q;
-	var pass = _n0.T;
+	var emailAddress = _n0.P;
+	var pass = _n0.S;
 	var image = _n0.au;
 	var university = _n0.aW;
 	var nickName = _n0.aC;
 	var _n1 = author$project$Api$universityToSimpleRecord(university);
-	var graduate = _n1.R;
-	var department = _n1.I;
+	var graduate = _n1.Q;
+	var department = _n1.H;
 	return elm$json$Json$Encode$object(
 		_Utils_ap(
 			_List_fromArray(
@@ -8298,10 +8298,10 @@ var author$project$Api$signUp = F2(
 	function (signUpData, msg) {
 		return elm$http$Http$post(
 			{
-				H: elm$http$Http$jsonBody(
+				G: elm$http$Http$jsonBody(
 					author$project$Api$signUpJson(signUpData)),
-				x: A2(elm$http$Http$expectStringResponse, msg, author$project$Api$signUpResponseToResult),
-				D: 'https://api.tsukumart.com/auth/signup/'
+				w: A2(elm$http$Http$expectStringResponse, msg, author$project$Api$signUpResponseToResult),
+				C: 'https://api.tsukumart.com/auth/signup/'
 			});
 	});
 var author$project$Api$confirmTokenToHeader = function (token) {
@@ -8347,8 +8347,8 @@ var author$project$Api$signUpConfirm = F2(
 		var confirmToken = _n0.am;
 		return elm$http$Http$request(
 			{
-				H: elm$http$Http$emptyBody,
-				x: A2(elm$http$Http$expectStringResponse, msg, author$project$Api$signUpConfirmResponseToResult),
+				G: elm$http$Http$emptyBody,
+				w: A2(elm$http$Http$expectStringResponse, msg, author$project$Api$signUpConfirmResponseToResult),
 				as: _List_fromArray(
 					[
 						author$project$Api$confirmTokenToHeader(confirmToken)
@@ -8356,7 +8356,7 @@ var author$project$Api$signUpConfirm = F2(
 				ay: 'POST',
 				aU: elm$core$Maybe$Nothing,
 				aV: elm$core$Maybe$Nothing,
-				D: 'https://api.tsukumart.com/auth/signup/confirm/'
+				C: 'https://api.tsukumart.com/auth/signup/confirm/'
 			});
 	});
 var author$project$Main$DeleteAllUserResponse = function (a) {
@@ -8409,7 +8409,7 @@ var author$project$Page$LogIn$update = F2(
 						_Utils_update(
 							r,
 							{
-								_: elm$core$Result$toMaybe(
+								Z: elm$core$Result$toMaybe(
 									author$project$Password$passwordFromString(string))
 							}));
 				} else {
@@ -8423,7 +8423,7 @@ var author$project$Page$LogIn$update = F2(
 						_Utils_update(
 							r,
 							{
-								af: author$project$Page$LogIn$analysisStudentIdOrEmailAddress(string)
+								ae: author$project$Page$LogIn$analysisStudentIdOrEmailAddress(string)
 							}));
 				} else {
 					return author$project$Page$LogIn$ForgotPassword;
@@ -8434,7 +8434,7 @@ var author$project$Page$LogIn$update = F2(
 					return author$project$Page$LogIn$LogInPage(
 						_Utils_update(
 							r,
-							{V: true}));
+							{U: true}));
 				} else {
 					return author$project$Page$LogIn$ForgotPassword;
 				}
@@ -8444,7 +8444,7 @@ var author$project$Page$LogIn$update = F2(
 					return author$project$Page$LogIn$LogInPage(
 						_Utils_update(
 							r,
-							{V: false}));
+							{U: false}));
 				} else {
 					return author$project$Page$LogIn$ForgotPassword;
 				}
@@ -8502,18 +8502,18 @@ var author$project$Page$SignUp$update = F2(
 				switch (msg.$) {
 					case 0:
 						var string = msg.a;
-						var _n2 = rec.j;
+						var _n2 = rec.i;
 						if (!_n2.$) {
 							var r = _n2.a;
 							return author$project$Page$SignUp$Normal(
 								_Utils_update(
 									rec,
 									{
-										j: author$project$Page$SignUp$StudentHasSAddress(
+										i: author$project$Page$SignUp$StudentHasSAddress(
 											_Utils_update(
 												r,
 												{
-													L: author$project$Page$SignUp$analysisStudentIdOrSAddress(string)
+													K: author$project$Page$SignUp$analysisStudentIdOrSAddress(string)
 												}))
 									}));
 						} else {
@@ -8522,28 +8522,28 @@ var author$project$Page$SignUp$update = F2(
 								_Utils_update(
 									rec,
 									{
-										j: author$project$Page$SignUp$NewStudent(
+										i: author$project$Page$SignUp$NewStudent(
 											_Utils_update(
 												r,
 												{
-													Q: author$project$Page$SignUp$analysisEmailAddress(string)
+													P: author$project$Page$SignUp$analysisEmailAddress(string)
 												}))
 									}));
 						}
 					case 1:
 						var dataUrlString = msg.a;
-						var _n3 = rec.j;
+						var _n3 = rec.i;
 						if (_n3.$ === 1) {
 							var r = _n3.a;
 							return author$project$Page$SignUp$Normal(
 								_Utils_update(
 									rec,
 									{
-										j: author$project$Page$SignUp$NewStudent(
+										i: author$project$Page$SignUp$NewStudent(
 											_Utils_update(
 												r,
 												{
-													S: elm$core$Maybe$Just(dataUrlString)
+													R: elm$core$Maybe$Just(dataUrlString)
 												}))
 									}));
 						} else {
@@ -8555,15 +8555,15 @@ var author$project$Page$SignUp$update = F2(
 							_Utils_update(
 								rec,
 								{
-									j: function () {
-										var _n4 = rec.j;
+									i: function () {
+										var _n4 = rec.i;
 										if (_n4.$ === 1) {
 											var r = _n4.a;
 											return author$project$Page$SignUp$NewStudent(
 												_Utils_update(
 													r,
 													{
-														_: author$project$Password$passwordFromString(string)
+														Z: author$project$Password$passwordFromString(string)
 													}));
 										} else {
 											var r = _n4.a;
@@ -8571,7 +8571,7 @@ var author$project$Page$SignUp$update = F2(
 												_Utils_update(
 													r,
 													{
-														_: author$project$Password$passwordFromString(string)
+														Z: author$project$Password$passwordFromString(string)
 													}));
 										}
 									}()
@@ -8879,12 +8879,12 @@ var author$project$Main$update = F2(
 			case 1:
 				return _Utils_Tuple2(
 					function () {
-						var _n2 = rec.i;
+						var _n2 = rec.h;
 						if (!_n2.$) {
 							return _Utils_update(
 								rec,
 								{
-									i: elm$core$Maybe$Just(2)
+									h: elm$core$Maybe$Just(2)
 								});
 						} else {
 							return rec;
@@ -8894,12 +8894,12 @@ var author$project$Main$update = F2(
 			case 2:
 				return _Utils_Tuple2(
 					function () {
-						var _n3 = rec.i;
+						var _n3 = rec.h;
 						if (!_n3.$) {
 							return _Utils_update(
 								rec,
 								{
-									i: elm$core$Maybe$Just(1)
+									h: elm$core$Maybe$Just(1)
 								});
 						} else {
 							return rec;
@@ -8910,14 +8910,14 @@ var author$project$Main$update = F2(
 				return _Utils_Tuple2(
 					_Utils_update(
 						rec,
-						{i: elm$core$Maybe$Nothing}),
+						{h: elm$core$Maybe$Nothing}),
 					elm$core$Platform$Cmd$none);
 			case 4:
 				return _Utils_Tuple2(
 					_Utils_update(
 						rec,
 						{
-							i: elm$core$Maybe$Just(0)
+							h: elm$core$Maybe$Just(0)
 						}),
 					elm$core$Platform$Cmd$none);
 			case 5:
@@ -8932,16 +8932,16 @@ var author$project$Main$update = F2(
 					_Utils_update(
 						rec,
 						{
-							i: function () {
-								var _n5 = rec.i;
+							h: function () {
+								var _n5 = rec.h;
 								if ((!_n5.$) && (_n5.a === 2)) {
 									var _n6 = _n5.a;
 									return elm$core$Maybe$Just(1);
 								} else {
-									return rec.i;
+									return rec.h;
 								}
 							}(),
-							o: messageMaybe,
+							n: messageMaybe,
 							a: newPage
 						}),
 					elm$core$Platform$Cmd$none);
@@ -8971,7 +8971,7 @@ var author$project$Main$update = F2(
 						rec,
 						{
 							a: author$project$Main$PageSignUp(
-								author$project$Page$SignUp$sentSignUpDataInitModel(signUpData.Q))
+								author$project$Page$SignUp$sentSignUpDataInitModel(signUpData.P))
 						}),
 					A2(author$project$Api$signUp, signUpData, author$project$Main$SignUpResponse));
 			case 9:
@@ -9021,7 +9021,7 @@ var author$project$Main$update = F2(
 				var logInResponse = msg.a;
 				if (!logInResponse.$) {
 					var access = logInResponse.a.ag;
-					var refresh = logInResponse.a.ab;
+					var refresh = logInResponse.a.aa;
 					return _Utils_Tuple2(
 						function () {
 							var pageMaybe = function () {
@@ -9046,18 +9046,18 @@ var author$project$Main$update = F2(
 								return _Utils_update(
 									rec,
 									{
-										z: author$project$Main$LogInStateOk(
-											{ag: access, U: elm$core$Maybe$Nothing, ab: refresh}),
-										o: elm$core$Maybe$Just('ログインしました'),
+										y: author$project$Main$LogInStateOk(
+											{ag: access, T: elm$core$Maybe$Nothing, aa: refresh}),
+										n: elm$core$Maybe$Just('ログインしました'),
 										a: newPage
 									});
 							} else {
 								return _Utils_update(
 									rec,
 									{
-										z: author$project$Main$LogInStateOk(
-											{ag: access, U: elm$core$Maybe$Nothing, ab: refresh}),
-										o: elm$core$Maybe$Just('ログインしました')
+										y: author$project$Main$LogInStateOk(
+											{ag: access, T: elm$core$Maybe$Nothing, aa: refresh}),
+										n: elm$core$Maybe$Just('ログインしました')
 									});
 							}
 						}(),
@@ -9074,7 +9074,7 @@ var author$project$Main$update = F2(
 								return _Utils_update(
 									rec,
 									{
-										o: elm$core$Maybe$Just(
+										n: elm$core$Maybe$Just(
 											author$project$Api$logInResponseErrorToString(logInResponseError)),
 										a: author$project$Main$PageLogIn(
 											_Utils_Tuple2(
@@ -9085,7 +9085,7 @@ var author$project$Main$update = F2(
 								return _Utils_update(
 									rec,
 									{
-										o: elm$core$Maybe$Just(
+										n: elm$core$Maybe$Just(
 											author$project$Api$logInResponseErrorToString(logInResponseError))
 									});
 							}
@@ -9112,7 +9112,7 @@ var author$project$Main$update = F2(
 							return _Utils_update(
 								rec,
 								{
-									o: elm$core$Maybe$Just('新規登録完了'),
+									n: elm$core$Maybe$Just('新規登録完了'),
 									a: author$project$Main$PageHome(1)
 								});
 						} else {
@@ -9311,7 +9311,7 @@ var author$project$Main$update = F2(
 				}
 			default:
 				var response = msg.a;
-				var _n28 = _Utils_Tuple2(response, rec.z);
+				var _n28 = _Utils_Tuple2(response, rec.y);
 				if ((!_n28.a.$) && (!_n28.b.$)) {
 					var profile = _n28.a.a;
 					var r = _n28.b.a;
@@ -9319,11 +9319,11 @@ var author$project$Main$update = F2(
 						_Utils_update(
 							rec,
 							{
-								z: author$project$Main$LogInStateOk(
+								y: author$project$Main$LogInStateOk(
 									_Utils_update(
 										r,
 										{
-											U: elm$core$Maybe$Just(profile)
+											T: elm$core$Maybe$Just(profile)
 										}))
 							}),
 						elm$core$Platform$Cmd$none);
@@ -9915,7 +9915,7 @@ var author$project$Tab$Single = function (a) {
 	return {$: 1, a: a};
 };
 var author$project$Main$exhibitionView = function (_n0) {
-	var title = _n0.f;
+	var title = _n0.af;
 	var description = _n0.ao;
 	var price = _n0.aH;
 	var image = _n0.au;
@@ -9937,151 +9937,28 @@ var author$project$Main$exhibitionView = function (_n0) {
 					]))
 			]));
 };
-var author$project$Goods$getComplete = function (_n0) {
-	var complete = _n0.ak;
-	return complete;
-};
-var author$project$Goods$getCondition = function (_n0) {
-	var condition = _n0.al;
-	return condition;
-};
-var author$project$Goods$getDescription = function (_n0) {
-	var description = _n0.ao;
-	return description;
-};
-var author$project$Goods$getImage = function (_n0) {
-	var image = _n0.au;
-	return image;
-};
-var author$project$Goods$getLike = function (_n0) {
-	var like = _n0.aw;
-	return like;
-};
-var author$project$Goods$getLocation = function (_n0) {
-	var location = _n0.ax;
-	return location;
-};
-var author$project$Goods$getName = function (_n0) {
-	var name = _n0.aB;
-	return name;
-};
-var author$project$Goods$getPrice = function (_n0) {
-	var price = _n0.aH;
-	return price;
-};
-var author$project$Main$goodsViewCondition = function (condition) {
-	return A2(
-		elm$html$Html$div,
-		_List_Nil,
-		_List_fromArray(
-			[
-				elm$html$Html$text(
-				'商品の状態' + function () {
-					switch (condition) {
-						case 0:
-							return '新品・未使用';
-						case 1:
-							return 'ほぼ未使用';
-						case 2:
-							return '目立った傷や汚れなし';
-						case 3:
-							return '多少の傷や汚れあり';
-						case 4:
-							return '目立つ傷や汚れあり';
-						default:
-							return '状態が悪い・ジャンク';
-					}
-				}())
-			]));
-};
-var author$project$Main$goodsViewDescription = function (description) {
-	return A2(
-		elm$html$Html$div,
-		_List_fromArray(
-			[
-				elm$html$Html$Attributes$class('goods-description')
-			]),
-		_List_fromArray(
-			[
-				A2(
-				elm$html$Html$div,
-				_List_fromArray(
-					[
-						elm$html$Html$Attributes$class('goods-description-label')
-					]),
-				_List_fromArray(
-					[
-						elm$html$Html$text('商品の説明')
-					])),
-				A2(
-				elm$html$Html$div,
-				_List_Nil,
-				_List_fromArray(
-					[
-						elm$html$Html$text(description)
-					]))
-			]));
-};
-var author$project$Main$goodsViewImage = function (dataUrl) {
-	return A2(
-		elm$html$Html$img,
-		_List_fromArray(
-			[
-				elm$html$Html$Attributes$class('goods-image'),
-				elm$html$Html$Attributes$src(dataUrl)
-			]),
-		_List_Nil);
-};
-var author$project$Main$goodsViewLike = function (likeCount) {
-	return A2(
-		elm$html$Html$div,
-		_List_Nil,
-		_List_fromArray(
-			[
-				elm$html$Html$text(
-				elm$core$String$fromInt(likeCount))
-			]));
-};
-var author$project$Main$goodsViewLocation = function (location) {
-	return A2(
-		elm$html$Html$div,
-		_List_fromArray(
-			[
-				elm$html$Html$Attributes$class('goods-location')
-			]),
-		_List_fromArray(
-			[
-				A2(
-				elm$html$Html$div,
-				_List_fromArray(
-					[
-						elm$html$Html$Attributes$class('goods-location-label')
-					]),
-				_List_fromArray(
-					[
-						elm$html$Html$text('取引場所')
-					])),
-				A2(
-				elm$html$Html$div,
-				_List_Nil,
-				_List_fromArray(
-					[
-						elm$html$Html$text(location)
-					]))
-			]));
-};
-var author$project$Main$goodsViewName = function (name) {
-	return A2(
-		elm$html$Html$div,
-		_List_fromArray(
-			[
-				elm$html$Html$Attributes$class('goods-name')
-			]),
-		_List_fromArray(
-			[
-				elm$html$Html$text(name)
-			]));
-};
+var author$project$Main$HomePageFree = 2;
+var author$project$Main$HomePageRecent = 0;
+var author$project$SiteMap$exhibitionUrl = '/exhibition';
+var author$project$Main$exhibitButton = A2(
+	elm$html$Html$a,
+	_List_fromArray(
+		[
+			elm$html$Html$Attributes$class('exhibitButton'),
+			elm$html$Html$Attributes$href(author$project$SiteMap$exhibitionUrl)
+		]),
+	_List_fromArray(
+		[
+			elm$html$Html$text('出品')
+		]));
+var author$project$Page$Goods$itemImage = A2(
+	elm$html$Html$img,
+	_List_fromArray(
+		[
+			elm$html$Html$Attributes$class('itemImage'),
+			elm$html$Html$Attributes$src('/assets/itemDummy.png')
+		]),
+	_List_Nil);
 var elm$core$Basics$modBy = _Basics_modBy;
 var elm$core$String$cons = _String_cons;
 var elm$core$String$fromChar = function (_char) {
@@ -10126,7 +10003,7 @@ var elm$core$Tuple$mapSecond = F2(
 			x,
 			func(y));
 	});
-var author$project$Main$priceToString = function (price) {
+var author$project$Page$Goods$priceToString = function (price) {
 	return A2(
 		elm$core$String$join,
 		',',
@@ -10158,105 +10035,11 @@ var author$project$Main$priceToString = function (price) {
 								A2(elm$core$Basics$modBy, 1000, price)
 							]))))))) + '円';
 };
-var elm$html$Html$button = _VirtualDom_node('button');
-var author$project$Main$goodsViewPriceAndBuyButton = function (price) {
-	return A2(
-		elm$html$Html$div,
-		_List_fromArray(
-			[
-				elm$html$Html$Attributes$class('goods-priceAndBuyButton')
-			]),
-		_List_fromArray(
-			[
-				A2(
-				elm$html$Html$div,
-				_List_Nil,
-				_List_fromArray(
-					[
-						elm$html$Html$text(
-						author$project$Main$priceToString(price))
-					])),
-				A2(
-				elm$html$Html$button,
-				_List_Nil,
-				_List_fromArray(
-					[
-						elm$html$Html$text('購入手続きへ')
-					]))
-			]));
-};
-var author$project$Main$goodsView = function (goods) {
-	return _List_fromArray(
-		[
-			A2(
-			elm$html$Html$div,
-			_List_fromArray(
-				[
-					elm$html$Html$Attributes$class('goodsContainer')
-				]),
-			_List_fromArray(
-				[
-					A2(
-					elm$html$Html$div,
-					_List_fromArray(
-						[
-							elm$html$Html$Attributes$class('goods')
-						]),
-					_List_fromArray(
-						[
-							author$project$Main$goodsViewImage(
-							author$project$Goods$getImage(goods)),
-							author$project$Main$goodsViewName(
-							author$project$Goods$getName(goods)),
-							author$project$Main$goodsViewLike(
-							author$project$Goods$getLike(goods)),
-							author$project$Main$goodsViewDescription(
-							author$project$Goods$getDescription(goods)),
-							author$project$Main$goodsViewPriceAndBuyButton(
-							author$project$Goods$getPrice(goods)),
-							author$project$Main$goodsViewCondition(
-							author$project$Goods$getCondition(goods)),
-							author$project$Main$goodsViewLocation(
-							author$project$Goods$getLocation(goods)),
-							A2(
-							elm$html$Html$div,
-							_List_Nil,
-							_List_fromArray(
-								[
-									elm$html$Html$text(
-									author$project$Goods$getComplete(goods) ? '売却済み' : 'まだ売れていない')
-								]))
-						]))
-				]))
-		]);
-};
-var author$project$Main$HomePageFree = 2;
-var author$project$Main$HomePageRecent = 0;
-var author$project$SiteMap$exhibitionUrl = '/exhibition';
-var author$project$Main$exhibitButton = A2(
-	elm$html$Html$a,
-	_List_fromArray(
-		[
-			elm$html$Html$Attributes$class('exhibitButton'),
-			elm$html$Html$Attributes$href(author$project$SiteMap$exhibitionUrl)
-		]),
-	_List_fromArray(
-		[
-			elm$html$Html$text('出品')
-		]));
-var author$project$Main$itemImage = A2(
-	elm$html$Html$img,
-	_List_fromArray(
-		[
-			elm$html$Html$Attributes$class('itemImage'),
-			elm$html$Html$Attributes$src('/assets/itemDummy.png')
-		]),
-	_List_Nil);
 var author$project$SiteMap$goodsUrl = function (goodsId) {
 	return '/goods/' + goodsId;
 };
-var author$project$Main$item = function (_n0) {
-	var title = _n0.f;
+var author$project$Page$Goods$goodsListItem = function (_n0) {
+	var title = _n0.af;
 	var price = _n0.aH;
 	var like = _n0.aw;
 	return A2(
@@ -10269,7 +10052,7 @@ var author$project$Main$item = function (_n0) {
 			]),
 		_List_fromArray(
 			[
-				author$project$Main$itemImage,
+				author$project$Page$Goods$itemImage,
 				A2(
 				elm$html$Html$div,
 				_List_fromArray(
@@ -10289,7 +10072,7 @@ var author$project$Main$item = function (_n0) {
 				_List_fromArray(
 					[
 						elm$html$Html$text(
-						author$project$Main$priceToString(price))
+						author$project$Page$Goods$priceToString(price))
 					])),
 				A2(
 				elm$html$Html$div,
@@ -10303,7 +10086,7 @@ var author$project$Main$item = function (_n0) {
 };
 var elm$virtual_dom$VirtualDom$style = _VirtualDom_style;
 var elm$html$Html$Attributes$style = elm$virtual_dom$VirtualDom$style;
-var author$project$Main$itemList = function (isWideMode) {
+var author$project$Page$Goods$goodsList = function (isWideMode) {
 	return A2(
 		elm$html$Html$div,
 		_List_fromArray(
@@ -10316,21 +10099,21 @@ var author$project$Main$itemList = function (isWideMode) {
 			]),
 		A2(
 			elm$core$List$map,
-			author$project$Main$item,
+			author$project$Page$Goods$goodsListItem,
 			_List_fromArray(
 				[
-					{aw: 1, aH: 300, f: '冷蔵庫'},
-					{aw: 5, aH: 100, f: '洗濯機'},
-					{aw: 99, aH: 10, f: '時計'},
-					{aw: 5, aH: 100, f: '掃除機'},
-					{aw: 9, aH: 200, f: '自転車'},
-					{aw: 99, aH: 10, f: 'マンガ'},
-					{aw: 99, aH: 10, f: 'ゲーム'},
-					{aw: 5, aH: 100, f: '絵本'},
-					{aw: 2, aH: 1000, f: '棚'},
-					{aw: 2, aH: 1000, f: 'いす'},
-					{aw: 20, aH: 300, f: 'バッテリー'},
-					{aw: 10, aH: 20, f: '教科書'}
+					{aw: 1, aH: 300, af: '冷蔵庫'},
+					{aw: 5, aH: 100, af: '洗濯機'},
+					{aw: 99, aH: 10, af: '時計'},
+					{aw: 5, aH: 100, af: '掃除機'},
+					{aw: 9, aH: 200, af: '自転車'},
+					{aw: 99, aH: 10, af: 'マンガ'},
+					{aw: 99, aH: 10, af: 'ゲーム'},
+					{aw: 5, aH: 100, af: '絵本'},
+					{aw: 2, aH: 1000, af: '棚'},
+					{aw: 2, aH: 1000, af: 'いす'},
+					{aw: 20, aH: 300, af: 'バッテリー'},
+					{aw: 10, aH: 20, af: '教科書'}
 				])));
 };
 var author$project$Tab$Multi = F2(
@@ -10360,7 +10143,7 @@ var author$project$Main$homeView = F2(
 				}()),
 			_List_fromArray(
 				[
-					author$project$Main$itemList(isWideScreenMode),
+					author$project$Page$Goods$goodsList(isWideScreenMode),
 					author$project$Main$exhibitButton
 				]));
 	});
@@ -10384,7 +10167,7 @@ var author$project$Main$likeAndHistoryView = F2(
 				}()),
 			_List_fromArray(
 				[
-					author$project$Main$itemList(isWideScreenMode)
+					author$project$Page$Goods$goodsList(isWideScreenMode)
 				]));
 	});
 var author$project$Main$InputPassword = function (a) {
@@ -10491,6 +10274,262 @@ var author$project$Main$siteMapXmlView = _Utils_Tuple2(
 					elm$html$Html$text(author$project$SiteMap$siteMapXml)
 				]))
 		]));
+var author$project$Goods$getComplete = function (_n0) {
+	var complete = _n0.ak;
+	return complete;
+};
+var author$project$Goods$getCondition = function (_n0) {
+	var condition = _n0.al;
+	return condition;
+};
+var author$project$Goods$getDescription = function (_n0) {
+	var description = _n0.ao;
+	return description;
+};
+var author$project$Goods$getImage = function (_n0) {
+	var image = _n0.au;
+	return image;
+};
+var author$project$Goods$getLike = function (_n0) {
+	var like = _n0.aw;
+	return like;
+};
+var author$project$Goods$getLocation = function (_n0) {
+	var location = _n0.ax;
+	return location;
+};
+var author$project$Goods$getName = function (_n0) {
+	var name = _n0.aB;
+	return name;
+};
+var author$project$Goods$getPrice = function (_n0) {
+	var price = _n0.aH;
+	return price;
+};
+var author$project$Page$Goods$goodsViewCondition = function (condition) {
+	return A2(
+		elm$html$Html$div,
+		_List_Nil,
+		_List_fromArray(
+			[
+				A2(
+				elm$html$Html$div,
+				_List_fromArray(
+					[
+						elm$html$Html$Attributes$class('goods-label')
+					]),
+				_List_fromArray(
+					[
+						elm$html$Html$text('商品の状態')
+					])),
+				A2(
+				elm$html$Html$div,
+				_List_fromArray(
+					[
+						elm$html$Html$Attributes$class('goods-condition')
+					]),
+				_List_fromArray(
+					[
+						elm$html$Html$text(
+						function () {
+							switch (condition) {
+								case 0:
+									return '新品・未使用';
+								case 1:
+									return 'ほぼ未使用';
+								case 2:
+									return '目立った傷や汚れなし';
+								case 3:
+									return '多少の傷や汚れあり';
+								case 4:
+									return '目立つ傷や汚れあり';
+								default:
+									return '状態が悪い・ジャンク';
+							}
+						}())
+					]))
+			]));
+};
+var author$project$Page$Goods$goodsViewDescription = function (description) {
+	return A2(
+		elm$html$Html$div,
+		_List_fromArray(
+			[
+				elm$html$Html$Attributes$class('goods-description')
+			]),
+		_List_fromArray(
+			[
+				A2(
+				elm$html$Html$div,
+				_List_fromArray(
+					[
+						elm$html$Html$Attributes$class('goods-label')
+					]),
+				_List_fromArray(
+					[
+						elm$html$Html$text('商品の説明')
+					])),
+				A2(
+				elm$html$Html$div,
+				_List_Nil,
+				_List_fromArray(
+					[
+						elm$html$Html$text(description)
+					]))
+			]));
+};
+var author$project$Page$Goods$goodsViewImage = function (dataUrl) {
+	return A2(
+		elm$html$Html$img,
+		_List_fromArray(
+			[
+				elm$html$Html$Attributes$class('goods-image'),
+				elm$html$Html$Attributes$src(dataUrl)
+			]),
+		_List_Nil);
+};
+var elm$html$Html$span = _VirtualDom_node('span');
+var author$project$Page$Goods$goodsViewLike = function (likeCount) {
+	return A2(
+		elm$html$Html$div,
+		_List_fromArray(
+			[
+				elm$html$Html$Attributes$class('goods-like')
+			]),
+		_List_fromArray(
+			[
+				A2(
+				elm$html$Html$span,
+				_List_Nil,
+				_List_fromArray(
+					[
+						elm$html$Html$text('いいね')
+					])),
+				A2(
+				elm$html$Html$span,
+				_List_Nil,
+				_List_fromArray(
+					[
+						elm$html$Html$text(
+						elm$core$String$fromInt(likeCount))
+					]))
+			]));
+};
+var author$project$Page$Goods$goodsViewLocation = function (location) {
+	return A2(
+		elm$html$Html$div,
+		_List_fromArray(
+			[
+				elm$html$Html$Attributes$class('goods-location')
+			]),
+		_List_fromArray(
+			[
+				A2(
+				elm$html$Html$div,
+				_List_fromArray(
+					[
+						elm$html$Html$Attributes$class('goods-label')
+					]),
+				_List_fromArray(
+					[
+						elm$html$Html$text('取引場所')
+					])),
+				A2(
+				elm$html$Html$div,
+				_List_Nil,
+				_List_fromArray(
+					[
+						elm$html$Html$text(location)
+					]))
+			]));
+};
+var author$project$Page$Goods$goodsViewName = function (name) {
+	return A2(
+		elm$html$Html$div,
+		_List_fromArray(
+			[
+				elm$html$Html$Attributes$class('goods-name')
+			]),
+		_List_fromArray(
+			[
+				elm$html$Html$text(name)
+			]));
+};
+var elm$html$Html$button = _VirtualDom_node('button');
+var author$project$Page$Goods$goodsViewPriceAndBuyButton = function (price) {
+	return A2(
+		elm$html$Html$div,
+		_List_fromArray(
+			[
+				elm$html$Html$Attributes$class('goods-priceAndBuyButton')
+			]),
+		_List_fromArray(
+			[
+				A2(
+				elm$html$Html$div,
+				_List_fromArray(
+					[
+						elm$html$Html$Attributes$class('goods-price')
+					]),
+				_List_fromArray(
+					[
+						elm$html$Html$text(
+						author$project$Page$Goods$priceToString(price))
+					])),
+				A2(
+				elm$html$Html$button,
+				_List_Nil,
+				_List_fromArray(
+					[
+						elm$html$Html$text('購入手続きへ')
+					]))
+			]));
+};
+var author$project$Page$Goods$goodsView = function (goods) {
+	return _List_fromArray(
+		[
+			A2(
+			elm$html$Html$div,
+			_List_fromArray(
+				[
+					elm$html$Html$Attributes$class('goodsContainer')
+				]),
+			_List_fromArray(
+				[
+					A2(
+					elm$html$Html$div,
+					_List_fromArray(
+						[
+							elm$html$Html$Attributes$class('goods')
+						]),
+					_List_fromArray(
+						[
+							author$project$Page$Goods$goodsViewImage(
+							author$project$Goods$getImage(goods)),
+							author$project$Page$Goods$goodsViewName(
+							author$project$Goods$getName(goods)),
+							author$project$Page$Goods$goodsViewLike(
+							author$project$Goods$getLike(goods)),
+							author$project$Page$Goods$goodsViewDescription(
+							author$project$Goods$getDescription(goods)),
+							author$project$Page$Goods$goodsViewCondition(
+							author$project$Goods$getCondition(goods)),
+							author$project$Page$Goods$goodsViewLocation(
+							author$project$Goods$getLocation(goods)),
+							A2(
+							elm$html$Html$div,
+							_List_Nil,
+							_List_fromArray(
+								[
+									elm$html$Html$text(
+									author$project$Goods$getComplete(goods) ? '売却済み' : 'まだ売れていない')
+								]))
+						])),
+					author$project$Page$Goods$goodsViewPriceAndBuyButton(
+					author$project$Goods$getPrice(goods))
+				]))
+		]);
+};
 var author$project$Page$LogIn$forgotPasswordView = _List_fromArray(
 	[
 		elm$html$Html$text('パスワードを忘れたら。登録している学籍番号かメールアドレスを入力してください。パスワードを再発行します。')
@@ -10557,15 +10596,15 @@ var author$project$Page$LogIn$getLogInData = F2(
 						var password = _n0.b.a;
 						return elm$core$Maybe$Just(
 							{
-								Q: author$project$EmailAddress$fromSAddress(
+								P: author$project$EmailAddress$fromSAddress(
 									author$project$SAddress$fromStundetId(studentId)),
-								T: password
+								S: password
 							});
 					case 2:
 						var emailAddress = _n0.a.a;
 						var password = _n0.b.a;
 						return elm$core$Maybe$Just(
-							{Q: emailAddress, T: password});
+							{P: emailAddress, S: password});
 					default:
 						break _n0$2;
 				}
@@ -10734,7 +10773,6 @@ var author$project$Page$LogIn$EmitChangePage = function (a) {
 var author$project$Page$LogIn$EmitInputPassword = function (a) {
 	return {$: 2, a: a};
 };
-var elm$html$Html$span = _VirtualDom_node('span');
 var elm$html$Html$Attributes$minlength = function (n) {
 	return A2(
 		_VirtualDom_attribute,
@@ -10861,9 +10899,9 @@ var author$project$Page$LogIn$view = function (logInPage) {
 				]),
 			function () {
 				if (!logInPage.$) {
-					var studentIdOrEmailAddress = logInPage.a.af;
-					var password = logInPage.a._;
-					var sending = logInPage.a.V;
+					var studentIdOrEmailAddress = logInPage.a.ae;
+					var password = logInPage.a.Z;
+					var sending = logInPage.a.U;
 					return A3(author$project$Page$LogIn$logInView, studentIdOrEmailAddress, password, sending);
 				} else {
 					return author$project$Page$LogIn$forgotPasswordView;
@@ -10877,8 +10915,8 @@ var author$project$Page$SignUp$EmitChangePage = function (a) {
 var author$project$Page$SignUp$EmitDeleteUserAll = {$: 6};
 var author$project$Page$SignUp$getSignUpRequestEmailAddressAndPasswordAndImage = function (sAddressAndPassword) {
 	if (!sAddressAndPassword.$) {
-		var studentIdOrTsukubaEmailAddress = sAddressAndPassword.a.L;
-		var password = sAddressAndPassword.a._;
+		var studentIdOrTsukubaEmailAddress = sAddressAndPassword.a.K;
+		var password = sAddressAndPassword.a.Z;
 		var _n1 = _Utils_Tuple2(studentIdOrTsukubaEmailAddress, password);
 		_n1$2:
 		while (true) {
@@ -10889,19 +10927,19 @@ var author$project$Page$SignUp$getSignUpRequestEmailAddressAndPasswordAndImage =
 						var pass = _n1.b.a;
 						return elm$core$Maybe$Just(
 							{
-								Q: author$project$EmailAddress$fromSAddress(
+								P: author$project$EmailAddress$fromSAddress(
 									author$project$SAddress$fromStundetId(studentId)),
 								au: elm$core$Maybe$Nothing,
-								_: pass
+								Z: pass
 							});
 					case 2:
 						var sAddress = _n1.a.a;
 						var pass = _n1.b.a;
 						return elm$core$Maybe$Just(
 							{
-								Q: author$project$EmailAddress$fromSAddress(sAddress),
+								P: author$project$EmailAddress$fromSAddress(sAddress),
 								au: elm$core$Maybe$Nothing,
-								_: pass
+								Z: pass
 							});
 					default:
 						break _n1$2;
@@ -10912,9 +10950,9 @@ var author$project$Page$SignUp$getSignUpRequestEmailAddressAndPasswordAndImage =
 		}
 		return elm$core$Maybe$Nothing;
 	} else {
-		var emailAddress = sAddressAndPassword.a.Q;
-		var password = sAddressAndPassword.a._;
-		var imageUrl = sAddressAndPassword.a.S;
+		var emailAddress = sAddressAndPassword.a.P;
+		var password = sAddressAndPassword.a.Z;
+		var imageUrl = sAddressAndPassword.a.R;
 		var _n2 = _Utils_Tuple3(emailAddress, password, imageUrl);
 		if (((!_n2.a.$) && (!_n2.b.$)) && (!_n2.c.$)) {
 			var address = _n2.a.a;
@@ -10922,9 +10960,9 @@ var author$project$Page$SignUp$getSignUpRequestEmailAddressAndPasswordAndImage =
 			var image = _n2.c.a;
 			return elm$core$Maybe$Just(
 				{
-					Q: address,
+					P: address,
 					au: elm$core$Maybe$Just(image),
-					_: pass
+					Z: pass
 				});
 		} else {
 			return elm$core$Maybe$Nothing;
@@ -10984,12 +11022,12 @@ var author$project$Page$SignUp$getSignUpRequest = F3(
 			author$project$Page$SignUp$getSignUpRequestEmailAddressAndPasswordAndImage(sAddressAndPassword),
 			author$project$Page$SignUp$getSignUpRequestUniversity(university));
 		if ((!_n0.a.$) && (!_n0.b.$)) {
-			var emailAddress = _n0.a.a.Q;
-			var password = _n0.a.a._;
+			var emailAddress = _n0.a.a.P;
+			var password = _n0.a.a.Z;
 			var image = _n0.a.a.au;
 			var universityData = _n0.b.a;
 			return ((1 <= elm$core$String$length(nickName)) && (elm$core$String$length(nickName) <= 50)) ? elm$core$Maybe$Just(
-				{Q: emailAddress, au: image, aC: nickName, T: password, aW: universityData}) : elm$core$Maybe$Nothing;
+				{P: emailAddress, au: image, aC: nickName, S: password, aW: universityData}) : elm$core$Maybe$Nothing;
 		} else {
 			return elm$core$Maybe$Nothing;
 		}
@@ -11320,14 +11358,14 @@ var author$project$Page$SignUp$sAddressSelectView = function (userSignUpSAddress
 						if (!userSignUpSAddressAndPassword.$) {
 							return _List_Nil;
 						} else {
-							var password = userSignUpSAddressAndPassword.a._;
+							var password = userSignUpSAddressAndPassword.a.Z;
 							return _List_fromArray(
 								[
 									elm$html$Html$Events$onClick(
 									author$project$Page$SignUp$StudentHasSAddress(
 										{
-											_: password,
-											L: author$project$Page$SignUp$analysisStudentIdOrSAddress('')
+											Z: password,
+											K: author$project$Page$SignUp$analysisStudentIdOrSAddress('')
 										}))
 								]);
 						}
@@ -11351,15 +11389,15 @@ var author$project$Page$SignUp$sAddressSelectView = function (userSignUpSAddress
 						]),
 					function () {
 						if (!userSignUpSAddressAndPassword.$) {
-							var password = userSignUpSAddressAndPassword.a._;
+							var password = userSignUpSAddressAndPassword.a.Z;
 							return _List_fromArray(
 								[
 									elm$html$Html$Events$onClick(
 									author$project$Page$SignUp$NewStudent(
 										{
-											Q: author$project$EmailAddress$fromCharList(_List_Nil),
-											S: elm$core$Maybe$Nothing,
-											_: password
+											P: author$project$EmailAddress$fromCharList(_List_Nil),
+											R: elm$core$Maybe$Nothing,
+											Z: password
 										}))
 								]);
 						} else {
@@ -11707,7 +11745,7 @@ var author$project$School$schoolAndDepartmentToJapaneseString = function (school
 		var s = _n1.a;
 		var d = _n1.b;
 		return {
-			I: d,
+			H: d,
 			bf: author$project$School$schoolToJapaneseString(s)
 		};
 	}(
@@ -11766,7 +11804,7 @@ var author$project$School$departmentToJapaneseString = A2(
 	elm$core$Basics$composeR,
 	author$project$School$schoolAndDepartmentToJapaneseString,
 	function ($) {
-		return $.I;
+		return $.H;
 	});
 var elm$html$Html$option = _VirtualDom_node('option');
 var elm$html$Html$select = _VirtualDom_node('select');
@@ -12580,20 +12618,20 @@ var author$project$Page$SignUp$normalView = F3(
 							function (s) {
 								return author$project$Page$SignUp$EmitChangePage(
 									author$project$Page$SignUp$Normal(
-										{aC: nickName, j: s, aW: university}));
+										{aC: nickName, i: s, aW: university}));
 							},
 							author$project$Page$SignUp$sAddressView(sAddressAndPassword)))
 					]),
 				_Utils_ap(
 					function () {
 						if (!sAddressAndPassword.$) {
-							var studentIdOrTsukubaEmailAddress = sAddressAndPassword.a.L;
-							var password = sAddressAndPassword.a._;
+							var studentIdOrTsukubaEmailAddress = sAddressAndPassword.a.K;
+							var password = sAddressAndPassword.a.Z;
 							return A2(author$project$Page$SignUp$studentHasSAddressFormList, studentIdOrTsukubaEmailAddress, password);
 						} else {
-							var emailAddress = sAddressAndPassword.a.Q;
-							var imageUrl = sAddressAndPassword.a.S;
-							var password = sAddressAndPassword.a._;
+							var emailAddress = sAddressAndPassword.a.P;
+							var imageUrl = sAddressAndPassword.a.R;
+							var password = sAddressAndPassword.a.Z;
 							return A3(author$project$Page$SignUp$newStudentForm, emailAddress, imageUrl, password);
 						}
 					}(),
@@ -12607,7 +12645,7 @@ var author$project$Page$SignUp$normalView = F3(
 										function (s) {
 											return author$project$Page$SignUp$EmitChangePage(
 												author$project$Page$SignUp$Normal(
-													{aC: nickName, j: sAddressAndPassword, aW: s}));
+													{aC: nickName, i: sAddressAndPassword, aW: s}));
 										})),
 								author$project$Page$SignUp$signUpUniversityView(university)),
 							_Utils_ap(
@@ -12763,7 +12801,7 @@ var author$project$Page$SignUp$view = function (userSignUpPage) {
 	var _n0 = function () {
 		switch (userSignUpPage.$) {
 			case 0:
-				var sAddressAndPassword = userSignUpPage.a.j;
+				var sAddressAndPassword = userSignUpPage.a.i;
 				var university = userSignUpPage.a.aW;
 				var nickName = userSignUpPage.a.aC;
 				return _Utils_Tuple2(
@@ -12996,14 +13034,14 @@ var author$project$Main$mainViewAndMainTab = F2(
 						author$project$Tab$Single('購入した商品'),
 						_List_fromArray(
 							[
-								author$project$Main$itemList(isWideScreenMode)
+								author$project$Page$Goods$goodsList(isWideScreenMode)
 							]));
 				case 4:
 					return _Utils_Tuple2(
 						author$project$Tab$Single('出品した商品'),
 						_List_fromArray(
 							[
-								author$project$Main$itemList(isWideScreenMode)
+								author$project$Page$Goods$goodsList(isWideScreenMode)
 							]));
 				case 1:
 					var signUpPageModel = page.a;
@@ -13033,7 +13071,7 @@ var author$project$Main$mainViewAndMainTab = F2(
 					var goods = page.a;
 					return _Utils_Tuple2(
 						author$project$Tab$None,
-						author$project$Main$goodsView(goods));
+						author$project$Page$Goods$goodsView(goods));
 				default:
 					return A2(
 						elm$core$Tuple$mapFirst,
@@ -13081,7 +13119,7 @@ var author$project$Main$CloseMenu = {$: 2};
 var author$project$SiteMap$logInUrl = '/user-login';
 var author$project$Main$menuAccount = function (logInState) {
 	if (!logInState.$) {
-		var profile = logInState.a.U;
+		var profile = logInState.a.T;
 		return _List_fromArray(
 			[
 				A2(
@@ -13100,7 +13138,7 @@ var author$project$Main$menuAccount = function (logInState) {
 				function () {
 					if (!profile.$) {
 						var introduction = profile.a.a7;
-						var department = profile.a.I;
+						var department = profile.a.H;
 						return _Utils_ap(
 							_List_fromArray(
 								[
@@ -13336,12 +13374,12 @@ var author$project$Main$messageView = function (message) {
 };
 var author$project$Main$view = function (_n0) {
 	var page = _n0.a;
-	var menuState = _n0.i;
-	var message = _n0.o;
-	var logInState = _n0.z;
+	var menuState = _n0.h;
+	var message = _n0.n;
+	var logInState = _n0.y;
 	var isWideScreen = _Utils_eq(menuState, elm$core$Maybe$Nothing);
 	return {
-		H: _Utils_ap(
+		G: _Utils_ap(
 			_List_fromArray(
 				[
 					author$project$Main$header(isWideScreen),
@@ -13360,7 +13398,7 @@ var author$project$Main$view = function (_n0) {
 						return _List_Nil;
 					}
 				}())),
-		f: 'つくマート'
+		af: 'つくマート'
 	};
 };
 var elm$browser$Browser$application = _Browser_application;

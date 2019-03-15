@@ -474,6 +474,8 @@ img {
 .goodsContainer {
     display: flex;
     justify-content: center;
+    width: 100%;
+    position: relative;
 }
 
 .goods {
@@ -494,9 +496,21 @@ img {
     font-size: 1.5rem;
 }
 
-.goods-description-label {
+.goods-like {
+    border: solid #000 2px;
+    border-radius: 1rem;
+    justify-self: left;
+    padding: .5rem 1rem;
+    user-select: none;
+}
+
+.goods-label {
     background-color: #ddd;
     padding: .2rem .5rem;
+}
+
+.goods-condition {
+    font-size: 1.5rem;
 }
 
 .goods-priceAndBuyButton {
@@ -508,11 +522,11 @@ img {
     box-sizing: border-box;
     bottom: 0;
     background-color: var(--primaryColor);
+    color: white;
 }
 
-.goods-location-label {
-    background-color: #ddd;
-    padding: .2rem .5rem;
+.goods-price {
+    font-size: 1.5rem;
 }
 
 /*===============================================

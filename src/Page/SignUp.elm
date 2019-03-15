@@ -564,7 +564,8 @@ passwordForm passwordResult =
         ]
 
 
-{-| -}
+{-| 表示名フォーム
+-}
 nickNameForm : String -> List ( String, Html.Html Emit )
 nickNameForm nickName =
     [ ( "nickNameForm"

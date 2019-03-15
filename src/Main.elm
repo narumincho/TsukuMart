@@ -9,6 +9,7 @@ import Html.Attributes
 import Html.Events
 import Html.Keyed
 import Json.Decode
+import Page.Goods
 import Page.LogIn
 import Page.SignUp
 import School
@@ -966,12 +967,12 @@ mainViewAndMainTab page isWideScreenMode =
 
                 PagePurchaseGoodsList ->
                     ( Tab.Single "購入した商品"
-                    , [ itemList isWideScreenMode ]
+                    , [ Page.Goods.goodsList isWideScreenMode ]
                     )
 
                 PageExhibitionGoodsList ->
                     ( Tab.Single "出品した商品"
-                    , [ itemList isWideScreenMode ]
+                    , [ Page.Goods.goodsList isWideScreenMode ]
                     )
 
                 PageSignUp signUpPageModel ->
@@ -985,7 +986,7 @@ mainViewAndMainTab page isWideScreenMode =
                     )
 
                 PageGoods goods ->
-                    ( Tab.None, goodsView goods )
+                    ( Tab.None, Page.Goods.goodsView goods )
 
                 PageSiteMapXml ->
                     siteMapXmlView
@@ -1078,7 +1079,7 @@ homeView isWideScreenMode subPage =
             HomePageFree ->
                 2
         )
-    , [ itemList isWideScreenMode, exhibitButton ]
+    , [ Page.Goods.goodsList isWideScreenMode, exhibitButton ]
     )
 
 
@@ -1095,184 +1096,8 @@ likeAndHistoryView isWideScreenMode likeAndHistory =
             History ->
                 1
         )
-    , [ itemList isWideScreenMode ]
+    , [ Page.Goods.goodsList isWideScreenMode ]
     )
-
-
-{-| 商品の一覧 中身は適当
--}
-itemList : Bool -> Html.Html Msg
-itemList isWideMode =
-    Html.div
-        [ Html.Attributes.style "display" "grid"
-        , Html.Attributes.style "grid-template-columns"
-            (if isWideMode then
-                "33.3% 33.4% 33.3%"
-
-             else
-                "50% 50%"
-            )
-        ]
-        ([ { title = "冷蔵庫", price = 300, like = 1 }
-         , { title = "洗濯機", price = 100, like = 5 }
-         , { title = "時計", price = 10, like = 99 }
-         , { title = "掃除機", price = 100, like = 5 }
-         , { title = "自転車", price = 200, like = 9 }
-         , { title = "マンガ", price = 10, like = 99 }
-         , { title = "ゲーム", price = 10, like = 99 }
-         , { title = "絵本", price = 100, like = 5 }
-         , { title = "棚", price = 1000, like = 2 }
-         , { title = "いす", price = 1000, like = 2 }
-         , { title = "バッテリー", price = 300, like = 20 }
-         , { title = "教科書", price = 20, like = 10 }
-         ]
-            |> List.map item
-        )
-
-
-item : { title : String, price : Int, like : Int } -> Html.Html Msg
-item { title, price, like } =
-    Html.a
-        [ Html.Attributes.class "item"
-        , Html.Attributes.href (SiteMap.goodsUrl "id")
-        ]
-        [ itemImage
-        , Html.div [ Html.Attributes.class "itemTitle" ] [ Html.text title ]
-        , Html.div [ Html.Attributes.class "itemPrice" ] [ Html.text (priceToString price) ]
-        , Html.div [] [ Html.text ("いいね" ++ String.fromInt like) ]
-        ]
-
-
-priceToString : Int -> String
-priceToString price =
-    ((if price < 1000 then
-        ( price, [] )
-
-      else if price < 1000000 then
-        ( price // 1000, [ price |> modBy 1000 ] )
-
-      else
-        ( price // 1000000, [ price // 1000 |> modBy 1000, price |> modBy 1000 ] )
-     )
-        |> Tuple.mapFirst String.fromInt
-        |> Tuple.mapSecond (List.map (String.fromInt >> String.padLeft 3 '0'))
-        |> (\( a, b ) -> a :: b)
-        |> String.join ","
-    )
-        ++ "円"
-
-
-itemImage : Html.Html Msg
-itemImage =
-    Html.img
-        [ Html.Attributes.class "itemImage"
-        , Html.Attributes.src "/assets/itemDummy.png"
-        ]
-        []
-
-
-goodsView : Goods.Goods -> List (Html.Html Msg)
-goodsView goods =
-    [ Html.div
-        [ Html.Attributes.class "goodsContainer" ]
-        [ Html.div
-            [ Html.Attributes.class "goods" ]
-            [ goodsViewImage (Goods.getImage goods)
-            , goodsViewName (Goods.getName goods)
-            , goodsViewLike (Goods.getLike goods)
-            , goodsViewDescription (Goods.getDescription goods)
-            , goodsViewPriceAndBuyButton (Goods.getPrice goods)
-            , goodsViewCondition (Goods.getCondition goods)
-            , goodsViewLocation (Goods.getLocation goods)
-            , Html.div []
-                [ Html.text
-                    (if Goods.getComplete goods then
-                        "売却済み"
-
-                     else
-                        "まだ売れていない"
-                    )
-                ]
-            ]
-        ]
-    ]
-
-
-goodsViewImage : String -> Html.Html msg
-goodsViewImage dataUrl =
-    Html.img
-        [ Html.Attributes.class "goods-image"
-        , Html.Attributes.src dataUrl
-        ]
-        []
-
-
-goodsViewName : String -> Html.Html msg
-goodsViewName name =
-    Html.div
-        [ Html.Attributes.class "goods-name" ]
-        [ Html.text name ]
-
-
-goodsViewLike : Int -> Html.Html msg
-goodsViewLike likeCount =
-    Html.div
-        []
-        [ Html.text (String.fromInt likeCount) ]
-
-
-goodsViewDescription : String -> Html.Html msg
-goodsViewDescription description =
-    Html.div
-        [ Html.Attributes.class "goods-description" ]
-        [ Html.div [ Html.Attributes.class "goods-description-label" ] [ Html.text "商品の説明" ]
-        , Html.div [] [ Html.text description ]
-        ]
-
-
-goodsViewPriceAndBuyButton : Int -> Html.Html msg
-goodsViewPriceAndBuyButton price =
-    Html.div
-        [ Html.Attributes.class "goods-priceAndBuyButton" ]
-        [ Html.div [] [ Html.text (priceToString price) ]
-        , Html.button [] [ Html.text "購入手続きへ" ]
-        ]
-
-
-goodsViewCondition : Goods.Condition -> Html.Html msg
-goodsViewCondition condition =
-    Html.div []
-        [ Html.text
-            ("商品の状態"
-                ++ (case condition of
-                        Goods.New ->
-                            "新品・未使用"
-
-                        Goods.LikeNew ->
-                            "ほぼ未使用"
-
-                        Goods.VeryGood ->
-                            "目立った傷や汚れなし"
-
-                        Goods.Good ->
-                            "多少の傷や汚れあり"
-
-                        Goods.Acceptable ->
-                            "目立つ傷や汚れあり"
-
-                        Goods.Junk ->
-                            "状態が悪い・ジャンク"
-                   )
-            )
-        ]
-
-
-goodsViewLocation : Goods.Location -> Html.Html msg
-goodsViewLocation location =
-    Html.div [ Html.Attributes.class "goods-location" ]
-        [ Html.div [ Html.Attributes.class "goods-location-label" ] [ Html.text "取引場所" ]
-        , Html.div [] [ Html.text location ]
-        ]
 
 
 exhibitButton : Html.Html Msg
