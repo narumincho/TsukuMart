@@ -11,6 +11,7 @@ import Html.Keyed
 import Json.Decode
 import Page.LogIn
 import Page.SignUp
+import School
 import SiteMap
 import Svg
 import Svg.Attributes
@@ -100,6 +101,7 @@ type LogInState
     = LogInStateOk
         { access : Api.Token
         , refresh : Api.Token
+        , profile : Maybe Api.UserProfile
         }
     | LogInStateNone
 
@@ -126,6 +128,7 @@ type Msg
     | SendConfirmToken String
     | DeleteAllUser
     | DeleteAllUserResponse (Result () ())
+    | GetUserProfileResponse (Result () Api.UserProfile)
 
 
 main : Program () Model Msg
@@ -247,15 +250,8 @@ update msg (Model rec) =
             )
 
         LogIn logInData ->
-            ( case rec.page of
-                PageLogIn ( _, Just nextPage ) ->
-                    Model
-                        { rec
-                            | page = nextPage
-                        }
-
-                _ ->
-                    Model rec
+            ( Model rec
+              -- TODO ログイン処理中の表示
             , Api.logIn logInData LogInResponse
             )
 
@@ -271,23 +267,26 @@ update msg (Model rec) =
             )
 
         LogInResponse logInResponse ->
-            ( case logInResponse of
+            case logInResponse of
                 Ok (Api.LogInResponseOk { access, refresh }) ->
-                    let
+                    ( let
                         pageMaybe =
                             case rec.page of
-                                PageLogIn ( _, p ) ->
-                                    p
+                                PageLogIn ( _, Just p ) ->
+                                    Just p
+
+                                PageLogIn ( _, Nothing ) ->
+                                    Just (PageHome HomePageRecommend)
 
                                 _ ->
                                     Nothing
-                    in
-                    case pageMaybe of
+                      in
+                      case pageMaybe of
                         Just newPage ->
                             Model
                                 { rec
                                     | message = Just "ログインしました"
-                                    , logInState = LogInStateOk { access = access, refresh = refresh }
+                                    , logInState = LogInStateOk { access = access, refresh = refresh, profile = Nothing }
                                     , page = newPage
                                 }
 
@@ -295,16 +294,18 @@ update msg (Model rec) =
                             Model
                                 { rec
                                     | message = Just "ログインしました"
-                                    , logInState = LogInStateOk { access = access, refresh = refresh }
+                                    , logInState = LogInStateOk { access = access, refresh = refresh, profile = Nothing }
                                 }
+                    , Api.getUserProfile access GetUserProfileResponse
+                    )
 
                 Err logInResponseError ->
-                    Model
+                    ( Model
                         { rec
                             | message = Just (Api.logInResponseErrorToString logInResponseError)
                         }
-            , Cmd.none
-            )
+                    , Cmd.none
+                    )
 
         SignUpConfirmResponse response ->
             ( case response of
@@ -456,6 +457,14 @@ update msg (Model rec) =
                     ( Model rec
                     , Cmd.none
                     )
+
+        GetUserProfileResponse response ->
+            case ( response, rec.logInState ) of
+                ( Ok profile, LogInStateOk r ) ->
+                    ( Model { rec | logInState = LogInStateOk { r | profile = Just profile } }, Cmd.none )
+
+                ( _, _ ) ->
+                    ( Model rec, Cmd.none )
 
 
 urlToPage : Url.Url -> Maybe Page -> ( Page, Maybe String )
@@ -872,8 +881,26 @@ menuMain logInState =
 menuAccount : LogInState -> List (Html.Html msg)
 menuAccount logInState =
     case logInState of
-        LogInStateOk _ ->
-            [ Html.div [ Html.Attributes.class "menu-noLogin" ] [ Html.text "ログインしています" ] ]
+        LogInStateOk { profile } ->
+            [ Html.div [ Html.Attributes.class "menu-noLogin" ] [ Html.text "ログイン済み" ]
+            , Html.div []
+                (case profile of
+                    Just (Api.UserProfile { introduction, department }) ->
+                        [ Html.div [] [ Html.text ("紹介文:" ++ introduction) ]
+                        , Html.div [] [ Html.text ("学群:" ++ (School.departmentToSchool department |> School.schoolToJapaneseString)) ]
+                        ]
+                            ++ (case School.departmentToJapaneseString department of
+                                    Just departmentText ->
+                                        [ Html.div [] [ Html.text ("学類:" ++ departmentText) ] ]
+
+                                    Nothing ->
+                                        []
+                               )
+
+                    Nothing ->
+                        []
+                )
+            ]
 
         LogInStateNone ->
             [ Html.div [ Html.Attributes.class "menu-noLogin" ] [ Html.text "ログインしていません" ]

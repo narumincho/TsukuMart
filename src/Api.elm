@@ -11,7 +11,9 @@ module Api exposing
     , SignUpResponseOk(..)
     , Token
     , UniversityData(..)
+    , UserProfile(..)
     , debugDeleteAllUser
+    , getUserProfile
     , logIn
     , logInResponseErrorToString
     , signUp
@@ -68,6 +70,11 @@ type alias ConfirmToken =
 
 confirmTokenToHeader : ConfirmToken -> Http.Header
 confirmTokenToHeader token =
+    Http.header "Authorization" ("Bearer " ++ token)
+
+
+tokenToHeader : Token -> Http.Header
+tokenToHeader token =
     Http.header "Authorization" ("Bearer " ++ token)
 
 
@@ -408,6 +415,66 @@ tokenRefreshBodyStringDecoder =
             (\access ->
                 Ok (TokenRefreshResponseOk { access = access })
             )
+
+
+
+{- ============================================================
+       Current User Profile /{version}/currentuser/profile/
+   ============================================================
+-}
+
+
+type UserProfile
+    = UserProfile { introduction : String, department : School.SchoolAndDepartment }
+
+
+getUserProfile : Token -> (Result () UserProfile -> msg) -> Cmd msg
+getUserProfile token msg =
+    Http.request
+        { method = "GET"
+        , headers = [ tokenToHeader token ]
+        , url = "http://api.tsukumart.com/v1/currentuser/profile/"
+        , body = Http.emptyBody
+        , expect = Http.expectStringResponse msg getUserProfileResponseToResult
+        , timeout = Nothing
+        , tracker = Nothing
+        }
+
+
+getUserProfileResponseToResult : Http.Response String -> Result () UserProfile
+getUserProfileResponseToResult response =
+    case response of
+        Http.BadStatus_ _ body ->
+            Json.Decode.decodeString getUserProfileResponeBodyDecoder body
+                |> Result.withDefault (Err ())
+
+        Http.GoodStatus_ _ body ->
+            Json.Decode.decodeString getUserProfileResponeBodyDecoder body
+                |> Result.withDefault (Err ())
+
+        _ ->
+            Err ()
+
+
+getUserProfileResponeBodyDecoder : Json.Decode.Decoder (Result () UserProfile)
+getUserProfileResponeBodyDecoder =
+    Json.Decode.map2
+        (\introduction departmentIdString ->
+            case School.departmentFromIdString departmentIdString of
+                Just department ->
+                    Ok
+                        (UserProfile
+                            { introduction = introduction
+                            , department = department
+                            }
+                        )
+
+                Nothing ->
+                    Err
+                        ()
+        )
+        (Json.Decode.field "introduction" Json.Decode.string)
+        (Json.Decode.field "department" Json.Decode.string)
 
 
 

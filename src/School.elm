@@ -3,6 +3,7 @@ module School exposing
     , School
     , SchoolAndDepartment
     , departmentAllValue
+    , departmentFromIdString
     , departmentToIdString
     , departmentToJapaneseString
     , departmentToSchool
@@ -349,6 +350,25 @@ departmentToIdString department =
 
         DSport ->
             schoolToIdString SSport
+
+
+departmentFromIdString : String -> Maybe SchoolAndDepartment
+departmentFromIdString idString =
+    departmentFromIdStringLoop idString (schoolAllValue |> List.concatMap departmentAllValue)
+
+
+departmentFromIdStringLoop : String -> List SchoolAndDepartment -> Maybe SchoolAndDepartment
+departmentFromIdStringLoop idString departmentList =
+    case departmentList of
+        x :: xs ->
+            if departmentToIdString x == idString then
+                Just x
+
+            else
+                departmentFromIdStringLoop idString xs
+
+        [] ->
+            Nothing
 
 
 schoolAndDepartmentToJapaneseString : SchoolAndDepartment -> { school : String, department : Maybe String }

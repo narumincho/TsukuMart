@@ -172,7 +172,7 @@ logInButton logInDataMaybe =
              ]
                 ++ (case logInDataMaybe of
                         Just logInData ->
-                            [ Html.Events.stopPropagationOn "click"
+                            [ Html.Events.preventDefaultOn "click"
                                 (Json.Decode.succeed
                                     ( EmitLogIn logInData
                                     , True
