@@ -18,6 +18,7 @@ import SiteMap
 import StudentId
 import Svg
 import Svg.Attributes
+import Tab
 import Url
 import Url.Parser
 
@@ -75,7 +76,6 @@ type Page
     | PageExhibitionGoodsList
     | PagePurchaseGoodsList
     | PageExhibition ExhibitionPage
-    | PageSendSignUpEmail EmailAddress.EmailAddress (Maybe (Result Api.SignUpResponseError Api.SignUpResponseOk))
     | PageGoods Goods.Goods
     | PageSiteMapXml
 
@@ -114,7 +114,7 @@ type Msg
     | ReceiveImageDataUrl String
     | ReceiveImageDataUrlMulti (List String)
     | InputPassword String
-    | SendConfirmToken
+    | SendConfirmToken String
     | DeleteAllUser
     | DeleteAllUserResponse (Result () ())
 
@@ -221,7 +221,7 @@ update msg (Model rec) =
         SignUp signUpData ->
             ( Model
                 { rec
-                    | page = PageSendSignUpEmail signUpData.emailAddress Nothing
+                    | page = PageSignUp (Page.SignUp.sentSignUpDataModel signUpData.emailAddress)
                 }
             , Api.signUp signUpData SignUpResponse
             )
@@ -241,9 +241,9 @@ update msg (Model rec) =
 
         SignUpResponse response ->
             ( case rec.page of
-                PageSendSignUpEmail emailAddress _ ->
+                PageSignUp singUpPageModel ->
                     Model
-                        { rec | page = PageSendSignUpEmail emailAddress (Just response) }
+                        { rec | page = PageSignUp (Page.SignUp.update (Page.SignUp.SignUpResponse response) singUpPageModel) }
 
                 _ ->
                     Model rec
@@ -371,17 +371,10 @@ update msg (Model rec) =
             , Cmd.none
             )
 
-        SendConfirmToken ->
-            case rec.page of
-                PageSendSignUpEmail _ (Just (Ok (Api.SignUpResponseOk token))) ->
-                    ( Model rec
-                    , Api.signUpConfirm { confirmToken = token } SignUpConfirmResponse
-                    )
-
-                _ ->
-                    ( Model rec
-                    , Cmd.none
-                    )
+        SendConfirmToken token ->
+            ( Model rec
+            , Api.signUpConfirm { confirmToken = token } SignUpConfirmResponse
+            )
 
         DeleteAllUser ->
             ( Model rec
@@ -821,118 +814,52 @@ menuMain =
 mainViewAndMainTab : Page -> Bool -> List (Html.Html Msg)
 mainViewAndMainTab page isWideScreenMode =
     let
-        { tabData, mainView } =
+        ( tabData, mainView ) =
             case page of
                 PageHome subPage ->
-                    { tabData =
-                        TabMulti
-                            [ ( PageHome HomePageRecent, "新着" )
-                            , ( PageHome (HomePageRecommend { valid = True }), "おすすめ" )
-                            , ( PageHome HomePageFree, "0円" )
-                            ]
-                            (case subPage of
-                                HomePageRecent ->
-                                    0
-
-                                HomePageRecommend _ ->
-                                    1
-
-                                HomePageFree ->
-                                    2
-                            )
-                    , mainView =
-                        case subPage of
-                            HomePageRecommend { valid } ->
-                                if valid then
-                                    [ itemList isWideScreenMode, exhibitButton ]
-
-                                else
-                                    [ invalidLinkErrorMsg, itemList isWideScreenMode, exhibitButton ]
-
-                            _ ->
-                                [ itemList isWideScreenMode, exhibitButton ]
-                    }
+                    homeView isWideScreenMode subPage
+                        |> Tuple.mapFirst (Tab.map PageHome)
 
                 PageExhibition subPage ->
                     exhibitionView subPage
+                        |> Tuple.mapFirst (Tab.map never)
 
                 PageLikeAndHistory subPage ->
-                    { tabData =
-                        TabMulti
-                            [ ( PageLikeAndHistory Like, "いいね" )
-                            , ( PageLikeAndHistory History, "閲覧履歴" )
-                            ]
-                            (case subPage of
-                                Like ->
-                                    0
-
-                                History ->
-                                    1
-                            )
-                    , mainView =
-                        [ itemList isWideScreenMode ]
-                    }
+                    likeAndHistoryView isWideScreenMode subPage
+                        |> Tuple.mapFirst (Tab.map PageLikeAndHistory)
 
                 PagePurchaseGoodsList ->
-                    { tabData = TabSingle "購入した商品"
-                    , mainView =
-                        [ itemList isWideScreenMode ]
-                    }
+                    ( Tab.Single "購入した商品"
+                    , [ itemList isWideScreenMode ]
+                    )
 
                 PageExhibitionGoodsList ->
-                    { tabData = TabSingle "出品した商品"
-                    , mainView =
-                        [ itemList isWideScreenMode ]
-                    }
+                    ( Tab.Single "出品した商品"
+                    , [ itemList isWideScreenMode ]
+                    )
 
                 PageSignUp signUpPageModel ->
-                    { tabData = TabSingle "新規登録"
-                    , mainView =
-                        Page.SignUp.view signUpPageModel
-                            |> List.map (Html.map signUpPageEmitToMsg)
-                    }
+                    Page.SignUp.view signUpPageModel
+                        |> (\( t, v ) -> ( t |> Tab.map never, v |> List.map (Html.map signUpPageEmitToMsg) ))
 
                 PageLogIn ( logInPageModel, pageMaybe ) ->
-                    { tabData = TabSingle "ログイン"
-                    , mainView =
-                        Page.LogIn.view logInPageModel
-                            |> List.map (Html.map (logInPageEmitToMsg pageMaybe))
-                    }
-
-                PageSendSignUpEmail emailAddress response ->
-                    { tabData = TabNone
-                    , mainView =
-                        Page.SignUp.sendSignUpEmailView emailAddress response
-                            |> List.map (Html.map signUpPageEmitToMsg)
-                    }
+                    ( Tab.Single "ログイン"
+                    , Page.LogIn.view logInPageModel
+                        |> List.map (Html.map (logInPageEmitToMsg pageMaybe))
+                    )
 
                 PageGoods goods ->
-                    { tabData = TabNone
-                    , mainView = goodsView goods
-                    }
+                    ( Tab.None, goodsView goods )
 
                 PageSiteMapXml ->
                     siteMapXmlView
+                        |> Tuple.mapFirst (Tab.map never)
     in
-    [ Html.div
-        ([ Html.Attributes.classList
-            [ ( "mainTab", True ), ( "mainTab-wide", isWideScreenMode ) ]
-         ]
-            ++ (case tabData of
-                    TabNone ->
-                        [ Html.Attributes.style "height" "0" ]
-
-                    _ ->
-                        [ Html.Attributes.style "grid-template-columns"
-                            (List.repeat (tabDataToCount tabData) "1fr" |> String.join " ")
-                        , Html.Attributes.style "height" "3rem"
-                        ]
-               )
-        )
-        (mainTabItemList page tabData)
+    [ Tab.view isWideScreenMode tabData
+        |> Html.map ChangePage
     , Html.div
         (case tabData of
-            TabNone ->
+            Tab.None ->
                 [ Html.Attributes.classList
                     [ ( "mainView-noMainTab", True ), ( "mainView-wide-noMainTab", isWideScreenMode ) ]
                 ]
@@ -944,107 +871,6 @@ mainViewAndMainTab page isWideScreenMode =
         )
         mainView
     ]
-
-
-type TabData
-    = TabMulti (List ( Page, String )) Int
-    | TabSingle String
-    | TabNone
-
-
-tabDataToCount : TabData -> Int
-tabDataToCount tabType =
-    case tabType of
-        TabMulti list _ ->
-            List.length list
-
-        TabSingle _ ->
-            1
-
-        TabNone ->
-            0
-
-
-mainTabItemList : Page -> TabData -> List (Html.Html Msg)
-mainTabItemList selectedPage tabData =
-    case tabData of
-        TabMulti tabList selectIndex ->
-            (tabList
-                |> List.map
-                    (\( tab, label ) ->
-                        mainTabItem (tab == selectedPage)
-                            label
-                            (Just (ChangePage tab))
-                    )
-            )
-                ++ [ mainTabSelectLine
-                        selectIndex
-                        (List.length tabList)
-                   ]
-
-        TabSingle label ->
-            [ mainTabItem
-                True
-                label
-                Nothing
-            , mainTabSelectLine 0 1
-            ]
-
-        TabNone ->
-            []
-
-
-firstElementIndex : a -> List a -> Maybe Int
-firstElementIndex a list =
-    case list of
-        [] ->
-            Nothing
-
-        x :: xs ->
-            if x == a then
-                Just 0
-
-            else
-                firstElementIndex a xs |> Maybe.map ((+) 1)
-
-
-mainTabItem : Bool -> String -> Maybe Msg -> Html.Html Msg
-mainTabItem isSelected label clickEventMaybe =
-    if isSelected then
-        Html.div
-            [ Html.Attributes.class "mainTab-item-select" ]
-            [ Html.text label ]
-
-    else
-        case clickEventMaybe of
-            Just clickEvent ->
-                Html.div
-                    [ Html.Attributes.class "mainTab-item"
-                    , Html.Events.onClick clickEvent
-                    ]
-                    [ Html.text label ]
-
-            Nothing ->
-                Html.div
-                    [ Html.Attributes.class "mainTab-item" ]
-                    [ Html.text label ]
-
-
-{-| タブの下線
-mainTabSelectLine index count
-index : 何番目のタブを選択しているか
-count : 全部で何個のタブがあるか
--}
-mainTabSelectLine : Int -> Int -> Html.Html Msg
-mainTabSelectLine index count =
-    Html.div [ Html.Attributes.class "mainTab-selectLineArea" ]
-        [ Html.div
-            [ Html.Attributes.class "mainTab-selectLine"
-            , Html.Attributes.style "left" ("calc( 100% /" ++ String.fromInt count ++ " * " ++ String.fromInt index ++ ")")
-            , Html.Attributes.style "width" ("calc( 100% / " ++ String.fromInt count ++ ")")
-            ]
-            []
-        ]
 
 
 invalidLinkErrorMsg : Html.Html msg
@@ -1073,8 +899,8 @@ signUpPageEmitToMsg emit =
         Page.SignUp.EmitSignUp record ->
             SignUp record
 
-        Page.SignUp.EmitSendConfirmToken ->
-            SendConfirmToken
+        Page.SignUp.EmitSendConfirmToken token ->
+            SendConfirmToken token
 
         Page.SignUp.EmitDeleteUserAll ->
             DeleteAllUser
@@ -1094,6 +920,53 @@ logInPageEmitToMsg pageMaybe emit =
 
         Page.LogIn.EmitLogIn record ->
             LogIn record
+
+
+homeView : Bool -> HomePage -> ( Tab.Tab HomePage, List (Html.Html Msg) )
+homeView isWideScreenMode subPage =
+    ( Tab.Multi
+        [ ( HomePageRecent, "新着" )
+        , ( HomePageRecommend { valid = True }, "おすすめ" )
+        , ( HomePageFree, "0円" )
+        ]
+        (case subPage of
+            HomePageRecent ->
+                0
+
+            HomePageRecommend _ ->
+                1
+
+            HomePageFree ->
+                2
+        )
+    , case subPage of
+        HomePageRecommend { valid } ->
+            if valid then
+                [ itemList isWideScreenMode, exhibitButton ]
+
+            else
+                [ invalidLinkErrorMsg, itemList isWideScreenMode, exhibitButton ]
+
+        _ ->
+            [ itemList isWideScreenMode, exhibitButton ]
+    )
+
+
+likeAndHistoryView : Bool -> LikeAndHistory -> ( Tab.Tab LikeAndHistory, List (Html.Html Msg) )
+likeAndHistoryView isWideScreenMode likeAndHistory =
+    ( Tab.Multi
+        [ ( Like, "いいね" )
+        , ( History, "閲覧履歴" )
+        ]
+        (case likeAndHistory of
+            Like ->
+                0
+
+            History ->
+                1
+        )
+    , [ itemList isWideScreenMode ]
+    )
 
 
 {-| 商品の一覧 中身は適当
@@ -1281,19 +1154,17 @@ exhibitButton =
         [ Html.text "出品" ]
 
 
-exhibitionView : ExhibitionPage -> { tabData : TabData, mainView : List (Html.Html Msg) }
+exhibitionView : ExhibitionPage -> ( Tab.Tab Never, List (Html.Html Msg) )
 exhibitionView (ExhibitionPage { title, description, price, image }) =
-    { tabData =
-        TabSingle "商品の情報を入力"
-    , mainView =
-        [ Html.div
+    ( Tab.Single "商品の情報を入力"
+    , [ Html.div
             [ Html.Attributes.class "exhibitionView" ]
             [ exhibitionViewPhoto image
             , exhibitionViewItemTitleAndDescription
             , exhibitionViewItemPrice price
             ]
-        ]
-    }
+      ]
+    )
 
 
 exhibitionViewPhoto : List String -> Html.Html Msg
@@ -1377,15 +1248,14 @@ exhibitionViewItemPrice price =
         ]
 
 
-siteMapXmlView : { tabData : TabData, mainView : List (Html.Html msg) }
+siteMapXmlView : ( Tab.Tab Never, List (Html.Html msg) )
 siteMapXmlView =
-    { tabData = TabSingle "sitemap.xml"
-    , mainView =
-        [ Html.div
+    ( Tab.Single "sitemap.xml"
+    , [ Html.div
             [ Html.Attributes.style "white-space" "pre-wrap" ]
             [ Html.text SiteMap.siteMapXml ]
-        ]
-    }
+      ]
+    )
 
 
 subscription : Model -> Sub Msg

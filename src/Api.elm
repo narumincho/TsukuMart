@@ -1,5 +1,5 @@
 module Api exposing
-    ( ConfirmToken(..)
+    ( ConfirmToken
     , LogInRequest
     , LogInResponseError
     , LogInResponseOk
@@ -60,12 +60,12 @@ type SignUpResponseOk
     = SignUpResponseOk ConfirmToken
 
 
-type ConfirmToken
-    = ConfirmToken String
+type alias ConfirmToken =
+    String
 
 
 confirmTokenToHeader : ConfirmToken -> Http.Header
-confirmTokenToHeader (ConfirmToken token) =
+confirmTokenToHeader token =
     Http.header "Authorization" ("Bearer " ++ token)
 
 
@@ -162,7 +162,7 @@ signUpResponseBodyDecoder : Json.Decode.Decoder (Result SignUpResponseError Sign
 signUpResponseBodyDecoder =
     Json.Decode.oneOf
         [ Json.Decode.field "confirm_token" Json.Decode.string
-            |> Json.Decode.map (\token -> Ok (SignUpResponseOk (ConfirmToken token)))
+            |> Json.Decode.map (\token -> Ok (SignUpResponseOk token))
         , Json.Decode.field "error" Json.Decode.string
             |> Json.Decode.map
                 (\reason ->
@@ -191,8 +191,8 @@ type alias SignUpConfirmRequest =
 
 
 type SignUpConfirmResponseError
-    = SignUpConfirmResponseErrorAlreadyConfirmed
-    | SignUpConfirmResponseError
+    = SignUpConfirmResponseErrorAlreadyConfirmed -- すでに認証トークンを送っている
+    | SignUpConfirmResponseError -- エラーの理由がわからないエラー
 
 
 type SignUpConfirmResponseOk
@@ -274,7 +274,7 @@ type LogInResponseError
     | LogInErrorBadUrl
     | LogInErrorTimeout
     | LogInErrorNetworkError
-    | LogInError
+    | LogInError -- エラーの理由がわからないエラー
 
 
 type Token
@@ -326,17 +326,28 @@ logInResponseToResult response =
 
 logInResponseBodyDecoder : Json.Decode.Decoder (Result LogInResponseError LogInResponseOk)
 logInResponseBodyDecoder =
-    Json.Decode.map2
-        (\access refresh ->
-            Ok
-                (LogInOk
-                    { access = Token access
-                    , refresh = Token refresh
-                    }
+    Json.Decode.oneOf
+        [ Json.Decode.map2
+            (\access refresh ->
+                Ok
+                    (LogInOk
+                        { access = Token access
+                        , refresh = Token refresh
+                        }
+                    )
+            )
+            (Json.Decode.field "access" Json.Decode.string)
+            (Json.Decode.field "refresh" Json.Decode.string)
+        , Json.Decode.field "non_field_errors" Json.Decode.string
+            |> Json.Decode.map
+                (\e ->
+                    if e == "No active confirmed account found with the given credentials" then
+                        Err LogInErrorNoConfirm
+
+                    else
+                        Err LogInError
                 )
-        )
-        (Json.Decode.field "access" Json.Decode.string)
-        (Json.Decode.field "refresh" Json.Decode.string)
+        ]
 
 
 
@@ -398,9 +409,9 @@ tokenRefreshBodyStringDecoder =
 
 
 
-{- ===========================================================
-      debug_user_delete_list /{version}/debug/user/delete/
-   ===========================================================
+{- ==============================================================
+      デバック用 すべてのユーザーを削除 /{version}/debug/user/delete/
+   ==============================================================
 -}
 
 

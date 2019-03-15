@@ -1,4 +1,4 @@
-module Page.SignUp exposing (Emit(..), Model, Msg(..), initModel, sendSignUpEmailView, update, view)
+module Page.SignUp exposing (Emit(..), Model, Msg(..), initModel, sentSignUpDataModel, update, view)
 
 {-| Sign Up 新規登録画面
 -}
@@ -15,13 +15,17 @@ import Password
 import SAddress
 import School
 import StudentId
+import Tab
 
 
 type Model
-    = Model
+    = Normal
+        -- 新規登録入力フォーム
         { sAddressAndPassword : SAddressAndPassword
         , university : UniversitySelect
         }
+    | SentSingUpData EmailAddress.EmailAddress (Maybe (Result Api.SignUpResponseError Api.SignUpResponseOk))
+    | SentConfirmTokenError (Maybe Api.SignUpResponseError)
     | DeletedAllUser Bool
 
 
@@ -60,7 +64,7 @@ type Emit
     | EmitInputStudentImage String
     | EmitInputPassword String
     | EmitSignUp Api.SignUpRequest
-    | EmitSendConfirmToken
+    | EmitSendConfirmToken String
     | EmitDeleteUserAll
 
 
@@ -69,11 +73,14 @@ type Msg
     | ReceiveImageDataUrl String
     | InputPassword String
     | DeleteUserAll (Result () ())
+    | SignUpResponse (Result Api.SignUpResponseError Api.SignUpResponseOk)
 
 
+{-| すべて空白の新規登録画面を表示するためのModel
+-}
 initModel : Model
 initModel =
-    Model
+    Normal
         { sAddressAndPassword =
             StudentHasSAddress
                 { studentIdOrTsukubaEmailAddress = analysisStudentIdOrSAddress ""
@@ -83,15 +90,22 @@ initModel =
         }
 
 
+{-| 新規登録データを送った画面を表示するためのModel
+-}
+sentSignUpDataModel : EmailAddress.EmailAddress -> Model
+sentSignUpDataModel emailAddress =
+    SentSingUpData emailAddress Nothing
+
+
 update : Msg -> Model -> Model
 update msg model =
     case model of
-        Model { sAddressAndPassword, university } ->
+        Normal { sAddressAndPassword, university } ->
             case msg of
                 InputStudentIdOrEmailAddress string ->
                     case sAddressAndPassword of
                         StudentHasSAddress r ->
-                            Model
+                            Normal
                                 { sAddressAndPassword =
                                     StudentHasSAddress
                                         { r
@@ -102,7 +116,7 @@ update msg model =
                                 }
 
                         NewStudent r ->
-                            Model
+                            Normal
                                 { sAddressAndPassword =
                                     NewStudent
                                         { r
@@ -114,7 +128,7 @@ update msg model =
                 ReceiveImageDataUrl dataUrlString ->
                     case sAddressAndPassword of
                         NewStudent r ->
-                            Model
+                            Normal
                                 { sAddressAndPassword =
                                     NewStudent
                                         { r | imageUrl = Just dataUrlString }
@@ -122,13 +136,13 @@ update msg model =
                                 }
 
                         _ ->
-                            Model
+                            Normal
                                 { sAddressAndPassword = sAddressAndPassword
                                 , university = university
                                 }
 
                 InputPassword string ->
-                    Model
+                    Normal
                         { sAddressAndPassword =
                             case sAddressAndPassword of
                                 NewStudent r ->
@@ -151,65 +165,92 @@ update msg model =
                                 False
                         )
 
+                _ ->
+                    model
+
         DeletedAllUser _ ->
+            model
+
+        SentSingUpData emailAddress _ ->
+            case msg of
+                SignUpResponse response ->
+                    SentSingUpData emailAddress (Just response)
+
+                _ ->
+                    model
+
+        SentConfirmTokenError maybe ->
             model
 
 
 {-| 新規登録画面の表示
 -}
-view : Model -> List (Html.Html Emit)
+view : Model -> ( Tab.Tab Never, List (Html.Html Emit) )
 view userSignUpPage =
-    [ Html.div
-        [ Html.Attributes.class "signUpContainer" ]
-        (case userSignUpPage of
-            Model { sAddressAndPassword, university } ->
-                [ Html.Keyed.node "form"
-                    [ Html.Attributes.class "signUp" ]
-                    ([ ( "s_or_nos"
-                       , sAddressView sAddressAndPassword
-                            |> Html.map (\s -> EmitChangePage (Model { sAddressAndPassword = s, university = university }))
-                       )
-                     ]
-                        ++ (case sAddressAndPassword of
-                                StudentHasSAddress { studentIdOrTsukubaEmailAddress, password } ->
-                                    studentHasSAddressFormList studentIdOrTsukubaEmailAddress password
+    ( Tab.Single "新規登録"
+    , [ Html.div
+            [ Html.Attributes.class "signUpContainer" ]
+            (case userSignUpPage of
+                Normal { sAddressAndPassword, university } ->
+                    normalView sAddressAndPassword university
 
-                                NewStudent { emailAddress, imageUrl, password } ->
-                                    newStudentForm emailAddress imageUrl password
-                           )
-                        ++ (signUpUniversityView university
-                                |> List.map
-                                    (Tuple.mapSecond
-                                        (Html.map
-                                            (\s ->
-                                                EmitChangePage (Model { sAddressAndPassword = sAddressAndPassword, university = s })
-                                            )
-                                        )
-                                    )
-                           )
-                        ++ [ ( "submit", signUpSubmitButton (getSignUpRequest userSignUpPage) ) ]
-                        ++ [ ( "deleteAllUser"
-                             , Html.button
-                                [ Html.Events.preventDefaultOn "click"
-                                    (Json.Decode.succeed ( EmitDeleteUserAll, True ))
-                                ]
-                                [ Html.text "すべてのユーザーを削除" ]
-                             )
-                           ]
-                    )
-                ]
+                DeletedAllUser result ->
+                    [ Html.text
+                        ("すべてのユーザーの削除処理を"
+                            ++ (if result then
+                                    "成功した"
 
-            DeletedAllUser result ->
-                [ Html.text
-                    ("すべてのユーザーの削除処理を"
-                        ++ (if result then
-                                "成功した"
+                                else
+                                    "失敗した"
+                               )
+                        )
+                    ]
 
-                            else
-                                "失敗した"
-                           )
-                    )
-                ]
+                SentSingUpData emailAddress maybe ->
+                    sendSignUpEmailView emailAddress maybe
+
+                SentConfirmTokenError maybe ->
+                    []
+            )
+      ]
+    )
+
+
+normalView : SAddressAndPassword -> UniversitySelect -> List (Html.Html Emit)
+normalView sAddressAndPassword university =
+    [ Html.Keyed.node "form"
+        [ Html.Attributes.class "signUp" ]
+        ([ ( "s_or_nos"
+           , sAddressView sAddressAndPassword
+                |> Html.map (\s -> EmitChangePage (Normal { sAddressAndPassword = s, university = university }))
+           )
+         ]
+            ++ (case sAddressAndPassword of
+                    StudentHasSAddress { studentIdOrTsukubaEmailAddress, password } ->
+                        studentHasSAddressFormList studentIdOrTsukubaEmailAddress password
+
+                    NewStudent { emailAddress, imageUrl, password } ->
+                        newStudentForm emailAddress imageUrl password
+               )
+            ++ (signUpUniversityView university
+                    |> List.map
+                        (Tuple.mapSecond
+                            (Html.map
+                                (\s ->
+                                    EmitChangePage (Normal { sAddressAndPassword = sAddressAndPassword, university = s })
+                                )
+                            )
+                        )
+               )
+            ++ [ ( "submit", signUpSubmitButton (getSignUpRequest sAddressAndPassword university) ) ]
+            ++ [ ( "deleteAllUser"
+                 , Html.button
+                    [ Html.Events.preventDefaultOn "click"
+                        (Json.Decode.succeed ( EmitDeleteUserAll, True ))
+                    ]
+                    [ Html.text "すべてのユーザーを削除" ]
+                 )
+               ]
         )
     ]
 
@@ -853,23 +894,18 @@ signUpSubmitButton signUpRequestMaybe =
 
 {-| 画面の情報から新規登録できる情報を入力しているかと、新規登録に必要なデータを取りだす
 -}
-getSignUpRequest : Model -> Maybe Api.SignUpRequest
-getSignUpRequest model =
-    case model of
-        Model { sAddressAndPassword, university } ->
-            case ( getSignUpRequestEmailAddressAndPasswordAndImage sAddressAndPassword, getSignUpRequestUniversity university ) of
-                ( Just { emailAddress, password, image }, Just universityData ) ->
-                    Just
-                        { emailAddress = emailAddress
-                        , pass = password
-                        , image = image
-                        , university = universityData
-                        }
+getSignUpRequest : SAddressAndPassword -> UniversitySelect -> Maybe Api.SignUpRequest
+getSignUpRequest sAddressAndPassword university =
+    case ( getSignUpRequestEmailAddressAndPasswordAndImage sAddressAndPassword, getSignUpRequestUniversity university ) of
+        ( Just { emailAddress, password, image }, Just universityData ) ->
+            Just
+                { emailAddress = emailAddress
+                , pass = password
+                , image = image
+                , university = universityData
+                }
 
-                ( _, _ ) ->
-                    Nothing
-
-        DeletedAllUser _ ->
+        ( _, _ ) ->
             Nothing
 
 
@@ -928,21 +964,18 @@ getSignUpRequestUniversity universitySelect =
 -}
 sendSignUpEmailView : EmailAddress.EmailAddress -> Maybe (Result Api.SignUpResponseError Api.SignUpResponseOk) -> List (Html.Html Emit)
 sendSignUpEmailView emailAddress signUpResultMaybe =
-    [ Html.div [ Html.Attributes.class "signUp-resultMsg" ]
-        (case signUpResultMaybe of
-            Just signUpResult ->
-                signUpResultToString emailAddress signUpResult
+    case signUpResultMaybe of
+        Just signUpResult ->
+            signUpResultToString emailAddress signUpResult
 
-            Nothing ->
-                [ Html.text "新規登録の情報を送信中" ]
-        )
-    ]
+        Nothing ->
+            [ Html.text "新規登録の情報を送信中" ]
 
 
 signUpResultToString : EmailAddress.EmailAddress -> Result Api.SignUpResponseError Api.SignUpResponseOk -> List (Html.Html Emit)
 signUpResultToString emailAddress signUpResult =
     case signUpResult of
-        Ok (Api.SignUpResponseOk (Api.ConfirmToken token)) ->
+        Ok (Api.SignUpResponseOk token) ->
             [ Html.text
                 ("送信完了。"
                     ++ EmailAddress.toString emailAddress
@@ -952,7 +985,7 @@ signUpResultToString emailAddress signUpResult =
                     ++ "\""
                 )
             , Html.div
-                [ Html.Events.onClick EmitSendConfirmToken
+                [ Html.Events.onClick (EmitSendConfirmToken token)
                 , Html.Attributes.style "border" "solid 2px black"
                 ]
                 [ Html.text "confirm_tokenを送信" ]
