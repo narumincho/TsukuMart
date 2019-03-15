@@ -205,7 +205,7 @@ update msg model =
 view : Model -> ( Tab.Tab Never, List (Html.Html Emit) )
 view userSignUpPage =
     let
-        ( tabText, htmlList ) =
+        ( tabText, mainView ) =
             case userSignUpPage of
                 Normal { sAddressAndPassword, university } ->
                     ( "新規登録", normalView sAddressAndPassword university )
@@ -218,29 +218,28 @@ view userSignUpPage =
 
                 DeletedAllUser result ->
                     ( "すべてのユーザーの削除"
-                    , [ Html.text
-                            ("すべてのユーザーの削除処理を"
-                                ++ (if result then
-                                        "成功した"
+                    , Html.text
+                        ("すべてのユーザーの削除処理を"
+                            ++ (if result then
+                                    "成功した"
 
-                                    else
-                                        "失敗した"
-                                   )
-                            )
-                      ]
+                                else
+                                    "失敗した"
+                               )
+                        )
                     )
     in
     ( Tab.Single tabText
     , [ Html.div
             [ Html.Attributes.class "signUpContainer" ]
-            htmlList
+            [ mainView ]
       ]
     )
 
 
-normalView : SAddressAndPassword -> UniversitySelect -> List (Html.Html Emit)
+normalView : SAddressAndPassword -> UniversitySelect -> Html.Html Emit
 normalView sAddressAndPassword university =
-    [ Html.Keyed.node "form"
+    Html.Keyed.node "form"
         [ Html.Attributes.class "signUp" ]
         ([ ( "s_or_nos"
            , sAddressView sAddressAndPassword
@@ -274,7 +273,6 @@ normalView sAddressAndPassword university =
                  )
                ]
         )
-    ]
 
 
 {-| sアドを持っているか持っていないかを選択するフォーム
@@ -984,22 +982,21 @@ getSignUpRequestUniversity universitySelect =
 
 {-| 新規登録のボタンを押した後の画面
 -}
-sentSingUpDataView : EmailAddress.EmailAddress -> Maybe (Result Api.SignUpResponseError Api.SignUpResponseOk) -> List (Html.Html Emit)
+sentSingUpDataView : EmailAddress.EmailAddress -> Maybe (Result Api.SignUpResponseError Api.SignUpResponseOk) -> Html.Html Emit
 sentSingUpDataView emailAddress signUpResultMaybe =
     case signUpResultMaybe of
         Just signUpResult ->
             signUpResultToString emailAddress signUpResult
 
         Nothing ->
-            [ Html.text "新規登録の情報を送信中" ]
+            Html.div [] [ Html.text "新規登録の情報を送信中" ]
 
 
-signUpResultToString : EmailAddress.EmailAddress -> Result Api.SignUpResponseError Api.SignUpResponseOk -> List (Html.Html Emit)
+signUpResultToString : EmailAddress.EmailAddress -> Result Api.SignUpResponseError Api.SignUpResponseOk -> Html.Html Emit
 signUpResultToString emailAddress signUpResult =
     case signUpResult of
         Ok (Api.SignUpResponseOk token) ->
-            [ Html.div
-                []
+            Html.div [ Html.Attributes.class "signUp" ]
                 [ Html.text
                     ("送信完了。"
                         ++ EmailAddress.toString emailAddress
@@ -1008,42 +1005,43 @@ signUpResultToString emailAddress signUpResult =
                         ++ token
                         ++ "\""
                     )
+                , Html.div
+                    [ Html.Events.onClick (EmitSendConfirmToken token)
+                    , Html.Attributes.style "border" "solid 2px black"
+                    , Html.Attributes.style "padding" "4px"
+                    ]
+                    [ Html.text "confirm_tokenを送信" ]
                 ]
-            , Html.div
-                [ Html.Events.onClick (EmitSendConfirmToken token)
-                , Html.Attributes.style "border" "solid 2px black"
-                , Html.Attributes.style "padding" "4px"
-                ]
-                [ Html.text "confirm_tokenを送信" ]
-            ]
 
         Err Api.SignUpErrorAlreadySignUp ->
-            [ Html.text "すでにあなたは登録されています" ]
+            Html.div [] [ Html.text "すでにあなたは登録されています" ]
 
         Err Api.SignUpErrorBadUrl ->
-            [ Html.text "正しいURLが指定されなかった" ]
+            Html.div [] [ Html.text "正しいURLが指定されなかった" ]
 
         Err Api.SignUpErrorTimeout ->
-            [ Html.text "タイムアウトエラー。回線が混雑しています" ]
+            Html.div [] [ Html.text "タイムアウトエラー。回線が混雑しています" ]
 
         Err Api.SignUpErrorNetworkError ->
-            [ Html.text "ネットワークエラー。接続が切れている可能性があります" ]
+            Html.div [] [ Html.text "ネットワークエラー。接続が切れている可能性があります" ]
 
         Err Api.SignUpInvalidData ->
-            [ Html.text "不正なリクエストをした疑いがあります" ]
+            Html.div [] [ Html.text "不正なリクエストをした疑いがあります" ]
 
         Err Api.SignUpError ->
-            [ Html.text "サーバーの回答を理解することができませんでした" ]
+            Html.div [] [ Html.text "サーバーの回答を理解することができませんでした" ]
 
 
-sentConfirmTokenView : Maybe Api.SignUpConfirmResponseError -> List (Html.Html Emit)
+sentConfirmTokenView : Maybe Api.SignUpConfirmResponseError -> Html.Html Emit
 sentConfirmTokenView signUpResponseErrorMaybe =
-    case signUpResponseErrorMaybe of
-        Just Api.SignUpConfirmResponseErrorAlreadyConfirmed ->
-            [ Html.text "すでにこの認証トークンは送られています" ]
+    Html.text
+        (case signUpResponseErrorMaybe of
+            Just Api.SignUpConfirmResponseErrorAlreadyConfirmed ->
+                "すでにこの認証トークンは送られています"
 
-        Just Api.SignUpConfirmResponseError ->
-            [ Html.text "認証トークン送信に予期せぬエラーが発生しました" ]
+            Just Api.SignUpConfirmResponseError ->
+                "認証トークン送信に予期せぬエラーが発生しました"
 
-        Nothing ->
-            [ Html.text "認証トークン送信中……" ]
+            Nothing ->
+                "認証トークン送信中……"
+        )

@@ -2,16 +2,18 @@ module Api exposing
     ( ConfirmToken
     , LogInRequest
     , LogInResponseError
-    , LogInResponseOk
+    , LogInResponseOk(..)
     , SignUpConfirmRequest
     , SignUpConfirmResponseError(..)
     , SignUpConfirmResponseOk
     , SignUpRequest
     , SignUpResponseError(..)
     , SignUpResponseOk(..)
+    , Token
     , UniversityData(..)
     , debugDeleteAllUser
     , logIn
+    , logInResponseErrorToString
     , signUp
     , signUpConfirm
     )
@@ -262,23 +264,19 @@ type alias LogInRequest =
 
 
 type LogInResponseOk
-    = LogInOk
+    = LogInResponseOk
         { access : Token
         , refresh : Token
         }
 
 
 type LogInResponseError
-    = LogInErrorMistakePasswordOrEmail
-    | LogInErrorNoConfirm -- 認証をしていないユーザー? ログインできる?
-    | LogInErrorBadUrl
-    | LogInErrorTimeout
-    | LogInErrorNetworkError
+    = LogInErrorNoConfirmOrMistakePasswordOrEmail -- 認証をしていないユーザー? ログインできる?
     | LogInError -- エラーの理由がわからないエラー
 
 
-type Token
-    = Token String
+type alias Token =
+    String
 
 
 {-| ログイン /auth/token/
@@ -306,15 +304,6 @@ logInRequestToJson { emailAddress, pass } =
 logInResponseToResult : Http.Response String -> Result LogInResponseError LogInResponseOk
 logInResponseToResult response =
     case response of
-        Http.BadUrl_ _ ->
-            Err LogInErrorBadUrl
-
-        Http.Timeout_ ->
-            Err LogInErrorTimeout
-
-        Http.NetworkError_ ->
-            Err LogInErrorNetworkError
-
         Http.BadStatus_ _ body ->
             Json.Decode.decodeString logInResponseBodyDecoder body
                 |> Result.withDefault (Err LogInError)
@@ -323,6 +312,9 @@ logInResponseToResult response =
             Json.Decode.decodeString logInResponseBodyDecoder body
                 |> Result.withDefault (Err LogInError)
 
+        _ ->
+            Err LogInError
+
 
 logInResponseBodyDecoder : Json.Decode.Decoder (Result LogInResponseError LogInResponseOk)
 logInResponseBodyDecoder =
@@ -330,9 +322,9 @@ logInResponseBodyDecoder =
         [ Json.Decode.map2
             (\access refresh ->
                 Ok
-                    (LogInOk
-                        { access = Token access
-                        , refresh = Token refresh
+                    (LogInResponseOk
+                        { access = access
+                        , refresh = refresh
                         }
                     )
             )
@@ -342,12 +334,22 @@ logInResponseBodyDecoder =
             |> Json.Decode.map
                 (\e ->
                     if e == "No active confirmed account found with the given credentials" then
-                        Err LogInErrorNoConfirm
+                        Err LogInErrorNoConfirmOrMistakePasswordOrEmail
 
                     else
                         Err LogInError
                 )
         ]
+
+
+logInResponseErrorToString : LogInResponseError -> String
+logInResponseErrorToString logInResponseError =
+    case logInResponseError of
+        LogInErrorNoConfirmOrMistakePasswordOrEmail ->
+            "認証をしていないか、メールアドレスかパスワードが間違っています"
+
+        LogInError ->
+            "予期せぬエラーでログインすることができませんでした"
 
 
 
@@ -404,7 +406,7 @@ tokenRefreshBodyStringDecoder =
     Json.Decode.field "access" Json.Decode.string
         |> Json.Decode.map
             (\access ->
-                Ok (TokenRefreshResponseOk { access = Token access })
+                Ok (TokenRefreshResponseOk { access = access })
             )
 
 

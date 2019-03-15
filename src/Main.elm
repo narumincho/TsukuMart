@@ -55,16 +55,12 @@ port studentImageChange : String -> Cmd msg
 
 type Model
     = Model
-        { page : Page
-        , menuState : Maybe MenuState
+        { page : Page -- 開いているページ
+        , menuState : Maybe MenuState -- メニューの開閉など
+        , message : Maybe String -- ちょっとしたことがあったら表示するもの
+        , logInState : LogInState
         , key : Browser.Navigation.Key
         }
-
-
-type MenuState
-    = MenuNotOpenedYet
-    | MenuClose
-    | MenuOpen
 
 
 type Page
@@ -85,13 +81,27 @@ type ExhibitionPage
 
 type HomePage
     = HomePageRecent
-    | HomePageRecommend { message : Maybe String } -- 不正なURLで飛んだかどうか
+    | HomePageRecommend
     | HomePageFree
 
 
 type LikeAndHistory
     = Like
     | History
+
+
+type MenuState
+    = MenuNotOpenedYet
+    | MenuClose
+    | MenuOpen
+
+
+type LogInState
+    = LogInStateOk
+        { access : Api.Token
+        , refresh : Api.Token
+        }
+    | LogInStateNone
 
 
 type Msg
@@ -132,9 +142,15 @@ main =
 
 init : () -> Url.Url -> Browser.Navigation.Key -> ( Model, Cmd Msg )
 init _ url key =
+    let
+        ( page, messageMaybe ) =
+            urlToPage url Nothing
+    in
     ( Model
-        { page = urlToPage url Nothing
+        { page = page
         , menuState = Just MenuNotOpenedYet
+        , message = messageMaybe
+        , logInState = LogInStateNone
         , key = key
         }
     , Cmd.none
@@ -191,9 +207,14 @@ update msg (Model rec) =
             )
 
         UrlChange url ->
+            let
+                ( newPage, messageMaybe ) =
+                    urlToPage url (Just rec.page)
+            in
             ( Model
                 { rec
-                    | page = urlToPage url (Just rec.page)
+                    | page = newPage
+                    , message = messageMaybe
                     , menuState =
                         case rec.menuState of
                             Just MenuOpen ->
@@ -249,22 +270,56 @@ update msg (Model rec) =
             , Cmd.none
             )
 
-        LogInResponse _ ->
-            ( Model rec
+        LogInResponse logInResponse ->
+            ( case logInResponse of
+                Ok (Api.LogInResponseOk { access, refresh }) ->
+                    let
+                        pageMaybe =
+                            case rec.page of
+                                PageLogIn ( _, p ) ->
+                                    p
+
+                                _ ->
+                                    Nothing
+                    in
+                    case pageMaybe of
+                        Just newPage ->
+                            Model
+                                { rec
+                                    | message = Just "ログインしました"
+                                    , logInState = LogInStateOk { access = access, refresh = refresh }
+                                    , page = newPage
+                                }
+
+                        Nothing ->
+                            Model
+                                { rec
+                                    | message = Just "ログインしました"
+                                    , logInState = LogInStateOk { access = access, refresh = refresh }
+                                }
+
+                Err logInResponseError ->
+                    Model
+                        { rec
+                            | message = Just (Api.logInResponseErrorToString logInResponseError)
+                        }
             , Cmd.none
             )
 
         SignUpConfirmResponse response ->
-            ( Model
-                { rec
-                    | page =
-                        case response of
-                            Ok _ ->
-                                PageHome (HomePageRecommend { message = Just "新規登録できた" })
+            ( case response of
+                Ok _ ->
+                    Model
+                        { rec
+                            | message = Just "新規登録できました"
+                            , page = PageHome HomePageRecommend
+                        }
 
-                            Err e ->
-                                PageSignUp (Page.SignUp.sentConfirmTokenModel e)
-                }
+                Err e ->
+                    Model
+                        { rec
+                            | page = PageSignUp (Page.SignUp.sentConfirmTokenModel e)
+                        }
             , Cmd.none
             )
 
@@ -403,17 +458,18 @@ update msg (Model rec) =
                     )
 
 
-urlToPage : Url.Url -> Maybe Page -> Page
+urlToPage : Url.Url -> Maybe Page -> ( Page, Maybe String )
 urlToPage url beforePageMaybe =
     Url.Parser.parse (urlParser beforePageMaybe) url
-        |> Maybe.withDefault (PageHome (HomePageRecommend { message = Just "指定したページが見つからないのでホームに移動しました" }))
+        |> Maybe.map (\page -> ( page, Nothing ))
+        |> Maybe.withDefault ( PageHome HomePageRecommend, Just "指定したページが見つからないのでホームに移動しました" )
 
 
 urlParser : Maybe Page -> Url.Parser.Parser (Page -> a) a
 urlParser beforePageMaybe =
     Url.Parser.oneOf
         [ SiteMap.homeParser
-            |> Url.Parser.map (PageHome (HomePageRecommend { message = Nothing }))
+            |> Url.Parser.map (PageHome HomePageRecommend)
         , SiteMap.signUpParser
             |> Url.Parser.map (PageSignUp Page.SignUp.initModel)
         , SiteMap.logInParser
@@ -437,7 +493,7 @@ urlParser beforePageMaybe =
 {-| 見た目を決める
 -}
 view : Model -> { title : String, body : List (Html.Html Msg) }
-view (Model { page, menuState }) =
+view (Model { page, menuState, message, logInState }) =
     let
         isWideScreen =
             menuState == Nothing
@@ -445,9 +501,16 @@ view (Model { page, menuState }) =
     { title = "つくマート"
     , body =
         [ header isWideScreen
-        , menuView menuState
+        , menuView logInState menuState
         ]
             ++ mainViewAndMainTab page isWideScreen
+            ++ (case message of
+                    Just m ->
+                        [ messageView m ]
+
+                    Nothing ->
+                        []
+               )
     }
 
 
@@ -732,8 +795,8 @@ headerButton =
 {- Menu -}
 
 
-menuView : Maybe MenuState -> Html.Html Msg
-menuView menuStateMaybe =
+menuView : LogInState -> Maybe MenuState -> Html.Html Msg
+menuView logInState menuStateMaybe =
     case menuStateMaybe of
         Just menuState ->
             Html.Keyed.node "div"
@@ -753,7 +816,7 @@ menuView menuStateMaybe =
                         , ( "om"
                           , Html.div
                                 [ Html.Attributes.class "menu-list menu-list-open" ]
-                                menuMain
+                                (menuMain logInState)
                           )
                         ]
 
@@ -766,7 +829,7 @@ menuView menuStateMaybe =
                         , ( "cm"
                           , Html.div
                                 [ Html.Attributes.class "menu-list menu-list-close" ]
-                                menuMain
+                                (menuMain logInState)
                           )
                         ]
                 )
@@ -774,28 +837,15 @@ menuView menuStateMaybe =
         Nothing ->
             Html.div
                 [ Html.Attributes.class "menu-wide" ]
-                menuMain
+                (menuMain logInState)
 
 
-menuMain : List (Html.Html Msg)
-menuMain =
+menuMain : LogInState -> List (Html.Html Msg)
+menuMain logInState =
     [ Html.div
         [ Html.Attributes.class "menu-account"
         ]
-        [ Html.div [ Html.Attributes.class "menu-noLogin" ] [ Html.text "ログインしていません" ]
-        , Html.div [ Html.Attributes.class "menu-logInsignUpButtonContainer" ]
-            [ Html.a
-                [ Html.Attributes.class "menu-logInButton"
-                , Html.Attributes.href SiteMap.logInUrl
-                ]
-                [ Html.text "ログイン" ]
-            , Html.a
-                [ Html.Attributes.class "menu-signUpButton"
-                , Html.Attributes.href SiteMap.signUpUrl
-                ]
-                [ Html.text "新規登録" ]
-            ]
-        ]
+        (menuAccount logInState)
     , Html.a
         [ Html.Attributes.class "menu-item"
         , Html.Attributes.href SiteMap.homeUrl
@@ -817,6 +867,29 @@ menuMain =
         ]
         [ Html.text "購入した商品" ]
     ]
+
+
+menuAccount : LogInState -> List (Html.Html msg)
+menuAccount logInState =
+    case logInState of
+        LogInStateOk _ ->
+            [ Html.div [ Html.Attributes.class "menu-noLogin" ] [ Html.text "ログインしています" ] ]
+
+        LogInStateNone ->
+            [ Html.div [ Html.Attributes.class "menu-noLogin" ] [ Html.text "ログインしていません" ]
+            , Html.div [ Html.Attributes.class "menu-logInsignUpButtonContainer" ]
+                [ Html.a
+                    [ Html.Attributes.class "menu-logInButton"
+                    , Html.Attributes.href SiteMap.logInUrl
+                    ]
+                    [ Html.text "ログイン" ]
+                , Html.a
+                    [ Html.Attributes.class "menu-signUpButton"
+                    , Html.Attributes.href SiteMap.signUpUrl
+                    ]
+                    [ Html.text "新規登録" ]
+                ]
+            ]
 
 
 mainViewAndMainTab : Page -> Bool -> List (Html.Html Msg)
@@ -881,10 +954,10 @@ mainViewAndMainTab page isWideScreenMode =
     ]
 
 
-invalidLinkErrorMsg : String -> Html.Html msg
-invalidLinkErrorMsg message =
+messageView : String -> Html.Html msg
+messageView message =
     Html.div
-        [ Html.Attributes.class "invalidLinkErrorMsg"
+        [ Html.Attributes.class "message"
         ]
         [ Html.text message ]
 
@@ -934,30 +1007,20 @@ homeView : Bool -> HomePage -> ( Tab.Tab HomePage, List (Html.Html Msg) )
 homeView isWideScreenMode subPage =
     ( Tab.Multi
         [ ( HomePageRecent, "新着" )
-        , ( HomePageRecommend { message = Nothing }, "おすすめ" )
+        , ( HomePageRecommend, "おすすめ" )
         , ( HomePageFree, "0円" )
         ]
         (case subPage of
             HomePageRecent ->
                 0
 
-            HomePageRecommend _ ->
+            HomePageRecommend ->
                 1
 
             HomePageFree ->
                 2
         )
-    , case subPage of
-        HomePageRecommend { message } ->
-            case message of
-                Just m ->
-                    [ invalidLinkErrorMsg m, itemList isWideScreenMode, exhibitButton ]
-
-                Nothing ->
-                    [ itemList isWideScreenMode, exhibitButton ]
-
-        _ ->
-            [ itemList isWideScreenMode, exhibitButton ]
+    , [ itemList isWideScreenMode, exhibitButton ]
     )
 
 

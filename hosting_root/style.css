@@ -8,12 +8,8 @@ body {
     margin: 0;
     height: 100%;
     width: 100%;
-}
-
-.body-wide {
-    display: grid;
-    grid-template-columns: max-content 1fr;
-    grid-template-rows: max-content max-content 1fr;
+    display: flex;
+    justify-content: center;
 }
 
 /*===========================
@@ -69,7 +65,7 @@ h1:hover {
     border-radius: 50%;
 }
 
-.invalidLinkErrorMsg {
+.message {
     position: absolute;
     top: 8rem;
     z-index: 2;
@@ -81,6 +77,9 @@ h1:hover {
     padding: 2rem;
     pointer-events: none;
     animation: invalidLinkErrorMsgAnimation 10s ease 2s 1 normal forwards;
+    max-width: 100%;
+    box-sizing: border-box;
+    word-break: break-word;
 }
 
 @keyframes invalidLinkErrorMsgAnimation {
@@ -635,6 +634,7 @@ img {
     padding: 1.5rem;
     box-sizing: border-box;
     width: 100%;
+    word-break: break-word;
 }
 
 .signUp-label {
