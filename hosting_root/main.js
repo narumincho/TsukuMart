@@ -4216,7 +4216,7 @@ var _Browser_document = _Debugger_document || F4(function(impl, flagDecoder, deb
 		impl.bm,
 		impl.bk,
 		function(sendToApp, initialModel) {
-			var divertHrefToApp = impl.I && impl.I(sendToApp)
+			var divertHrefToApp = impl.J && impl.J(sendToApp)
 			var view = impl.bn;
 			var title = _VirtualDom_doc.title;
 			var bodyNode = _VirtualDom_doc.body;
@@ -4291,7 +4291,7 @@ function _Browser_application(impl)
 	var key = function() { key.a(onUrlChange(_Browser_getUrl())); };
 
 	return _Browser_document({
-		I: function(sendToApp)
+		J: function(sendToApp)
 		{
 			key.a = sendToApp;
 			_Browser_window.addEventListener('popstate', key);
@@ -6130,7 +6130,7 @@ var author$project$Page$SignUp$initModel = author$project$Page$SignUp$Normal(
 		i: author$project$Page$SignUp$StudentHasSAddress(
 			{
 				_: author$project$Data$Password$passwordFromString(''),
-				J: author$project$Page$SignUp$analysisStudentIdOrSAddress('')
+				K: author$project$Page$SignUp$analysisStudentIdOrSAddress('')
 			}),
 		ah: author$project$Page$SignUp$UniversitySchool(author$project$Page$SignUp$UniversitySchoolNone)
 	});
@@ -7510,7 +7510,8 @@ var author$project$Api$debugDeleteAllUser = function (msg) {
 			C: 'https://api.tsukumart.com/v1/debug/user/delete/?all=true'
 		});
 };
-var author$project$Api$UserProfile = elm$core$Basics$identity;
+var author$project$Data$Profile$Profile = elm$core$Basics$identity;
+var author$project$Data$Profile$make = elm$core$Basics$identity;
 var author$project$Data$University$GraduateNotTsukuba = function (a) {
 	return {$: 1, a: a};
 };
@@ -7734,7 +7735,8 @@ var author$project$Api$getUserProfileResponseValueListToResult = F4(
 		if (!_n0.$) {
 			var university = _n0.a;
 			return elm$core$Result$Ok(
-				{a9: introduction, Y: nickName, ah: university});
+				author$project$Data$Profile$make(
+					{a9: introduction, Y: nickName, ah: university}));
 		} else {
 			return elm$core$Result$Err(0);
 		}
@@ -8033,8 +8035,8 @@ var elm$json$Json$Encode$object = function (pairs) {
 };
 var elm$json$Json$Encode$string = _Json_wrap;
 var author$project$Api$logInRequestToJson = function (_n0) {
-	var emailAddress = _n0.P;
-	var pass = _n0.S;
+	var emailAddress = _n0.Q;
+	var pass = _n0.T;
 	return elm$json$Json$Encode$object(
 		_List_fromArray(
 			[
@@ -8122,32 +8124,32 @@ var author$project$Api$universityToSimpleRecord = function (universityData) {
 			var graduate = universityData.a;
 			var schoolAndDepartment = universityData.b;
 			return {
-				O: elm$core$Maybe$Just(schoolAndDepartment),
-				Q: elm$core$Maybe$Just(graduate)
+				P: elm$core$Maybe$Just(schoolAndDepartment),
+				R: elm$core$Maybe$Just(graduate)
 			};
 		case 1:
 			var graduate = universityData.a;
 			return {
-				O: elm$core$Maybe$Nothing,
-				Q: elm$core$Maybe$Just(graduate)
+				P: elm$core$Maybe$Nothing,
+				R: elm$core$Maybe$Just(graduate)
 			};
 		default:
 			var schoolAndDepartment = universityData.a;
 			return {
-				O: elm$core$Maybe$Just(schoolAndDepartment),
-				Q: elm$core$Maybe$Nothing
+				P: elm$core$Maybe$Just(schoolAndDepartment),
+				R: elm$core$Maybe$Nothing
 			};
 	}
 };
 var author$project$Api$signUpJson = function (_n0) {
-	var emailAddress = _n0.P;
-	var pass = _n0.S;
+	var emailAddress = _n0.Q;
+	var pass = _n0.T;
 	var image = _n0.aw;
 	var university = _n0.ah;
 	var nickName = _n0.Y;
 	var _n1 = author$project$Api$universityToSimpleRecord(university);
-	var graduate = _n1.Q;
-	var department = _n1.O;
+	var graduate = _n1.R;
+	var department = _n1.P;
 	return elm$json$Json$Encode$object(
 		_Utils_ap(
 			_List_fromArray(
@@ -8488,7 +8490,7 @@ var author$project$Page$SignUp$update = F2(
 											_Utils_update(
 												r,
 												{
-													J: author$project$Page$SignUp$analysisStudentIdOrSAddress(string)
+													K: author$project$Page$SignUp$analysisStudentIdOrSAddress(string)
 												}))
 									}));
 						} else {
@@ -8501,7 +8503,7 @@ var author$project$Page$SignUp$update = F2(
 											_Utils_update(
 												r,
 												{
-													P: author$project$Page$SignUp$analysisEmailAddress(string)
+													Q: author$project$Page$SignUp$analysisEmailAddress(string)
 												}))
 									}));
 						}
@@ -8518,7 +8520,7 @@ var author$project$Page$SignUp$update = F2(
 											_Utils_update(
 												r,
 												{
-													R: elm$core$Maybe$Just(dataUrlString)
+													S: elm$core$Maybe$Just(dataUrlString)
 												}))
 									}));
 						} else {
@@ -8947,7 +8949,7 @@ var author$project$Main$update = F2(
 						rec,
 						{
 							a: author$project$Main$PageSignUp(
-								author$project$Page$SignUp$sentSignUpDataInitModel(signUpData.P))
+								author$project$Page$SignUp$sentSignUpDataInitModel(signUpData.Q))
 						}),
 					A2(author$project$Api$signUp, signUpData, author$project$Main$SignUpResponse));
 			case 9:
@@ -9023,7 +9025,7 @@ var author$project$Main$update = F2(
 									rec,
 									{
 										y: author$project$Main$LogInStateOk(
-											{ai: access, T: elm$core$Maybe$Nothing, ab: refresh}),
+											{ai: access, I: elm$core$Maybe$Nothing, ab: refresh}),
 										n: elm$core$Maybe$Just('ログインしました'),
 										a: newPage
 									});
@@ -9032,7 +9034,7 @@ var author$project$Main$update = F2(
 									rec,
 									{
 										y: author$project$Main$LogInStateOk(
-											{ai: access, T: elm$core$Maybe$Nothing, ab: refresh}),
+											{ai: access, I: elm$core$Maybe$Nothing, ab: refresh}),
 										n: elm$core$Maybe$Just('ログインしました')
 									});
 							}
@@ -9296,7 +9298,7 @@ var author$project$Main$update = F2(
 									_Utils_update(
 										r,
 										{
-											T: elm$core$Maybe$Just(profile)
+											I: elm$core$Maybe$Just(profile)
 										}))
 							}),
 						elm$core$Platform$Cmd$none);
@@ -10607,15 +10609,15 @@ var author$project$Page$LogIn$getLogInData = F2(
 						var password = _n0.b.a;
 						return elm$core$Maybe$Just(
 							{
-								P: author$project$Data$EmailAddress$fromSAddress(
+								Q: author$project$Data$EmailAddress$fromSAddress(
 									author$project$Data$SAddress$fromStundetId(studentId)),
-								S: password
+								T: password
 							});
 					case 2:
 						var emailAddress = _n0.a.a;
 						var password = _n0.b.a;
 						return elm$core$Maybe$Just(
-							{P: emailAddress, S: password});
+							{Q: emailAddress, T: password});
 					default:
 						break _n0$2;
 				}
@@ -10920,21 +10922,295 @@ var author$project$Page$LogIn$view = function (logInPage) {
 			}())
 		]);
 };
-var author$project$Page$Profile$view = function (model) {
-	return _Utils_Tuple2(
-		author$project$Tab$Single('プロフィール'),
-		_List_fromArray(
-			[
-				elm$html$Html$text('プロフィール画面')
-			]));
+var author$project$Data$Profile$getIntroduction = function (_n0) {
+	var introduction = _n0.a9;
+	return introduction;
 };
+var author$project$Data$Profile$getNickName = function (_n0) {
+	var nickName = _n0.Y;
+	return nickName;
+};
+var author$project$Data$Profile$getUniversity = function (_n0) {
+	var university = _n0.ah;
+	return university;
+};
+var author$project$Data$University$departmentToJapaneseString = function (schoolAndDepartment) {
+	switch (schoolAndDepartment) {
+		case 0:
+			return elm$core$Maybe$Just('人文学類');
+		case 1:
+			return elm$core$Maybe$Just('比較文化学類');
+		case 2:
+			return elm$core$Maybe$Just('日本語・日本文化学類');
+		case 3:
+			return elm$core$Maybe$Just('社会学類');
+		case 4:
+			return elm$core$Maybe$Just('国際総合学類');
+		case 5:
+			return elm$core$Maybe$Just('教育学類');
+		case 6:
+			return elm$core$Maybe$Just('心理学類');
+		case 7:
+			return elm$core$Maybe$Just('障害科学類');
+		case 8:
+			return elm$core$Maybe$Just('生物学類');
+		case 9:
+			return elm$core$Maybe$Just('生物資源学類');
+		case 10:
+			return elm$core$Maybe$Just('地球学類');
+		case 11:
+			return elm$core$Maybe$Just('数学類');
+		case 12:
+			return elm$core$Maybe$Just('物理学類');
+		case 13:
+			return elm$core$Maybe$Just('化学類');
+		case 14:
+			return elm$core$Maybe$Just('応用理工学類');
+		case 15:
+			return elm$core$Maybe$Just('工学システム学類');
+		case 16:
+			return elm$core$Maybe$Just('社会工学類');
+		case 17:
+			return elm$core$Maybe$Just('情報科学類');
+		case 18:
+			return elm$core$Maybe$Just('情報メディア創成学類');
+		case 19:
+			return elm$core$Maybe$Just('知識情報・図書館科学類');
+		case 20:
+			return elm$core$Maybe$Just('医学類');
+		case 21:
+			return elm$core$Maybe$Just('看護学類');
+		case 22:
+			return elm$core$Maybe$Just('医療科学類');
+		case 23:
+			return elm$core$Maybe$Nothing;
+		default:
+			return elm$core$Maybe$Nothing;
+	}
+};
+var author$project$Data$University$graduateToJapaneseString = function (gradate) {
+	switch (gradate) {
+		case 0:
+			return '教育研究科';
+		case 1:
+			return '人文社会科学研究科';
+		case 2:
+			return 'ビジネス科学研究科';
+		case 3:
+			return '数理物質科学研究科';
+		case 4:
+			return 'システム情報工学研究科';
+		case 5:
+			return '生命環境科学研究科';
+		case 6:
+			return '人間総合科学研究科';
+		case 7:
+			return '図書館情報メディア研究科';
+		default:
+			return 'グローバル研究院';
+	}
+};
+var author$project$Data$University$SAandd = 7;
+var author$project$Data$University$SHuman = 2;
+var author$project$Data$University$SHumcul = 0;
+var author$project$Data$University$SInfo = 5;
+var author$project$Data$University$SLife = 3;
+var author$project$Data$University$SMed = 6;
+var author$project$Data$University$SSocint = 1;
+var author$project$Data$University$SSport = 8;
+var author$project$Data$University$SSse = 4;
+var author$project$Data$University$schoolFromDepartment = function (schoolAndDepartment) {
+	switch (schoolAndDepartment) {
+		case 0:
+			return 0;
+		case 1:
+			return 0;
+		case 2:
+			return 0;
+		case 3:
+			return 1;
+		case 4:
+			return 1;
+		case 5:
+			return 2;
+		case 6:
+			return 2;
+		case 7:
+			return 2;
+		case 8:
+			return 3;
+		case 9:
+			return 3;
+		case 10:
+			return 3;
+		case 11:
+			return 4;
+		case 12:
+			return 4;
+		case 13:
+			return 4;
+		case 14:
+			return 4;
+		case 15:
+			return 4;
+		case 16:
+			return 4;
+		case 17:
+			return 5;
+		case 18:
+			return 5;
+		case 19:
+			return 5;
+		case 20:
+			return 6;
+		case 21:
+			return 6;
+		case 22:
+			return 6;
+		case 23:
+			return 7;
+		default:
+			return 8;
+	}
+};
+var author$project$Data$University$schoolToJapaneseString = function (school) {
+	switch (school) {
+		case 0:
+			return '人文・文化学群';
+		case 1:
+			return '社会・国際学群';
+		case 2:
+			return '人間学群';
+		case 3:
+			return '生命環境学群';
+		case 4:
+			return '理工学群';
+		case 5:
+			return '情報学群';
+		case 6:
+			return '医学群';
+		case 7:
+			return '芸術専門学群';
+		default:
+			return '体育専門学群';
+	}
+};
+var author$project$Data$University$universityToJapaneseString = function (university) {
+	switch (university.$) {
+		case 0:
+			var graduate = university.a;
+			var schoolAndDepartment = university.b;
+			return {
+				P: author$project$Data$University$departmentToJapaneseString(schoolAndDepartment),
+				R: elm$core$Maybe$Just(
+					author$project$Data$University$graduateToJapaneseString(graduate)),
+				ac: elm$core$Maybe$Just(
+					author$project$Data$University$schoolToJapaneseString(
+						author$project$Data$University$schoolFromDepartment(schoolAndDepartment)))
+			};
+		case 1:
+			var graduate = university.a;
+			return {
+				P: elm$core$Maybe$Nothing,
+				R: elm$core$Maybe$Just(
+					author$project$Data$University$graduateToJapaneseString(graduate)),
+				ac: elm$core$Maybe$Nothing
+			};
+		default:
+			var schoolAndDepartment = university.a;
+			return {
+				P: author$project$Data$University$departmentToJapaneseString(schoolAndDepartment),
+				R: elm$core$Maybe$Nothing,
+				ac: elm$core$Maybe$Just(
+					author$project$Data$University$schoolToJapaneseString(
+						author$project$Data$University$schoolFromDepartment(schoolAndDepartment)))
+			};
+	}
+};
+var author$project$Page$Profile$view = F2(
+	function (profileMaybe, model) {
+		return _Utils_Tuple2(
+			author$project$Tab$Single('プロフィール'),
+			function () {
+				if (!profileMaybe.$) {
+					var profile = profileMaybe.a;
+					return _List_fromArray(
+						[
+							A2(
+							elm$html$Html$div,
+							_List_Nil,
+							_List_fromArray(
+								[
+									elm$html$Html$text(
+									'表示名:' + author$project$Data$Profile$getNickName(profile))
+								])),
+							A2(
+							elm$html$Html$div,
+							_List_Nil,
+							_List_fromArray(
+								[
+									elm$html$Html$text(
+									'紹介文:' + author$project$Data$Profile$getIntroduction(profile))
+								])),
+							A2(
+							elm$html$Html$div,
+							_List_Nil,
+							_List_fromArray(
+								[
+									elm$html$Html$text(
+									function () {
+										var _n1 = author$project$Data$University$universityToJapaneseString(
+											author$project$Data$Profile$getUniversity(profile));
+										var graduate = _n1.R;
+										var school = _n1.ac;
+										var department = _n1.P;
+										return _Utils_ap(
+											A2(
+												elm$core$Maybe$withDefault,
+												'',
+												A2(
+													elm$core$Maybe$map,
+													function (g) {
+														return '研究科:' + g;
+													},
+													graduate)),
+											_Utils_ap(
+												A2(
+													elm$core$Maybe$withDefault,
+													'',
+													A2(
+														elm$core$Maybe$map,
+														function (s) {
+															return '学群:' + s;
+														},
+														school)),
+												A2(
+													elm$core$Maybe$withDefault,
+													'',
+													A2(
+														elm$core$Maybe$map,
+														function (d) {
+															return '学類:' + d;
+														},
+														department))));
+									}())
+								]))
+						]);
+				} else {
+					return _List_fromArray(
+						[
+							elm$html$Html$text('プロフィールがまだ読み込まれていません')
+						]);
+				}
+			}());
+	});
 var author$project$Page$SignUp$EmitChangePage = function (a) {
 	return {$: 0, a: a};
 };
 var author$project$Page$SignUp$EmitDeleteUserAll = {$: 6};
 var author$project$Page$SignUp$getSignUpRequestEmailAddressAndPasswordAndImage = function (sAddressAndPassword) {
 	if (!sAddressAndPassword.$) {
-		var studentIdOrTsukubaEmailAddress = sAddressAndPassword.a.J;
+		var studentIdOrTsukubaEmailAddress = sAddressAndPassword.a.K;
 		var password = sAddressAndPassword.a._;
 		var _n1 = _Utils_Tuple2(studentIdOrTsukubaEmailAddress, password);
 		_n1$2:
@@ -10946,7 +11222,7 @@ var author$project$Page$SignUp$getSignUpRequestEmailAddressAndPasswordAndImage =
 						var pass = _n1.b.a;
 						return elm$core$Maybe$Just(
 							{
-								P: author$project$Data$EmailAddress$fromSAddress(
+								Q: author$project$Data$EmailAddress$fromSAddress(
 									author$project$Data$SAddress$fromStundetId(studentId)),
 								aw: elm$core$Maybe$Nothing,
 								_: pass
@@ -10956,7 +11232,7 @@ var author$project$Page$SignUp$getSignUpRequestEmailAddressAndPasswordAndImage =
 						var pass = _n1.b.a;
 						return elm$core$Maybe$Just(
 							{
-								P: author$project$Data$EmailAddress$fromSAddress(sAddress),
+								Q: author$project$Data$EmailAddress$fromSAddress(sAddress),
 								aw: elm$core$Maybe$Nothing,
 								_: pass
 							});
@@ -10969,9 +11245,9 @@ var author$project$Page$SignUp$getSignUpRequestEmailAddressAndPasswordAndImage =
 		}
 		return elm$core$Maybe$Nothing;
 	} else {
-		var emailAddress = sAddressAndPassword.a.P;
+		var emailAddress = sAddressAndPassword.a.Q;
 		var password = sAddressAndPassword.a._;
-		var imageUrl = sAddressAndPassword.a.R;
+		var imageUrl = sAddressAndPassword.a.S;
 		var _n2 = _Utils_Tuple3(emailAddress, password, imageUrl);
 		if (((!_n2.a.$) && (!_n2.b.$)) && (!_n2.c.$)) {
 			var address = _n2.a.a;
@@ -10979,7 +11255,7 @@ var author$project$Page$SignUp$getSignUpRequestEmailAddressAndPasswordAndImage =
 			var image = _n2.c.a;
 			return elm$core$Maybe$Just(
 				{
-					P: address,
+					Q: address,
 					aw: elm$core$Maybe$Just(image),
 					_: pass
 				});
@@ -11031,12 +11307,12 @@ var author$project$Page$SignUp$getSignUpRequest = F3(
 			author$project$Page$SignUp$getSignUpRequestEmailAddressAndPasswordAndImage(sAddressAndPassword),
 			author$project$Page$SignUp$getSignUpRequestUniversity(university));
 		if ((!_n0.a.$) && (!_n0.b.$)) {
-			var emailAddress = _n0.a.a.P;
+			var emailAddress = _n0.a.a.Q;
 			var password = _n0.a.a._;
 			var image = _n0.a.a.aw;
 			var universityData = _n0.b.a;
 			return ((1 <= elm$core$String$length(nickName)) && (elm$core$String$length(nickName) <= 50)) ? elm$core$Maybe$Just(
-				{P: emailAddress, aw: image, Y: nickName, S: password, ah: universityData}) : elm$core$Maybe$Nothing;
+				{Q: emailAddress, aw: image, Y: nickName, T: password, ah: universityData}) : elm$core$Maybe$Nothing;
 		} else {
 			return elm$core$Maybe$Nothing;
 		}
@@ -11349,7 +11625,7 @@ var author$project$Page$SignUp$sAddressSelectView = function (userSignUpSAddress
 									author$project$Page$SignUp$StudentHasSAddress(
 										{
 											_: password,
-											J: author$project$Page$SignUp$analysisStudentIdOrSAddress('')
+											K: author$project$Page$SignUp$analysisStudentIdOrSAddress('')
 										}))
 								]);
 						}
@@ -11379,8 +11655,8 @@ var author$project$Page$SignUp$sAddressSelectView = function (userSignUpSAddress
 									elm$html$Html$Events$onClick(
 									author$project$Page$SignUp$NewStudent(
 										{
-											P: author$project$Data$EmailAddress$fromCharList(_List_Nil),
-											R: elm$core$Maybe$Nothing,
+											Q: author$project$Data$EmailAddress$fromCharList(_List_Nil),
+											S: elm$core$Maybe$Nothing,
 											_: password
 										}))
 								]);
@@ -11530,69 +11806,6 @@ var author$project$Page$SignUp$signUpUniversityViewGraduateYesNoTsukuba = functi
 					]))
 			]));
 };
-var author$project$Data$University$SAandd = 7;
-var author$project$Data$University$SHuman = 2;
-var author$project$Data$University$SHumcul = 0;
-var author$project$Data$University$SInfo = 5;
-var author$project$Data$University$SLife = 3;
-var author$project$Data$University$SMed = 6;
-var author$project$Data$University$SSocint = 1;
-var author$project$Data$University$SSport = 8;
-var author$project$Data$University$SSse = 4;
-var author$project$Data$University$schoolFromDepartment = function (schoolAndDepartment) {
-	switch (schoolAndDepartment) {
-		case 0:
-			return 0;
-		case 1:
-			return 0;
-		case 2:
-			return 0;
-		case 3:
-			return 1;
-		case 4:
-			return 1;
-		case 5:
-			return 2;
-		case 6:
-			return 2;
-		case 7:
-			return 2;
-		case 8:
-			return 3;
-		case 9:
-			return 3;
-		case 10:
-			return 3;
-		case 11:
-			return 4;
-		case 12:
-			return 4;
-		case 13:
-			return 4;
-		case 14:
-			return 4;
-		case 15:
-			return 4;
-		case 16:
-			return 4;
-		case 17:
-			return 5;
-		case 18:
-			return 5;
-		case 19:
-			return 5;
-		case 20:
-			return 6;
-		case 21:
-			return 6;
-		case 22:
-			return 6;
-		case 23:
-			return 7;
-		default:
-			return 8;
-	}
-};
 var author$project$Data$University$schoolToIdString = function (school) {
 	switch (school) {
 		case 0:
@@ -11630,60 +11843,6 @@ var author$project$Page$SignUp$UniversitySchoolSelectSchool = function (a) {
 };
 var author$project$Page$SignUp$UniversitySchoolSelectSchoolAndDepartment = function (a) {
 	return {$: 2, a: a};
-};
-var author$project$Data$University$departmentToJapaneseString = function (schoolAndDepartment) {
-	switch (schoolAndDepartment) {
-		case 0:
-			return elm$core$Maybe$Just('人文学類');
-		case 1:
-			return elm$core$Maybe$Just('比較文化学類');
-		case 2:
-			return elm$core$Maybe$Just('日本語・日本文化学類');
-		case 3:
-			return elm$core$Maybe$Just('社会学類');
-		case 4:
-			return elm$core$Maybe$Just('国際総合学類');
-		case 5:
-			return elm$core$Maybe$Just('教育学類');
-		case 6:
-			return elm$core$Maybe$Just('心理学類');
-		case 7:
-			return elm$core$Maybe$Just('障害科学類');
-		case 8:
-			return elm$core$Maybe$Just('生物学類');
-		case 9:
-			return elm$core$Maybe$Just('生物資源学類');
-		case 10:
-			return elm$core$Maybe$Just('地球学類');
-		case 11:
-			return elm$core$Maybe$Just('数学類');
-		case 12:
-			return elm$core$Maybe$Just('物理学類');
-		case 13:
-			return elm$core$Maybe$Just('化学類');
-		case 14:
-			return elm$core$Maybe$Just('応用理工学類');
-		case 15:
-			return elm$core$Maybe$Just('工学システム学類');
-		case 16:
-			return elm$core$Maybe$Just('社会工学類');
-		case 17:
-			return elm$core$Maybe$Just('情報科学類');
-		case 18:
-			return elm$core$Maybe$Just('情報メディア創成学類');
-		case 19:
-			return elm$core$Maybe$Just('知識情報・図書館科学類');
-		case 20:
-			return elm$core$Maybe$Just('医学類');
-		case 21:
-			return elm$core$Maybe$Just('看護学類');
-		case 22:
-			return elm$core$Maybe$Just('医療科学類');
-		case 23:
-			return elm$core$Maybe$Nothing;
-		default:
-			return elm$core$Maybe$Nothing;
-	}
 };
 var author$project$Data$University$schoolToDepartmentList = function (school) {
 	switch (school) {
@@ -11875,28 +12034,6 @@ var author$project$Page$SignUp$signUpUniversityViewSelectDepartment = function (
 };
 var author$project$Data$University$schoolAll = _List_fromArray(
 	[0, 1, 2, 3, 4, 5, 6, 7, 8]);
-var author$project$Data$University$schoolToJapaneseString = function (school) {
-	switch (school) {
-		case 0:
-			return '人文・文化学群';
-		case 1:
-			return '社会・国際学群';
-		case 2:
-			return '人間学群';
-		case 3:
-			return '生命環境学群';
-		case 4:
-			return '理工学群';
-		case 5:
-			return '情報学群';
-		case 6:
-			return '医学群';
-		case 7:
-			return '芸術専門学群';
-		default:
-			return '体育専門学群';
-	}
-};
 var author$project$Page$SignUp$selectSchoolDecoder = A2(
 	elm$json$Json$Decode$map,
 	function (index) {
@@ -12030,28 +12167,6 @@ var author$project$Page$SignUp$signUpUniversityViewSchool = function (schoolSele
 				return _List_fromArray(
 					[schoolView]);
 			}
-	}
-};
-var author$project$Data$University$graduateToJapaneseString = function (gradate) {
-	switch (gradate) {
-		case 0:
-			return '教育研究科';
-		case 1:
-			return '人文社会科学研究科';
-		case 2:
-			return 'ビジネス科学研究科';
-		case 3:
-			return '数理物質科学研究科';
-		case 4:
-			return 'システム情報工学研究科';
-		case 5:
-			return '生命環境科学研究科';
-		case 6:
-			return '人間総合科学研究科';
-		case 7:
-			return '図書館情報メディア研究科';
-		default:
-			return 'グローバル研究院';
 	}
 };
 var author$project$Page$SignUp$selectGraduateDecoder = A2(
@@ -12605,12 +12720,12 @@ var author$project$Page$SignUp$normalView = F3(
 				_Utils_ap(
 					function () {
 						if (!sAddressAndPassword.$) {
-							var studentIdOrTsukubaEmailAddress = sAddressAndPassword.a.J;
+							var studentIdOrTsukubaEmailAddress = sAddressAndPassword.a.K;
 							var password = sAddressAndPassword.a._;
 							return A2(author$project$Page$SignUp$studentHasSAddressFormList, studentIdOrTsukubaEmailAddress, password);
 						} else {
-							var emailAddress = sAddressAndPassword.a.P;
-							var imageUrl = sAddressAndPassword.a.R;
+							var emailAddress = sAddressAndPassword.a.Q;
+							var imageUrl = sAddressAndPassword.a.S;
 							var password = sAddressAndPassword.a._;
 							return A3(author$project$Page$SignUp$newStudentForm, emailAddress, imageUrl, password);
 						}
@@ -12851,8 +12966,8 @@ var elm$core$Tuple$mapBoth = F3(
 			funcA(x),
 			funcB(y));
 	});
-var author$project$Main$tabDataAndMainView = F2(
-	function (isWideScreenMode, page) {
+var author$project$Main$tabDataAndMainView = F3(
+	function (logInState, isWideScreenMode, page) {
 		switch (page.$) {
 			case 0:
 				var subPage = page.a;
@@ -12922,7 +13037,17 @@ var author$project$Main$tabDataAndMainView = F2(
 				return A2(
 					elm$core$Tuple$mapFirst,
 					author$project$Tab$map(elm$core$Basics$never),
-					author$project$Page$Profile$view(profileModel));
+					A2(
+						author$project$Page$Profile$view,
+						function () {
+							if (!logInState.$) {
+								var profile = logInState.a.I;
+								return profile;
+							} else {
+								return elm$core$Maybe$Nothing;
+							}
+						}(),
+						profileModel));
 			default:
 				return A2(
 					elm$core$Tuple$mapFirst,
@@ -13074,9 +13199,9 @@ var author$project$Tab$view = F2(
 				}
 			}());
 	});
-var author$project$Main$mainViewAndMainTab = F2(
-	function (page, isWideScreenMode) {
-		var _n0 = A2(author$project$Main$tabDataAndMainView, isWideScreenMode, page);
+var author$project$Main$mainViewAndMainTab = F3(
+	function (logInState, page, isWideScreenMode) {
+		var _n0 = A3(author$project$Main$tabDataAndMainView, logInState, isWideScreenMode, page);
 		var tabData = _n0.a;
 		var mainView = _n0.b;
 		return _List_fromArray(
@@ -13118,66 +13243,82 @@ var author$project$SiteMap$logInUrl = '/login';
 var author$project$SiteMap$profileUrl = 'profile';
 var author$project$Main$menuAccount = function (logInState) {
 	if (!logInState.$) {
-		var profile = logInState.a.T;
-		return _List_fromArray(
-			[
-				A2(
-				elm$html$Html$div,
-				_List_fromArray(
-					[
-						elm$html$Html$Attributes$class('menu-noLogin'),
-						elm$html$Html$Attributes$href(author$project$SiteMap$profileUrl)
-					]),
-				_List_fromArray(
-					[
-						elm$html$Html$text('ログイン済み')
-					]))
-			]);
+		var profile = logInState.a.I;
+		return A2(
+			elm$html$Html$a,
+			_List_fromArray(
+				[
+					elm$html$Html$Attributes$class('menu-account'),
+					elm$html$Html$Attributes$href(author$project$SiteMap$profileUrl)
+				]),
+			_List_fromArray(
+				[
+					A2(
+					elm$html$Html$div,
+					_List_fromArray(
+						[
+							elm$html$Html$Attributes$class('menu-noLogin')
+						]),
+					_List_fromArray(
+						[
+							elm$html$Html$text(
+							A2(
+								elm$core$Maybe$withDefault,
+								'ログイン済み',
+								A2(elm$core$Maybe$map, author$project$Data$Profile$getNickName, profile)))
+						]))
+				]));
 	} else {
-		return _List_fromArray(
-			[
-				A2(
-				elm$html$Html$div,
-				_List_fromArray(
-					[
-						elm$html$Html$Attributes$class('menu-noLogin')
-					]),
-				_List_fromArray(
-					[
-						elm$html$Html$text('ログインしていません')
-					])),
-				A2(
-				elm$html$Html$div,
-				_List_fromArray(
-					[
-						elm$html$Html$Attributes$class('menu-logInsignUpButtonContainer')
-					]),
-				_List_fromArray(
-					[
-						A2(
-						elm$html$Html$a,
-						_List_fromArray(
-							[
-								elm$html$Html$Attributes$class('menu-logInButton'),
-								elm$html$Html$Attributes$href(author$project$SiteMap$logInUrl)
-							]),
-						_List_fromArray(
-							[
-								elm$html$Html$text('ログイン')
-							])),
-						A2(
-						elm$html$Html$a,
-						_List_fromArray(
-							[
-								elm$html$Html$Attributes$class('menu-signUpButton'),
-								elm$html$Html$Attributes$href(author$project$SiteMap$signUpUrl)
-							]),
-						_List_fromArray(
-							[
-								elm$html$Html$text('新規登録')
-							]))
-					]))
-			]);
+		return A2(
+			elm$html$Html$div,
+			_List_fromArray(
+				[
+					elm$html$Html$Attributes$class('menu-account')
+				]),
+			_List_fromArray(
+				[
+					A2(
+					elm$html$Html$div,
+					_List_fromArray(
+						[
+							elm$html$Html$Attributes$class('menu-noLogin')
+						]),
+					_List_fromArray(
+						[
+							elm$html$Html$text('ログインしていません')
+						])),
+					A2(
+					elm$html$Html$div,
+					_List_fromArray(
+						[
+							elm$html$Html$Attributes$class('menu-logInsignUpButtonContainer')
+						]),
+					_List_fromArray(
+						[
+							A2(
+							elm$html$Html$a,
+							_List_fromArray(
+								[
+									elm$html$Html$Attributes$class('menu-logInButton'),
+									elm$html$Html$Attributes$href(author$project$SiteMap$logInUrl)
+								]),
+							_List_fromArray(
+								[
+									elm$html$Html$text('ログイン')
+								])),
+							A2(
+							elm$html$Html$a,
+							_List_fromArray(
+								[
+									elm$html$Html$Attributes$class('menu-signUpButton'),
+									elm$html$Html$Attributes$href(author$project$SiteMap$signUpUrl)
+								]),
+							_List_fromArray(
+								[
+									elm$html$Html$text('新規登録')
+								]))
+						]))
+				]));
 	}
 };
 var author$project$SiteMap$exhibitionGoodsUrl = '/exhibition-item';
@@ -13186,13 +13327,7 @@ var author$project$SiteMap$purchaseGoodsUrl = '/purchase-item';
 var author$project$Main$menuMain = function (logInState) {
 	return _List_fromArray(
 		[
-			A2(
-			elm$html$Html$div,
-			_List_fromArray(
-				[
-					elm$html$Html$Attributes$class('menu-account')
-				]),
-			author$project$Main$menuAccount(logInState)),
+			author$project$Main$menuAccount(logInState),
 			A2(
 			elm$html$Html$a,
 			_List_fromArray(
@@ -13337,7 +13472,7 @@ var author$project$Main$view = function (_n0) {
 					A2(author$project$Main$menuView, logInState, menuState)
 				]),
 			_Utils_ap(
-				A2(author$project$Main$mainViewAndMainTab, page, isWideScreen),
+				A3(author$project$Main$mainViewAndMainTab, logInState, page, isWideScreen),
 				function () {
 					if (!message.$) {
 						var m = message.a;

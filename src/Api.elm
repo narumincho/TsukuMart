@@ -10,7 +10,6 @@ module Api exposing
     , SignUpResponseError(..)
     , SignUpResponseOk(..)
     , Token
-    , UserProfile(..)
     , debugDeleteAllUser
     , getUserProfile
     , logIn
@@ -21,6 +20,7 @@ module Api exposing
 
 import Data.EmailAddress as EmailAddress
 import Data.Password as Password
+import Data.Profile as Profile
 import Data.University as University
 import Http
 import Json.Decode
@@ -419,15 +419,7 @@ tokenRefreshBodyStringDecoder =
 -}
 
 
-type UserProfile
-    = UserProfile
-        { introduction : String
-        , university : University.University
-        , nickName : String
-        }
-
-
-getUserProfile : Token -> (Result () UserProfile -> msg) -> Cmd msg
+getUserProfile : Token -> (Result () Profile.Profile -> msg) -> Cmd msg
 getUserProfile token msg =
     Http.request
         { method = "GET"
@@ -440,7 +432,7 @@ getUserProfile token msg =
         }
 
 
-getUserProfileResponseToResult : Http.Response String -> Result () UserProfile
+getUserProfileResponseToResult : Http.Response String -> Result () Profile.Profile
 getUserProfileResponseToResult response =
     case response of
         Http.BadStatus_ _ body ->
@@ -455,7 +447,7 @@ getUserProfileResponseToResult response =
             Err ()
 
 
-getUserProfileResponseBodyDecoder : Json.Decode.Decoder (Result () UserProfile)
+getUserProfileResponseBodyDecoder : Json.Decode.Decoder (Result () Profile.Profile)
 getUserProfileResponseBodyDecoder =
     Json.Decode.oneOf
         [ Json.Decode.map4
@@ -467,12 +459,12 @@ getUserProfileResponseBodyDecoder =
         ]
 
 
-getUserProfileResponseValueListToResult : String -> String -> Maybe String -> Maybe String -> Result () UserProfile
+getUserProfileResponseValueListToResult : String -> String -> Maybe String -> Maybe String -> Result () Profile.Profile
 getUserProfileResponseValueListToResult nickName introduction departmentMaybe graduateMaybe =
     case University.universityFromIdString { departmentMaybe = departmentMaybe, graduateMaybe = graduateMaybe } of
         Just university ->
             Ok
-                (UserProfile
+                (Profile.make
                     { nickName = nickName
                     , introduction = introduction
                     , university = university

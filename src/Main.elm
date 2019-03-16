@@ -4,6 +4,7 @@ import Api
 import Browser
 import Browser.Navigation
 import Data.Goods
+import Data.Profile
 import Html
 import Html.Attributes
 import Html.Events
@@ -95,7 +96,7 @@ type LogInState
     = LogInStateOk
         { access : Api.Token
         , refresh : Api.Token
-        , profile : Maybe Api.UserProfile
+        , profile : Maybe Data.Profile.Profile
         }
     | LogInStateNone
 
@@ -123,7 +124,7 @@ type Msg
     | SendConfirmToken String
     | DeleteAllUser
     | DeleteAllUserResponse (Result () ())
-    | GetUserProfileResponse (Result () Api.UserProfile)
+    | GetUserProfileResponse (Result () Data.Profile.Profile)
 
 
 main : Program () Model Msg
@@ -541,7 +542,7 @@ view (Model { page, menuState, message, logInState }) =
         [ header isWideScreen
         , menuView logInState menuState
         ]
-            ++ mainViewAndMainTab page isWideScreen
+            ++ mainViewAndMainTab logInState page isWideScreen
             ++ (case message of
                     Just m ->
                         [ messageView m ]
@@ -880,10 +881,7 @@ menuView logInState menuStateMaybe =
 
 menuMain : LogInState -> List (Html.Html Msg)
 menuMain logInState =
-    [ Html.div
-        [ Html.Attributes.class "menu-account"
-        ]
-        (menuAccount logInState)
+    [ menuAccount logInState
     , Html.a
         [ Html.Attributes.class "menu-item"
         , Html.Attributes.href SiteMap.homeUrl
@@ -907,39 +905,44 @@ menuMain logInState =
     ]
 
 
-menuAccount : LogInState -> List (Html.Html msg)
+menuAccount : LogInState -> Html.Html msg
 menuAccount logInState =
     case logInState of
         LogInStateOk { profile } ->
-            [ Html.div
-                [ Html.Attributes.class "menu-noLogin"
+            Html.a
+                [ Html.Attributes.class "menu-account"
                 , Html.Attributes.href SiteMap.profileUrl
                 ]
-                [ Html.text "ログイン済み" ]
-            ]
+                [ Html.div
+                    [ Html.Attributes.class "menu-noLogin"
+                    ]
+                    [ Html.text (profile |> Maybe.map Data.Profile.getNickName |> Maybe.withDefault "ログイン済み") ]
+                ]
 
         LogInStateNone ->
-            [ Html.div [ Html.Attributes.class "menu-noLogin" ] [ Html.text "ログインしていません" ]
-            , Html.div [ Html.Attributes.class "menu-logInsignUpButtonContainer" ]
-                [ Html.a
-                    [ Html.Attributes.class "menu-logInButton"
-                    , Html.Attributes.href SiteMap.logInUrl
+            Html.div
+                [ Html.Attributes.class "menu-account" ]
+                [ Html.div [ Html.Attributes.class "menu-noLogin" ] [ Html.text "ログインしていません" ]
+                , Html.div [ Html.Attributes.class "menu-logInsignUpButtonContainer" ]
+                    [ Html.a
+                        [ Html.Attributes.class "menu-logInButton"
+                        , Html.Attributes.href SiteMap.logInUrl
+                        ]
+                        [ Html.text "ログイン" ]
+                    , Html.a
+                        [ Html.Attributes.class "menu-signUpButton"
+                        , Html.Attributes.href SiteMap.signUpUrl
+                        ]
+                        [ Html.text "新規登録" ]
                     ]
-                    [ Html.text "ログイン" ]
-                , Html.a
-                    [ Html.Attributes.class "menu-signUpButton"
-                    , Html.Attributes.href SiteMap.signUpUrl
-                    ]
-                    [ Html.text "新規登録" ]
                 ]
-            ]
 
 
-mainViewAndMainTab : Page -> Bool -> List (Html.Html Msg)
-mainViewAndMainTab page isWideScreenMode =
+mainViewAndMainTab : LogInState -> Page -> Bool -> List (Html.Html Msg)
+mainViewAndMainTab logInState page isWideScreenMode =
     let
         ( tabData, mainView ) =
-            tabDataAndMainView isWideScreenMode page
+            tabDataAndMainView logInState isWideScreenMode page
     in
     [ Tab.view isWideScreenMode tabData
         |> Html.map ChangePage
@@ -959,8 +962,8 @@ mainViewAndMainTab page isWideScreenMode =
     ]
 
 
-tabDataAndMainView : Bool -> Page -> ( Tab.Tab Page, List (Html.Html Msg) )
-tabDataAndMainView isWideScreenMode page =
+tabDataAndMainView : LogInState -> Bool -> Page -> ( Tab.Tab Page, List (Html.Html Msg) )
+tabDataAndMainView logInState isWideScreenMode page =
     case page of
         PageHome subPage ->
             homeView isWideScreenMode subPage
@@ -1000,7 +1003,15 @@ tabDataAndMainView isWideScreenMode page =
             ( Tab.None, Page.Goods.goodsView isWideScreenMode goods )
 
         PageProfile profileModel ->
-            Page.Profile.view profileModel
+            Page.Profile.view
+                (case logInState of
+                    LogInStateOk { profile } ->
+                        profile
+
+                    LogInStateNone ->
+                        Nothing
+                )
+                profileModel
                 |> Tuple.mapFirst (Tab.map never)
 
         PageSiteMapXml ->
