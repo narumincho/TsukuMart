@@ -23,17 +23,13 @@ import Url.Parser
 
 
 {-
-   ローカルホストで動作を試す
-   npmにあるlocal-web-server( https://www.npmjs.com/package/local-web-server )を使います。コマンド名がwsだけど使っているのはws( https://www.npmjs.com/package/ws )ではない。
    Windows PowerSellを起動して
 
-   Set-Location D:/tsukumart/hosting_root | ws --spa index.html
+   Set-Location D:/tsukumart/hosting_root | firebase deploy --project tsukumart-demo
 
    を入力する
 
-   ブラウザのアドレスバーに http://127.0.0.1:8000 を入力するとページを見ることができる。
-
-    https://tsukumart-demo.firebaseapp.com/ で出力結果を見ることができるが、APIのサーバーとドメインが違うせいで通信できない
+   ブラウザのアドレスバーに https://tsukumart-demo.firebaseapp.com/ を入力すると出力結果を見ることができる
 -}
 
 

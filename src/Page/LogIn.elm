@@ -200,6 +200,9 @@ logInButton sending logInDataMaybe =
                 ++ (case logInDataMaybe of
                         Just logInData ->
                             if sending then
+                                [ Html.Attributes.disabled True ]
+
+                            else
                                 [ Html.Events.preventDefaultOn "click"
                                     (Json.Decode.succeed
                                         ( EmitLogIn logInData
@@ -208,9 +211,6 @@ logInButton sending logInDataMaybe =
                                     )
                                 , Html.Attributes.disabled False
                                 ]
-
-                            else
-                                [ Html.Attributes.disabled True ]
 
                         Nothing ->
                             [ Html.Attributes.disabled True ]
@@ -224,7 +224,7 @@ logInButton sending logInDataMaybe =
 -}
 forgotPasswordView : List (Html.Html msg)
 forgotPasswordView =
-    [ Html.text "パスワードを忘れたら。登録している学籍番号かメールアドレスを入力してください。パスワードを再発行します。" ]
+    [ Html.text "パスワードを忘れたら。パスワード再発行機能はまだできあがっていません。" ]
 
 
 orLabel : Html.Html msg

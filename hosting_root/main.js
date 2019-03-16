@@ -10566,7 +10566,7 @@ var author$project$Page$Goods$goodsView = F2(
 	});
 var author$project$Page$LogIn$forgotPasswordView = _List_fromArray(
 	[
-		elm$html$Html$text('パスワードを忘れたら。登録している学籍番号かメールアドレスを入力してください。パスワードを再発行します。')
+		elm$html$Html$text('パスワードを忘れたら。パスワード再発行機能はまだできあがっていません。')
 	]);
 var author$project$StudentId$digitToChar = function (i) {
 	switch (i) {
@@ -10681,6 +10681,9 @@ var author$project$Page$LogIn$logInButton = F2(
 								var logInData = logInDataMaybe.a;
 								return sending ? _List_fromArray(
 									[
+										elm$html$Html$Attributes$disabled(true)
+									]) : _List_fromArray(
+									[
 										A2(
 										elm$html$Html$Events$preventDefaultOn,
 										'click',
@@ -10689,9 +10692,6 @@ var author$project$Page$LogIn$logInButton = F2(
 												author$project$Page$LogIn$EmitLogIn(logInData),
 												true))),
 										elm$html$Html$Attributes$disabled(false)
-									]) : _List_fromArray(
-									[
-										elm$html$Html$Attributes$disabled(true)
 									]);
 							} else {
 								return _List_fromArray(
