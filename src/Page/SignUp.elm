@@ -179,7 +179,7 @@ update msg model =
                 InputNickName nickName ->
                     Normal
                         { rec
-                            | nickName = nickName
+                            | nickName = String.trim nickName
                         }
 
                 _ ->

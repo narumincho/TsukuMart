@@ -489,7 +489,7 @@ getUserProfileResponeBodyDecoder =
 debugDeleteAllUser : (Result () () -> msg) -> Cmd msg
 debugDeleteAllUser msg =
     Http.get
-        { url = "httpss://api.tsukumart.com/v1/debug/user/delete/?all=true"
+        { url = "https://api.tsukumart.com/v1/debug/user/delete/?all=true"
         , expect = Http.expectStringResponse msg debugDeleteAllUserResponseToResult
         }
 
