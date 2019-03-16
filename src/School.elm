@@ -8,6 +8,7 @@ module School exposing
     , departmentToJapaneseString
     , departmentToSchool
     , graduateAllValue
+    , graduateFromIdString
     , graduateToIdString
     , graduateToJapaneseString
     , schoolAllValue
@@ -352,9 +353,11 @@ departmentToIdString department =
             schoolToIdString SSport
 
 
+{-| 学類のないもの(芸術専門学群,体育専門学群)は学群IDから判断する
+-}
 departmentFromIdString : String -> Maybe SchoolAndDepartment
 departmentFromIdString idString =
-    departmentFromIdStringLoop idString (schoolAllValue |> List.concatMap departmentAllValue)
+    departmentFromIdStringLoop idString ((schoolAllValue |> List.concatMap departmentAllValue) ++ [ DAandd, DSport ])
 
 
 departmentFromIdStringLoop : String -> List SchoolAndDepartment -> Maybe SchoolAndDepartment
@@ -680,3 +683,22 @@ graduateToIdString graduate =
 
         GGlobal ->
             "global"
+
+
+graduateFromIdString : String -> Maybe Graduate
+graduateFromIdString idString =
+    graduateFromIdStringLoop idString graduateAllValue
+
+
+graduateFromIdStringLoop : String -> List Graduate -> Maybe Graduate
+graduateFromIdStringLoop idString graduateList =
+    case graduateList of
+        x :: xs ->
+            if graduateToIdString x == idString then
+                Just x
+
+            else
+                graduateFromIdStringLoop idString xs
+
+        [] ->
+            Nothing

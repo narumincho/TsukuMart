@@ -427,7 +427,11 @@ tokenRefreshBodyStringDecoder =
 
 
 type UserProfile
-    = UserProfile { introduction : String, department : School.SchoolAndDepartment }
+    = UserProfile
+        { introduction : String
+        , university : UniversityData
+        , nickName : String
+        }
 
 
 getUserProfile : Token -> (Result () UserProfile -> msg) -> Cmd msg
@@ -447,36 +451,58 @@ getUserProfileResponseToResult : Http.Response String -> Result () UserProfile
 getUserProfileResponseToResult response =
     case response of
         Http.BadStatus_ _ body ->
-            Json.Decode.decodeString getUserProfileResponeBodyDecoder body
+            Json.Decode.decodeString getUserProfileResponseBodyDecoder body
                 |> Result.withDefault (Err ())
 
         Http.GoodStatus_ _ body ->
-            Json.Decode.decodeString getUserProfileResponeBodyDecoder body
+            Json.Decode.decodeString getUserProfileResponseBodyDecoder body
                 |> Result.withDefault (Err ())
 
         _ ->
             Err ()
 
 
-getUserProfileResponeBodyDecoder : Json.Decode.Decoder (Result () UserProfile)
-getUserProfileResponeBodyDecoder =
-    Json.Decode.map2
-        (\introduction departmentIdString ->
-            case School.departmentFromIdString departmentIdString of
-                Just department ->
-                    Ok
-                        (UserProfile
-                            { introduction = introduction
-                            , department = department
-                            }
-                        )
+getUserProfileResponseBodyDecoder : Json.Decode.Decoder (Result () UserProfile)
+getUserProfileResponseBodyDecoder =
+    Json.Decode.oneOf
+        [ Json.Decode.map4
+            getUserProfileResponseValueListToResult
+            (Json.Decode.field "nick" Json.Decode.string)
+            (Json.Decode.field "introduction" Json.Decode.string)
+            (Json.Decode.maybe (Json.Decode.field "department" Json.Decode.string))
+            (Json.Decode.maybe (Json.Decode.field "graduate" Json.Decode.string))
+        ]
 
-                Nothing ->
-                    Err
-                        ()
-        )
-        (Json.Decode.field "introduction" Json.Decode.string)
-        (Json.Decode.field "department" Json.Decode.string)
+
+getUserProfileResponseValueListToResult : String -> String -> Maybe String -> Maybe String -> Result () UserProfile
+getUserProfileResponseValueListToResult nickName introduction departmentMaybe graduateMaybe =
+    let
+        universityMaybe =
+            case ( departmentMaybe |> Maybe.andThen School.departmentFromIdString, graduateMaybe |> Maybe.andThen School.graduateFromIdString ) of
+                ( Just department, Just graduate ) ->
+                    Just (UniversityGraduateFromTsukuba graduate department)
+
+                ( Nothing, Just graduate ) ->
+                    Just (UniversityGraduateFromNotTsukuba graduate)
+
+                ( Just department, Nothing ) ->
+                    Just (UniversitySchool department)
+
+                ( Nothing, Nothing ) ->
+                    Nothing
+    in
+    case universityMaybe of
+        Just university ->
+            Ok
+                (UserProfile
+                    { nickName = nickName
+                    , introduction = introduction
+                    , university = university
+                    }
+                )
+
+        Nothing ->
+            Err ()
 
 
 

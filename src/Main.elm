@@ -8,10 +8,10 @@ import Html
 import Html.Attributes
 import Html.Events
 import Html.Keyed
-import Json.Decode
 import Page.Exhibition
 import Page.Goods
 import Page.LogIn
+import Page.Profile
 import Page.SignUp
 import School
 import SiteMap
@@ -71,6 +71,7 @@ type Page
     | PagePurchaseGoodsList
     | PageExhibition Page.Exhibition.Model
     | PageGoods Goods.Goods
+    | PageProfile Page.Profile.Model
     | PageSiteMapXml
 
 
@@ -521,6 +522,8 @@ urlParser beforePageMaybe =
             |> Url.Parser.map (PageExhibition Page.Exhibition.initModel)
         , SiteMap.goodsParser
             |> Url.Parser.map (\_ -> PageGoods Goods.none)
+        , SiteMap.profileParser
+            |> Url.Parser.map (PageProfile Page.Profile.initModel)
         , SiteMap.siteMapParser
             |> Url.Parser.map PageSiteMapXml
         ]
@@ -912,17 +915,8 @@ menuAccount logInState =
             [ Html.div [ Html.Attributes.class "menu-noLogin" ] [ Html.text "ログイン済み" ]
             , Html.div []
                 (case profile of
-                    Just (Api.UserProfile { introduction, department }) ->
-                        [ Html.div [] [ Html.text ("紹介文:" ++ introduction) ]
-                        , Html.div [] [ Html.text ("学群:" ++ (School.departmentToSchool department |> School.schoolToJapaneseString)) ]
-                        ]
-                            ++ (case School.departmentToJapaneseString department of
-                                    Just departmentText ->
-                                        [ Html.div [] [ Html.text ("学類:" ++ departmentText) ] ]
-
-                                    Nothing ->
-                                        []
-                               )
+                    Just (Api.UserProfile { nickName }) ->
+                        [ Html.div [] [ Html.text nickName ] ]
 
                     Nothing ->
                         []
@@ -950,46 +944,7 @@ mainViewAndMainTab : Page -> Bool -> List (Html.Html Msg)
 mainViewAndMainTab page isWideScreenMode =
     let
         ( tabData, mainView ) =
-            case page of
-                PageHome subPage ->
-                    homeView isWideScreenMode subPage
-                        |> Tuple.mapFirst (Tab.map PageHome)
-
-                PageExhibition subPage ->
-                    Page.Exhibition.view subPage
-                        |> Tuple.mapFirst (Tab.map never)
-                        |> Tuple.mapSecond (List.map (Html.map exhibitionPageEmitToMsg))
-
-                PageLikeAndHistory subPage ->
-                    likeAndHistoryView isWideScreenMode subPage
-                        |> Tuple.mapFirst (Tab.map PageLikeAndHistory)
-
-                PagePurchaseGoodsList ->
-                    ( Tab.Single "購入した商品"
-                    , [ Page.Goods.goodsList isWideScreenMode ]
-                    )
-
-                PageExhibitionGoodsList ->
-                    ( Tab.Single "出品した商品"
-                    , [ Page.Goods.goodsList isWideScreenMode ]
-                    )
-
-                PageSignUp signUpPageModel ->
-                    Page.SignUp.view signUpPageModel
-                        |> (\( t, v ) -> ( t |> Tab.map never, v |> List.map (Html.map signUpPageEmitToMsg) ))
-
-                PageLogIn ( logInPageModel, pageMaybe ) ->
-                    ( Tab.Single "ログイン"
-                    , Page.LogIn.view logInPageModel
-                        |> List.map (Html.map (logInPageEmitToMsg pageMaybe))
-                    )
-
-                PageGoods goods ->
-                    ( Tab.None, Page.Goods.goodsView isWideScreenMode goods )
-
-                PageSiteMapXml ->
-                    siteMapXmlView
-                        |> Tuple.mapFirst (Tab.map never)
+            tabDataAndMainView isWideScreenMode page
     in
     [ Tab.view isWideScreenMode tabData
         |> Html.map ChangePage
@@ -1007,6 +962,55 @@ mainViewAndMainTab page isWideScreenMode =
         )
         mainView
     ]
+
+
+tabDataAndMainView : Bool -> Page -> ( Tab.Tab Page, List (Html.Html Msg) )
+tabDataAndMainView isWideScreenMode page =
+    case page of
+        PageHome subPage ->
+            homeView isWideScreenMode subPage
+                |> Tuple.mapFirst (Tab.map PageHome)
+
+        PageExhibition subPage ->
+            Page.Exhibition.view subPage
+                |> Tuple.mapBoth
+                    (Tab.map never)
+                    (List.map (Html.map exhibitionPageEmitToMsg))
+
+        PageLikeAndHistory subPage ->
+            likeAndHistoryView isWideScreenMode subPage
+                |> Tuple.mapFirst (Tab.map PageLikeAndHistory)
+
+        PagePurchaseGoodsList ->
+            ( Tab.Single "購入した商品"
+            , [ Page.Goods.goodsList isWideScreenMode ]
+            )
+
+        PageExhibitionGoodsList ->
+            ( Tab.Single "出品した商品"
+            , [ Page.Goods.goodsList isWideScreenMode ]
+            )
+
+        PageSignUp signUpPageModel ->
+            Page.SignUp.view signUpPageModel
+                |> (\( t, v ) -> ( t |> Tab.map never, v |> List.map (Html.map signUpPageEmitToMsg) ))
+
+        PageLogIn ( logInPageModel, pageMaybe ) ->
+            ( Tab.Single "ログイン"
+            , Page.LogIn.view logInPageModel
+                |> List.map (Html.map (logInPageEmitToMsg pageMaybe))
+            )
+
+        PageGoods goods ->
+            ( Tab.None, Page.Goods.goodsView isWideScreenMode goods )
+
+        PageProfile profileModel ->
+            Page.Profile.view profileModel
+                |> Tuple.mapFirst (Tab.map never)
+
+        PageSiteMapXml ->
+            siteMapXmlView
+                |> Tuple.mapFirst (Tab.map never)
 
 
 messageView : String -> Html.Html msg

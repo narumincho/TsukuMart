@@ -11,6 +11,8 @@ module SiteMap exposing
     , likeHistoryUrl
     , logInParser
     , logInUrl
+    , profileParser
+    , profileUrl
     , purchaseGoodsParser
     , purchaseGoodsUrl
     , signUpParser
@@ -35,22 +37,22 @@ homeUrl =
 
 signUpParser : Url.Parser.Parser a a
 signUpParser =
-    Url.Parser.s "user-signup"
+    Url.Parser.s "signup"
 
 
 signUpUrl : String
 signUpUrl =
-    "/user-signup"
+    "/signup"
 
 
 logInParser : Url.Parser.Parser a a
 logInParser =
-    Url.Parser.s "user-login"
+    Url.Parser.s "login"
 
 
 logInUrl : String
 logInUrl =
-    "/user-login"
+    "/login"
 
 
 likeHistoryParser : Url.Parser.Parser a a
@@ -101,6 +103,16 @@ goodsParser =
 goodsUrl : String -> String
 goodsUrl goodsId =
     "/goods/" ++ goodsId
+
+
+profileParser : Url.Parser.Parser a a
+profileParser =
+    Url.Parser.s "profile"
+
+
+profileUrl : String
+profileUrl =
+    "profile"
 
 
 siteMapParser : Url.Parser.Parser a a
