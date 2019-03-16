@@ -10456,43 +10456,43 @@ var author$project$Page$Goods$goodsViewName = function (name) {
 			]));
 };
 var elm$html$Html$button = _VirtualDom_node('button');
-var author$project$Page$Goods$goodsViewPriceAndBuyButton = function (price) {
-	return A2(
-		elm$html$Html$div,
-		_List_fromArray(
-			[
-				elm$html$Html$Attributes$class('goods-priceAndBuyButton')
-			]),
-		_List_fromArray(
-			[
-				A2(
-				elm$html$Html$div,
-				_List_fromArray(
-					[
-						elm$html$Html$Attributes$class('goods-price')
-					]),
-				_List_fromArray(
-					[
-						elm$html$Html$text(
-						author$project$Page$Goods$priceToString(price))
-					])),
-				A2(
-				elm$html$Html$button,
-				_List_Nil,
-				_List_fromArray(
-					[
-						elm$html$Html$text('購入手続きへ')
-					]))
-			]));
+var elm$core$List$filter = F2(
+	function (isGood, list) {
+		return A3(
+			elm$core$List$foldr,
+			F2(
+				function (x, xs) {
+					return isGood(x) ? A2(elm$core$List$cons, x, xs) : xs;
+				}),
+			_List_Nil,
+			list);
+	});
+var elm$core$Tuple$second = function (_n0) {
+	var y = _n0.b;
+	return y;
 };
-var author$project$Page$Goods$goodsView = function (goods) {
-	return _List_fromArray(
-		[
+var elm$html$Html$Attributes$classList = function (classes) {
+	return elm$html$Html$Attributes$class(
+		A2(
+			elm$core$String$join,
+			' ',
 			A2(
+				elm$core$List$map,
+				elm$core$Tuple$first,
+				A2(elm$core$List$filter, elm$core$Tuple$second, classes))));
+};
+var author$project$Page$Goods$goodsViewPriceAndBuyButton = F2(
+	function (isWideScreenMode, price) {
+		return A2(
 			elm$html$Html$div,
 			_List_fromArray(
 				[
-					elm$html$Html$Attributes$class('goodsContainer')
+					elm$html$Html$Attributes$classList(
+					_List_fromArray(
+						[
+							_Utils_Tuple2('goods-priceAndBuyButton', true),
+							_Utils_Tuple2('goods-priceAndBuyButton-wide', isWideScreenMode)
+						]))
 				]),
 			_List_fromArray(
 				[
@@ -10500,36 +10500,70 @@ var author$project$Page$Goods$goodsView = function (goods) {
 					elm$html$Html$div,
 					_List_fromArray(
 						[
-							elm$html$Html$Attributes$class('goods')
+							elm$html$Html$Attributes$class('goods-price')
 						]),
 					_List_fromArray(
 						[
-							author$project$Page$Goods$goodsViewImage(
-							author$project$Goods$getImage(goods)),
-							author$project$Page$Goods$goodsViewName(
-							author$project$Goods$getName(goods)),
-							author$project$Page$Goods$goodsViewLike(
-							author$project$Goods$getLike(goods)),
-							author$project$Page$Goods$goodsViewDescription(
-							author$project$Goods$getDescription(goods)),
-							author$project$Page$Goods$goodsViewCondition(
-							author$project$Goods$getCondition(goods)),
-							author$project$Page$Goods$goodsViewLocation(
-							author$project$Goods$getLocation(goods)),
-							A2(
-							elm$html$Html$div,
-							_List_Nil,
-							_List_fromArray(
-								[
-									elm$html$Html$text(
-									author$project$Goods$getComplete(goods) ? '売却済み' : 'まだ売れていない')
-								]))
+							elm$html$Html$text(
+							author$project$Page$Goods$priceToString(price))
 						])),
-					author$project$Page$Goods$goodsViewPriceAndBuyButton(
-					author$project$Goods$getPrice(goods))
-				]))
-		]);
-};
+					A2(
+					elm$html$Html$button,
+					_List_Nil,
+					_List_fromArray(
+						[
+							elm$html$Html$text('購入手続きへ')
+						]))
+				]));
+	});
+var author$project$Page$Goods$goodsView = F2(
+	function (isWideScreenMode, goods) {
+		return _List_fromArray(
+			[
+				A2(
+				elm$html$Html$div,
+				_List_fromArray(
+					[
+						elm$html$Html$Attributes$class('goods-container')
+					]),
+				_List_fromArray(
+					[
+						A2(
+						elm$html$Html$div,
+						_List_fromArray(
+							[
+								elm$html$Html$Attributes$class('goods')
+							]),
+						_List_fromArray(
+							[
+								author$project$Page$Goods$goodsViewImage(
+								author$project$Goods$getImage(goods)),
+								author$project$Page$Goods$goodsViewName(
+								author$project$Goods$getName(goods)),
+								author$project$Page$Goods$goodsViewLike(
+								author$project$Goods$getLike(goods)),
+								author$project$Page$Goods$goodsViewDescription(
+								author$project$Goods$getDescription(goods)),
+								author$project$Page$Goods$goodsViewCondition(
+								author$project$Goods$getCondition(goods)),
+								author$project$Page$Goods$goodsViewLocation(
+								author$project$Goods$getLocation(goods)),
+								A2(
+								elm$html$Html$div,
+								_List_Nil,
+								_List_fromArray(
+									[
+										elm$html$Html$text(
+										author$project$Goods$getComplete(goods) ? '売却済み' : 'まだ売れていない')
+									]))
+							])),
+						A2(
+						author$project$Page$Goods$goodsViewPriceAndBuyButton,
+						isWideScreenMode,
+						author$project$Goods$getPrice(goods))
+					]))
+			]);
+	});
 var author$project$Page$LogIn$forgotPasswordView = _List_fromArray(
 	[
 		elm$html$Html$text('パスワードを忘れたら。登録している学籍番号かメールアドレスを入力してください。パスワードを再発行します。')
@@ -11299,31 +11333,6 @@ var author$project$Page$SignUp$nickNameForm = function (nickName) {
 							elm$html$Html$text('表示名は 50文字以内である必要があります')
 						]) : _List_Nil))))
 		]);
-};
-var elm$core$List$filter = F2(
-	function (isGood, list) {
-		return A3(
-			elm$core$List$foldr,
-			F2(
-				function (x, xs) {
-					return isGood(x) ? A2(elm$core$List$cons, x, xs) : xs;
-				}),
-			_List_Nil,
-			list);
-	});
-var elm$core$Tuple$second = function (_n0) {
-	var y = _n0.b;
-	return y;
-};
-var elm$html$Html$Attributes$classList = function (classes) {
-	return elm$html$Html$Attributes$class(
-		A2(
-			elm$core$String$join,
-			' ',
-			A2(
-				elm$core$List$map,
-				elm$core$Tuple$first,
-				A2(elm$core$List$filter, elm$core$Tuple$second, classes))));
 };
 var author$project$Page$SignUp$sAddressSelectView = function (userSignUpSAddressAndPassword) {
 	var leftSelect = function () {
@@ -13071,7 +13080,7 @@ var author$project$Main$mainViewAndMainTab = F2(
 					var goods = page.a;
 					return _Utils_Tuple2(
 						author$project$Tab$None,
-						author$project$Page$Goods$goodsView(goods));
+						A2(author$project$Page$Goods$goodsView, isWideScreenMode, goods));
 				default:
 					return A2(
 						elm$core$Tuple$mapFirst,

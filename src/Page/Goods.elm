@@ -93,10 +93,10 @@ itemImage =
         []
 
 
-goodsView : Goods.Goods -> List (Html.Html msg)
-goodsView goods =
+goodsView : Bool -> Goods.Goods -> List (Html.Html msg)
+goodsView isWideScreenMode goods =
     [ Html.div
-        [ Html.Attributes.class "goodsContainer" ]
+        [ Html.Attributes.class "goods-container" ]
         [ Html.div
             [ Html.Attributes.class "goods" ]
             [ goodsViewImage (Goods.getImage goods)
@@ -115,7 +115,7 @@ goodsView goods =
                     )
                 ]
             ]
-        , goodsViewPriceAndBuyButton (Goods.getPrice goods)
+        , goodsViewPriceAndBuyButton isWideScreenMode (Goods.getPrice goods)
         ]
     ]
 
@@ -154,10 +154,11 @@ goodsViewDescription description =
         ]
 
 
-goodsViewPriceAndBuyButton : Int -> Html.Html msg
-goodsViewPriceAndBuyButton price =
+goodsViewPriceAndBuyButton : Bool -> Int -> Html.Html msg
+goodsViewPriceAndBuyButton isWideScreenMode price =
     Html.div
-        [ Html.Attributes.class "goods-priceAndBuyButton" ]
+        [ Html.Attributes.classList [ ( "goods-priceAndBuyButton", True ), ( "goods-priceAndBuyButton-wide", isWideScreenMode ) ]
+        ]
         [ Html.div [ Html.Attributes.class "goods-price" ] [ Html.text (priceToString price) ]
         , Html.button [] [ Html.text "購入手続きへ" ]
         ]

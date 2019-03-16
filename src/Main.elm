@@ -986,7 +986,7 @@ mainViewAndMainTab page isWideScreenMode =
                     )
 
                 PageGoods goods ->
-                    ( Tab.None, Page.Goods.goodsView goods )
+                    ( Tab.None, Page.Goods.goodsView isWideScreenMode goods )
 
                 PageSiteMapXml ->
                     siteMapXmlView

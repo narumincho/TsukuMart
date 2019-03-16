@@ -470,12 +470,10 @@ img {
 /*===============================================
                 Goods 商品詳細画面
 ===============================================*/
-
-.goodsContainer {
+.goods-container {
     display: flex;
     justify-content: center;
     width: 100%;
-    position: relative;
 }
 
 .goods {
@@ -523,6 +521,9 @@ img {
     bottom: 0;
     background-color: var(--primaryColor);
     color: white;
+}
+.goods-priceAndBuyButton-wide {
+    width: calc(100% - 20rem);
 }
 
 .goods-price {
