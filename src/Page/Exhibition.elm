@@ -13,15 +13,18 @@ type Model
         , description : String
         , price : Maybe Int
         , image : List String
+        , confirm : Bool
         }
 
 
 type Emit
     = EmitInputExhibitionImage String
+    | EmitToConfirmPage
 
 
 type Msg
     = InputExhibitionImage (List String)
+    | ToConfirmPage
 
 
 initModel : Model
@@ -31,6 +34,7 @@ initModel =
         , description = ""
         , price = Nothing
         , image = []
+        , confirm = False
         }
 
 
@@ -43,16 +47,28 @@ update msg (Model rec) =
                     | image = dataUrlList
                 }
 
+        ToConfirmPage ->
+            Model
+                { rec
+                    | confirm = True
+                }
+
 
 view : Model -> ( Tab.Tab Never, List (Html.Html Emit) )
-view (Model { title, description, price, image }) =
+view (Model { title, description, price, image, confirm }) =
     ( Tab.Single "商品の情報を入力"
     , [ Html.div
             [ Html.Attributes.class "exhibitionView" ]
-            [ photoView image
-            , titleAndDescriptionView
-            , priceView price
-            ]
+            (if confirm then
+                [ Html.text "出品確認画面" ]
+
+             else
+                [ photoView image
+                , titleAndDescriptionView
+                , priceView price
+                , toConformPageButton
+                ]
+            )
       ]
     )
 
@@ -136,3 +152,10 @@ priceView price =
             , Html.text "円"
             ]
         ]
+
+
+toConformPageButton : Html.Html Emit
+toConformPageButton =
+    Html.button
+        [ Html.Events.onClick EmitToConfirmPage ]
+        []

@@ -24,9 +24,16 @@ import Url.Parser
 
 
 {-
+   # Elmのコンパイル
+   Set-Location D:/tsukumart | elm make src/Main.elm --output main.js --optimize | uglifyjs main.js -o hosting_root/main.js
+
+   # CSSのコンパイル
+   Set-Location D:/tsukumart | cleancss style.css -o hosting_root/style.css
+
+   # 実行確認
    Windows PowerSellを起動して
 
-   Set-Location D:/tsukumart/hosting_root | firebase deploy --project tsukumart-demo
+   Set-Location D:/tsukumart | firebase deploy --project tsukumart-demo
 
    を入力する
 
@@ -125,6 +132,7 @@ type Msg
     | DeleteAllUser
     | DeleteAllUserResponse (Result () ())
     | GetUserProfileResponse (Result () Data.Profile.Profile)
+    | ToConfirmPage
 
 
 main : Program () Model Msg
@@ -499,6 +507,21 @@ update msg (Model rec) =
                     Model rec
             , Cmd.none
             )
+
+        ToConfirmPage ->
+            case rec.page of
+                PageExhibition pageModel ->
+                    ( Model
+                        { rec
+                            | page =
+                                PageExhibition
+                                    (Page.Exhibition.update Page.Exhibition.ToConfirmPage pageModel)
+                        }
+                    , Cmd.none
+                    )
+
+                _ ->
+                    ( Model rec, Cmd.none )
 
 
 urlToPage : Url.Url -> Maybe Page -> ( Page, Maybe String )
@@ -1123,6 +1146,9 @@ exhibitionPageEmitToMsg emit =
     case emit of
         Page.Exhibition.EmitInputExhibitionImage string ->
             InputExhibitionImage string
+
+        Page.Exhibition.EmitToConfirmPage ->
+            ToConfirmPage
 
 
 homeView : Bool -> HomePage -> ( Tab.Tab HomePage, List (Html.Html Msg) )
