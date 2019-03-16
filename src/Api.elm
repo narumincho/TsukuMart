@@ -10,7 +10,6 @@ module Api exposing
     , SignUpResponseError(..)
     , SignUpResponseOk(..)
     , Token
-    , UniversityData(..)
     , UserProfile(..)
     , debugDeleteAllUser
     , getUserProfile
@@ -20,12 +19,12 @@ module Api exposing
     , signUpConfirm
     )
 
-import EmailAddress
+import Data.EmailAddress as EmailAddress
+import Data.Password as Password
+import Data.University as University
 import Http
 import Json.Decode
 import Json.Encode
-import Password
-import University
 
 
 
@@ -41,15 +40,9 @@ type alias SignUpRequest =
     { emailAddress : EmailAddress.EmailAddress
     , pass : Password.Password
     , image : Maybe String
-    , university : UniversityData
+    , university : University.University
     , nickName : String
     }
-
-
-type UniversityData
-    = UniversitySchool University.SchoolAndDepartment
-    | UniversityGraduateFromTsukuba University.Graduate University.SchoolAndDepartment
-    | UniversityGraduateFromNotTsukuba University.Graduate
 
 
 type SignUpResponseError
@@ -127,22 +120,22 @@ signUpJson { emailAddress, pass, image, university, nickName } =
         )
 
 
-universityToSimpleRecord : UniversityData -> { graduate : Maybe University.Graduate, department : Maybe University.SchoolAndDepartment }
+universityToSimpleRecord : University.University -> { graduate : Maybe University.Graduate, department : Maybe University.SchoolAndDepartment }
 universityToSimpleRecord universityData =
     case universityData of
-        UniversitySchool schoolAndDepartment ->
-            { graduate = Nothing
-            , department = Just schoolAndDepartment
-            }
-
-        UniversityGraduateFromTsukuba graduate schoolAndDepartment ->
+        University.GraduateTsukuba graduate schoolAndDepartment ->
             { graduate = Just graduate
             , department = Just schoolAndDepartment
             }
 
-        UniversityGraduateFromNotTsukuba graduate ->
+        University.GraduateNotTsukuba graduate ->
             { graduate = Just graduate
             , department = Nothing
+            }
+
+        University.NotGraduate schoolAndDepartment ->
+            { graduate = Nothing
+            , department = Just schoolAndDepartment
             }
 
 
@@ -429,7 +422,7 @@ tokenRefreshBodyStringDecoder =
 type UserProfile
     = UserProfile
         { introduction : String
-        , university : UniversityData
+        , university : University.University
         , nickName : String
         }
 
@@ -476,22 +469,7 @@ getUserProfileResponseBodyDecoder =
 
 getUserProfileResponseValueListToResult : String -> String -> Maybe String -> Maybe String -> Result () UserProfile
 getUserProfileResponseValueListToResult nickName introduction departmentMaybe graduateMaybe =
-    let
-        universityMaybe =
-            case ( departmentMaybe |> Maybe.andThen University.departmentFromIdString, graduateMaybe |> Maybe.andThen University.graduateFromIdString ) of
-                ( Just department, Just graduate ) ->
-                    Just (UniversityGraduateFromTsukuba graduate department)
-
-                ( Nothing, Just graduate ) ->
-                    Just (UniversityGraduateFromNotTsukuba graduate)
-
-                ( Just department, Nothing ) ->
-                    Just (UniversitySchool department)
-
-                ( Nothing, Nothing ) ->
-                    Nothing
-    in
-    case universityMaybe of
+    case University.universityFromIdString { departmentMaybe = departmentMaybe, graduateMaybe = graduateMaybe } of
         Just university ->
             Ok
                 (UserProfile

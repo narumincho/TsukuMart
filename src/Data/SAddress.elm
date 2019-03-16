@@ -1,6 +1,6 @@
-module SAddress exposing (SAddress, fromCharList, toEmailAddressString, fromStundetId)
+module Data.SAddress exposing (SAddress, fromCharList, fromStundetId, toEmailAddressString)
 
-import StudentId exposing (StudentId)
+import Data.StudentId as StudentId exposing (StudentId)
 
 
 {-| いわゆる"sアド"
@@ -56,6 +56,7 @@ fromCharList charList =
 
         _ ->
             Nothing
+
 
 {-| 学籍番号をsアドのsに変換する
 201712345 → s1712345@s.tsukuba.ac.jp

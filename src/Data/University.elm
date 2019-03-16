@@ -1,8 +1,8 @@
-module University exposing
+module Data.University exposing
     ( Graduate
     , School
     , SchoolAndDepartment
-    , University
+    , University(..)
     , departmentFromIdString
     , departmentToIdString
     , departmentToJapaneseString
@@ -16,6 +16,8 @@ module University exposing
     , schoolToIdString
     , schoolToJapaneseString
     , schoolToOnlyOneDepartment
+    , universityFromIdString
+    , universityToJapaneseString
     )
 
 {-| 研究科、学群、学類
@@ -33,6 +35,46 @@ type University
     = GraduateTsukuba Graduate SchoolAndDepartment
     | GraduateNotTsukuba Graduate
     | NotGraduate SchoolAndDepartment
+
+
+{-| 研究科、学群、学類を日本語の文字列にする
+-}
+universityToJapaneseString : University -> { graduate : Maybe String, school : Maybe String, department : Maybe String }
+universityToJapaneseString university =
+    case university of
+        GraduateTsukuba graduate schoolAndDepartment ->
+            { graduate = Just (graduateToJapaneseString graduate)
+            , school = Just (schoolToJapaneseString (schoolFromDepartment schoolAndDepartment))
+            , department = departmentToJapaneseString schoolAndDepartment
+            }
+
+        GraduateNotTsukuba graduate ->
+            { graduate = Just (graduateToJapaneseString graduate)
+            , school = Nothing
+            , department = Nothing
+            }
+
+        NotGraduate schoolAndDepartment ->
+            { graduate = Nothing
+            , school = Just (schoolToJapaneseString (schoolFromDepartment schoolAndDepartment))
+            , department = departmentToJapaneseString schoolAndDepartment
+            }
+
+
+universityFromIdString : { graduateMaybe : Maybe String, departmentMaybe : Maybe String } -> Maybe University
+universityFromIdString { graduateMaybe, departmentMaybe } =
+    case ( departmentMaybe |> Maybe.andThen departmentFromIdString, graduateMaybe |> Maybe.andThen graduateFromIdString ) of
+        ( Just department, Just graduate ) ->
+            Just (GraduateTsukuba graduate department)
+
+        ( Nothing, Just graduate ) ->
+            Just (GraduateNotTsukuba graduate)
+
+        ( Just department, Nothing ) ->
+            Just (NotGraduate department)
+
+        ( Nothing, Nothing ) ->
+            Nothing
 
 
 

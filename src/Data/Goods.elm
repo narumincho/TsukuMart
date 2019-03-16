@@ -1,4 +1,4 @@
-module Goods exposing
+module Data.Goods exposing
     ( Condition(..)
     , Goods
     , Location

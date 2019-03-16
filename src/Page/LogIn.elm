@@ -1,20 +1,20 @@
 module Page.LogIn exposing (Emit(..), Model, Msg(..), initModel, update, view)
 
-import EmailAddress
+import Data.EmailAddress
+import Data.Password
+import Data.SAddress
+import Data.StudentId
 import Html
 import Html.Attributes
 import Html.Events
 import Json.Decode
-import Password
-import SAddress
 import SiteMap
-import StudentId
 
 
 type Model
     = LogInPage
         { studentIdOrEmailAddress : AnalysisStudentIdOrEmailAddressResult
-        , password : Maybe Password.Password
+        , password : Maybe Data.Password.Password
         , sending : Bool -- ログイン処理で送信か
         }
     | ForgotPassword
@@ -24,7 +24,7 @@ type Emit
     = EmitChangePage Model
     | EmitInputStudentIdOrEmailAddress String
     | EmitInputPassword String
-    | EmitLogIn { emailAddress : EmailAddress.EmailAddress, pass : Password.Password }
+    | EmitLogIn { emailAddress : Data.EmailAddress.EmailAddress, pass : Data.Password.Password }
 
 
 type Msg
@@ -36,8 +36,8 @@ type Msg
 
 type AnalysisStudentIdOrEmailAddressResult
     = AENone
-    | AEStudentId StudentId.StudentId
-    | AEEmailAddress EmailAddress.EmailAddress
+    | AEStudentId Data.StudentId.StudentId
+    | AEEmailAddress Data.EmailAddress.EmailAddress
 
 
 initModel : Model
@@ -57,7 +57,7 @@ update msg model =
                 LogInPage r ->
                     LogInPage
                         { r
-                            | password = Password.passwordFromString string |> Result.toMaybe
+                            | password = Data.Password.passwordFromString string |> Result.toMaybe
                         }
 
                 ForgotPassword ->
@@ -106,7 +106,7 @@ view logInPage =
     ]
 
 
-logInView : AnalysisStudentIdOrEmailAddressResult -> Maybe Password.Password -> Bool -> List (Html.Html Emit)
+logInView : AnalysisStudentIdOrEmailAddressResult -> Maybe Data.Password.Password -> Bool -> List (Html.Html Emit)
 logInView analysisStudentIdOrEmailAddressResult password sending =
     [ Html.div
         [ Html.Attributes.class "logIn" ]
@@ -153,10 +153,10 @@ logInIdView analysisStudentIdOrEmailAddressResult =
                         ""
 
                     AEStudentId studentId ->
-                        "学籍番号" ++ StudentId.toStringWith20 studentId
+                        "学籍番号" ++ Data.StudentId.toStringWith20 studentId
 
                     AEEmailAddress emailAddress ->
-                        "メールアドレス" ++ EmailAddress.toString emailAddress
+                        "メールアドレス" ++ Data.EmailAddress.toString emailAddress
                 )
             ]
         ]
@@ -190,7 +190,7 @@ logInPasswordView =
         ]
 
 
-logInButton : Bool -> Maybe { emailAddress : EmailAddress.EmailAddress, pass : Password.Password } -> Html.Html Emit
+logInButton : Bool -> Maybe { emailAddress : Data.EmailAddress.EmailAddress, pass : Data.Password.Password } -> Html.Html Emit
 logInButton sending logInDataMaybe =
     Html.div
         []
@@ -250,12 +250,12 @@ analysisStudentIdOrEmailAddress string =
         charList =
             String.toList (String.trim string)
     in
-    case StudentId.fromCharList charList of
+    case Data.StudentId.fromCharList charList of
         Just studentId ->
             AEStudentId studentId
 
         Nothing ->
-            case EmailAddress.fromCharList charList of
+            case Data.EmailAddress.fromCharList charList of
                 Just emailAddress ->
                     AEEmailAddress emailAddress
 
@@ -263,12 +263,12 @@ analysisStudentIdOrEmailAddress string =
                     AENone
 
 
-getLogInData : AnalysisStudentIdOrEmailAddressResult -> Maybe Password.Password -> Maybe { emailAddress : EmailAddress.EmailAddress, pass : Password.Password }
+getLogInData : AnalysisStudentIdOrEmailAddressResult -> Maybe Data.Password.Password -> Maybe { emailAddress : Data.EmailAddress.EmailAddress, pass : Data.Password.Password }
 getLogInData studentIdOrEmailAddress passwordMaybe =
     case ( studentIdOrEmailAddress, passwordMaybe ) of
         ( AEStudentId studentId, Just password ) ->
             Just
-                { emailAddress = EmailAddress.fromSAddress (SAddress.fromStundetId studentId)
+                { emailAddress = Data.EmailAddress.fromSAddress (Data.SAddress.fromStundetId studentId)
                 , pass = password
                 }
 

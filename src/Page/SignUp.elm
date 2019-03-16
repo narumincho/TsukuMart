@@ -5,17 +5,17 @@ module Page.SignUp exposing (Emit(..), Model, Msg(..), initModel, sentConfirmTok
 
 import Api
 import Array
-import EmailAddress
+import Data.EmailAddress
+import Data.Password
+import Data.SAddress
+import Data.StudentId
+import Data.University
 import Html
 import Html.Attributes
 import Html.Events
 import Html.Keyed
 import Json.Decode
-import Password
-import SAddress
-import StudentId
 import Tab
-import University
 
 
 type Model
@@ -25,7 +25,7 @@ type Model
         , university : UniversitySelect
         , nickName : String
         }
-    | SentSingUpData EmailAddress.EmailAddress (Maybe (Result Api.SignUpResponseError Api.SignUpResponseOk))
+    | SentSingUpData Data.EmailAddress.EmailAddress (Maybe (Result Api.SignUpResponseError Api.SignUpResponseOk))
     | SentConfirmTokenError (Maybe Api.SignUpConfirmResponseError)
     | DeletedAllUser Bool
 
@@ -37,23 +37,23 @@ type UniversitySelect
 
 type SchoolSelect
     = UniversitySchoolNone
-    | UniversitySchoolSelectSchool University.School
-    | UniversitySchoolSelectSchoolAndDepartment University.SchoolAndDepartment
+    | UniversitySchoolSelectSchool Data.University.School
+    | UniversitySchoolSelectSchoolAndDepartment Data.University.SchoolAndDepartment
 
 
 type GraduateSelect
-    = UniversityGraduateSelect (Maybe University.Graduate) (Maybe SchoolSelect)
+    = UniversityGraduateSelect (Maybe Data.University.Graduate) (Maybe SchoolSelect)
 
 
 type SAddressAndPassword
     = StudentHasSAddress
         { studentIdOrTsukubaEmailAddress : AnalysisStudentIdOrSAddressResult
-        , password : Result Password.Error Password.Password
+        , password : Result Data.Password.Error Data.Password.Password
         }
     | NewStudent
-        { emailAddress : Maybe EmailAddress.EmailAddress
+        { emailAddress : Maybe Data.EmailAddress.EmailAddress
         , imageUrl : Maybe String
-        , password : Result Password.Error Password.Password
+        , password : Result Data.Password.Error Data.Password.Password
         }
 
 
@@ -87,7 +87,7 @@ initModel =
         { sAddressAndPassword =
             StudentHasSAddress
                 { studentIdOrTsukubaEmailAddress = analysisStudentIdOrSAddress ""
-                , password = Password.passwordFromString ""
+                , password = Data.Password.passwordFromString ""
                 }
         , university = UniversitySchool UniversitySchoolNone
         , nickName = ""
@@ -96,7 +96,7 @@ initModel =
 
 {-| 新規登録データを送った画面を表示するためのModel
 -}
-sentSignUpDataInitModel : EmailAddress.EmailAddress -> Model
+sentSignUpDataInitModel : Data.EmailAddress.EmailAddress -> Model
 sentSignUpDataInitModel emailAddress =
     SentSingUpData emailAddress Nothing
 
@@ -159,11 +159,11 @@ update msg model =
                                 case rec.sAddressAndPassword of
                                     NewStudent r ->
                                         NewStudent
-                                            { r | password = Password.passwordFromString string }
+                                            { r | password = Data.Password.passwordFromString string }
 
                                     StudentHasSAddress r ->
                                         StudentHasSAddress
-                                            { r | password = Password.passwordFromString string }
+                                            { r | password = Data.Password.passwordFromString string }
                         }
 
                 DeleteUserAll response ->
@@ -348,7 +348,7 @@ sAddressSelectView userSignUpSAddressAndPassword =
                         StudentHasSAddress { password } ->
                             [ Html.Events.onClick
                                 (NewStudent
-                                    { emailAddress = [] |> EmailAddress.fromCharList
+                                    { emailAddress = [] |> Data.EmailAddress.fromCharList
                                     , imageUrl = Nothing
                                     , password = password
                                     }
@@ -363,7 +363,7 @@ sAddressSelectView userSignUpSAddressAndPassword =
         ]
 
 
-studentHasSAddressFormList : AnalysisStudentIdOrSAddressResult -> Result Password.Error Password.Password -> List ( String, Html.Html Emit )
+studentHasSAddressFormList : AnalysisStudentIdOrSAddressResult -> Result Data.Password.Error Data.Password.Password -> List ( String, Html.Html Emit )
 studentHasSAddressFormList analysisStudentIdOrEmailAddressResult password =
     [ ( "sAddressFrom"
       , Html.div
@@ -389,21 +389,21 @@ studentHasSAddressFormList analysisStudentIdOrEmailAddressResult password =
 
                         AStudentId studentId ->
                             "学籍番号 "
-                                ++ StudentId.toStringWith20 studentId
+                                ++ Data.StudentId.toStringWith20 studentId
                                 ++ " "
                                 ++ (studentId
-                                        |> SAddress.fromStundetId
-                                        |> EmailAddress.fromSAddress
-                                        |> EmailAddress.toString
+                                        |> Data.SAddress.fromStundetId
+                                        |> Data.EmailAddress.fromSAddress
+                                        |> Data.EmailAddress.toString
                                    )
                                 ++ "にメールを送信します"
 
                         APartStudentId partStudentId ->
                             "学籍番号 "
-                                ++ StudentId.partStudentIdToStringWith20 partStudentId
+                                ++ Data.StudentId.partStudentIdToStringWith20 partStudentId
 
                         ASAddress sAddress ->
-                            "筑波大学のメールアドレス " ++ SAddress.toEmailAddressString sAddress
+                            "筑波大学のメールアドレス " ++ Data.SAddress.toEmailAddressString sAddress
 
                         AEmailButIsNotTsukuba ->
                             "筑波大学のメールアドレスではありません"
@@ -423,22 +423,22 @@ analysisStudentIdOrSAddress string =
         charList =
             String.toList (String.trim string)
     in
-    case StudentId.fromCharList charList of
+    case Data.StudentId.fromCharList charList of
         Just studentId ->
             AStudentId studentId
 
         Nothing ->
-            case StudentId.partStudentIdFromCharList charList of
+            case Data.StudentId.partStudentIdFromCharList charList of
                 Just partStudentId ->
                     APartStudentId partStudentId
 
                 Nothing ->
-                    case SAddress.fromCharList charList of
+                    case Data.SAddress.fromCharList charList of
                         Just sAddress ->
                             ASAddress sAddress
 
                         Nothing ->
-                            case EmailAddress.fromCharList charList of
+                            case Data.EmailAddress.fromCharList charList of
                                 Just _ ->
                                     AEmailButIsNotTsukuba
 
@@ -448,21 +448,21 @@ analysisStudentIdOrSAddress string =
 
 type AnalysisStudentIdOrSAddressResult
     = ANone
-    | AStudentId StudentId.StudentId
-    | ASAddress SAddress.SAddress
-    | APartStudentId StudentId.PartStudentId
+    | AStudentId Data.StudentId.StudentId
+    | ASAddress Data.SAddress.SAddress
+    | APartStudentId Data.StudentId.PartStudentId
     | AEmailButIsNotTsukuba
 
 
-analysisEmailAddress : String -> Maybe EmailAddress.EmailAddress
+analysisEmailAddress : String -> Maybe Data.EmailAddress.EmailAddress
 analysisEmailAddress string =
     string
         |> String.trim
         |> String.toList
-        |> EmailAddress.fromCharList
+        |> Data.EmailAddress.fromCharList
 
 
-newStudentForm : Maybe EmailAddress.EmailAddress -> Maybe String -> Result Password.Error Password.Password -> List ( String, Html.Html Emit )
+newStudentForm : Maybe Data.EmailAddress.EmailAddress -> Maybe String -> Result Data.Password.Error Data.Password.Password -> List ( String, Html.Html Emit )
 newStudentForm emailAddress imageUrlMaybe password =
     [ ( "addressForm"
       , Html.div
@@ -485,7 +485,7 @@ newStudentForm emailAddress imageUrlMaybe password =
                 [ Html.text
                     (case emailAddress of
                         Just address ->
-                            EmailAddress.toString address
+                            Data.EmailAddress.toString address
                                 ++ "に登録メールを送信します"
 
                         Nothing ->
@@ -531,7 +531,7 @@ newStudentForm emailAddress imageUrlMaybe password =
 
 {-| 新規登録のパスワード入力フォーム
 -}
-passwordForm : Result Password.Error Password.Password -> Html.Html Emit
+passwordForm : Result Data.Password.Error Data.Password.Password -> Html.Html Emit
 passwordForm passwordResult =
     Html.div
         []
@@ -555,10 +555,10 @@ passwordForm passwordResult =
             [ Html.text
                 (case passwordResult of
                     Ok password ->
-                        Password.toString password
+                        Data.Password.toString password
 
                     Err error ->
-                        Password.errorMessage error
+                        Data.Password.errorMessage error
                 )
             ]
         ]
@@ -690,7 +690,7 @@ signUpUniversityViewSchool schoolSelect =
                     (\m ->
                         case m of
                             Just school ->
-                                case University.schoolToOnlyOneDepartment school of
+                                case Data.University.schoolToOnlyOneDepartment school of
                                     Just schoolAndDepartment ->
                                         UniversitySchoolSelectSchoolAndDepartment schoolAndDepartment
 
@@ -706,7 +706,7 @@ signUpUniversityViewSchool schoolSelect =
             case signUpUniversityViewSelectDepartment school of
                 Just v ->
                     Just
-                        ( "s=" ++ University.schoolToIdString school
+                        ( "s=" ++ Data.University.schoolToIdString school
                         , v
                             |> Html.map
                                 (\m ->
@@ -735,7 +735,7 @@ signUpUniversityViewSchool schoolSelect =
                     [ schoolView ]
 
         UniversitySchoolSelectSchoolAndDepartment department ->
-            case departmentSelectView (University.schoolFromDepartment department) of
+            case departmentSelectView (Data.University.schoolFromDepartment department) of
                 Just departV ->
                     [ schoolView, departV ]
 
@@ -781,7 +781,7 @@ signUpUniversityViewGraduate univAndGraduateSelect =
            )
 
 
-signUpUniversityViewSelectGraduate : Html.Html (Maybe University.Graduate)
+signUpUniversityViewSelectGraduate : Html.Html (Maybe Data.University.Graduate)
 signUpUniversityViewSelectGraduate =
     Html.div
         []
@@ -796,22 +796,22 @@ signUpUniversityViewSelectGraduate =
             , Html.Events.on "change" selectGraduateDecoder
             ]
             ([ Html.option [] [ Html.text "--選択してください--" ] ]
-                ++ (University.graduateAllValue
+                ++ (Data.University.graduateAllValue
                         |> List.map
                             (\s ->
-                                Html.option [] [ Html.text (University.graduateToJapaneseString s) ]
+                                Html.option [] [ Html.text (Data.University.graduateToJapaneseString s) ]
                             )
                    )
             )
         ]
 
 
-selectGraduateDecoder : Json.Decode.Decoder (Maybe University.Graduate)
+selectGraduateDecoder : Json.Decode.Decoder (Maybe Data.University.Graduate)
 selectGraduateDecoder =
     Json.Decode.at
         [ "target", "selectedIndex" ]
         Json.Decode.int
-        |> Json.Decode.map (\index -> University.graduateAllValue |> Array.fromList |> Array.get (index - 1))
+        |> Json.Decode.map (\index -> Data.University.graduateAllValue |> Array.fromList |> Array.get (index - 1))
 
 
 {-| 筑波大学に所属していたかしていなかったか
@@ -862,7 +862,7 @@ signUpUniversityViewGraduateYesNoTsukuba leftSelect =
 
 {-| 学群の選択
 -}
-signUpUniversityViewSelectSchool : Html.Html (Maybe University.School)
+signUpUniversityViewSelectSchool : Html.Html (Maybe Data.University.School)
 signUpUniversityViewSelectSchool =
     Html.div
         []
@@ -877,29 +877,29 @@ signUpUniversityViewSelectSchool =
             , Html.Events.on "change" selectSchoolDecoder
             ]
             ([ Html.option [] [ Html.text "--選択してください--" ] ]
-                ++ (University.schoolAll
+                ++ (Data.University.schoolAll
                         |> List.map
                             (\s ->
-                                Html.option [] [ Html.text (University.schoolToJapaneseString s) ]
+                                Html.option [] [ Html.text (Data.University.schoolToJapaneseString s) ]
                             )
                    )
             )
         ]
 
 
-selectSchoolDecoder : Json.Decode.Decoder (Maybe University.School)
+selectSchoolDecoder : Json.Decode.Decoder (Maybe Data.University.School)
 selectSchoolDecoder =
     Json.Decode.at
         [ "target", "selectedIndex" ]
         Json.Decode.int
-        |> Json.Decode.map (\index -> University.schoolAll |> Array.fromList |> Array.get (index - 1))
+        |> Json.Decode.map (\index -> Data.University.schoolAll |> Array.fromList |> Array.get (index - 1))
 
 
 {-| 学類の選択
 -}
-signUpUniversityViewSelectDepartment : University.School -> Maybe (Html.Html (Maybe University.SchoolAndDepartment))
+signUpUniversityViewSelectDepartment : Data.University.School -> Maybe (Html.Html (Maybe Data.University.SchoolAndDepartment))
 signUpUniversityViewSelectDepartment school =
-    case University.schoolToDepartmentList school of
+    case Data.University.schoolToDepartmentList school of
         [] ->
             Nothing
 
@@ -921,7 +921,7 @@ signUpUniversityViewSelectDepartment school =
                             ++ (departmentList
                                     |> List.map
                                         (\s ->
-                                            Html.option [] [ Html.text (University.departmentToJapaneseString s |> Maybe.withDefault "?") ]
+                                            Html.option [] [ Html.text (Data.University.departmentToJapaneseString s |> Maybe.withDefault "?") ]
                                         )
                                )
                         )
@@ -929,13 +929,13 @@ signUpUniversityViewSelectDepartment school =
                 )
 
 
-selectDepartmentDecoder : University.School -> Json.Decode.Decoder (Maybe University.SchoolAndDepartment)
+selectDepartmentDecoder : Data.University.School -> Json.Decode.Decoder (Maybe Data.University.SchoolAndDepartment)
 selectDepartmentDecoder school =
     Json.Decode.at
         [ "target", "selectedIndex" ]
         Json.Decode.int
         |> Json.Decode.map
-            (\index -> University.schoolToDepartmentList school |> Array.fromList |> Array.get (index - 1))
+            (\index -> Data.University.schoolToDepartmentList school |> Array.fromList |> Array.get (index - 1))
 
 
 signUpSubmitButton : Maybe Api.SignUpRequest -> Html.Html Emit
@@ -982,21 +982,21 @@ getSignUpRequest sAddressAndPassword university nickName =
             Nothing
 
 
-getSignUpRequestEmailAddressAndPasswordAndImage : SAddressAndPassword -> Maybe { emailAddress : EmailAddress.EmailAddress, password : Password.Password, image : Maybe String }
+getSignUpRequestEmailAddressAndPasswordAndImage : SAddressAndPassword -> Maybe { emailAddress : Data.EmailAddress.EmailAddress, password : Data.Password.Password, image : Maybe String }
 getSignUpRequestEmailAddressAndPasswordAndImage sAddressAndPassword =
     case sAddressAndPassword of
         StudentHasSAddress { studentIdOrTsukubaEmailAddress, password } ->
             case ( studentIdOrTsukubaEmailAddress, password ) of
                 ( AStudentId studentId, Ok pass ) ->
                     Just
-                        { emailAddress = EmailAddress.fromSAddress (SAddress.fromStundetId studentId)
+                        { emailAddress = Data.EmailAddress.fromSAddress (Data.SAddress.fromStundetId studentId)
                         , password = pass
                         , image = Nothing
                         }
 
                 ( ASAddress sAddress, Ok pass ) ->
                     Just
-                        { emailAddress = EmailAddress.fromSAddress sAddress
+                        { emailAddress = Data.EmailAddress.fromSAddress sAddress
                         , password = pass
                         , image = Nothing
                         }
@@ -1017,17 +1017,17 @@ getSignUpRequestEmailAddressAndPasswordAndImage sAddressAndPassword =
                     Nothing
 
 
-getSignUpRequestUniversity : UniversitySelect -> Maybe Api.UniversityData
+getSignUpRequestUniversity : UniversitySelect -> Maybe Data.University.University
 getSignUpRequestUniversity universitySelect =
     case universitySelect of
         UniversitySchool (UniversitySchoolSelectSchoolAndDepartment schoolAndDepartment) ->
-            Just (Api.UniversitySchool schoolAndDepartment)
+            Just (Data.University.NotGraduate schoolAndDepartment)
 
         UniversityGraduate (UniversityGraduateSelect (Just graduate) (Just (UniversitySchoolSelectSchoolAndDepartment schoolAndDepartment))) ->
-            Just (Api.UniversityGraduateFromTsukuba graduate schoolAndDepartment)
+            Just (Data.University.GraduateTsukuba graduate schoolAndDepartment)
 
         UniversityGraduate (UniversityGraduateSelect (Just graduate) Nothing) ->
-            Just (Api.UniversityGraduateFromNotTsukuba graduate)
+            Just (Data.University.GraduateNotTsukuba graduate)
 
         _ ->
             Nothing
@@ -1035,7 +1035,7 @@ getSignUpRequestUniversity universitySelect =
 
 {-| 新規登録のボタンを押した後の画面
 -}
-sentSingUpDataView : EmailAddress.EmailAddress -> Maybe (Result Api.SignUpResponseError Api.SignUpResponseOk) -> Html.Html Emit
+sentSingUpDataView : Data.EmailAddress.EmailAddress -> Maybe (Result Api.SignUpResponseError Api.SignUpResponseOk) -> Html.Html Emit
 sentSingUpDataView emailAddress signUpResultMaybe =
     case signUpResultMaybe of
         Just signUpResult ->
@@ -1045,14 +1045,14 @@ sentSingUpDataView emailAddress signUpResultMaybe =
             Html.div [] [ Html.text "新規登録の情報を送信中" ]
 
 
-signUpResultToString : EmailAddress.EmailAddress -> Result Api.SignUpResponseError Api.SignUpResponseOk -> Html.Html Emit
+signUpResultToString : Data.EmailAddress.EmailAddress -> Result Api.SignUpResponseError Api.SignUpResponseOk -> Html.Html Emit
 signUpResultToString emailAddress signUpResult =
     case signUpResult of
         Ok (Api.SignUpResponseOk token) ->
             Html.div [ Html.Attributes.class "signUp" ]
                 [ Html.text
                     ("送信完了。"
-                        ++ EmailAddress.toString emailAddress
+                        ++ Data.EmailAddress.toString emailAddress
                         ++ "にメールを送信しました。届いたメールのリンクをクリックして認証をしてください"
                         ++ "token = \""
                         ++ token

@@ -3,7 +3,7 @@ port module Main exposing (main)
 import Api
 import Browser
 import Browser.Navigation
-import Goods
+import Data.Goods
 import Html
 import Html.Attributes
 import Html.Events
@@ -17,7 +17,6 @@ import SiteMap
 import Svg
 import Svg.Attributes
 import Tab
-import University
 import Url
 import Url.Parser
 
@@ -70,7 +69,7 @@ type Page
     | PageExhibitionGoodsList
     | PagePurchaseGoodsList
     | PageExhibition Page.Exhibition.Model
-    | PageGoods Goods.Goods
+    | PageGoods Data.Goods.Goods
     | PageProfile Page.Profile.Model
     | PageSiteMapXml
 
@@ -521,7 +520,7 @@ urlParser beforePageMaybe =
         , SiteMap.exhibitionParser
             |> Url.Parser.map (PageExhibition Page.Exhibition.initModel)
         , SiteMap.goodsParser
-            |> Url.Parser.map (\_ -> PageGoods Goods.none)
+            |> Url.Parser.map (\_ -> PageGoods Data.Goods.none)
         , SiteMap.profileParser
             |> Url.Parser.map (PageProfile Page.Profile.initModel)
         , SiteMap.siteMapParser
@@ -912,15 +911,11 @@ menuAccount : LogInState -> List (Html.Html msg)
 menuAccount logInState =
     case logInState of
         LogInStateOk { profile } ->
-            [ Html.div [ Html.Attributes.class "menu-noLogin" ] [ Html.text "ログイン済み" ]
-            , Html.div []
-                (case profile of
-                    Just (Api.UserProfile { nickName }) ->
-                        [ Html.div [] [ Html.text nickName ] ]
-
-                    Nothing ->
-                        []
-                )
+            [ Html.div
+                [ Html.Attributes.class "menu-noLogin"
+                , Html.Attributes.href SiteMap.profileUrl
+                ]
+                [ Html.text "ログイン済み" ]
             ]
 
         LogInStateNone ->

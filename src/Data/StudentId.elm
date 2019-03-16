@@ -1,4 +1,4 @@
-module StudentId exposing
+module Data.StudentId exposing
     ( PartStudentId
     , StudentId
     , fromCharList

@@ -6,7 +6,7 @@ module Page.Goods exposing
 {-| 商品の表示
 -}
 
-import Goods
+import Data.Goods as Goods
 import Html
 import Html.Attributes
 import SiteMap

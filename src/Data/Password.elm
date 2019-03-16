@@ -1,4 +1,4 @@
-module Password exposing (Error, Password, errorMessage, passwordFromString, toString)
+module Data.Password exposing (Error, Password, errorMessage, passwordFromString, toString)
 
 import Set exposing (Set)
 
