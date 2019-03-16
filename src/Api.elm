@@ -25,7 +25,7 @@ import Http
 import Json.Decode
 import Json.Encode
 import Password
-import School
+import University
 
 
 
@@ -47,9 +47,9 @@ type alias SignUpRequest =
 
 
 type UniversityData
-    = UniversitySchool School.SchoolAndDepartment
-    | UniversityGraduateFromTsukuba School.Graduate School.SchoolAndDepartment
-    | UniversityGraduateFromNotTsukuba School.Graduate
+    = UniversitySchool University.SchoolAndDepartment
+    | UniversityGraduateFromTsukuba University.Graduate University.SchoolAndDepartment
+    | UniversityGraduateFromNotTsukuba University.Graduate
 
 
 type SignUpResponseError
@@ -112,14 +112,14 @@ signUpJson { emailAddress, pass, image, university, nickName } =
                )
             ++ (case graduate of
                     Just g ->
-                        [ ( "graduate", Json.Encode.string (School.graduateToIdString g) ) ]
+                        [ ( "graduate", Json.Encode.string (University.graduateToIdString g) ) ]
 
                     Nothing ->
                         []
                )
             ++ (case department of
                     Just d ->
-                        [ ( "department", Json.Encode.string (School.departmentToIdString d) ) ]
+                        [ ( "department", Json.Encode.string (University.departmentToIdString d) ) ]
 
                     Nothing ->
                         []
@@ -127,7 +127,7 @@ signUpJson { emailAddress, pass, image, university, nickName } =
         )
 
 
-universityToSimpleRecord : UniversityData -> { graduate : Maybe School.Graduate, department : Maybe School.SchoolAndDepartment }
+universityToSimpleRecord : UniversityData -> { graduate : Maybe University.Graduate, department : Maybe University.SchoolAndDepartment }
 universityToSimpleRecord universityData =
     case universityData of
         UniversitySchool schoolAndDepartment ->
@@ -478,7 +478,7 @@ getUserProfileResponseValueListToResult : String -> String -> Maybe String -> Ma
 getUserProfileResponseValueListToResult nickName introduction departmentMaybe graduateMaybe =
     let
         universityMaybe =
-            case ( departmentMaybe |> Maybe.andThen School.departmentFromIdString, graduateMaybe |> Maybe.andThen School.graduateFromIdString ) of
+            case ( departmentMaybe |> Maybe.andThen University.departmentFromIdString, graduateMaybe |> Maybe.andThen University.graduateFromIdString ) of
                 ( Just department, Just graduate ) ->
                     Just (UniversityGraduateFromTsukuba graduate department)
 

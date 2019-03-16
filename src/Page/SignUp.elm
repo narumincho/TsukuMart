@@ -13,9 +13,9 @@ import Html.Keyed
 import Json.Decode
 import Password
 import SAddress
-import School
 import StudentId
 import Tab
+import University
 
 
 type Model
@@ -37,12 +37,12 @@ type UniversitySelect
 
 type SchoolSelect
     = UniversitySchoolNone
-    | UniversitySchoolSelectSchool School.School
-    | UniversitySchoolSelectSchoolAndDepartment School.SchoolAndDepartment
+    | UniversitySchoolSelectSchool University.School
+    | UniversitySchoolSelectSchoolAndDepartment University.SchoolAndDepartment
 
 
 type GraduateSelect
-    = UniversityGraduateSelect (Maybe School.Graduate) (Maybe SchoolSelect)
+    = UniversityGraduateSelect (Maybe University.Graduate) (Maybe SchoolSelect)
 
 
 type SAddressAndPassword
@@ -690,7 +690,7 @@ signUpUniversityViewSchool schoolSelect =
                     (\m ->
                         case m of
                             Just school ->
-                                case School.schoolToOnlyOneDepartment school of
+                                case University.schoolToOnlyOneDepartment school of
                                     Just schoolAndDepartment ->
                                         UniversitySchoolSelectSchoolAndDepartment schoolAndDepartment
 
@@ -706,7 +706,7 @@ signUpUniversityViewSchool schoolSelect =
             case signUpUniversityViewSelectDepartment school of
                 Just v ->
                     Just
-                        ( "s=" ++ School.schoolToIdString school
+                        ( "s=" ++ University.schoolToIdString school
                         , v
                             |> Html.map
                                 (\m ->
@@ -735,7 +735,7 @@ signUpUniversityViewSchool schoolSelect =
                     [ schoolView ]
 
         UniversitySchoolSelectSchoolAndDepartment department ->
-            case departmentSelectView (School.departmentToSchool department) of
+            case departmentSelectView (University.schoolFromDepartment department) of
                 Just departV ->
                     [ schoolView, departV ]
 
@@ -781,7 +781,7 @@ signUpUniversityViewGraduate univAndGraduateSelect =
            )
 
 
-signUpUniversityViewSelectGraduate : Html.Html (Maybe School.Graduate)
+signUpUniversityViewSelectGraduate : Html.Html (Maybe University.Graduate)
 signUpUniversityViewSelectGraduate =
     Html.div
         []
@@ -796,22 +796,22 @@ signUpUniversityViewSelectGraduate =
             , Html.Events.on "change" selectGraduateDecoder
             ]
             ([ Html.option [] [ Html.text "--選択してください--" ] ]
-                ++ (School.graduateAllValue
+                ++ (University.graduateAllValue
                         |> List.map
                             (\s ->
-                                Html.option [] [ Html.text (School.graduateToJapaneseString s) ]
+                                Html.option [] [ Html.text (University.graduateToJapaneseString s) ]
                             )
                    )
             )
         ]
 
 
-selectGraduateDecoder : Json.Decode.Decoder (Maybe School.Graduate)
+selectGraduateDecoder : Json.Decode.Decoder (Maybe University.Graduate)
 selectGraduateDecoder =
     Json.Decode.at
         [ "target", "selectedIndex" ]
         Json.Decode.int
-        |> Json.Decode.map (\index -> School.graduateAllValue |> Array.fromList |> Array.get (index - 1))
+        |> Json.Decode.map (\index -> University.graduateAllValue |> Array.fromList |> Array.get (index - 1))
 
 
 {-| 筑波大学に所属していたかしていなかったか
@@ -862,7 +862,7 @@ signUpUniversityViewGraduateYesNoTsukuba leftSelect =
 
 {-| 学群の選択
 -}
-signUpUniversityViewSelectSchool : Html.Html (Maybe School.School)
+signUpUniversityViewSelectSchool : Html.Html (Maybe University.School)
 signUpUniversityViewSelectSchool =
     Html.div
         []
@@ -877,29 +877,29 @@ signUpUniversityViewSelectSchool =
             , Html.Events.on "change" selectSchoolDecoder
             ]
             ([ Html.option [] [ Html.text "--選択してください--" ] ]
-                ++ (School.schoolAllValue
+                ++ (University.schoolAll
                         |> List.map
                             (\s ->
-                                Html.option [] [ Html.text (School.schoolToJapaneseString s) ]
+                                Html.option [] [ Html.text (University.schoolToJapaneseString s) ]
                             )
                    )
             )
         ]
 
 
-selectSchoolDecoder : Json.Decode.Decoder (Maybe School.School)
+selectSchoolDecoder : Json.Decode.Decoder (Maybe University.School)
 selectSchoolDecoder =
     Json.Decode.at
         [ "target", "selectedIndex" ]
         Json.Decode.int
-        |> Json.Decode.map (\index -> School.schoolAllValue |> Array.fromList |> Array.get (index - 1))
+        |> Json.Decode.map (\index -> University.schoolAll |> Array.fromList |> Array.get (index - 1))
 
 
 {-| 学類の選択
 -}
-signUpUniversityViewSelectDepartment : School.School -> Maybe (Html.Html (Maybe School.SchoolAndDepartment))
+signUpUniversityViewSelectDepartment : University.School -> Maybe (Html.Html (Maybe University.SchoolAndDepartment))
 signUpUniversityViewSelectDepartment school =
-    case School.departmentAllValue school of
+    case University.schoolToDepartmentList school of
         [] ->
             Nothing
 
@@ -921,7 +921,7 @@ signUpUniversityViewSelectDepartment school =
                             ++ (departmentList
                                     |> List.map
                                         (\s ->
-                                            Html.option [] [ Html.text (School.departmentToJapaneseString s |> Maybe.withDefault "?") ]
+                                            Html.option [] [ Html.text (University.departmentToJapaneseString s |> Maybe.withDefault "?") ]
                                         )
                                )
                         )
@@ -929,13 +929,13 @@ signUpUniversityViewSelectDepartment school =
                 )
 
 
-selectDepartmentDecoder : School.School -> Json.Decode.Decoder (Maybe School.SchoolAndDepartment)
+selectDepartmentDecoder : University.School -> Json.Decode.Decoder (Maybe University.SchoolAndDepartment)
 selectDepartmentDecoder school =
     Json.Decode.at
         [ "target", "selectedIndex" ]
         Json.Decode.int
         |> Json.Decode.map
-            (\index -> School.departmentAllValue school |> Array.fromList |> Array.get (index - 1))
+            (\index -> University.schoolToDepartmentList school |> Array.fromList |> Array.get (index - 1))
 
 
 signUpSubmitButton : Maybe Api.SignUpRequest -> Html.Html Emit

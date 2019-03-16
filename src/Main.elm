@@ -13,11 +13,11 @@ import Page.Goods
 import Page.LogIn
 import Page.Profile
 import Page.SignUp
-import School
 import SiteMap
 import Svg
 import Svg.Attributes
 import Tab
+import University
 import Url
 import Url.Parser
 

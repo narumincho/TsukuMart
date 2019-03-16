@@ -1976,8 +1976,8 @@ var _Platform_worker = F4(function(impl, flagDecoder, debugMetadata, args)
 		flagDecoder,
 		args,
 		impl.a5,
-		impl.bk,
-		impl.bi,
+		impl.bj,
+		impl.bh,
 		function() { return function() {} }
 	);
 });
@@ -2497,7 +2497,7 @@ function _Http_toMetadata(xhr)
 	return {
 		C: xhr.responseURL,
 		aR: xhr.status,
-		bg: xhr.statusText,
+		bf: xhr.statusText,
 		at: _Http_parseHeaders(xhr.getAllResponseHeaders())
 	};
 }
@@ -2593,7 +2593,7 @@ function _Http_track(router, xhr, tracker)
 	xhr.upload.addEventListener('progress', function(event) {
 		if (xhr.c) { return; }
 		_Scheduler_rawSpawn(A2(elm$core$Platform$sendToSelf, router, _Utils_Tuple2(tracker, elm$http$Http$Sending({
-			bf: event.loaded,
+			be: event.loaded,
 			ac: event.total
 		}))));
 	});
@@ -4177,10 +4177,10 @@ var _Browser_element = _Debugger_element || F4(function(impl, flagDecoder, debug
 		flagDecoder,
 		args,
 		impl.a5,
-		impl.bk,
-		impl.bi,
+		impl.bj,
+		impl.bh,
 		function(sendToApp, initialModel) {
-			var view = impl.bl;
+			var view = impl.bk;
 			/**/
 			var domNode = args['node'];
 			//*/
@@ -4213,11 +4213,11 @@ var _Browser_document = _Debugger_document || F4(function(impl, flagDecoder, deb
 		flagDecoder,
 		args,
 		impl.a5,
-		impl.bk,
-		impl.bi,
+		impl.bj,
+		impl.bh,
 		function(sendToApp, initialModel) {
 			var divertHrefToApp = impl.I && impl.I(sendToApp)
-			var view = impl.bl;
+			var view = impl.bk;
 			var title = _VirtualDom_doc.title;
 			var bodyNode = _VirtualDom_doc.body;
 			var currNode = _VirtualDom_virtualize(bodyNode);
@@ -4230,7 +4230,7 @@ var _Browser_document = _Debugger_document || F4(function(impl, flagDecoder, deb
 				bodyNode = _VirtualDom_applyPatches(bodyNode, currNode, patches, sendToApp);
 				currNode = nextNode;
 				_VirtualDom_divertHrefToApp = 0;
-				(title !== doc.bj) && (_VirtualDom_doc.title = title = doc.bj);
+				(title !== doc.bi) && (_VirtualDom_doc.title = title = doc.bi);
 			});
 		}
 	);
@@ -4321,9 +4321,9 @@ function _Browser_application(impl)
 		{
 			return A3(impl.a5, flags, _Browser_getUrl(), key);
 		},
-		bl: impl.bl,
 		bk: impl.bk,
-		bi: impl.bi
+		bj: impl.bj,
+		bh: impl.bh
 	});
 }
 
@@ -4764,7 +4764,7 @@ var elm$core$Set$toList = function (_n0) {
 	var dict = _n0;
 	return elm$core$Dict$keys(dict);
 };
-var author$project$Page$Exhibition$initModel = {ap: '', av: _List_Nil, aH: elm$core$Maybe$Nothing, bj: ''};
+var author$project$Page$Exhibition$initModel = {ap: '', av: _List_Nil, aH: elm$core$Maybe$Nothing, bi: ''};
 var author$project$Page$LogIn$LogInPage = function (a) {
 	return {$: 0, a: a};
 };
@@ -4787,7 +4787,7 @@ var elm$core$Maybe$Just = function (a) {
 };
 var elm$regex$Regex$Match = F4(
 	function (match, index, number, submatches) {
-		return {a4: index, a7: match, a8: number, bh: submatches};
+		return {a4: index, a7: match, a8: number, bg: submatches};
 	});
 var elm$regex$Regex$fromStringWith = _Regex_fromStringWith;
 var elm$regex$Regex$fromString = function (string) {
@@ -7521,229 +7521,88 @@ var author$project$Api$UniversitySchool = function (a) {
 	return {$: 0, a: a};
 };
 var author$project$Api$UserProfile = elm$core$Basics$identity;
-var author$project$School$DAandd = {$: 7};
-var author$project$School$DSport = {$: 8};
-var author$project$School$DHuman = function (a) {
-	return {$: 2, a: a};
-};
-var author$project$School$DHumcul = function (a) {
-	return {$: 0, a: a};
-};
-var author$project$School$DInfo = function (a) {
-	return {$: 5, a: a};
-};
-var author$project$School$DLife = function (a) {
-	return {$: 3, a: a};
-};
-var author$project$School$DMed = function (a) {
-	return {$: 6, a: a};
-};
-var author$project$School$DSocint = function (a) {
-	return {$: 1, a: a};
-};
-var author$project$School$DSse = function (a) {
-	return {$: 4, a: a};
-};
-var author$project$School$HumanDisability = 2;
-var author$project$School$HumanEducation = 0;
-var author$project$School$HumanPsyche = 1;
-var author$project$School$HumculCulture = 1;
-var author$project$School$HumculHumanity = 0;
-var author$project$School$HumculJapanese = 2;
-var author$project$School$InfoCoins = 0;
-var author$project$School$InfoKlis = 2;
-var author$project$School$InfoMast = 1;
-var author$project$School$LifeBiol = 0;
-var author$project$School$LifeBres = 1;
-var author$project$School$LifeEarth = 2;
-var author$project$School$MedMed = 0;
-var author$project$School$MedMs = 2;
-var author$project$School$MedNurse = 1;
-var author$project$School$SocintCis = 1;
-var author$project$School$SocintSocial = 0;
-var author$project$School$SseChem = 2;
-var author$project$School$SseCoens = 3;
-var author$project$School$SseEsys = 4;
-var author$project$School$SseMath = 0;
-var author$project$School$SsePandps = 5;
-var author$project$School$SsePhys = 1;
-var author$project$School$departmentAllValue = function (school) {
-	switch (school) {
-		case 0:
-			return A2(
-				elm$core$List$map,
-				author$project$School$DHumcul,
-				_List_fromArray(
-					[0, 1, 2]));
-		case 1:
-			return A2(
-				elm$core$List$map,
-				author$project$School$DSocint,
-				_List_fromArray(
-					[0, 1]));
-		case 2:
-			return A2(
-				elm$core$List$map,
-				author$project$School$DHuman,
-				_List_fromArray(
-					[0, 1, 2]));
-		case 3:
-			return A2(
-				elm$core$List$map,
-				author$project$School$DLife,
-				_List_fromArray(
-					[0, 1, 2]));
-		case 4:
-			return A2(
-				elm$core$List$map,
-				author$project$School$DSse,
-				_List_fromArray(
-					[0, 1, 2, 3, 4, 5]));
-		case 5:
-			return A2(
-				elm$core$List$map,
-				author$project$School$DInfo,
-				_List_fromArray(
-					[0, 1, 2]));
-		case 6:
-			return A2(
-				elm$core$List$map,
-				author$project$School$DMed,
-				_List_fromArray(
-					[0, 1, 2]));
-		case 7:
-			return _List_Nil;
-		default:
-			return _List_Nil;
-	}
-};
-var author$project$School$SAandd = 7;
-var author$project$School$SSport = 8;
-var author$project$School$humanDepartmentToIdString = function (department) {
-	switch (department) {
-		case 0:
-			return 'education';
-		case 1:
-			return 'psyche';
-		default:
-			return 'disability';
-	}
-};
-var author$project$School$humculDepartmentToIdString = function (department) {
+var author$project$University$DAandd = 23;
+var author$project$University$DBiol = 8;
+var author$project$University$DBres = 9;
+var author$project$University$DChem = 13;
+var author$project$University$DCis = 4;
+var author$project$University$DCoens = 14;
+var author$project$University$DCoins = 17;
+var author$project$University$DCulture = 1;
+var author$project$University$DDisability = 7;
+var author$project$University$DEarth = 10;
+var author$project$University$DEducation = 5;
+var author$project$University$DEsys = 15;
+var author$project$University$DHumanity = 0;
+var author$project$University$DJapanese = 2;
+var author$project$University$DKlis = 19;
+var author$project$University$DMast = 18;
+var author$project$University$DMath = 11;
+var author$project$University$DMed = 20;
+var author$project$University$DMs = 22;
+var author$project$University$DNurse = 21;
+var author$project$University$DPandps = 16;
+var author$project$University$DPhys = 12;
+var author$project$University$DPsyche = 6;
+var author$project$University$DSocial = 3;
+var author$project$University$DSport = 24;
+var author$project$University$departmentAll = _List_fromArray(
+	[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]);
+var author$project$University$departmentToIdString = function (department) {
 	switch (department) {
 		case 0:
 			return 'humanity';
 		case 1:
 			return 'culture';
-		default:
-			return 'japanese';
-	}
-};
-var author$project$School$infoDepartmentToIdString = function (department) {
-	switch (department) {
-		case 0:
-			return 'coins';
-		case 1:
-			return 'mast';
-		default:
-			return 'klis';
-	}
-};
-var author$project$School$lifeDepartmentToIdString = function (department) {
-	switch (department) {
-		case 0:
-			return 'biol';
-		case 1:
-			return 'bres';
-		default:
-			return 'earth';
-	}
-};
-var author$project$School$medDepartmentToIdString = function (department) {
-	switch (department) {
-		case 0:
-			return 'med';
-		case 1:
-			return 'nurse';
-		default:
-			return 'ms';
-	}
-};
-var author$project$School$schoolToIdString = function (school) {
-	switch (school) {
-		case 0:
-			return 'humcul';
-		case 1:
-			return 'socint';
 		case 2:
-			return 'human';
+			return 'japanese';
 		case 3:
-			return 'life';
+			return 'social';
 		case 4:
-			return 'sse';
+			return 'cis';
 		case 5:
-			return 'info';
+			return 'education';
 		case 6:
-			return 'med';
+			return 'psyche';
 		case 7:
+			return 'disability';
+		case 8:
+			return 'biol';
+		case 9:
+			return 'bres';
+		case 10:
+			return 'earth';
+		case 11:
+			return 'math';
+		case 12:
+			return 'phys';
+		case 13:
+			return 'chem';
+		case 14:
+			return 'coens';
+		case 15:
+			return 'esys';
+		case 16:
+			return 'pandps';
+		case 17:
+			return 'coins';
+		case 18:
+			return 'mast';
+		case 19:
+			return 'klis';
+		case 20:
+			return 'med';
+		case 21:
+			return 'nurse';
+		case 22:
+			return 'ms';
+		case 23:
 			return 'aandd';
 		default:
 			return 'sport';
 	}
 };
-var author$project$School$socintDepartmentToIdString = function (department) {
-	if (!department) {
-		return 'social';
-	} else {
-		return 'cis';
-	}
-};
-var author$project$School$sseDepartmentToIdString = function (department) {
-	switch (department) {
-		case 0:
-			return 'math';
-		case 1:
-			return 'phys';
-		case 2:
-			return 'chem';
-		case 3:
-			return 'coens';
-		case 4:
-			return 'esys';
-		default:
-			return 'pandps';
-	}
-};
-var author$project$School$departmentToIdString = function (department) {
-	switch (department.$) {
-		case 0:
-			var d = department.a;
-			return author$project$School$humculDepartmentToIdString(d);
-		case 1:
-			var d = department.a;
-			return author$project$School$socintDepartmentToIdString(d);
-		case 2:
-			var d = department.a;
-			return author$project$School$humanDepartmentToIdString(d);
-		case 3:
-			var d = department.a;
-			return author$project$School$lifeDepartmentToIdString(d);
-		case 4:
-			var d = department.a;
-			return author$project$School$sseDepartmentToIdString(d);
-		case 5:
-			var d = department.a;
-			return author$project$School$infoDepartmentToIdString(d);
-		case 6:
-			var d = department.a;
-			return author$project$School$medDepartmentToIdString(d);
-		case 7:
-			return author$project$School$schoolToIdString(7);
-		default:
-			return author$project$School$schoolToIdString(8);
-	}
-};
-var author$project$School$departmentFromIdStringLoop = F2(
+var author$project$University$departmentFromIdStringLoop = F2(
 	function (idString, departmentList) {
 		departmentFromIdStringLoop:
 		while (true) {
@@ -7751,7 +7610,7 @@ var author$project$School$departmentFromIdStringLoop = F2(
 				var x = departmentList.a;
 				var xs = departmentList.b;
 				if (_Utils_eq(
-					author$project$School$departmentToIdString(x),
+					author$project$University$departmentToIdString(x),
 					idString)) {
 					return elm$core$Maybe$Just(x);
 				} else {
@@ -7766,36 +7625,21 @@ var author$project$School$departmentFromIdStringLoop = F2(
 			}
 		}
 	});
-var author$project$School$SHuman = 2;
-var author$project$School$SHumcul = 0;
-var author$project$School$SInfo = 5;
-var author$project$School$SLife = 3;
-var author$project$School$SMed = 6;
-var author$project$School$SSocint = 1;
-var author$project$School$SSse = 4;
-var author$project$School$schoolAllValue = _List_fromArray(
-	[0, 1, 2, 3, 4, 5, 6, 7, 8]);
-var author$project$School$departmentFromIdString = function (idString) {
-	return A2(
-		author$project$School$departmentFromIdStringLoop,
-		idString,
-		_Utils_ap(
-			A2(elm$core$List$concatMap, author$project$School$departmentAllValue, author$project$School$schoolAllValue),
-			_List_fromArray(
-				[author$project$School$DAandd, author$project$School$DSport])));
+var author$project$University$departmentFromIdString = function (idString) {
+	return A2(author$project$University$departmentFromIdStringLoop, idString, author$project$University$departmentAll);
 };
-var author$project$School$GChs = 6;
-var author$project$School$GEducation = 0;
-var author$project$School$GGabs = 2;
-var author$project$School$GGlobal = 8;
-var author$project$School$GHass = 1;
-var author$project$School$GLife = 5;
-var author$project$School$GPas = 3;
-var author$project$School$GSie = 4;
-var author$project$School$GSlis = 7;
-var author$project$School$graduateAllValue = _List_fromArray(
+var author$project$University$GChs = 6;
+var author$project$University$GEducation = 0;
+var author$project$University$GGabs = 2;
+var author$project$University$GGlobal = 8;
+var author$project$University$GHass = 1;
+var author$project$University$GLife = 5;
+var author$project$University$GPas = 3;
+var author$project$University$GSie = 4;
+var author$project$University$GSlis = 7;
+var author$project$University$graduateAllValue = _List_fromArray(
 	[0, 1, 2, 3, 4, 5, 6, 7, 8]);
-var author$project$School$graduateToIdString = function (graduate) {
+var author$project$University$graduateToIdString = function (graduate) {
 	switch (graduate) {
 		case 0:
 			return 'education';
@@ -7817,7 +7661,7 @@ var author$project$School$graduateToIdString = function (graduate) {
 			return 'global';
 	}
 };
-var author$project$School$graduateFromIdStringLoop = F2(
+var author$project$University$graduateFromIdStringLoop = F2(
 	function (idString, graduateList) {
 		graduateFromIdStringLoop:
 		while (true) {
@@ -7825,7 +7669,7 @@ var author$project$School$graduateFromIdStringLoop = F2(
 				var x = graduateList.a;
 				var xs = graduateList.b;
 				if (_Utils_eq(
-					author$project$School$graduateToIdString(x),
+					author$project$University$graduateToIdString(x),
 					idString)) {
 					return elm$core$Maybe$Just(x);
 				} else {
@@ -7840,8 +7684,8 @@ var author$project$School$graduateFromIdStringLoop = F2(
 			}
 		}
 	});
-var author$project$School$graduateFromIdString = function (idString) {
-	return A2(author$project$School$graduateFromIdStringLoop, idString, author$project$School$graduateAllValue);
+var author$project$University$graduateFromIdString = function (idString) {
+	return A2(author$project$University$graduateFromIdStringLoop, idString, author$project$University$graduateAllValue);
 };
 var elm$core$Maybe$andThen = F2(
 	function (callback, maybeValue) {
@@ -7856,8 +7700,8 @@ var author$project$Api$getUserProfileResponseValueListToResult = F4(
 	function (nickName, introduction, departmentMaybe, graduateMaybe) {
 		var universityMaybe = function () {
 			var _n1 = _Utils_Tuple2(
-				A2(elm$core$Maybe$andThen, author$project$School$departmentFromIdString, departmentMaybe),
-				A2(elm$core$Maybe$andThen, author$project$School$graduateFromIdString, graduateMaybe));
+				A2(elm$core$Maybe$andThen, author$project$University$departmentFromIdString, departmentMaybe),
+				A2(elm$core$Maybe$andThen, author$project$University$graduateFromIdString, graduateMaybe));
 			if (!_n1.a.$) {
 				if (!_n1.b.$) {
 					var department = _n1.a.a;
@@ -8339,7 +8183,7 @@ var author$project$Api$signUpJson = function (_n0) {
 									_Utils_Tuple2(
 									'graduate',
 									elm$json$Json$Encode$string(
-										author$project$School$graduateToIdString(g)))
+										author$project$University$graduateToIdString(g)))
 								]);
 						} else {
 							return _List_Nil;
@@ -8353,7 +8197,7 @@ var author$project$Api$signUpJson = function (_n0) {
 									_Utils_Tuple2(
 									'department',
 									elm$json$Json$Encode$string(
-										author$project$School$departmentToIdString(d)))
+										author$project$University$departmentToIdString(d)))
 								]);
 						} else {
 							return _List_Nil;
@@ -9986,7 +9830,7 @@ var author$project$SiteMap$goodsUrl = function (goodsId) {
 };
 var elm$html$Html$div = _VirtualDom_node('div');
 var author$project$Page$Goods$goodsListItem = function (_n0) {
-	var title = _n0.bj;
+	var title = _n0.bi;
 	var price = _n0.aH;
 	var like = _n0.ax;
 	return A2(
@@ -10049,18 +9893,18 @@ var author$project$Page$Goods$goodsList = function (isWideMode) {
 			author$project$Page$Goods$goodsListItem,
 			_List_fromArray(
 				[
-					{ax: 1, aH: 300, bj: '冷蔵庫'},
-					{ax: 5, aH: 100, bj: '洗濯機'},
-					{ax: 99, aH: 10, bj: '時計'},
-					{ax: 5, aH: 100, bj: '掃除機'},
-					{ax: 9, aH: 200, bj: '自転車'},
-					{ax: 99, aH: 10, bj: 'マンガ'},
-					{ax: 99, aH: 10, bj: 'ゲーム'},
-					{ax: 5, aH: 100, bj: '絵本'},
-					{ax: 2, aH: 1000, bj: '棚'},
-					{ax: 2, aH: 1000, bj: 'いす'},
-					{ax: 20, aH: 300, bj: 'バッテリー'},
-					{ax: 10, aH: 20, bj: '教科書'}
+					{ax: 1, aH: 300, bi: '冷蔵庫'},
+					{ax: 5, aH: 100, bi: '洗濯機'},
+					{ax: 99, aH: 10, bi: '時計'},
+					{ax: 5, aH: 100, bi: '掃除機'},
+					{ax: 9, aH: 200, bi: '自転車'},
+					{ax: 99, aH: 10, bi: 'マンガ'},
+					{ax: 99, aH: 10, bi: 'ゲーム'},
+					{ax: 5, aH: 100, bi: '絵本'},
+					{ax: 2, aH: 1000, bi: '棚'},
+					{ax: 2, aH: 1000, bi: 'いす'},
+					{ax: 20, aH: 300, bi: 'バッテリー'},
+					{ax: 10, aH: 20, bi: '教科書'}
 				])));
 };
 var author$project$Tab$Multi = F2(
@@ -10381,7 +10225,7 @@ var author$project$Page$Exhibition$titleAndDescriptionView = A2(
 			_List_Nil)
 		]));
 var author$project$Page$Exhibition$view = function (_n0) {
-	var title = _n0.bj;
+	var title = _n0.bi;
 	var description = _n0.ap;
 	var price = _n0.aH;
 	var image = _n0.av;
@@ -11688,6 +11532,35 @@ var author$project$Page$SignUp$UniversitySchoolSelectSchool = function (a) {
 var author$project$Page$SignUp$UniversitySchoolSelectSchoolAndDepartment = function (a) {
 	return {$: 2, a: a};
 };
+var author$project$University$schoolToDepartmentList = function (school) {
+	switch (school) {
+		case 0:
+			return _List_fromArray(
+				[0, 1, 2]);
+		case 1:
+			return _List_fromArray(
+				[3, 4]);
+		case 2:
+			return _List_fromArray(
+				[5, 6, 7]);
+		case 3:
+			return _List_fromArray(
+				[8, 9, 10]);
+		case 4:
+			return _List_fromArray(
+				[11, 12, 13, 14, 15, 16]);
+		case 5:
+			return _List_fromArray(
+				[17, 18, 19]);
+		case 6:
+			return _List_fromArray(
+				[20, 21, 22]);
+		case 7:
+			return _List_Nil;
+		default:
+			return _List_Nil;
+	}
+};
 var elm$core$Array$fromListHelp = F3(
 	function (list, nodeList, nodeListSize) {
 		fromListHelp:
@@ -11773,7 +11646,7 @@ var author$project$Page$SignUp$selectDepartmentDecoder = function (school) {
 				elm$core$Array$get,
 				index - 1,
 				elm$core$Array$fromList(
-					author$project$School$departmentAllValue(school)));
+					author$project$University$schoolToDepartmentList(school)));
 		},
 		A2(
 			elm$json$Json$Decode$at,
@@ -11781,171 +11654,64 @@ var author$project$Page$SignUp$selectDepartmentDecoder = function (school) {
 				['target', 'selectedIndex']),
 			elm$json$Json$Decode$int));
 };
-var author$project$School$humanDepartmentToJapaneseString = function (department) {
-	switch (department) {
+var author$project$University$departmentToJapaneseString = function (schoolAndDepartment) {
+	switch (schoolAndDepartment) {
 		case 0:
-			return '教育学類';
+			return elm$core$Maybe$Just('人文学類');
 		case 1:
-			return '心理学類';
-		default:
-			return '障害科学類';
-	}
-};
-var author$project$School$humculDepartmentToJapaneseString = function (department) {
-	switch (department) {
-		case 0:
-			return '人文学類';
-		case 1:
-			return '比較文化学類';
-		default:
-			return '日本語・日本文化学類';
-	}
-};
-var author$project$School$infoDepartmentToJapaneseString = function (department) {
-	switch (department) {
-		case 0:
-			return '情報科学類';
-		case 1:
-			return '情報メディア創成学類';
-		default:
-			return '知識情報・図書館科学類';
-	}
-};
-var author$project$School$lifeDepartmentToJapanseString = function (department) {
-	switch (department) {
-		case 0:
-			return '生物学類';
-		case 1:
-			return '生物資源学類';
-		default:
-			return '地球学類';
-	}
-};
-var author$project$School$medDepartmentToJapaneseString = function (department) {
-	switch (department) {
-		case 0:
-			return '医学類';
-		case 1:
-			return '看護学類';
-		default:
-			return '医療科学類';
-	}
-};
-var author$project$School$schoolToJapaneseString = function (school) {
-	switch (school) {
-		case 0:
-			return '人文・文化学群';
-		case 1:
-			return '社会・国際学群';
+			return elm$core$Maybe$Just('比較文化学類');
 		case 2:
-			return '人間学群';
+			return elm$core$Maybe$Just('日本語・日本文化学類');
 		case 3:
-			return '生命環境学群';
+			return elm$core$Maybe$Just('社会学類');
 		case 4:
-			return '理工学群';
+			return elm$core$Maybe$Just('国際総合学類');
 		case 5:
-			return '情報学群';
+			return elm$core$Maybe$Just('教育学類');
 		case 6:
-			return '医学群';
+			return elm$core$Maybe$Just('心理学類');
 		case 7:
-			return '芸術専門学群';
+			return elm$core$Maybe$Just('障害科学類');
+		case 8:
+			return elm$core$Maybe$Just('生物学類');
+		case 9:
+			return elm$core$Maybe$Just('生物資源学類');
+		case 10:
+			return elm$core$Maybe$Just('地球学類');
+		case 11:
+			return elm$core$Maybe$Just('数学類');
+		case 12:
+			return elm$core$Maybe$Just('物理学類');
+		case 13:
+			return elm$core$Maybe$Just('化学類');
+		case 14:
+			return elm$core$Maybe$Just('応用理工学類');
+		case 15:
+			return elm$core$Maybe$Just('工学システム学類');
+		case 16:
+			return elm$core$Maybe$Just('社会工学類');
+		case 17:
+			return elm$core$Maybe$Just('情報科学類');
+		case 18:
+			return elm$core$Maybe$Just('情報メディア創成学類');
+		case 19:
+			return elm$core$Maybe$Just('知識情報・図書館科学類');
+		case 20:
+			return elm$core$Maybe$Just('医学類');
+		case 21:
+			return elm$core$Maybe$Just('看護学類');
+		case 22:
+			return elm$core$Maybe$Just('医療科学類');
+		case 23:
+			return elm$core$Maybe$Nothing;
 		default:
-			return '体育専門学群';
+			return elm$core$Maybe$Nothing;
 	}
 };
-var author$project$School$socintDepartmentToJapaneseString = function (department) {
-	if (!department) {
-		return '社会学類';
-	} else {
-		return '国際総合学類';
-	}
-};
-var author$project$School$sseDepartmentToJapaneseString = function (department) {
-	switch (department) {
-		case 0:
-			return '数学類';
-		case 1:
-			return '物理学類';
-		case 2:
-			return '化学類';
-		case 3:
-			return '応用理工学類';
-		case 4:
-			return '工学システム学類';
-		default:
-			return '社会工学類';
-	}
-};
-var author$project$School$schoolAndDepartmentToJapaneseString = function (schoolAndDepartment) {
-	return function (_n1) {
-		var s = _n1.a;
-		var d = _n1.b;
-		return {
-			O: d,
-			be: author$project$School$schoolToJapaneseString(s)
-		};
-	}(
-		function () {
-			switch (schoolAndDepartment.$) {
-				case 0:
-					var humculDepartment = schoolAndDepartment.a;
-					return _Utils_Tuple2(
-						0,
-						elm$core$Maybe$Just(
-							author$project$School$humculDepartmentToJapaneseString(humculDepartment)));
-				case 1:
-					var socintDepartment = schoolAndDepartment.a;
-					return _Utils_Tuple2(
-						1,
-						elm$core$Maybe$Just(
-							author$project$School$socintDepartmentToJapaneseString(socintDepartment)));
-				case 2:
-					var humanDepartment = schoolAndDepartment.a;
-					return _Utils_Tuple2(
-						2,
-						elm$core$Maybe$Just(
-							author$project$School$humanDepartmentToJapaneseString(humanDepartment)));
-				case 3:
-					var lifeDepartment = schoolAndDepartment.a;
-					return _Utils_Tuple2(
-						3,
-						elm$core$Maybe$Just(
-							author$project$School$lifeDepartmentToJapanseString(lifeDepartment)));
-				case 4:
-					var sseDepartment = schoolAndDepartment.a;
-					return _Utils_Tuple2(
-						4,
-						elm$core$Maybe$Just(
-							author$project$School$sseDepartmentToJapaneseString(sseDepartment)));
-				case 5:
-					var infoDepartment = schoolAndDepartment.a;
-					return _Utils_Tuple2(
-						5,
-						elm$core$Maybe$Just(
-							author$project$School$infoDepartmentToJapaneseString(infoDepartment)));
-				case 6:
-					var medDepartment = schoolAndDepartment.a;
-					return _Utils_Tuple2(
-						6,
-						elm$core$Maybe$Just(
-							author$project$School$medDepartmentToJapaneseString(medDepartment)));
-				case 7:
-					return _Utils_Tuple2(7, elm$core$Maybe$Nothing);
-				default:
-					return _Utils_Tuple2(8, elm$core$Maybe$Nothing);
-			}
-		}());
-};
-var author$project$School$departmentToJapaneseString = A2(
-	elm$core$Basics$composeR,
-	author$project$School$schoolAndDepartmentToJapaneseString,
-	function ($) {
-		return $.O;
-	});
 var elm$html$Html$option = _VirtualDom_node('option');
 var elm$html$Html$select = _VirtualDom_node('select');
 var author$project$Page$SignUp$signUpUniversityViewSelectDepartment = function (school) {
-	var _n0 = author$project$School$departmentAllValue(school);
+	var _n0 = author$project$University$schoolToDepartmentList(school);
 	if (!_n0.b) {
 		return elm$core$Maybe$Nothing;
 	} else {
@@ -12001,26 +11767,59 @@ var author$project$Page$SignUp$signUpUniversityViewSelectDepartment = function (
 												A2(
 													elm$core$Maybe$withDefault,
 													'?',
-													author$project$School$departmentToJapaneseString(s)))
+													author$project$University$departmentToJapaneseString(s)))
 											]));
 								},
 								departmentList)))
 					])));
 	}
 };
+var author$project$University$SAandd = 7;
+var author$project$University$SHuman = 2;
+var author$project$University$SHumcul = 0;
+var author$project$University$SInfo = 5;
+var author$project$University$SLife = 3;
+var author$project$University$SMed = 6;
+var author$project$University$SSocint = 1;
+var author$project$University$SSport = 8;
+var author$project$University$SSse = 4;
+var author$project$University$schoolAll = _List_fromArray(
+	[0, 1, 2, 3, 4, 5, 6, 7, 8]);
 var author$project$Page$SignUp$selectSchoolDecoder = A2(
 	elm$json$Json$Decode$map,
 	function (index) {
 		return A2(
 			elm$core$Array$get,
 			index - 1,
-			elm$core$Array$fromList(author$project$School$schoolAllValue));
+			elm$core$Array$fromList(author$project$University$schoolAll));
 	},
 	A2(
 		elm$json$Json$Decode$at,
 		_List_fromArray(
 			['target', 'selectedIndex']),
 		elm$json$Json$Decode$int));
+var author$project$University$schoolToJapaneseString = function (school) {
+	switch (school) {
+		case 0:
+			return '人文・文化学群';
+		case 1:
+			return '社会・国際学群';
+		case 2:
+			return '人間学群';
+		case 3:
+			return '生命環境学群';
+		case 4:
+			return '理工学群';
+		case 5:
+			return '情報学群';
+		case 6:
+			return '医学群';
+		case 7:
+			return '芸術専門学群';
+		default:
+			return '体育専門学群';
+	}
+};
 var author$project$Page$SignUp$signUpUniversityViewSelectSchool = A2(
 	elm$html$Html$div,
 	_List_Nil,
@@ -12065,39 +11864,93 @@ var author$project$Page$SignUp$signUpUniversityViewSelectSchool = A2(
 							_List_fromArray(
 								[
 									elm$html$Html$text(
-									author$project$School$schoolToJapaneseString(s))
+									author$project$University$schoolToJapaneseString(s))
 								]));
 					},
-					author$project$School$schoolAllValue)))
+					author$project$University$schoolAll)))
 		]));
-var author$project$School$departmentToSchool = function (schoolAndDepartment) {
-	switch (schoolAndDepartment.$) {
+var author$project$University$schoolFromDepartment = function (schoolAndDepartment) {
+	switch (schoolAndDepartment) {
 		case 0:
 			return 0;
 		case 1:
-			return 1;
+			return 0;
 		case 2:
-			return 2;
+			return 0;
 		case 3:
-			return 3;
+			return 1;
 		case 4:
-			return 4;
+			return 1;
 		case 5:
-			return 5;
+			return 2;
 		case 6:
-			return 6;
+			return 2;
 		case 7:
+			return 2;
+		case 8:
+			return 3;
+		case 9:
+			return 3;
+		case 10:
+			return 3;
+		case 11:
+			return 4;
+		case 12:
+			return 4;
+		case 13:
+			return 4;
+		case 14:
+			return 4;
+		case 15:
+			return 4;
+		case 16:
+			return 4;
+		case 17:
+			return 5;
+		case 18:
+			return 5;
+		case 19:
+			return 5;
+		case 20:
+			return 6;
+		case 21:
+			return 6;
+		case 22:
+			return 6;
+		case 23:
 			return 7;
 		default:
 			return 8;
 	}
 };
-var author$project$School$schoolToOnlyOneDepartment = function (school) {
+var author$project$University$schoolToIdString = function (school) {
+	switch (school) {
+		case 0:
+			return 'humcul';
+		case 1:
+			return 'socint';
+		case 2:
+			return 'human';
+		case 3:
+			return 'life';
+		case 4:
+			return 'sse';
+		case 5:
+			return 'info';
+		case 6:
+			return 'med';
+		case 7:
+			return 'aandd';
+		default:
+			return 'sport';
+	}
+};
+var author$project$University$schoolToOnlyOneDepartment = function (school) {
 	switch (school) {
 		case 7:
-			return elm$core$Maybe$Just(author$project$School$DAandd);
+			return elm$core$Maybe$Just(23);
 		case 8:
-			return elm$core$Maybe$Just(author$project$School$DSport);
+			return elm$core$Maybe$Just(24);
 		default:
 			return elm$core$Maybe$Nothing;
 	}
@@ -12112,7 +11965,7 @@ var author$project$Page$SignUp$signUpUniversityViewSchool = function (schoolSele
 			function (m) {
 				if (!m.$) {
 					var school = m.a;
-					var _n6 = author$project$School$schoolToOnlyOneDepartment(school);
+					var _n6 = author$project$University$schoolToOnlyOneDepartment(school);
 					if (!_n6.$) {
 						var schoolAndDepartment = _n6.a;
 						return author$project$Page$SignUp$UniversitySchoolSelectSchoolAndDepartment(schoolAndDepartment);
@@ -12130,7 +11983,7 @@ var author$project$Page$SignUp$signUpUniversityViewSchool = function (schoolSele
 			var v = _n3.a;
 			return elm$core$Maybe$Just(
 				_Utils_Tuple2(
-					's=' + author$project$School$schoolToIdString(school),
+					's=' + author$project$University$schoolToIdString(school),
 					A2(
 						elm$html$Html$map,
 						function (m) {
@@ -12164,7 +12017,7 @@ var author$project$Page$SignUp$signUpUniversityViewSchool = function (schoolSele
 		default:
 			var department = schoolSelect.a;
 			var _n2 = departmentSelectView(
-				author$project$School$departmentToSchool(department));
+				author$project$University$schoolFromDepartment(department));
 			if (!_n2.$) {
 				var departV = _n2.a;
 				return _List_fromArray(
@@ -12181,14 +12034,14 @@ var author$project$Page$SignUp$selectGraduateDecoder = A2(
 		return A2(
 			elm$core$Array$get,
 			index - 1,
-			elm$core$Array$fromList(author$project$School$graduateAllValue));
+			elm$core$Array$fromList(author$project$University$graduateAllValue));
 	},
 	A2(
 		elm$json$Json$Decode$at,
 		_List_fromArray(
 			['target', 'selectedIndex']),
 		elm$json$Json$Decode$int));
-var author$project$School$graduateToJapaneseString = function (gradate) {
+var author$project$University$graduateToJapaneseString = function (gradate) {
 	switch (gradate) {
 		case 0:
 			return '教育研究科';
@@ -12254,10 +12107,10 @@ var author$project$Page$SignUp$signUpUniversityViewSelectGraduate = A2(
 							_List_fromArray(
 								[
 									elm$html$Html$text(
-									author$project$School$graduateToJapaneseString(s))
+									author$project$University$graduateToJapaneseString(s))
 								]));
 					},
-					author$project$School$graduateAllValue)))
+					author$project$University$graduateAllValue)))
 		]));
 var author$project$Page$SignUp$signUpUniversityViewGraduate = function (univAndGraduateSelect) {
 	var _n0 = univAndGraduateSelect;
@@ -13510,11 +13363,11 @@ var author$project$Main$view = function (_n0) {
 						return _List_Nil;
 					}
 				}())),
-		bj: 'つくマート'
+		bi: 'つくマート'
 	};
 };
 var elm$browser$Browser$application = _Browser_application;
 var author$project$Main$main = elm$browser$Browser$application(
-	{a5: author$project$Main$init, a9: author$project$Main$UrlChange, ba: author$project$Main$UrlRequest, bi: author$project$Main$subscription, bk: author$project$Main$update, bl: author$project$Main$view});
+	{a5: author$project$Main$init, a9: author$project$Main$UrlChange, ba: author$project$Main$UrlRequest, bh: author$project$Main$subscription, bj: author$project$Main$update, bk: author$project$Main$view});
 _Platform_export({'Main':{'init':author$project$Main$main(
 	elm$json$Json$Decode$succeed(0))(0)}});}(this));
