@@ -2952,7 +2952,7 @@ var _VirtualDom_mapEventTuple = F2(function(func, tuple)
 var _VirtualDom_mapEventRecord = F2(function(func, record)
 {
 	return {
-		n: func(record.n),
+		k: func(record.k),
 		af: record.af,
 		aa: record.aa
 	}
@@ -3222,7 +3222,7 @@ function _VirtualDom_makeCallback(eventNode, initialHandler)
 		// 3 = Custom
 
 		var value = result.a;
-		var message = !tag ? value : tag < 3 ? value.a : value.n;
+		var message = !tag ? value : tag < 3 ? value.a : value.k;
 		var stopPropagation = tag == 1 ? value.b : tag == 3 && value.af;
 		var currentEventNode = (
 			stopPropagation && event.stopPropagation(),
@@ -6141,7 +6141,7 @@ var elm$core$Basics$apL = F2(
 var elm$url$Url$Parser$Parser = elm$core$Basics$identity;
 var elm$url$Url$Parser$State = F5(
 	function (visited, unvisited, params, frag, value) {
-		return {q: frag, s: params, p: unvisited, l: value, t: visited};
+		return {q: frag, s: params, p: unvisited, m: value, t: visited};
 	});
 var elm$url$Url$Parser$s = function (str) {
 	return function (_n0) {
@@ -6149,7 +6149,7 @@ var elm$url$Url$Parser$s = function (str) {
 		var unvisited = _n0.p;
 		var params = _n0.s;
 		var frag = _n0.q;
-		var value = _n0.l;
+		var value = _n0.m;
 		if (!unvisited.b) {
 			return _List_Nil;
 		} else {
@@ -6168,7 +6168,7 @@ var elm$url$Url$Parser$s = function (str) {
 		}
 	};
 };
-var author$project$SiteMap$exhibitionGoodsParser = elm$url$Url$Parser$s('exhibition-item');
+var author$project$SiteMap$exhibitionGoodsParser = elm$url$Url$Parser$s('exhibition-goods');
 var author$project$SiteMap$exhibitionParser = elm$url$Url$Parser$s('exhibition');
 var elm$core$List$append = F2(
 	function (xs, ys) {
@@ -6204,7 +6204,7 @@ var elm$url$Url$Parser$custom = F2(
 			var unvisited = _n0.p;
 			var params = _n0.s;
 			var frag = _n0.q;
-			var value = _n0.l;
+			var value = _n0.m;
 			if (!unvisited.b) {
 				return _List_Nil;
 			} else {
@@ -6242,7 +6242,7 @@ var author$project$SiteMap$homeParser = elm$url$Url$Parser$top;
 var author$project$SiteMap$likeHistoryParser = elm$url$Url$Parser$s('like-history');
 var author$project$SiteMap$logInParser = elm$url$Url$Parser$s('login');
 var author$project$SiteMap$profileParser = elm$url$Url$Parser$s('profile');
-var author$project$SiteMap$purchaseGoodsParser = elm$url$Url$Parser$s('purchase-item');
+var author$project$SiteMap$purchaseGoodsParser = elm$url$Url$Parser$s('purchase-goods');
 var author$project$SiteMap$signUpParser = elm$url$Url$Parser$s('signup');
 var author$project$SiteMap$siteMapParser = elm$url$Url$Parser$s('sitemap');
 var elm$url$Url$Parser$mapState = F2(
@@ -6251,7 +6251,7 @@ var elm$url$Url$Parser$mapState = F2(
 		var unvisited = _n0.p;
 		var params = _n0.s;
 		var frag = _n0.q;
-		var value = _n0.l;
+		var value = _n0.m;
 		return A5(
 			elm$url$Url$Parser$State,
 			visited,
@@ -6268,7 +6268,7 @@ var elm$url$Url$Parser$map = F2(
 			var unvisited = _n1.p;
 			var params = _n1.s;
 			var frag = _n1.q;
-			var value = _n1.l;
+			var value = _n1.m;
 			return A2(
 				elm$core$List$map,
 				elm$url$Url$Parser$mapState(value),
@@ -6337,10 +6337,10 @@ var elm$url$Url$Parser$getFirstMatch = function (states) {
 			var rest = states.b;
 			var _n1 = state.p;
 			if (!_n1.b) {
-				return elm$core$Maybe$Just(state.l);
+				return elm$core$Maybe$Just(state.m);
 			} else {
 				if ((_n1.a === '') && (!_n1.b.b)) {
-					return elm$core$Maybe$Just(state.l);
+					return elm$core$Maybe$Just(state.m);
 				} else {
 					var $temp$states = rest;
 					states = $temp$states;
@@ -7196,7 +7196,7 @@ var author$project$Main$init = F3(
 				ax: key,
 				y: author$project$Main$LogInStateNone,
 				h: elm$core$Maybe$Just(0),
-				n: messageMaybe,
+				k: messageMaybe,
 				a: page
 			},
 			elm$core$Platform$Cmd$none);
@@ -8919,7 +8919,7 @@ var author$project$Main$update = F2(
 									return rec.h;
 								}
 							}(),
-							n: messageMaybe,
+							k: messageMaybe,
 							a: newPage
 						}),
 					elm$core$Platform$Cmd$none);
@@ -9026,7 +9026,7 @@ var author$project$Main$update = F2(
 									{
 										y: author$project$Main$LogInStateOk(
 											{ai: access, I: elm$core$Maybe$Nothing, ab: refresh}),
-										n: elm$core$Maybe$Just('ログインしました'),
+										k: elm$core$Maybe$Just('ログインしました'),
 										a: newPage
 									});
 							} else {
@@ -9035,7 +9035,7 @@ var author$project$Main$update = F2(
 									{
 										y: author$project$Main$LogInStateOk(
 											{ai: access, I: elm$core$Maybe$Nothing, ab: refresh}),
-										n: elm$core$Maybe$Just('ログインしました')
+										k: elm$core$Maybe$Just('ログインしました')
 									});
 							}
 						}(),
@@ -9052,7 +9052,7 @@ var author$project$Main$update = F2(
 								return _Utils_update(
 									rec,
 									{
-										n: elm$core$Maybe$Just(
+										k: elm$core$Maybe$Just(
 											author$project$Api$logInResponseErrorToString(logInResponseError)),
 										a: author$project$Main$PageLogIn(
 											_Utils_Tuple2(
@@ -9063,7 +9063,7 @@ var author$project$Main$update = F2(
 								return _Utils_update(
 									rec,
 									{
-										n: elm$core$Maybe$Just(
+										k: elm$core$Maybe$Just(
 											author$project$Api$logInResponseErrorToString(logInResponseError))
 									});
 							}
@@ -9090,7 +9090,7 @@ var author$project$Main$update = F2(
 							return _Utils_update(
 								rec,
 								{
-									n: elm$core$Maybe$Just('新規登録完了'),
+									k: elm$core$Maybe$Just('新規登録完了'),
 									a: author$project$Main$PageHome(1)
 								});
 						} else {
@@ -9286,25 +9286,36 @@ var author$project$Main$update = F2(
 				}
 			default:
 				var response = msg.a;
-				var _n28 = _Utils_Tuple2(response, rec.y);
-				if ((!_n28.a.$) && (!_n28.b.$)) {
-					var profile = _n28.a.a;
-					var r = _n28.b.a;
-					return _Utils_Tuple2(
-						_Utils_update(
-							rec,
-							{
-								y: author$project$Main$LogInStateOk(
-									_Utils_update(
-										r,
-										{
-											I: elm$core$Maybe$Just(profile)
-										}))
-							}),
-						elm$core$Platform$Cmd$none);
-				} else {
-					return _Utils_Tuple2(rec, elm$core$Platform$Cmd$none);
-				}
+				return _Utils_Tuple2(
+					function () {
+						var _n28 = _Utils_Tuple2(response, rec.y);
+						if (!_n28.b.$) {
+							if (!_n28.a.$) {
+								var profile = _n28.a.a;
+								var r = _n28.b.a;
+								return _Utils_update(
+									rec,
+									{
+										y: author$project$Main$LogInStateOk(
+											_Utils_update(
+												r,
+												{
+													I: elm$core$Maybe$Just(profile)
+												}))
+									});
+							} else {
+								return _Utils_update(
+									rec,
+									{
+										k: elm$core$Maybe$Just('プロフィール情報の取得に失敗しました')
+									});
+							}
+						} else {
+							var _n29 = _n28.b;
+							return rec;
+						}
+					}(),
+					elm$core$Platform$Cmd$none);
 		}
 	});
 var elm$svg$Svg$Attributes$fill = _VirtualDom_attribute('fill');
@@ -10934,6 +10945,24 @@ var author$project$Data$Profile$getUniversity = function (_n0) {
 	var university = _n0.ah;
 	return university;
 };
+var author$project$Page$Profile$introductionView = function (introduction) {
+	return A2(
+		elm$html$Html$div,
+		_List_Nil,
+		_List_fromArray(
+			[
+				elm$html$Html$text('紹介文:' + introduction)
+			]));
+};
+var author$project$Page$Profile$nickNameView = function (nickName) {
+	return A2(
+		elm$html$Html$div,
+		_List_Nil,
+		_List_fromArray(
+			[
+				elm$html$Html$text('表示名:' + nickName)
+			]));
+};
 var author$project$Data$University$departmentToJapaneseString = function (schoolAndDepartment) {
 	switch (schoolAndDepartment) {
 		case 0:
@@ -11127,82 +11156,107 @@ var author$project$Data$University$universityToJapaneseString = function (univer
 			};
 	}
 };
+var author$project$Page$Profile$universityView = function (university) {
+	var _n0 = author$project$Data$University$universityToJapaneseString(university);
+	var graduate = _n0.R;
+	var school = _n0.ac;
+	var department = _n0.P;
+	return _Utils_ap(
+		function () {
+			if (!graduate.$) {
+				var g = graduate.a;
+				return _List_fromArray(
+					[
+						A2(
+						elm$html$Html$div,
+						_List_Nil,
+						_List_fromArray(
+							[
+								elm$html$Html$text('研究科:' + g)
+							]))
+					]);
+			} else {
+				return _List_Nil;
+			}
+		}(),
+		_Utils_ap(
+			function () {
+				if (!school.$) {
+					var s = school.a;
+					return _List_fromArray(
+						[
+							A2(
+							elm$html$Html$div,
+							_List_Nil,
+							_List_fromArray(
+								[
+									elm$html$Html$text('学群:' + s)
+								]))
+						]);
+				} else {
+					return _List_Nil;
+				}
+			}(),
+			function () {
+				if (!department.$) {
+					var d = department.a;
+					return _List_fromArray(
+						[
+							A2(
+							elm$html$Html$div,
+							_List_Nil,
+							_List_fromArray(
+								[
+									elm$html$Html$text('学類:' + d)
+								]))
+						]);
+				} else {
+					return _List_Nil;
+				}
+			}()));
+};
 var author$project$Page$Profile$view = F2(
 	function (profileMaybe, model) {
 		return _Utils_Tuple2(
 			author$project$Tab$Single('プロフィール'),
-			function () {
-				if (!profileMaybe.$) {
-					var profile = profileMaybe.a;
-					return _List_fromArray(
+			_List_fromArray(
+				[
+					A2(
+					elm$html$Html$div,
+					_List_fromArray(
+						[
+							elm$html$Html$Attributes$class('profile-container')
+						]),
+					_List_fromArray(
 						[
 							A2(
 							elm$html$Html$div,
-							_List_Nil,
 							_List_fromArray(
 								[
-									elm$html$Html$text(
-									'表示名:' + author$project$Data$Profile$getNickName(profile))
-								])),
-							A2(
-							elm$html$Html$div,
-							_List_Nil,
-							_List_fromArray(
-								[
-									elm$html$Html$text(
-									'紹介文:' + author$project$Data$Profile$getIntroduction(profile))
-								])),
-							A2(
-							elm$html$Html$div,
-							_List_Nil,
-							_List_fromArray(
-								[
-									elm$html$Html$text(
-									function () {
-										var _n1 = author$project$Data$University$universityToJapaneseString(
-											author$project$Data$Profile$getUniversity(profile));
-										var graduate = _n1.R;
-										var school = _n1.ac;
-										var department = _n1.P;
-										return _Utils_ap(
-											A2(
-												elm$core$Maybe$withDefault,
-												'',
-												A2(
-													elm$core$Maybe$map,
-													function (g) {
-														return '研究科:' + g;
-													},
-													graduate)),
-											_Utils_ap(
-												A2(
-													elm$core$Maybe$withDefault,
-													'',
-													A2(
-														elm$core$Maybe$map,
-														function (s) {
-															return '学群:' + s;
-														},
-														school)),
-												A2(
-													elm$core$Maybe$withDefault,
-													'',
-													A2(
-														elm$core$Maybe$map,
-														function (d) {
-															return '学類:' + d;
-														},
-														department))));
-									}())
-								]))
-						]);
-				} else {
-					return _List_fromArray(
-						[
-							elm$html$Html$text('プロフィールがまだ読み込まれていません')
-						]);
-				}
-			}());
+									elm$html$Html$Attributes$class('profile')
+								]),
+							function () {
+								if (!profileMaybe.$) {
+									var profile = profileMaybe.a;
+									return _Utils_ap(
+										_List_fromArray(
+											[
+												author$project$Page$Profile$nickNameView(
+												author$project$Data$Profile$getNickName(profile)),
+												author$project$Page$Profile$introductionView(
+												author$project$Data$Profile$getIntroduction(profile))
+											]),
+										author$project$Page$Profile$universityView(
+											author$project$Data$Profile$getUniversity(profile)));
+								} else {
+									return _List_fromArray(
+										[
+											elm$html$Html$text('プロフィールがまだ読み込まれていません')
+										]);
+								}
+							}())
+						]))
+				]));
 	});
 var author$project$Page$SignUp$EmitChangePage = function (a) {
 	return {$: 0, a: a};
@@ -13240,7 +13294,7 @@ var author$project$Main$mainViewAndMainTab = F3(
 	});
 var author$project$Main$CloseMenu = {$: 2};
 var author$project$SiteMap$logInUrl = '/login';
-var author$project$SiteMap$profileUrl = 'profile';
+var author$project$SiteMap$profileUrl = '/profile';
 var author$project$Main$menuAccount = function (logInState) {
 	if (!logInState.$) {
 		var profile = logInState.a.I;
@@ -13249,15 +13303,24 @@ var author$project$Main$menuAccount = function (logInState) {
 			_List_fromArray(
 				[
 					elm$html$Html$Attributes$class('menu-account'),
+					elm$html$Html$Attributes$class('menu-account-a'),
 					elm$html$Html$Attributes$href(author$project$SiteMap$profileUrl)
 				]),
 			_List_fromArray(
 				[
 					A2(
-					elm$html$Html$div,
+					elm$html$Html$img,
 					_List_fromArray(
 						[
-							elm$html$Html$Attributes$class('menu-noLogin')
+							elm$html$Html$Attributes$class('menu-account-a-icon'),
+							elm$html$Html$Attributes$src('/assets/accountImage.png')
+						]),
+					_List_Nil),
+					A2(
+					elm$html$Html$span,
+					_List_fromArray(
+						[
+							elm$html$Html$Attributes$class('menu-account-a-name')
 						]),
 					_List_fromArray(
 						[
@@ -13321,9 +13384,9 @@ var author$project$Main$menuAccount = function (logInState) {
 				]));
 	}
 };
-var author$project$SiteMap$exhibitionGoodsUrl = '/exhibition-item';
+var author$project$SiteMap$exhibitionGoodsUrl = '/exhibition-goods';
 var author$project$SiteMap$likeHistoryUrl = '/like-history';
-var author$project$SiteMap$purchaseGoodsUrl = '/purchase-item';
+var author$project$SiteMap$purchaseGoodsUrl = '/purchase-goods';
 var author$project$Main$menuMain = function (logInState) {
 	return _List_fromArray(
 		[
@@ -13458,10 +13521,39 @@ var author$project$Main$messageView = function (message) {
 				elm$html$Html$text(message)
 			]));
 };
+var author$project$Main$title = function (page) {
+	return function () {
+		switch (page.$) {
+			case 0:
+				var homePage = page.a;
+				return '';
+			case 1:
+				var model = page.a;
+				return '新規登録 | ';
+			case 2:
+				return 'ログイン | ';
+			case 3:
+				return 'いいね・閲覧した商品 | ';
+			case 4:
+				return '出品した商品 | ';
+			case 5:
+				return '購入した商品 | ';
+			case 6:
+				return '出品 | ';
+			case 7:
+				var goods = page.a;
+				return author$project$Data$Goods$getName(goods) + ' | ';
+			case 8:
+				return 'ユーザーページ | ';
+			default:
+				return 'sitemap.xml | ';
+		}
+	}() + 'つくマート';
+};
 var author$project$Main$view = function (_n0) {
 	var page = _n0.a;
 	var menuState = _n0.h;
-	var message = _n0.n;
+	var message = _n0.k;
 	var logInState = _n0.y;
 	var isWideScreen = _Utils_eq(menuState, elm$core$Maybe$Nothing);
 	return {
@@ -13484,7 +13576,7 @@ var author$project$Main$view = function (_n0) {
 						return _List_Nil;
 					}
 				}())),
-		bl: 'つくマート'
+		bl: author$project$Main$title(page)
 	};
 };
 var elm$browser$Browser$application = _Browser_application;

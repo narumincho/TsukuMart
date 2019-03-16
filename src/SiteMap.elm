@@ -67,22 +67,22 @@ likeHistoryUrl =
 
 exhibitionGoodsParser : Url.Parser.Parser a a
 exhibitionGoodsParser =
-    Url.Parser.s "exhibition-item"
+    Url.Parser.s "exhibition-goods"
 
 
 exhibitionGoodsUrl : String
 exhibitionGoodsUrl =
-    "/exhibition-item"
+    "/exhibition-goods"
 
 
 purchaseGoodsParser : Url.Parser.Parser a a
 purchaseGoodsParser =
-    Url.Parser.s "purchase-item"
+    Url.Parser.s "purchase-goods"
 
 
 purchaseGoodsUrl : String
 purchaseGoodsUrl =
-    "/purchase-item"
+    "/purchase-goods"
 
 
 exhibitionParser : Url.Parser.Parser a a
@@ -112,7 +112,7 @@ profileParser =
 
 profileUrl : String
 profileUrl =
-    "profile"
+    "/profile"
 
 
 siteMapParser : Url.Parser.Parser a a

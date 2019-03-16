@@ -197,6 +197,28 @@ h1:hover {
     text-decoration: none;
 }
 
+.menu-account-a {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.menu-account-a-icon {
+    width: 3rem;
+    height: 3rem;
+}
+
+.menu-account-a:hover {
+    background-color: rgba(0, 0, 0, 0.4);
+}
+
+.menu-account-a-name {
+    font-size: 1rem;
+    color: #ddd;
+    padding: 0 0 0 1rem;
+    user-select: none;
+}
+
 .menu-noLogin {
     text-align: center;
     font-size: 1rem;
@@ -379,6 +401,10 @@ img {
     align-items: center;
 }
 
+.exhibitButton:hover {
+    background-color: rgba(0, 0, 0, 0.4);
+}
+
 /*===============================
         Exhibition 出品画面
 ===============================*/
@@ -470,6 +496,7 @@ img {
 /*===============================================
                 Goods 商品詳細画面
 ===============================================*/
+
 .goods-container {
     display: flex;
     justify-content: center;
@@ -522,6 +549,7 @@ img {
     background-color: var(--primaryColor);
     color: white;
 }
+
 .goods-priceAndBuyButton-wide {
     width: calc(100% - 20rem);
 }
@@ -746,6 +774,25 @@ img {
 
 .signUp-resultMsg {
     padding: 1rem;
+}
+
+/*===============================================
+            Profile ユーザーページ画面
+===============================================*/
+
+.profile-container {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+.profile {
+    display: grid;
+    max-width: 40rem;
+    gap: 1rem;
+    padding: 1.5rem;
+    box-sizing: border-box;
+    width: 100%;
 }
 
 /*===============================================

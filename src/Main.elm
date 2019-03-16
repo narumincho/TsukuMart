@@ -488,12 +488,17 @@ update msg (Model rec) =
                     )
 
         GetUserProfileResponse response ->
-            case ( response, rec.logInState ) of
+            ( case ( response, rec.logInState ) of
                 ( Ok profile, LogInStateOk r ) ->
-                    ( Model { rec | logInState = LogInStateOk { r | profile = Just profile } }, Cmd.none )
+                    Model { rec | logInState = LogInStateOk { r | profile = Just profile } }
 
-                ( _, _ ) ->
-                    ( Model rec, Cmd.none )
+                ( Err (), LogInStateOk _ ) ->
+                    Model { rec | message = Just "プロフィール情報の取得に失敗しました" }
+
+                ( _, LogInStateNone ) ->
+                    Model rec
+            , Cmd.none
+            )
 
 
 urlToPage : Url.Url -> Maybe Page -> ( Page, Maybe String )
@@ -537,7 +542,8 @@ view (Model { page, menuState, message, logInState }) =
         isWideScreen =
             menuState == Nothing
     in
-    { title = "つくマート"
+    { title =
+        title page
     , body =
         [ header isWideScreen
         , menuView logInState menuState
@@ -551,6 +557,42 @@ view (Model { page, menuState, message, logInState }) =
                         []
                )
     }
+
+
+title : Page -> String
+title page =
+    (case page of
+        PageHome homePage ->
+            ""
+
+        PageSignUp model ->
+            "新規登録 | "
+
+        PageLogIn _ ->
+            "ログイン | "
+
+        PageLikeAndHistory _ ->
+            "いいね・閲覧した商品 | "
+
+        PageExhibitionGoodsList ->
+            "出品した商品 | "
+
+        PagePurchaseGoodsList ->
+            "購入した商品 | "
+
+        PageExhibition _ ->
+            "出品 | "
+
+        PageGoods goods ->
+            Data.Goods.getName goods ++ " | "
+
+        PageProfile _ ->
+            "ユーザーページ | "
+
+        PageSiteMapXml ->
+            "sitemap.xml | "
+    )
+        ++ "つくマート"
 
 
 
@@ -911,11 +953,16 @@ menuAccount logInState =
         LogInStateOk { profile } ->
             Html.a
                 [ Html.Attributes.class "menu-account"
+                , Html.Attributes.class "menu-account-a"
                 , Html.Attributes.href SiteMap.profileUrl
                 ]
-                [ Html.div
-                    [ Html.Attributes.class "menu-noLogin"
+                [ Html.img
+                    [ Html.Attributes.class "menu-account-a-icon"
+                    , Html.Attributes.src "/assets/accountImage.png"
                     ]
+                    []
+                , Html.span
+                    [ Html.Attributes.class "menu-account-a-name" ]
                     [ Html.text (profile |> Maybe.map Data.Profile.getNickName |> Maybe.withDefault "ログイン済み") ]
                 ]
 
