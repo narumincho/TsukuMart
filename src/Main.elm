@@ -25,15 +25,15 @@ import Url.Parser
 
 {-
    # Elmのコンパイル
-   Set-Location D:/tsukumart | elm make src/Main.elm --output main.js --optimize | uglifyjs main.js -o hosting_root/main.js
+   Set-Location D:/tsukumart ; elm make src/Main.elm --output main.js --optimize ; uglifyjs main.js -o hosting_root/main.js ; Remove-Item main.js
 
    # CSSのコンパイル
-   Set-Location D:/tsukumart | cleancss style.css -o hosting_root/style.css
+   Set-Location D:/tsukumart ; cleancss style.css -o hosting_root/style.css
 
    # 実行確認
    Windows PowerSellを起動して
 
-   Set-Location D:/tsukumart | firebase deploy --project tsukumart-demo
+   Set-Location D:/tsukumart ; firebase deploy --project tsukumart-demo
 
    を入力する
 
@@ -132,7 +132,13 @@ type Msg
     | DeleteAllUser
     | DeleteAllUserResponse (Result () ())
     | GetUserProfileResponse (Result () Data.Profile.Profile)
-    | ToConfirmPage
+    | ToConfirmPage Api.SellGoodsRequest
+    | InputGoodsName String
+    | InputGoodsDescription String
+    | InputGoodsPrice String
+    | InputCondition (Maybe Data.Goods.Condition)
+    | SellGoods Api.SellGoodsRequest
+    | SellGoodsResponse (Result () ())
 
 
 main : Program () Model Msg
@@ -508,20 +514,97 @@ update msg (Model rec) =
             , Cmd.none
             )
 
-        ToConfirmPage ->
+        ToConfirmPage request ->
             case rec.page of
                 PageExhibition pageModel ->
                     ( Model
                         { rec
                             | page =
                                 PageExhibition
-                                    (Page.Exhibition.update Page.Exhibition.ToConfirmPage pageModel)
+                                    (Page.Exhibition.update (Page.Exhibition.ToConfirmPage request) pageModel)
                         }
                     , Cmd.none
                     )
 
                 _ ->
                     ( Model rec, Cmd.none )
+
+        InputGoodsName name ->
+            ( case rec.page of
+                PageExhibition pageModel ->
+                    Model
+                        { rec
+                            | page =
+                                PageExhibition
+                                    (Page.Exhibition.update (Page.Exhibition.InputGoodsName name) pageModel)
+                        }
+
+                _ ->
+                    Model rec
+            , Cmd.none
+            )
+
+        InputGoodsDescription description ->
+            ( case rec.page of
+                PageExhibition pageModel ->
+                    Model
+                        { rec
+                            | page =
+                                PageExhibition
+                                    (Page.Exhibition.update (Page.Exhibition.InputGoodsDescription description) pageModel)
+                        }
+
+                _ ->
+                    Model rec
+            , Cmd.none
+            )
+
+        InputGoodsPrice string ->
+            ( case rec.page of
+                PageExhibition pageModel ->
+                    Model
+                        { rec
+                            | page =
+                                PageExhibition
+                                    (Page.Exhibition.update (Page.Exhibition.InputGoodsPrice string) pageModel)
+                        }
+
+                _ ->
+                    Model rec
+            , Cmd.none
+            )
+
+        InputCondition maybe ->
+            ( case rec.page of
+                PageExhibition pageModel ->
+                    Model
+                        { rec
+                            | page =
+                                PageExhibition
+                                    (Page.Exhibition.update (Page.Exhibition.InputCondition maybe) pageModel)
+                        }
+
+                _ ->
+                    Model rec
+            , Cmd.none
+            )
+
+        SellGoods request ->
+            case rec.logInState of
+                LogInStateOk { access } ->
+                    ( Model rec
+                    , Api.sellGoods access request SellGoodsResponse
+                    )
+
+                LogInStateNone ->
+                    ( Model rec
+                    , Cmd.none
+                    )
+
+        SellGoodsResponse _ ->
+            ( Model rec
+            , Cmd.none
+            )
 
 
 urlToPage : Url.Url -> Maybe Page -> ( Page, Maybe String )
@@ -1147,8 +1230,23 @@ exhibitionPageEmitToMsg emit =
         Page.Exhibition.EmitInputExhibitionImage string ->
             InputExhibitionImage string
 
-        Page.Exhibition.EmitToConfirmPage ->
-            ToConfirmPage
+        Page.Exhibition.EmitToConfirmPage request ->
+            ToConfirmPage request
+
+        Page.Exhibition.EmitInputGoodsName string ->
+            InputGoodsName string
+
+        Page.Exhibition.EmitInputGoodsDescription string ->
+            InputGoodsDescription string
+
+        Page.Exhibition.EmitInputGoodsPrice string ->
+            InputGoodsPrice string
+
+        Page.Exhibition.EmitInputCondition maybe ->
+            InputCondition maybe
+
+        Page.Exhibition.EmitSellGoods sellGoodsRequest ->
+            SellGoods sellGoodsRequest
 
 
 homeView : Bool -> HomePage -> ( Tab.Tab HomePage, List (Html.Html Msg) )
@@ -1192,7 +1290,7 @@ likeAndHistoryView isWideScreenMode likeAndHistory =
 exhibitButton : Html.Html Msg
 exhibitButton =
     Html.a
-        [ Html.Attributes.class "exhibitButton"
+        [ Html.Attributes.class "exhibitionButton"
         , Html.Attributes.href SiteMap.exhibitionUrl
         ]
         [ Html.text "出品" ]

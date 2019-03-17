@@ -3,6 +3,7 @@ module Api exposing
     , LogInRequest
     , LogInResponseError
     , LogInResponseOk(..)
+    , SellGoodsRequest(..)
     , SignUpConfirmRequest
     , SignUpConfirmResponseError(..)
     , SignUpConfirmResponseOk
@@ -14,11 +15,13 @@ module Api exposing
     , getUserProfile
     , logIn
     , logInResponseErrorToString
+    , sellGoods
     , signUp
     , signUpConfirm
     )
 
 import Data.EmailAddress as EmailAddress
+import Data.Goods as Goods
 import Data.Password as Password
 import Data.Profile as Profile
 import Data.University as University
@@ -410,6 +413,57 @@ tokenRefreshBodyStringDecoder =
             (\access ->
                 Ok (TokenRefreshResponseOk { access = access })
             )
+
+
+
+{- ==================================================================
+        出品     POST /{version}/currentuser/goods/
+   ==================================================================
+-}
+
+
+type SellGoodsRequest
+    = SellGoodsRequest
+        { name : String
+        , description : String
+        , price : Int
+        , condition : Goods.Condition
+        }
+
+
+sellGoods : Token -> SellGoodsRequest -> (Result () () -> msg) -> Cmd msg
+sellGoods token createGoodsRequest msg =
+    Http.request
+        { method = "POST"
+        , headers = [ tokenToHeader token ]
+        , url = "https://api.tsukumart.com/v1/currentuser/goods/"
+        , body = Http.jsonBody (createGoodsRequestJsonBody createGoodsRequest)
+        , expect = Http.expectStringResponse msg createGoodsResponseToResult
+        , timeout = Nothing
+        , tracker = Nothing
+        }
+
+
+createGoodsRequestJsonBody : SellGoodsRequest -> Json.Encode.Value
+createGoodsRequestJsonBody (SellGoodsRequest { name, description, price, condition }) =
+    Json.Encode.object
+        [ ( "name", Json.Encode.string name )
+        , ( "description", Json.Encode.string description )
+        , ( "price", Json.Encode.int price )
+        , ( "condition", Json.Encode.string (Goods.conditionToIdString condition) )
+        , ( "location", Json.Encode.string "場所の指定はなし" )
+        , ( "status", Json.Encode.string "selling" )
+        ]
+
+
+createGoodsResponseToResult : Http.Response String -> Result () ()
+createGoodsResponseToResult response =
+    case response of
+        Http.GoodStatus_ _ _ ->
+            Ok ()
+
+        _ ->
+            Err ()
 
 
 

@@ -172,26 +172,7 @@ goodsViewCondition condition =
             [ Html.text "商品の状態" ]
         , Html.div
             [ Html.Attributes.class "goods-condition" ]
-            [ Html.text
-                (case condition of
-                    Goods.New ->
-                        "新品・未使用"
-
-                    Goods.LikeNew ->
-                        "ほぼ未使用"
-
-                    Goods.VeryGood ->
-                        "目立った傷や汚れなし"
-
-                    Goods.Good ->
-                        "多少の傷や汚れあり"
-
-                    Goods.Acceptable ->
-                        "目立つ傷や汚れあり"
-
-                    Goods.Junk ->
-                        "状態が悪い・ジャンク"
-                )
+            [ Html.text (Goods.conditionToJapaneseString condition)
             ]
         ]
 

@@ -385,7 +385,7 @@ img {
         Exhibit Button
 ===========================*/
 
-.exhibitButton {
+.exhibitionButton {
     position: fixed;
     bottom: 3rem;
     right: 1rem;
@@ -401,8 +401,8 @@ img {
     align-items: center;
 }
 
-.exhibitButton:hover {
-    background-color: rgba(255, 165, 0, 0.4);
+.exhibitionButton:hover {
+    background-color: rgb(200, 145, 0);
 }
 
 /*===============================

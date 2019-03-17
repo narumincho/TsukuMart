@@ -2,6 +2,9 @@ module Data.Goods exposing
     ( Condition(..)
     , Goods
     , Location
+    , conditionAll
+    , conditionToIdString
+    , conditionToJapaneseString
     , getComplete
     , getCondition
     , getDescription
@@ -38,6 +41,61 @@ type Condition
     | Good
     | Acceptable
     | Junk
+
+
+conditionAll : List Condition
+conditionAll =
+    [ New
+    , LikeNew
+    , VeryGood
+    , Good
+    , Acceptable
+    , Junk
+    ]
+
+
+conditionToJapaneseString : Condition -> String
+conditionToJapaneseString condition =
+    case condition of
+        New ->
+            "新品・未使用"
+
+        LikeNew ->
+            "ほぼ未使用"
+
+        VeryGood ->
+            "目立った傷や汚れなし"
+
+        Good ->
+            "多少の傷や汚れあり"
+
+        Acceptable ->
+            "目立つ傷や汚れあり"
+
+        Junk ->
+            "状態が悪い・ジャンク"
+
+
+conditionToIdString : Condition -> String
+conditionToIdString condition =
+    case condition of
+        New ->
+            "New"
+
+        LikeNew ->
+            "Like New"
+
+        VeryGood ->
+            "Very Good"
+
+        Good ->
+            "Good"
+
+        Acceptable ->
+            "Acceptable"
+
+        Junk ->
+            "Junk"
 
 
 type alias Location =
