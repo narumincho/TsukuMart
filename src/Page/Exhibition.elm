@@ -115,14 +115,15 @@ view model =
                     [ Html.Attributes.class "exhibition-container" ]
                     [ Html.div
                         [ Html.Attributes.class "exhibition" ]
-                        [ photoAdd
-                        , photoCardList rec.image
-                        , descriptionView
-                        , priceView rec.price
-                        , conditionView
-                            |> Html.map EmitInputCondition
-                        , toConformPageButton (editPageToSellGoodsRequest rec)
-                        ]
+                        (photoAdd
+                            ++ [ photoCardList rec.image
+                               , descriptionView
+                               , priceView rec.price
+                               , conditionView
+                                    |> Html.map EmitInputCondition
+                               , toConformPageButton (editPageToSellGoodsRequest rec)
+                               ]
+                        )
                     ]
               ]
             )
@@ -136,30 +137,28 @@ view model =
             )
 
 
-photoAdd : Html.Html Emit
+photoAdd : List (Html.Html Emit)
 photoAdd =
-    Html.div
-        []
-        [ Html.label
-            [ Html.Attributes.for "exhibition-photo-input"
-            , Html.Attributes.class "exhibition-photo-add"
-            ]
-            [ Html.img
-                [ Html.Attributes.src "/assets/add_a_photo.svg"
-                , Html.Attributes.class "exhibition-photo-addIcon"
-                ]
-                []
-            ]
-        , Html.input
-            [ Html.Attributes.class "exhibition-photo-input"
-            , Html.Attributes.id "exhibition-photo-input"
-            , Html.Attributes.type_ "file"
-            , Html.Attributes.multiple True
-            , Html.Attributes.accept "image/png,image/jpeg"
-            , Html.Events.on "change" (Json.Decode.succeed (EmitInputImageList "exhibition-photo-input"))
+    [ Html.label
+        [ Html.Attributes.for "exhibition-photo-input"
+        , Html.Attributes.class "exhibition-photo-add"
+        ]
+        [ Html.img
+            [ Html.Attributes.src "/assets/add_a_photo.svg"
+            , Html.Attributes.class "exhibition-photo-addIcon"
             ]
             []
         ]
+    , Html.input
+        [ Html.Attributes.class "exhibition-photo-input"
+        , Html.Attributes.id "exhibition-photo-input"
+        , Html.Attributes.type_ "file"
+        , Html.Attributes.multiple True
+        , Html.Attributes.accept "image/png,image/jpeg"
+        , Html.Events.on "change" (Json.Decode.succeed (EmitInputImageList "exhibition-photo-input"))
+        ]
+        []
+    ]
 
 
 photoCardList : List String -> Html.Html Emit

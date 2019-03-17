@@ -424,23 +424,17 @@ img {
     font-size: 1.5rem;
 }
 
-/* .exhibition-photo {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-} */
-
 .exhibition-photo-add {
     width: 100%;
     display: flex;
     justify-content: center;
     background-color: gray;
+    cursor: pointer;
 }
 
 .exhibition-photo-addIcon {
     width: 7rem;
     height: 7rem;
-    cursor: pointer;
 }
 
 .exhibition-photo-input {
