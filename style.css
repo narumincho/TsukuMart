@@ -381,10 +381,6 @@ img {
     display: block;
 }
 
-/*===========================
-        Exhibit Button
-===========================*/
-
 .exhibitionButton {
     position: fixed;
     bottom: 3rem;
@@ -408,8 +404,26 @@ img {
 /*===============================
         Exhibition 出品画面
 ===============================*/
+.exhibition-container {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
 
-.exhibitionView-photo {
+.exhibition {
+    display: grid;
+    max-width: 40rem;
+    gap: 1rem;
+    padding: 1.5rem;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.exhibition-label {
+    font-size: 1.5rem;
+}
+
+.exhibition-photo {
     width: 100%;
     background-color: gray;
     display: flex;
@@ -418,41 +432,34 @@ img {
     overflow-x: auto;
 }
 
-.exhibitionView-photo-input {
+.exhibition-photo-input {
     min-width: 10rem;
 }
 
-.exhibitionView-photo-icon {
+.exhibition-photo-icon {
     width: 3rem;
     height: 3rem;
 }
 
-.exhibitionView-photo-image {
+.exhibition-photo-image {
     width: 10rem;
     height: 10rem;
     object-fit: contain;
 }
 
-.exhibitionView-itemTitleAndDescription {
-    padding: 1rem;
-    display: grid;
-    align-content: flex-start;
-    grid-gap: 1rem;
-}
-
-.exhibitionView-itemTitle {
+.exhibition-itemTitle {
     width: 100%;
     font-size: 2rem;
     border: none;
     border-bottom: #aaa 2px solid;
 }
 
-.exhibitionView-itemTitle:focus {
+.exhibition-itemTitle:focus {
     border-bottom: var(--primaryColor) 2px solid;
     outline: none;
 }
 
-.exhibitionView-itemDescription {
+.exhibition-itemDescription {
     width: 100%;
     height: 6rem;
     font-size: 1.3rem;
@@ -462,35 +469,48 @@ img {
     border-bottom: #aaa 2px solid;
 }
 
-.exhibitionView-itemDescription:focus {
+.exhibition-itemDescription:focus {
     border-bottom: var(--primaryColor) 2px solid;
     outline: none;
 }
 
-.exhibitionView-itemPrice {
+.exhibition-itemPrice {
     padding: 1rem;
     display: grid;
     align-content: flex-start;
     grid-gap: 1rem;
 }
 
-.exhibitionView-itemPrice-input {
+.exhibition-itemPrice-input {
     display: flex;
-    width: auto;
+    align-items: baseline;
 }
 
-.exhibitionView-itemPrice-input-input {
+.exhibition-itemPrice-input-input {
     flex-grow: 1;
     text-align: right;
-    font-size: 2.3rem;
-    width: 4rem;
+    font-size: 2rem;
     border: none;
     border-bottom: #aaa 2px solid;
 }
 
-.exhibitionView-itemPrice-input-input:focus {
+.exhibition-itemPrice-input-input:focus {
     border-bottom: var(--primaryColor) 2px solid;
     outline: none;
+}
+
+.exhibition-itemPrice-yen {
+    font-size: 1.5rem;
+}
+
+.exhibition-condition {
+    display: block;
+    width: 100%;
+    height: 4rem;
+    border: solid 2px #000;
+    box-sizing: border-box;
+    border-radius: .4rem;
+    font-size: 1.5rem;
 }
 
 /*===============================================

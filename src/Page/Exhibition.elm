@@ -11,7 +11,7 @@ import Tab
 
 
 type Model
-    = Model
+    = EditPage
         { name : String
         , description : String
         , price : Maybe Int
@@ -44,7 +44,7 @@ type Msg
 
 initModel : Model
 initModel =
-    Model
+    EditPage
         { name = ""
         , description = ""
         , price = Nothing
@@ -56,10 +56,10 @@ initModel =
 update : Msg -> Model -> Model
 update msg model =
     case model of
-        Model rec ->
+        EditPage rec ->
             case msg of
                 InputExhibitionImage dataUrlList ->
-                    Model
+                    EditPage
                         { rec
                             | image = dataUrlList
                         }
@@ -68,25 +68,25 @@ update msg model =
                     ConfirmPage { request = request }
 
                 InputGoodsName name ->
-                    Model
+                    EditPage
                         { rec
                             | name = name
                         }
 
                 InputGoodsDescription description ->
-                    Model
+                    EditPage
                         { rec
                             | description = description
                         }
 
                 InputGoodsPrice priceString ->
-                    Model
+                    EditPage
                         { rec
                             | price = String.toInt priceString
                         }
 
                 InputCondition condition ->
-                    Model
+                    EditPage
                         { rec
                             | condition = condition
                         }
@@ -98,16 +98,20 @@ update msg model =
 view : Model -> ( Tab.Tab Never, List (Html.Html Emit) )
 view model =
     case model of
-        Model rec ->
+        EditPage rec ->
             ( Tab.Single "商品の情報を入力"
             , [ Html.div
-                    [ Html.Attributes.class "exhibitionView" ]
-                    [ photoView rec.image
-                    , titleAndDescriptionView
-                    , priceView rec.price
-                    , toConformPageButton (editPageToSellGoodsRequest rec)
-                    , conditionView
-                        |> Html.map EmitInputCondition
+                    [ Html.Attributes.class "exhibition-container" ]
+                    [ Html.div
+                        [ Html.Attributes.class "exhibition" ]
+                        [ photoView rec.image
+                        , nameView
+                        , descriptionView
+                        , priceView rec.price
+                        , conditionView
+                            |> Html.map EmitInputCondition
+                        , toConformPageButton (editPageToSellGoodsRequest rec)
+                        ]
                     ]
               ]
             )
@@ -124,15 +128,17 @@ view model =
 photoView : List String -> Html.Html Emit
 photoView imageUrlList =
     Html.div
-        [ Html.Attributes.class "exhibitionView-photo" ]
-        ([ Html.label [] [ Html.text "ラベル" ]
+        [ Html.Attributes.class "exhibition-photo" ]
+        ([ Html.label
+            []
+            [ Html.text "ラベル" ]
          , Html.input
-            [ Html.Attributes.class "exhibitionView-photo-input"
-            , Html.Attributes.id "exhibitionView-photo-input"
+            [ Html.Attributes.class "exhibition-photo-input"
+            , Html.Attributes.id "exhibition-photo-input"
             , Html.Attributes.type_ "file"
             , Html.Attributes.multiple True
             , Html.Attributes.accept "image/png,image/jpeg"
-            , Html.Events.on "change" (Json.Decode.succeed (EmitInputExhibitionImage "exhibitionView-photo-input"))
+            , Html.Events.on "change" (Json.Decode.succeed (EmitInputExhibitionImage "exhibition-photo-input"))
             ]
             []
          ]
@@ -143,7 +149,7 @@ photoView imageUrlList =
                                 (\imageUrl ->
                                     Html.img
                                         [ Html.Attributes.src imageUrl
-                                        , Html.Attributes.class "exhibitionView-photo-image"
+                                        , Html.Attributes.class "exhibition-photo-image"
                                         ]
                                         []
                                 )
@@ -151,7 +157,7 @@ photoView imageUrlList =
                     [] ->
                         [ Html.img
                             [ Html.Attributes.src "/assets/add_a_photo.svg"
-                            , Html.Attributes.class "exhibitionView-photo-icon"
+                            , Html.Attributes.class "exhibition-photo-icon"
                             ]
                             []
                         ]
@@ -159,21 +165,38 @@ photoView imageUrlList =
         )
 
 
-titleAndDescriptionView : Html.Html Emit
-titleAndDescriptionView =
+nameView : Html.Html Emit
+nameView =
     Html.div
-        [ Html.Attributes.class "exhibitionView-itemTitleAndDescription" ]
-        [ Html.h2 [] [ Html.text "商品名と説明" ]
+        []
+        [ Html.label
+            [ Html.Attributes.for "exhibition-name"
+            , Html.Attributes.class "exhibition-label"
+            ]
+            [ Html.text "商品名" ]
         , Html.input
-            [ Html.Attributes.placeholder "商品名(40文字まで)"
-            , Html.Attributes.class "exhibitionView-itemTitle"
+            [ Html.Attributes.placeholder "40文字まで"
+            , Html.Attributes.class "exhibition-itemTitle"
+            , Html.Attributes.id "exhibition-name"
             , Html.Attributes.maxlength 40
             , Html.Events.onInput EmitInputGoodsName
             ]
             []
+        ]
+
+
+descriptionView : Html.Html Emit
+descriptionView =
+    Html.div
+        []
+        [ Html.label
+            [ Html.Attributes.for "exhibition-description"
+            , Html.Attributes.class "exhibition-label"
+            ]
+            [ Html.text "商品の説明" ]
         , Html.textarea
-            [ Html.Attributes.placeholder "商品の説明"
-            , Html.Attributes.class "exhibitionView-itemDescription"
+            [ Html.Attributes.class "exhibition-itemDescription"
+            , Html.Attributes.id "exhibition-description"
             , Html.Events.onInput EmitInputGoodsDescription
             ]
             []
@@ -183,17 +206,28 @@ titleAndDescriptionView =
 priceView : Maybe Int -> Html.Html Emit
 priceView price =
     Html.div
-        [ Html.Attributes.class "exhibitionView-itemPrice" ]
-        [ Html.text "販売価格 (0～100万円)"
+        []
+        [ Html.label
+            [ Html.Attributes.for "exhibition-price"
+            , Html.Attributes.class "exhibition-label"
+            ]
+            [ Html.text "販売価格" ]
         , Html.div
-            [ Html.Attributes.class "exhibitionView-itemPrice-input" ]
+            [ Html.Attributes.class "exhibition-itemPrice-input"
+            ]
             [ Html.input
                 [ Html.Attributes.type_ "number"
-                , Html.Attributes.class "exhibitionView-itemPrice-input-input"
+                , Html.Attributes.class "exhibition-itemPrice-input-input"
+                , Html.Attributes.id "exhibition-price"
+                , Html.Attributes.placeholder "0～100万"
+                , Html.Attributes.min "0"
+                , Html.Attributes.max "1000000"
                 , Html.Events.onInput EmitInputGoodsPrice
                 ]
                 []
-            , Html.text "円"
+            , Html.span
+                [ Html.Attributes.class "exhibition-itemPrice-yen" ]
+                [ Html.text "円" ]
             ]
         ]
 
@@ -203,10 +237,13 @@ conditionView =
     Html.div
         []
         [ Html.label
-            [ Html.Attributes.for "exhibition-selectCondition" ]
+            [ Html.Attributes.for "exhibition-selectCondition"
+            , Html.Attributes.class "exhibition-label"
+            ]
             [ Html.text "商品の状態" ]
         , Html.select
             [ Html.Attributes.id "exhibition-selectCondition"
+            , Html.Attributes.class "exhibition-condition"
             , Html.Events.on "change" selectConditionDecoder
             ]
             ([ Html.option [] [ Html.text "--選択してください--" ] ]

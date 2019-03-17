@@ -24,18 +24,20 @@ import Url.Parser
 
 
 {-
+   Windows PowerSellを起動して入力する
+
    # Elmのコンパイル
    Set-Location D:/tsukumart ; elm make src/Main.elm --output main.js --optimize ; uglifyjs main.js -o hosting_root/main.js ; Remove-Item main.js
 
    # CSSのコンパイル
    Set-Location D:/tsukumart ; cleancss style.css -o hosting_root/style.css
 
-   # 実行確認
-   Windows PowerSellを起動して
+   # デモ用のサーバーにデータを送信
 
    Set-Location D:/tsukumart ; firebase deploy --project tsukumart-demo
 
-   を入力する
+   # すべて一度に
+   Set-Location D:/tsukumart ; elm make src/Main.elm --output main.js --optimize ; uglifyjs main.js -o hosting_root/main.js ; Remove-Item main.js ; cleancss style.css -o hosting_root/style.css ; firebase deploy --project tsukumart-demo
 
    ブラウザのアドレスバーに https://tsukumart-demo.firebaseapp.com/ を入力すると出力結果を見ることができる
 -}
