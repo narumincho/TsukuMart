@@ -140,7 +140,7 @@ type Msg
     | InputGoodsPrice String
     | InputCondition (Maybe Data.Goods.Condition)
     | SellGoods Api.SellGoodsRequest
-    | SellGoodsResponse (Result () ())
+    | SellGoodsResponse (Result Api.SellGoodsResponseError ())
     | DeleteImage Int
 
 

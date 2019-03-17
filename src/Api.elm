@@ -4,6 +4,7 @@ module Api exposing
     , LogInResponseError
     , LogInResponseOk(..)
     , SellGoodsRequest(..)
+    , SellGoodsResponseError
     , SignUpConfirmRequest
     , SignUpConfirmResponseError(..)
     , SignUpConfirmResponseOk
@@ -428,10 +429,19 @@ type SellGoodsRequest
         , description : String
         , price : Int
         , condition : Goods.Condition
+        , image0 : String
+        , image1 : Maybe String
+        , image2 : Maybe String
+        , image3 : Maybe String
         }
 
 
-sellGoods : Token -> SellGoodsRequest -> (Result () () -> msg) -> Cmd msg
+type SellGoodsResponseError
+    = SellGoodsResponseErrorNameBlank -- 商品名の指定がない
+    | SellGoodsResponseError -- 不明なエラー
+
+
+sellGoods : Token -> SellGoodsRequest -> (Result SellGoodsResponseError () -> msg) -> Cmd msg
 sellGoods token createGoodsRequest msg =
     Http.request
         { method = "POST"
@@ -445,25 +455,74 @@ sellGoods token createGoodsRequest msg =
 
 
 createGoodsRequestJsonBody : SellGoodsRequest -> Json.Encode.Value
-createGoodsRequestJsonBody (SellGoodsRequest { name, description, price, condition }) =
+createGoodsRequestJsonBody (SellGoodsRequest { name, description, price, condition, image0, image1, image2, image3 }) =
     Json.Encode.object
-        [ ( "name", Json.Encode.string name )
-        , ( "description", Json.Encode.string description )
-        , ( "price", Json.Encode.int price )
-        , ( "condition", Json.Encode.string (Goods.conditionToIdString condition) )
-        , ( "location", Json.Encode.string "場所の指定はなし" )
-        , ( "status", Json.Encode.string "selling" )
-        ]
+        ([ ( "name", Json.Encode.string name )
+         , ( "description", Json.Encode.string description )
+         , ( "price", Json.Encode.int price )
+         , ( "condition", Json.Encode.string (Goods.conditionToIdString condition) )
+         , ( "location", Json.Encode.string "場所の指定はなし" )
+         , ( "status", Json.Encode.string "selling" )
+         , ( "image1", Json.Encode.string image0 )
+         ]
+            ++ (case image1 of
+                    Just i ->
+                        [ ( "image2", Json.Encode.string i ) ]
+
+                    Nothing ->
+                        []
+               )
+            ++ (case image2 of
+                    Just i ->
+                        [ ( "image3", Json.Encode.string i ) ]
+
+                    Nothing ->
+                        []
+               )
+            ++ (case image3 of
+                    Just i ->
+                        [ ( "image4", Json.Encode.string i ) ]
+
+                    Nothing ->
+                        []
+               )
+        )
 
 
-createGoodsResponseToResult : Http.Response String -> Result () ()
+createGoodsResponseToResult : Http.Response String -> Result SellGoodsResponseError ()
 createGoodsResponseToResult response =
     case response of
-        Http.GoodStatus_ _ _ ->
+        Http.BadUrl_ _ ->
+            Err SellGoodsResponseError
+
+        Http.Timeout_ ->
+            Err SellGoodsResponseError
+
+        Http.NetworkError_ ->
+            Err SellGoodsResponseError
+
+        Http.BadStatus_ _ body ->
+            Json.Decode.decodeString createGoodsResponseBodyDecoder body
+                |> Result.withDefault (Err SellGoodsResponseError)
+
+        Http.GoodStatus_ _ body ->
             Ok ()
 
-        _ ->
-            Err ()
+
+createGoodsResponseBodyDecoder : Json.Decode.Decoder (Result SellGoodsResponseError ())
+createGoodsResponseBodyDecoder =
+    Json.Decode.oneOf
+        [ Json.Decode.field "name"
+            (Json.Decode.list Json.Decode.string)
+            |> Json.Decode.map
+                (\list ->
+                    if list == [ "This field may not be blank." ] then
+                        Err SellGoodsResponseErrorNameBlank
+
+                    else
+                        Err SellGoodsResponseError
+                )
+        ]
 
 
 

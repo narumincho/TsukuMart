@@ -441,7 +441,6 @@ img {
     display: none;
 }
 
-
 .exhibition-photo-cardList-container {
     background-color: gray;
     overflow-x: auto;
@@ -457,14 +456,15 @@ img {
     position: relative;
     width: 15rem;
     height: 15rem;
+    padding: 1rem;
 }
 
 .exhibition-photo-card-deleteButton {
     width: 2rem;
     height: 2rem;
     position: absolute;
-    right: 0;
-    top: 0;
+    right: .5rem;
+    top: .5rem;
     fill: black;
     stroke: white;
     cursor: pointer;
@@ -544,6 +544,43 @@ img {
     box-sizing: border-box;
     border-radius: .4rem;
     font-size: 1.5rem;
+}
+
+.exhibition-confirm-item {
+    border-bottom: solid 1px #000;
+    display: flex;
+}
+
+.exhibition-confirm-item-value {
+    flex-grow: 1;
+    text-align: right;
+}
+
+.exhibition-confirm-msg {
+    font-size: 1.5rem;
+    text-align: center;
+}
+
+.exhibition-sellButton {
+    background-color: var(--primaryColor);
+    color: #ddd;
+    padding: 1rem;
+    width: 100%;
+    text-align: center;
+    font-size: 1.5rem;
+    border-radius: .4rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.18);
+    user-select: none;
+}
+
+.exhibition-sellButton:hover {
+    background-color: var(--primaryColorLight);
+    color: #111;
+}
+
+.exhibition-sellButton:disabled {
+    background-color: #aaa;
+    color: #ddd;
 }
 
 /*===============================================

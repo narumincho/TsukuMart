@@ -58,30 +58,9 @@ goodsListItem { title, price, like } =
         ]
         [ itemImage
         , Html.div [ Html.Attributes.class "itemTitle" ] [ Html.text title ]
-        , Html.div [ Html.Attributes.class "itemPrice" ] [ Html.text (priceToString price) ]
+        , Html.div [ Html.Attributes.class "itemPrice" ] [ Html.text (Goods.priceToString price) ]
         , Html.div [] [ Html.text ("いいね" ++ String.fromInt like) ]
         ]
-
-
-{-| 価格(整数)を3桁ごとに,がついたものにする
--}
-priceToString : Int -> String
-priceToString price =
-    ((if price < 1000 then
-        ( price, [] )
-
-      else if price < 1000000 then
-        ( price // 1000, [ price |> modBy 1000 ] )
-
-      else
-        ( price // 1000000, [ price // 1000 |> modBy 1000, price |> modBy 1000 ] )
-     )
-        |> Tuple.mapFirst String.fromInt
-        |> Tuple.mapSecond (List.map (String.fromInt >> String.padLeft 3 '0'))
-        |> (\( a, b ) -> a :: b)
-        |> String.join ","
-    )
-        ++ "円"
 
 
 itemImage : Html.Html msg
@@ -159,7 +138,7 @@ goodsViewPriceAndBuyButton isWideScreenMode price =
     Html.div
         [ Html.Attributes.classList [ ( "goods-priceAndBuyButton", True ), ( "goods-priceAndBuyButton-wide", isWideScreenMode ) ]
         ]
-        [ Html.div [ Html.Attributes.class "goods-price" ] [ Html.text (priceToString price) ]
+        [ Html.div [ Html.Attributes.class "goods-price" ] [ Html.text (Goods.priceToString price) ]
         , Html.button [] [ Html.text "購入手続きへ" ]
         ]
 

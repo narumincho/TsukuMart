@@ -14,6 +14,7 @@ module Data.Goods exposing
     , getName
     , getPrice
     , none
+    , priceToString
     )
 
 {-| 商品
@@ -156,6 +157,27 @@ getComplete (Goods { complete }) =
 getImage : Goods -> String
 getImage (Goods { image }) =
     image
+
+
+{-| 価格(整数)を3桁ごとに,がついたものにする
+-}
+priceToString : Int -> String
+priceToString price =
+    ((if price < 1000 then
+        ( price, [] )
+
+      else if price < 1000000 then
+        ( price // 1000, [ price |> modBy 1000 ] )
+
+      else
+        ( price // 1000000, [ price // 1000 |> modBy 1000, price |> modBy 1000 ] )
+     )
+        |> Tuple.mapFirst String.fromInt
+        |> Tuple.mapSecond (List.map (String.fromInt >> String.padLeft 3 '0'))
+        |> (\( a, b ) -> a :: b)
+        |> String.join ","
+    )
+        ++ "円"
 
 
 {-| 仮の商品
