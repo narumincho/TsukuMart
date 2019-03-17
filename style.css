@@ -404,6 +404,7 @@ img {
 /*===============================
         Exhibition 出品画面
 ===============================*/
+
 .exhibition-container {
     display: flex;
     justify-content: center;
@@ -423,27 +424,65 @@ img {
     font-size: 1.5rem;
 }
 
-.exhibition-photo {
+/* .exhibition-photo {
     width: 100%;
-    background-color: gray;
     display: flex;
-    align-items: center;
+    flex-direction: column;
+} */
+
+.exhibition-photo-add {
+    width: 100%;
+    display: flex;
     justify-content: center;
-    overflow-x: auto;
+    background-color: gray;
+}
+
+.exhibition-photo-addIcon {
+    width: 7rem;
+    height: 7rem;
+    cursor: pointer;
 }
 
 .exhibition-photo-input {
-    min-width: 10rem;
+    display: none;
 }
 
-.exhibition-photo-icon {
-    width: 3rem;
-    height: 3rem;
+
+.exhibition-photo-cardList-container {
+    background-color: gray;
+    overflow-x: auto;
+    position: relative;
 }
 
-.exhibition-photo-image {
-    width: 10rem;
-    height: 10rem;
+.exhibition-photo-cardList {
+    display: flex;
+    flex-direction: row;
+}
+
+.exhibition-photo-card {
+    position: relative;
+    width: 15rem;
+    height: 15rem;
+}
+
+.exhibition-photo-card-deleteButton {
+    width: 2rem;
+    height: 2rem;
+    position: absolute;
+    right: 0;
+    top: 0;
+    fill: black;
+    stroke: white;
+    cursor: pointer;
+}
+
+.exhibition-photo-card-deleteButton:hover {
+    fill: #444;
+}
+
+.exhibition-photo-card-image {
+    width: 15rem;
+    height: 15rem;
     object-fit: contain;
 }
 

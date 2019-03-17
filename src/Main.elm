@@ -141,6 +141,7 @@ type Msg
     | InputCondition (Maybe Data.Goods.Condition)
     | SellGoods Api.SellGoodsRequest
     | SellGoodsResponse (Result () ())
+    | DeleteImage Int
 
 
 main : Program () Model Msg
@@ -427,7 +428,7 @@ update msg (Model rec) =
                             | page =
                                 PageExhibition
                                     (Page.Exhibition.update
-                                        (Page.Exhibition.InputExhibitionImage [ urlString ])
+                                        (Page.Exhibition.InputImageList [ urlString ])
                                         exhibitionPageModel
                                     )
                         }
@@ -445,7 +446,7 @@ update msg (Model rec) =
                             | page =
                                 PageExhibition
                                     (Page.Exhibition.update
-                                        (Page.Exhibition.InputExhibitionImage urlStringList)
+                                        (Page.Exhibition.InputImageList urlStringList)
                                         exhibitionPageModel
                                     )
                         }
@@ -605,6 +606,21 @@ update msg (Model rec) =
 
         SellGoodsResponse _ ->
             ( Model rec
+            , Cmd.none
+            )
+
+        DeleteImage index ->
+            ( case rec.page of
+                PageExhibition pageModel ->
+                    Model
+                        { rec
+                            | page =
+                                PageExhibition
+                                    (Page.Exhibition.update (Page.Exhibition.DeleteImage index) pageModel)
+                        }
+
+                _ ->
+                    Model rec
             , Cmd.none
             )
 
@@ -1229,7 +1245,7 @@ logInPageEmitToMsg pageMaybe emit =
 exhibitionPageEmitToMsg : Page.Exhibition.Emit -> Msg
 exhibitionPageEmitToMsg emit =
     case emit of
-        Page.Exhibition.EmitInputExhibitionImage string ->
+        Page.Exhibition.EmitInputImageList string ->
             InputExhibitionImage string
 
         Page.Exhibition.EmitToConfirmPage request ->
@@ -1249,6 +1265,9 @@ exhibitionPageEmitToMsg emit =
 
         Page.Exhibition.EmitSellGoods sellGoodsRequest ->
             SellGoods sellGoodsRequest
+
+        Page.Exhibition.EmitDeleteImage index ->
+            DeleteImage index
 
 
 homeView : Bool -> HomePage -> ( Tab.Tab HomePage, List (Html.Html Msg) )

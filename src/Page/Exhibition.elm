@@ -7,6 +7,9 @@ import Html
 import Html.Attributes
 import Html.Events
 import Json.Decode
+import Svg
+import Svg.Attributes
+import Svg.Events
 import Tab
 
 
@@ -24,7 +27,8 @@ type Model
 
 
 type Emit
-    = EmitInputExhibitionImage String
+    = EmitInputImageList String
+    | EmitDeleteImage Int
     | EmitInputGoodsName String
     | EmitInputGoodsDescription String
     | EmitInputGoodsPrice String
@@ -34,7 +38,8 @@ type Emit
 
 
 type Msg
-    = InputExhibitionImage (List String)
+    = InputImageList (List String)
+    | DeleteImage Int
     | InputGoodsName String
     | InputGoodsDescription String
     | InputGoodsPrice String
@@ -58,10 +63,16 @@ update msg model =
     case model of
         EditPage rec ->
             case msg of
-                InputExhibitionImage dataUrlList ->
+                InputImageList dataUrlList ->
                     EditPage
                         { rec
-                            | image = dataUrlList
+                            | image = rec.image ++ dataUrlList
+                        }
+
+                DeleteImage index ->
+                    EditPage
+                        { rec
+                            | image = List.take index rec.image ++ List.drop (index + 1) rec.image
                         }
 
                 ToConfirmPage request ->
@@ -104,8 +115,8 @@ view model =
                     [ Html.Attributes.class "exhibition-container" ]
                     [ Html.div
                         [ Html.Attributes.class "exhibition" ]
-                        [ photoView rec.image
-                        , nameView
+                        [ photoAdd
+                        , photoCardList rec.image
                         , descriptionView
                         , priceView rec.price
                         , conditionView
@@ -125,44 +136,73 @@ view model =
             )
 
 
-photoView : List String -> Html.Html Emit
-photoView imageUrlList =
+photoAdd : Html.Html Emit
+photoAdd =
     Html.div
-        [ Html.Attributes.class "exhibition-photo" ]
-        ([ Html.label
-            []
-            [ Html.text "ラベル" ]
-         , Html.input
+        []
+        [ Html.label
+            [ Html.Attributes.for "exhibition-photo-input"
+            , Html.Attributes.class "exhibition-photo-add"
+            ]
+            [ Html.img
+                [ Html.Attributes.src "/assets/add_a_photo.svg"
+                , Html.Attributes.class "exhibition-photo-addIcon"
+                ]
+                []
+            ]
+        , Html.input
             [ Html.Attributes.class "exhibition-photo-input"
             , Html.Attributes.id "exhibition-photo-input"
             , Html.Attributes.type_ "file"
             , Html.Attributes.multiple True
             , Html.Attributes.accept "image/png,image/jpeg"
-            , Html.Events.on "change" (Json.Decode.succeed (EmitInputExhibitionImage "exhibition-photo-input"))
+            , Html.Events.on "change" (Json.Decode.succeed (EmitInputImageList "exhibition-photo-input"))
             ]
             []
-         ]
-            ++ (case imageUrlList of
-                    _ :: _ ->
-                        imageUrlList
-                            |> List.map
-                                (\imageUrl ->
-                                    Html.img
-                                        [ Html.Attributes.src imageUrl
-                                        , Html.Attributes.class "exhibition-photo-image"
-                                        ]
-                                        []
-                                )
+        ]
 
-                    [] ->
-                        [ Html.img
-                            [ Html.Attributes.src "/assets/add_a_photo.svg"
-                            , Html.Attributes.class "exhibition-photo-icon"
-                            ]
-                            []
-                        ]
-               )
-        )
+
+photoCardList : List String -> Html.Html Emit
+photoCardList imageUrlList =
+    Html.div
+        [ Html.Attributes.class "exhibition-photo-cardList-container" ]
+        [ Html.div
+            [ Html.Attributes.class "exhibition-photo-cardList" ]
+            (imageUrlList |> List.indexedMap photoImage)
+        ]
+
+
+photoImage : Int -> String -> Html.Html Emit
+photoImage index dataUrl =
+    Html.div
+        [ Html.Attributes.class "exhibition-photo-card" ]
+        [ photoDeleteButton
+            |> Html.map (always (EmitDeleteImage index))
+        , Html.img
+            [ Html.Attributes.src dataUrl
+            , Html.Attributes.class "exhibition-photo-card-image"
+            ]
+            []
+        ]
+
+
+photoDeleteButton : Html.Html ()
+photoDeleteButton =
+    Svg.svg
+        [ Svg.Attributes.class "exhibition-photo-card-deleteButton"
+        , Svg.Attributes.viewBox "0 0 10 10"
+        , Svg.Events.onClick ()
+        ]
+        [ Svg.circle
+            [ Svg.Attributes.cx "5", Svg.Attributes.cy "5", Svg.Attributes.r "5", Svg.Attributes.stroke "none" ]
+            []
+        , Svg.line
+            [ Svg.Attributes.x1 "3", Svg.Attributes.y1 "3", Svg.Attributes.x2 "7", Svg.Attributes.y2 "7" ]
+            []
+        , Svg.line
+            [ Svg.Attributes.x1 "7", Svg.Attributes.y1 "3", Svg.Attributes.x2 "3", Svg.Attributes.y2 "7" ]
+            []
+        ]
 
 
 nameView : Html.Html Emit
