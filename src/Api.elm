@@ -26,6 +26,7 @@ import Data.Goods as Goods
 import Data.Password as Password
 import Data.Profile as Profile
 import Data.University as University
+import File
 import Http
 import Json.Decode
 import Json.Encode
@@ -429,10 +430,10 @@ type SellGoodsRequest
         , description : String
         , price : Int
         , condition : Goods.Condition
-        , image0 : String
-        , image1 : Maybe String
-        , image2 : Maybe String
-        , image3 : Maybe String
+        , image0 : File.File
+        , image1 : Maybe File.File
+        , image2 : Maybe File.File
+        , image3 : Maybe File.File
         }
 
 
@@ -447,47 +448,43 @@ sellGoods token createGoodsRequest msg =
         { method = "POST"
         , headers = [ tokenToHeader token ]
         , url = "https://api.tsukumart.com/v1/currentuser/goods/"
-        , body = Http.jsonBody (createGoodsRequestJsonBody createGoodsRequest)
+        , body = Http.multipartBody (createGoodsRequestJsonBody createGoodsRequest)
         , expect = Http.expectStringResponse msg createGoodsResponseToResult
         , timeout = Nothing
         , tracker = Nothing
         }
 
 
-createGoodsRequestJsonBody : SellGoodsRequest -> Json.Encode.Value
+createGoodsRequestJsonBody : SellGoodsRequest -> List Http.Part
 createGoodsRequestJsonBody (SellGoodsRequest { name, description, price, condition, image0, image1, image2, image3 }) =
-    Json.Encode.object
-        [ ( "name", Json.Encode.string name )
-        , ( "description", Json.Encode.string description )
-        , ( "price", Json.Encode.int price )
-        , ( "condition", Json.Encode.string (Goods.conditionToIdString condition) )
-        , ( "status", Json.Encode.string "selling" )
-        , ( "image1", Json.Encode.string image0 )
-        , ( "image2"
-          , case image1 of
+    [ Http.stringPart "name" name
+    , Http.stringPart "description" description
+    , Http.stringPart "price" (String.fromInt price)
+    , Http.stringPart "condition" (Goods.conditionToIdString condition)
+    , Http.stringPart "status" "selling"
+    , Http.filePart "image1" image0
+    ]
+        ++ (case image1 of
                 Just i ->
-                    Json.Encode.string i
+                    [ Http.filePart "image2" i ]
 
                 Nothing ->
-                    Json.Encode.null
-          )
-        , ( "image3"
-          , case image2 of
+                    []
+           )
+        ++ (case image2 of
                 Just i ->
-                    Json.Encode.string i
+                    [ Http.filePart "image3" i ]
 
                 Nothing ->
-                    Json.Encode.null
-          )
-        , ( "image4"
-          , case image3 of
+                    []
+           )
+        ++ (case image3 of
                 Just i ->
-                    Json.Encode.string i
+                    [ Http.filePart "image4" i ]
 
                 Nothing ->
-                    Json.Encode.null
-          )
-        ]
+                    []
+           )
 
 
 createGoodsResponseToResult : Http.Response String -> Result SellGoodsResponseError ()

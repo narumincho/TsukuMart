@@ -3,6 +3,7 @@ module Page.Exhibition exposing (Emit(..), Model, Msg(..), initModel, update, vi
 import Api
 import Array
 import Data.Goods as Goods
+import File
 import Html
 import Html.Attributes
 import Html.Events
@@ -26,16 +27,20 @@ type EditModel
         , description : String
         , price : Maybe Int
         , condition : Maybe Goods.Condition
-        , image : Image
+        , image : ImageList
         }
 
 
-type Image
+type ImageList
     = ImageNone
-    | Image1 String
-    | Image2 String String
-    | Image3 String String String
-    | Image4 String String String String
+    | Image1 Image
+    | Image2 Image Image
+    | Image3 Image Image Image
+    | Image4 Image Image Image Image
+
+
+type alias Image =
+    { file : File.File, blobUrl : String }
 
 
 type Emit
@@ -50,7 +55,7 @@ type Emit
 
 
 type Msg
-    = InputImageList (List String)
+    = InputImageList (List Image)
     | DeleteImage Int
     | InputGoodsName String
     | InputGoodsDescription String
@@ -77,10 +82,10 @@ update msg model =
     case model of
         EditPage (EditModel rec) ->
             case msg of
-                InputImageList dataUrlList ->
+                InputImageList fileList ->
                     EditPage
                         (EditModel
-                            { rec | image = imageAdd dataUrlList rec.image }
+                            { rec | image = imageAdd fileList rec.image }
                         )
 
                 DeleteImage index ->
@@ -130,9 +135,9 @@ update msg model =
             ConfirmPage rec
 
 
-imageAdd : List String -> Image -> Image
-imageAdd imageList imageSelected =
-    case imageList of
+imageAdd : List Image -> ImageList -> ImageList
+imageAdd fileList imageSelected =
+    case fileList of
         [] ->
             imageSelected
 
@@ -187,7 +192,7 @@ imageAdd imageList imageSelected =
                     imageSelected
 
 
-imageDeleteAt : Int -> Image -> Image
+imageDeleteAt : Int -> ImageList -> ImageList
 imageDeleteAt index image =
     case image of
         ImageNone ->
@@ -244,9 +249,9 @@ imageDeleteAt index image =
                     image
 
 
-imageToList : Image -> List String
-imageToList image =
-    case image of
+imageListToBlobUrlList : ImageList -> List String
+imageListToBlobUrlList imageList =
+    (case imageList of
         ImageNone ->
             []
 
@@ -261,6 +266,8 @@ imageToList image =
 
         Image4 i0 i1 i2 i3 ->
             [ i0, i1, i2, i3 ]
+    )
+        |> List.map .blobUrl
 
 
 editPageToSellGoodsRequest : EditModel -> Maybe Api.SellGoodsRequest
@@ -293,23 +300,23 @@ editPageToSellGoodsRequest (EditModel { name, description, price, condition, ima
             Nothing
 
 
-itemToRequest : Image -> Maybe { image0 : String, image1 : Maybe String, image2 : Maybe String, image3 : Maybe String }
+itemToRequest : ImageList -> Maybe { image0 : File.File, image1 : Maybe File.File, image2 : Maybe File.File, image3 : Maybe File.File }
 itemToRequest image =
     case image of
         ImageNone ->
             Nothing
 
         Image1 i0 ->
-            Just { image0 = i0, image1 = Nothing, image2 = Nothing, image3 = Nothing }
+            Just { image0 = i0.file, image1 = Nothing, image2 = Nothing, image3 = Nothing }
 
         Image2 i0 i1 ->
-            Just { image0 = i0, image1 = Just i1, image2 = Nothing, image3 = Nothing }
+            Just { image0 = i0.file, image1 = Just i1.file, image2 = Nothing, image3 = Nothing }
 
         Image3 i0 i1 i2 ->
-            Just { image0 = i0, image1 = Just i1, image2 = Just i2, image3 = Nothing }
+            Just { image0 = i0.file, image1 = Just i1.file, image2 = Just i2.file, image3 = Nothing }
 
         Image4 i0 i1 i2 i3 ->
-            Just { image0 = i0, image1 = Just i1, image2 = Just i2, image3 = Just i3 }
+            Just { image0 = i0.file, image1 = Just i1.file, image2 = Just i2.file, image3 = Just i3.file }
 
 
 view : Model -> ( Tab.Tab Never, List (Html.Html Emit) )
@@ -344,13 +351,13 @@ view model =
 editView : EditModel -> ( String, List (Html.Html Emit) )
 editView (EditModel rec) =
     ( "商品の情報を入力"
-    , (if 4 <= List.length (imageToList rec.image) then
+    , (if 4 <= List.length (imageListToBlobUrlList rec.image) then
         []
 
        else
         photoAdd
       )
-        ++ [ photoCardList (imageToList rec.image)
+        ++ [ photoCardList (imageListToBlobUrlList rec.image)
            , nameView
            , descriptionView
            , priceView rec.price
@@ -364,8 +371,8 @@ editView (EditModel rec) =
 photoAdd : List (Html.Html Emit)
 photoAdd =
     [ Html.label
-        [ Html.Attributes.for "exhibition-photo-input"
-        , Html.Attributes.class "exhibition-photo-add"
+        [ Html.Attributes.class "exhibition-photo-add"
+        , Html.Attributes.for "exhibition-photo-input"
         ]
         [ Html.img
             [ Html.Attributes.src "/assets/add_a_photo.svg"

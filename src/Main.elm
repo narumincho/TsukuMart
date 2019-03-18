@@ -5,10 +5,13 @@ import Browser
 import Browser.Navigation
 import Data.Goods
 import Data.Profile
+import File
+import File.Select
 import Html
 import Html.Attributes
 import Html.Events
 import Html.Keyed
+import Json.Decode
 import Page.Exhibition
 import Page.Goods
 import Page.LogIn
@@ -43,6 +46,12 @@ import Url.Parser
 -}
 
 
+port receiveImageFileAndBlobUrl : (Json.Decode.Value -> msg) -> Sub msg
+
+
+port exhibitionImageChange : String -> Cmd msg
+
+
 port toWideScreenMode : (() -> msg) -> Sub msg
 
 
@@ -50,12 +59,6 @@ port toNarrowScreenMode : (() -> msg) -> Sub msg
 
 
 port receiveImageDataUrl : (String -> msg) -> Sub msg
-
-
-port receiveImageDataUrlMulti : (List String -> msg) -> Sub msg
-
-
-port exhibitionImageChange : String -> Cmd msg
 
 
 port studentImageChange : String -> Cmd msg
@@ -125,10 +128,10 @@ type Msg
     | LogInResponse (Result Api.LogInResponseError Api.LogInResponseOk)
     | InputStudentIdOrEmailAddress String
     | InputStudentImage String
-    | InputExhibitionImage String
     | InputNickName String
     | ReceiveImageDataUrl String
-    | ReceiveImageDataUrlMulti (List String)
+    | ReceiveImageFileAndBlobUrl Json.Decode.Value
+    | InputMultiImageFile String
     | InputPassword String
     | SendConfirmToken String
     | DeleteAllUser
@@ -393,11 +396,6 @@ update msg (Model rec) =
             , studentImageChange idString
             )
 
-        InputExhibitionImage idString ->
-            ( Model rec
-            , exhibitionImageChange idString
-            )
-
         InputNickName string ->
             ( case rec.page of
                 PageSignUp signUpModel ->
@@ -422,34 +420,33 @@ update msg (Model rec) =
                                     )
                         }
 
-                PageExhibition exhibitionPageModel ->
-                    Model
-                        { rec
-                            | page =
-                                PageExhibition
-                                    (Page.Exhibition.update
-                                        (Page.Exhibition.InputImageList [ urlString ])
-                                        exhibitionPageModel
-                                    )
-                        }
-
                 _ ->
                     Model rec
             , Cmd.none
             )
 
-        ReceiveImageDataUrlMulti urlStringList ->
+        InputMultiImageFile idString ->
+            ( Model rec
+            , exhibitionImageChange idString
+            )
+
+        ReceiveImageFileAndBlobUrl value ->
             ( case rec.page of
                 PageExhibition exhibitionPageModel ->
-                    Model
-                        { rec
-                            | page =
-                                PageExhibition
-                                    (Page.Exhibition.update
-                                        (Page.Exhibition.InputImageList urlStringList)
-                                        exhibitionPageModel
-                                    )
-                        }
+                    case Debug.log "r" (Json.Decode.decodeValue receiveImageFileAndBlobUrlDocoder value) of
+                        Ok data ->
+                            Model
+                                { rec
+                                    | page =
+                                        PageExhibition
+                                            (Page.Exhibition.update
+                                                (Page.Exhibition.InputImageList data)
+                                                exhibitionPageModel
+                                            )
+                                }
+
+                        Err _ ->
+                            Model rec
 
                 _ ->
                     Model rec
@@ -630,6 +627,20 @@ update msg (Model rec) =
                     Model rec
             , Cmd.none
             )
+
+
+receiveImageFileAndBlobUrlDocoder : Json.Decode.Decoder (List { file : File.File, blobUrl : String })
+receiveImageFileAndBlobUrlDocoder =
+    Json.Decode.list
+        (Json.Decode.map2
+            (\file blob ->
+                { file = file
+                , blobUrl = blob
+                }
+            )
+            (Json.Decode.field "file" File.decoder)
+            (Json.Decode.field "blobUrl" Json.Decode.string)
+        )
 
 
 urlToPage : Url.Url -> Maybe Page -> ( Page, Maybe String )
@@ -1215,7 +1226,7 @@ signUpPageEmitToMsg emit =
             InputStudentIdOrEmailAddress string
 
         Page.SignUp.EmitInputStudentImage string ->
-            InputExhibitionImage string
+            InputStudentImage string
 
         Page.SignUp.EmitInputPassword string ->
             InputPassword string
@@ -1253,7 +1264,7 @@ exhibitionPageEmitToMsg : Page.Exhibition.Emit -> Msg
 exhibitionPageEmitToMsg emit =
     case emit of
         Page.Exhibition.EmitInputImageList string ->
-            InputExhibitionImage string
+            InputMultiImageFile string
 
         Page.Exhibition.EmitToConfirmPage request ->
             ToConfirmPage request
@@ -1338,7 +1349,7 @@ subscription : Model -> Sub Msg
 subscription (Model { menuState }) =
     Sub.batch
         [ receiveImageDataUrl ReceiveImageDataUrl
-        , receiveImageDataUrlMulti ReceiveImageDataUrlMulti
+        , receiveImageFileAndBlobUrl ReceiveImageFileAndBlobUrl
         , case menuState of
             Just _ ->
                 toWideScreenMode (always ToWideScreenMode)

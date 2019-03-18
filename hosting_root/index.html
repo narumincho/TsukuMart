@@ -28,7 +28,7 @@
         addEventListener("resize", windowResizeListener);
         windowResizeListener();
         /* 指定されたidの<input type="file">から1つファイルの情報を受け取りData URLに変換してElmに送信 */
-        app.ports.studentImageChange.subscribe((id) => {
+        app.ports.studentImageChange.subscribe(id => {
             const fileInputElement = document.getElementById(id);
             const imageFile = fileInputElement.files[0]
             if (imageFile === undefined) {
@@ -41,22 +41,17 @@
             fileReader.readAsDataURL(imageFile);
         });
         /* 指定されたidの<input type="file">から複数のファイルの情報を受け取りData URLに変換してElmに送信 */
-        app.ports.exhibitionImageChange.subscribe((id) => {
+        app.ports.exhibitionImageChange.subscribe(id => {
             const fileInputElement = document.getElementById(id);
-            const imageFiles = fileInputElement.files;
-            const fileCount = imageFiles.length;
-            const encodedFiles = [];
-            for (const imageFile of imageFiles) {
-                const fileReader = new FileReader();
-                fileReader.addEventListener("load", (e) => {
-                    encodedFiles.push(fileReader.result);
-                    if (fileCount <= encodedFiles.length) {
-                        console.log(encodedFiles);
-                        app.ports.receiveImageDataUrlMulti.send(encodedFiles);
-                    }
-                })
-                fileReader.readAsDataURL(imageFile);
+            const result = [];
+            for (const imageFile of fileInputElement.files) {
+                result.push({
+                    file: imageFile,
+                    blobUrl: URL.createObjectURL(imageFile)
+                });
             }
+            console.log(result);
+            app.ports.receiveImageFileAndBlobUrl.send(result);
         });
 
         navigator.serviceWorker.register("/serviceworker.js", { scope: "/" });
