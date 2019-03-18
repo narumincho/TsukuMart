@@ -600,12 +600,19 @@ update msg (Model rec) =
                     )
 
                 LogInStateNone ->
-                    ( Model rec
+                    ( Model
+                        { rec | message = Just "ログインしていないので出品できません" }
                     , Cmd.none
                     )
 
-        SellGoodsResponse _ ->
-            ( Model rec
+        SellGoodsResponse response ->
+            ( case response of
+                Ok () ->
+                    Model
+                        { rec | message = Just "出品しました" }
+
+                Err _ ->
+                    Model { rec | message = Just "出品できませんでした" }
             , Cmd.none
             )
 

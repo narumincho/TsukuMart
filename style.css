@@ -415,7 +415,7 @@ img {
     display: grid;
     max-width: 40rem;
     gap: 1rem;
-    padding: 1.5rem;
+    padding: 1rem;
     box-sizing: border-box;
     width: 100%;
 }

@@ -457,36 +457,37 @@ sellGoods token createGoodsRequest msg =
 createGoodsRequestJsonBody : SellGoodsRequest -> Json.Encode.Value
 createGoodsRequestJsonBody (SellGoodsRequest { name, description, price, condition, image0, image1, image2, image3 }) =
     Json.Encode.object
-        ([ ( "name", Json.Encode.string name )
-         , ( "description", Json.Encode.string description )
-         , ( "price", Json.Encode.int price )
-         , ( "condition", Json.Encode.string (Goods.conditionToIdString condition) )
-         , ( "location", Json.Encode.string "場所の指定はなし" )
-         , ( "status", Json.Encode.string "selling" )
-         , ( "image1", Json.Encode.string image0 )
-         ]
-            ++ (case image1 of
-                    Just i ->
-                        [ ( "image2", Json.Encode.string i ) ]
+        [ ( "name", Json.Encode.string name )
+        , ( "description", Json.Encode.string description )
+        , ( "price", Json.Encode.int price )
+        , ( "condition", Json.Encode.string (Goods.conditionToIdString condition) )
+        , ( "status", Json.Encode.string "selling" )
+        , ( "image1", Json.Encode.string image0 )
+        , ( "image2"
+          , case image1 of
+                Just i ->
+                    Json.Encode.string i
 
-                    Nothing ->
-                        []
-               )
-            ++ (case image2 of
-                    Just i ->
-                        [ ( "image3", Json.Encode.string i ) ]
+                Nothing ->
+                    Json.Encode.null
+          )
+        , ( "image3"
+          , case image2 of
+                Just i ->
+                    Json.Encode.string i
 
-                    Nothing ->
-                        []
-               )
-            ++ (case image3 of
-                    Just i ->
-                        [ ( "image4", Json.Encode.string i ) ]
+                Nothing ->
+                    Json.Encode.null
+          )
+        , ( "image4"
+          , case image3 of
+                Just i ->
+                    Json.Encode.string i
 
-                    Nothing ->
-                        []
-               )
-        )
+                Nothing ->
+                    Json.Encode.null
+          )
+        ]
 
 
 createGoodsResponseToResult : Http.Response String -> Result SellGoodsResponseError ()
