@@ -8,14 +8,6 @@ const urlListToCache = [];
 
 // 最初の読み込み。 Service Workerのインストール
 self.addEventListener("install", (e) => {
-    // e.waitUntil(
-    //     caches
-    //         .open(cacheName)
-    //         .then((cache) => {
-    //             console.log("cache", cache);
-    //             return cache.addAll(urlListToCache);
-    //         })
-    // );
     console.log("Service Worker内でブラウザにインストールされたことを検知した");
 });
 
@@ -43,7 +35,7 @@ self.addEventListener("push", (e) => {
         self.registration.showNotification("プッシュ通知です!", {
             body: "プッシュ通知はこのようにして送られるのです",
             icon: "assets/icon.png",
-            tag: 'push-notification-tag'
+            tag: "push-notification-tag"
         })
     );
 });

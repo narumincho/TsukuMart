@@ -3,6 +3,7 @@ module Page.Exhibition exposing (Emit(..), Model, Msg(..), initModel, update, vi
 import Api
 import Array
 import Data.Goods as Goods
+import Data.LogInState
 import File
 import Html
 import Html.Attributes
@@ -319,16 +320,21 @@ itemToRequest image =
             Just { image0 = i0.file, image1 = Just i1.file, image2 = Just i2.file, image3 = Just i3.file }
 
 
-view : Model -> ( Tab.Tab Never, List (Html.Html Emit) )
-view model =
+view : Data.LogInState.LogInState -> Model -> ( Tab.Tab Never, List (Html.Html Emit) )
+view logInState model =
     let
         ( tabText, body ) =
-            case model of
-                EditPage editModel ->
-                    editView editModel
+            case logInState of
+                Data.LogInState.LogInStateNone ->
+                    ( "出品画面", [ Html.text "ログインしていません" ] )
 
-                ConfirmPage { request } ->
-                    confirmView request
+                Data.LogInState.LogInStateOk _ ->
+                    case model of
+                        EditPage editModel ->
+                            editView editModel
+
+                        ConfirmPage { request } ->
+                            confirmView request
     in
     ( Tab.Single tabText
     , [ Html.div

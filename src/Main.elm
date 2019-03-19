@@ -4,6 +4,7 @@ import Api
 import Browser
 import Browser.Navigation
 import Data.Goods
+import Data.LogInState
 import Data.Profile
 import File
 import File.Select
@@ -69,7 +70,7 @@ type Model
         { page : Page -- 開いているページ
         , menuState : Maybe MenuState -- メニューの開閉など
         , message : Maybe String -- ちょっとしたことがあったら表示するもの
-        , logInState : LogInState
+        , logInState : Data.LogInState.LogInState
         , key : Browser.Navigation.Key
         , goodsList : List Data.Goods.Goods
         }
@@ -103,15 +104,6 @@ type MenuState
     = MenuNotOpenedYet
     | MenuClose
     | MenuOpen
-
-
-type LogInState
-    = LogInStateOk
-        { access : Api.Token
-        , refresh : Api.Token
-        , profile : Maybe Data.Profile.Profile
-        }
-    | LogInStateNone
 
 
 type Msg
@@ -171,7 +163,7 @@ init _ url key =
         { page = page
         , menuState = Just MenuNotOpenedYet
         , message = messageMaybe
-        , logInState = LogInStateNone
+        , logInState = Data.LogInState.LogInStateNone
         , key = key
         , goodsList = []
         }
@@ -312,7 +304,7 @@ update msg (Model rec) =
                             Model
                                 { rec
                                     | message = Just "ログインしました"
-                                    , logInState = LogInStateOk { access = access, refresh = refresh, profile = Nothing }
+                                    , logInState = Data.LogInState.LogInStateOk { access = access, refresh = refresh, profile = Nothing }
                                     , page = newPage
                                 }
 
@@ -320,7 +312,7 @@ update msg (Model rec) =
                             Model
                                 { rec
                                     | message = Just "ログインしました"
-                                    , logInState = LogInStateOk { access = access, refresh = refresh, profile = Nothing }
+                                    , logInState = Data.LogInState.LogInStateOk { access = access, refresh = refresh, profile = Nothing }
                                 }
                     , Api.getUserProfile access GetUserProfileResponse
                     )
@@ -506,13 +498,13 @@ update msg (Model rec) =
 
         GetUserProfileResponse response ->
             ( case ( response, rec.logInState ) of
-                ( Ok profile, LogInStateOk r ) ->
-                    Model { rec | logInState = LogInStateOk { r | profile = Just profile } }
+                ( Ok profile, Data.LogInState.LogInStateOk r ) ->
+                    Model { rec | logInState = Data.LogInState.LogInStateOk { r | profile = Just profile } }
 
-                ( Err (), LogInStateOk _ ) ->
+                ( Err (), Data.LogInState.LogInStateOk _ ) ->
                     Model { rec | message = Just "プロフィール情報の取得に失敗しました" }
 
-                ( _, LogInStateNone ) ->
+                ( _, Data.LogInState.LogInStateNone ) ->
                     Model rec
             , Cmd.none
             )
@@ -594,12 +586,12 @@ update msg (Model rec) =
 
         SellGoods request ->
             case rec.logInState of
-                LogInStateOk { access } ->
+                Data.LogInState.LogInStateOk { access } ->
                     ( Model rec
                     , Api.sellGoods access request SellGoodsResponse
                     )
 
-                LogInStateNone ->
+                Data.LogInState.LogInStateNone ->
                     ( Model
                         { rec | message = Just "ログインしていないので出品できません" }
                     , Cmd.none
@@ -1032,7 +1024,7 @@ headerButton =
 {- Menu -}
 
 
-menuView : LogInState -> Maybe MenuState -> Html.Html Msg
+menuView : Data.LogInState.LogInState -> Maybe MenuState -> Html.Html Msg
 menuView logInState menuStateMaybe =
     case menuStateMaybe of
         Just menuState ->
@@ -1077,7 +1069,7 @@ menuView logInState menuStateMaybe =
                 (menuMain logInState)
 
 
-menuMain : LogInState -> List (Html.Html Msg)
+menuMain : Data.LogInState.LogInState -> List (Html.Html Msg)
 menuMain logInState =
     [ menuAccount logInState
     , Html.a
@@ -1103,10 +1095,10 @@ menuMain logInState =
     ]
 
 
-menuAccount : LogInState -> Html.Html msg
+menuAccount : Data.LogInState.LogInState -> Html.Html msg
 menuAccount logInState =
     case logInState of
-        LogInStateOk { profile } ->
+        Data.LogInState.LogInStateOk { profile } ->
             Html.a
                 [ Html.Attributes.class "menu-account"
                 , Html.Attributes.class "menu-account-a"
@@ -1122,7 +1114,7 @@ menuAccount logInState =
                     [ Html.text (profile |> Maybe.map Data.Profile.getNickName |> Maybe.withDefault "ログイン済み") ]
                 ]
 
-        LogInStateNone ->
+        Data.LogInState.LogInStateNone ->
             Html.div
                 [ Html.Attributes.class "menu-account" ]
                 [ Html.div [ Html.Attributes.class "menu-noLogin" ] [ Html.text "ログインしていません" ]
@@ -1141,7 +1133,7 @@ menuAccount logInState =
                 ]
 
 
-mainViewAndMainTab : List Data.Goods.Goods -> LogInState -> Page -> Bool -> List (Html.Html Msg)
+mainViewAndMainTab : List Data.Goods.Goods -> Data.LogInState.LogInState -> Page -> Bool -> List (Html.Html Msg)
 mainViewAndMainTab goodsList logInState page isWideScreenMode =
     let
         ( tabData, mainView ) =
@@ -1165,7 +1157,7 @@ mainViewAndMainTab goodsList logInState page isWideScreenMode =
     ]
 
 
-tabDataAndMainView : List Data.Goods.Goods -> LogInState -> Bool -> Page -> ( Tab.Tab Page, List (Html.Html Msg) )
+tabDataAndMainView : List Data.Goods.Goods -> Data.LogInState.LogInState -> Bool -> Page -> ( Tab.Tab Page, List (Html.Html Msg) )
 tabDataAndMainView goodsList logInState isWideScreenMode page =
     case page of
         PageHome subPage ->
@@ -1173,7 +1165,7 @@ tabDataAndMainView goodsList logInState isWideScreenMode page =
                 |> Tuple.mapFirst (Tab.map PageHome)
 
         PageExhibition subPage ->
-            Page.Exhibition.view subPage
+            Page.Exhibition.view logInState subPage
                 |> Tuple.mapBoth
                     (Tab.map never)
                     (List.map (Html.map exhibitionPageEmitToMsg))
@@ -1208,10 +1200,10 @@ tabDataAndMainView goodsList logInState isWideScreenMode page =
         PageProfile profileModel ->
             Page.Profile.view
                 (case logInState of
-                    LogInStateOk { profile } ->
+                    Data.LogInState.LogInStateOk { profile } ->
                         profile
 
-                    LogInStateNone ->
+                    Data.LogInState.LogInStateNone ->
                         Nothing
                 )
                 profileModel
