@@ -50,7 +50,6 @@
                     blobUrl: URL.createObjectURL(imageFile)
                 });
             }
-            console.log(result);
             app.ports.receiveImageFileAndBlobUrl.send(result);
         });
 

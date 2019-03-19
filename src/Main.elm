@@ -71,6 +71,7 @@ type Model
         , message : Maybe String -- ちょっとしたことがあったら表示するもの
         , logInState : LogInState
         , key : Browser.Navigation.Key
+        , goodsList : List Data.Goods.Goods
         }
 
 
@@ -145,6 +146,7 @@ type Msg
     | SellGoods Api.SellGoodsRequest
     | SellGoodsResponse (Result Api.SellGoodsResponseError ())
     | DeleteImage Int
+    | GetAllGoodsResponse (Result () (List Data.Goods.Goods))
 
 
 main : Program () Model Msg
@@ -171,8 +173,9 @@ init _ url key =
         , message = messageMaybe
         , logInState = LogInStateNone
         , key = key
+        , goodsList = []
         }
-    , Cmd.none
+    , Api.getAllGoods GetAllGoodsResponse
     )
 
 
@@ -433,7 +436,7 @@ update msg (Model rec) =
         ReceiveImageFileAndBlobUrl value ->
             ( case rec.page of
                 PageExhibition exhibitionPageModel ->
-                    case Debug.log "r" (Json.Decode.decodeValue receiveImageFileAndBlobUrlDocoder value) of
+                    case Json.Decode.decodeValue receiveImageFileAndBlobUrlDocoder value of
                         Ok data ->
                             Model
                                 { rec
@@ -628,6 +631,17 @@ update msg (Model rec) =
             , Cmd.none
             )
 
+        GetAllGoodsResponse result ->
+            ( case result of
+                Ok goodsList ->
+                    Model
+                        { rec | goodsList = goodsList }
+
+                Err _ ->
+                    Model rec
+            , Cmd.none
+            )
+
 
 receiveImageFileAndBlobUrlDocoder : Json.Decode.Decoder (List { file : File.File, blobUrl : String })
 receiveImageFileAndBlobUrlDocoder =
@@ -679,7 +693,7 @@ urlParser beforePageMaybe =
 {-| 見た目を決める
 -}
 view : Model -> { title : String, body : List (Html.Html Msg) }
-view (Model { page, menuState, message, logInState }) =
+view (Model { page, menuState, message, logInState, goodsList }) =
     let
         isWideScreen =
             menuState == Nothing
@@ -690,7 +704,7 @@ view (Model { page, menuState, message, logInState }) =
         [ header isWideScreen
         , menuView logInState menuState
         ]
-            ++ mainViewAndMainTab logInState page isWideScreen
+            ++ mainViewAndMainTab goodsList logInState page isWideScreen
             ++ (case message of
                     Just m ->
                         [ messageView m ]
@@ -1127,11 +1141,11 @@ menuAccount logInState =
                 ]
 
 
-mainViewAndMainTab : LogInState -> Page -> Bool -> List (Html.Html Msg)
-mainViewAndMainTab logInState page isWideScreenMode =
+mainViewAndMainTab : List Data.Goods.Goods -> LogInState -> Page -> Bool -> List (Html.Html Msg)
+mainViewAndMainTab goodsList logInState page isWideScreenMode =
     let
         ( tabData, mainView ) =
-            tabDataAndMainView logInState isWideScreenMode page
+            tabDataAndMainView goodsList logInState isWideScreenMode page
     in
     [ Tab.view isWideScreenMode tabData
         |> Html.map ChangePage
@@ -1151,11 +1165,11 @@ mainViewAndMainTab logInState page isWideScreenMode =
     ]
 
 
-tabDataAndMainView : LogInState -> Bool -> Page -> ( Tab.Tab Page, List (Html.Html Msg) )
-tabDataAndMainView logInState isWideScreenMode page =
+tabDataAndMainView : List Data.Goods.Goods -> LogInState -> Bool -> Page -> ( Tab.Tab Page, List (Html.Html Msg) )
+tabDataAndMainView goodsList logInState isWideScreenMode page =
     case page of
         PageHome subPage ->
-            homeView isWideScreenMode subPage
+            homeView goodsList isWideScreenMode subPage
                 |> Tuple.mapFirst (Tab.map PageHome)
 
         PageExhibition subPage ->
@@ -1165,17 +1179,17 @@ tabDataAndMainView logInState isWideScreenMode page =
                     (List.map (Html.map exhibitionPageEmitToMsg))
 
         PageLikeAndHistory subPage ->
-            likeAndHistoryView isWideScreenMode subPage
+            likeAndHistoryView goodsList isWideScreenMode subPage
                 |> Tuple.mapFirst (Tab.map PageLikeAndHistory)
 
         PagePurchaseGoodsList ->
             ( Tab.Single "購入した商品"
-            , [ Page.Goods.goodsList isWideScreenMode ]
+            , [ Page.Goods.goodsListView isWideScreenMode goodsList ]
             )
 
         PageExhibitionGoodsList ->
             ( Tab.Single "出品した商品"
-            , [ Page.Goods.goodsList isWideScreenMode ]
+            , [ Page.Goods.goodsListView isWideScreenMode goodsList ]
             )
 
         PageSignUp signUpPageModel ->
@@ -1288,8 +1302,8 @@ exhibitionPageEmitToMsg emit =
             DeleteImage index
 
 
-homeView : Bool -> HomePage -> ( Tab.Tab HomePage, List (Html.Html Msg) )
-homeView isWideScreenMode subPage =
+homeView : List Data.Goods.Goods -> Bool -> HomePage -> ( Tab.Tab HomePage, List (Html.Html Msg) )
+homeView goodsList isWideScreenMode subPage =
     ( Tab.Multi
         [ ( HomePageRecent, "新着" )
         , ( HomePageRecommend, "おすすめ" )
@@ -1305,12 +1319,12 @@ homeView isWideScreenMode subPage =
             HomePageFree ->
                 2
         )
-    , [ Page.Goods.goodsList isWideScreenMode, exhibitButton ]
+    , [ Page.Goods.goodsListView isWideScreenMode goodsList, exhibitButton ]
     )
 
 
-likeAndHistoryView : Bool -> LikeAndHistory -> ( Tab.Tab LikeAndHistory, List (Html.Html Msg) )
-likeAndHistoryView isWideScreenMode likeAndHistory =
+likeAndHistoryView : List Data.Goods.Goods -> Bool -> LikeAndHistory -> ( Tab.Tab LikeAndHistory, List (Html.Html Msg) )
+likeAndHistoryView goodsList isWideScreenMode likeAndHistory =
     ( Tab.Multi
         [ ( Like, "いいね" )
         , ( History, "閲覧履歴" )
@@ -1322,7 +1336,7 @@ likeAndHistoryView isWideScreenMode likeAndHistory =
             History ->
                 1
         )
-    , [ Page.Goods.goodsList isWideScreenMode ]
+    , [ Page.Goods.goodsListView isWideScreenMode goodsList ]
     )
 
 

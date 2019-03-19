@@ -13,6 +13,7 @@ module Api exposing
     , SignUpResponseOk(..)
     , Token
     , debugDeleteAllUser
+    , getAllGoods
     , getUserProfile
     , logIn
     , logInResponseErrorToString
@@ -29,6 +30,7 @@ import Data.University as University
 import File
 import Http
 import Json.Decode
+import Json.Decode.Pipeline
 import Json.Encode
 
 
@@ -587,6 +589,124 @@ getUserProfileResponseValueListToResult nickName introduction departmentMaybe gr
 
 
 
+{- ==============================================================
+      すべての商品を取得    /{version}/goods/
+   ==============================================================
+-}
+
+
+getAllGoods : (Result () (List Goods.Goods) -> msg) -> Cmd msg
+getAllGoods msg =
+    Http.get
+        { url = "https://api.tsukumart.com/v1/goods/"
+        , expect = Http.expectStringResponse msg getAllGoodsResponseToResult
+        }
+
+
+getAllGoodsResponseToResult : Http.Response String -> Result () (List Goods.Goods)
+getAllGoodsResponseToResult response =
+    case response of
+        Http.BadStatus_ _ body ->
+            Json.Decode.decodeString getAllGoodsResponseBodyJsonDecoder body
+                |> Result.withDefault (Err ())
+
+        Http.GoodStatus_ _ body ->
+            Json.Decode.decodeString getAllGoodsResponseBodyJsonDecoder body
+                |> Result.withDefault (Err ())
+
+        _ ->
+            Err ()
+
+
+getAllGoodsResponseBodyJsonDecoder : Json.Decode.Decoder (Result () (List Goods.Goods))
+getAllGoodsResponseBodyJsonDecoder =
+    Json.Decode.list goodsDecoder
+        |> Json.Decode.map Ok
+
+
+goodsDecoder : Json.Decode.Decoder Goods.Goods
+goodsDecoder =
+    Json.Decode.succeed
+        (\id name desription price condition status image0Url image1Url image2Url image3Url ->
+            Goods.Goods
+                { id = id
+                , name = name
+                , like = 28
+                , description = desription
+                , price = price
+                , condition = condition
+                , status = status
+                , image0Url = image0Url
+                , image1Url = image1Url
+                , image2Url = image2Url
+                , image3Url = image3Url
+                }
+        )
+        |> Json.Decode.Pipeline.required "id" Json.Decode.int
+        |> Json.Decode.Pipeline.required "name" Json.Decode.string
+        |> Json.Decode.Pipeline.required "description" Json.Decode.string
+        |> Json.Decode.Pipeline.required "price" Json.Decode.int
+        |> Json.Decode.Pipeline.required "condition" conditionDecoder
+        |> Json.Decode.Pipeline.required "status" statusDecoder
+        |> Json.Decode.Pipeline.required "image1" Json.Decode.string
+        |> Json.Decode.Pipeline.required "image2" (Json.Decode.nullable Json.Decode.string)
+        |> Json.Decode.Pipeline.required "image3" (Json.Decode.nullable Json.Decode.string)
+        |> Json.Decode.Pipeline.required "image4" (Json.Decode.nullable Json.Decode.string)
+
+
+conditionDecoder : Json.Decode.Decoder Goods.Condition
+conditionDecoder =
+    Json.Decode.string
+        |> Json.Decode.andThen
+            (\idString ->
+                case Goods.conditionFromString idString of
+                    Just condition ->
+                        Json.Decode.succeed condition
+
+                    Nothing ->
+                        Json.Decode.fail
+                            ("I can't understand conditionId=\""
+                                ++ idString
+                                ++ "\" except \""
+                                ++ String.join "\" or \"" (Goods.conditionAll |> List.map Goods.conditionToIdString)
+                                ++ "\""
+                            )
+            )
+
+
+statusDecoder : Json.Decode.Decoder Goods.Status
+statusDecoder =
+    Json.Decode.string
+        |> Json.Decode.andThen
+            (\idString ->
+                case Goods.statusFromIdString idString of
+                    Just status ->
+                        Json.Decode.succeed status
+
+                    Nothing ->
+                        Json.Decode.fail
+                            ("I can't understand statusId=\""
+                                ++ idString
+                                ++ "\" except \""
+                                ++ String.join "\" or \"" (Goods.statusAll |> List.map Goods.statusToIdString)
+                                ++ "\""
+                            )
+            )
+
+
+
+--        { id = 0
+--        , name = "仮"
+--        , like = 14
+--        , description = "仮の商品の説明文"
+--        , price = 23
+--        , condition = LikeNew
+--        , status = Selling
+--        , image0Url = "/assets/itemDummy.png"
+--        , image1Url = Nothing
+--        , image2Url = Nothing
+--        , image3Url = Nothing
+--        }
 {- ==============================================================
       デバック用 すべてのユーザーを削除 /{version}/debug/user/delete/
    ==============================================================

@@ -1,5 +1,5 @@
 module Page.Goods exposing
-    ( goodsList
+    ( goodsListView
     , goodsView
     )
 
@@ -21,8 +21,8 @@ import SiteMap
 
 {-| 商品の一覧表示
 -}
-goodsList : Bool -> Html.Html msg
-goodsList isWideMode =
+goodsListView : Bool -> List Goods.Goods -> Html.Html msg
+goodsListView isWideMode goodsList =
     Html.div
         [ Html.Attributes.style "display" "grid"
         , Html.Attributes.style "grid-template-columns"
@@ -33,41 +33,27 @@ goodsList isWideMode =
                 "50% 50%"
             )
         ]
-        ([ { title = "冷蔵庫", price = 300, like = 1 }
-         , { title = "洗濯機", price = 100, like = 5 }
-         , { title = "時計", price = 10, like = 99 }
-         , { title = "掃除機", price = 100, like = 5 }
-         , { title = "自転車", price = 200, like = 9 }
-         , { title = "マンガ", price = 10, like = 99 }
-         , { title = "ゲーム", price = 10, like = 99 }
-         , { title = "絵本", price = 100, like = 5 }
-         , { title = "棚", price = 1000, like = 2 }
-         , { title = "いす", price = 1000, like = 2 }
-         , { title = "バッテリー", price = 300, like = 20 }
-         , { title = "教科書", price = 20, like = 10 }
-         ]
-            |> List.map goodsListItem
-        )
+        (goodsList |> List.map goodsListItem)
 
 
-goodsListItem : { title : String, price : Int, like : Int } -> Html.Html msg
-goodsListItem { title, price, like } =
+goodsListItem : Goods.Goods -> Html.Html msg
+goodsListItem goods =
     Html.a
         [ Html.Attributes.class "item"
         , Html.Attributes.href (SiteMap.goodsUrl "id")
         ]
-        [ itemImage
-        , Html.div [ Html.Attributes.class "itemTitle" ] [ Html.text title ]
-        , Html.div [ Html.Attributes.class "itemPrice" ] [ Html.text (Goods.priceToString price) ]
-        , Html.div [] [ Html.text ("いいね" ++ String.fromInt like) ]
+        [ itemImage (Goods.getFirstImageUrl goods)
+        , Html.div [ Html.Attributes.class "itemTitle" ] [ Html.text (Goods.getName goods) ]
+        , Html.div [ Html.Attributes.class "itemPrice" ] [ Html.text (Goods.priceToString (Goods.getPrice goods)) ]
+        , Html.div [] [ Html.text ("いいね" ++ String.fromInt (Goods.getLike goods)) ]
         ]
 
 
-itemImage : Html.Html msg
-itemImage =
+itemImage : String -> Html.Html msg
+itemImage url =
     Html.img
         [ Html.Attributes.class "itemImage"
-        , Html.Attributes.src "/assets/itemDummy.png"
+        , Html.Attributes.src url
         ]
         []
 
@@ -78,21 +64,11 @@ goodsView isWideScreenMode goods =
         [ Html.Attributes.class "goods-container" ]
         [ Html.div
             [ Html.Attributes.class "goods" ]
-            [ goodsViewImage (Goods.getImage goods)
+            [ goodsViewImage (Goods.getFirstImageUrl goods)
             , goodsViewName (Goods.getName goods)
             , goodsViewLike (Goods.getLike goods)
             , goodsViewDescription (Goods.getDescription goods)
             , goodsViewCondition (Goods.getCondition goods)
-            , goodsViewLocation (Goods.getLocation goods)
-            , Html.div []
-                [ Html.text
-                    (if Goods.getComplete goods then
-                        "売却済み"
-
-                     else
-                        "まだ売れていない"
-                    )
-                ]
             ]
         , goodsViewPriceAndBuyButton isWideScreenMode (Goods.getPrice goods)
         ]
@@ -153,12 +129,4 @@ goodsViewCondition condition =
             [ Html.Attributes.class "goods-condition" ]
             [ Html.text (Goods.conditionToJapaneseString condition)
             ]
-        ]
-
-
-goodsViewLocation : Goods.Location -> Html.Html msg
-goodsViewLocation location =
-    Html.div [ Html.Attributes.class "goods-location" ]
-        [ Html.div [ Html.Attributes.class "goods-label" ] [ Html.text "取引場所" ]
-        , Html.div [] [ Html.text location ]
         ]
