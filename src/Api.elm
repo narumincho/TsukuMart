@@ -695,18 +695,6 @@ statusDecoder =
 
 
 
---        { id = 0
---        , name = "仮"
---        , like = 14
---        , description = "仮の商品の説明文"
---        , price = 23
---        , condition = LikeNew
---        , status = Selling
---        , image0Url = "/assets/itemDummy.png"
---        , image1Url = Nothing
---        , image2Url = Nothing
---        , image3Url = Nothing
---        }
 {- ==============================================================
       デバック用 すべてのユーザーを削除 /{version}/debug/user/delete/
    ==============================================================

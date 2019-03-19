@@ -7,12 +7,12 @@ import Data.Goods
 import Data.LogInState
 import Data.Profile
 import File
-import File.Select
 import Html
 import Html.Attributes
 import Html.Events
 import Html.Keyed
 import Json.Decode
+import Page.Component.LogInOrSignUp
 import Page.Exhibition
 import Page.Goods
 import Page.LogIn
@@ -79,7 +79,7 @@ type Model
 type Page
     = PageHome HomePage
     | PageSignUp Page.SignUp.Model
-    | PageLogIn ( Page.LogIn.Model, Maybe Page )
+    | PageLogIn Page.LogIn.Model
     | PageLikeAndHistory LikeAndHistory
     | PageExhibitionGoodsList
     | PagePurchaseGoodsList
@@ -115,13 +115,13 @@ type Msg
     | UrlChange Url.Url
     | UrlRequest Browser.UrlRequest
     | SignUp Api.SignUpRequest
-    | LogIn Api.LogInRequest
     | SignUpResponse (Result Api.SignUpResponseError Api.SignUpResponseOk)
     | SignUpConfirmResponse (Result Api.SignUpConfirmResponseError Api.SignUpConfirmResponseOk)
     | LogInResponse (Result Api.LogInResponseError Api.LogInResponseOk)
     | InputStudentIdOrEmailAddress String
     | InputStudentImage String
     | InputNickName String
+    | LogInPageMsg Page.LogIn.Msg
     | ReceiveImageDataUrl String
     | ReceiveImageFileAndBlobUrl Json.Decode.Value
     | InputMultiImageFile String
@@ -157,7 +157,7 @@ init : () -> Url.Url -> Browser.Navigation.Key -> ( Model, Cmd Msg )
 init _ url key =
     let
         ( page, messageMaybe ) =
-            urlToPage url Nothing
+            urlToPage url
     in
     ( Model
         { page = page
@@ -223,7 +223,7 @@ update msg (Model rec) =
         UrlChange url ->
             let
                 ( newPage, messageMaybe ) =
-                    urlToPage url (Just rec.page)
+                    urlToPage url
             in
             ( Model
                 { rec
@@ -271,59 +271,32 @@ update msg (Model rec) =
             , Cmd.none
             )
 
-        LogIn logInData ->
-            ( case rec.page of
-                PageLogIn ( logInPageModel, nextPage ) ->
-                    Model
-                        { rec
-                            | page = PageLogIn ( logInPageModel |> Page.LogIn.update Page.LogIn.SendLogIn, nextPage )
-                        }
-
-                _ ->
-                    Model rec
-            , Api.logIn logInData LogInResponse
-            )
-
         LogInResponse logInResponse ->
             case logInResponse of
                 Ok (Api.LogInResponseOk { access, refresh }) ->
-                    ( let
-                        pageMaybe =
-                            case rec.page of
-                                PageLogIn ( _, Just p ) ->
-                                    Just p
-
-                                PageLogIn ( _, Nothing ) ->
-                                    Just (PageHome HomePageRecommend)
-
-                                _ ->
-                                    Nothing
-                      in
-                      case pageMaybe of
-                        Just newPage ->
+                    ( case rec.page of
+                        PageLogIn logInPageModel ->
                             Model
                                 { rec
                                     | message = Just "ログインしました"
-                                    , logInState = Data.LogInState.LogInStateOk { access = access, refresh = refresh, profile = Nothing }
-                                    , page = newPage
+                                    , page = PageLogIn (logInPageModel |> Page.LogIn.update Page.LogIn.StopSendLogInConnection |> Tuple.first)
                                 }
 
-                        Nothing ->
+                        _ ->
                             Model
                                 { rec
                                     | message = Just "ログインしました"
-                                    , logInState = Data.LogInState.LogInStateOk { access = access, refresh = refresh, profile = Nothing }
                                 }
                     , Api.getUserProfile access GetUserProfileResponse
                     )
 
                 Err logInResponseError ->
                     ( case rec.page of
-                        PageLogIn ( logInPageModel, nextPage ) ->
+                        PageLogIn logInPageModel ->
                             Model
                                 { rec
                                     | message = Just (Api.logInResponseErrorToString logInResponseError)
-                                    , page = PageLogIn ( logInPageModel |> Page.LogIn.update Page.LogIn.StopSendLogIn, nextPage )
+                                    , page = PageLogIn (logInPageModel |> Page.LogIn.update Page.LogIn.StopSendLogInConnection |> Tuple.first)
                                 }
 
                         _ ->
@@ -366,18 +339,6 @@ update msg (Model rec) =
                                     (Page.SignUp.update
                                         (Page.SignUp.InputStudentIdOrEmailAddress string)
                                         signUpModel
-                                    )
-                        }
-
-                PageLogIn ( logInModel, pageMaybe ) ->
-                    Model
-                        { rec
-                            | page =
-                                PageLogIn
-                                    ( Page.LogIn.update
-                                        (Page.LogIn.InputStudentIdOrEmailAddress string)
-                                        logInModel
-                                    , pageMaybe
                                     )
                         }
 
@@ -428,7 +389,7 @@ update msg (Model rec) =
         ReceiveImageFileAndBlobUrl value ->
             ( case rec.page of
                 PageExhibition exhibitionPageModel ->
-                    case Json.Decode.decodeValue receiveImageFileAndBlobUrlDocoder value of
+                    case Json.Decode.decodeValue receiveImageFileAndBlobUrlDecoder value of
                         Ok data ->
                             Model
                                 { rec
@@ -461,22 +422,33 @@ update msg (Model rec) =
                                     )
                         }
 
-                PageLogIn ( logInModel, pageMaybe ) ->
-                    Model
-                        { rec
-                            | page =
-                                PageLogIn
-                                    ( Page.LogIn.update
-                                        (Page.LogIn.InputPassword string)
-                                        logInModel
-                                    , pageMaybe
-                                    )
-                        }
-
                 _ ->
                     Model rec
             , Cmd.none
             )
+
+        LogInPageMsg logInPageMsg ->
+            case rec.page of
+                PageLogIn logInModel ->
+                    let
+                        ( newModel, emit ) =
+                            Page.LogIn.update
+                                logInPageMsg
+                                logInModel
+                    in
+                    ( Model { rec | page = PageLogIn newModel }
+                    , case emit of
+                        Just e ->
+                            logInPageEmitToCmd e
+
+                        Nothing ->
+                            Cmd.none
+                    )
+
+                _ ->
+                    ( Model rec
+                    , Cmd.none
+                    )
 
         DeleteAllUser ->
             ( Model rec
@@ -635,8 +607,22 @@ update msg (Model rec) =
             )
 
 
-receiveImageFileAndBlobUrlDocoder : Json.Decode.Decoder (List { file : File.File, blobUrl : String })
-receiveImageFileAndBlobUrlDocoder =
+logInPageEmitToCmd : Page.LogIn.Emit -> Cmd Msg
+logInPageEmitToCmd emit =
+    case emit of
+        Page.LogIn.LogInOrSignUpEmit e ->
+            logInOrSignUpEmitToCmd e
+
+
+logInOrSignUpEmitToCmd : Page.Component.LogInOrSignUp.Emit -> Cmd Msg
+logInOrSignUpEmitToCmd emit =
+    case emit of
+        Page.Component.LogInOrSignUp.EmitLogIn logInRequest ->
+            Api.logIn logInRequest LogInResponse
+
+
+receiveImageFileAndBlobUrlDecoder : Json.Decode.Decoder (List { file : File.File, blobUrl : String })
+receiveImageFileAndBlobUrlDecoder =
     Json.Decode.list
         (Json.Decode.map2
             (\file blob ->
@@ -649,22 +635,22 @@ receiveImageFileAndBlobUrlDocoder =
         )
 
 
-urlToPage : Url.Url -> Maybe Page -> ( Page, Maybe String )
-urlToPage url beforePageMaybe =
-    Url.Parser.parse (urlParser beforePageMaybe) url
+urlToPage : Url.Url -> ( Page, Maybe String )
+urlToPage url =
+    Url.Parser.parse urlParser url
         |> Maybe.map (\page -> ( page, Nothing ))
         |> Maybe.withDefault ( PageHome HomePageRecommend, Just "指定したページが見つからないのでホームに移動しました" )
 
 
-urlParser : Maybe Page -> Url.Parser.Parser (Page -> a) a
-urlParser beforePageMaybe =
+urlParser : Url.Parser.Parser (Page -> a) a
+urlParser =
     Url.Parser.oneOf
         [ SiteMap.homeParser
             |> Url.Parser.map (PageHome HomePageRecommend)
         , SiteMap.signUpParser
             |> Url.Parser.map (PageSignUp Page.SignUp.initModel)
         , SiteMap.logInParser
-            |> Url.Parser.map (PageLogIn ( Page.LogIn.initModel, beforePageMaybe ))
+            |> Url.Parser.map (PageLogIn Page.LogIn.initModel)
         , SiteMap.likeHistoryParser
             |> Url.Parser.map (PageLikeAndHistory Like)
         , SiteMap.exhibitionGoodsParser
@@ -1188,11 +1174,9 @@ tabDataAndMainView goodsList logInState isWideScreenMode page =
             Page.SignUp.view signUpPageModel
                 |> (\( t, v ) -> ( t |> Tab.map never, v |> List.map (Html.map signUpPageEmitToMsg) ))
 
-        PageLogIn ( logInPageModel, pageMaybe ) ->
-            ( Tab.Single "ログイン"
-            , Page.LogIn.view logInPageModel
-                |> List.map (Html.map (logInPageEmitToMsg pageMaybe))
-            )
+        PageLogIn logInPageModel ->
+            Page.LogIn.view logInPageModel
+                |> Tuple.mapBoth (Tab.map never) (List.map (Html.map LogInPageMsg))
 
         PageGoods goods ->
             ( Tab.None, Page.Goods.goodsView isWideScreenMode goods )
@@ -1248,22 +1232,6 @@ signUpPageEmitToMsg emit =
 
         Page.SignUp.EmitInputNickName string ->
             InputNickName string
-
-
-logInPageEmitToMsg : Maybe Page -> Page.LogIn.Emit -> Msg
-logInPageEmitToMsg pageMaybe emit =
-    case emit of
-        Page.LogIn.EmitChangePage model ->
-            ChangePage (PageLogIn ( model, pageMaybe ))
-
-        Page.LogIn.EmitInputStudentIdOrEmailAddress string ->
-            InputStudentIdOrEmailAddress string
-
-        Page.LogIn.EmitInputPassword string ->
-            InputPassword string
-
-        Page.LogIn.EmitLogIn record ->
-            LogIn record
 
 
 exhibitionPageEmitToMsg : Page.Exhibition.Emit -> Msg

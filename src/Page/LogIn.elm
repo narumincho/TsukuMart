@@ -1,282 +1,55 @@
 module Page.LogIn exposing (Emit(..), Model, Msg(..), initModel, update, view)
 
-import Data.EmailAddress
-import Data.Password
-import Data.SAddress
-import Data.StudentId
 import Html
 import Html.Attributes
-import Html.Events
-import Json.Decode
-import SiteMap
+import Page.Component.LogInOrSignUp as LogInOrSignUp
+import Tab
 
 
 type Model
-    = LogInPage
-        { studentIdOrEmailAddress : AnalysisStudentIdOrEmailAddressResult
-        , password : Maybe Data.Password.Password
-        , sending : Bool -- ログイン処理で送信か
-        }
-    | ForgotPassword
+    = Model LogInOrSignUp.Model
 
 
 type Emit
-    = EmitChangePage Model
-    | EmitInputStudentIdOrEmailAddress String
-    | EmitInputPassword String
-    | EmitLogIn { emailAddress : Data.EmailAddress.EmailAddress, pass : Data.Password.Password }
+    = LogInOrSignUpEmit LogInOrSignUp.Emit
 
 
 type Msg
-    = InputPassword String
-    | InputStudentIdOrEmailAddress String
-    | SendLogIn
-    | StopSendLogIn
-
-
-type AnalysisStudentIdOrEmailAddressResult
-    = AENone
-    | AEStudentId Data.StudentId.StudentId
-    | AEEmailAddress Data.EmailAddress.EmailAddress
+    = Msg LogInOrSignUp.Msg
+    | StopSendLogInConnection
 
 
 initModel : Model
 initModel =
-    LogInPage
-        { studentIdOrEmailAddress = analysisStudentIdOrEmailAddress ""
-        , password = Nothing
-        , sending = False
-        }
+    Model
+        LogInOrSignUp.initModel
 
 
-update : Msg -> Model -> Model
-update msg model =
+update : Msg -> Model -> ( Model, Maybe Emit )
+update msg (Model logInOrSignUpModel) =
     case msg of
-        InputPassword string ->
-            case model of
-                LogInPage r ->
-                    LogInPage
-                        { r
-                            | password = Data.Password.passwordFromString string |> Result.toMaybe
-                        }
+        Msg logInOrSignUpMsg ->
+            logInOrSignUpModel
+                |> LogInOrSignUp.update logInOrSignUpMsg
+                |> Tuple.mapBoth Model (Maybe.map LogInOrSignUpEmit)
 
-                ForgotPassword ->
-                    ForgotPassword
-
-        InputStudentIdOrEmailAddress string ->
-            case model of
-                LogInPage r ->
-                    LogInPage
-                        { r | studentIdOrEmailAddress = analysisStudentIdOrEmailAddress string }
-
-                ForgotPassword ->
-                    ForgotPassword
-
-        SendLogIn ->
-            case model of
-                LogInPage r ->
-                    LogInPage
-                        { r | sending = True }
-
-                ForgotPassword ->
-                    ForgotPassword
-
-        StopSendLogIn ->
-            case model of
-                LogInPage r ->
-                    LogInPage { r | sending = False }
-
-                ForgotPassword ->
-                    ForgotPassword
+        StopSendLogInConnection ->
+            ( logInOrSignUpModel
+                |> LogInOrSignUp.stopSendLogInConnection
+                |> Model
+            , Nothing
+            )
 
 
 {-| ログイン画面
 -}
-view : Model -> List (Html.Html Emit)
-view logInPage =
-    [ Html.div
-        [ Html.Attributes.class "logIn-Container" ]
-        (case logInPage of
-            LogInPage { studentIdOrEmailAddress, password, sending } ->
-                logInView studentIdOrEmailAddress password sending
-
-            ForgotPassword ->
-                forgotPasswordView
-        )
-    ]
-
-
-logInView : AnalysisStudentIdOrEmailAddressResult -> Maybe Data.Password.Password -> Bool -> List (Html.Html Emit)
-logInView analysisStudentIdOrEmailAddressResult password sending =
-    [ Html.div
-        [ Html.Attributes.class "logIn" ]
-        [ Html.form
-            [ Html.Attributes.class "logIn-group" ]
-            ([ logInIdView analysisStudentIdOrEmailAddressResult
-             , logInPasswordView
-             , logInButton sending (getLogInData analysisStudentIdOrEmailAddressResult password)
-             ]
-                ++ (if sending then
-                        [ Html.text "送信中" ]
-
-                    else
-                        []
-                   )
-            )
-        , orLabel
-        , Html.div
-            [ Html.Attributes.class "logIn-group" ]
-            [ signUpButton ]
-        ]
-    ]
-
-
-logInIdView : AnalysisStudentIdOrEmailAddressResult -> Html.Html Emit
-logInIdView analysisStudentIdOrEmailAddressResult =
-    Html.div
-        []
-        [ Html.label
-            [ Html.Attributes.class "logIn-subTitle", Html.Attributes.for "logInId" ]
-            [ Html.text "学籍番号かメールアドレス" ]
-        , Html.input
-            [ Html.Attributes.class "logIn-input"
-            , Html.Attributes.id "logInId"
-            , Html.Attributes.attribute "autocomplete" "email"
-            , Html.Events.onInput EmitInputStudentIdOrEmailAddress
+view : Model -> ( Tab.Tab Never, List (Html.Html Msg) )
+view (Model logInOrSignUpModel) =
+    ( Tab.Single "ログイン"
+    , [ Html.div
+            [ Html.Attributes.class "logIn-Container" ]
+            [ LogInOrSignUp.view logInOrSignUpModel
+                |> Html.map Msg
             ]
-            []
-        , Html.div
-            []
-            [ Html.text
-                (case analysisStudentIdOrEmailAddressResult of
-                    AENone ->
-                        ""
-
-                    AEStudentId studentId ->
-                        "学籍番号" ++ Data.StudentId.toStringWith20 studentId
-
-                    AEEmailAddress emailAddress ->
-                        "メールアドレス" ++ Data.EmailAddress.toString emailAddress
-                )
-            ]
-        ]
-
-
-logInPasswordView : Html.Html Emit
-logInPasswordView =
-    Html.div
-        []
-        [ Html.label
-            [ Html.Attributes.class "logIn-subTitle"
-            , Html.Attributes.for "logInPassword"
-            ]
-            [ Html.text "パスワード"
-            , Html.span
-                [ Html.Attributes.class "logIn-subTitle-forgotPassword"
-                , Html.Events.onClick (EmitChangePage ForgotPassword)
-                ]
-                [ Html.text "パスワードを忘れた" ]
-            ]
-        , Html.input
-            [ Html.Attributes.type_ "password"
-            , Html.Attributes.class "logIn-input"
-            , Html.Attributes.id "logInPassword"
-            , Html.Attributes.minlength 9
-            , Html.Attributes.maxlength 50
-            , Html.Attributes.attribute "autocomplete" "current-password"
-            , Html.Events.onInput EmitInputPassword
-            ]
-            []
-        ]
-
-
-logInButton : Bool -> Maybe { emailAddress : Data.EmailAddress.EmailAddress, pass : Data.Password.Password } -> Html.Html Emit
-logInButton sending logInDataMaybe =
-    Html.div
-        []
-        [ Html.button
-            ([ Html.Attributes.class "logIn-logInButton"
-             ]
-                ++ (case logInDataMaybe of
-                        Just logInData ->
-                            if sending then
-                                [ Html.Attributes.disabled True ]
-
-                            else
-                                [ Html.Events.preventDefaultOn "click"
-                                    (Json.Decode.succeed
-                                        ( EmitLogIn logInData
-                                        , True
-                                        )
-                                    )
-                                , Html.Attributes.disabled False
-                                ]
-
-                        Nothing ->
-                            [ Html.Attributes.disabled True ]
-                   )
-            )
-            [ Html.text "ログイン" ]
-        ]
-
-
-{-| パスワードを忘れた画面
--}
-forgotPasswordView : List (Html.Html msg)
-forgotPasswordView =
-    [ Html.text "パスワードを忘れたら。パスワード再発行機能はまだできあがっていません。" ]
-
-
-orLabel : Html.Html msg
-orLabel =
-    Html.div [ Html.Attributes.class "logIn-orLabel" ]
-        [ Html.text "or" ]
-
-
-signUpButton : Html.Html msg
-signUpButton =
-    Html.a
-        [ Html.Attributes.class "logIn-signInButton"
-        , Html.Attributes.href SiteMap.signUpUrl
-        ]
-        [ Html.text "新規登録" ]
-
-
-{-| ログイン画面で使う入力の解析
--}
-analysisStudentIdOrEmailAddress : String -> AnalysisStudentIdOrEmailAddressResult
-analysisStudentIdOrEmailAddress string =
-    let
-        charList =
-            String.toList (String.trim string)
-    in
-    case Data.StudentId.fromCharList charList of
-        Just studentId ->
-            AEStudentId studentId
-
-        Nothing ->
-            case Data.EmailAddress.fromCharList charList of
-                Just emailAddress ->
-                    AEEmailAddress emailAddress
-
-                Nothing ->
-                    AENone
-
-
-getLogInData : AnalysisStudentIdOrEmailAddressResult -> Maybe Data.Password.Password -> Maybe { emailAddress : Data.EmailAddress.EmailAddress, pass : Data.Password.Password }
-getLogInData studentIdOrEmailAddress passwordMaybe =
-    case ( studentIdOrEmailAddress, passwordMaybe ) of
-        ( AEStudentId studentId, Just password ) ->
-            Just
-                { emailAddress = Data.EmailAddress.fromSAddress (Data.SAddress.fromStundetId studentId)
-                , pass = password
-                }
-
-        ( AEEmailAddress emailAddress, Just password ) ->
-            Just
-                { emailAddress = emailAddress
-                , pass = password
-                }
-
-        ( _, _ ) ->
-            Nothing
+      ]
+    )
