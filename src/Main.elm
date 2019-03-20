@@ -124,21 +124,14 @@ type Msg
     | LogInPageMsg Page.LogIn.Msg
     | ReceiveImageDataUrl String
     | ReceiveImageFileAndBlobUrl Json.Decode.Value
-    | InputMultiImageFile String
     | InputPassword String
     | SendConfirmToken String
     | DeleteAllUser
     | DeleteAllUserResponse (Result () ())
-    | GetUserProfileResponse (Result () Data.Profile.Profile)
-    | ToConfirmPage Api.SellGoodsRequest
-    | InputGoodsName String
-    | InputGoodsDescription String
-    | InputGoodsPrice String
-    | InputCondition (Maybe Data.Goods.Condition)
-    | SellGoods Api.SellGoodsRequest
+    | GetUserProfileResponse { access : Api.Token, refresh : Api.Token } (Result () Data.Profile.Profile)
     | SellGoodsResponse (Result Api.SellGoodsResponseError ())
-    | DeleteImage Int
     | GetAllGoodsResponse (Result () (List Data.Goods.Goods))
+    | ExhibitionMsg Page.Exhibition.Msg
 
 
 main : Program () Model Msg
@@ -279,7 +272,14 @@ update msg (Model rec) =
                             Model
                                 { rec
                                     | message = Just "ログインしました"
-                                    , page = PageLogIn (logInPageModel |> Page.LogIn.update Page.LogIn.StopSendLogInConnection |> Tuple.first)
+                                    , page = PageLogIn (logInPageModel |> Page.LogIn.update (Page.LogIn.Msg Page.Component.LogInOrSignUp.StopSendLogInConnection) |> Tuple.first)
+                                }
+
+                        PageExhibition exhibitionModel ->
+                            Model
+                                { rec
+                                    | message = Just "ログインしました"
+                                    , page = PageExhibition (exhibitionModel |> Page.Exhibition.update rec.logInState (Page.Exhibition.LogInOrSignUpMsg Page.Component.LogInOrSignUp.StopSendLogInConnection) |> Tuple.first)
                                 }
 
                         _ ->
@@ -287,7 +287,7 @@ update msg (Model rec) =
                                 { rec
                                     | message = Just "ログインしました"
                                 }
-                    , Api.getUserProfile access GetUserProfileResponse
+                    , Api.getUserProfile access (GetUserProfileResponse { access = access, refresh = refresh })
                     )
 
                 Err logInResponseError ->
@@ -296,7 +296,14 @@ update msg (Model rec) =
                             Model
                                 { rec
                                     | message = Just (Api.logInResponseErrorToString logInResponseError)
-                                    , page = PageLogIn (logInPageModel |> Page.LogIn.update Page.LogIn.StopSendLogInConnection |> Tuple.first)
+                                    , page = PageLogIn (logInPageModel |> Page.LogIn.update (Page.LogIn.Msg Page.Component.LogInOrSignUp.StopSendLogInConnection) |> Tuple.first)
+                                }
+
+                        PageExhibition exhibitionModel ->
+                            Model
+                                { rec
+                                    | message = Just (Api.logInResponseErrorToString logInResponseError)
+                                    , page = PageExhibition (exhibitionModel |> Page.Exhibition.update rec.logInState (Page.Exhibition.LogInOrSignUpMsg Page.Component.LogInOrSignUp.StopSendLogInConnection) |> Tuple.first)
                                 }
 
                         _ ->
@@ -381,33 +388,36 @@ update msg (Model rec) =
             , Cmd.none
             )
 
-        InputMultiImageFile idString ->
-            ( Model rec
-            , exhibitionImageChange idString
-            )
-
         ReceiveImageFileAndBlobUrl value ->
-            ( case rec.page of
+            case rec.page of
                 PageExhibition exhibitionPageModel ->
                     case Json.Decode.decodeValue receiveImageFileAndBlobUrlDecoder value of
                         Ok data ->
-                            Model
-                                { rec
-                                    | page =
-                                        PageExhibition
-                                            (Page.Exhibition.update
-                                                (Page.Exhibition.InputImageList data)
-                                                exhibitionPageModel
-                                            )
-                                }
+                            let
+                                ( newModel, emitMaybe ) =
+                                    Page.Exhibition.update
+                                        rec.logInState
+                                        (Page.Exhibition.InputImageList data)
+                                        exhibitionPageModel
+                            in
+                            ( Model { rec | page = PageExhibition newModel }
+                            , case emitMaybe of
+                                Just emit ->
+                                    exhibitionEmitToCmd emit
+
+                                Nothing ->
+                                    Cmd.none
+                            )
 
                         Err _ ->
-                            Model rec
+                            ( Model rec
+                            , Cmd.none
+                            )
 
                 _ ->
-                    Model rec
-            , Cmd.none
-            )
+                    ( Model rec
+                    , Cmd.none
+                    )
 
         InputPassword string ->
             ( case rec.page of
@@ -431,15 +441,15 @@ update msg (Model rec) =
             case rec.page of
                 PageLogIn logInModel ->
                     let
-                        ( newModel, emit ) =
+                        ( newModel, emitMaybe ) =
                             Page.LogIn.update
                                 logInPageMsg
                                 logInModel
                     in
                     ( Model { rec | page = PageLogIn newModel }
-                    , case emit of
-                        Just e ->
-                            logInPageEmitToCmd e
+                    , case emitMaybe of
+                        Just emit ->
+                            logInPageEmitToCmd emit
 
                         Nothing ->
                             Cmd.none
@@ -468,106 +478,19 @@ update msg (Model rec) =
                     , Cmd.none
                     )
 
-        GetUserProfileResponse response ->
-            ( case ( response, rec.logInState ) of
-                ( Ok profile, Data.LogInState.LogInStateOk r ) ->
-                    Model { rec | logInState = Data.LogInState.LogInStateOk { r | profile = Just profile } }
+        GetUserProfileResponse { access, refresh } response ->
+            ( case response of
+                Ok profile ->
+                    Model
+                        { rec
+                            | logInState =
+                                Data.LogInState.LogInStateOk { access = access, refresh = refresh, profile = profile }
+                        }
 
-                ( Err (), Data.LogInState.LogInStateOk _ ) ->
+                Err () ->
                     Model { rec | message = Just "プロフィール情報の取得に失敗しました" }
-
-                ( _, Data.LogInState.LogInStateNone ) ->
-                    Model rec
             , Cmd.none
             )
-
-        ToConfirmPage request ->
-            case rec.page of
-                PageExhibition pageModel ->
-                    ( Model
-                        { rec
-                            | page =
-                                PageExhibition
-                                    (Page.Exhibition.update (Page.Exhibition.ToConfirmPage request) pageModel)
-                        }
-                    , Cmd.none
-                    )
-
-                _ ->
-                    ( Model rec, Cmd.none )
-
-        InputGoodsName name ->
-            ( case rec.page of
-                PageExhibition pageModel ->
-                    Model
-                        { rec
-                            | page =
-                                PageExhibition
-                                    (Page.Exhibition.update (Page.Exhibition.InputGoodsName name) pageModel)
-                        }
-
-                _ ->
-                    Model rec
-            , Cmd.none
-            )
-
-        InputGoodsDescription description ->
-            ( case rec.page of
-                PageExhibition pageModel ->
-                    Model
-                        { rec
-                            | page =
-                                PageExhibition
-                                    (Page.Exhibition.update (Page.Exhibition.InputGoodsDescription description) pageModel)
-                        }
-
-                _ ->
-                    Model rec
-            , Cmd.none
-            )
-
-        InputGoodsPrice string ->
-            ( case rec.page of
-                PageExhibition pageModel ->
-                    Model
-                        { rec
-                            | page =
-                                PageExhibition
-                                    (Page.Exhibition.update (Page.Exhibition.InputGoodsPrice string) pageModel)
-                        }
-
-                _ ->
-                    Model rec
-            , Cmd.none
-            )
-
-        InputCondition maybe ->
-            ( case rec.page of
-                PageExhibition pageModel ->
-                    Model
-                        { rec
-                            | page =
-                                PageExhibition
-                                    (Page.Exhibition.update (Page.Exhibition.InputCondition maybe) pageModel)
-                        }
-
-                _ ->
-                    Model rec
-            , Cmd.none
-            )
-
-        SellGoods request ->
-            case rec.logInState of
-                Data.LogInState.LogInStateOk { access } ->
-                    ( Model rec
-                    , Api.sellGoods access request SellGoodsResponse
-                    )
-
-                Data.LogInState.LogInStateNone ->
-                    ( Model
-                        { rec | message = Just "ログインしていないので出品できません" }
-                    , Cmd.none
-                    )
 
         SellGoodsResponse response ->
             ( case response of
@@ -577,21 +500,6 @@ update msg (Model rec) =
 
                 Err _ ->
                     Model { rec | message = Just "出品できませんでした" }
-            , Cmd.none
-            )
-
-        DeleteImage index ->
-            ( case rec.page of
-                PageExhibition pageModel ->
-                    Model
-                        { rec
-                            | page =
-                                PageExhibition
-                                    (Page.Exhibition.update (Page.Exhibition.DeleteImage index) pageModel)
-                        }
-
-                _ ->
-                    Model rec
             , Cmd.none
             )
 
@@ -606,12 +514,46 @@ update msg (Model rec) =
             , Cmd.none
             )
 
+        ExhibitionMsg exhibitionMsg ->
+            case rec.page of
+                PageExhibition exhibitionPageModel ->
+                    let
+                        ( newModel, emitMaybe ) =
+                            Page.Exhibition.update rec.logInState exhibitionMsg exhibitionPageModel
+                    in
+                    ( Model { rec | page = PageExhibition newModel }
+                    , case emitMaybe of
+                        Just emit ->
+                            exhibitionEmitToCmd emit
+
+                        Nothing ->
+                            Cmd.none
+                    )
+
+                _ ->
+                    ( Model rec
+                    , Cmd.none
+                    )
+
 
 logInPageEmitToCmd : Page.LogIn.Emit -> Cmd Msg
 logInPageEmitToCmd emit =
     case emit of
         Page.LogIn.LogInOrSignUpEmit e ->
             logInOrSignUpEmitToCmd e
+
+
+exhibitionEmitToCmd : Page.Exhibition.Emit -> Cmd Msg
+exhibitionEmitToCmd emit =
+    case emit of
+        Page.Exhibition.EmitLogInOrSignUp e ->
+            logInOrSignUpEmitToCmd e
+
+        Page.Exhibition.EmitSellGoods ( token, request ) ->
+            Api.sellGoods token request SellGoodsResponse
+
+        Page.Exhibition.EmitCatchImageList string ->
+            exhibitionImageChange string
 
 
 logInOrSignUpEmitToCmd : Page.Component.LogInOrSignUp.Emit -> Cmd Msg
@@ -1097,7 +1039,7 @@ menuAccount logInState =
                     []
                 , Html.span
                     [ Html.Attributes.class "menu-account-a-name" ]
-                    [ Html.text (profile |> Maybe.map Data.Profile.getNickName |> Maybe.withDefault "ログイン済み") ]
+                    [ Html.text (Data.Profile.getNickName profile) ]
                 ]
 
         Data.LogInState.LogInStateNone ->
@@ -1152,9 +1094,7 @@ tabDataAndMainView goodsList logInState isWideScreenMode page =
 
         PageExhibition subPage ->
             Page.Exhibition.view logInState subPage
-                |> Tuple.mapBoth
-                    (Tab.map never)
-                    (List.map (Html.map exhibitionPageEmitToMsg))
+                |> Tuple.mapBoth (Tab.map never) (List.map (Html.map ExhibitionMsg))
 
         PageLikeAndHistory subPage ->
             likeAndHistoryView goodsList isWideScreenMode subPage
@@ -1185,7 +1125,7 @@ tabDataAndMainView goodsList logInState isWideScreenMode page =
             Page.Profile.view
                 (case logInState of
                     Data.LogInState.LogInStateOk { profile } ->
-                        profile
+                        Just profile
 
                     Data.LogInState.LogInStateNone ->
                         Nothing
@@ -1232,34 +1172,6 @@ signUpPageEmitToMsg emit =
 
         Page.SignUp.EmitInputNickName string ->
             InputNickName string
-
-
-exhibitionPageEmitToMsg : Page.Exhibition.Emit -> Msg
-exhibitionPageEmitToMsg emit =
-    case emit of
-        Page.Exhibition.EmitInputImageList string ->
-            InputMultiImageFile string
-
-        Page.Exhibition.EmitToConfirmPage request ->
-            ToConfirmPage request
-
-        Page.Exhibition.EmitInputGoodsName string ->
-            InputGoodsName string
-
-        Page.Exhibition.EmitInputGoodsDescription string ->
-            InputGoodsDescription string
-
-        Page.Exhibition.EmitInputGoodsPrice string ->
-            InputGoodsPrice string
-
-        Page.Exhibition.EmitInputCondition maybe ->
-            InputCondition maybe
-
-        Page.Exhibition.EmitSellGoods sellGoodsRequest ->
-            SellGoods sellGoodsRequest
-
-        Page.Exhibition.EmitDeleteImage index ->
-            DeleteImage index
 
 
 homeView : List Data.Goods.Goods -> Bool -> HomePage -> ( Tab.Tab HomePage, List (Html.Html Msg) )

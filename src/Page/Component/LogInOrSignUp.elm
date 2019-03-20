@@ -1,9 +1,8 @@
 module Page.Component.LogInOrSignUp exposing
     ( Emit(..)
     , Model
-    , Msg
+    , Msg(..)
     , initModel
-    , stopSendLogInConnection
     , update
     , view
     )
@@ -36,6 +35,7 @@ type Msg
     = InputStudentIdOrEmailAddress String
     | InputPassword String
     | LogIn Api.LogInRequest
+    | StopSendLogInConnection
 
 
 {-| 学籍番号かメールアドレスの解析結果
@@ -73,15 +73,14 @@ update msg (Model r) =
             )
 
         LogIn request ->
-            ( Model
-                { r | sending = True }
+            ( Model { r | sending = True }
             , Just (EmitLogIn request)
             )
 
-
-stopSendLogInConnection : Model -> Model
-stopSendLogInConnection (Model rec) =
-    Model { rec | sending = False }
+        StopSendLogInConnection ->
+            ( Model r
+            , Nothing
+            )
 
 
 {-| ログイン画面で使う入力の解析

@@ -1,4 +1,11 @@
-module Page.LogIn exposing (Emit(..), Model, Msg(..), initModel, update, view)
+module Page.LogIn exposing
+    ( Emit(..)
+    , Model
+    , Msg(..)
+    , initModel
+    , update
+    , view
+    )
 
 import Html
 import Html.Attributes
@@ -16,7 +23,6 @@ type Emit
 
 type Msg
     = Msg LogInOrSignUp.Msg
-    | StopSendLogInConnection
 
 
 initModel : Model
@@ -32,13 +38,6 @@ update msg (Model logInOrSignUpModel) =
             logInOrSignUpModel
                 |> LogInOrSignUp.update logInOrSignUpMsg
                 |> Tuple.mapBoth Model (Maybe.map LogInOrSignUpEmit)
-
-        StopSendLogInConnection ->
-            ( logInOrSignUpModel
-                |> LogInOrSignUp.stopSendLogInConnection
-                |> Model
-            , Nothing
-            )
 
 
 {-| ログイン画面

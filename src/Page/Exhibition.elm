@@ -1,4 +1,11 @@
-module Page.Exhibition exposing (Emit(..), Model, Msg(..), initModel, update, view)
+module Page.Exhibition exposing
+    ( Emit(..)
+    , Model
+    , Msg(..)
+    , initModel
+    , update
+    , view
+    )
 
 import Api
 import Array
@@ -9,6 +16,7 @@ import Html
 import Html.Attributes
 import Html.Events
 import Json.Decode
+import Page.Component.LogInOrSignUp as LogInOrSignUp
 import Svg
 import Svg.Attributes
 import Svg.Events
@@ -16,6 +24,13 @@ import Tab
 
 
 type Model
+    = Model
+        { logInOrSignUpModel : LogInOrSignUp.Model
+        , page : Page
+        }
+
+
+type Page
     = EditPage EditModel
     | ConfirmPage
         { request : Api.SellGoodsRequest
@@ -45,95 +60,159 @@ type alias Image =
 
 
 type Emit
-    = EmitInputImageList String
-    | EmitDeleteImage Int
-    | EmitInputGoodsName String
-    | EmitInputGoodsDescription String
-    | EmitInputGoodsPrice String
-    | EmitInputCondition (Maybe Goods.Condition)
-    | EmitToConfirmPage Api.SellGoodsRequest
-    | EmitSellGoods Api.SellGoodsRequest
+    = EmitLogInOrSignUp LogInOrSignUp.Emit
+    | EmitSellGoods ( Api.Token, Api.SellGoodsRequest )
+    | EmitCatchImageList String -- JSにファイルとBlobURLの取得を要請する
 
 
 type Msg
     = InputImageList (List Image)
+    | CatchImageList String -- JSにファイルとBlobURLの取得を要請する
     | DeleteImage Int
     | InputGoodsName String
     | InputGoodsDescription String
     | InputGoodsPrice String
     | InputCondition (Maybe Goods.Condition)
-    | ToConfirmPage Api.SellGoodsRequest
+    | ToConfirmPage ( Api.Token, Api.SellGoodsRequest )
+    | LogInOrSignUpMsg LogInOrSignUp.Msg
+    | SellGoods ( Api.Token, Api.SellGoodsRequest )
 
 
 initModel : Model
 initModel =
-    EditPage
-        (EditModel
-            { name = ""
-            , description = ""
-            , price = Nothing
-            , condition = Nothing
-            , image = ImageNone
-            }
-        )
+    Model
+        { logInOrSignUpModel = LogInOrSignUp.initModel
+        , page =
+            EditPage
+                (EditModel
+                    { name = ""
+                    , description = ""
+                    , price = Nothing
+                    , condition = Nothing
+                    , image = ImageNone
+                    }
+                )
+        }
 
 
-update : Msg -> Model -> Model
-update msg model =
-    case model of
+update : Data.LogInState.LogInState -> Msg -> Model -> ( Model, Maybe Emit )
+update logInState msg (Model rec) =
+    case logInState of
+        Data.LogInState.LogInStateOk _ ->
+            updateWhenLogIn msg rec.page
+                |> Tuple.mapFirst
+                    (\p ->
+                        Model { rec | page = p }
+                    )
+
+        Data.LogInState.LogInStateNone ->
+            updateWhenNoLogIn msg rec.logInOrSignUpModel
+                |> Tuple.mapBoth
+                    (\l ->
+                        Model { rec | logInOrSignUpModel = l }
+                    )
+                    (Maybe.map EmitLogInOrSignUp)
+
+
+updateWhenLogIn : Msg -> Page -> ( Page, Maybe Emit )
+updateWhenLogIn msg page =
+    case page of
         EditPage (EditModel rec) ->
             case msg of
                 InputImageList fileList ->
-                    EditPage
+                    ( EditPage
                         (EditModel
                             { rec | image = imageAdd fileList rec.image }
                         )
+                    , Nothing
+                    )
 
                 DeleteImage index ->
-                    EditPage
+                    ( EditPage
                         (EditModel
                             { rec
                                 | image = imageDeleteAt index rec.image
                             }
                         )
+                    , Nothing
+                    )
 
                 InputGoodsName name ->
-                    EditPage
+                    ( EditPage
                         (EditModel
                             { rec
                                 | name = name
                             }
                         )
+                    , Nothing
+                    )
 
                 InputGoodsDescription description ->
-                    EditPage
+                    ( EditPage
                         (EditModel
                             { rec
                                 | description = description
                             }
                         )
+                    , Nothing
+                    )
 
                 InputGoodsPrice priceString ->
-                    EditPage
+                    ( EditPage
                         (EditModel
                             { rec
                                 | price = String.toInt priceString
                             }
                         )
+                    , Nothing
+                    )
 
                 InputCondition condition ->
-                    EditPage
+                    ( EditPage
                         (EditModel
                             { rec
                                 | condition = condition
                             }
                         )
+                    , Nothing
+                    )
 
-                ToConfirmPage request ->
-                    ConfirmPage { request = request }
+                ToConfirmPage ( _, request ) ->
+                    ( ConfirmPage { request = request }
+                    , Nothing
+                    )
+
+                CatchImageList idString ->
+                    ( EditPage (EditModel rec)
+                    , Just (EmitCatchImageList idString)
+                    )
+
+                _ ->
+                    ( EditPage (EditModel rec)
+                    , Nothing
+                    )
 
         ConfirmPage rec ->
-            ConfirmPage rec
+            case msg of
+                SellGoods data ->
+                    ( ConfirmPage rec
+                    , Just (EmitSellGoods data)
+                    )
+
+                _ ->
+                    ( ConfirmPage rec
+                    , Nothing
+                    )
+
+
+updateWhenNoLogIn : Msg -> LogInOrSignUp.Model -> ( LogInOrSignUp.Model, Maybe LogInOrSignUp.Emit )
+updateWhenNoLogIn msg model =
+    case msg of
+        LogInOrSignUpMsg m ->
+            model |> LogInOrSignUp.update m
+
+        _ ->
+            ( model, Nothing )
 
 
 imageAdd : List Image -> ImageList -> ImageList
@@ -320,21 +399,21 @@ itemToRequest image =
             Just { image0 = i0.file, image1 = Just i1.file, image2 = Just i2.file, image3 = Just i3.file }
 
 
-view : Data.LogInState.LogInState -> Model -> ( Tab.Tab Never, List (Html.Html Emit) )
-view logInState model =
+view : Data.LogInState.LogInState -> Model -> ( Tab.Tab Never, List (Html.Html Msg) )
+view logInState (Model { page, logInOrSignUpModel }) =
     let
         ( tabText, body ) =
             case logInState of
                 Data.LogInState.LogInStateNone ->
-                    ( "出品画面", [ Html.text "ログインしていません" ] )
+                    logInStateNoneView logInOrSignUpModel
 
-                Data.LogInState.LogInStateOk _ ->
-                    case model of
+                Data.LogInState.LogInStateOk { access } ->
+                    case page of
                         EditPage editModel ->
-                            editView editModel
+                            editView access editModel
 
                         ConfirmPage { request } ->
-                            confirmView request
+                            confirmView access request
     in
     ( Tab.Single tabText
     , [ Html.div
@@ -347,6 +426,16 @@ view logInState model =
     )
 
 
+logInStateNoneView : LogInOrSignUp.Model -> ( String, List (Html.Html Msg) )
+logInStateNoneView model =
+    ( "出品画面"
+    , [ Html.text "ログインしていません"
+      , LogInOrSignUp.view model
+            |> Html.map LogInOrSignUpMsg
+      ]
+    )
+
+
 
 {- =====================================
                出品 編集画面
@@ -354,8 +443,8 @@ view logInState model =
 -}
 
 
-editView : EditModel -> ( String, List (Html.Html Emit) )
-editView (EditModel rec) =
+editView : Api.Token -> EditModel -> ( String, List (Html.Html Msg) )
+editView accessToken (EditModel rec) =
     ( "商品の情報を入力"
     , (if 4 <= List.length (imageListToBlobUrlList rec.image) then
         []
@@ -368,13 +457,13 @@ editView (EditModel rec) =
            , descriptionView
            , priceView rec.price
            , conditionView
-                |> Html.map EmitInputCondition
-           , toConformPageButton (editPageToSellGoodsRequest (EditModel rec))
+                |> Html.map InputCondition
+           , toConformPageButton accessToken (editPageToSellGoodsRequest (EditModel rec))
            ]
     )
 
 
-photoAdd : List (Html.Html Emit)
+photoAdd : List (Html.Html Msg)
 photoAdd =
     [ Html.label
         [ Html.Attributes.class "exhibition-photo-add"
@@ -392,13 +481,13 @@ photoAdd =
         , Html.Attributes.type_ "file"
         , Html.Attributes.multiple True
         , Html.Attributes.accept "image/png,image/jpeg"
-        , Html.Events.on "change" (Json.Decode.succeed (EmitInputImageList "exhibition-photo-input"))
+        , Html.Events.on "change" (Json.Decode.succeed (CatchImageList "exhibition-photo-input"))
         ]
         []
     ]
 
 
-photoCardList : List String -> Html.Html Emit
+photoCardList : List String -> Html.Html Msg
 photoCardList imageUrlList =
     Html.div
         [ Html.Attributes.class "exhibition-photo-cardList-container" ]
@@ -408,12 +497,12 @@ photoCardList imageUrlList =
         ]
 
 
-photoImage : Int -> String -> Html.Html Emit
+photoImage : Int -> String -> Html.Html Msg
 photoImage index dataUrl =
     Html.div
         [ Html.Attributes.class "exhibition-photo-card" ]
         [ photoDeleteButton
-            |> Html.map (always (EmitDeleteImage index))
+            |> Html.map (always (DeleteImage index))
         , Html.img
             [ Html.Attributes.src dataUrl
             , Html.Attributes.class "exhibition-photo-card-image"
@@ -441,7 +530,7 @@ photoDeleteButton =
         ]
 
 
-nameView : Html.Html Emit
+nameView : Html.Html Msg
 nameView =
     Html.div
         []
@@ -455,13 +544,13 @@ nameView =
             , Html.Attributes.class "exhibition-itemTitle"
             , Html.Attributes.id "exhibition-name"
             , Html.Attributes.maxlength 40
-            , Html.Events.onInput EmitInputGoodsName
+            , Html.Events.onInput InputGoodsName
             ]
             []
         ]
 
 
-descriptionView : Html.Html Emit
+descriptionView : Html.Html Msg
 descriptionView =
     Html.div
         []
@@ -473,13 +562,13 @@ descriptionView =
         , Html.textarea
             [ Html.Attributes.class "exhibition-itemDescription"
             , Html.Attributes.id "exhibition-description"
-            , Html.Events.onInput EmitInputGoodsDescription
+            , Html.Events.onInput InputGoodsDescription
             ]
             []
         ]
 
 
-priceView : Maybe Int -> Html.Html Emit
+priceView : Maybe Int -> Html.Html Msg
 priceView price =
     Html.div
         []
@@ -498,7 +587,7 @@ priceView price =
                 , Html.Attributes.placeholder "0～100万"
                 , Html.Attributes.min "0"
                 , Html.Attributes.max "1000000"
-                , Html.Events.onInput EmitInputGoodsPrice
+                , Html.Events.onInput InputGoodsPrice
                 ]
                 []
             , Html.span
@@ -541,12 +630,12 @@ selectConditionDecoder =
         |> Json.Decode.map (\index -> Goods.conditionAll |> Array.fromList |> Array.get (index - 1))
 
 
-toConformPageButton : Maybe Api.SellGoodsRequest -> Html.Html Emit
-toConformPageButton requestMaybe =
+toConformPageButton : Api.Token -> Maybe Api.SellGoodsRequest -> Html.Html Msg
+toConformPageButton accessToken requestMaybe =
     case requestMaybe of
         Just request ->
             Html.button
-                [ Html.Events.onClick (EmitToConfirmPage request)
+                [ Html.Events.onClick (ToConfirmPage ( accessToken, request ))
                 , Html.Attributes.disabled False
                 , Html.Attributes.class "exhibition-sellButton"
                 ]
@@ -567,8 +656,8 @@ toConformPageButton requestMaybe =
 -}
 
 
-confirmView : Api.SellGoodsRequest -> ( String, List (Html.Html Emit) )
-confirmView request =
+confirmView : Api.Token -> Api.SellGoodsRequest -> ( String, List (Html.Html Msg) )
+confirmView accessToken request =
     let
         (Api.SellGoodsRequest { name, description, price, condition }) =
             request
@@ -593,7 +682,7 @@ confirmView request =
       , Html.div [ Html.Attributes.class "exhibition-confirm-msg" ]
             [ Html.text "この商品を出品します。よろしいですか?" ]
       , Html.button
-            [ Html.Events.onClick (EmitSellGoods request)
+            [ Html.Events.onClick (SellGoods ( accessToken, request ))
             , Html.Attributes.class "exhibition-sellButton"
             ]
             [ Html.text "出品する" ]

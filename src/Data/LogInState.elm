@@ -8,6 +8,6 @@ type LogInState
     = LogInStateOk
         { access : Api.Token
         , refresh : Api.Token
-        , profile : Maybe Data.Profile.Profile
+        , profile : Data.Profile.Profile
         }
     | LogInStateNone
