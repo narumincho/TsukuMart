@@ -14,7 +14,7 @@ module Api exposing
     , Token
     , debugDeleteAllUser
     , getAllGoods
-    , getUserProfile
+    , getMyProfile
     , logIn
     , logInResponseErrorToString
     , sellGoods
@@ -32,6 +32,17 @@ import Http
 import Json.Decode
 import Json.Decode.Pipeline
 import Json.Encode
+import Url.Builder
+
+
+apiOrigin : String
+apiOrigin =
+    "https://api.tsukumart.com"
+
+
+urlBuilder : List String -> String
+urlBuilder pathList =
+    Url.Builder.crossOrigin apiOrigin pathList []
 
 
 
@@ -84,7 +95,7 @@ tokenToHeader token =
 signUp : SignUpRequest -> (Result SignUpResponseError SignUpResponseOk -> msg) -> Cmd msg
 signUp signUpData msg =
     Http.post
-        { url = "https://api.tsukumart.com/auth/signup/"
+        { url = urlBuilder [ "auth", "signup" ]
         , body = Http.jsonBody (signUpJson signUpData)
         , expect = Http.expectStringResponse msg signUpResponseToResult
         }
@@ -215,7 +226,7 @@ signUpConfirm { confirmToken } msg =
     Http.request
         { method = "POST"
         , headers = [ confirmTokenToHeader confirmToken ]
-        , url = "https://api.tsukumart.com/auth/signup/confirm/"
+        , url = urlBuilder [ "auth", "signup", "confirm" ]
         , body = Http.emptyBody
         , expect = Http.expectStringResponse msg signUpConfirmResponseToResult
         , timeout = Nothing
@@ -294,7 +305,7 @@ type alias Token =
 logIn : LogInRequest -> (Result LogInResponseError LogInResponseOk -> msg) -> Cmd msg
 logIn logInData msg =
     Http.post
-        { url = "https://api.tsukumart.com/auth/token/"
+        { url = urlBuilder [ "auth", "token" ]
         , body = Http.jsonBody (logInRequestToJson logInData)
         , expect = Http.expectStringResponse msg logInResponseToResult
         }
@@ -399,7 +410,7 @@ type TokenRefreshResponseError
 tokenRefresh : TokenRefreshRequest -> (Result TokenRefreshResponseError TokenRefreshResponseOk -> msg) -> Cmd msg
 tokenRefresh { refresh } msg =
     Http.post
-        { url = "https://api.tsukumart.com/auth/token/refresh/"
+        { url = urlBuilder [ "auth", "token", "refresh" ]
         , body = Http.emptyBody
         , expect = Http.expectStringResponse msg tokenRefreshResponseToResult
         }
@@ -465,7 +476,7 @@ sellGoods token createGoodsRequest msg =
     Http.request
         { method = "POST"
         , headers = [ tokenToHeader token ]
-        , url = "https://api.tsukumart.com/v1/currentuser/goods/"
+        , url = urlBuilder [ "v1", "currentuser", "goods" ]
         , body = Http.multipartBody (createGoodsRequestJsonBody createGoodsRequest)
         , expect = Http.expectStringResponse msg createGoodsResponseToResult
         , timeout = Nothing
@@ -548,12 +559,32 @@ createGoodsResponseBodyDecoder =
 -}
 
 
-getUserProfile : Token -> (Result () User.User -> msg) -> Cmd msg
-getUserProfile token msg =
+getMyProfile : Token -> (Result () User.User -> msg) -> Cmd msg
+getMyProfile token msg =
     Http.request
         { method = "GET"
         , headers = [ tokenToHeader token ]
-        , url = "https://api.tsukumart.com/v1/currentuser/profile/"
+        , url = urlBuilder [ "v1", "currentuser", "profile" ]
+        , body = Http.emptyBody
+        , expect = Http.expectStringResponse msg getUserProfileResponseToResult
+        , timeout = Nothing
+        , tracker = Nothing
+        }
+
+
+
+{- ============================================================
+          User Profile /{version}/profile/{user}/
+   ============================================================
+-}
+
+
+getUserProfile : User.UserId -> (Result () User.User -> msg) -> Cmd msg
+getUserProfile userId msg =
+    Http.request
+        { method = "GET"
+        , headers = []
+        , url = urlBuilder [ "v1", "profile", userId |> User.userIdToInt |> String.fromInt ]
         , body = Http.emptyBody
         , expect = Http.expectStringResponse msg getUserProfileResponseToResult
         , timeout = Nothing
@@ -616,7 +647,7 @@ getUserProfileResponseValueListToResult id nickName introduction departmentMaybe
 getAllGoods : (Result () (List Goods.Goods) -> msg) -> Cmd msg
 getAllGoods msg =
     Http.get
-        { url = "https://api.tsukumart.com/v1/goods/"
+        { url = urlBuilder [ "v1", "goods" ]
         , expect = Http.expectStringResponse msg getAllGoodsResponseToResult
         }
 
@@ -723,7 +754,7 @@ statusDecoder =
 debugDeleteAllUser : (Result () () -> msg) -> Cmd msg
 debugDeleteAllUser msg =
     Http.get
-        { url = "https://api.tsukumart.com/v1/debug/user/delete/?all=true"
+        { url = Url.Builder.crossOrigin apiOrigin [ "v1", "debug", "user", "delete" ] [ Url.Builder.string "all" "true" ]
         , expect = Http.expectStringResponse msg debugDeleteAllUserResponseToResult
         }
 

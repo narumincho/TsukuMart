@@ -300,7 +300,7 @@ update msg (Model rec) =
                                 { rec
                                     | message = Just "ログインしました"
                                 }
-                    , Api.getUserProfile access (GetUserProfileResponse { access = access, refresh = refresh })
+                    , Api.getMyProfile access (GetUserProfileResponse { access = access, refresh = refresh })
                     )
 
                 Err logInResponseError ->
