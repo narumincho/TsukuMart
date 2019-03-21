@@ -9,7 +9,8 @@ module Data.Goods exposing
     , getCondition
     , getDescription
     , getFirstImageUrl
-    , getLike
+    , getLikedByUserList
+    , getLikedCount
     , getName
     , getPrice
     , none
@@ -22,12 +23,13 @@ module Data.Goods exposing
 {-| 商品
 -}
 
+import Data.User as Profile
+
 
 type Goods
     = Goods
         { id : Int
         , name : String -- 長さは1～255文字
-        , like : Int
         , description : String
         , price : Int
         , condition : Condition
@@ -36,6 +38,7 @@ type Goods
         , image1Url : Maybe String
         , image2Url : Maybe String
         , image3Url : Maybe String
+        , likedByUserList : List Profile.UserId
         }
 
 
@@ -169,46 +172,53 @@ statusFromIdStringLoop idString statusList =
             Nothing
 
 
-{-| 商品の名前を取得する
+{-| 商品の名前
 -}
 getName : Goods -> String
 getName (Goods { name }) =
     name
 
 
-{-| 商品のいいねの数を取得する
+{-| いいねをされた数
 -}
-getLike : Goods -> Int
-getLike (Goods { like }) =
-    like
+getLikedCount : Goods -> Int
+getLikedCount (Goods { likedByUserList }) =
+    List.length likedByUserList
 
 
-{-| 商品の説明を取得する
+{-| 商品の説明
 -}
 getDescription : Goods -> String
 getDescription (Goods { description }) =
     description
 
 
-{-| 商品の価格を取得する
+{-| 商品の価格
 -}
 getPrice : Goods -> Int
 getPrice (Goods { price }) =
     price
 
 
-{-| 商品の状態を取得する
+{-| 商品の状態
 -}
 getCondition : Goods -> Condition
 getCondition (Goods { condition }) =
     condition
 
 
-{-| 商品の画像を取得する
+{-| 商品の最初の画像のURL
 -}
 getFirstImageUrl : Goods -> String
 getFirstImageUrl (Goods { image0Url }) =
     image0Url
+
+
+{-| いいねをしたユーザーIDを取得する
+-}
+getLikedByUserList : Goods -> List Profile.UserId
+getLikedByUserList (Goods { likedByUserList }) =
+    likedByUserList
 
 
 {-| 価格(整数)を3桁ごとに,がついたものにする
@@ -239,7 +249,6 @@ none =
     Goods
         { id = 0
         , name = "仮"
-        , like = 14
         , description = "仮の商品の説明文"
         , price = 23
         , condition = LikeNew
@@ -248,4 +257,5 @@ none =
         , image1Url = Nothing
         , image2Url = Nothing
         , image3Url = Nothing
+        , likedByUserList = []
         }

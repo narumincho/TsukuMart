@@ -25,8 +25,8 @@ module Api exposing
 import Data.EmailAddress as EmailAddress
 import Data.Goods as Goods
 import Data.Password as Password
-import Data.Profile as Profile
 import Data.University as University
+import Data.User as User
 import File
 import Http
 import Json.Decode
@@ -548,7 +548,7 @@ createGoodsResponseBodyDecoder =
 -}
 
 
-getUserProfile : Token -> (Result () Profile.Profile -> msg) -> Cmd msg
+getUserProfile : Token -> (Result () User.User -> msg) -> Cmd msg
 getUserProfile token msg =
     Http.request
         { method = "GET"
@@ -561,7 +561,7 @@ getUserProfile token msg =
         }
 
 
-getUserProfileResponseToResult : Http.Response String -> Result () Profile.Profile
+getUserProfileResponseToResult : Http.Response String -> Result () User.User
 getUserProfileResponseToResult response =
     case response of
         Http.BadStatus_ _ body ->
@@ -576,11 +576,12 @@ getUserProfileResponseToResult response =
             Err ()
 
 
-getUserProfileResponseBodyDecoder : Json.Decode.Decoder (Result () Profile.Profile)
+getUserProfileResponseBodyDecoder : Json.Decode.Decoder (Result () User.User)
 getUserProfileResponseBodyDecoder =
     Json.Decode.oneOf
-        [ Json.Decode.map4
+        [ Json.Decode.map5
             getUserProfileResponseValueListToResult
+            (Json.Decode.field "user" Json.Decode.int)
             (Json.Decode.field "nick" Json.Decode.string)
             (Json.Decode.field "introduction" Json.Decode.string)
             (Json.Decode.maybe (Json.Decode.field "department" Json.Decode.string))
@@ -588,13 +589,14 @@ getUserProfileResponseBodyDecoder =
         ]
 
 
-getUserProfileResponseValueListToResult : String -> String -> Maybe String -> Maybe String -> Result () Profile.Profile
-getUserProfileResponseValueListToResult nickName introduction departmentMaybe graduateMaybe =
+getUserProfileResponseValueListToResult : Int -> String -> String -> Maybe String -> Maybe String -> Result () User.User
+getUserProfileResponseValueListToResult id nickName introduction departmentMaybe graduateMaybe =
     case University.universityFromIdString { departmentMaybe = departmentMaybe, graduateMaybe = graduateMaybe } of
         Just university ->
             Ok
-                (Profile.make
-                    { nickName = nickName
+                (User.make
+                    { id = User.userIdFromInt id
+                    , nickName = nickName
                     , introduction = introduction
                     , university = university
                     }
@@ -643,12 +645,11 @@ getAllGoodsResponseBodyJsonDecoder =
 goodsDecoder : Json.Decode.Decoder Goods.Goods
 goodsDecoder =
     Json.Decode.succeed
-        (\id name desription price condition status image0Url image1Url image2Url image3Url ->
+        (\id name description price condition status image0Url image1Url image2Url image3Url likedByUserList ->
             Goods.Goods
                 { id = id
                 , name = name
-                , like = 28
-                , description = desription
+                , description = description
                 , price = price
                 , condition = condition
                 , status = status
@@ -656,6 +657,7 @@ goodsDecoder =
                 , image1Url = image1Url
                 , image2Url = image2Url
                 , image3Url = image3Url
+                , likedByUserList = likedByUserList |> List.map User.userIdFromInt
                 }
         )
         |> Json.Decode.Pipeline.required "id" Json.Decode.int
@@ -668,6 +670,7 @@ goodsDecoder =
         |> Json.Decode.Pipeline.required "image2" (Json.Decode.nullable Json.Decode.string)
         |> Json.Decode.Pipeline.required "image3" (Json.Decode.nullable Json.Decode.string)
         |> Json.Decode.Pipeline.required "image4" (Json.Decode.nullable Json.Decode.string)
+        |> Json.Decode.Pipeline.required "liked_by_prof" (Json.Decode.list Json.Decode.int)
 
 
 conditionDecoder : Json.Decode.Decoder Goods.Condition

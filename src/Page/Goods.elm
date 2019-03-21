@@ -45,7 +45,7 @@ goodsListItem goods =
         [ itemImage (Goods.getFirstImageUrl goods)
         , Html.div [ Html.Attributes.class "itemTitle" ] [ Html.text (Goods.getName goods) ]
         , Html.div [ Html.Attributes.class "itemPrice" ] [ Html.text (Goods.priceToString (Goods.getPrice goods)) ]
-        , Html.div [] [ Html.text ("いいね" ++ String.fromInt (Goods.getLike goods)) ]
+        , Html.div [] [ Html.text ("いいね" ++ String.fromInt (Goods.getLikedCount goods)) ]
         ]
 
 
@@ -66,7 +66,7 @@ goodsView isWideScreenMode goods =
             [ Html.Attributes.class "goods" ]
             [ goodsViewImage (Goods.getFirstImageUrl goods)
             , goodsViewName (Goods.getName goods)
-            , goodsViewLike (Goods.getLike goods)
+            , goodsViewLike (Goods.getLikedCount goods)
             , goodsViewDescription (Goods.getDescription goods)
             , goodsViewCondition (Goods.getCondition goods)
             ]

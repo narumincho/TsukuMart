@@ -5,7 +5,7 @@ import Browser
 import Browser.Navigation
 import Data.Goods
 import Data.LogInState
-import Data.Profile
+import Data.User
 import File
 import Html
 import Html.Attributes
@@ -120,7 +120,7 @@ type Msg
     | ReceiveImageDataUrl String
     | ReceiveImageFileAndBlobUrl Json.Decode.Value
     | DeleteAllUserResponse (Result () ())
-    | GetUserProfileResponse { access : Api.Token, refresh : Api.Token } (Result () Data.Profile.Profile)
+    | GetUserProfileResponse { access : Api.Token, refresh : Api.Token } (Result () Data.User.User)
     | SellGoodsResponse (Result Api.SellGoodsResponseError ())
     | GetAllGoodsResponse (Result () (List Data.Goods.Goods))
     | LogInPageMsg Page.LogIn.Msg
@@ -1033,7 +1033,7 @@ menuAccount logInState =
                     []
                 , Html.span
                     [ Html.Attributes.class "menu-account-a-name" ]
-                    [ Html.text (Data.Profile.getNickName profile) ]
+                    [ Html.text (Data.User.getNickName profile) ]
                 ]
 
         Data.LogInState.LogInStateNone ->

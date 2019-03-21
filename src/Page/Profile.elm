@@ -1,7 +1,7 @@
 module Page.Profile exposing (Model, initModel, view)
 
-import Data.Profile as Profile
 import Data.University
+import Data.User as Profile
 import Html
 import Html.Attributes
 import Tab
@@ -16,7 +16,7 @@ initModel =
     Model
 
 
-view : Maybe Profile.Profile -> Model -> ( Tab.Tab Never, List (Html.Html msg) )
+view : Maybe Profile.User -> Model -> ( Tab.Tab Never, List (Html.Html msg) )
 view profileMaybe model =
     ( Tab.Single "プロフィール"
     , [ Html.div
