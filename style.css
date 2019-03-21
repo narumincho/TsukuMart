@@ -571,6 +571,7 @@ img {
     border-radius: .4rem;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.18);
     user-select: none;
+    cursor: pointer;
 }
 
 .exhibition-sellButton:hover {
@@ -771,7 +772,7 @@ img {
 .signUp {
     display: grid;
     max-width: 40rem;
-    gap: 1rem;
+    gap: 1.5rem;
     padding: 1.5rem;
     box-sizing: border-box;
     width: 100%;

@@ -144,10 +144,10 @@ init : () -> Url.Url -> Browser.Navigation.Key -> ( Model, Cmd Msg )
 init _ url key =
     let
         ( page, messageMaybe ) =
-            urlToPage url
+            urlToPage (PageHome HomePageRecommend) url
     in
     ( Model
-        { page = page
+        { page = page |> Maybe.withDefault (PageHome HomePageRecommend)
         , menuState = Just MenuNotOpenedYet
         , message = messageMaybe
         , logInState = Data.LogInState.LogInStateNone
@@ -209,21 +209,36 @@ update msg (Model rec) =
 
         UrlChange url ->
             let
-                ( newPage, messageMaybe ) =
-                    urlToPage url
+                ( newPageMaybe, messageMaybe ) =
+                    urlToPage rec.page url
             in
-            ( Model
-                { rec
-                    | page = newPage
-                    , message = messageMaybe
-                    , menuState =
-                        case rec.menuState of
-                            Just MenuOpen ->
-                                Just MenuClose
+            ( case newPageMaybe of
+                Just newPage ->
+                    Model
+                        { rec
+                            | page = newPage
+                            , message = messageMaybe
+                            , menuState =
+                                case rec.menuState of
+                                    Just MenuOpen ->
+                                        Just MenuClose
 
-                            _ ->
-                                rec.menuState
-                }
+                                    _ ->
+                                        rec.menuState
+                        }
+
+                Nothing ->
+                    Model
+                        { rec
+                            | message = messageMaybe
+                            , menuState =
+                                case rec.menuState of
+                                    Just MenuOpen ->
+                                        Just MenuClose
+
+                                    _ ->
+                                        rec.menuState
+                        }
             , Cmd.none
             )
 
@@ -367,7 +382,7 @@ update msg (Model rec) =
                             ( Model { rec | page = PageExhibition newModel }
                             , case emitMaybe of
                                 Just emit ->
-                                    exhibitionPageEmitToCmd emit
+                                    exhibitionPageEmitToCmd rec.key emit
 
                                 Nothing ->
                                     Cmd.none
@@ -473,7 +488,7 @@ update msg (Model rec) =
                     ( Model { rec | page = PageExhibition newModel }
                     , case emitMaybe of
                         Just emit ->
-                            exhibitionPageEmitToCmd emit
+                            exhibitionPageEmitToCmd rec.key emit
 
                         Nothing ->
                             Cmd.none
@@ -517,8 +532,8 @@ logInPageEmitToCmd emit =
             logInOrSignUpEmitToCmd e
 
 
-exhibitionPageEmitToCmd : Page.Exhibition.Emit -> Cmd Msg
-exhibitionPageEmitToCmd emit =
+exhibitionPageEmitToCmd : Browser.Navigation.Key -> Page.Exhibition.Emit -> Cmd Msg
+exhibitionPageEmitToCmd key emit =
     case emit of
         Page.Exhibition.EmitLogInOrSignUp e ->
             logInOrSignUpEmitToCmd e
@@ -528,6 +543,9 @@ exhibitionPageEmitToCmd emit =
 
         Page.Exhibition.EmitCatchImageList string ->
             exhibitionImageChange string
+
+        Page.Exhibition.EmitHistoryPushExhibitionUrl ->
+            Browser.Navigation.pushUrl key SiteMap.exhibitionUrl
 
 
 signUpPageEmitToCmd : Page.SignUp.Emit -> Cmd Msg
@@ -571,11 +589,24 @@ receiveImageFileAndBlobUrlDecoder =
         )
 
 
-urlToPage : Url.Url -> ( Page, Maybe String )
-urlToPage url =
+urlToPage : Page -> Url.Url -> ( Maybe Page, Maybe String )
+urlToPage beforePage url =
     Url.Parser.parse urlParser url
-        |> Maybe.map (\page -> ( page, Nothing ))
-        |> Maybe.withDefault ( PageHome HomePageRecommend, Just "指定したページが見つからないのでホームに移動しました" )
+        |> Maybe.map
+            (\page ->
+                case page of
+                    PageExhibition _ ->
+                        case beforePage of
+                            PageExhibition _ ->
+                                ( Nothing, Nothing )
+
+                            _ ->
+                                ( Just page, Nothing )
+
+                    _ ->
+                        ( Just page, Nothing )
+            )
+        |> Maybe.withDefault ( Just (PageHome HomePageRecommend), Just "指定したページが見つからないのでホームに移動しました" )
 
 
 urlParser : Url.Parser.Parser (Page -> a) a

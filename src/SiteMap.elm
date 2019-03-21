@@ -22,6 +22,7 @@ module SiteMap exposing
     , siteMapXml
     )
 
+import Url.Builder
 import Url.Parser exposing ((</>))
 
 
@@ -32,47 +33,87 @@ homeParser =
 
 homeUrl : String
 homeUrl =
-    "/"
+    Url.Builder.absolute [] []
+
+
+
+{- signup -}
 
 
 signUpParser : Url.Parser.Parser a a
 signUpParser =
-    Url.Parser.s "signup"
+    Url.Parser.s signUpPath
 
 
 signUpUrl : String
 signUpUrl =
-    "/signup"
+    Url.Builder.absolute [ signUpPath ] []
+
+
+signUpPath : String
+signUpPath =
+    "signup"
+
+
+
+{- login -}
 
 
 logInParser : Url.Parser.Parser a a
 logInParser =
-    Url.Parser.s "login"
+    Url.Parser.s logInPath
 
 
 logInUrl : String
 logInUrl =
-    "/login"
+    Url.Builder.absolute [ logInPath ] []
+
+
+logInPath : String
+logInPath =
+    "login"
+
+
+
+{- like-history -}
 
 
 likeHistoryParser : Url.Parser.Parser a a
 likeHistoryParser =
-    Url.Parser.s "like-history"
+    Url.Parser.s likeHistoryPath
 
 
 likeHistoryUrl : String
 likeHistoryUrl =
-    "/like-history"
+    Url.Builder.absolute [ likeHistoryPath ] []
+
+
+likeHistoryPath : String
+likeHistoryPath =
+    "like-history"
+
+
+
+{- exhibition-goods -}
 
 
 exhibitionGoodsParser : Url.Parser.Parser a a
 exhibitionGoodsParser =
-    Url.Parser.s "exhibition-goods"
+    Url.Parser.s exhibitionGoodsPath
 
 
 exhibitionGoodsUrl : String
 exhibitionGoodsUrl =
-    "/exhibition-goods"
+    Url.Builder.absolute [ exhibitionGoodsPath ] []
+
+
+exhibitionGoodsPath : String
+exhibitionGoodsPath =
+    "exhibition-goods"
+
+
+
+{- purchase-goods -}
 
 
 purchaseGoodsParser : Url.Parser.Parser a a
@@ -82,47 +123,88 @@ purchaseGoodsParser =
 
 purchaseGoodsUrl : String
 purchaseGoodsUrl =
-    "/purchase-goods"
+    Url.Builder.absolute [ purchaseGoodsPath ] []
+
+
+purchaseGoodsPath : String
+purchaseGoodsPath =
+    "purchase-goods"
+
+
+
+{- exhibition -}
 
 
 exhibitionParser : Url.Parser.Parser a a
 exhibitionParser =
-    Url.Parser.s "exhibition"
+    Url.Parser.s exhibitionPath
 
 
 exhibitionUrl : String
 exhibitionUrl =
-    "/exhibition"
+    Url.Builder.absolute [ exhibitionPath ] []
+
+
+exhibitionPath : String
+exhibitionPath =
+    "exhibition"
+
+
+
+{- goods -}
 
 
 goodsParser : Url.Parser.Parser (String -> a) a
 goodsParser =
-    Url.Parser.s "goods" </> Url.Parser.string
+    Url.Parser.s goodsPath </> Url.Parser.string
 
 
 goodsUrl : String -> String
 goodsUrl goodsId =
-    "/goods/" ++ goodsId
+    Url.Builder.absolute [ goodsPath, goodsId ] []
+
+
+goodsPath : String
+goodsPath =
+    "goods"
+
+
+
+{- profile -}
 
 
 profileParser : Url.Parser.Parser a a
 profileParser =
-    Url.Parser.s "profile"
+    Url.Parser.s profilePath
 
 
 profileUrl : String
 profileUrl =
-    "/profile"
+    Url.Builder.absolute [ profilePath ] []
+
+
+profilePath : String
+profilePath =
+    "profile"
+
+
+
+{- sitemap -}
 
 
 siteMapParser : Url.Parser.Parser a a
 siteMapParser =
-    Url.Parser.s "sitemap"
+    Url.Parser.s siteMapPath
 
 
 siteMapUrl : String
 siteMapUrl =
-    "/sitemap"
+    Url.Builder.absolute [ siteMapPath ] []
+
+
+siteMapPath : String
+siteMapPath =
+    "sitemap"
 
 
 siteMapXml : String
@@ -141,7 +223,5 @@ siteMapXml =
 urlNode : String -> String
 urlNode string =
     "  <url>\n"
-        ++ "    <loc>http://tsukumart.com"
-        ++ string
-        ++ "</loc>\n"
+        ++ ("    <loc>http://tsukumart.com" ++ string ++ "</loc>\n")
         ++ "  </url>\n"

@@ -63,6 +63,7 @@ type Emit
     = EmitLogInOrSignUp LogInOrSignUp.Emit
     | EmitSellGoods ( Api.Token, Api.SellGoodsRequest )
     | EmitCatchImageList String -- JSにファイルとBlobURLの取得を要請する
+    | EmitHistoryPushExhibitionUrl
 
 
 type Msg
@@ -179,7 +180,7 @@ updateWhenLogIn msg page =
 
                 ToConfirmPage ( _, request ) ->
                     ( ConfirmPage { request = request }
-                    , Nothing
+                    , Just EmitHistoryPushExhibitionUrl
                     )
 
                 CatchImageList idString ->
