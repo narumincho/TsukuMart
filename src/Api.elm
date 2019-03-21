@@ -363,8 +363,24 @@ logInResponseErrorToString logInResponseError =
 
 
 {- =================================================
-           Token Refresh /auth/token/refresh/
+           Tokenの更新 /auth/token/refresh/
    =================================================
+-}
+{-
+   HTTPレスポンスコード:401 Unauthorized
+   body:
+      {
+          "detail": "Given token not valid for any token type",
+          "code": "token_not_valid",
+          "messages": [
+              {
+                  "token_class": "AccessToken",
+                  "token_type": "access",
+                  "message": "Token is invalid or expired"
+              }
+          ]
+      }
+      期限切れか無効かを判断することはなさそう。認証が必要なリクエストでこれが帰ってきたら、Tokenの更新の必要がありそうだ。
 -}
 
 

@@ -65,7 +65,7 @@ h1:hover {
 }
 
 .message {
-    position: absolute;
+    position: fixed;
     top: 8rem;
     z-index: 2;
     background-color: #ddd;
@@ -696,9 +696,17 @@ img {
     font-size: 1.2rem;
     padding: .4rem;
     width: 100%;
-    border: solid 2px #000;
+    border: solid 1px #ccc;
+    box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075);
     box-sizing: border-box;
     border-radius: .4rem;
+    transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
+    outline: none;
+}
+
+.logIn-input:focus {
+    box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075), 0 0 8px #66afe999;
+    border: solid 1px #66afe9;
 }
 
 .logIn-logInButton {
@@ -816,9 +824,17 @@ img {
     font-size: 1.2rem;
     padding: .4rem;
     width: 100%;
-    border: solid 2px #000;
+    border: solid 1px #ccc;
     box-sizing: border-box;
     border-radius: .4rem;
+    box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075);
+    transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
+    outline: none;
+}
+
+.signUp-input:focus {
+    box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075), 0 0 8px rgba(102, 175, 233, .6);
+    border: solid 1px #66afe9;
 }
 
 .signUp-image {
@@ -837,6 +853,7 @@ img {
     box-sizing: border-box;
     border-radius: .4rem;
     font-size: 1.5rem;
+    border: solid 1px #ccc;
 }
 
 .signUp-signUpButton {

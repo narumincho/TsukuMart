@@ -114,24 +114,18 @@ type Msg
     | ToNarrowScreenMode
     | UrlChange Url.Url
     | UrlRequest Browser.UrlRequest
-    | SignUp Api.SignUpRequest
     | SignUpResponse (Result Api.SignUpResponseError Api.SignUpResponseOk)
     | SignUpConfirmResponse (Result Api.SignUpConfirmResponseError Api.SignUpConfirmResponseOk)
     | LogInResponse (Result Api.LogInResponseError Api.LogInResponseOk)
-    | InputStudentIdOrEmailAddress String
-    | InputStudentImage String
-    | InputNickName String
-    | LogInPageMsg Page.LogIn.Msg
     | ReceiveImageDataUrl String
     | ReceiveImageFileAndBlobUrl Json.Decode.Value
-    | InputPassword String
-    | SendConfirmToken String
-    | DeleteAllUser
     | DeleteAllUserResponse (Result () ())
     | GetUserProfileResponse { access : Api.Token, refresh : Api.Token } (Result () Data.Profile.Profile)
     | SellGoodsResponse (Result Api.SellGoodsResponseError ())
     | GetAllGoodsResponse (Result () (List Data.Goods.Goods))
+    | LogInPageMsg Page.LogIn.Msg
     | ExhibitionMsg Page.Exhibition.Msg
+    | SignUpMsg Page.SignUp.Msg
 
 
 main : Program () Model Msg
@@ -245,24 +239,28 @@ update msg (Model rec) =
                     , Browser.Navigation.load string
                     )
 
-        SignUp signUpData ->
-            ( Model
-                { rec
-                    | page = PageSignUp (Page.SignUp.sentSignUpDataInitModel signUpData.emailAddress)
-                }
-            , Api.signUp signUpData SignUpResponse
-            )
-
         SignUpResponse response ->
-            ( case rec.page of
+            case rec.page of
                 PageSignUp singUpPageModel ->
-                    Model
-                        { rec | page = PageSignUp (Page.SignUp.update (Page.SignUp.SignUpResponse response) singUpPageModel) }
+                    let
+                        ( newModel, emitMaybe ) =
+                            Page.SignUp.update
+                                (Page.SignUp.SignUpResponse response)
+                                singUpPageModel
+                    in
+                    ( Model { rec | page = PageSignUp newModel }
+                    , case emitMaybe of
+                        Just emit ->
+                            signUpPageEmitToCmd emit
+
+                        Nothing ->
+                            Cmd.none
+                    )
 
                 _ ->
-                    Model rec
-            , Cmd.none
-            )
+                    ( Model rec
+                    , Cmd.none
+                    )
 
         LogInResponse logInResponse ->
             case logInResponse of
@@ -314,11 +312,6 @@ update msg (Model rec) =
                     , Cmd.none
                     )
 
-        SendConfirmToken token ->
-            ( Model { rec | page = PageSignUp Page.SignUp.sentConfirmTokenInitModel }
-            , Api.signUpConfirm { confirmToken = token } SignUpConfirmResponse
-            )
-
         SignUpConfirmResponse response ->
             ( case response of
                 Ok _ ->
@@ -336,57 +329,28 @@ update msg (Model rec) =
             , Cmd.none
             )
 
-        InputStudentIdOrEmailAddress string ->
-            ( case rec.page of
-                PageSignUp signUpModel ->
-                    Model
-                        { rec
-                            | page =
-                                PageSignUp
-                                    (Page.SignUp.update
-                                        (Page.SignUp.InputStudentIdOrEmailAddress string)
-                                        signUpModel
-                                    )
-                        }
-
-                _ ->
-                    Model rec
-            , Cmd.none
-            )
-
-        InputStudentImage idString ->
-            ( Model rec
-            , studentImageChange idString
-            )
-
-        InputNickName string ->
-            ( case rec.page of
-                PageSignUp signUpModel ->
-                    Model
-                        { rec | page = PageSignUp (signUpModel |> Page.SignUp.update (Page.SignUp.InputNickName string)) }
-
-                _ ->
-                    Model rec
-            , Cmd.none
-            )
-
         ReceiveImageDataUrl urlString ->
-            ( case rec.page of
+            case rec.page of
                 PageSignUp signUpModel ->
-                    Model
-                        { rec
-                            | page =
-                                PageSignUp
-                                    (Page.SignUp.update
-                                        (Page.SignUp.ReceiveImageDataUrl urlString)
-                                        signUpModel
-                                    )
-                        }
+                    let
+                        ( newModel, emitMaybe ) =
+                            Page.SignUp.update
+                                (Page.SignUp.ReceiveImageDataUrl urlString)
+                                signUpModel
+                    in
+                    ( Model { rec | page = PageSignUp newModel }
+                    , case emitMaybe of
+                        Just emit ->
+                            signUpPageEmitToCmd emit
+
+                        Nothing ->
+                            Cmd.none
+                    )
 
                 _ ->
-                    Model rec
-            , Cmd.none
-            )
+                    ( Model rec
+                    , Cmd.none
+                    )
 
         ReceiveImageFileAndBlobUrl value ->
             case rec.page of
@@ -403,7 +367,7 @@ update msg (Model rec) =
                             ( Model { rec | page = PageExhibition newModel }
                             , case emitMaybe of
                                 Just emit ->
-                                    exhibitionEmitToCmd emit
+                                    exhibitionPageEmitToCmd emit
 
                                 Nothing ->
                                     Cmd.none
@@ -418,24 +382,6 @@ update msg (Model rec) =
                     ( Model rec
                     , Cmd.none
                     )
-
-        InputPassword string ->
-            ( case rec.page of
-                PageSignUp signUpModel ->
-                    Model
-                        { rec
-                            | page =
-                                PageSignUp
-                                    (Page.SignUp.update
-                                        (Page.SignUp.InputPassword string)
-                                        signUpModel
-                                    )
-                        }
-
-                _ ->
-                    Model rec
-            , Cmd.none
-            )
 
         LogInPageMsg logInPageMsg ->
             case rec.page of
@@ -460,17 +406,20 @@ update msg (Model rec) =
                     , Cmd.none
                     )
 
-        DeleteAllUser ->
-            ( Model rec
-            , Api.debugDeleteAllUser DeleteAllUserResponse
-            )
-
         DeleteAllUserResponse response ->
             case rec.page of
                 PageSignUp signUpModel ->
-                    ( Model
-                        { rec | page = PageSignUp (Page.SignUp.update (Page.SignUp.DeleteUserAll response) signUpModel) }
-                    , Cmd.none
+                    let
+                        ( newModel, emitMaybe ) =
+                            Page.SignUp.update (Page.SignUp.DeleteUserAllResponse response) signUpModel
+                    in
+                    ( Model { rec | page = PageSignUp newModel }
+                    , case emitMaybe of
+                        Just emit ->
+                            signUpPageEmitToCmd emit
+
+                        Nothing ->
+                            Cmd.none
                     )
 
                 _ ->
@@ -524,7 +473,28 @@ update msg (Model rec) =
                     ( Model { rec | page = PageExhibition newModel }
                     , case emitMaybe of
                         Just emit ->
-                            exhibitionEmitToCmd emit
+                            exhibitionPageEmitToCmd emit
+
+                        Nothing ->
+                            Cmd.none
+                    )
+
+                _ ->
+                    ( Model rec
+                    , Cmd.none
+                    )
+
+        SignUpMsg signUpMsg ->
+            case rec.page of
+                PageSignUp signUpPageModel ->
+                    let
+                        ( newModel, emitMaybe ) =
+                            Page.SignUp.update signUpMsg signUpPageModel
+                    in
+                    ( Model { rec | page = PageSignUp newModel }
+                    , case emitMaybe of
+                        Just emit ->
+                            signUpPageEmitToCmd emit
 
                         Nothing ->
                             Cmd.none
@@ -536,6 +506,10 @@ update msg (Model rec) =
                     )
 
 
+
+{- ===================== Page Emit To Msg ======================== -}
+
+
 logInPageEmitToCmd : Page.LogIn.Emit -> Cmd Msg
 logInPageEmitToCmd emit =
     case emit of
@@ -543,8 +517,8 @@ logInPageEmitToCmd emit =
             logInOrSignUpEmitToCmd e
 
 
-exhibitionEmitToCmd : Page.Exhibition.Emit -> Cmd Msg
-exhibitionEmitToCmd emit =
+exhibitionPageEmitToCmd : Page.Exhibition.Emit -> Cmd Msg
+exhibitionPageEmitToCmd emit =
     case emit of
         Page.Exhibition.EmitLogInOrSignUp e ->
             logInOrSignUpEmitToCmd e
@@ -554,6 +528,26 @@ exhibitionEmitToCmd emit =
 
         Page.Exhibition.EmitCatchImageList string ->
             exhibitionImageChange string
+
+
+signUpPageEmitToCmd : Page.SignUp.Emit -> Cmd Msg
+signUpPageEmitToCmd emit =
+    case emit of
+        Page.SignUp.EmitCatchStudentImage idString ->
+            studentImageChange idString
+
+        Page.SignUp.EmitSignUp signUpRequest ->
+            Api.signUp signUpRequest SignUpResponse
+
+        Page.SignUp.EmitSendConfirmToken token ->
+            Api.signUpConfirm { confirmToken = token } SignUpConfirmResponse
+
+        Page.SignUp.EmitDeleteUserAll ->
+            Api.debugDeleteAllUser DeleteAllUserResponse
+
+
+
+{- ===================== Page Component Emit To Msg ======================== -}
 
 
 logInOrSignUpEmitToCmd : Page.Component.LogInOrSignUp.Emit -> Cmd Msg
@@ -1112,7 +1106,7 @@ tabDataAndMainView goodsList logInState isWideScreenMode page =
 
         PageSignUp signUpPageModel ->
             Page.SignUp.view signUpPageModel
-                |> (\( t, v ) -> ( t |> Tab.map never, v |> List.map (Html.map signUpPageEmitToMsg) ))
+                |> Tuple.mapBoth (Tab.map never) (List.map (Html.map SignUpMsg))
 
         PageLogIn logInPageModel ->
             Page.LogIn.view logInPageModel
@@ -1144,34 +1138,6 @@ messageView message =
         [ Html.Attributes.class "message"
         ]
         [ Html.text message ]
-
-
-signUpPageEmitToMsg : Page.SignUp.Emit -> Msg
-signUpPageEmitToMsg emit =
-    case emit of
-        Page.SignUp.EmitChangePage model ->
-            ChangePage (PageSignUp model)
-
-        Page.SignUp.EmitInputStudentIdOrEmailAddress string ->
-            InputStudentIdOrEmailAddress string
-
-        Page.SignUp.EmitInputStudentImage string ->
-            InputStudentImage string
-
-        Page.SignUp.EmitInputPassword string ->
-            InputPassword string
-
-        Page.SignUp.EmitSignUp record ->
-            SignUp record
-
-        Page.SignUp.EmitSendConfirmToken token ->
-            SendConfirmToken token
-
-        Page.SignUp.EmitDeleteUserAll ->
-            DeleteAllUser
-
-        Page.SignUp.EmitInputNickName string ->
-            InputNickName string
 
 
 homeView : List Data.Goods.Goods -> Bool -> HomePage -> ( Tab.Tab HomePage, List (Html.Html Msg) )
