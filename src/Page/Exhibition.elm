@@ -400,7 +400,7 @@ itemToRequest image =
             Just { image0 = i0.file, image1 = Just i1.file, image2 = Just i2.file, image3 = Just i3.file }
 
 
-view : Data.LogInState.LogInState -> Model -> ( Tab.Tab Never, List (Html.Html Msg) )
+view : Data.LogInState.LogInState -> Model -> ( String, Tab.Tab Never, List (Html.Html Msg) )
 view logInState (Model { page, logInOrSignUpModel }) =
     let
         ( tabText, body ) =
@@ -416,7 +416,8 @@ view logInState (Model { page, logInOrSignUpModel }) =
                         ConfirmPage { request } ->
                             confirmView access request
     in
-    ( Tab.Single tabText
+    ( "出品"
+    , Tab.Single tabText
     , [ Html.div
             [ Html.Attributes.class "exhibition-container" ]
             [ Html.div

@@ -266,7 +266,7 @@ receiveImageDataUrl string sAddressAndPassword =
 
 {-| 新規登録画面の表示
 -}
-view : Model -> ( Tab.Tab Never, List (Html.Html Msg) )
+view : Model -> ( String, Tab.Tab Never, List (Html.Html Msg) )
 view userSignUpPage =
     let
         ( tabText, mainView ) =
@@ -293,7 +293,8 @@ view userSignUpPage =
                         )
                     )
     in
-    ( Tab.Single tabText
+    ( "新規登録"
+    , Tab.Single tabText
     , [ Html.div
             [ Html.Attributes.class "signUpContainer" ]
             [ mainView ]

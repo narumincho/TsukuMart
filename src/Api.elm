@@ -14,6 +14,7 @@ module Api exposing
     , Token
     , debugDeleteAllUser
     , getAllGoods
+    , getGoods
     , getMyProfile
     , logIn
     , logInResponseErrorToString
@@ -671,6 +672,46 @@ getAllGoodsResponseBodyJsonDecoder : Json.Decode.Decoder (Result () (List Goods.
 getAllGoodsResponseBodyJsonDecoder =
     Json.Decode.list goodsDecoder
         |> Json.Decode.map Ok
+
+
+
+{- ==============================================================================
+      商品の情報を取得    /{version}/goods/{id} エラーのため/{version}/goods/でラップ
+   ==============================================================================
+-}
+
+
+getGoods : Int -> (Result () Goods.Goods -> msg) -> Cmd msg
+getGoods id msg =
+    getAllGoods
+        (\r ->
+            case r of
+                Ok goodsList ->
+                    case Goods.searchGoodsFromId id goodsList of
+                        Just goods ->
+                            msg (Ok goods)
+
+                        Nothing ->
+                            msg (Err ())
+
+                Err _ ->
+                    msg (Err ())
+        )
+
+
+getGoodsResponseToResult : Http.Response String -> Result () Goods.Goods
+getGoodsResponseToResult response =
+    case response of
+        Http.BadStatus_ _ body ->
+            Json.Decode.decodeString (goodsDecoder |> Json.Decode.map Ok) body
+                |> Result.withDefault (Err ())
+
+        Http.GoodStatus_ _ body ->
+            Json.Decode.decodeString (goodsDecoder |> Json.Decode.map Ok) body
+                |> Result.withDefault (Err ())
+
+        _ ->
+            Err ()
 
 
 goodsDecoder : Json.Decode.Decoder Goods.Goods

@@ -1,18 +1,32 @@
-module BasicParts exposing (Msg(..), header)
+module BasicParts exposing
+    ( HeaderMsg(..)
+    , MenuMsg(..)
+    , MenuState(..)
+    , header
+    , menuView
+    )
 
+import Data.LogInState
+import Data.User
 import Html
 import Html.Attributes
+import Html.Events
+import Html.Keyed
 import SiteMap
 import Svg
 import Svg.Attributes
 import Svg.Events
 
 
-type Msg
+type HeaderMsg
     = OpenMenu
 
 
-header : Bool -> Html.Html Msg
+
+{- ================= header ================ -}
+
+
+header : Bool -> Html.Html HeaderMsg
 header isWideScreenMode =
     Html.header
         []
@@ -36,7 +50,7 @@ header isWideScreenMode =
         )
 
 
-menuButton : Html.Html Msg
+menuButton : Html.Html HeaderMsg
 menuButton =
     Svg.svg
         [ headerButton
@@ -50,7 +64,7 @@ menuButton =
         ]
 
 
-logo : Html.Html Msg
+logo : Html.Html HeaderMsg
 logo =
     Svg.svg
         [ Svg.Attributes.class "logo"
@@ -265,7 +279,7 @@ logoSubTextFontColor =
     Svg.Attributes.fill "#ffe2a6"
 
 
-searchButton : Html.Html Msg
+searchButton : Html.Html HeaderMsg
 searchButton =
     Svg.svg
         [ Svg.Attributes.viewBox "0 0 24 24"
@@ -276,7 +290,7 @@ searchButton =
         ]
 
 
-notificationsButton : Html.Html Msg
+notificationsButton : Html.Html HeaderMsg
 notificationsButton =
     Svg.svg
         [ Svg.Attributes.viewBox "0 0 24 24"
@@ -287,6 +301,129 @@ notificationsButton =
         ]
 
 
-headerButton : Svg.Attribute Msg
+headerButton : Svg.Attribute HeaderMsg
 headerButton =
     Svg.Attributes.class "headerButton"
+
+
+
+{- ================= menu ================ -}
+
+
+type MenuState
+    = MenuNotOpenedYet
+    | MenuClose
+    | MenuOpen
+
+
+type MenuMsg
+    = CloseMenu
+
+
+menuView : Data.LogInState.LogInState -> Maybe MenuState -> Html.Html MenuMsg
+menuView logInState menuStateMaybe =
+    case menuStateMaybe of
+        Just menuState ->
+            Html.Keyed.node "div"
+                [ Html.Attributes.class "menu" ]
+                (case menuState of
+                    MenuNotOpenedYet ->
+                        []
+
+                    MenuOpen ->
+                        [ ( "os"
+                          , Html.div
+                                [ Html.Attributes.class "menu-shadow menu-shadow-appear"
+                                , Html.Events.onClick CloseMenu
+                                ]
+                                []
+                          )
+                        , ( "om"
+                          , Html.div
+                                [ Html.Attributes.class "menu-list menu-list-open" ]
+                                (menuMain logInState)
+                          )
+                        ]
+
+                    MenuClose ->
+                        [ ( "cs"
+                          , Html.div
+                                [ Html.Attributes.class "menu-shadow menu-shadow-disappear" ]
+                                []
+                          )
+                        , ( "cm"
+                          , Html.div
+                                [ Html.Attributes.class "menu-list menu-list-close" ]
+                                (menuMain logInState)
+                          )
+                        ]
+                )
+
+        Nothing ->
+            Html.div
+                [ Html.Attributes.class "menu-wide" ]
+                (menuMain logInState)
+
+
+menuMain : Data.LogInState.LogInState -> List (Html.Html msg)
+menuMain logInState =
+    [ menuAccount logInState
+    , Html.a
+        [ Html.Attributes.class "menu-item"
+        , Html.Attributes.href SiteMap.homeUrl
+        ]
+        [ Html.text "ホーム" ]
+    , Html.a
+        [ Html.Attributes.class "menu-item"
+        , Html.Attributes.href SiteMap.likeHistoryUrl
+        ]
+        [ Html.text "いいね・閲覧した商品" ]
+    , Html.a
+        [ Html.Attributes.class "menu-item"
+        , Html.Attributes.href SiteMap.exhibitionGoodsUrl
+        ]
+        [ Html.text "出品した商品" ]
+    , Html.a
+        [ Html.Attributes.class "menu-item"
+        , Html.Attributes.href SiteMap.purchaseGoodsUrl
+        ]
+        [ Html.text "購入した商品" ]
+    ]
+
+
+menuAccount : Data.LogInState.LogInState -> Html.Html msg
+menuAccount logInState =
+    case logInState of
+        Data.LogInState.LogInStateOk { profile } ->
+            Html.a
+                [ Html.Attributes.class "menu-account"
+                , Html.Attributes.class "menu-account-a"
+                , Html.Attributes.href SiteMap.profileUrl
+                ]
+                [ Html.img
+                    [ Html.Attributes.class "menu-account-a-icon"
+                    , Html.Attributes.src "/assets/account_image.png"
+                    ]
+                    []
+                , Html.span
+                    [ Html.Attributes.class "menu-account-a-name" ]
+                    [ Html.text (Data.User.getNickName profile) ]
+                ]
+
+        Data.LogInState.LogInStateNone ->
+            Html.div
+                [ Html.Attributes.class "menu-account" ]
+                [ Html.div [ Html.Attributes.class "menu-noLogin" ] [ Html.text "ログインしていません" ]
+                , Html.div [ Html.Attributes.class "menu-logInsignUpButtonContainer" ]
+                    [ Html.a
+                        [ Html.Attributes.class "menu-logInButton"
+                        , Html.Attributes.href SiteMap.logInUrl
+                        ]
+                        [ Html.text "ログイン" ]
+                    , Html.a
+                        [ Html.Attributes.class "menu-signUpButton"
+                        , Html.Attributes.href SiteMap.signUpUrl
+                        ]
+                        [ Html.text "新規登録" ]
+                    ]
+                ]

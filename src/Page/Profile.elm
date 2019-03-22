@@ -63,9 +63,10 @@ update msg (Model rec) =
 {- ====== View ====== -}
 
 
-view : Maybe Profile.User -> Model -> ( Tab.Tab Never, List (Html.Html Msg) )
+view : Maybe Profile.User -> Model -> ( String, Tab.Tab Never, List (Html.Html Msg) )
 view profileMaybe (Model { logInOrSignUpModel }) =
-    ( Tab.Single "プロフィール"
+    ( "プロフィール"
+    , Tab.Single "プロフィール"
     , [ Html.div
             [ Html.Attributes.class "profile-container" ]
             [ Html.div

@@ -42,9 +42,10 @@ update msg (Model logInOrSignUpModel) =
 
 {-| ログイン画面
 -}
-view : Model -> ( Tab.Tab Never, List (Html.Html Msg) )
+view : Model -> ( String, Tab.Tab Never, List (Html.Html Msg) )
 view (Model logInOrSignUpModel) =
-    ( Tab.Single "ログイン"
+    ( "ログイン"
+    , Tab.Single "ログイン"
     , [ Html.div
             [ Html.Attributes.class "logIn-Container" ]
             [ LogInOrSignUp.view logInOrSignUpModel

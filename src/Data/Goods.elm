@@ -9,12 +9,13 @@ module Data.Goods exposing
     , getCondition
     , getDescription
     , getFirstImageUrl
+    , getId
     , getLikedByUserList
     , getLikedCount
     , getName
     , getPrice
-    , none
     , priceToString
+    , searchGoodsFromId
     , statusAll
     , statusFromIdString
     , statusToIdString
@@ -172,6 +173,13 @@ statusFromIdStringLoop idString statusList =
             Nothing
 
 
+{-| 商品のID
+-}
+getId : Goods -> Int
+getId (Goods { id }) =
+    id
+
+
 {-| 商品の名前
 -}
 getName : Goods -> String
@@ -242,20 +250,15 @@ priceToString price =
         ++ "円"
 
 
-{-| 仮の商品
--}
-none : Goods
-none =
-    Goods
-        { id = 0
-        , name = "仮"
-        , description = "仮の商品の説明文"
-        , price = 23
-        , condition = LikeNew
-        , status = Selling
-        , image0Url = "/assets/itemDummy.png"
-        , image1Url = Nothing
-        , image2Url = Nothing
-        , image3Url = Nothing
-        , likedByUserList = []
-        }
+searchGoodsFromId : Int -> List Goods -> Maybe Goods
+searchGoodsFromId id goodsList =
+    case goodsList of
+        x :: xs ->
+            if getId x == id then
+                Just x
+
+            else
+                searchGoodsFromId id xs
+
+        [] ->
+            Nothing

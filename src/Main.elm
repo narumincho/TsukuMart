@@ -16,6 +16,7 @@ import Json.Decode
 import Page.Component.LogInOrSignUp
 import Page.Exhibition
 import Page.Goods
+import Page.GoodsList
 import Page.LogIn
 import Page.Profile
 import Page.SignUp
@@ -67,7 +68,7 @@ port studentImageChange : String -> Cmd msg
 type Model
     = Model
         { page : Page -- 開いているページ
-        , menuState : Maybe MenuState -- メニューの開閉など
+        , menuState : Maybe BasicParts.MenuState -- メニューの開閉
         , message : Maybe String -- ちょっとしたことがあったら表示するもの
         , logInState : Data.LogInState.LogInState
         , key : Browser.Navigation.Key
@@ -83,7 +84,7 @@ type Page
     | PageExhibitionGoodsList
     | PagePurchaseGoodsList
     | PageExhibition Page.Exhibition.Model
-    | PageGoods Data.Goods.Goods
+    | PageGoods Page.Goods.Model
     | PageProfile Page.Profile.Model
     | PageSiteMapXml
 
@@ -97,12 +98,6 @@ type HomePage
 type LikeAndHistory
     = Like
     | History
-
-
-type MenuState
-    = MenuNotOpenedYet
-    | MenuClose
-    | MenuOpen
 
 
 type Msg
@@ -122,10 +117,12 @@ type Msg
     | GetUserProfileResponse { access : Api.Token, refresh : Api.Token } (Result () Data.User.User)
     | SellGoodsResponse (Result Api.SellGoodsResponseError ())
     | GetAllGoodsResponse (Result () (List Data.Goods.Goods))
+    | GetGoodsResponse (Result () Data.Goods.Goods)
     | LogInPageMsg Page.LogIn.Msg
     | ExhibitionMsg Page.Exhibition.Msg
     | SignUpMsg Page.SignUp.Msg
     | ProfilePageMsg Page.Profile.Msg
+    | GoodsPageMsg Page.Goods.Msg
 
 
 main : Program () Model Msg
@@ -143,18 +140,21 @@ main =
 init : () -> Url.Url -> Browser.Navigation.Key -> ( Model, Cmd Msg )
 init _ url key =
     let
-        ( page, messageMaybe ) =
-            urlToPage (PageHome HomePageRecommend) url
+        initModel =
+            Model
+                { page = PageHome HomePageRecommend
+                , menuState = Just BasicParts.MenuNotOpenedYet
+                , message = Nothing
+                , logInState = Data.LogInState.LogInStateNone
+                , key = key
+                , goodsList = []
+                }
+
+        ( model, cmd ) =
+            urlChange url initModel
     in
-    ( Model
-        { page = page |> Maybe.withDefault (PageHome HomePageRecommend)
-        , menuState = Just MenuNotOpenedYet
-        , message = messageMaybe
-        , logInState = Data.LogInState.LogInStateNone
-        , key = key
-        , goodsList = []
-        }
-    , Api.getAllGoods GetAllGoodsResponse
+    ( model
+    , Cmd.batch [ Api.getAllGoods GetAllGoodsResponse, cmd ]
     )
 
 
@@ -174,7 +174,7 @@ update msg (Model rec) =
                 Just _ ->
                     Model
                         { rec
-                            | menuState = Just MenuOpen
+                            | menuState = Just BasicParts.MenuOpen
                         }
 
                 Nothing ->
@@ -187,7 +187,7 @@ update msg (Model rec) =
                 Just _ ->
                     Model
                         { rec
-                            | menuState = Just MenuClose
+                            | menuState = Just BasicParts.MenuClose
                         }
 
                 Nothing ->
@@ -203,44 +203,12 @@ update msg (Model rec) =
 
         ToNarrowScreenMode ->
             ( Model
-                { rec | menuState = Just MenuNotOpenedYet }
+                { rec | menuState = Just BasicParts.MenuNotOpenedYet }
             , Cmd.none
             )
 
         UrlChange url ->
-            let
-                ( newPageMaybe, messageMaybe ) =
-                    urlToPage rec.page url
-            in
-            ( case newPageMaybe of
-                Just newPage ->
-                    Model
-                        { rec
-                            | page = newPage
-                            , message = messageMaybe
-                            , menuState =
-                                case rec.menuState of
-                                    Just MenuOpen ->
-                                        Just MenuClose
-
-                                    _ ->
-                                        rec.menuState
-                        }
-
-                Nothing ->
-                    Model
-                        { rec
-                            | message = messageMaybe
-                            , menuState =
-                                case rec.menuState of
-                                    Just MenuOpen ->
-                                        Just MenuClose
-
-                                    _ ->
-                                        rec.menuState
-                        }
-            , Cmd.none
-            )
+            urlChange url (Model rec)
 
         UrlRequest urlRequest ->
             case urlRequest of
@@ -478,6 +446,35 @@ update msg (Model rec) =
             , Cmd.none
             )
 
+        GetGoodsResponse result ->
+            case result of
+                Ok goods ->
+                    case rec.page of
+                        PageGoods pageGoodsModel ->
+                            let
+                                ( newModel, emitMaybe ) =
+                                    Page.Goods.update (Page.Goods.GetGoodsResponse goods) pageGoodsModel
+                            in
+                            ( Model { rec | page = PageGoods newModel }
+                            , case emitMaybe of
+                                Just emit ->
+                                    goodsPageEmitToCmd emit
+
+                                Nothing ->
+                                    Cmd.none
+                            )
+
+                        _ ->
+                            ( Model rec
+                            , Cmd.none
+                            )
+
+                Err _ ->
+                    ( Model
+                        { rec | message = Just "商品の取得に失敗しました" }
+                    , Cmd.none
+                    )
+
         ExhibitionMsg exhibitionMsg ->
             case rec.page of
                 PageExhibition exhibitionPageModel ->
@@ -544,6 +541,27 @@ update msg (Model rec) =
                     , Cmd.none
                     )
 
+        GoodsPageMsg goodsPageMsg ->
+            case rec.page of
+                PageGoods goodsModel ->
+                    let
+                        ( newModel, emitMabye ) =
+                            Page.Goods.update goodsPageMsg goodsModel
+                    in
+                    ( Model { rec | page = PageGoods newModel }
+                    , case emitMabye of
+                        Just emit ->
+                            goodsPageEmitToCmd emit
+
+                        Nothing ->
+                            Cmd.none
+                    )
+
+                _ ->
+                    ( Model rec
+                    , Cmd.none
+                    )
+
 
 
 {- ===================== Page Emit To Msg ======================== -}
@@ -595,6 +613,13 @@ profilePageEmitToCmd emit =
             logInOrSignUpEmitToCmd e
 
 
+goodsPageEmitToCmd : Page.Goods.Emit -> Cmd Msg
+goodsPageEmitToCmd emit =
+    case emit of
+        Page.Goods.EmitGetGoods { goodsId } ->
+            Api.getGoods goodsId GetGoodsResponse
+
+
 
 {- ===================== Page Component Emit To Msg ======================== -}
 
@@ -620,50 +645,146 @@ receiveImageFileAndBlobUrlDecoder =
         )
 
 
-urlToPage : Page -> Url.Url -> ( Maybe Page, Maybe String )
-urlToPage beforePage url =
-    Url.Parser.parse urlParser url
-        |> Maybe.map
-            (\page ->
-                case page of
-                    PageExhibition _ ->
-                        case beforePage of
-                            PageExhibition _ ->
-                                ( Nothing, Nothing )
+urlChange : Url.Url -> Model -> ( Model, Cmd Msg )
+urlChange url (Model rec) =
+    let
+        result =
+            Url.Parser.parse (urlParser (Model rec)) url
+    in
+    case result of
+        Just ( newPageMaybe, cmd ) ->
+            ( case newPageMaybe of
+                Just newPage ->
+                    Model
+                        { rec
+                            | page = newPage
+                            , menuState =
+                                case rec.menuState of
+                                    Just BasicParts.MenuOpen ->
+                                        Just BasicParts.MenuClose
+
+                                    _ ->
+                                        rec.menuState
+                        }
+
+                Nothing ->
+                    Model
+                        { rec
+                            | menuState =
+                                case rec.menuState of
+                                    Just BasicParts.MenuOpen ->
+                                        Just BasicParts.MenuClose
+
+                                    _ ->
+                                        rec.menuState
+                        }
+            , cmd
+            )
+
+        Nothing ->
+            ( Model
+                { rec
+                    | message = Just "指定したページが見つからないのでホームに移動しました"
+                    , menuState =
+                        case rec.menuState of
+                            Just BasicParts.MenuOpen ->
+                                Just BasicParts.MenuClose
 
                             _ ->
-                                ( Just page, Nothing )
-
-                    _ ->
-                        ( Just page, Nothing )
+                                rec.menuState
+                }
+            , Cmd.none
             )
-        |> Maybe.withDefault ( Just (PageHome HomePageRecommend), Just "指定したページが見つからないのでホームに移動しました" )
 
 
-urlParser : Url.Parser.Parser (Page -> a) a
-urlParser =
+urlParser : Model -> Url.Parser.Parser (( Maybe Page, Cmd Msg ) -> a) a
+urlParser (Model rec) =
     Url.Parser.oneOf
         [ SiteMap.homeParser
-            |> Url.Parser.map (PageHome HomePageRecommend)
+            |> Url.Parser.map
+                ( Just (PageHome HomePageRecommend)
+                , Cmd.none
+                )
         , SiteMap.signUpParser
-            |> Url.Parser.map (PageSignUp Page.SignUp.initModel)
+            |> Url.Parser.map
+                ( Just (PageSignUp Page.SignUp.initModel)
+                , Cmd.none
+                )
         , SiteMap.logInParser
-            |> Url.Parser.map (PageLogIn Page.LogIn.initModel)
+            |> Url.Parser.map
+                ( Just (PageLogIn Page.LogIn.initModel)
+                , Cmd.none
+                )
         , SiteMap.likeHistoryParser
-            |> Url.Parser.map (PageLikeAndHistory Like)
+            |> Url.Parser.map
+                ( Just (PageLikeAndHistory Like)
+                , Cmd.none
+                )
         , SiteMap.exhibitionGoodsParser
-            |> Url.Parser.map PageExhibitionGoodsList
+            |> Url.Parser.map
+                ( Just PageExhibitionGoodsList
+                , Cmd.none
+                )
         , SiteMap.purchaseGoodsParser
-            |> Url.Parser.map PagePurchaseGoodsList
+            |> Url.Parser.map
+                ( Just PagePurchaseGoodsList
+                , Cmd.none
+                )
         , SiteMap.exhibitionParser
-            |> Url.Parser.map (PageExhibition Page.Exhibition.initModel)
+            |> Url.Parser.map
+                (case rec.page of
+                    PageExhibition _ ->
+                        ( Nothing, Cmd.none )
+
+                    _ ->
+                        ( Just (PageExhibition Page.Exhibition.initModel), Cmd.none )
+                )
         , SiteMap.goodsParser
-            |> Url.Parser.map (\_ -> PageGoods Data.Goods.none)
+            |> Url.Parser.map
+                (\id ->
+                    case rec.page of
+                        PageGoods _ ->
+                            ( Nothing, Cmd.none )
+
+                        _ ->
+                            let
+                                ( newModel, emitMaybe ) =
+                                    case rec.page of
+                                        PageHome _ ->
+                                            case Data.Goods.searchGoodsFromId id rec.goodsList of
+                                                Just goods ->
+                                                    Page.Goods.initModelFromGoods goods
+
+                                                Nothing ->
+                                                    Page.Goods.initModel id
+
+                                        _ ->
+                                            Page.Goods.initModel id
+                            in
+                            ( Just (PageGoods newModel)
+                            , case emitMaybe of
+                                Just emit ->
+                                    goodsPageEmitToCmd emit
+
+                                Nothing ->
+                                    Cmd.none
+                            )
+                )
         , SiteMap.profileParser
-            |> Url.Parser.map (PageProfile Page.Profile.initModel)
+            |> Url.Parser.map
+                ( Just (PageProfile Page.Profile.initModel)
+                , Cmd.none
+                )
         , SiteMap.siteMapParser
-            |> Url.Parser.map PageSiteMapXml
+            |> Url.Parser.map
+                ( Just PageSiteMapXml
+                , Cmd.none
+                )
         ]
+
+
+
+{- ============================ View ============================= -}
 
 
 {-| 見た目を決める
@@ -673,18 +794,22 @@ view (Model { page, menuState, message, logInState, goodsList }) =
     let
         isWideScreen =
             menuState == Nothing
+
+        ( title, mainView ) =
+            mainViewAndMainTab goodsList logInState page isWideScreen
     in
     { title =
-        title page
+        title ++ " | つくマート"
     , body =
         [ BasicParts.header isWideScreen
             |> Html.map basicPartsHeaderMsgToMsg
-        , menuView logInState menuState
+        , BasicParts.menuView logInState menuState
+            |> Html.map basicPartMenuMsgToMsg
         ]
-            ++ mainViewAndMainTab goodsList logInState page isWideScreen
+            ++ mainView
             ++ (case message of
                     Just m ->
-                        [ messageView m ]
+                        [ Html.Keyed.node "div" [] [ ( m, messageView m ) ] ]
 
                     Nothing ->
                         []
@@ -692,222 +817,84 @@ view (Model { page, menuState, message, logInState, goodsList }) =
     }
 
 
-basicPartsHeaderMsgToMsg : BasicParts.Msg -> Msg
+mainViewAndMainTab : List Data.Goods.Goods -> Data.LogInState.LogInState -> Page -> Bool -> ( String, List (Html.Html Msg) )
+mainViewAndMainTab goodsList logInState page isWideScreenMode =
+    let
+        ( title, tabData, mainView ) =
+            titleAndTabDataAndMainView goodsList logInState isWideScreenMode page
+    in
+    ( title
+    , [ Tab.view isWideScreenMode tabData
+            |> Html.map ChangePage
+      , Html.div
+            (case tabData of
+                Tab.None ->
+                    [ Html.Attributes.classList
+                        [ ( "mainView-noMainTab", True ), ( "mainView-wide-noMainTab", isWideScreenMode ) ]
+                    ]
+
+                _ ->
+                    [ Html.Attributes.classList
+                        [ ( "mainView", True ), ( "mainView-wide", isWideScreenMode ) ]
+                    ]
+            )
+            mainView
+      ]
+    )
+
+
+basicPartsHeaderMsgToMsg : BasicParts.HeaderMsg -> Msg
 basicPartsHeaderMsgToMsg msg =
     case msg of
         BasicParts.OpenMenu ->
             OpenMenu
 
 
-title : Page -> String
-title page =
-    (case page of
-        PageHome homePage ->
-            ""
-
-        PageSignUp model ->
-            "新規登録 | "
-
-        PageLogIn _ ->
-            "ログイン | "
-
-        PageLikeAndHistory _ ->
-            "いいね・閲覧した商品 | "
-
-        PageExhibitionGoodsList ->
-            "出品した商品 | "
-
-        PagePurchaseGoodsList ->
-            "購入した商品 | "
-
-        PageExhibition _ ->
-            "出品 | "
-
-        PageGoods goods ->
-            Data.Goods.getName goods ++ " | "
-
-        PageProfile _ ->
-            "ユーザーページ | "
-
-        PageSiteMapXml ->
-            "sitemap.xml | "
-    )
-        ++ "つくマート"
+basicPartMenuMsgToMsg : BasicParts.MenuMsg -> Msg
+basicPartMenuMsgToMsg msg =
+    case msg of
+        BasicParts.CloseMenu ->
+            CloseMenu
 
 
-
-{- Header -}
-{- Menu -}
-
-
-menuView : Data.LogInState.LogInState -> Maybe MenuState -> Html.Html Msg
-menuView logInState menuStateMaybe =
-    case menuStateMaybe of
-        Just menuState ->
-            Html.Keyed.node "div"
-                [ Html.Attributes.class "menu" ]
-                (case menuState of
-                    MenuNotOpenedYet ->
-                        []
-
-                    MenuOpen ->
-                        [ ( "os"
-                          , Html.div
-                                [ Html.Attributes.class "menu-shadow menu-shadow-appear"
-                                , Html.Events.onClick CloseMenu
-                                ]
-                                []
-                          )
-                        , ( "om"
-                          , Html.div
-                                [ Html.Attributes.class "menu-list menu-list-open" ]
-                                (menuMain logInState)
-                          )
-                        ]
-
-                    MenuClose ->
-                        [ ( "cs"
-                          , Html.div
-                                [ Html.Attributes.class "menu-shadow menu-shadow-disappear" ]
-                                []
-                          )
-                        , ( "cm"
-                          , Html.div
-                                [ Html.Attributes.class "menu-list menu-list-close" ]
-                                (menuMain logInState)
-                          )
-                        ]
-                )
-
-        Nothing ->
-            Html.div
-                [ Html.Attributes.class "menu-wide" ]
-                (menuMain logInState)
-
-
-menuMain : Data.LogInState.LogInState -> List (Html.Html Msg)
-menuMain logInState =
-    [ menuAccount logInState
-    , Html.a
-        [ Html.Attributes.class "menu-item"
-        , Html.Attributes.href SiteMap.homeUrl
-        ]
-        [ Html.text "ホーム" ]
-    , Html.a
-        [ Html.Attributes.class "menu-item"
-        , Html.Attributes.href SiteMap.likeHistoryUrl
-        ]
-        [ Html.text "いいね・閲覧した商品" ]
-    , Html.a
-        [ Html.Attributes.class "menu-item"
-        , Html.Attributes.href SiteMap.exhibitionGoodsUrl
-        ]
-        [ Html.text "出品した商品" ]
-    , Html.a
-        [ Html.Attributes.class "menu-item"
-        , Html.Attributes.href SiteMap.purchaseGoodsUrl
-        ]
-        [ Html.text "購入した商品" ]
-    ]
-
-
-menuAccount : Data.LogInState.LogInState -> Html.Html msg
-menuAccount logInState =
-    case logInState of
-        Data.LogInState.LogInStateOk { profile } ->
-            Html.a
-                [ Html.Attributes.class "menu-account"
-                , Html.Attributes.class "menu-account-a"
-                , Html.Attributes.href SiteMap.profileUrl
-                ]
-                [ Html.img
-                    [ Html.Attributes.class "menu-account-a-icon"
-                    , Html.Attributes.src "/assets/account_image.png"
-                    ]
-                    []
-                , Html.span
-                    [ Html.Attributes.class "menu-account-a-name" ]
-                    [ Html.text (Data.User.getNickName profile) ]
-                ]
-
-        Data.LogInState.LogInStateNone ->
-            Html.div
-                [ Html.Attributes.class "menu-account" ]
-                [ Html.div [ Html.Attributes.class "menu-noLogin" ] [ Html.text "ログインしていません" ]
-                , Html.div [ Html.Attributes.class "menu-logInsignUpButtonContainer" ]
-                    [ Html.a
-                        [ Html.Attributes.class "menu-logInButton"
-                        , Html.Attributes.href SiteMap.logInUrl
-                        ]
-                        [ Html.text "ログイン" ]
-                    , Html.a
-                        [ Html.Attributes.class "menu-signUpButton"
-                        , Html.Attributes.href SiteMap.signUpUrl
-                        ]
-                        [ Html.text "新規登録" ]
-                    ]
-                ]
-
-
-mainViewAndMainTab : List Data.Goods.Goods -> Data.LogInState.LogInState -> Page -> Bool -> List (Html.Html Msg)
-mainViewAndMainTab goodsList logInState page isWideScreenMode =
-    let
-        ( tabData, mainView ) =
-            tabDataAndMainView goodsList logInState isWideScreenMode page
-    in
-    [ Tab.view isWideScreenMode tabData
-        |> Html.map ChangePage
-    , Html.div
-        (case tabData of
-            Tab.None ->
-                [ Html.Attributes.classList
-                    [ ( "mainView-noMainTab", True ), ( "mainView-wide-noMainTab", isWideScreenMode ) ]
-                ]
-
-            _ ->
-                [ Html.Attributes.classList
-                    [ ( "mainView", True ), ( "mainView-wide", isWideScreenMode ) ]
-                ]
-        )
-        mainView
-    ]
-
-
-tabDataAndMainView : List Data.Goods.Goods -> Data.LogInState.LogInState -> Bool -> Page -> ( Tab.Tab Page, List (Html.Html Msg) )
-tabDataAndMainView goodsList logInState isWideScreenMode page =
+titleAndTabDataAndMainView : List Data.Goods.Goods -> Data.LogInState.LogInState -> Bool -> Page -> ( String, Tab.Tab Page, List (Html.Html Msg) )
+titleAndTabDataAndMainView goodsList logInState isWideScreenMode page =
     case page of
         PageHome subPage ->
             homeView goodsList isWideScreenMode subPage
-                |> Tuple.mapFirst (Tab.map PageHome)
+                |> mapPageData PageHome identity
 
         PageExhibition subPage ->
             Page.Exhibition.view logInState subPage
-                |> Tuple.mapBoth (Tab.map never) (List.map (Html.map ExhibitionMsg))
+                |> mapPageData never ExhibitionMsg
 
         PageLikeAndHistory subPage ->
             likeAndHistoryView goodsList isWideScreenMode subPage
-                |> Tuple.mapFirst (Tab.map PageLikeAndHistory)
+                |> mapPageData PageLikeAndHistory identity
 
         PagePurchaseGoodsList ->
-            ( Tab.Single "購入した商品"
-            , [ Page.Goods.goodsListView isWideScreenMode goodsList ]
+            ( "購入した商品"
+            , Tab.Single "購入した商品"
+            , [ Page.GoodsList.goodsListView isWideScreenMode goodsList ]
             )
 
         PageExhibitionGoodsList ->
-            ( Tab.Single "出品した商品"
-            , [ Page.Goods.goodsListView isWideScreenMode goodsList ]
+            ( "出品した商品"
+            , Tab.Single "出品した商品"
+            , [ Page.GoodsList.goodsListView isWideScreenMode goodsList ]
             )
 
         PageSignUp signUpPageModel ->
             Page.SignUp.view signUpPageModel
-                |> Tuple.mapBoth (Tab.map never) (List.map (Html.map SignUpMsg))
+                |> mapPageData never SignUpMsg
 
         PageLogIn logInPageModel ->
             Page.LogIn.view logInPageModel
-                |> Tuple.mapBoth (Tab.map never) (List.map (Html.map LogInPageMsg))
+                |> mapPageData never LogInPageMsg
 
         PageGoods goods ->
-            ( Tab.None, Page.Goods.goodsView isWideScreenMode goods )
+            Page.Goods.view isWideScreenMode goods
+                |> mapPageData never GoodsPageMsg
 
         PageProfile profileModel ->
             Page.Profile.view
@@ -919,11 +906,16 @@ tabDataAndMainView goodsList logInState isWideScreenMode page =
                         Nothing
                 )
                 profileModel
-                |> Tuple.mapBoth (Tab.map never) (List.map (Html.map ProfilePageMsg))
+                |> mapPageData never ProfilePageMsg
 
         PageSiteMapXml ->
             siteMapXmlView
-                |> Tuple.mapFirst (Tab.map never)
+                |> mapPageData never identity
+
+
+mapPageData : (a -> b) -> (c -> d) -> ( String, Tab.Tab a, List (Html.Html c) ) -> ( String, Tab.Tab b, List (Html.Html d) )
+mapPageData tabF msgF ( title, tab, htmlList ) =
+    ( title, tab |> Tab.map tabF, htmlList |> List.map (Html.map msgF) )
 
 
 messageView : String -> Html.Html msg
@@ -934,9 +926,10 @@ messageView message =
         [ Html.text message ]
 
 
-homeView : List Data.Goods.Goods -> Bool -> HomePage -> ( Tab.Tab HomePage, List (Html.Html Msg) )
+homeView : List Data.Goods.Goods -> Bool -> HomePage -> ( String, Tab.Tab HomePage, List (Html.Html Msg) )
 homeView goodsList isWideScreenMode subPage =
-    ( Tab.Multi
+    ( ""
+    , Tab.Multi
         [ ( HomePageRecent, "新着" )
         , ( HomePageRecommend, "おすすめ" )
         , ( HomePageFree, "0円" )
@@ -951,13 +944,14 @@ homeView goodsList isWideScreenMode subPage =
             HomePageFree ->
                 2
         )
-    , [ Page.Goods.goodsListView isWideScreenMode goodsList, exhibitButton ]
+    , [ Page.GoodsList.goodsListView isWideScreenMode goodsList, exhibitButton ]
     )
 
 
-likeAndHistoryView : List Data.Goods.Goods -> Bool -> LikeAndHistory -> ( Tab.Tab LikeAndHistory, List (Html.Html Msg) )
+likeAndHistoryView : List Data.Goods.Goods -> Bool -> LikeAndHistory -> ( String, Tab.Tab LikeAndHistory, List (Html.Html Msg) )
 likeAndHistoryView goodsList isWideScreenMode likeAndHistory =
-    ( Tab.Multi
+    ( "いいね・閲覧した商品"
+    , Tab.Multi
         [ ( Like, "いいね" )
         , ( History, "閲覧履歴" )
         ]
@@ -968,7 +962,7 @@ likeAndHistoryView goodsList isWideScreenMode likeAndHistory =
             History ->
                 1
         )
-    , [ Page.Goods.goodsListView isWideScreenMode goodsList ]
+    , [ Page.GoodsList.goodsListView isWideScreenMode goodsList ]
     )
 
 
@@ -981,9 +975,10 @@ exhibitButton =
         [ Html.text "出品" ]
 
 
-siteMapXmlView : ( Tab.Tab Never, List (Html.Html msg) )
+siteMapXmlView : ( String, Tab.Tab Never, List (Html.Html msg) )
 siteMapXmlView =
-    ( Tab.Single "sitemap.xml"
+    ( "sitemap.xml"
+    , Tab.Single "sitemap.xml"
     , [ Html.div
             [ Html.Attributes.style "white-space" "pre-wrap" ]
             [ Html.text SiteMap.siteMapXml ]

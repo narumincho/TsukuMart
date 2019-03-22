@@ -1,6 +1,11 @@
 module Page.Goods exposing
-    ( goodsListView
-    , goodsView
+    ( Emit(..)
+    , Model
+    , Msg(..)
+    , initModel
+    , initModelFromGoods
+    , update
+    , view
     )
 
 {-| 商品の表示
@@ -10,69 +15,77 @@ import Data.Goods as Goods
 import Html
 import Html.Attributes
 import SiteMap
+import Tab
 
 
 
-{- ============================================
-                商品の一覧表示
-   ============================================
+{- 商品詳細ページ -}
+
+
+type Model
+    = Normal Goods.Goods
+    | Loading { goodsId : Int }
+
+
+type Emit
+    = EmitGetGoods { goodsId : Int }
+
+
+type Msg
+    = GetGoodsResponse Goods.Goods
+
+
+{-| 指定したIDの商品詳細ページ
 -}
+initModel : Int -> ( Model, Maybe Emit )
+initModel id =
+    ( Loading { goodsId = id }
+    , Just (EmitGetGoods { goodsId = id })
+    )
 
 
-{-| 商品の一覧表示
+{-| 商品の内容があらかじめ、わかっているときのもの。でも、一応また聞きに行く
 -}
-goodsListView : Bool -> List Goods.Goods -> Html.Html msg
-goodsListView isWideMode goodsList =
-    Html.div
-        [ Html.Attributes.style "display" "grid"
-        , Html.Attributes.style "grid-template-columns"
-            (if isWideMode then
-                "33.3% 33.4% 33.3%"
+initModelFromGoods : Goods.Goods -> ( Model, Maybe Emit )
+initModelFromGoods goods =
+    ( Normal goods
+    , Just (EmitGetGoods { goodsId = Goods.getId goods })
+    )
 
-             else
-                "50% 50%"
+
+update : Msg -> Model -> ( Model, Maybe Emit )
+update msg _ =
+    case msg of
+        GetGoodsResponse goods ->
+            ( Normal goods, Nothing )
+
+
+view : Bool -> Model -> ( String, Tab.Tab Never, List (Html.Html msg) )
+view isWideScreenMode model =
+    case model of
+        Loading _ ->
+            ( "商品詳細ページ"
+            , Tab.None
+            , [ Html.text "読み込み中" ]
             )
-        ]
-        (goodsList |> List.map goodsListItem)
 
-
-goodsListItem : Goods.Goods -> Html.Html msg
-goodsListItem goods =
-    Html.a
-        [ Html.Attributes.class "item"
-        , Html.Attributes.href (SiteMap.goodsUrl "id")
-        ]
-        [ itemImage (Goods.getFirstImageUrl goods)
-        , Html.div [ Html.Attributes.class "itemTitle" ] [ Html.text (Goods.getName goods) ]
-        , Html.div [ Html.Attributes.class "itemPrice" ] [ Html.text (Goods.priceToString (Goods.getPrice goods)) ]
-        , Html.div [] [ Html.text ("いいね" ++ String.fromInt (Goods.getLikedCount goods)) ]
-        ]
-
-
-itemImage : String -> Html.Html msg
-itemImage url =
-    Html.img
-        [ Html.Attributes.class "itemImage"
-        , Html.Attributes.src url
-        ]
-        []
-
-
-goodsView : Bool -> Goods.Goods -> List (Html.Html msg)
-goodsView isWideScreenMode goods =
-    [ Html.div
-        [ Html.Attributes.class "goods-container" ]
-        [ Html.div
-            [ Html.Attributes.class "goods" ]
-            [ goodsViewImage (Goods.getFirstImageUrl goods)
-            , goodsViewName (Goods.getName goods)
-            , goodsViewLike (Goods.getLikedCount goods)
-            , goodsViewDescription (Goods.getDescription goods)
-            , goodsViewCondition (Goods.getCondition goods)
-            ]
-        , goodsViewPriceAndBuyButton isWideScreenMode (Goods.getPrice goods)
-        ]
-    ]
+        Normal goods ->
+            ( Goods.getName goods
+            , Tab.None
+            , [ Html.div
+                    [ Html.Attributes.class "goods-container" ]
+                    [ Html.div
+                        [ Html.Attributes.class "goods" ]
+                        [ goodsViewImage (Goods.getFirstImageUrl goods)
+                        , goodsViewName (Goods.getName goods)
+                        , goodsViewLike (Goods.getLikedCount goods)
+                        , goodsViewDescription (Goods.getDescription goods)
+                        , goodsViewCondition (Goods.getCondition goods)
+                        ]
+                    , goodsViewPriceAndBuyButton isWideScreenMode (Goods.getPrice goods)
+                    ]
+              ]
+            )
 
 
 goodsViewImage : String -> Html.Html msg

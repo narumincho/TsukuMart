@@ -154,14 +154,14 @@ exhibitionPath =
 {- goods -}
 
 
-goodsParser : Url.Parser.Parser (String -> a) a
+goodsParser : Url.Parser.Parser (Int -> a) a
 goodsParser =
-    Url.Parser.s goodsPath </> Url.Parser.string
+    Url.Parser.s goodsPath </> Url.Parser.int
 
 
-goodsUrl : String -> String
+goodsUrl : Int -> String
 goodsUrl goodsId =
-    Url.Builder.absolute [ goodsPath, goodsId ] []
+    Url.Builder.absolute [ goodsPath, String.fromInt goodsId ] []
 
 
 goodsPath : String
@@ -212,7 +212,7 @@ siteMapXml =
     ([ "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
      , "<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n"
      ]
-        ++ (([ homeUrl ] ++ [ goodsUrl "sampleId" ])
+        ++ (([ homeUrl ] ++ [ goodsUrl 0 ])
                 |> List.map urlNode
            )
         ++ [ "</urlset>\n" ]
