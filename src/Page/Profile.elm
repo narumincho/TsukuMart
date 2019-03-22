@@ -1,23 +1,70 @@
-module Page.Profile exposing (Model, initModel, view)
+module Page.Profile exposing
+    ( Emit(..)
+    , Model
+    , Msg(..)
+    , initModel
+    , update
+    , view
+    )
 
 import Data.University
 import Data.User as Profile
 import Html
 import Html.Attributes
+import Page.Component.LogInOrSignUp as LogInOrSignUp
 import Tab
 
 
 type Model
     = Model
+        { editMode : EditMode
+        , logInOrSignUpModel : LogInOrSignUp.Model
+        }
+
+
+type EditMode
+    = EditMode
+
+
+type Emit
+    = EmitLogInOrSignUp LogInOrSignUp.Emit
+
+
+type Msg
+    = MsgLogInOrSignUp LogInOrSignUp.Msg
 
 
 initModel : Model
 initModel =
     Model
+        { editMode = EditMode
+        , logInOrSignUpModel = LogInOrSignUp.initModel
+        }
 
 
-view : Maybe Profile.User -> Model -> ( Tab.Tab Never, List (Html.Html msg) )
-view profileMaybe model =
+
+{- ====== Update ====== -}
+
+
+update : Msg -> Model -> ( Model, Maybe Emit )
+update msg (Model rec) =
+    case msg of
+        MsgLogInOrSignUp logInOrSignUpMsg ->
+            let
+                ( newModel, emitMaybe ) =
+                    LogInOrSignUp.update logInOrSignUpMsg rec.logInOrSignUpModel
+            in
+            ( Model { rec | logInOrSignUpModel = newModel }
+            , emitMaybe |> Maybe.map EmitLogInOrSignUp
+            )
+
+
+
+{- ====== View ====== -}
+
+
+view : Maybe Profile.User -> Model -> ( Tab.Tab Never, List (Html.Html Msg) )
+view profileMaybe (Model { logInOrSignUpModel }) =
     ( Tab.Single "プロフィール"
     , [ Html.div
             [ Html.Attributes.class "profile-container" ]
@@ -31,7 +78,9 @@ view profileMaybe model =
                             ++ universityView (Profile.getUniversity profile)
 
                     Nothing ->
-                        [ Html.text "プロフィールがまだ読み込まれていません" ]
+                        [ LogInOrSignUp.view logInOrSignUpModel
+                            |> Html.map MsgLogInOrSignUp
+                        ]
                 )
             ]
       ]

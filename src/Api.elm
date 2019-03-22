@@ -42,7 +42,7 @@ apiOrigin =
 
 urlBuilder : List String -> String
 urlBuilder pathList =
-    Url.Builder.crossOrigin apiOrigin pathList []
+    Url.Builder.crossOrigin apiOrigin (pathList ++ [ "" ]) []
 
 
 

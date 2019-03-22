@@ -78,7 +78,7 @@ update msg (Model r) =
             )
 
         StopSendLogInConnection ->
-            ( Model r
+            ( Model { r | sending = False }
             , Nothing
             )
 
