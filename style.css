@@ -71,6 +71,9 @@ header {
 .message {
     position: fixed;
     top: 8rem;
+    left: 10%;
+    width: 80%;
+    text-align: center;
     z-index: 2;
     background-color: #ddd;
     color: #111;
@@ -79,7 +82,7 @@ header {
     font-size: 1.3rem;
     padding: 2rem;
     pointer-events: none;
-    animation: invalidLinkErrorMsgAnimation 10s ease 2s 1 normal forwards;
+    animation: invalidLinkErrorMsgAnimation 12s ease 2s 1 normal forwards;
     max-width: 100%;
     box-sizing: border-box;
     word-break: break-word;
@@ -602,14 +605,28 @@ img {
     display: grid;
     max-width: 40rem;
     gap: 1rem;
-    padding: 1.5rem;
+    padding: 1rem 1rem 5rem 1rem;
     box-sizing: border-box;
     width: 100%;
 }
 
+.goods-imageListContainer {
+    background-color: gray;
+    overflow-x: auto;
+    position: relative;
+}
+
+.goods-imageList {
+    display: flex;
+    flex-direction: row;
+}
+
 .goods-image {
-    display: block;
-    width: 100%;
+    position: relative;
+    width: 20rem;
+    height: 20rem;
+    padding: 1rem;
+    object-fit: contain;
 }
 
 .goods-name {

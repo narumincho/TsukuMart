@@ -13,6 +13,7 @@ module Data.Goods exposing
     , getLikedByUserList
     , getLikedCount
     , getName
+    , getOthersImageUrlList
     , getPrice
     , priceToString
     , searchGoodsFromId
@@ -220,6 +221,23 @@ getCondition (Goods { condition }) =
 getFirstImageUrl : Goods -> String
 getFirstImageUrl (Goods { image0Url }) =
     image0Url
+
+
+{-| 商品の最初以外の画像のURL
+-}
+getOthersImageUrlList : Goods -> List String
+getOthersImageUrlList (Goods { image1Url, image2Url, image3Url }) =
+    [ image1Url, image2Url, image3Url ] |> List.map maybeToList |> List.concat
+
+
+maybeToList : Maybe a -> List a
+maybeToList aMaybe =
+    case aMaybe of
+        Just a ->
+            [ a ]
+
+        Nothing ->
+            []
 
 
 {-| いいねをしたユーザーIDを取得する

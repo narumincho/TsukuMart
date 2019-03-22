@@ -799,7 +799,11 @@ view (Model { page, menuState, message, logInState, goodsList }) =
             mainViewAndMainTab goodsList logInState page isWideScreen
     in
     { title =
-        title ++ " | つくマート"
+        if title == "" then
+            "つくマート"
+
+        else
+            title ++ " | つくマート"
     , body =
         [ BasicParts.header isWideScreen
             |> Html.map basicPartsHeaderMsgToMsg

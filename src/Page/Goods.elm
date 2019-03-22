@@ -2,6 +2,7 @@ module Page.Goods exposing
     ( Emit(..)
     , Model
     , Msg(..)
+    , imageView
     , initModel
     , initModelFromGoods
     , update
@@ -76,7 +77,7 @@ view isWideScreenMode model =
                     [ Html.Attributes.class "goods-container" ]
                     [ Html.div
                         [ Html.Attributes.class "goods" ]
-                        [ goodsViewImage (Goods.getFirstImageUrl goods)
+                        [ goodsViewImage (Goods.getFirstImageUrl goods) (Goods.getOthersImageUrlList goods)
                         , goodsViewName (Goods.getName goods)
                         , goodsViewLike (Goods.getLikedCount goods)
                         , goodsViewDescription (Goods.getDescription goods)
@@ -88,11 +89,22 @@ view isWideScreenMode model =
             )
 
 
-goodsViewImage : String -> Html.Html msg
-goodsViewImage dataUrl =
+goodsViewImage : String -> List String -> Html.Html msg
+goodsViewImage url urlList =
+    Html.div
+        [ Html.Attributes.class "goods-imageListContainer" ]
+        [ Html.div
+            [ Html.Attributes.class "goods-imageList"
+            ]
+            (url :: urlList |> List.map imageView)
+        ]
+
+
+imageView : String -> Html.Html msg
+imageView url =
     Html.img
         [ Html.Attributes.class "goods-image"
-        , Html.Attributes.src dataUrl
+        , Html.Attributes.src url
         ]
         []
 
