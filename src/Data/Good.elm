@@ -1,6 +1,6 @@
-module Data.Goods exposing
-    ( Condition(..)
-    , Goods(..)
+module Data.Good exposing
+    ( Condition
+    , Good(..)
     , Status
     , conditionAll
     , conditionFromString
@@ -28,8 +28,8 @@ module Data.Goods exposing
 import Data.User as Profile
 
 
-type Goods
-    = Goods
+type Good
+    = Good
         { id : Int
         , name : String -- 長さは1～255文字
         , description : String
@@ -45,66 +45,66 @@ type Goods
 
 
 type Condition
-    = New
-    | LikeNew
-    | VeryGood
-    | Good
-    | Acceptable
-    | Junk
+    = ConditionNew
+    | ConditionLikeNew
+    | ConditionVeryGood
+    | ConditionGood
+    | ConditionAcceptable
+    | ConditionJunk
 
 
 conditionAll : List Condition
 conditionAll =
-    [ New
-    , LikeNew
-    , VeryGood
-    , Good
-    , Acceptable
-    , Junk
+    [ ConditionNew
+    , ConditionLikeNew
+    , ConditionVeryGood
+    , ConditionGood
+    , ConditionAcceptable
+    , ConditionJunk
     ]
 
 
 conditionToJapaneseString : Condition -> String
 conditionToJapaneseString condition =
     case condition of
-        New ->
+        ConditionNew ->
             "新品・未使用"
 
-        LikeNew ->
+        ConditionLikeNew ->
             "ほぼ未使用"
 
-        VeryGood ->
+        ConditionVeryGood ->
             "目立った傷や汚れなし"
 
-        Good ->
+        ConditionGood ->
             "多少の傷や汚れあり"
 
-        Acceptable ->
+        ConditionAcceptable ->
             "目立つ傷や汚れあり"
 
-        Junk ->
+        ConditionJunk ->
             "状態が悪い・ジャンク"
 
 
 conditionToIdString : Condition -> String
 conditionToIdString condition =
     case condition of
-        New ->
+        ConditionNew ->
             "New"
 
-        LikeNew ->
+        ConditionLikeNew ->
             "Like New"
 
-        VeryGood ->
+        ConditionVeryGood ->
             "Very Good"
 
-        Good ->
+        ConditionGood ->
             "Good"
 
-        Acceptable ->
+        ConditionAcceptable ->
             "Acceptable"
 
-        Junk ->
+        ConditionJunk ->
             "Junk"
 
 
@@ -176,57 +176,57 @@ statusFromIdStringLoop idString statusList =
 
 {-| 商品のID
 -}
-getId : Goods -> Int
-getId (Goods { id }) =
+getId : Good -> Int
+getId (Good { id }) =
     id
 
 
 {-| 商品の名前
 -}
-getName : Goods -> String
-getName (Goods { name }) =
+getName : Good -> String
+getName (Good { name }) =
     name
 
 
 {-| いいねをされた数
 -}
-getLikedCount : Goods -> Int
-getLikedCount (Goods { likedByUserList }) =
+getLikedCount : Good -> Int
+getLikedCount (Good { likedByUserList }) =
     List.length likedByUserList
 
 
 {-| 商品の説明
 -}
-getDescription : Goods -> String
-getDescription (Goods { description }) =
+getDescription : Good -> String
+getDescription (Good { description }) =
     description
 
 
 {-| 商品の価格
 -}
-getPrice : Goods -> Int
-getPrice (Goods { price }) =
+getPrice : Good -> Int
+getPrice (Good { price }) =
     price
 
 
 {-| 商品の状態
 -}
-getCondition : Goods -> Condition
-getCondition (Goods { condition }) =
+getCondition : Good -> Condition
+getCondition (Good { condition }) =
     condition
 
 
 {-| 商品の最初の画像のURL
 -}
-getFirstImageUrl : Goods -> String
-getFirstImageUrl (Goods { image0Url }) =
+getFirstImageUrl : Good -> String
+getFirstImageUrl (Good { image0Url }) =
     image0Url
 
 
 {-| 商品の最初以外の画像のURL
 -}
-getOthersImageUrlList : Goods -> List String
-getOthersImageUrlList (Goods { image1Url, image2Url, image3Url }) =
+getOthersImageUrlList : Good -> List String
+getOthersImageUrlList (Good { image1Url, image2Url, image3Url }) =
     [ image1Url, image2Url, image3Url ] |> List.map maybeToList |> List.concat
 
 
@@ -242,8 +242,8 @@ maybeToList aMaybe =
 
 {-| いいねをしたユーザーIDを取得する
 -}
-getLikedByUserList : Goods -> List Profile.UserId
-getLikedByUserList (Goods { likedByUserList }) =
+getLikedByUserList : Good -> List Profile.UserId
+getLikedByUserList (Good { likedByUserList }) =
     likedByUserList
 
 
@@ -268,7 +268,7 @@ priceToString price =
         ++ "円"
 
 
-searchGoodsFromId : Int -> List Goods -> Maybe Goods
+searchGoodsFromId : Int -> List Good -> Maybe Good
 searchGoodsFromId id goodsList =
     case goodsList of
         x :: xs ->

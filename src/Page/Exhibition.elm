@@ -9,7 +9,7 @@ module Page.Exhibition exposing
 
 import Api
 import Array
-import Data.Goods as Goods
+import Data.Good as Goods
 import Data.LogInState
 import File
 import Html

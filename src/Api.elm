@@ -16,6 +16,7 @@ module Api exposing
     , getAllGoods
     , getGoods
     , getMyProfile
+    , likeGoods
     , logIn
     , logInResponseErrorToString
     , sellGoods
@@ -24,7 +25,7 @@ module Api exposing
     )
 
 import Data.EmailAddress as EmailAddress
-import Data.Goods as Goods
+import Data.Good as Good
 import Data.Password as Password
 import Data.University as University
 import Data.User as User
@@ -47,6 +48,7 @@ urlBuilder pathList =
 
 
 
+--    Url.Builder.absolute ([ "api" ] ++ pathList ++ [ "" ]) []
 {- =================================================
                  新規登録 /auth/signup/
    =================================================
@@ -459,7 +461,7 @@ type SellGoodsRequest
         { name : String
         , description : String
         , price : Int
-        , condition : Goods.Condition
+        , condition : Good.Condition
         , image0 : File.File
         , image1 : Maybe File.File
         , image2 : Maybe File.File
@@ -490,7 +492,7 @@ createGoodsRequestJsonBody (SellGoodsRequest { name, description, price, conditi
     [ Http.stringPart "name" name
     , Http.stringPart "description" description
     , Http.stringPart "price" (String.fromInt price)
-    , Http.stringPart "condition" (Goods.conditionToIdString condition)
+    , Http.stringPart "condition" (Good.conditionToIdString condition)
     , Http.stringPart "status" "selling"
     , Http.filePart "image1" image0
     ]
@@ -645,7 +647,7 @@ getUserProfileResponseValueListToResult id nickName introduction departmentMaybe
 -}
 
 
-getAllGoods : (Result () (List Goods.Goods) -> msg) -> Cmd msg
+getAllGoods : (Result () (List Good.Good) -> msg) -> Cmd msg
 getAllGoods msg =
     Http.get
         { url = urlBuilder [ "v1", "goods" ]
@@ -653,7 +655,7 @@ getAllGoods msg =
         }
 
 
-getAllGoodsResponseToResult : Http.Response String -> Result () (List Goods.Goods)
+getAllGoodsResponseToResult : Http.Response String -> Result () (List Good.Good)
 getAllGoodsResponseToResult response =
     case response of
         Http.BadStatus_ _ body ->
@@ -668,7 +670,7 @@ getAllGoodsResponseToResult response =
             Err ()
 
 
-getAllGoodsResponseBodyJsonDecoder : Json.Decode.Decoder (Result () (List Goods.Goods))
+getAllGoodsResponseBodyJsonDecoder : Json.Decode.Decoder (Result () (List Good.Good))
 getAllGoodsResponseBodyJsonDecoder =
     Json.Decode.list goodsDecoder
         |> Json.Decode.map Ok
@@ -681,13 +683,13 @@ getAllGoodsResponseBodyJsonDecoder =
 -}
 
 
-getGoods : Int -> (Result () Goods.Goods -> msg) -> Cmd msg
+getGoods : Int -> (Result () Good.Good -> msg) -> Cmd msg
 getGoods id msg =
     getAllGoods
         (\r ->
             case r of
                 Ok goodsList ->
-                    case Goods.searchGoodsFromId id goodsList of
+                    case Good.searchGoodsFromId id goodsList of
                         Just goods ->
                             msg (Ok goods)
 
@@ -699,7 +701,7 @@ getGoods id msg =
         )
 
 
-getGoodsResponseToResult : Http.Response String -> Result () Goods.Goods
+getGoodsResponseToResult : Http.Response String -> Result () Good.Good
 getGoodsResponseToResult response =
     case response of
         Http.BadStatus_ _ body ->
@@ -714,11 +716,11 @@ getGoodsResponseToResult response =
             Err ()
 
 
-goodsDecoder : Json.Decode.Decoder Goods.Goods
+goodsDecoder : Json.Decode.Decoder Good.Good
 goodsDecoder =
     Json.Decode.succeed
         (\id name description price condition status image0Url image1Url image2Url image3Url likedByUserList ->
-            Goods.Goods
+            Good.Good
                 { id = id
                 , name = name
                 , description = description
@@ -745,12 +747,12 @@ goodsDecoder =
         |> Json.Decode.Pipeline.required "liked_by_prof" (Json.Decode.list Json.Decode.int)
 
 
-conditionDecoder : Json.Decode.Decoder Goods.Condition
+conditionDecoder : Json.Decode.Decoder Good.Condition
 conditionDecoder =
     Json.Decode.string
         |> Json.Decode.andThen
             (\idString ->
-                case Goods.conditionFromString idString of
+                case Good.conditionFromString idString of
                     Just condition ->
                         Json.Decode.succeed condition
 
@@ -759,18 +761,18 @@ conditionDecoder =
                             ("I can't understand conditionId=\""
                                 ++ idString
                                 ++ "\" except \""
-                                ++ String.join "\" or \"" (Goods.conditionAll |> List.map Goods.conditionToIdString)
+                                ++ String.join "\" or \"" (Good.conditionAll |> List.map Good.conditionToIdString)
                                 ++ "\""
                             )
             )
 
 
-statusDecoder : Json.Decode.Decoder Goods.Status
+statusDecoder : Json.Decode.Decoder Good.Status
 statusDecoder =
     Json.Decode.string
         |> Json.Decode.andThen
             (\idString ->
-                case Goods.statusFromIdString idString of
+                case Good.statusFromIdString idString of
                     Just status ->
                         Json.Decode.succeed status
 
@@ -779,10 +781,36 @@ statusDecoder =
                             ("I can't understand statusId=\""
                                 ++ idString
                                 ++ "\" except \""
-                                ++ String.join "\" or \"" (Goods.statusAll |> List.map Goods.statusToIdString)
+                                ++ String.join "\" or \"" (Good.statusAll |> List.map Good.statusToIdString)
                                 ++ "\""
                             )
             )
+
+
+
+{- ==============================================================================
+      商品にいいねをする    /{version}/goods/{goods_id}/like
+   ==============================================================================
+-}
+
+
+likeGoods : Token -> Int -> (Result () () -> msg) -> Cmd msg
+likeGoods token goodsId msg =
+    Http.post
+        { url = urlBuilder [ "v1", "goods", String.fromInt goodsId, "like" ]
+        , body = Http.emptyBody
+        , expect = Http.expectStringResponse msg likeGoodsResponseToResult
+        }
+
+
+likeGoodsResponseToResult : Http.Response String -> Result () ()
+likeGoodsResponseToResult response =
+    case response of
+        Http.GoodStatus_ _ _ ->
+            Ok ()
+
+        _ ->
+            Err ()
 
 
 
@@ -794,10 +822,14 @@ statusDecoder =
 
 debugDeleteAllUser : (Result () () -> msg) -> Cmd msg
 debugDeleteAllUser msg =
-    Http.get
-        { url = Url.Builder.crossOrigin apiOrigin [ "v1", "debug", "user", "delete" ] [ Url.Builder.string "all" "true" ]
-        , expect = Http.expectStringResponse msg debugDeleteAllUserResponseToResult
-        }
+    Cmd.none
+
+
+
+--    Http.get
+--        { url = Url.Builder.crossOrigin apiOrigin [ "v1", "debug", "user", "delete" ] [ Url.Builder.string "all" "true" ]
+--        , expect = Http.expectStringResponse msg debugDeleteAllUserResponseToResult
+--        }
 
 
 debugDeleteAllUserResponseToResult : Http.Response String -> Result () ()

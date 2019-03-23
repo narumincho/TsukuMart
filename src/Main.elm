@@ -4,7 +4,7 @@ import Api
 import BasicParts
 import Browser
 import Browser.Navigation
-import Data.Goods
+import Data.Good
 import Data.LogInState
 import Data.User
 import File
@@ -15,8 +15,8 @@ import Html.Keyed
 import Json.Decode
 import Page.Component.LogInOrSignUp
 import Page.Exhibition
-import Page.Goods
-import Page.GoodsList
+import Page.Good
+import Page.GoodList
 import Page.LogIn
 import Page.Profile
 import Page.SignUp
@@ -72,7 +72,7 @@ type Model
         , message : Maybe String -- ちょっとしたことがあったら表示するもの
         , logInState : Data.LogInState.LogInState
         , key : Browser.Navigation.Key
-        , goodsList : List Data.Goods.Goods
+        , goodsList : List Data.Good.Good
         }
 
 
@@ -84,7 +84,7 @@ type Page
     | PageExhibitionGoodsList
     | PagePurchaseGoodsList
     | PageExhibition Page.Exhibition.Model
-    | PageGoods Page.Goods.Model
+    | PageGoods Page.Good.Model
     | PageProfile Page.Profile.Model
     | PageSiteMapXml
 
@@ -116,13 +116,15 @@ type Msg
     | DeleteAllUserResponse (Result () ())
     | GetUserProfileResponse { access : Api.Token, refresh : Api.Token } (Result () Data.User.User)
     | SellGoodsResponse (Result Api.SellGoodsResponseError ())
-    | GetAllGoodsResponse (Result () (List Data.Goods.Goods))
-    | GetGoodsResponse (Result () Data.Goods.Goods)
+    | GetAllGoodsResponse (Result () (List Data.Good.Good))
+    | GetGoodsResponse (Result () Data.Good.Good)
     | LogInPageMsg Page.LogIn.Msg
     | ExhibitionMsg Page.Exhibition.Msg
     | SignUpMsg Page.SignUp.Msg
     | ProfilePageMsg Page.Profile.Msg
-    | GoodsPageMsg Page.Goods.Msg
+    | GoodsPageMsg Page.Good.Msg
+    | LikeGoods Api.Token Int
+    | LikeGoodsResponse (Result () ())
 
 
 main : Program () Model Msg
@@ -453,7 +455,7 @@ update msg (Model rec) =
                         PageGoods pageGoodsModel ->
                             let
                                 ( newModel, emitMaybe ) =
-                                    Page.Goods.update (Page.Goods.GetGoodsResponse goods) pageGoodsModel
+                                    Page.Good.update (Page.Good.GetGoodsResponse goods) pageGoodsModel
                             in
                             ( Model { rec | page = PageGoods newModel }
                             , case emitMaybe of
@@ -546,7 +548,7 @@ update msg (Model rec) =
                 PageGoods goodsModel ->
                     let
                         ( newModel, emitMabye ) =
-                            Page.Goods.update goodsPageMsg goodsModel
+                            Page.Good.update goodsPageMsg goodsModel
                     in
                     ( Model { rec | page = PageGoods newModel }
                     , case emitMabye of
@@ -561,6 +563,16 @@ update msg (Model rec) =
                     ( Model rec
                     , Cmd.none
                     )
+
+        LikeGoods token id ->
+            ( Model rec
+            , Api.likeGoods token id LikeGoodsResponse
+            )
+
+        LikeGoodsResponse response ->
+            ( Model rec
+            , Cmd.none
+            )
 
 
 
@@ -613,10 +625,10 @@ profilePageEmitToCmd emit =
             logInOrSignUpEmitToCmd e
 
 
-goodsPageEmitToCmd : Page.Goods.Emit -> Cmd Msg
+goodsPageEmitToCmd : Page.Good.Emit -> Cmd Msg
 goodsPageEmitToCmd emit =
     case emit of
-        Page.Goods.EmitGetGoods { goodsId } ->
+        Page.Good.EmitGetGoods { goodsId } ->
             Api.getGoods goodsId GetGoodsResponse
 
 
@@ -751,15 +763,15 @@ urlParser (Model rec) =
                                 ( newModel, emitMaybe ) =
                                     case rec.page of
                                         PageHome _ ->
-                                            case Data.Goods.searchGoodsFromId id rec.goodsList of
+                                            case Data.Good.searchGoodsFromId id rec.goodsList of
                                                 Just goods ->
-                                                    Page.Goods.initModelFromGoods goods
+                                                    Page.Good.initModelFromGoods goods
 
                                                 Nothing ->
-                                                    Page.Goods.initModel id
+                                                    Page.Good.initModel id
 
                                         _ ->
-                                            Page.Goods.initModel id
+                                            Page.Good.initModel id
                             in
                             ( Just (PageGoods newModel)
                             , case emitMaybe of
@@ -821,7 +833,7 @@ view (Model { page, menuState, message, logInState, goodsList }) =
     }
 
 
-mainViewAndMainTab : List Data.Goods.Goods -> Data.LogInState.LogInState -> Page -> Bool -> ( String, List (Html.Html Msg) )
+mainViewAndMainTab : List Data.Good.Good -> Data.LogInState.LogInState -> Page -> Bool -> ( String, List (Html.Html Msg) )
 mainViewAndMainTab goodsList logInState page isWideScreenMode =
     let
         ( title, tabData, mainView ) =
@@ -861,11 +873,11 @@ basicPartMenuMsgToMsg msg =
             CloseMenu
 
 
-titleAndTabDataAndMainView : List Data.Goods.Goods -> Data.LogInState.LogInState -> Bool -> Page -> ( String, Tab.Tab Page, List (Html.Html Msg) )
+titleAndTabDataAndMainView : List Data.Good.Good -> Data.LogInState.LogInState -> Bool -> Page -> ( String, Tab.Tab Page, List (Html.Html Msg) )
 titleAndTabDataAndMainView goodsList logInState isWideScreenMode page =
     case page of
         PageHome subPage ->
-            homeView goodsList isWideScreenMode subPage
+            homeView logInState goodsList isWideScreenMode subPage
                 |> mapPageData PageHome identity
 
         PageExhibition subPage ->
@@ -879,13 +891,13 @@ titleAndTabDataAndMainView goodsList logInState isWideScreenMode page =
         PagePurchaseGoodsList ->
             ( "購入した商品"
             , Tab.Single "購入した商品"
-            , [ Page.GoodsList.goodsListView isWideScreenMode goodsList ]
+            , []
             )
 
         PageExhibitionGoodsList ->
             ( "出品した商品"
             , Tab.Single "出品した商品"
-            , [ Page.GoodsList.goodsListView isWideScreenMode goodsList ]
+            , []
             )
 
         PageSignUp signUpPageModel ->
@@ -897,7 +909,7 @@ titleAndTabDataAndMainView goodsList logInState isWideScreenMode page =
                 |> mapPageData never LogInPageMsg
 
         PageGoods goods ->
-            Page.Goods.view isWideScreenMode goods
+            Page.Good.view isWideScreenMode goods
                 |> mapPageData never GoodsPageMsg
 
         PageProfile profileModel ->
@@ -930,8 +942,8 @@ messageView message =
         [ Html.text message ]
 
 
-homeView : List Data.Goods.Goods -> Bool -> HomePage -> ( String, Tab.Tab HomePage, List (Html.Html Msg) )
-homeView goodsList isWideScreenMode subPage =
+homeView : Data.LogInState.LogInState -> List Data.Good.Good -> Bool -> HomePage -> ( String, Tab.Tab HomePage, List (Html.Html Msg) )
+homeView logInState goodsList isWideScreenMode subPage =
     ( ""
     , Tab.Multi
         [ ( HomePageRecent, "新着" )
@@ -948,11 +960,21 @@ homeView goodsList isWideScreenMode subPage =
             HomePageFree ->
                 2
         )
-    , [ Page.GoodsList.goodsListView isWideScreenMode goodsList, exhibitButton ]
+    , [ Page.GoodList.view logInState isWideScreenMode goodsList
+            |> Html.map goodsListMsgToMsg
+      , exhibitButton
+      ]
     )
 
 
-likeAndHistoryView : List Data.Goods.Goods -> Bool -> LikeAndHistory -> ( String, Tab.Tab LikeAndHistory, List (Html.Html Msg) )
+goodsListMsgToMsg : Page.GoodList.Msg -> Msg
+goodsListMsgToMsg msg =
+    case msg of
+        Page.GoodList.LikeGoods token id ->
+            LikeGoods token id
+
+
+likeAndHistoryView : List Data.Good.Good -> Bool -> LikeAndHistory -> ( String, Tab.Tab LikeAndHistory, List (Html.Html Msg) )
 likeAndHistoryView goodsList isWideScreenMode likeAndHistory =
     ( "いいね・閲覧した商品"
     , Tab.Multi
@@ -966,7 +988,7 @@ likeAndHistoryView goodsList isWideScreenMode likeAndHistory =
             History ->
                 1
         )
-    , [ Page.GoodsList.goodsListView isWideScreenMode goodsList ]
+    , []
     )
 
 

@@ -1,4 +1,4 @@
-module Page.Goods exposing
+module Page.Good exposing
     ( Emit(..)
     , Model
     , Msg(..)
@@ -12,7 +12,7 @@ module Page.Goods exposing
 {-| 商品の表示
 -}
 
-import Data.Goods as Goods
+import Data.Good as Good
 import Html
 import Html.Attributes
 import SiteMap
@@ -24,7 +24,7 @@ import Tab
 
 
 type Model
-    = Normal Goods.Goods
+    = Normal Good.Good
     | Loading { goodsId : Int }
 
 
@@ -33,7 +33,7 @@ type Emit
 
 
 type Msg
-    = GetGoodsResponse Goods.Goods
+    = GetGoodsResponse Good.Good
 
 
 {-| 指定したIDの商品詳細ページ
@@ -47,10 +47,10 @@ initModel id =
 
 {-| 商品の内容があらかじめ、わかっているときのもの。でも、一応また聞きに行く
 -}
-initModelFromGoods : Goods.Goods -> ( Model, Maybe Emit )
+initModelFromGoods : Good.Good -> ( Model, Maybe Emit )
 initModelFromGoods goods =
     ( Normal goods
-    , Just (EmitGetGoods { goodsId = Goods.getId goods })
+    , Just (EmitGetGoods { goodsId = Good.getId goods })
     )
 
 
@@ -71,19 +71,19 @@ view isWideScreenMode model =
             )
 
         Normal goods ->
-            ( Goods.getName goods
+            ( Good.getName goods
             , Tab.None
             , [ Html.div
                     [ Html.Attributes.class "goods-container" ]
                     [ Html.div
                         [ Html.Attributes.class "goods" ]
-                        [ goodsViewImage (Goods.getFirstImageUrl goods) (Goods.getOthersImageUrlList goods)
-                        , goodsViewName (Goods.getName goods)
-                        , goodsViewLike (Goods.getLikedCount goods)
-                        , goodsViewDescription (Goods.getDescription goods)
-                        , goodsViewCondition (Goods.getCondition goods)
+                        [ goodsViewImage (Good.getFirstImageUrl goods) (Good.getOthersImageUrlList goods)
+                        , goodsViewName (Good.getName goods)
+                        , goodsViewLike (Good.getLikedCount goods)
+                        , goodsViewDescription (Good.getDescription goods)
+                        , goodsViewCondition (Good.getCondition goods)
                         ]
-                    , goodsViewPriceAndBuyButton isWideScreenMode (Goods.getPrice goods)
+                    , goodsViewPriceAndBuyButton isWideScreenMode (Good.getPrice goods)
                     ]
               ]
             )
@@ -139,12 +139,12 @@ goodsViewPriceAndBuyButton isWideScreenMode price =
     Html.div
         [ Html.Attributes.classList [ ( "goods-priceAndBuyButton", True ), ( "goods-priceAndBuyButton-wide", isWideScreenMode ) ]
         ]
-        [ Html.div [ Html.Attributes.class "goods-price" ] [ Html.text (Goods.priceToString price) ]
+        [ Html.div [ Html.Attributes.class "goods-price" ] [ Html.text (Good.priceToString price) ]
         , Html.button [] [ Html.text "購入手続きへ" ]
         ]
 
 
-goodsViewCondition : Goods.Condition -> Html.Html msg
+goodsViewCondition : Good.Condition -> Html.Html msg
 goodsViewCondition condition =
     Html.div []
         [ Html.div
@@ -152,6 +152,6 @@ goodsViewCondition condition =
             [ Html.text "商品の状態" ]
         , Html.div
             [ Html.Attributes.class "goods-condition" ]
-            [ Html.text (Goods.conditionToJapaneseString condition)
+            [ Html.text (Good.conditionToJapaneseString condition)
             ]
         ]
