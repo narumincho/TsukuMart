@@ -10,14 +10,13 @@ import Data.User
 import File
 import Html
 import Html.Attributes
-import Html.Events
 import Html.Keyed
 import Json.Decode
+import Page.Component.GoodList
 import Page.Component.LogInOrSignUp
 import Page.Exhibition
 import Page.ExhibitionGoodList
 import Page.Good
-import Page.GoodList
 import Page.Home
 import Page.LikeAndHistory
 import Page.LogIn
@@ -69,6 +68,9 @@ port receiveImageDataUrl : (String -> msg) -> Sub msg
 port studentImageChange : String -> Cmd msg
 
 
+port elementScrollIntoView : String -> Cmd msg
+
+
 type Model
     = Model
         { page : Page -- 開いているページ
@@ -115,8 +117,7 @@ type Msg
     | GetExhibitionGoodListResponse (Result () (List Data.Good.Good))
     | GetPurchaseGoodListResponse (Result () (List Data.Good.Good))
     | GetGoodResponse (Result () Data.Good.Good)
-    | LikeGood Api.Token Int
-    | LikeGoodResponse (Result () ())
+    | LikeGoodResponse Data.User.UserId Int (Result () ())
     | HomePageMsg Page.Home.Msg
     | LikeAndHistoryPageMsg Page.LikeAndHistory.Msg
     | PurchaseGoodListPageMsg Page.PurchaseGoodList.Msg
@@ -143,8 +144,8 @@ main =
 init : () -> Url.Url -> Browser.Navigation.Key -> ( Model, Cmd Msg )
 init _ url key =
     let
-        ( newModel, emitList ) =
-            Page.Home.initModel
+        ( newModel, _ ) =
+            Page.Home.initModel Nothing
 
         initModel =
             Model
@@ -159,7 +160,7 @@ init _ url key =
             urlChange url initModel
     in
     ( model
-    , Cmd.batch ((emitList |> List.map homePageEmitToCmd) ++ [ cmd ])
+    , Cmd.batch [ cmd ]
     )
 
 
@@ -297,7 +298,7 @@ update msg (Model rec) =
                 Ok _ ->
                     let
                         ( newModel, emitList ) =
-                            Page.Home.initModel
+                            Page.Home.initModel (getGoodId rec.page)
                     in
                     ( Model
                         { rec
@@ -447,8 +448,7 @@ update msg (Model rec) =
                     let
                         ( newModel, emitList ) =
                             homeModel
-                                |> Page.Home.update
-                                    (Page.Home.GetRecentGoodListResponse result)
+                                |> Page.Home.update (Page.Home.GetRecentGoodListResponse result)
                     in
                     ( Model { rec | page = PageHome newModel }
                     , emitList |> List.map homePageEmitToCmd |> Cmd.batch
@@ -464,7 +464,8 @@ update msg (Model rec) =
                 PageHome homeModel ->
                     let
                         ( newModel, emitList ) =
-                            homeModel |> Page.Home.update (Page.Home.GetRecentGoodListResponse result)
+                            homeModel
+                                |> Page.Home.update (Page.Home.GetRecommendGoodListResponse result)
                     in
                     ( Model { rec | page = PageHome newModel }
                     , emitList |> List.map homePageEmitToCmd |> Cmd.batch
@@ -675,15 +676,19 @@ update msg (Model rec) =
                     , Cmd.none
                     )
 
-        LikeGood token id ->
-            ( Model rec
-            , Api.likeGoods token id LikeGoodResponse
-            )
+        LikeGoodResponse userId id response ->
+            case rec.page of
+                PageHome homeModel ->
+                    let
+                        ( newModel, emitList ) =
+                            homeModel |> Page.Home.update (Page.Home.GoodLikeResponse userId id response)
+                    in
+                    ( Model { rec | page = PageHome newModel }
+                    , emitList |> List.map homePageEmitToCmd |> Cmd.batch
+                    )
 
-        LikeGoodResponse response ->
-            ( Model rec
-            , Cmd.none
-            )
+                _ ->
+                    ( Model rec, Cmd.none )
 
         HomePageMsg homePageMsg ->
             case rec.page of
@@ -770,6 +775,9 @@ homePageEmitToCmd emit =
         Page.Home.EmitGetFreeGoodList ->
             Api.getFreeGoods GetFreeGoodListResponse
 
+        Page.Home.EmitGoodList e ->
+            goodsListEmitToMsg e
+
 
 likeAndHistoryEmitToCmd : Page.LikeAndHistory.Emit -> Cmd Msg
 likeAndHistoryEmitToCmd emit =
@@ -853,8 +861,8 @@ profilePageEmitToCmd emit =
 goodsPageEmitToCmd : Page.Good.Emit -> Cmd Msg
 goodsPageEmitToCmd emit =
     case emit of
-        Page.Good.EmitGetGoods { goodsId } ->
-            Api.getGoods goodsId GetGoodResponse
+        Page.Good.EmitGetGoods { goodId } ->
+            Api.getGoods goodId GetGoodResponse
 
 
 
@@ -866,6 +874,16 @@ logInOrSignUpEmitToCmd emit =
     case emit of
         Page.Component.LogInOrSignUp.EmitLogIn logInRequest ->
             Api.logIn logInRequest LogInResponse
+
+
+goodsListEmitToMsg : Page.Component.GoodList.Emit -> Cmd Msg
+goodsListEmitToMsg emit =
+    case emit of
+        Page.Component.GoodList.EmitLikeGood userId token id ->
+            Api.likeGoods token id (LikeGoodResponse userId id)
+
+        Page.Component.GoodList.EmitScrollIntoView idString ->
+            elementScrollIntoView idString
 
 
 receiveImageFileAndBlobUrlDecoder : Json.Decode.Decoder (List { file : File.File, blobUrl : String })
@@ -939,7 +957,7 @@ urlParser (Model rec) =
     Url.Parser.oneOf
         [ SiteMap.homeParser
             |> Url.Parser.map
-                (Page.Home.initModel
+                (Page.Home.initModel (getGoodId rec.page)
                     |> Tuple.mapBoth
                         (\m -> Just (PageHome m))
                         (List.map homePageEmitToCmd >> Cmd.batch)
@@ -1026,6 +1044,16 @@ urlParser (Model rec) =
                 , Cmd.none
                 )
         ]
+
+
+getGoodId : Page -> Maybe Int
+getGoodId page =
+    case page of
+        PageGoods goodModel ->
+            Just (Page.Good.getGoodId goodModel)
+
+        _ ->
+            Nothing
 
 
 
@@ -1174,13 +1202,6 @@ messageView message =
         [ Html.Attributes.class "message"
         ]
         [ Html.text message ]
-
-
-goodsListMsgToMsg : Page.GoodList.Msg -> Msg
-goodsListMsgToMsg msg =
-    case msg of
-        Page.GoodList.LikeGood token id ->
-            LikeGood token id
 
 
 exhibitButton : Html.Html Msg

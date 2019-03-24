@@ -15,6 +15,8 @@ module Data.Good exposing
     , getName
     , getOthersImageUrlList
     , getPrice
+    , like
+    , listMapIf
     , priceToString
     , searchGoodsFromId
     , statusAll
@@ -195,6 +197,13 @@ getLikedCount (Good { likedByUserList }) =
     List.length likedByUserList
 
 
+{-| いいねをする
+-}
+like : Profile.UserId -> Good -> Good
+like userId (Good rec) =
+    Good { rec | likedByUserList = rec.likedByUserList ++ [ userId ] }
+
+
 {-| 商品の説明
 -}
 getDescription : Good -> String
@@ -280,3 +289,17 @@ searchGoodsFromId id goodsList =
 
         [] ->
             Nothing
+
+
+listMapIf : (Good -> Bool) -> (Good -> Good) -> List Good -> List Good
+listMapIf condition f list =
+    case list of
+        x :: xs ->
+            if condition x then
+                f x :: listMapIf condition f xs
+
+            else
+                x :: listMapIf condition f xs
+
+        [] ->
+            []

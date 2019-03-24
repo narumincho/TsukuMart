@@ -52,6 +52,12 @@
             }
             app.ports.receiveImageFileAndBlobUrl.send(result);
         });
+        /* 指定されたidの要素が表示されるようにスクロールさせる */
+        app.ports.elementScrollIntoView.subscribe(id => {
+            requestAnimationFrame(() => {
+                document.getElementById(id).scrollIntoView({ behavior: "smooth", block: "center" });
+            })
+        });
 
         navigator.serviceWorker.register("/serviceworker.js", { scope: "/" });
     </script>

@@ -1,4 +1,4 @@
-module Data.User exposing (User, UserId, getIntroduction, getNickName, getUniversity, make, userIdFromInt, userIdToInt)
+module Data.User exposing (User, UserId, getIntroduction, getNickName, getUniversity, getUserId, make, userIdFromInt, userIdToInt)
 
 import Data.University as University
 
@@ -31,6 +31,11 @@ userIdFromInt =
 make : { id : UserId, introduction : String, university : University.University, nickName : String } -> User
 make =
     User
+
+
+getUserId : User -> UserId
+getUserId (User { id }) =
+    id
 
 
 getIntroduction : User -> String

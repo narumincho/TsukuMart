@@ -2,16 +2,19 @@ module Page.Home exposing (Emit(..), Model, Msg(..), getGoodAllGoodList, initMod
 
 import Data.Good as Good
 import Data.LogInState as LogInState
+import Data.User
 import Html
+import Page.Component.GoodList as GoodList
 import Tab
 
 
 type Model
     = Model
         { tabSelect : TabSelect
-        , recent : Maybe (Result () (List Good.Good))
-        , recommend : Maybe (Result () (List Good.Good))
-        , free : Maybe (Result () (List Good.Good))
+        , recent : Maybe (List Good.Good)
+        , recommend : Maybe (List Good.Good)
+        , free : Maybe (List Good.Good)
+        , goodListModel : GoodList.Model
         }
 
 
@@ -25,6 +28,7 @@ type Emit
     = EmitGetRecentGoodList
     | EmitGetRecommendGoodList
     | EmitGetFreeGoodList
+    | EmitGoodList GoodList.Emit
 
 
 type Msg
@@ -32,19 +36,26 @@ type Msg
     | GetRecentGoodListResponse (Result () (List Good.Good))
     | GetRecommendGoodListResponse (Result () (List Good.Good))
     | GetFreeGoodListResponse (Result () (List Good.Good))
+    | GoodListMsg GoodList.Msg
+    | GoodLikeResponse Data.User.UserId Int (Result () ())
 
 
 {-| 最初の状態。真ん中のタブ「おすすめ」が選択されている
 -}
-initModel : ( Model, List Emit )
-initModel =
+initModel : Maybe Int -> ( Model, List Emit )
+initModel goodIdMaybe =
+    let
+        ( goodListModel, emitList ) =
+            GoodList.initModel goodIdMaybe
+    in
     ( Model
         { tabSelect = TabRecommend
         , recent = Nothing
         , recommend = Nothing
         , free = Nothing
+        , goodListModel = goodListModel
         }
-    , [ EmitGetRecommendGoodList ]
+    , [ EmitGetRecommendGoodList ] ++ (emitList |> List.map EmitGoodList)
     )
 
 
@@ -62,7 +73,6 @@ getGoodAllGoodList (Model rec) =
         TabFree ->
             rec.free
     )
-        |> Maybe.map (Result.withDefault [])
         |> Maybe.withDefault []
 
 
@@ -83,17 +93,60 @@ update msg (Model rec) =
             )
 
         GetRecentGoodListResponse result ->
-            ( Model { rec | recent = Just result }
+            ( case result of
+                Ok goodList ->
+                    Model { rec | recent = Just goodList }
+
+                Err () ->
+                    Model rec
             , []
             )
 
         GetRecommendGoodListResponse result ->
-            ( Model { rec | recommend = Just result }
+            ( case result of
+                Ok goodList ->
+                    Model { rec | recommend = Just goodList }
+
+                Err () ->
+                    Model rec
             , []
             )
 
         GetFreeGoodListResponse result ->
-            ( Model { rec | free = Just result }
+            ( case result of
+                Ok goodList ->
+                    Model { rec | free = Just goodList }
+
+                Err () ->
+                    Model rec
+            , []
+            )
+
+        GoodListMsg goodListMsg ->
+            let
+                ( newModel, emitList ) =
+                    rec.goodListModel |> GoodList.update goodListMsg
+            in
+            ( Model { rec | goodListModel = newModel }
+            , emitList |> List.map EmitGoodList
+            )
+
+        GoodLikeResponse userId id result ->
+            ( case result of
+                Ok () ->
+                    let
+                        likeGoodListMaybe =
+                            Maybe.map (Good.listMapIf (\g -> Good.getId g == id) (Good.like userId))
+                    in
+                    Model
+                        { rec
+                            | recent = likeGoodListMaybe rec.recent
+                            , recommend = likeGoodListMaybe rec.recommend
+                            , free = likeGoodListMaybe rec.free
+                        }
+
+                Err () ->
+                    Model rec
             , []
             )
 
@@ -114,5 +167,19 @@ view logInState isWideScreenMode (Model rec) =
                 TabFree ->
                     2
         }
-    , [ Html.text "まってな" ]
+    , [ GoodList.view rec.goodListModel
+            logInState
+            isWideScreenMode
+            (case rec.tabSelect of
+                TabRecent ->
+                    rec.recent |> Maybe.withDefault []
+
+                TabRecommend ->
+                    rec.recommend |> Maybe.withDefault []
+
+                TabFree ->
+                    rec.free |> Maybe.withDefault []
+            )
+            |> Html.map GoodListMsg
+      ]
     )

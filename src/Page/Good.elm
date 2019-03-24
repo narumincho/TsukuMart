@@ -2,6 +2,7 @@ module Page.Good exposing
     ( Emit(..)
     , Model
     , Msg(..)
+    , getGoodId
     , imageView
     , initModel
     , initModelFromGoods
@@ -25,11 +26,11 @@ import Tab
 
 type Model
     = Normal Good.Good
-    | Loading { goodsId : Int }
+    | Loading { goodId : Int }
 
 
 type Emit
-    = EmitGetGoods { goodsId : Int }
+    = EmitGetGoods { goodId : Int }
 
 
 type Msg
@@ -40,18 +41,30 @@ type Msg
 -}
 initModel : Int -> ( Model, Maybe Emit )
 initModel id =
-    ( Loading { goodsId = id }
-    , Just (EmitGetGoods { goodsId = id })
+    ( Loading { goodId = id }
+    , Just (EmitGetGoods { goodId = id })
     )
 
 
 {-| 商品の内容があらかじめ、わかっているときのもの。でも、一応また聞きに行く
 -}
 initModelFromGoods : Good.Good -> ( Model, Maybe Emit )
-initModelFromGoods goods =
-    ( Normal goods
-    , Just (EmitGetGoods { goodsId = Good.getId goods })
+initModelFromGoods good =
+    ( Normal good
+    , Just (EmitGetGoods { goodId = Good.getId good })
     )
+
+
+{-| 表示している商品のIDを取得する
+-}
+getGoodId : Model -> Int
+getGoodId model =
+    case model of
+        Normal good ->
+            Good.getId good
+
+        Loading { goodId } ->
+            goodId
 
 
 update : Msg -> Model -> ( Model, Maybe Emit )
