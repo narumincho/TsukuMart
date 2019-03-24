@@ -15,7 +15,7 @@ module Api exposing
     , debugDeleteAllUser
     , getExhibitionGoodList
     , getFreeGoods
-    , getGoods
+    , getGood
     , getHistoryGoodList
     , getLikeGoodList
     , getMyProfile
@@ -797,8 +797,8 @@ getFreeGoods msg =
 -}
 
 
-getGoods : Int -> (Result () Good.Good -> msg) -> Cmd msg
-getGoods id msg =
+getGood : Int -> (Result () Good.Good -> msg) -> Cmd msg
+getGood id msg =
     Http.get
         { url = urlBuilder [ "v1", "goods", String.fromInt id ]
         , expect = Http.expectStringResponse msg getGoodsResponseToResult

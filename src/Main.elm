@@ -11,6 +11,7 @@ import File
 import Html
 import Html.Attributes
 import Html.Keyed
+import Http
 import Json.Decode
 import Page.Component.GoodList
 import Page.Component.LogInOrSignUp
@@ -25,6 +26,7 @@ import Page.PurchaseGoodList
 import Page.SignUp
 import SiteMap
 import Tab
+import Task
 import Url
 import Url.Parser
 
@@ -209,16 +211,14 @@ update msg (Model rec) =
             urlChange url (Model rec)
 
         UrlRequest urlRequest ->
-            case urlRequest of
+            ( Model rec
+            , case urlRequest of
                 Browser.Internal url ->
-                    ( update (UrlChange url) (Model rec) |> Tuple.first
-                    , Browser.Navigation.pushUrl rec.key (Url.toString url)
-                    )
+                    Browser.Navigation.pushUrl rec.key (Url.toString url)
 
-                Browser.External string ->
-                    ( Model rec
-                    , Browser.Navigation.load string
-                    )
+                Browser.External urlString ->
+                    Browser.Navigation.load urlString
+            )
 
         SignUpResponse response ->
             case rec.page of
@@ -566,16 +566,11 @@ update msg (Model rec) =
                     case rec.page of
                         PageGoods pageGoodsModel ->
                             let
-                                ( newModel, emitMaybe ) =
+                                ( newModel, emitList ) =
                                     Page.Good.update (Page.Good.GetGoodsResponse goods) pageGoodsModel
                             in
                             ( Model { rec | page = PageGoods newModel }
-                            , case emitMaybe of
-                                Just emit ->
-                                    goodsPageEmitToCmd emit
-
-                                Nothing ->
-                                    Cmd.none
+                            , emitList |> List.map goodsPageEmitToCmd |> Cmd.batch
                             )
 
                         _ ->
@@ -585,7 +580,7 @@ update msg (Model rec) =
 
                 Err _ ->
                     ( Model
-                        { rec | message = Just "商品の取得に失敗しました" }
+                        { rec | message = Just "商品情報の取得に失敗しました" }
                     , Cmd.none
                     )
 
@@ -659,16 +654,11 @@ update msg (Model rec) =
             case rec.page of
                 PageGoods goodsModel ->
                     let
-                        ( newModel, emitMabye ) =
+                        ( newModel, emitList ) =
                             Page.Good.update goodsPageMsg goodsModel
                     in
                     ( Model { rec | page = PageGoods newModel }
-                    , case emitMabye of
-                        Just emit ->
-                            goodsPageEmitToCmd emit
-
-                        Nothing ->
-                            Cmd.none
+                    , emitList |> List.map goodsPageEmitToCmd |> Cmd.batch
                     )
 
                 _ ->
@@ -862,7 +852,7 @@ goodsPageEmitToCmd : Page.Good.Emit -> Cmd Msg
 goodsPageEmitToCmd emit =
     case emit of
         Page.Good.EmitGetGoods { goodId } ->
-            Api.getGoods goodId GetGoodResponse
+            Api.getGood goodId GetGoodResponse
 
 
 
@@ -902,11 +892,7 @@ receiveImageFileAndBlobUrlDecoder =
 
 urlChange : Url.Url -> Model -> ( Model, Cmd Msg )
 urlChange url (Model rec) =
-    let
-        result =
-            Url.Parser.parse (urlParser (Model rec)) url
-    in
-    case result of
+    case Url.Parser.parse (urlParser (Model rec)) url of
         Just ( newPageMaybe, cmd ) ->
             ( case newPageMaybe of
                 Just newPage ->
@@ -1007,11 +993,14 @@ urlParser (Model rec) =
                 (\id ->
                     case rec.page of
                         PageGoods _ ->
-                            ( Nothing, Cmd.none )
+                            ( Nothing
+                            , Task.perform (always ToWideScreenMode)
+                                (Task.succeed ())
+                            )
 
                         _ ->
                             let
-                                ( newModel, emitMaybe ) =
+                                ( newModel, emitList ) =
                                     case rec.page of
                                         PageHome pageModel ->
                                             case Data.Good.searchGoodsFromId id (Page.Home.getGoodAllGoodList pageModel) of
@@ -1025,12 +1014,7 @@ urlParser (Model rec) =
                                             Page.Good.initModel id
                             in
                             ( Just (PageGoods newModel)
-                            , case emitMaybe of
-                                Just emit ->
-                                    goodsPageEmitToCmd emit
-
-                                Nothing ->
-                                    Cmd.none
+                            , emitList |> List.map goodsPageEmitToCmd |> Cmd.batch
                             )
                 )
         , SiteMap.profileParser
@@ -1202,15 +1186,6 @@ messageView message =
         [ Html.Attributes.class "message"
         ]
         [ Html.text message ]
-
-
-exhibitButton : Html.Html Msg
-exhibitButton =
-    Html.a
-        [ Html.Attributes.class "exhibitionButton"
-        , Html.Attributes.href SiteMap.exhibitionUrl
-        ]
-        [ Html.text "出品" ]
 
 
 siteMapXmlView : ( String, Tab.Tab msg, List (Html.Html msg) )

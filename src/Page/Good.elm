@@ -39,19 +39,19 @@ type Msg
 
 {-| 指定したIDの商品詳細ページ
 -}
-initModel : Int -> ( Model, Maybe Emit )
+initModel : Int -> ( Model, List Emit )
 initModel id =
     ( Loading { goodId = id }
-    , Just (EmitGetGoods { goodId = id })
+    , [ EmitGetGoods { goodId = id } ]
     )
 
 
 {-| 商品の内容があらかじめ、わかっているときのもの。でも、一応また聞きに行く
 -}
-initModelFromGoods : Good.Good -> ( Model, Maybe Emit )
+initModelFromGoods : Good.Good -> ( Model, List Emit )
 initModelFromGoods good =
     ( Normal good
-    , Just (EmitGetGoods { goodId = Good.getId good })
+    , [ EmitGetGoods { goodId = Good.getId good } ]
     )
 
 
@@ -67,11 +67,11 @@ getGoodId model =
             goodId
 
 
-update : Msg -> Model -> ( Model, Maybe Emit )
+update : Msg -> Model -> ( Model, List Emit )
 update msg _ =
     case msg of
         GetGoodsResponse goods ->
-            ( Normal goods, Nothing )
+            ( Normal goods, [] )
 
 
 view : Bool -> Model -> ( String, Tab.Tab Msg, List (Html.Html msg) )

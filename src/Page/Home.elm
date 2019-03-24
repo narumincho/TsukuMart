@@ -4,7 +4,9 @@ import Data.Good as Good
 import Data.LogInState as LogInState
 import Data.User
 import Html
+import Html.Attributes
 import Page.Component.GoodList as GoodList
+import SiteMap
 import Tab
 
 
@@ -182,4 +184,20 @@ view logInState isWideScreenMode (Model rec) =
             )
             |> Html.map GoodListMsg
       ]
+        ++ (case logInState of
+                LogInState.LogInStateOk _ ->
+                    [ exhibitButton ]
+
+                LogInState.LogInStateNone ->
+                    []
+           )
     )
+
+
+exhibitButton : Html.Html Msg
+exhibitButton =
+    Html.a
+        [ Html.Attributes.class "exhibitionButton"
+        , Html.Attributes.href SiteMap.exhibitionUrl
+        ]
+        [ Html.text "出品" ]

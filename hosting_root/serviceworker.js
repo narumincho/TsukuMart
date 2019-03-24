@@ -14,7 +14,6 @@ self.addEventListener("install", (e) => {
 // メインスレッドでfetchしたら
 self.addEventListener("fetch", (e) => {
     console.log("fetch。キャッシュから取る処理をすべきだが、今はすべてサーバーに問い合わせている", e.request);
-    console.log(caches);
     return fetch(e.request, {
         cache: "no-cache"
     });
