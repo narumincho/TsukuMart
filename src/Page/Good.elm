@@ -61,18 +61,18 @@ update msg _ =
             ( Normal goods, Nothing )
 
 
-view : Bool -> Model -> ( String, Tab.Tab Never, List (Html.Html msg) )
+view : Bool -> Model -> ( String, Tab.Tab Msg, List (Html.Html msg) )
 view isWideScreenMode model =
     case model of
         Loading _ ->
             ( "商品詳細ページ"
-            , Tab.None
+            , Tab.none
             , [ Html.text "読み込み中" ]
             )
 
         Normal goods ->
             ( Good.getName goods
-            , Tab.None
+            , Tab.none
             , [ Html.div
                     [ Html.Attributes.class "goods-container" ]
                     [ Html.div

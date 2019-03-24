@@ -15,10 +15,14 @@ import Html.Keyed
 import Json.Decode
 import Page.Component.LogInOrSignUp
 import Page.Exhibition
+import Page.ExhibitionGoodList
 import Page.Good
 import Page.GoodList
+import Page.Home
+import Page.LikeAndHistory
 import Page.LogIn
 import Page.Profile
+import Page.PurchaseGoodList
 import Page.SignUp
 import SiteMap
 import Tab
@@ -72,37 +76,24 @@ type Model
         , message : Maybe String -- ちょっとしたことがあったら表示するもの
         , logInState : Data.LogInState.LogInState
         , key : Browser.Navigation.Key
-        , goodsList : List Data.Good.Good
         }
 
 
 type Page
-    = PageHome HomePage
+    = PageHome Page.Home.Model
     | PageSignUp Page.SignUp.Model
     | PageLogIn Page.LogIn.Model
-    | PageLikeAndHistory LikeAndHistory
-    | PageExhibitionGoodsList
-    | PagePurchaseGoodsList
+    | PageLikeAndHistory Page.LikeAndHistory.Model
+    | PageExhibitionGoodList Page.ExhibitionGoodList.Model
+    | PagePurchaseGoodList Page.PurchaseGoodList.Model
     | PageExhibition Page.Exhibition.Model
     | PageGoods Page.Good.Model
     | PageProfile Page.Profile.Model
     | PageSiteMapXml
 
 
-type HomePage
-    = HomePageRecent
-    | HomePageRecommend
-    | HomePageFree
-
-
-type LikeAndHistory
-    = Like
-    | History
-
-
 type Msg
-    = ChangePage Page
-    | OpenMenu
+    = OpenMenu
     | CloseMenu
     | ToWideScreenMode
     | ToNarrowScreenMode
@@ -115,16 +106,26 @@ type Msg
     | ReceiveImageFileAndBlobUrl Json.Decode.Value
     | DeleteAllUserResponse (Result () ())
     | GetUserProfileResponse { access : Api.Token, refresh : Api.Token } (Result () Data.User.User)
-    | SellGoodsResponse (Result Api.SellGoodsResponseError ())
-    | GetAllGoodsResponse (Result () (List Data.Good.Good))
-    | GetGoodsResponse (Result () Data.Good.Good)
+    | SellGoodResponse (Result Api.SellGoodsResponseError ())
+    | GetRecentGoodListResponse (Result () (List Data.Good.Good))
+    | GetRecommendGoodListResponse (Result () (List Data.Good.Good))
+    | GetFreeGoodListResponse (Result () (List Data.Good.Good))
+    | GetLikeGoodListResponse (Result () (List Data.Good.Good))
+    | GetHistoryGoodListResponse (Result () (List Data.Good.Good))
+    | GetExhibitionGoodListResponse (Result () (List Data.Good.Good))
+    | GetPurchaseGoodListResponse (Result () (List Data.Good.Good))
+    | GetGoodResponse (Result () Data.Good.Good)
+    | LikeGood Api.Token Int
+    | LikeGoodResponse (Result () ())
+    | HomePageMsg Page.Home.Msg
+    | LikeAndHistoryPageMsg Page.LikeAndHistory.Msg
+    | PurchaseGoodListPageMsg Page.PurchaseGoodList.Msg
+    | ExhibitionGoodListPageMsg Page.ExhibitionGoodList.Msg
     | LogInPageMsg Page.LogIn.Msg
-    | ExhibitionMsg Page.Exhibition.Msg
+    | ExhibitionPageMsg Page.Exhibition.Msg
     | SignUpMsg Page.SignUp.Msg
     | ProfilePageMsg Page.Profile.Msg
     | GoodsPageMsg Page.Good.Msg
-    | LikeGoods Api.Token Int
-    | LikeGoodsResponse (Result () ())
 
 
 main : Program () Model Msg
@@ -142,35 +143,29 @@ main =
 init : () -> Url.Url -> Browser.Navigation.Key -> ( Model, Cmd Msg )
 init _ url key =
     let
+        ( newModel, emitList ) =
+            Page.Home.initModel
+
         initModel =
             Model
-                { page = PageHome HomePageRecommend
+                { page = PageHome newModel
                 , menuState = Just BasicParts.MenuNotOpenedYet
                 , message = Nothing
                 , logInState = Data.LogInState.LogInStateNone
                 , key = key
-                , goodsList = []
                 }
 
         ( model, cmd ) =
             urlChange url initModel
     in
     ( model
-    , Cmd.batch [ Api.getAllGoods GetAllGoodsResponse, cmd ]
+    , Cmd.batch ((emitList |> List.map homePageEmitToCmd) ++ [ cmd ])
     )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg (Model rec) =
     case msg of
-        ChangePage page ->
-            ( Model
-                { rec
-                    | page = page
-                }
-            , Cmd.none
-            )
-
         OpenMenu ->
             ( case rec.menuState of
                 Just _ ->
@@ -298,21 +293,30 @@ update msg (Model rec) =
                     )
 
         SignUpConfirmResponse response ->
-            ( case response of
+            case response of
                 Ok _ ->
-                    Model
+                    let
+                        ( newModel, emitList ) =
+                            Page.Home.initModel
+                    in
+                    ( Model
                         { rec
                             | message = Just "新規登録完了"
-                            , page = PageHome HomePageRecommend
+                            , page = PageHome newModel
                         }
+                    , Cmd.batch
+                        (Browser.Navigation.pushUrl rec.key SiteMap.homeUrl
+                            :: (emitList |> List.map homePageEmitToCmd)
+                        )
+                    )
 
                 Err e ->
-                    Model
+                    ( Model
                         { rec
                             | page = PageSignUp (Page.SignUp.sentConfirmTokenModel e)
                         }
-            , Cmd.none
-            )
+                    , Cmd.none
+                    )
 
         ReceiveImageDataUrl urlString ->
             case rec.page of
@@ -426,7 +430,7 @@ update msg (Model rec) =
             , Cmd.none
             )
 
-        SellGoodsResponse response ->
+        SellGoodResponse response ->
             ( case response of
                 Ok () ->
                     Model
@@ -434,21 +438,128 @@ update msg (Model rec) =
 
                 Err _ ->
                     Model { rec | message = Just "出品できませんでした" }
-            , Cmd.none
+            , Api.getRecommendGoods GetRecommendGoodListResponse
             )
 
-        GetAllGoodsResponse result ->
-            ( case result of
-                Ok goodsList ->
-                    Model
-                        { rec | goodsList = goodsList }
+        GetRecentGoodListResponse result ->
+            case rec.page of
+                PageHome homeModel ->
+                    let
+                        ( newModel, emitList ) =
+                            homeModel
+                                |> Page.Home.update
+                                    (Page.Home.GetRecentGoodListResponse result)
+                    in
+                    ( Model { rec | page = PageHome newModel }
+                    , emitList |> List.map homePageEmitToCmd |> Cmd.batch
+                    )
 
-                Err _ ->
-                    Model rec
-            , Cmd.none
-            )
+                _ ->
+                    ( Model rec
+                    , Cmd.none
+                    )
 
-        GetGoodsResponse result ->
+        GetRecommendGoodListResponse result ->
+            case rec.page of
+                PageHome homeModel ->
+                    let
+                        ( newModel, emitList ) =
+                            homeModel |> Page.Home.update (Page.Home.GetRecentGoodListResponse result)
+                    in
+                    ( Model { rec | page = PageHome newModel }
+                    , emitList |> List.map homePageEmitToCmd |> Cmd.batch
+                    )
+
+                _ ->
+                    ( Model rec
+                    , Cmd.none
+                    )
+
+        GetFreeGoodListResponse result ->
+            case rec.page of
+                PageHome homeModel ->
+                    let
+                        ( newModel, emitList ) =
+                            homeModel |> Page.Home.update (Page.Home.GetFreeGoodListResponse result)
+                    in
+                    ( Model { rec | page = PageHome newModel }
+                    , emitList |> List.map homePageEmitToCmd |> Cmd.batch
+                    )
+
+                _ ->
+                    ( Model rec
+                    , Cmd.none
+                    )
+
+        GetLikeGoodListResponse result ->
+            case rec.page of
+                PageLikeAndHistory likeAndHistoryModel ->
+                    let
+                        ( newModel, emitList ) =
+                            likeAndHistoryModel
+                                |> Page.LikeAndHistory.update rec.logInState (Page.LikeAndHistory.LikeGoodListResponse result)
+                    in
+                    ( Model { rec | page = PageLikeAndHistory newModel }
+                    , emitList |> List.map likeAndHistoryEmitToCmd |> Cmd.batch
+                    )
+
+                _ ->
+                    ( Model rec
+                    , Cmd.none
+                    )
+
+        GetHistoryGoodListResponse result ->
+            case rec.page of
+                PageLikeAndHistory likeAndHistoryModel ->
+                    let
+                        ( newModel, emitList ) =
+                            likeAndHistoryModel
+                                |> Page.LikeAndHistory.update rec.logInState (Page.LikeAndHistory.HistoryGoodListResponse result)
+                    in
+                    ( Model { rec | page = PageLikeAndHistory newModel }
+                    , emitList |> List.map likeAndHistoryEmitToCmd |> Cmd.batch
+                    )
+
+                _ ->
+                    ( Model rec
+                    , Cmd.none
+                    )
+
+        GetExhibitionGoodListResponse result ->
+            case rec.page of
+                PageExhibitionGoodList exhibitionGoodListModel ->
+                    let
+                        ( newModel, emitMaybe ) =
+                            exhibitionGoodListModel
+                                |> Page.ExhibitionGoodList.update (Page.ExhibitionGoodList.GetExhibitionGoodResponse result)
+                    in
+                    ( Model { rec | page = PageExhibitionGoodList newModel }
+                    , emitMaybe |> Maybe.map exhibitionGoodListPageEmitToCmd |> Maybe.withDefault Cmd.none
+                    )
+
+                _ ->
+                    ( Model rec
+                    , Cmd.none
+                    )
+
+        GetPurchaseGoodListResponse result ->
+            case rec.page of
+                PagePurchaseGoodList purchaseGoodListModel ->
+                    let
+                        ( newModel, emitMaybe ) =
+                            purchaseGoodListModel
+                                |> Page.PurchaseGoodList.update (Page.PurchaseGoodList.GetPurchaseGoodResponse result)
+                    in
+                    ( Model { rec | page = PagePurchaseGoodList newModel }
+                    , emitMaybe |> Maybe.map purchaseGoodListPageEmitToCmd |> Maybe.withDefault Cmd.none
+                    )
+
+                _ ->
+                    ( Model rec
+                    , Cmd.none
+                    )
+
+        GetGoodResponse result ->
             case result of
                 Ok goods ->
                     case rec.page of
@@ -477,7 +588,7 @@ update msg (Model rec) =
                     , Cmd.none
                     )
 
-        ExhibitionMsg exhibitionMsg ->
+        ExhibitionPageMsg exhibitionMsg ->
             case rec.page of
                 PageExhibition exhibitionPageModel ->
                     let
@@ -564,19 +675,133 @@ update msg (Model rec) =
                     , Cmd.none
                     )
 
-        LikeGoods token id ->
+        LikeGood token id ->
             ( Model rec
-            , Api.likeGoods token id LikeGoodsResponse
+            , Api.likeGoods token id LikeGoodResponse
             )
 
-        LikeGoodsResponse response ->
+        LikeGoodResponse response ->
             ( Model rec
             , Cmd.none
             )
 
+        HomePageMsg homePageMsg ->
+            case rec.page of
+                PageHome homePageModel ->
+                    let
+                        ( newModel, emitList ) =
+                            homePageModel
+                                |> Page.Home.update homePageMsg
+                    in
+                    ( Model { rec | page = PageHome newModel }
+                    , emitList |> List.map homePageEmitToCmd |> Cmd.batch
+                    )
+
+                _ ->
+                    ( Model rec
+                    , Cmd.none
+                    )
+
+        LikeAndHistoryPageMsg likeAndHistoryMsg ->
+            case rec.page of
+                PageLikeAndHistory likeAndHistoryModel ->
+                    let
+                        ( newModel, emitList ) =
+                            likeAndHistoryModel
+                                |> Page.LikeAndHistory.update rec.logInState likeAndHistoryMsg
+                    in
+                    ( Model { rec | page = PageLikeAndHistory newModel }
+                    , emitList |> List.map likeAndHistoryEmitToCmd |> Cmd.batch
+                    )
+
+                _ ->
+                    ( Model rec
+                    , Cmd.none
+                    )
+
+        PurchaseGoodListPageMsg purchaseGoodListMsg ->
+            case rec.page of
+                PagePurchaseGoodList purchaseGoodListModel ->
+                    let
+                        ( newModel, emitMaybe ) =
+                            purchaseGoodListModel
+                                |> Page.PurchaseGoodList.update purchaseGoodListMsg
+                    in
+                    ( Model { rec | page = PagePurchaseGoodList newModel }
+                    , emitMaybe |> Maybe.map purchaseGoodListPageEmitToCmd |> Maybe.withDefault Cmd.none
+                    )
+
+                _ ->
+                    ( Model rec
+                    , Cmd.none
+                    )
+
+        ExhibitionGoodListPageMsg exhibitionGoodListMsg ->
+            case rec.page of
+                PageExhibitionGoodList exhibitionGoodListModel ->
+                    let
+                        ( newModel, emitMaybe ) =
+                            exhibitionGoodListModel
+                                |> Page.ExhibitionGoodList.update exhibitionGoodListMsg
+                    in
+                    ( Model { rec | page = PageExhibitionGoodList newModel }
+                    , emitMaybe |> Maybe.map exhibitionGoodListPageEmitToCmd |> Maybe.withDefault Cmd.none
+                    )
+
+                _ ->
+                    ( Model rec
+                    , Cmd.none
+                    )
+
 
 
 {- ===================== Page Emit To Msg ======================== -}
+
+
+homePageEmitToCmd : Page.Home.Emit -> Cmd Msg
+homePageEmitToCmd emit =
+    case emit of
+        Page.Home.EmitGetRecentGoodList ->
+            Api.getRecentGoods GetRecentGoodListResponse
+
+        Page.Home.EmitGetRecommendGoodList ->
+            Api.getRecommendGoods GetRecommendGoodListResponse
+
+        Page.Home.EmitGetFreeGoodList ->
+            Api.getFreeGoods GetFreeGoodListResponse
+
+
+likeAndHistoryEmitToCmd : Page.LikeAndHistory.Emit -> Cmd Msg
+likeAndHistoryEmitToCmd emit =
+    case emit of
+        Page.LikeAndHistory.EmitGetLikeGoodList token ->
+            Api.getLikeGoodList token GetLikeGoodListResponse
+
+        Page.LikeAndHistory.EmitGetHistoryGoodList token ->
+            Api.getHistoryGoodList token GetHistoryGoodListResponse
+
+        Page.LikeAndHistory.EmitLogInOrSignUp e ->
+            logInOrSignUpEmitToCmd e
+
+
+exhibitionGoodListPageEmitToCmd : Page.ExhibitionGoodList.Emit -> Cmd Msg
+exhibitionGoodListPageEmitToCmd emit =
+    case emit of
+        Page.ExhibitionGoodList.EmitGetExhibitionGood token ->
+            Api.getExhibitionGoodList token GetExhibitionGoodListResponse
+
+        Page.ExhibitionGoodList.EmitLogInOrSignUp e ->
+            logInOrSignUpEmitToCmd e
+
+
+purchaseGoodListPageEmitToCmd : Page.PurchaseGoodList.Emit -> Cmd Msg
+purchaseGoodListPageEmitToCmd emit =
+    case emit of
+        Page.PurchaseGoodList.EmitGetPurchaseGoodList token ->
+            Api.getPurchaseGoodList token GetPurchaseGoodListResponse
+
+        Page.PurchaseGoodList.EmitLogInOrSignUp e ->
+            logInOrSignUpEmitToCmd e
 
 
 logInPageEmitToCmd : Page.LogIn.Emit -> Cmd Msg
@@ -593,7 +818,7 @@ exhibitionPageEmitToCmd key emit =
             logInOrSignUpEmitToCmd e
 
         Page.Exhibition.EmitSellGoods ( token, request ) ->
-            Api.sellGoods token request SellGoodsResponse
+            Api.sellGoods token request SellGoodResponse
 
         Page.Exhibition.EmitCatchImageList string ->
             exhibitionImageChange string
@@ -629,7 +854,7 @@ goodsPageEmitToCmd : Page.Good.Emit -> Cmd Msg
 goodsPageEmitToCmd emit =
     case emit of
         Page.Good.EmitGetGoods { goodsId } ->
-            Api.getGoods goodsId GetGoodsResponse
+            Api.getGoods goodsId GetGoodResponse
 
 
 
@@ -714,8 +939,10 @@ urlParser (Model rec) =
     Url.Parser.oneOf
         [ SiteMap.homeParser
             |> Url.Parser.map
-                ( Just (PageHome HomePageRecommend)
-                , Cmd.none
+                (Page.Home.initModel
+                    |> Tuple.mapBoth
+                        (\m -> Just (PageHome m))
+                        (List.map homePageEmitToCmd >> Cmd.batch)
                 )
         , SiteMap.signUpParser
             |> Url.Parser.map
@@ -729,18 +956,24 @@ urlParser (Model rec) =
                 )
         , SiteMap.likeHistoryParser
             |> Url.Parser.map
-                ( Just (PageLikeAndHistory Like)
-                , Cmd.none
+                (Page.LikeAndHistory.initModel rec.logInState
+                    |> Tuple.mapBoth
+                        (\m -> Just (PageLikeAndHistory m))
+                        (List.map likeAndHistoryEmitToCmd >> Cmd.batch)
                 )
         , SiteMap.exhibitionGoodsParser
             |> Url.Parser.map
-                ( Just PageExhibitionGoodsList
-                , Cmd.none
+                (Page.ExhibitionGoodList.initModel rec.logInState
+                    |> Tuple.mapBoth
+                        (\m -> Just (PageExhibitionGoodList m))
+                        (Maybe.map exhibitionGoodListPageEmitToCmd >> Maybe.withDefault Cmd.none)
                 )
         , SiteMap.purchaseGoodsParser
             |> Url.Parser.map
-                ( Just PagePurchaseGoodsList
-                , Cmd.none
+                (Page.PurchaseGoodList.initModel rec.logInState
+                    |> Tuple.mapBoth
+                        (\m -> Just (PagePurchaseGoodList m))
+                        (Maybe.map purchaseGoodListPageEmitToCmd >> Maybe.withDefault Cmd.none)
                 )
         , SiteMap.exhibitionParser
             |> Url.Parser.map
@@ -762,8 +995,8 @@ urlParser (Model rec) =
                             let
                                 ( newModel, emitMaybe ) =
                                     case rec.page of
-                                        PageHome _ ->
-                                            case Data.Good.searchGoodsFromId id rec.goodsList of
+                                        PageHome pageModel ->
+                                            case Data.Good.searchGoodsFromId id (Page.Home.getGoodAllGoodList pageModel) of
                                                 Just goods ->
                                                     Page.Good.initModelFromGoods goods
 
@@ -802,13 +1035,13 @@ urlParser (Model rec) =
 {-| 見た目を決める
 -}
 view : Model -> { title : String, body : List (Html.Html Msg) }
-view (Model { page, menuState, message, logInState, goodsList }) =
+view (Model { page, menuState, message, logInState }) =
     let
         isWideScreen =
             menuState == Nothing
 
         ( title, mainView ) =
-            mainViewAndMainTab goodsList logInState page isWideScreen
+            mainViewAndMainTab logInState page isWideScreen
     in
     { title =
         if title == "" then
@@ -833,26 +1066,24 @@ view (Model { page, menuState, message, logInState, goodsList }) =
     }
 
 
-mainViewAndMainTab : List Data.Good.Good -> Data.LogInState.LogInState -> Page -> Bool -> ( String, List (Html.Html Msg) )
-mainViewAndMainTab goodsList logInState page isWideScreenMode =
+mainViewAndMainTab : Data.LogInState.LogInState -> Page -> Bool -> ( String, List (Html.Html Msg) )
+mainViewAndMainTab logInState page isWideScreenMode =
     let
         ( title, tabData, mainView ) =
-            titleAndTabDataAndMainView goodsList logInState isWideScreenMode page
+            titleAndTabDataAndMainView logInState isWideScreenMode page
     in
     ( title
     , [ Tab.view isWideScreenMode tabData
-            |> Html.map ChangePage
       , Html.div
-            (case tabData of
-                Tab.None ->
-                    [ Html.Attributes.classList
-                        [ ( "mainView-noMainTab", True ), ( "mainView-wide-noMainTab", isWideScreenMode ) ]
-                    ]
+            (if Tab.isNone tabData then
+                [ Html.Attributes.classList
+                    [ ( "mainView-noMainTab", True ), ( "mainView-wide-noMainTab", isWideScreenMode ) ]
+                ]
 
-                _ ->
-                    [ Html.Attributes.classList
-                        [ ( "mainView", True ), ( "mainView-wide", isWideScreenMode ) ]
-                    ]
+             else
+                [ Html.Attributes.classList
+                    [ ( "mainView", True ), ( "mainView-wide", isWideScreenMode ) ]
+                ]
             )
             mainView
       ]
@@ -873,65 +1104,68 @@ basicPartMenuMsgToMsg msg =
             CloseMenu
 
 
-titleAndTabDataAndMainView : List Data.Good.Good -> Data.LogInState.LogInState -> Bool -> Page -> ( String, Tab.Tab Page, List (Html.Html Msg) )
-titleAndTabDataAndMainView goodsList logInState isWideScreenMode page =
+titleAndTabDataAndMainView : Data.LogInState.LogInState -> Bool -> Page -> ( String, Tab.Tab Msg, List (Html.Html Msg) )
+titleAndTabDataAndMainView logInState isWideScreenMode page =
     case page of
-        PageHome subPage ->
-            homeView logInState goodsList isWideScreenMode subPage
-                |> mapPageData PageHome identity
+        PageHome homeModel ->
+            homeModel
+                |> Page.Home.view logInState isWideScreenMode
+                |> mapPageData HomePageMsg
 
-        PageExhibition subPage ->
-            Page.Exhibition.view logInState subPage
-                |> mapPageData never ExhibitionMsg
+        PageExhibition exhibitionModel ->
+            exhibitionModel
+                |> Page.Exhibition.view logInState
+                |> mapPageData ExhibitionPageMsg
 
-        PageLikeAndHistory subPage ->
-            likeAndHistoryView goodsList isWideScreenMode subPage
-                |> mapPageData PageLikeAndHistory identity
+        PageLikeAndHistory likeAndHistoryModel ->
+            likeAndHistoryModel
+                |> Page.LikeAndHistory.view logInState isWideScreenMode
+                |> mapPageData LikeAndHistoryPageMsg
 
-        PagePurchaseGoodsList ->
-            ( "購入した商品"
-            , Tab.Single "購入した商品"
-            , []
-            )
+        PagePurchaseGoodList purchaseGoodListModel ->
+            purchaseGoodListModel
+                |> Page.PurchaseGoodList.view logInState isWideScreenMode
+                |> mapPageData PurchaseGoodListPageMsg
 
-        PageExhibitionGoodsList ->
-            ( "出品した商品"
-            , Tab.Single "出品した商品"
-            , []
-            )
+        PageExhibitionGoodList exhibitionGoodListModel ->
+            exhibitionGoodListModel
+                |> Page.ExhibitionGoodList.view logInState isWideScreenMode
+                |> mapPageData ExhibitionGoodListPageMsg
 
         PageSignUp signUpPageModel ->
-            Page.SignUp.view signUpPageModel
-                |> mapPageData never SignUpMsg
+            signUpPageModel
+                |> Page.SignUp.view
+                |> mapPageData SignUpMsg
 
         PageLogIn logInPageModel ->
-            Page.LogIn.view logInPageModel
-                |> mapPageData never LogInPageMsg
+            logInPageModel
+                |> Page.LogIn.view
+                |> mapPageData LogInPageMsg
 
-        PageGoods goods ->
-            Page.Good.view isWideScreenMode goods
-                |> mapPageData never GoodsPageMsg
+        PageGoods goodModel ->
+            goodModel
+                |> Page.Good.view isWideScreenMode
+                |> mapPageData GoodsPageMsg
 
         PageProfile profileModel ->
-            Page.Profile.view
-                (case logInState of
-                    Data.LogInState.LogInStateOk { profile } ->
-                        Just profile
+            profileModel
+                |> Page.Profile.view
+                    (case logInState of
+                        Data.LogInState.LogInStateOk { profile } ->
+                            Just profile
 
-                    Data.LogInState.LogInStateNone ->
-                        Nothing
-                )
-                profileModel
-                |> mapPageData never ProfilePageMsg
+                        Data.LogInState.LogInStateNone ->
+                            Nothing
+                    )
+                |> mapPageData ProfilePageMsg
 
         PageSiteMapXml ->
             siteMapXmlView
-                |> mapPageData never identity
 
 
-mapPageData : (a -> b) -> (c -> d) -> ( String, Tab.Tab a, List (Html.Html c) ) -> ( String, Tab.Tab b, List (Html.Html d) )
-mapPageData tabF msgF ( title, tab, htmlList ) =
-    ( title, tab |> Tab.map tabF, htmlList |> List.map (Html.map msgF) )
+mapPageData : (a -> b) -> ( String, Tab.Tab a, List (Html.Html a) ) -> ( String, Tab.Tab b, List (Html.Html b) )
+mapPageData f ( title, tab, htmlList ) =
+    ( title, tab |> Tab.map f, htmlList |> List.map (Html.map f) )
 
 
 messageView : String -> Html.Html msg
@@ -942,54 +1176,11 @@ messageView message =
         [ Html.text message ]
 
 
-homeView : Data.LogInState.LogInState -> List Data.Good.Good -> Bool -> HomePage -> ( String, Tab.Tab HomePage, List (Html.Html Msg) )
-homeView logInState goodsList isWideScreenMode subPage =
-    ( ""
-    , Tab.Multi
-        [ ( HomePageRecent, "新着" )
-        , ( HomePageRecommend, "おすすめ" )
-        , ( HomePageFree, "0円" )
-        ]
-        (case subPage of
-            HomePageRecent ->
-                0
-
-            HomePageRecommend ->
-                1
-
-            HomePageFree ->
-                2
-        )
-    , [ Page.GoodList.view logInState isWideScreenMode goodsList
-            |> Html.map goodsListMsgToMsg
-      , exhibitButton
-      ]
-    )
-
-
 goodsListMsgToMsg : Page.GoodList.Msg -> Msg
 goodsListMsgToMsg msg =
     case msg of
-        Page.GoodList.LikeGoods token id ->
-            LikeGoods token id
-
-
-likeAndHistoryView : List Data.Good.Good -> Bool -> LikeAndHistory -> ( String, Tab.Tab LikeAndHistory, List (Html.Html Msg) )
-likeAndHistoryView goodsList isWideScreenMode likeAndHistory =
-    ( "いいね・閲覧した商品"
-    , Tab.Multi
-        [ ( Like, "いいね" )
-        , ( History, "閲覧履歴" )
-        ]
-        (case likeAndHistory of
-            Like ->
-                0
-
-            History ->
-                1
-        )
-    , []
-    )
+        Page.GoodList.LikeGood token id ->
+            LikeGood token id
 
 
 exhibitButton : Html.Html Msg
@@ -1001,10 +1192,10 @@ exhibitButton =
         [ Html.text "出品" ]
 
 
-siteMapXmlView : ( String, Tab.Tab Never, List (Html.Html msg) )
+siteMapXmlView : ( String, Tab.Tab msg, List (Html.Html msg) )
 siteMapXmlView =
     ( "sitemap.xml"
-    , Tab.Single "sitemap.xml"
+    , Tab.single "sitemap.xml"
     , [ Html.div
             [ Html.Attributes.style "white-space" "pre-wrap" ]
             [ Html.text SiteMap.siteMapXml ]

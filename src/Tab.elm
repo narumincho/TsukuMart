@@ -1,14 +1,29 @@
-module Tab exposing (Tab(..), map, view)
+module Tab exposing (Tab, isNone, map, multi, none, single, view)
 
 import Html
 import Html.Attributes
 import Html.Events
 
 
-type Tab pageModel
-    = Multi (List ( pageModel, String )) Int
+type Tab msg
+    = Multi (List ( String, msg )) Int
     | Single String
     | None
+
+
+multi : { textAndMsgList : List ( String, msg ), selectIndex : Int } -> Tab msg
+multi { textAndMsgList, selectIndex } =
+    Multi textAndMsgList selectIndex
+
+
+single : String -> Tab msg
+single =
+    Single
+
+
+none : Tab msg
+none =
+    None
 
 
 map : (a -> b) -> Tab a -> Tab b
@@ -17,7 +32,7 @@ map f tab =
         Multi list selectIndex ->
             Multi
                 (list
-                    |> List.map (Tuple.mapFirst f)
+                    |> List.map (Tuple.mapSecond f)
                 )
                 selectIndex
 
@@ -43,9 +58,14 @@ toCount tab =
             0
 
 
+isNone : Tab a -> Bool
+isNone tab =
+    tab == None
+
+
 {-| タブの見た目
 -}
-view : Bool -> Tab a -> Html.Html a
+view : Bool -> Tab msg -> Html.Html msg
 view isWideScreenMode tabData =
     Html.div
         ([ Html.Attributes.classList
@@ -66,11 +86,11 @@ view isWideScreenMode tabData =
             Multi tabList selectIndex ->
                 (tabList
                     |> List.indexedMap
-                        (\index ( tab, label ) ->
+                        (\index ( label, msg ) ->
                             itemView
                                 (index == selectIndex)
                                 label
-                                (Just tab)
+                                (Just msg)
                         )
                 )
                     ++ [ selectLineView
@@ -125,9 +145,10 @@ itemView isSelected label clickEventMaybe =
 
 
 {-| タブの下線
-mainTabSelectLine index count
-index : 何番目のタブを選択しているか
-count : 全部で何個のタブがあるか
+
+  - index : 何番目のタブを選択しているか
+  - count : 全部で何個のタブがあるか
+
 -}
 selectLineView : Int -> Int -> Html.Html msg
 selectLineView index count =

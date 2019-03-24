@@ -13,9 +13,16 @@ module Api exposing
     , SignUpResponseOk(..)
     , Token
     , debugDeleteAllUser
-    , getAllGoods
+    , getExhibitionGoodList
+    , getFreeGoods
     , getGoods
+    , getHistoryGoodList
+    , getLikeGoodList
     , getMyProfile
+    , getPurchaseGoodList
+    , getRecentGoods
+    , getRecommendGoods
+    , getUserProfile
     , likeGoods
     , logIn
     , logInResponseErrorToString
@@ -34,6 +41,7 @@ import Http
 import Json.Decode
 import Json.Decode.Pipeline
 import Json.Encode
+import Task
 import Url.Builder
 
 
@@ -557,7 +565,7 @@ createGoodsResponseBodyDecoder =
 
 
 {- ============================================================
-       Current User Profile /{version}/currentuser/profile/
+       自分のプロフィールを取得する /{version}/currentuser/profile/
    ============================================================
 -}
 
@@ -577,6 +585,79 @@ getMyProfile token msg =
 
 
 {- ============================================================
+       自分がいいねした商品を取得する /{version}/currentuser/profile/
+   ============================================================
+-}
+
+
+getLikeGoodList : Token -> (Result () (List Good.Good) -> msg) -> Cmd msg
+getLikeGoodList token msg =
+    Http.request
+        { method = "GET"
+        , url = urlBuilder [ "v1", "currentuser", "likes" ]
+        , headers = [ tokenToHeader token ]
+        , body = Http.emptyBody
+        , expect = Http.expectStringResponse msg getGoodListResponseToResult
+        , timeout = Nothing
+        , tracker = Nothing
+        }
+
+
+
+{- =================================================================================
+       自分が閲覧した商品を取得    TODO /{version}/currentuser/wish/ wishなのにhistoryとして使っている
+   =================================================================================
+-}
+
+
+getHistoryGoodList : Token -> (Result () (List Good.Good) -> msg) -> Cmd msg
+getHistoryGoodList token msg =
+    Http.request
+        { method = "GET"
+        , url = urlBuilder [ "v1", "currentuser", "wish" ]
+        , headers = [ tokenToHeader token ]
+        , body = Http.emptyBody
+        , expect = Http.expectStringResponse msg getGoodListResponseToResult
+        , timeout = Nothing
+        , tracker = Nothing
+        }
+
+
+
+{- ============================================================
+       自分が出品した商品を取得する /{version}/currentuser/goods/
+   ============================================================
+-}
+
+
+getExhibitionGoodList : Token -> (Result () (List Good.Good) -> msg) -> Cmd msg
+getExhibitionGoodList token msg =
+    Http.request
+        { method = "GET"
+        , url = urlBuilder [ "v1", "currentuser", "goods" ]
+        , headers = [ tokenToHeader token ]
+        , body = Http.emptyBody
+        , expect = Http.expectStringResponse msg getGoodListResponseToResult
+        , timeout = Nothing
+        , tracker = Nothing
+        }
+
+
+
+{- ============================================================
+       自分が購入した商品を取得する TODO とりあえず常に Ok []
+   ============================================================
+-}
+
+
+getPurchaseGoodList : Token -> (Result () (List Good.Good) -> msg) -> Cmd msg
+getPurchaseGoodList token msg =
+    Task.succeed ()
+        |> Task.perform (always (msg (Ok [])))
+
+
+
+{- ============================================================
           User Profile /{version}/profile/{user}/
    ============================================================
 -}
@@ -584,14 +665,9 @@ getMyProfile token msg =
 
 getUserProfile : User.UserId -> (Result () User.User -> msg) -> Cmd msg
 getUserProfile userId msg =
-    Http.request
-        { method = "GET"
-        , headers = []
-        , url = urlBuilder [ "v1", "profile", userId |> User.userIdToInt |> String.fromInt ]
-        , body = Http.emptyBody
+    Http.get
+        { url = urlBuilder [ "v1", "profile", userId |> User.userIdToInt |> String.fromInt ]
         , expect = Http.expectStringResponse msg getUserProfileResponseToResult
-        , timeout = Nothing
-        , tracker = Nothing
         }
 
 
@@ -642,63 +718,91 @@ getUserProfileResponseValueListToResult id nickName introduction departmentMaybe
 
 
 {- ==============================================================
-      すべての商品を取得    /{version}/goods/
+       新着の商品を取得    TODO /{version}/goods/で取得したものを逆順
    ==============================================================
 -}
 
 
-getAllGoods : (Result () (List Good.Good) -> msg) -> Cmd msg
-getAllGoods msg =
+getRecentGoods : (Result () (List Good.Good) -> msg) -> Cmd msg
+getRecentGoods msg =
     Http.get
         { url = urlBuilder [ "v1", "goods" ]
-        , expect = Http.expectStringResponse msg getAllGoodsResponseToResult
+        , expect =
+            Http.expectStringResponse msg
+                (getGoodListResponseToResult
+                    >> Result.map List.reverse
+                )
         }
 
 
-getAllGoodsResponseToResult : Http.Response String -> Result () (List Good.Good)
-getAllGoodsResponseToResult response =
+
+{- ==============================================================
+      おすすめの商品を取得    /{version}/goods/
+   ==============================================================
+-}
+
+
+getRecommendGoods : (Result () (List Good.Good) -> msg) -> Cmd msg
+getRecommendGoods msg =
+    Http.get
+        { url = urlBuilder [ "v1", "goods" ]
+        , expect = Http.expectStringResponse msg getGoodListResponseToResult
+        }
+
+
+getGoodListResponseToResult : Http.Response String -> Result () (List Good.Good)
+getGoodListResponseToResult response =
     case response of
         Http.BadStatus_ _ body ->
-            Json.Decode.decodeString getAllGoodsResponseBodyJsonDecoder body
+            Json.Decode.decodeString getGoodListResponseBodyJsonDecoder body
                 |> Result.withDefault (Err ())
 
         Http.GoodStatus_ _ body ->
-            Json.Decode.decodeString getAllGoodsResponseBodyJsonDecoder body
+            Json.Decode.decodeString getGoodListResponseBodyJsonDecoder body
                 |> Result.withDefault (Err ())
 
         _ ->
             Err ()
 
 
-getAllGoodsResponseBodyJsonDecoder : Json.Decode.Decoder (Result () (List Good.Good))
-getAllGoodsResponseBodyJsonDecoder =
+getGoodListResponseBodyJsonDecoder : Json.Decode.Decoder (Result () (List Good.Good))
+getGoodListResponseBodyJsonDecoder =
     Json.Decode.list goodsDecoder
         |> Json.Decode.map Ok
 
 
 
+{- =================================================================================
+       0円の商品を取得    TODO /{version}/goods/で取得したものからクライアント側で選んでいる
+   =================================================================================
+-}
+
+
+getFreeGoods : (Result () (List Good.Good) -> msg) -> Cmd msg
+getFreeGoods msg =
+    Http.get
+        { url = urlBuilder [ "v1", "goods" ]
+        , expect =
+            Http.expectStringResponse msg
+                (getGoodListResponseToResult
+                    >> Result.map (List.filter (\g -> Good.getPrice g == 0))
+                )
+        }
+
+
+
 {- ==============================================================================
-      商品の情報を取得    /{version}/goods/{id} エラーのため/{version}/goods/でラップ
+      商品の情報を取得    /{version}/goods/{id}/
    ==============================================================================
 -}
 
 
 getGoods : Int -> (Result () Good.Good -> msg) -> Cmd msg
 getGoods id msg =
-    getAllGoods
-        (\r ->
-            case r of
-                Ok goodsList ->
-                    case Good.searchGoodsFromId id goodsList of
-                        Just goods ->
-                            msg (Ok goods)
-
-                        Nothing ->
-                            msg (Err ())
-
-                Err _ ->
-                    msg (Err ())
-        )
+    Http.get
+        { url = urlBuilder [ "v1", "goods", String.fromInt id ]
+        , expect = Http.expectStringResponse msg getGoodsResponseToResult
+        }
 
 
 getGoodsResponseToResult : Http.Response String -> Result () Good.Good
@@ -796,10 +900,14 @@ statusDecoder =
 
 likeGoods : Token -> Int -> (Result () () -> msg) -> Cmd msg
 likeGoods token goodsId msg =
-    Http.post
-        { url = urlBuilder [ "v1", "goods", String.fromInt goodsId, "like" ]
+    Http.request
+        { method = "POST"
+        , headers = [ tokenToHeader token ]
+        , url = urlBuilder [ "v1", "goods", String.fromInt goodsId, "like" ]
         , body = Http.emptyBody
         , expect = Http.expectStringResponse msg likeGoodsResponseToResult
+        , timeout = Nothing
+        , tracker = Nothing
         }
 
 
@@ -822,14 +930,10 @@ likeGoodsResponseToResult response =
 
 debugDeleteAllUser : (Result () () -> msg) -> Cmd msg
 debugDeleteAllUser msg =
-    Cmd.none
-
-
-
---    Http.get
---        { url = Url.Builder.crossOrigin apiOrigin [ "v1", "debug", "user", "delete" ] [ Url.Builder.string "all" "true" ]
---        , expect = Http.expectStringResponse msg debugDeleteAllUserResponseToResult
---        }
+    Http.get
+        { url = Url.Builder.crossOrigin apiOrigin [ "v1", "debug", "user", "delete" ] [ Url.Builder.string "all" "true" ]
+        , expect = Http.expectStringResponse msg debugDeleteAllUserResponseToResult
+        }
 
 
 debugDeleteAllUserResponseToResult : Http.Response String -> Result () ()

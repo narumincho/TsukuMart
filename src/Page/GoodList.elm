@@ -4,7 +4,7 @@ module Page.GoodList exposing (Msg(..), view)
 -}
 
 import Api
-import Data.Good as Goods
+import Data.Good as Good
 import Data.LogInState
 import Html
 import Html.Attributes
@@ -14,7 +14,7 @@ import SiteMap
 
 
 type Msg
-    = LikeGoods Api.Token Int
+    = LikeGood Api.Token Int
 
 
 
@@ -24,7 +24,7 @@ type Msg
 -}
 
 
-view : Data.LogInState.LogInState -> Bool -> List Goods.Good -> Html.Html Msg
+view : Data.LogInState.LogInState -> Bool -> List Good.Good -> Html.Html Msg
 view logInState isWideMode goodsList =
     Html.div
         [ Html.Attributes.style "display" "grid"
@@ -38,7 +38,7 @@ view logInState isWideMode goodsList =
         ]
         (goodsList
             |> List.map
-                (goodsListItem
+                (goodListItem
                     (case logInState of
                         Data.LogInState.LogInStateOk { access } ->
                             Just access
@@ -50,28 +50,28 @@ view logInState isWideMode goodsList =
         )
 
 
-goodsListItem : Maybe Api.Token -> Goods.Good -> Html.Html Msg
-goodsListItem tokenMaybe goods =
+goodListItem : Maybe Api.Token -> Good.Good -> Html.Html Msg
+goodListItem tokenMaybe good =
     Html.a
         [ Html.Attributes.class "item"
-        , Html.Attributes.href (SiteMap.goodsUrl (Goods.getId goods))
+        , Html.Attributes.href (SiteMap.goodsUrl (Good.getId good))
         ]
-        [ itemImage (Goods.getFirstImageUrl goods)
+        [ itemImage (Good.getFirstImageUrl good)
         , Html.div
             [ Html.Attributes.class "itemTitle" ]
-            [ Html.text (Goods.getName goods) ]
+            [ Html.text (Good.getName good) ]
         , Html.div
             [ Html.Attributes.class "itemPrice" ]
-            [ Html.text (Goods.priceToString (Goods.getPrice goods)) ]
+            [ Html.text (Good.priceToString (Good.getPrice good)) ]
         , Html.div
             (case tokenMaybe of
                 Just token ->
-                    [ Html.Events.preventDefaultOn "click" (Json.Decode.succeed ( LikeGoods token (Goods.getId goods), True )) ]
+                    [ Html.Events.preventDefaultOn "click" (Json.Decode.succeed ( LikeGood token (Good.getId good), True )) ]
 
                 Nothing ->
                     []
             )
-            [ Html.text ("いいね" ++ String.fromInt (Goods.getLikedCount goods)) ]
+            [ Html.text ("いいね" ++ String.fromInt (Good.getLikedCount good)) ]
         ]
 
 
