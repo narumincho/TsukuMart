@@ -19,6 +19,7 @@ type Model
 
 type Emit
     = LogInOrSignUpEmit LogInOrSignUp.Emit
+    | EmitPageToHome
 
 
 type Msg
@@ -31,13 +32,23 @@ initModel =
         LogInOrSignUp.initModel
 
 
-update : Msg -> Model -> ( Model, Maybe Emit )
+update : Msg -> Model -> ( Model, List Emit )
 update msg (Model logInOrSignUpModel) =
     case msg of
         Msg logInOrSignUpMsg ->
             logInOrSignUpModel
                 |> LogInOrSignUp.update logInOrSignUpMsg
-                |> Tuple.mapBoth Model (Maybe.map LogInOrSignUpEmit)
+                |> Tuple.mapBoth Model
+                    (\e ->
+                        (e |> List.map LogInOrSignUpEmit)
+                            ++ (case logInOrSignUpMsg of
+                                    LogInOrSignUp.LogInSuccess ->
+                                        [ EmitPageToHome ]
+
+                                    _ ->
+                                        []
+                               )
+                    )
 
 
 {-| ログイン画面

@@ -35,7 +35,8 @@ type Msg
     = InputStudentIdOrEmailAddress String
     | InputPassword String
     | LogIn Api.LogInRequest
-    | StopSendLogInConnection
+    | LogInSuccess
+    | LogInFailure
 
 
 {-| 学籍番号かメールアドレスの解析結果
@@ -55,7 +56,7 @@ initModel =
         }
 
 
-update : Msg -> Model -> ( Model, Maybe Emit )
+update : Msg -> Model -> ( Model, List Emit )
 update msg (Model r) =
     case msg of
         InputPassword string ->
@@ -63,23 +64,28 @@ update msg (Model r) =
                 { r
                     | password = Data.Password.passwordFromString string |> Result.toMaybe
                 }
-            , Nothing
+            , []
             )
 
         InputStudentIdOrEmailAddress string ->
             ( Model
                 { r | analysisStudentIdOrEmailAddressResult = analysisStudentIdOrEmailAddress string }
-            , Nothing
+            , []
             )
 
         LogIn request ->
             ( Model { r | sending = True }
-            , Just (EmitLogIn request)
+            , [ EmitLogIn request ]
             )
 
-        StopSendLogInConnection ->
+        LogInSuccess ->
             ( Model { r | sending = False }
-            , Nothing
+            , []
+            )
+
+        LogInFailure ->
+            ( Model { r | sending = False }
+            , []
             )
 
 

@@ -11,7 +11,6 @@ import File
 import Html
 import Html.Attributes
 import Html.Keyed
-import Http
 import Json.Decode
 import Page.Component.GoodList
 import Page.Component.LogInOrSignUp
@@ -224,18 +223,13 @@ update msg (Model rec) =
             case rec.page of
                 PageSignUp singUpPageModel ->
                     let
-                        ( newModel, emitMaybe ) =
+                        ( newModel, emitList ) =
                             Page.SignUp.update
                                 (Page.SignUp.SignUpResponse response)
                                 singUpPageModel
                     in
                     ( Model { rec | page = PageSignUp newModel }
-                    , case emitMaybe of
-                        Just emit ->
-                            signUpPageEmitToCmd emit
-
-                        Nothing ->
-                            Cmd.none
+                    , signUpPageEmitListToCmd emitList
                     )
 
                 _ ->
@@ -246,51 +240,58 @@ update msg (Model rec) =
         LogInResponse logInResponse ->
             case logInResponse of
                 Ok (Api.LogInResponseOk { access, refresh }) ->
-                    ( case rec.page of
-                        PageLogIn logInPageModel ->
-                            Model
-                                { rec
-                                    | message = Just "ログインしました"
-                                    , page = PageLogIn (logInPageModel |> Page.LogIn.update (Page.LogIn.Msg Page.Component.LogInOrSignUp.StopSendLogInConnection) |> Tuple.first)
-                                }
+                    let
+                        ( newPage, cmd ) =
+                            case rec.page of
+                                PageLogIn logInPageModel ->
+                                    logInPageModel
+                                        |> Page.LogIn.update (Page.LogIn.Msg Page.Component.LogInOrSignUp.LogInSuccess)
+                                        |> Tuple.mapBoth PageLogIn (logInPageEmitListToCmd rec.key)
 
-                        PageExhibition exhibitionModel ->
-                            Model
-                                { rec
-                                    | message = Just "ログインしました"
-                                    , page = PageExhibition (exhibitionModel |> Page.Exhibition.update rec.logInState (Page.Exhibition.LogInOrSignUpMsg Page.Component.LogInOrSignUp.StopSendLogInConnection) |> Tuple.first)
-                                }
+                                PageExhibition exhibitionPageModel ->
+                                    exhibitionPageModel
+                                        |> Page.Exhibition.update rec.logInState
+                                            (Page.Exhibition.LogInOrSignUpMsg Page.Component.LogInOrSignUp.LogInSuccess)
+                                        |> Tuple.mapBoth PageExhibition (exhibitionPageEmitListToCmd rec.key)
 
-                        _ ->
-                            Model
-                                { rec
-                                    | message = Just "ログインしました"
-                                }
-                    , Api.getMyProfile access (GetUserProfileResponse { access = access, refresh = refresh })
+                                _ ->
+                                    ( rec.page, Cmd.none )
+                    in
+                    ( Model
+                        { rec
+                            | message = Just "ログインしました"
+                            , page = newPage
+                        }
+                    , Cmd.batch
+                        [ cmd
+                        , Api.getMyProfile access (GetUserProfileResponse { access = access, refresh = refresh })
+                        ]
                     )
 
                 Err logInResponseError ->
-                    ( case rec.page of
-                        PageLogIn logInPageModel ->
-                            Model
-                                { rec
-                                    | message = Just (Api.logInResponseErrorToString logInResponseError)
-                                    , page = PageLogIn (logInPageModel |> Page.LogIn.update (Page.LogIn.Msg Page.Component.LogInOrSignUp.StopSendLogInConnection) |> Tuple.first)
-                                }
+                    let
+                        ( newPage, cmd ) =
+                            case rec.page of
+                                PageLogIn logInPageModel ->
+                                    logInPageModel
+                                        |> Page.LogIn.update (Page.LogIn.Msg Page.Component.LogInOrSignUp.LogInFailure)
+                                        |> Tuple.mapBoth PageLogIn (logInPageEmitListToCmd rec.key)
 
-                        PageExhibition exhibitionModel ->
-                            Model
-                                { rec
-                                    | message = Just (Api.logInResponseErrorToString logInResponseError)
-                                    , page = PageExhibition (exhibitionModel |> Page.Exhibition.update rec.logInState (Page.Exhibition.LogInOrSignUpMsg Page.Component.LogInOrSignUp.StopSendLogInConnection) |> Tuple.first)
-                                }
+                                PageExhibition exhibitionPageModel ->
+                                    exhibitionPageModel
+                                        |> Page.Exhibition.update rec.logInState
+                                            (Page.Exhibition.LogInOrSignUpMsg Page.Component.LogInOrSignUp.LogInFailure)
+                                        |> Tuple.mapBoth PageExhibition (exhibitionPageEmitListToCmd rec.key)
 
-                        _ ->
-                            Model
-                                { rec
-                                    | message = Just (Api.logInResponseErrorToString logInResponseError)
-                                }
-                    , Cmd.none
+                                _ ->
+                                    ( rec.page, Cmd.none )
+                    in
+                    ( Model
+                        { rec
+                            | message = Just (Api.logInResponseErrorToString logInResponseError)
+                            , page = newPage
+                        }
+                    , cmd
                     )
 
         SignUpConfirmResponse response ->
@@ -306,9 +307,9 @@ update msg (Model rec) =
                             , page = PageHome newModel
                         }
                     , Cmd.batch
-                        (Browser.Navigation.pushUrl rec.key SiteMap.homeUrl
-                            :: (emitList |> List.map homePageEmitToCmd)
-                        )
+                        [ Browser.Navigation.pushUrl rec.key SiteMap.homeUrl
+                        , homePageEmitListToCmd emitList
+                        ]
                     )
 
                 Err e ->
@@ -323,18 +324,13 @@ update msg (Model rec) =
             case rec.page of
                 PageSignUp signUpModel ->
                     let
-                        ( newModel, emitMaybe ) =
+                        ( newModel, emitList ) =
                             Page.SignUp.update
                                 (Page.SignUp.ReceiveImageDataUrl urlString)
                                 signUpModel
                     in
                     ( Model { rec | page = PageSignUp newModel }
-                    , case emitMaybe of
-                        Just emit ->
-                            signUpPageEmitToCmd emit
-
-                        Nothing ->
-                            Cmd.none
+                    , signUpPageEmitListToCmd emitList
                     )
 
                 _ ->
@@ -348,19 +344,14 @@ update msg (Model rec) =
                     case Json.Decode.decodeValue receiveImageFileAndBlobUrlDecoder value of
                         Ok data ->
                             let
-                                ( newModel, emitMaybe ) =
+                                ( newModel, emitList ) =
                                     Page.Exhibition.update
                                         rec.logInState
                                         (Page.Exhibition.InputImageList data)
                                         exhibitionPageModel
                             in
                             ( Model { rec | page = PageExhibition newModel }
-                            , case emitMaybe of
-                                Just emit ->
-                                    exhibitionPageEmitToCmd rec.key emit
-
-                                Nothing ->
-                                    Cmd.none
+                            , exhibitionPageEmitListToCmd rec.key emitList
                             )
 
                         Err _ ->
@@ -377,18 +368,13 @@ update msg (Model rec) =
             case rec.page of
                 PageLogIn logInModel ->
                     let
-                        ( newModel, emitMaybe ) =
+                        ( newModel, emitList ) =
                             Page.LogIn.update
                                 logInPageMsg
                                 logInModel
                     in
                     ( Model { rec | page = PageLogIn newModel }
-                    , case emitMaybe of
-                        Just emit ->
-                            logInPageEmitToCmd emit
-
-                        Nothing ->
-                            Cmd.none
+                    , logInPageEmitListToCmd rec.key emitList
                     )
 
                 _ ->
@@ -400,16 +386,11 @@ update msg (Model rec) =
             case rec.page of
                 PageSignUp signUpModel ->
                     let
-                        ( newModel, emitMaybe ) =
+                        ( newModel, emitList ) =
                             Page.SignUp.update (Page.SignUp.DeleteUserAllResponse response) signUpModel
                     in
                     ( Model { rec | page = PageSignUp newModel }
-                    , case emitMaybe of
-                        Just emit ->
-                            signUpPageEmitToCmd emit
-
-                        Nothing ->
-                            Cmd.none
+                    , signUpPageEmitListToCmd emitList
                     )
 
                 _ ->
@@ -451,7 +432,7 @@ update msg (Model rec) =
                                 |> Page.Home.update (Page.Home.GetRecentGoodListResponse result)
                     in
                     ( Model { rec | page = PageHome newModel }
-                    , emitList |> List.map homePageEmitToCmd |> Cmd.batch
+                    , homePageEmitListToCmd emitList
                     )
 
                 _ ->
@@ -468,7 +449,7 @@ update msg (Model rec) =
                                 |> Page.Home.update (Page.Home.GetRecommendGoodListResponse result)
                     in
                     ( Model { rec | page = PageHome newModel }
-                    , emitList |> List.map homePageEmitToCmd |> Cmd.batch
+                    , homePageEmitListToCmd emitList
                     )
 
                 _ ->
@@ -484,7 +465,7 @@ update msg (Model rec) =
                             homeModel |> Page.Home.update (Page.Home.GetFreeGoodListResponse result)
                     in
                     ( Model { rec | page = PageHome newModel }
-                    , emitList |> List.map homePageEmitToCmd |> Cmd.batch
+                    , homePageEmitListToCmd emitList
                     )
 
                 _ ->
@@ -501,7 +482,7 @@ update msg (Model rec) =
                                 |> Page.LikeAndHistory.update rec.logInState (Page.LikeAndHistory.LikeGoodListResponse result)
                     in
                     ( Model { rec | page = PageLikeAndHistory newModel }
-                    , emitList |> List.map likeAndHistoryEmitToCmd |> Cmd.batch
+                    , likeAndHistoryEmitListToCmd emitList
                     )
 
                 _ ->
@@ -518,7 +499,7 @@ update msg (Model rec) =
                                 |> Page.LikeAndHistory.update rec.logInState (Page.LikeAndHistory.HistoryGoodListResponse result)
                     in
                     ( Model { rec | page = PageLikeAndHistory newModel }
-                    , emitList |> List.map likeAndHistoryEmitToCmd |> Cmd.batch
+                    , likeAndHistoryEmitListToCmd emitList
                     )
 
                 _ ->
@@ -535,7 +516,7 @@ update msg (Model rec) =
                                 |> Page.ExhibitionGoodList.update (Page.ExhibitionGoodList.GetExhibitionGoodResponse result)
                     in
                     ( Model { rec | page = PageExhibitionGoodList newModel }
-                    , emitMaybe |> Maybe.map exhibitionGoodListPageEmitToCmd |> Maybe.withDefault Cmd.none
+                    , exhibitionGoodListPageEmitListToCmd emitMaybe
                     )
 
                 _ ->
@@ -552,7 +533,7 @@ update msg (Model rec) =
                                 |> Page.PurchaseGoodList.update (Page.PurchaseGoodList.GetPurchaseGoodResponse result)
                     in
                     ( Model { rec | page = PagePurchaseGoodList newModel }
-                    , emitMaybe |> Maybe.map purchaseGoodListPageEmitToCmd |> Maybe.withDefault Cmd.none
+                    , purchaseGoodListPageEmitListToCmd emitMaybe
                     )
 
                 _ ->
@@ -570,7 +551,7 @@ update msg (Model rec) =
                                     Page.Good.update (Page.Good.GetGoodsResponse goods) pageGoodsModel
                             in
                             ( Model { rec | page = PageGoods newModel }
-                            , emitList |> List.map goodsPageEmitToCmd |> Cmd.batch
+                            , goodsPageEmitListToCmd emitList
                             )
 
                         _ ->
@@ -588,16 +569,11 @@ update msg (Model rec) =
             case rec.page of
                 PageExhibition exhibitionPageModel ->
                     let
-                        ( newModel, emitMaybe ) =
+                        ( newModel, emitList ) =
                             Page.Exhibition.update rec.logInState exhibitionMsg exhibitionPageModel
                     in
                     ( Model { rec | page = PageExhibition newModel }
-                    , case emitMaybe of
-                        Just emit ->
-                            exhibitionPageEmitToCmd rec.key emit
-
-                        Nothing ->
-                            Cmd.none
+                    , exhibitionPageEmitListToCmd rec.key emitList
                     )
 
                 _ ->
@@ -609,16 +585,11 @@ update msg (Model rec) =
             case rec.page of
                 PageSignUp signUpPageModel ->
                     let
-                        ( newModel, emitMaybe ) =
+                        ( newModel, emitList ) =
                             Page.SignUp.update signUpMsg signUpPageModel
                     in
                     ( Model { rec | page = PageSignUp newModel }
-                    , case emitMaybe of
-                        Just emit ->
-                            signUpPageEmitToCmd emit
-
-                        Nothing ->
-                            Cmd.none
+                    , signUpPageEmitListToCmd emitList
                     )
 
                 _ ->
@@ -630,19 +601,14 @@ update msg (Model rec) =
             case rec.page of
                 PageProfile profileModel ->
                     let
-                        ( newModel, emitMaybe ) =
+                        ( newModel, emitList ) =
                             Page.Profile.update profileMsg profileModel
                     in
                     ( Model
                         { rec
                             | page = PageProfile newModel
                         }
-                    , case emitMaybe of
-                        Just emit ->
-                            profilePageEmitToCmd emit
-
-                        Nothing ->
-                            Cmd.none
+                    , profilePageEmitListToCmd emitList
                     )
 
                 _ ->
@@ -658,7 +624,7 @@ update msg (Model rec) =
                             Page.Good.update goodsPageMsg goodsModel
                     in
                     ( Model { rec | page = PageGoods newModel }
-                    , emitList |> List.map goodsPageEmitToCmd |> Cmd.batch
+                    , goodsPageEmitListToCmd emitList
                     )
 
                 _ ->
@@ -674,7 +640,7 @@ update msg (Model rec) =
                             homeModel |> Page.Home.update (Page.Home.GoodLikeResponse userId id response)
                     in
                     ( Model { rec | page = PageHome newModel }
-                    , emitList |> List.map homePageEmitToCmd |> Cmd.batch
+                    , homePageEmitListToCmd emitList
                     )
 
                 _ ->
@@ -689,7 +655,7 @@ update msg (Model rec) =
                                 |> Page.Home.update homePageMsg
                     in
                     ( Model { rec | page = PageHome newModel }
-                    , emitList |> List.map homePageEmitToCmd |> Cmd.batch
+                    , homePageEmitListToCmd emitList
                     )
 
                 _ ->
@@ -706,7 +672,7 @@ update msg (Model rec) =
                                 |> Page.LikeAndHistory.update rec.logInState likeAndHistoryMsg
                     in
                     ( Model { rec | page = PageLikeAndHistory newModel }
-                    , emitList |> List.map likeAndHistoryEmitToCmd |> Cmd.batch
+                    , likeAndHistoryEmitListToCmd emitList
                     )
 
                 _ ->
@@ -723,7 +689,7 @@ update msg (Model rec) =
                                 |> Page.PurchaseGoodList.update purchaseGoodListMsg
                     in
                     ( Model { rec | page = PagePurchaseGoodList newModel }
-                    , emitMaybe |> Maybe.map purchaseGoodListPageEmitToCmd |> Maybe.withDefault Cmd.none
+                    , purchaseGoodListPageEmitListToCmd emitMaybe
                     )
 
                 _ ->
@@ -740,7 +706,7 @@ update msg (Model rec) =
                                 |> Page.ExhibitionGoodList.update exhibitionGoodListMsg
                     in
                     ( Model { rec | page = PageExhibitionGoodList newModel }
-                    , emitMaybe |> Maybe.map exhibitionGoodListPageEmitToCmd |> Maybe.withDefault Cmd.none
+                    , exhibitionGoodListPageEmitListToCmd emitMaybe
                     )
 
                 _ ->
@@ -753,106 +719,145 @@ update msg (Model rec) =
 {- ===================== Page Emit To Msg ======================== -}
 
 
-homePageEmitToCmd : Page.Home.Emit -> Cmd Msg
-homePageEmitToCmd emit =
-    case emit of
-        Page.Home.EmitGetRecentGoodList ->
-            Api.getRecentGoods GetRecentGoodListResponse
+homePageEmitListToCmd : List Page.Home.Emit -> Cmd Msg
+homePageEmitListToCmd =
+    List.map
+        (\emit ->
+            case emit of
+                Page.Home.EmitGetRecentGoodList ->
+                    Api.getRecentGoods GetRecentGoodListResponse
 
-        Page.Home.EmitGetRecommendGoodList ->
-            Api.getRecommendGoods GetRecommendGoodListResponse
+                Page.Home.EmitGetRecommendGoodList ->
+                    Api.getRecommendGoods GetRecommendGoodListResponse
 
-        Page.Home.EmitGetFreeGoodList ->
-            Api.getFreeGoods GetFreeGoodListResponse
+                Page.Home.EmitGetFreeGoodList ->
+                    Api.getFreeGoods GetFreeGoodListResponse
 
-        Page.Home.EmitGoodList e ->
-            goodsListEmitToMsg e
-
-
-likeAndHistoryEmitToCmd : Page.LikeAndHistory.Emit -> Cmd Msg
-likeAndHistoryEmitToCmd emit =
-    case emit of
-        Page.LikeAndHistory.EmitGetLikeGoodList token ->
-            Api.getLikeGoodList token GetLikeGoodListResponse
-
-        Page.LikeAndHistory.EmitGetHistoryGoodList token ->
-            Api.getHistoryGoodList token GetHistoryGoodListResponse
-
-        Page.LikeAndHistory.EmitLogInOrSignUp e ->
-            logInOrSignUpEmitToCmd e
+                Page.Home.EmitGoodList e ->
+                    goodsListEmitToMsg e
+        )
+        >> Cmd.batch
 
 
-exhibitionGoodListPageEmitToCmd : Page.ExhibitionGoodList.Emit -> Cmd Msg
-exhibitionGoodListPageEmitToCmd emit =
-    case emit of
-        Page.ExhibitionGoodList.EmitGetExhibitionGood token ->
-            Api.getExhibitionGoodList token GetExhibitionGoodListResponse
+likeAndHistoryEmitListToCmd : List Page.LikeAndHistory.Emit -> Cmd Msg
+likeAndHistoryEmitListToCmd =
+    List.map
+        (\emit ->
+            case emit of
+                Page.LikeAndHistory.EmitGetLikeGoodList token ->
+                    Api.getLikeGoodList token GetLikeGoodListResponse
 
-        Page.ExhibitionGoodList.EmitLogInOrSignUp e ->
-            logInOrSignUpEmitToCmd e
+                Page.LikeAndHistory.EmitGetHistoryGoodList token ->
+                    Api.getHistoryGoodList token GetHistoryGoodListResponse
 
-
-purchaseGoodListPageEmitToCmd : Page.PurchaseGoodList.Emit -> Cmd Msg
-purchaseGoodListPageEmitToCmd emit =
-    case emit of
-        Page.PurchaseGoodList.EmitGetPurchaseGoodList token ->
-            Api.getPurchaseGoodList token GetPurchaseGoodListResponse
-
-        Page.PurchaseGoodList.EmitLogInOrSignUp e ->
-            logInOrSignUpEmitToCmd e
+                Page.LikeAndHistory.EmitLogInOrSignUp e ->
+                    logInOrSignUpEmitToCmd e
+        )
+        >> Cmd.batch
 
 
-logInPageEmitToCmd : Page.LogIn.Emit -> Cmd Msg
-logInPageEmitToCmd emit =
-    case emit of
-        Page.LogIn.LogInOrSignUpEmit e ->
-            logInOrSignUpEmitToCmd e
+exhibitionGoodListPageEmitListToCmd : List Page.ExhibitionGoodList.Emit -> Cmd Msg
+exhibitionGoodListPageEmitListToCmd =
+    List.map
+        (\emit ->
+            case emit of
+                Page.ExhibitionGoodList.EmitGetExhibitionGood token ->
+                    Api.getExhibitionGoodList token GetExhibitionGoodListResponse
+
+                Page.ExhibitionGoodList.EmitLogInOrSignUp e ->
+                    logInOrSignUpEmitToCmd e
+        )
+        >> Cmd.batch
 
 
-exhibitionPageEmitToCmd : Browser.Navigation.Key -> Page.Exhibition.Emit -> Cmd Msg
-exhibitionPageEmitToCmd key emit =
-    case emit of
-        Page.Exhibition.EmitLogInOrSignUp e ->
-            logInOrSignUpEmitToCmd e
+purchaseGoodListPageEmitListToCmd : List Page.PurchaseGoodList.Emit -> Cmd Msg
+purchaseGoodListPageEmitListToCmd =
+    List.map
+        (\emit ->
+            case emit of
+                Page.PurchaseGoodList.EmitGetPurchaseGoodList token ->
+                    Api.getPurchaseGoodList token GetPurchaseGoodListResponse
 
-        Page.Exhibition.EmitSellGoods ( token, request ) ->
-            Api.sellGoods token request SellGoodResponse
-
-        Page.Exhibition.EmitCatchImageList string ->
-            exhibitionImageChange string
-
-        Page.Exhibition.EmitHistoryPushExhibitionUrl ->
-            Browser.Navigation.pushUrl key SiteMap.exhibitionUrl
+                Page.PurchaseGoodList.EmitLogInOrSignUp e ->
+                    logInOrSignUpEmitToCmd e
+        )
+        >> Cmd.batch
 
 
-signUpPageEmitToCmd : Page.SignUp.Emit -> Cmd Msg
-signUpPageEmitToCmd emit =
-    case emit of
-        Page.SignUp.EmitCatchStudentImage idString ->
-            studentImageChange idString
+logInPageEmitListToCmd : Browser.Navigation.Key -> List Page.LogIn.Emit -> Cmd Msg
+logInPageEmitListToCmd key =
+    List.map
+        (\emit ->
+            case emit of
+                Page.LogIn.LogInOrSignUpEmit e ->
+                    logInOrSignUpEmitToCmd e
 
-        Page.SignUp.EmitSignUp signUpRequest ->
-            Api.signUp signUpRequest SignUpResponse
-
-        Page.SignUp.EmitSendConfirmToken token ->
-            Api.signUpConfirm { confirmToken = token } SignUpConfirmResponse
-
-        Page.SignUp.EmitDeleteUserAll ->
-            Api.debugDeleteAllUser DeleteAllUserResponse
+                Page.LogIn.EmitPageToHome ->
+                    Browser.Navigation.pushUrl key SiteMap.homeUrl
+        )
+        >> Cmd.batch
 
 
-profilePageEmitToCmd : Page.Profile.Emit -> Cmd Msg
-profilePageEmitToCmd emit =
-    case emit of
-        Page.Profile.EmitLogInOrSignUp e ->
-            logInOrSignUpEmitToCmd e
+exhibitionPageEmitListToCmd : Browser.Navigation.Key -> List Page.Exhibition.Emit -> Cmd Msg
+exhibitionPageEmitListToCmd key =
+    List.map
+        (\emit ->
+            case emit of
+                Page.Exhibition.EmitLogInOrSignUp e ->
+                    logInOrSignUpEmitToCmd e
+
+                Page.Exhibition.EmitSellGoods ( token, request ) ->
+                    Api.sellGoods token request SellGoodResponse
+
+                Page.Exhibition.EmitCatchImageList string ->
+                    exhibitionImageChange string
+
+                Page.Exhibition.EmitHistoryPushExhibitionUrl ->
+                    Browser.Navigation.pushUrl key SiteMap.exhibitionUrl
+        )
+        >> Cmd.batch
 
 
-goodsPageEmitToCmd : Page.Good.Emit -> Cmd Msg
-goodsPageEmitToCmd emit =
-    case emit of
-        Page.Good.EmitGetGoods { goodId } ->
-            Api.getGood goodId GetGoodResponse
+signUpPageEmitListToCmd : List Page.SignUp.Emit -> Cmd Msg
+signUpPageEmitListToCmd =
+    List.map
+        (\emit ->
+            case emit of
+                Page.SignUp.EmitCatchStudentImage idString ->
+                    studentImageChange idString
+
+                Page.SignUp.EmitSignUp signUpRequest ->
+                    Api.signUp signUpRequest SignUpResponse
+
+                Page.SignUp.EmitSendConfirmToken token ->
+                    Api.signUpConfirm { confirmToken = token } SignUpConfirmResponse
+
+                Page.SignUp.EmitDeleteUserAll ->
+                    Api.debugDeleteAllUser DeleteAllUserResponse
+        )
+        >> Cmd.batch
+
+
+profilePageEmitListToCmd : List Page.Profile.Emit -> Cmd Msg
+profilePageEmitListToCmd =
+    List.map
+        (\emit ->
+            case emit of
+                Page.Profile.EmitLogInOrSignUp e ->
+                    logInOrSignUpEmitToCmd e
+        )
+        >> Cmd.batch
+
+
+goodsPageEmitListToCmd : List Page.Good.Emit -> Cmd Msg
+goodsPageEmitListToCmd =
+    List.map
+        (\emit ->
+            case emit of
+                Page.Good.EmitGetGoods { goodId } ->
+                    Api.getGood goodId GetGoodResponse
+        )
+        >> Cmd.batch
 
 
 
@@ -946,7 +951,7 @@ urlParser (Model rec) =
                 (Page.Home.initModel (getGoodId rec.page)
                     |> Tuple.mapBoth
                         (\m -> Just (PageHome m))
-                        (List.map homePageEmitToCmd >> Cmd.batch)
+                        homePageEmitListToCmd
                 )
         , SiteMap.signUpParser
             |> Url.Parser.map
@@ -963,21 +968,21 @@ urlParser (Model rec) =
                 (Page.LikeAndHistory.initModel rec.logInState
                     |> Tuple.mapBoth
                         (\m -> Just (PageLikeAndHistory m))
-                        (List.map likeAndHistoryEmitToCmd >> Cmd.batch)
+                        likeAndHistoryEmitListToCmd
                 )
         , SiteMap.exhibitionGoodsParser
             |> Url.Parser.map
                 (Page.ExhibitionGoodList.initModel rec.logInState
                     |> Tuple.mapBoth
                         (\m -> Just (PageExhibitionGoodList m))
-                        (Maybe.map exhibitionGoodListPageEmitToCmd >> Maybe.withDefault Cmd.none)
+                        exhibitionGoodListPageEmitListToCmd
                 )
         , SiteMap.purchaseGoodsParser
             |> Url.Parser.map
                 (Page.PurchaseGoodList.initModel rec.logInState
                     |> Tuple.mapBoth
                         (\m -> Just (PagePurchaseGoodList m))
-                        (Maybe.map purchaseGoodListPageEmitToCmd >> Maybe.withDefault Cmd.none)
+                        purchaseGoodListPageEmitListToCmd
                 )
         , SiteMap.exhibitionParser
             |> Url.Parser.map
@@ -1014,7 +1019,7 @@ urlParser (Model rec) =
                                             Page.Good.initModel id
                             in
                             ( Just (PageGoods newModel)
-                            , emitList |> List.map goodsPageEmitToCmd |> Cmd.batch
+                            , goodsPageEmitListToCmd emitList
                             )
                 )
         , SiteMap.profileParser

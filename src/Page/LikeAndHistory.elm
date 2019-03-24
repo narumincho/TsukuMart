@@ -52,8 +52,7 @@ type TabSelect
 
 
 type Msg
-    = SelectTabLike
-    | SelectTabHistory
+    = SelectTab TabSelect
     | LikeGoodListResponse (Result () (List Good.Good))
     | HistoryGoodListResponse (Result () (List Good.Good))
     | LogInOrSignUpMsg LogInOrSignUp.Msg
@@ -92,23 +91,18 @@ initModel logInState =
 update : LogInState.LogInState -> Msg -> Model -> ( Model, List Emit )
 update logInState msg (Model rec) =
     case msg of
-        SelectTabLike ->
+        SelectTab tabSelect ->
             ( Model
-                { rec | normalModel = normalModelSetSelectTab TabLike rec.normalModel }
+                { rec | normalModel = normalModelSetSelectTab tabSelect rec.normalModel }
             , case logInState of
                 LogInState.LogInStateOk { access } ->
-                    [ EmitGetLikeGoodList access ]
+                    [ case tabSelect of
+                        TabLike ->
+                            EmitGetLikeGoodList access
 
-                LogInState.LogInStateNone ->
-                    []
-            )
-
-        SelectTabHistory ->
-            ( Model
-                { rec | normalModel = normalModelSetSelectTab TabHistory rec.normalModel }
-            , case logInState of
-                LogInState.LogInStateOk { access } ->
-                    [ EmitGetHistoryGoodList access ]
+                        TabHistory ->
+                            EmitGetHistoryGoodList access
+                    ]
 
                 LogInState.LogInStateNone ->
                     []
@@ -131,17 +125,12 @@ update logInState msg (Model rec) =
 
         LogInOrSignUpMsg logInOrSignUpMsg ->
             let
-                ( newModel, emitMaybe ) =
+                ( newModel, emitList ) =
                     rec.logInOrSignUpModel |> LogInOrSignUp.update logInOrSignUpMsg
             in
             ( Model
                 { rec | logInOrSignUpModel = newModel }
-            , case emitMaybe of
-                Just emit ->
-                    [ EmitLogInOrSignUp emit ]
-
-                Nothing ->
-                    []
+            , emitList |> List.map EmitLogInOrSignUp
             )
 
 
@@ -150,7 +139,7 @@ view logInState isWideScreenMode (Model rec) =
     ( "いいね・閲覧した商品"
     , Tab.multi
         { textAndMsgList =
-            [ ( "いいね", SelectTabLike ), ( "閲覧履歴", SelectTabHistory ) ]
+            [ ( "いいね", SelectTab TabLike ), ( "閲覧履歴", SelectTab TabHistory ) ]
         , selectIndex =
             case rec.normalModel |> normalModelGetSelectTab of
                 TabLike ->
@@ -159,5 +148,5 @@ view logInState isWideScreenMode (Model rec) =
                 TabHistory ->
                     1
         }
-    , [ Html.text "つくりとちゅー" ]
+    , [ Html.text "まってな" ]
     )

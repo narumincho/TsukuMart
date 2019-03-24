@@ -46,7 +46,7 @@ initModel =
 {- ====== Update ====== -}
 
 
-update : Msg -> Model -> ( Model, Maybe Emit )
+update : Msg -> Model -> ( Model, List Emit )
 update msg (Model rec) =
     case msg of
         MsgLogInOrSignUp logInOrSignUpMsg ->
@@ -55,7 +55,7 @@ update msg (Model rec) =
                     LogInOrSignUp.update logInOrSignUpMsg rec.logInOrSignUpModel
             in
             ( Model { rec | logInOrSignUpModel = newModel }
-            , emitMaybe |> Maybe.map EmitLogInOrSignUp
+            , emitMaybe |> List.map EmitLogInOrSignUp
             )
 
 

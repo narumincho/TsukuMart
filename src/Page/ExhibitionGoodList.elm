@@ -31,7 +31,7 @@ type Msg
     | LogInOrSignUpMsg LogInOrSignUp.Msg
 
 
-initModel : LogInState.LogInState -> ( Model, Maybe Emit )
+initModel : LogInState.LogInState -> ( Model, List Emit )
 initModel logInState =
     ( Model
         { logInOrSignUpModel = LogInOrSignUp.initModel
@@ -39,14 +39,14 @@ initModel logInState =
         }
     , case logInState of
         LogInState.LogInStateOk { access } ->
-            Just (EmitGetExhibitionGood access)
+            [ EmitGetExhibitionGood access ]
 
         LogInState.LogInStateNone ->
-            Nothing
+            []
     )
 
 
-update : Msg -> Model -> ( Model, Maybe Emit )
+update : Msg -> Model -> ( Model, List Emit )
 update msg (Model rec) =
     case msg of
         GetExhibitionGoodResponse result ->
@@ -54,21 +54,21 @@ update msg (Model rec) =
                 Ok goodList ->
                     ( Model
                         { rec | normalModel = Normal { exhibitionGood = goodList } }
-                    , Nothing
+                    , []
                     )
 
                 Err () ->
                     ( Model { rec | normalModel = Error }
-                    , Nothing
+                    , []
                     )
 
         LogInOrSignUpMsg logInOrSignUpMsg ->
             let
-                ( newModel, emitMaybe ) =
+                ( newModel, emitList ) =
                     LogInOrSignUp.update logInOrSignUpMsg rec.logInOrSignUpModel
             in
             ( Model { rec | logInOrSignUpModel = newModel }
-            , emitMaybe |> Maybe.map EmitLogInOrSignUp
+            , emitList |> List.map EmitLogInOrSignUp
             )
 
 

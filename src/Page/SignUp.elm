@@ -109,7 +109,7 @@ sentConfirmTokenModel signUpResponseError =
     SentConfirmTokenError (Just signUpResponseError)
 
 
-update : Msg -> Model -> ( Model, Maybe Emit )
+update : Msg -> Model -> ( Model, List Emit )
 update msg model =
     case msg of
         InputStudentIdOrEmailAddress string ->
@@ -119,12 +119,12 @@ update msg model =
 
                 _ ->
                     model
-            , Nothing
+            , []
             )
 
         CatchStudentImage idString ->
             ( model
-            , Just (EmitCatchStudentImage idString)
+            , [ EmitCatchStudentImage idString ]
             )
 
         ReceiveImageDataUrl dataUrl ->
@@ -134,7 +134,7 @@ update msg model =
 
                 _ ->
                     model
-            , Nothing
+            , []
             )
 
         InputSAddressAndPassword sAddressAndPassword ->
@@ -144,7 +144,7 @@ update msg model =
 
                 _ ->
                     model
-            , Nothing
+            , []
             )
 
         InputUniversity universitySelect ->
@@ -154,7 +154,7 @@ update msg model =
 
                 _ ->
                     model
-            , Nothing
+            , []
             )
 
         InputPassword string ->
@@ -175,7 +175,7 @@ update msg model =
 
                 _ ->
                     model
-            , Nothing
+            , []
             )
 
         InputNickName string ->
@@ -188,12 +188,12 @@ update msg model =
 
                 _ ->
                     model
-            , Nothing
+            , []
             )
 
         DeleteUserAll ->
             ( model
-            , Just EmitDeleteUserAll
+            , [ EmitDeleteUserAll ]
             )
 
         DeleteUserAllResponse response ->
@@ -205,12 +205,12 @@ update msg model =
                     Err () ->
                         False
                 )
-            , Nothing
+            , []
             )
 
         SignUp signUpRequest ->
             ( SentSingUpData signUpRequest.emailAddress Nothing
-            , Just (EmitSignUp signUpRequest)
+            , [ EmitSignUp signUpRequest ]
             )
 
         SignUpResponse result ->
@@ -220,12 +220,12 @@ update msg model =
 
                 _ ->
                     model
-            , Nothing
+            , []
             )
 
         SendConfirmToken token ->
             ( SentConfirmTokenError Nothing
-            , Just (EmitSendConfirmToken token)
+            , [ EmitSendConfirmToken token ]
             )
 
 

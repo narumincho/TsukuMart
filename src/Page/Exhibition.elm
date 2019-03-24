@@ -96,7 +96,7 @@ initModel =
         }
 
 
-update : Data.LogInState.LogInState -> Msg -> Model -> ( Model, Maybe Emit )
+update : Data.LogInState.LogInState -> Msg -> Model -> ( Model, List Emit )
 update logInState msg (Model rec) =
     case logInState of
         Data.LogInState.LogInStateOk _ ->
@@ -112,10 +112,10 @@ update logInState msg (Model rec) =
                     (\l ->
                         Model { rec | logInOrSignUpModel = l }
                     )
-                    (Maybe.map EmitLogInOrSignUp)
+                    (List.map EmitLogInOrSignUp)
 
 
-updateWhenLogIn : Msg -> Page -> ( Page, Maybe Emit )
+updateWhenLogIn : Msg -> Page -> ( Page, List Emit )
 updateWhenLogIn msg page =
     case page of
         EditPage (EditModel rec) ->
@@ -125,7 +125,7 @@ updateWhenLogIn msg page =
                         (EditModel
                             { rec | image = imageAdd fileList rec.image }
                         )
-                    , Nothing
+                    , []
                     )
 
                 DeleteImage index ->
@@ -135,7 +135,7 @@ updateWhenLogIn msg page =
                                 | image = imageDeleteAt index rec.image
                             }
                         )
-                    , Nothing
+                    , []
                     )
 
                 InputGoodsName name ->
@@ -145,7 +145,7 @@ updateWhenLogIn msg page =
                                 | name = name
                             }
                         )
-                    , Nothing
+                    , []
                     )
 
                 InputGoodsDescription description ->
@@ -155,7 +155,7 @@ updateWhenLogIn msg page =
                                 | description = description
                             }
                         )
-                    , Nothing
+                    , []
                     )
 
                 InputGoodsPrice priceString ->
@@ -165,7 +165,7 @@ updateWhenLogIn msg page =
                                 | price = String.toInt priceString
                             }
                         )
-                    , Nothing
+                    , []
                     )
 
                 InputCondition condition ->
@@ -175,45 +175,45 @@ updateWhenLogIn msg page =
                                 | condition = condition
                             }
                         )
-                    , Nothing
+                    , []
                     )
 
                 ToConfirmPage ( _, request ) ->
                     ( ConfirmPage { request = request }
-                    , Just EmitHistoryPushExhibitionUrl
+                    , [ EmitHistoryPushExhibitionUrl ]
                     )
 
                 CatchImageList idString ->
                     ( EditPage (EditModel rec)
-                    , Just (EmitCatchImageList idString)
+                    , [ EmitCatchImageList idString ]
                     )
 
                 _ ->
                     ( EditPage (EditModel rec)
-                    , Nothing
+                    , []
                     )
 
         ConfirmPage rec ->
             case msg of
                 SellGoods data ->
                     ( ConfirmPage rec
-                    , Just (EmitSellGoods data)
+                    , [ EmitSellGoods data ]
                     )
 
                 _ ->
                     ( ConfirmPage rec
-                    , Nothing
+                    , []
                     )
 
 
-updateWhenNoLogIn : Msg -> LogInOrSignUp.Model -> ( LogInOrSignUp.Model, Maybe LogInOrSignUp.Emit )
+updateWhenNoLogIn : Msg -> LogInOrSignUp.Model -> ( LogInOrSignUp.Model, List LogInOrSignUp.Emit )
 updateWhenNoLogIn msg model =
     case msg of
         LogInOrSignUpMsg m ->
             model |> LogInOrSignUp.update m
 
         _ ->
-            ( model, Nothing )
+            ( model, [] )
 
 
 imageAdd : List Image -> ImageList -> ImageList
