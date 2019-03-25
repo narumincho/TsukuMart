@@ -646,14 +646,14 @@ toConformPageButton accessToken requestMaybe =
             Html.button
                 [ Html.Events.onClick (ToConfirmPage ( accessToken, request ))
                 , Html.Attributes.disabled False
-                , Html.Attributes.class "exhibition-sellButton"
+                , Html.Attributes.class "mainButton"
                 ]
                 [ Html.text "出品確認画面へ" ]
 
         Nothing ->
             Html.button
                 [ Html.Attributes.disabled True
-                , Html.Attributes.class "exhibition-sellButton"
+                , Html.Attributes.class "mainButton"
                 ]
                 [ Html.text "出品確認画面へ" ]
 
@@ -692,7 +692,7 @@ confirmView accessToken request =
             [ Html.text "この商品を出品します。よろしいですか?" ]
       , Html.button
             [ Html.Events.onClick (SellGoods ( accessToken, request ))
-            , Html.Attributes.class "exhibition-sellButton"
+            , Html.Attributes.class "mainButton"
             ]
             [ Html.text "出品する" ]
       ]

@@ -12,6 +12,7 @@ import Data.University
 import Data.User as User
 import Html
 import Html.Attributes
+import Html.Events
 import Page.Component.LogInOrSignUp as LogInOrSignUp
 import Svg
 import Svg.Attributes
@@ -160,10 +161,12 @@ universityView university =
            )
 
 
-editButton : Html.Html msg
+editButton : Html.Html Msg
 editButton =
-    Html.div
-        []
+    Html.button
+        [ Html.Attributes.class "mainButton"
+        , Html.Events.onClick MsgToEditMode
+        ]
         [ editIcon
         , Html.text "編集する"
         ]

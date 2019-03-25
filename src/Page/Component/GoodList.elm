@@ -73,32 +73,19 @@ view _ logInState isWideMode goodsList =
 goodListItem : Data.LogInState.LogInState -> Good.Good -> Html.Html Msg
 goodListItem logInState good =
     Html.a
-        [ Html.Attributes.class "item"
+        [ Html.Attributes.class "goodList-item"
         , Html.Attributes.href (SiteMap.goodsUrl (Good.getId good))
         , Html.Attributes.id (goodIdString (Good.getId good))
         ]
         [ itemImage (Good.getFirstImageUrl good)
         , Html.div
-            [ Html.Attributes.class "itemTitle" ]
+            [ Html.Attributes.class "goodList-name" ]
             [ Html.text (Good.getName good) ]
         , Html.div
-            [ Html.Attributes.class "itemPrice" ]
-            [ Html.text (Good.priceToString (Good.getPrice good)) ]
-        , Html.div
-            (case logInState of
-                Data.LogInState.LogInStateOk { profile, access } ->
-                    [ Html.Events.preventDefaultOn "click"
-                        (Json.Decode.succeed
-                            ( LikeGood (Data.User.getUserId profile) access (Good.getId good)
-                            , True
-                            )
-                        )
-                    ]
-
-                Data.LogInState.LogInStateNone ->
-                    []
-            )
-            [ Html.text ("いいね" ++ String.fromInt (Good.getLikedCount good)) ]
+            [ Html.Attributes.class "goodList-priceAndLike" ]
+            [ itemLike logInState good
+            , itemPrice (Good.getPrice good)
+            ]
         ]
 
 
@@ -107,10 +94,52 @@ goodIdString goodId =
     "good-" ++ String.fromInt goodId
 
 
+itemPrice : Int -> Html.Html msg
+itemPrice price =
+    Html.div
+        []
+        [ Html.span
+            [ Html.Attributes.class "goodList-price" ]
+            [ Html.text (Good.priceToStringWithoutYen price) ]
+        , Html.text "円"
+        ]
+
+
+itemLike : Data.LogInState.LogInState -> Good.Good -> Html.Html Msg
+itemLike logInState good =
+    Html.div
+        ([ Html.Attributes.class "goodList-like" ]
+            ++ (case logInState of
+                    Data.LogInState.LogInStateOk { profile, access } ->
+                        [ Html.Events.stopPropagationOn "click"
+                            (Json.Decode.succeed
+                                ( LikeGood (Data.User.getUserId profile) access (Good.getId good)
+                                , True
+                                )
+                            )
+                        ]
+                            ++ (if good |> Good.isLikedBy (Data.User.getUserId profile) then
+                                    [ Html.Attributes.class "goodList-liked" ]
+
+                                else
+                                    []
+                               )
+
+                    Data.LogInState.LogInStateNone ->
+                        []
+               )
+        )
+        [ Html.text "いいね"
+        , Html.span
+            [ Html.Attributes.class "goodList-like-number" ]
+            [ Html.text (String.fromInt (Good.getLikedCount good)) ]
+        ]
+
+
 itemImage : String -> Html.Html msg
 itemImage url =
     Html.img
-        [ Html.Attributes.class "itemImage"
+        [ Html.Attributes.class "goodList-image"
         , Html.Attributes.src url
         ]
         []

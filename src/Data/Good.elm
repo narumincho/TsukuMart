@@ -15,9 +15,11 @@ module Data.Good exposing
     , getName
     , getOthersImageUrlList
     , getPrice
+    , isLikedBy
     , like
     , listMapIf
     , priceToString
+    , priceToStringWithoutYen
     , searchGoodsFromId
     , statusAll
     , statusFromIdString
@@ -27,7 +29,7 @@ module Data.Good exposing
 {-| 商品
 -}
 
-import Data.User as Profile
+import Data.User as User
 
 
 type Good
@@ -42,7 +44,7 @@ type Good
         , image1Url : Maybe String
         , image2Url : Maybe String
         , image3Url : Maybe String
-        , likedByUserList : List Profile.UserId
+        , likedByUserList : List User.UserId
         }
 
 
@@ -199,7 +201,7 @@ getLikedCount (Good { likedByUserList }) =
 
 {-| いいねをする
 -}
-like : Profile.UserId -> Good -> Good
+like : User.UserId -> Good -> Good
 like userId (Good rec) =
     Good { rec | likedByUserList = rec.likedByUserList ++ [ userId ] }
 
@@ -251,30 +253,41 @@ maybeToList aMaybe =
 
 {-| いいねをしたユーザーIDを取得する
 -}
-getLikedByUserList : Good -> List Profile.UserId
+getLikedByUserList : Good -> List User.UserId
 getLikedByUserList (Good { likedByUserList }) =
     likedByUserList
+
+
+{-| 指定したユーザーがいいねをしているか取得する
+-}
+isLikedBy : User.UserId -> Good -> Bool
+isLikedBy userId (Good { likedByUserList }) =
+    likedByUserList
+        |> List.member userId
 
 
 {-| 価格(整数)を3桁ごとに,がついたものにする
 -}
 priceToString : Int -> String
 priceToString price =
-    ((if price < 1000 then
+    priceToStringWithoutYen price ++ "円"
+
+
+priceToStringWithoutYen : Int -> String
+priceToStringWithoutYen price =
+    (if price < 1000 then
         ( price, [] )
 
-      else if price < 1000000 then
+     else if price < 1000000 then
         ( price // 1000, [ price |> modBy 1000 ] )
 
-      else
+     else
         ( price // 1000000, [ price // 1000 |> modBy 1000, price |> modBy 1000 ] )
-     )
+    )
         |> Tuple.mapFirst String.fromInt
         |> Tuple.mapSecond (List.map (String.fromInt >> String.padLeft 3 '0'))
         |> (\( a, b ) -> a :: b)
         |> String.join ","
-    )
-        ++ "円"
 
 
 searchGoodsFromId : Int -> List Good -> Maybe Good
