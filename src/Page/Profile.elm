@@ -7,23 +7,27 @@ module Page.Profile exposing
     , view
     )
 
+import Data.LogInState as LogInState
 import Data.University
-import Data.User as Profile
+import Data.User as User
 import Html
 import Html.Attributes
 import Page.Component.LogInOrSignUp as LogInOrSignUp
+import Svg
+import Svg.Attributes
 import Tab
 
 
 type Model
     = Model
-        { editMode : EditMode
+        { mode : Mode
         , logInOrSignUpModel : LogInOrSignUp.Model
         }
 
 
-type EditMode
+type Mode
     = EditMode
+    | ViewMode
 
 
 type Emit
@@ -32,12 +36,15 @@ type Emit
 
 type Msg
     = MsgLogInOrSignUp LogInOrSignUp.Msg
+    | MsgToEditMode
+    | MsgBackToViewMode
+    | MsgChangeProfile User.Profile
 
 
 initModel : Model
 initModel =
     Model
-        { editMode = EditMode
+        { mode = ViewMode
         , logInOrSignUpModel = LogInOrSignUp.initModel
         }
 
@@ -58,33 +65,49 @@ update msg (Model rec) =
             , emitMaybe |> List.map EmitLogInOrSignUp
             )
 
+        MsgToEditMode ->
+            ( Model { rec | mode = EditMode }
+            , []
+            )
+
+        MsgBackToViewMode ->
+            ( Model { rec | mode = ViewMode }
+            , []
+            )
+
+        MsgChangeProfile profile ->
+            ( Model rec
+            , []
+            )
+
 
 
 {- ====== View ====== -}
 
 
-view : Maybe Profile.User -> Model -> ( String, Tab.Tab Msg, List (Html.Html Msg) )
-view profileMaybe (Model { logInOrSignUpModel }) =
+view : LogInState.LogInState -> Model -> ( String, Tab.Tab Msg, List (Html.Html Msg) )
+view logInState (Model { logInOrSignUpModel }) =
     ( "プロフィール"
     , Tab.single "プロフィール"
-    , [ Html.div
-            [ Html.Attributes.class "profile-container" ]
+    , case logInState of
+        LogInState.LogInStateOk { access, profile } ->
             [ Html.div
-                [ Html.Attributes.class "profile" ]
-                (case profileMaybe of
-                    Just profile ->
-                        [ nickNameView (Profile.getNickName profile)
-                        , introductionView (Profile.getIntroduction profile)
-                        ]
-                            ++ universityView (Profile.getUniversity profile)
-
-                    Nothing ->
-                        [ LogInOrSignUp.view logInOrSignUpModel
-                            |> Html.map MsgLogInOrSignUp
-                        ]
-                )
+                [ Html.Attributes.class "profile-container" ]
+                [ Html.div
+                    [ Html.Attributes.class "profile" ]
+                    ([ nickNameView (User.getNickName profile)
+                     , introductionView (User.getIntroduction profile)
+                     ]
+                        ++ universityView (User.getUniversity profile)
+                        ++ [ editButton ]
+                    )
+                ]
             ]
-      ]
+
+        LogInState.LogInStateNone ->
+            [ LogInOrSignUp.view logInOrSignUpModel
+                |> Html.map MsgLogInOrSignUp
+            ]
     )
 
 
@@ -92,14 +115,20 @@ nickNameView : String -> Html.Html msg
 nickNameView nickName =
     Html.div
         []
-        [ Html.text ("表示名:" ++ nickName) ]
+        [ Html.div [ Html.Attributes.class "profile-title" ] [ Html.text "表示名" ]
+        , Html.div [] [ Html.text nickName ]
+        ]
 
 
 introductionView : String -> Html.Html msg
 introductionView introduction =
     Html.div
         []
-        [ Html.text ("紹介文:" ++ introduction) ]
+        [ Html.div
+            [ Html.Attributes.class "profile-title" ]
+            [ Html.text "紹介文" ]
+        , Html.div [] [ Html.text introduction ]
+        ]
 
 
 universityView : Data.University.University -> List (Html.Html msg)
@@ -129,3 +158,21 @@ universityView university =
                 Nothing ->
                     []
            )
+
+
+editButton : Html.Html msg
+editButton =
+    Html.div
+        []
+        [ editIcon
+        , Html.text "編集する"
+        ]
+
+
+editIcon : Html.Html msg
+editIcon =
+    Svg.svg
+        [ Svg.Attributes.viewBox "0 0 24 24"
+        , Svg.Attributes.class "profile-editIcon"
+        ]
+        [ Svg.path [ Svg.Attributes.d "M3 17.46v3.04c0 .28.22.5.5.5h3.04c.13 0 .26-.05.35-.15L17.81 9.94l-3.75-3.75L3.15 17.1c-.1.1-.15.22-.15.36zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" ] [] ]

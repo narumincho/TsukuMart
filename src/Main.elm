@@ -254,6 +254,24 @@ update msg (Model rec) =
                                             (Page.Exhibition.LogInOrSignUpMsg Page.Component.LogInOrSignUp.LogInSuccess)
                                         |> Tuple.mapBoth PageExhibition (exhibitionPageEmitListToCmd rec.key)
 
+                                PageLikeAndHistory likeAndHistoryModel ->
+                                    likeAndHistoryModel
+                                        |> Page.LikeAndHistory.update rec.logInState
+                                            (Page.LikeAndHistory.LogInOrSignUpMsg Page.Component.LogInOrSignUp.LogInSuccess)
+                                        |> Tuple.mapBoth PageLikeAndHistory likeAndHistoryEmitListToCmd
+
+                                PagePurchaseGoodList purchaseGoodListModel ->
+                                    purchaseGoodListModel
+                                        |> Page.PurchaseGoodList.update
+                                            (Page.PurchaseGoodList.LogInOrSignUpMsg Page.Component.LogInOrSignUp.LogInSuccess)
+                                        |> Tuple.mapBoth PagePurchaseGoodList purchaseGoodListPageEmitListToCmd
+
+                                PageExhibitionGoodList exhibitonGoodListModel ->
+                                    exhibitonGoodListModel
+                                        |> Page.ExhibitionGoodList.update
+                                            (Page.ExhibitionGoodList.LogInOrSignUpMsg Page.Component.LogInOrSignUp.LogInSuccess)
+                                        |> Tuple.mapBoth PageExhibitionGoodList exhibitionGoodListPageEmitListToCmd
+
                                 _ ->
                                     ( rec.page, Cmd.none )
                     in
@@ -1205,14 +1223,7 @@ titleAndTabDataAndMainView logInState isWideScreenMode page =
 
         PageProfile profileModel ->
             profileModel
-                |> Page.Profile.view
-                    (case logInState of
-                        Data.LogInState.LogInStateOk { profile } ->
-                            Just profile
-
-                        Data.LogInState.LogInStateNone ->
-                            Nothing
-                    )
+                |> Page.Profile.view logInState
                 |> mapPageData ProfilePageMsg
 
         PageSiteMapXml ->

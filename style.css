@@ -924,6 +924,14 @@ img {
     width: 100%;
 }
 
+.profile-title {
+    font-size: 1.5rem;
+}
+
+.profile-editIcon {
+    width: 2rem;
+    height: 2rem;
+}
 /*===============================================
            Main View 画面に主に表示する場所
 ===============================================*/

@@ -704,7 +704,7 @@ getUserProfileResponseValueListToResult id nickName introduction departmentMaybe
     case University.universityFromIdString { departmentMaybe = departmentMaybe, graduateMaybe = graduateMaybe } of
         Just university ->
             Ok
-                (User.make
+                (User.makeFromApi
                     { id = User.userIdFromInt id
                     , nickName = nickName
                     , introduction = introduction
