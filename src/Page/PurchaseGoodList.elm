@@ -20,7 +20,7 @@ type Model
 
 type NormalModel
     = Loading
-    | Normal { exhibitionGood : List Data.Good.Good }
+    | Normal { purchaseGoodList : List Data.Good.Good }
     | Error
 
 
@@ -66,7 +66,7 @@ update msg (Model rec) =
             case result of
                 Ok goodList ->
                     ( Model
-                        { rec | normalModel = Normal { exhibitionGood = goodList } }
+                        { rec | normalModel = Normal { purchaseGoodList = goodList } }
                     , []
                     )
 
@@ -107,9 +107,9 @@ update msg (Model rec) =
                                     Loading ->
                                         Loading
 
-                                    Normal { exhibitionGood } ->
+                                    Normal { purchaseGoodList } ->
                                         Normal
-                                            { exhibitionGood = likeGoodList exhibitionGood }
+                                            { purchaseGoodList = likeGoodList purchaseGoodList }
 
                                     Error ->
                                         Error
@@ -135,8 +135,8 @@ view logInState isWideScreenMode (Model rec) =
                     Loading ->
                         []
 
-                    Normal { exhibitionGood } ->
-                        exhibitionGood
+                    Normal { purchaseGoodList } ->
+                        purchaseGoodList
 
                     Error ->
                         []
