@@ -119,21 +119,23 @@ itemLike logInState good =
             ++ (case logInState of
                     Data.LogInState.LogInStateOk { profile, access } ->
                         if good |> Good.isLikedBy (Data.User.getUserId profile) then
-                            [ Html.Events.stopPropagationOn "click"
+                            [ Html.Events.custom "click"
                                 (Json.Decode.succeed
-                                    ( UnLikeGood (Data.User.getUserId profile) access (Good.getId good)
-                                    , True
-                                    )
+                                    { message = UnLikeGood (Data.User.getUserId profile) access (Good.getId good)
+                                    , stopPropagation = True
+                                    , preventDefault = True
+                                    }
                                 )
                             , Html.Attributes.class "goodList-liked"
                             ]
 
                         else
-                            [ Html.Events.stopPropagationOn "click"
+                            [ Html.Events.custom "click"
                                 (Json.Decode.succeed
-                                    ( LikeGood (Data.User.getUserId profile) access (Good.getId good)
-                                    , True
-                                    )
+                                    { message = LikeGood (Data.User.getUserId profile) access (Good.getId good)
+                                    , stopPropagation = True
+                                    , preventDefault = True
+                                    }
                                 )
                             ]
 
