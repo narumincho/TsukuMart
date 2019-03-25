@@ -114,40 +114,48 @@ itemPrice price =
 
 itemLike : Data.LogInState.LogInState -> Good.Good -> Html.Html Msg
 itemLike logInState good =
-    Html.div
-        ([ Html.Attributes.class "goodList-like" ]
-            ++ (case logInState of
-                    Data.LogInState.LogInStateOk { profile, access } ->
-                        if good |> Good.isLikedBy (Data.User.getUserId profile) then
-                            [ Html.Events.custom "click"
-                                (Json.Decode.succeed
-                                    { message = UnLikeGood (Data.User.getUserId profile) access (Good.getId good)
-                                    , stopPropagation = True
-                                    , preventDefault = True
-                                    }
-                                )
-                            , Html.Attributes.class "goodList-liked"
-                            ]
+    case logInState of
+        Data.LogInState.LogInStateOk { profile, access } ->
+            if good |> Good.isLikedBy (Data.User.getUserId profile) then
+                Html.button
+                    [ Html.Events.custom "click"
+                        (Json.Decode.succeed
+                            { message = UnLikeGood (Data.User.getUserId profile) access (Good.getId good)
+                            , stopPropagation = True
+                            , preventDefault = True
+                            }
+                        )
+                    , Html.Attributes.class "goodList-liked"
+                    , Html.Attributes.class "goodList-like"
+                    ]
+                    (itemLikeBody (Good.getLikedCount good))
 
-                        else
-                            [ Html.Events.custom "click"
-                                (Json.Decode.succeed
-                                    { message = LikeGood (Data.User.getUserId profile) access (Good.getId good)
-                                    , stopPropagation = True
-                                    , preventDefault = True
-                                    }
-                                )
-                            ]
+            else
+                Html.button
+                    [ Html.Events.custom "click"
+                        (Json.Decode.succeed
+                            { message = LikeGood (Data.User.getUserId profile) access (Good.getId good)
+                            , stopPropagation = True
+                            , preventDefault = True
+                            }
+                        )
+                    , Html.Attributes.class "goodList-like"
+                    ]
+                    (itemLikeBody (Good.getLikedCount good))
 
-                    Data.LogInState.LogInStateNone ->
-                        []
-               )
-        )
-        [ Html.text "いいね"
-        , Html.span
-            [ Html.Attributes.class "goodList-like-number" ]
-            [ Html.text (String.fromInt (Good.getLikedCount good)) ]
-        ]
+        Data.LogInState.LogInStateNone ->
+            Html.div
+                [ Html.Attributes.class "goodList-like-label" ]
+                (itemLikeBody (Good.getLikedCount good))
+
+
+itemLikeBody : Int -> List (Html.Html msg)
+itemLikeBody count =
+    [ Html.text "いいね"
+    , Html.span
+        [ Html.Attributes.class "goodList-like-number" ]
+        [ Html.text (String.fromInt count) ]
+    ]
 
 
 itemImage : String -> Html.Html msg
