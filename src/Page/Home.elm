@@ -40,6 +40,7 @@ type Msg
     | GetFreeGoodListResponse (Result () (List Good.Good))
     | GoodListMsg GoodList.Msg
     | GoodLikeResponse Data.User.UserId Int (Result () ())
+    | GoodUnlikeResponse Data.User.UserId Int (Result () ())
 
 
 {-| 最初の状態。真ん中のタブ「おすすめ」が選択されている
@@ -145,6 +146,25 @@ update msg (Model rec) =
                             | recent = likeGoodListMaybe rec.recent
                             , recommend = likeGoodListMaybe rec.recommend
                             , free = likeGoodListMaybe rec.free
+                        }
+
+                Err () ->
+                    Model rec
+            , []
+            )
+
+        GoodUnlikeResponse userId id result ->
+            ( case result of
+                Ok () ->
+                    let
+                        unlikeGoodListMaybe =
+                            Maybe.map (Good.listMapIf (\g -> Good.getId g == id) (Good.unlike userId))
+                    in
+                    Model
+                        { rec
+                            | recent = unlikeGoodListMaybe rec.recent
+                            , recommend = unlikeGoodListMaybe rec.recommend
+                            , free = unlikeGoodListMaybe rec.free
                         }
 
                 Err () ->

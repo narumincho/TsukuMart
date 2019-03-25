@@ -1,6 +1,6 @@
 module Data.Good exposing
     ( Condition
-    , Good(..)
+    , Good
     , Status
     , conditionAll
     , conditionFromString
@@ -18,18 +18,21 @@ module Data.Good exposing
     , isLikedBy
     , like
     , listMapIf
+    , make
     , priceToString
     , priceToStringWithoutYen
     , searchGoodsFromId
     , statusAll
     , statusFromIdString
     , statusToIdString
+    , unlike
     )
 
 {-| 商品
 -}
 
 import Data.User as User
+import Set
 
 
 type Good
@@ -44,7 +47,24 @@ type Good
         , image1Url : Maybe String
         , image2Url : Maybe String
         , image3Url : Maybe String
-        , likedByUserList : List User.UserId
+        , likedByUserSet : Set.Set Int
+        }
+
+
+make : { id : Int, name : String, description : String, price : Int, condition : Condition, status : Status, image0Url : String, image1Url : Maybe String, image2Url : Maybe String, image3Url : Maybe String, likedByUserList : List User.UserId } -> Good
+make { id, name, description, price, condition, status, image0Url, image1Url, image2Url, image3Url, likedByUserList } =
+    Good
+        { id = id
+        , name = name
+        , description = description
+        , price = price
+        , condition = condition
+        , status = status
+        , image0Url = image0Url
+        , image1Url = image1Url
+        , image2Url = image2Url
+        , image3Url = image3Url
+        , likedByUserSet = likedByUserList |> List.map User.userIdToInt |> Set.fromList
         }
 
 
@@ -195,15 +215,22 @@ getName (Good { name }) =
 {-| いいねをされた数
 -}
 getLikedCount : Good -> Int
-getLikedCount (Good { likedByUserList }) =
-    List.length likedByUserList
+getLikedCount (Good { likedByUserSet }) =
+    Set.size likedByUserSet
 
 
 {-| いいねをする
 -}
 like : User.UserId -> Good -> Good
 like userId (Good rec) =
-    Good { rec | likedByUserList = rec.likedByUserList ++ [ userId ] }
+    Good { rec | likedByUserSet = rec.likedByUserSet |> Set.insert (User.userIdToInt userId) }
+
+
+{-| いいねを外す
+-}
+unlike : User.UserId -> Good -> Good
+unlike userId (Good rec) =
+    Good { rec | likedByUserSet = rec.likedByUserSet |> Set.remove (User.userIdToInt userId) }
 
 
 {-| 商品の説明
@@ -254,16 +281,18 @@ maybeToList aMaybe =
 {-| いいねをしたユーザーIDを取得する
 -}
 getLikedByUserList : Good -> List User.UserId
-getLikedByUserList (Good { likedByUserList }) =
-    likedByUserList
+getLikedByUserList (Good { likedByUserSet }) =
+    likedByUserSet
+        |> Set.toList
+        |> List.map User.userIdFromInt
 
 
 {-| 指定したユーザーがいいねをしているか取得する
 -}
 isLikedBy : User.UserId -> Good -> Bool
-isLikedBy userId (Good { likedByUserList }) =
-    likedByUserList
-        |> List.member userId
+isLikedBy userId (Good { likedByUserSet }) =
+    likedByUserSet
+        |> Set.member (User.userIdToInt userId)
 
 
 {-| 価格(整数)を3桁ごとに,がついたものにする

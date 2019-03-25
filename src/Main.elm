@@ -119,6 +119,7 @@ type Msg
     | GetPurchaseGoodListResponse (Result () (List Data.Good.Good))
     | GetGoodResponse (Result () Data.Good.Good)
     | LikeGoodResponse Data.User.UserId Int (Result () ())
+    | UnlikeGoodResponse Data.User.UserId Int (Result () ())
     | HomePageMsg Page.Home.Msg
     | LikeAndHistoryPageMsg Page.LikeAndHistory.Msg
     | PurchaseGoodListPageMsg Page.PurchaseGoodList.Msg
@@ -651,45 +652,22 @@ update msg (Model rec) =
                     )
 
         LikeGoodResponse userId id response ->
-            case rec.page of
-                PageHome homeModel ->
-                    let
-                        ( newModel, emitList ) =
-                            homeModel |> Page.Home.update (Page.Home.GoodLikeResponse userId id response)
-                    in
-                    ( Model { rec | page = PageHome newModel }
-                    , homePageEmitListToCmd emitList
-                    )
+            let
+                ( page, cmd ) =
+                    likeGood userId id response rec.logInState rec.page
+            in
+            ( Model { rec | page = page }
+            , cmd
+            )
 
-                PageLikeAndHistory likeAndHistoryModel ->
-                    let
-                        ( newModel, emitList ) =
-                            likeAndHistoryModel |> Page.LikeAndHistory.update rec.logInState (Page.LikeAndHistory.GoodLikeResponse userId id response)
-                    in
-                    ( Model { rec | page = PageLikeAndHistory newModel }
-                    , likeAndHistoryEmitListToCmd emitList
-                    )
-
-                PageExhibitionGoodList exhibitoonGoodListModel ->
-                    let
-                        ( newModel, emitList ) =
-                            exhibitoonGoodListModel |> Page.ExhibitionGoodList.update (Page.ExhibitionGoodList.GoodLikeResponse userId id response)
-                    in
-                    ( Model { rec | page = PageExhibitionGoodList newModel }
-                    , exhibitionGoodListPageEmitListToCmd emitList
-                    )
-
-                PagePurchaseGoodList purchaseGoodListModel ->
-                    let
-                        ( newModel, emitList ) =
-                            purchaseGoodListModel |> Page.PurchaseGoodList.update (Page.PurchaseGoodList.GoodLikeResponse userId id response)
-                    in
-                    ( Model { rec | page = PagePurchaseGoodList newModel }
-                    , purchaseGoodListPageEmitListToCmd emitList
-                    )
-
-                _ ->
-                    ( Model rec, Cmd.none )
+        UnlikeGoodResponse userId id response ->
+            let
+                ( page, cmd ) =
+                    unlikeGood userId id response rec.logInState rec.page
+            in
+            ( Model { rec | page = page }
+            , cmd
+            )
 
         HomePageMsg homePageMsg ->
             case rec.page of
@@ -931,6 +909,9 @@ goodsListEmitToMsg emit =
         Page.Component.GoodList.EmitLikeGood userId token id ->
             Api.likeGoods token id (LikeGoodResponse userId id)
 
+        Page.Component.GoodList.EmitUnlikeGood userId token id ->
+            Api.unlikeGoods token id (UnlikeGoodResponse userId id)
+
         Page.Component.GoodList.EmitScrollIntoView idString ->
             elementScrollIntoView idString
 
@@ -1100,6 +1081,104 @@ getGoodId page =
 
         _ ->
             Nothing
+
+
+{-| 各ページにいいねを押した結果を反映するように通知する
+-}
+likeGood : Data.User.UserId -> Int -> Result () () -> Data.LogInState.LogInState -> Page -> ( Page, Cmd Msg )
+likeGood userId goodId result logInState page =
+    case page of
+        PageHome homeModel ->
+            let
+                ( newModel, emitList ) =
+                    homeModel |> Page.Home.update (Page.Home.GoodLikeResponse userId goodId result)
+            in
+            ( PageHome newModel
+            , homePageEmitListToCmd emitList
+            )
+
+        PageLikeAndHistory likeAndHistoryModel ->
+            let
+                ( newModel, emitList ) =
+                    likeAndHistoryModel
+                        |> Page.LikeAndHistory.update logInState
+                            (Page.LikeAndHistory.GoodLikeResponse userId goodId result)
+            in
+            ( PageLikeAndHistory newModel
+            , likeAndHistoryEmitListToCmd emitList
+            )
+
+        PageExhibitionGoodList exhibitionGoodListModel ->
+            let
+                ( newModel, emitList ) =
+                    exhibitionGoodListModel |> Page.ExhibitionGoodList.update (Page.ExhibitionGoodList.GoodLikeResponse userId goodId result)
+            in
+            ( PageExhibitionGoodList newModel
+            , exhibitionGoodListPageEmitListToCmd emitList
+            )
+
+        PagePurchaseGoodList purchaseGoodListModel ->
+            let
+                ( newModel, emitList ) =
+                    purchaseGoodListModel |> Page.PurchaseGoodList.update (Page.PurchaseGoodList.GoodLikeResponse userId goodId result)
+            in
+            ( PagePurchaseGoodList newModel
+            , purchaseGoodListPageEmitListToCmd emitList
+            )
+
+        _ ->
+            ( page
+            , Cmd.none
+            )
+
+
+{-| 各ページにいいねを外した結果を反映するように通知する
+-}
+unlikeGood : Data.User.UserId -> Int -> Result () () -> Data.LogInState.LogInState -> Page -> ( Page, Cmd Msg )
+unlikeGood userId goodId result logInState page =
+    case page of
+        PageHome homeModel ->
+            let
+                ( newModel, emitList ) =
+                    homeModel |> Page.Home.update (Page.Home.GoodUnlikeResponse userId goodId result)
+            in
+            ( PageHome newModel
+            , homePageEmitListToCmd emitList
+            )
+
+        PageLikeAndHistory likeAndHistoryModel ->
+            let
+                ( newModel, emitList ) =
+                    likeAndHistoryModel
+                        |> Page.LikeAndHistory.update logInState
+                            (Page.LikeAndHistory.GoodUnlikeResponse userId goodId result)
+            in
+            ( PageLikeAndHistory newModel
+            , likeAndHistoryEmitListToCmd emitList
+            )
+
+        PageExhibitionGoodList exhibitionGoodListModel ->
+            let
+                ( newModel, emitList ) =
+                    exhibitionGoodListModel |> Page.ExhibitionGoodList.update (Page.ExhibitionGoodList.GoodUnlikeResponse userId goodId result)
+            in
+            ( PageExhibitionGoodList newModel
+            , exhibitionGoodListPageEmitListToCmd emitList
+            )
+
+        PagePurchaseGoodList purchaseGoodListModel ->
+            let
+                ( newModel, emitList ) =
+                    purchaseGoodListModel |> Page.PurchaseGoodList.update (Page.PurchaseGoodList.GoodUnlikeResponse userId goodId result)
+            in
+            ( PagePurchaseGoodList newModel
+            , purchaseGoodListPageEmitListToCmd emitList
+            )
+
+        _ ->
+            ( page
+            , Cmd.none
+            )
 
 
 

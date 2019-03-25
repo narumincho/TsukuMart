@@ -29,6 +29,7 @@ module Api exposing
     , sellGoods
     , signUp
     , signUpConfirm
+    , unlikeGoods
     )
 
 import Data.EmailAddress as EmailAddress
@@ -824,7 +825,7 @@ goodsDecoder : Json.Decode.Decoder Good.Good
 goodsDecoder =
     Json.Decode.succeed
         (\id name description price condition status image0Url image1Url image2Url image3Url likedByUserList ->
-            Good.Good
+            Good.make
                 { id = id
                 , name = name
                 , description = description
@@ -913,6 +914,36 @@ likeGoods token goodsId msg =
 
 likeGoodsResponseToResult : Http.Response String -> Result () ()
 likeGoodsResponseToResult response =
+    case response of
+        Http.GoodStatus_ _ _ ->
+            Ok ()
+
+        _ ->
+            Err ()
+
+
+
+{- ==============================================================================
+      商品のいいねをはずす    /{version}/goods/{goods_id}/unlike
+   ==============================================================================
+-}
+
+
+unlikeGoods : Token -> Int -> (Result () () -> msg) -> Cmd msg
+unlikeGoods token goodsId msg =
+    Http.request
+        { method = "DELETE"
+        , headers = [ tokenToHeader token ]
+        , url = urlBuilder [ "v1", "goods", String.fromInt goodsId, "unlike" ]
+        , body = Http.emptyBody
+        , expect = Http.expectStringResponse msg likeGoodsResponseToResult
+        , timeout = Nothing
+        , tracker = Nothing
+        }
+
+
+unlikeGoodsResponseToResult : Http.Response String -> Result () ()
+unlikeGoodsResponseToResult response =
     case response of
         Http.GoodStatus_ _ _ ->
             Ok ()

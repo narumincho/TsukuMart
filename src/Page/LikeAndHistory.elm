@@ -87,6 +87,7 @@ type Msg
     | LogInOrSignUpMsg LogInOrSignUp.Msg
     | GoodListMsg GoodList.Msg
     | GoodLikeResponse Data.User.UserId Int (Result () ())
+    | GoodUnlikeResponse Data.User.UserId Int (Result () ())
 
 
 type Emit
@@ -194,6 +195,26 @@ update logInState msg (Model rec) =
                                 rec.normalModel
                                     |> normalModelMapLikeGoodResponse likeGoodListResult
                                     |> normalModelMapHistoryGoodResponse likeGoodListResult
+                        }
+
+                Err () ->
+                    Model rec
+            , []
+            )
+
+        GoodUnlikeResponse userId id result ->
+            ( case result of
+                Ok () ->
+                    let
+                        unlikeGoodListResult =
+                            Result.map (Good.listMapIf (\g -> Good.getId g == id) (Good.unlike userId))
+                    in
+                    Model
+                        { rec
+                            | normalModel =
+                                rec.normalModel
+                                    |> normalModelMapLikeGoodResponse unlikeGoodListResult
+                                    |> normalModelMapHistoryGoodResponse unlikeGoodListResult
                         }
 
                 Err () ->

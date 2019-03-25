@@ -20,10 +20,12 @@ type Model
 
 type Msg
     = LikeGood Data.User.UserId Api.Token Int
+    | UnLikeGood Data.User.UserId Api.Token Int
 
 
 type Emit
     = EmitLikeGood Data.User.UserId Api.Token Int
+    | EmitUnlikeGood Data.User.UserId Api.Token Int
     | EmitScrollIntoView String
 
 
@@ -45,6 +47,11 @@ update msg _ =
         LikeGood userId token goodId ->
             ( Model
             , [ EmitLikeGood userId token goodId ]
+            )
+
+        UnLikeGood userId token goodId ->
+            ( Model
+            , [ EmitUnlikeGood userId token goodId ]
             )
 
 
@@ -111,19 +118,24 @@ itemLike logInState good =
         ([ Html.Attributes.class "goodList-like" ]
             ++ (case logInState of
                     Data.LogInState.LogInStateOk { profile, access } ->
-                        [ Html.Events.stopPropagationOn "click"
-                            (Json.Decode.succeed
-                                ( LikeGood (Data.User.getUserId profile) access (Good.getId good)
-                                , True
+                        if good |> Good.isLikedBy (Data.User.getUserId profile) then
+                            [ Html.Events.stopPropagationOn "click"
+                                (Json.Decode.succeed
+                                    ( UnLikeGood (Data.User.getUserId profile) access (Good.getId good)
+                                    , True
+                                    )
                                 )
-                            )
-                        ]
-                            ++ (if good |> Good.isLikedBy (Data.User.getUserId profile) then
-                                    [ Html.Attributes.class "goodList-liked" ]
+                            , Html.Attributes.class "goodList-liked"
+                            ]
 
-                                else
-                                    []
-                               )
+                        else
+                            [ Html.Events.stopPropagationOn "click"
+                                (Json.Decode.succeed
+                                    ( LikeGood (Data.User.getUserId profile) access (Good.getId good)
+                                    , True
+                                    )
+                                )
+                            ]
 
                     Data.LogInState.LogInStateNone ->
                         []

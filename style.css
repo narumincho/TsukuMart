@@ -833,11 +833,6 @@ header {
 .profile-editIcon {
     width: 2rem;
     height: 2rem;
-    fill: white;
-}
-
-.profile-editIcon:hover {
-    fill: black;
 }
 
 /*===============================================
@@ -965,6 +960,7 @@ header {
 .mainButton {
     background-color: var(--primaryColor);
     color: #ddd;
+    fill: #ddd;
     padding: 1rem;
     width: 100%;
     font-size: 1.5rem;
@@ -980,9 +976,11 @@ header {
 .mainButton:hover {
     background-color: var(--primaryColorLight);
     color: #111;
+    fill: #111;
 }
 
 .mainButton:disabled {
     background-color: #aaa;
     color: #ddd;
+    fill: #ddd;
 }

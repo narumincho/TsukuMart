@@ -35,6 +35,7 @@ type Msg
     | LogInOrSignUpMsg LogInOrSignUp.Msg
     | GoodListMsg GoodList.Msg
     | GoodLikeResponse Data.User.UserId Int (Result () ())
+    | GoodUnlikeResponse Data.User.UserId Int (Result () ())
 
 
 initModel : Maybe Int -> LogInState.LogInState -> ( Model, List Emit )
@@ -110,6 +111,33 @@ update msg (Model rec) =
                                     Normal { purchaseGoodList } ->
                                         Normal
                                             { purchaseGoodList = likeGoodList purchaseGoodList }
+
+                                    Error ->
+                                        Error
+                        }
+
+                Err () ->
+                    Model rec
+            , []
+            )
+
+        GoodUnlikeResponse userId id result ->
+            ( case result of
+                Ok () ->
+                    let
+                        unlikeGoodList =
+                            Data.Good.listMapIf (\g -> Data.Good.getId g == id) (Data.Good.unlike userId)
+                    in
+                    Model
+                        { rec
+                            | normalModel =
+                                case rec.normalModel of
+                                    Loading ->
+                                        Loading
+
+                                    Normal { purchaseGoodList } ->
+                                        Normal
+                                            { purchaseGoodList = unlikeGoodList purchaseGoodList }
 
                                     Error ->
                                         Error
