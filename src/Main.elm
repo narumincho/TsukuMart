@@ -643,6 +643,15 @@ update msg (Model rec) =
                     , homePageEmitListToCmd emitList
                     )
 
+                PageLikeAndHistory likeAndHistoryModel ->
+                    let
+                        ( newModel, emitList ) =
+                            likeAndHistoryModel |> Page.LikeAndHistory.update rec.logInState (Page.LikeAndHistory.GoodLikeResponse userId id response)
+                    in
+                    ( Model { rec | page = PageLikeAndHistory newModel }
+                    , likeAndHistoryEmitListToCmd emitList
+                    )
+
                 _ ->
                     ( Model rec, Cmd.none )
 
@@ -752,6 +761,9 @@ likeAndHistoryEmitListToCmd =
 
                 Page.LikeAndHistory.EmitLogInOrSignUp e ->
                     logInOrSignUpEmitToCmd e
+
+                Page.LikeAndHistory.EmitGoodList e ->
+                    goodsListEmitToMsg e
         )
         >> Cmd.batch
 
@@ -965,7 +977,7 @@ urlParser (Model rec) =
                 )
         , SiteMap.likeHistoryParser
             |> Url.Parser.map
-                (Page.LikeAndHistory.initModel rec.logInState
+                (Page.LikeAndHistory.initModel (getGoodId rec.page) rec.logInState
                     |> Tuple.mapBoth
                         (\m -> Just (PageLikeAndHistory m))
                         likeAndHistoryEmitListToCmd
@@ -1035,6 +1047,9 @@ urlParser (Model rec) =
         ]
 
 
+{-| 指定したページにあるメインの商品ID
+GoodListの表示になったときにその商品のところへスクロールできるように
+-}
 getGoodId : Page -> Maybe Int
 getGoodId page =
     case page of

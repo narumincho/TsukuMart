@@ -55,7 +55,10 @@
         /* 指定されたidの要素が表示されるようにスクロールさせる */
         app.ports.elementScrollIntoView.subscribe(id => {
             requestAnimationFrame(() => {
-                document.getElementById(id).scrollIntoView({ behavior: "smooth", block: "center" });
+                const element = document.getElementById(id);
+                if (element !== null) {
+                    element.scrollIntoView({ behavior: "smooth", block: "center" });
+                }
             })
         });
 

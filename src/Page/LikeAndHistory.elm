@@ -3,15 +3,19 @@ module Page.LikeAndHistory exposing (Emit(..), Model(..), Msg(..), initModel, up
 import Api
 import Data.Good as Good
 import Data.LogInState as LogInState
+import Data.User
 import Html
+import Page.Component.GoodList as GoodList
 import Page.Component.LogInOrSignUp as LogInOrSignUp
 import Tab
+import Utility
 
 
 type Model
     = Model
         { normalModel : NormalModel
         , logInOrSignUpModel : LogInOrSignUp.Model
+        , goodListModel : GoodList.Model
         }
 
 
@@ -23,15 +27,25 @@ type NormalModel
         }
 
 
+normalModelGetSelectTab : NormalModel -> TabSelect
+normalModelGetSelectTab (NormalModel { tabSelect }) =
+    tabSelect
+
+
 normalModelSetSelectTab : TabSelect -> NormalModel -> NormalModel
 normalModelSetSelectTab tab (NormalModel rec) =
     NormalModel
         { rec | tabSelect = tab }
 
 
-normalModelGetSelectTab : NormalModel -> TabSelect
-normalModelGetSelectTab (NormalModel { tabSelect }) =
-    tabSelect
+normalModelMapSelectTab : (TabSelect -> TabSelect) -> NormalModel -> NormalModel
+normalModelMapSelectTab =
+    Utility.toMapper normalModelGetSelectTab normalModelSetSelectTab
+
+
+normalModelGetLikeGoodResponse : NormalModel -> Maybe (Result () (List Good.Good))
+normalModelGetLikeGoodResponse (NormalModel { like }) =
+    like
 
 
 normalModelSetLikeGoodResponse : Result () (List Good.Good) -> NormalModel -> NormalModel
@@ -40,10 +54,25 @@ normalModelSetLikeGoodResponse goodList (NormalModel rec) =
         { rec | like = Just goodList }
 
 
+normalModelMapLikeGoodResponse : (Result () (List Good.Good) -> Result () (List Good.Good)) -> NormalModel -> NormalModel
+normalModelMapLikeGoodResponse =
+    Utility.toMapperGetterMaybe normalModelGetLikeGoodResponse normalModelSetLikeGoodResponse
+
+
+normalModelGetHistoryGoodResponse : NormalModel -> Maybe (Result () (List Good.Good))
+normalModelGetHistoryGoodResponse (NormalModel { history }) =
+    history
+
+
 normalModelSetHistoryGoodResponse : Result () (List Good.Good) -> NormalModel -> NormalModel
 normalModelSetHistoryGoodResponse historyGoodList (NormalModel rec) =
     NormalModel
         { rec | history = Just historyGoodList }
+
+
+normalModelMapHistoryGoodResponse : (Result () (List Good.Good) -> Result () (List Good.Good)) -> NormalModel -> NormalModel
+normalModelMapHistoryGoodResponse =
+    Utility.toMapperGetterMaybe normalModelGetHistoryGoodResponse normalModelSetHistoryGoodResponse
 
 
 type TabSelect
@@ -56,18 +85,25 @@ type Msg
     | LikeGoodListResponse (Result () (List Good.Good))
     | HistoryGoodListResponse (Result () (List Good.Good))
     | LogInOrSignUpMsg LogInOrSignUp.Msg
+    | GoodListMsg GoodList.Msg
+    | GoodLikeResponse Data.User.UserId Int (Result () ())
 
 
 type Emit
     = EmitGetLikeGoodList Api.Token
     | EmitGetHistoryGoodList Api.Token
     | EmitLogInOrSignUp LogInOrSignUp.Emit
+    | EmitGoodList GoodList.Emit
 
 
 {-| 初期状態 いいねが選ばれている
 -}
-initModel : LogInState.LogInState -> ( Model, List Emit )
-initModel logInState =
+initModel : Maybe Int -> LogInState.LogInState -> ( Model, List Emit )
+initModel goodIdMaybe logInState =
+    let
+        ( newGoodListModel, emitList ) =
+            GoodList.initModel goodIdMaybe
+    in
     ( Model
         { normalModel =
             NormalModel
@@ -76,8 +112,9 @@ initModel logInState =
                 , history = Nothing
                 }
         , logInOrSignUpModel = LogInOrSignUp.initModel
+        , goodListModel = newGoodListModel
         }
-    , case logInState of
+    , (case logInState of
         LogInState.LogInStateOk { access } ->
             [ EmitGetLikeGoodList access
             , EmitGetHistoryGoodList access
@@ -85,6 +122,8 @@ initModel logInState =
 
         LogInState.LogInStateNone ->
             []
+      )
+        ++ (emitList |> List.map EmitGoodList)
     )
 
 
@@ -133,6 +172,35 @@ update logInState msg (Model rec) =
             , emitList |> List.map EmitLogInOrSignUp
             )
 
+        GoodListMsg goodListMsg ->
+            let
+                ( newModel, emitList ) =
+                    rec.goodListModel |> GoodList.update goodListMsg
+            in
+            ( Model { rec | goodListModel = newModel }
+            , emitList |> List.map EmitGoodList
+            )
+
+        GoodLikeResponse userId id result ->
+            ( case result of
+                Ok () ->
+                    let
+                        likeGoodListMaybe =
+                            Result.map (Good.listMapIf (\g -> Good.getId g == id) (Good.like userId))
+                    in
+                    Model
+                        { rec
+                            | normalModel =
+                                rec.normalModel
+                                    |> normalModelMapLikeGoodResponse likeGoodListMaybe
+                                    |> normalModelMapHistoryGoodResponse likeGoodListMaybe
+                        }
+
+                Err () ->
+                    Model rec
+            , []
+            )
+
 
 view : LogInState.LogInState -> Bool -> Model -> ( String, Tab.Tab Msg, List (Html.Html Msg) )
 view logInState isWideScreenMode (Model rec) =
@@ -148,5 +216,31 @@ view logInState isWideScreenMode (Model rec) =
                 TabHistory ->
                     1
         }
-    , [ Html.text "まってな" ]
+    , case logInState of
+        LogInState.LogInStateOk _ ->
+            [ GoodList.view
+                rec.goodListModel
+                logInState
+                isWideScreenMode
+                (case normalModelGetSelectTab rec.normalModel of
+                    TabLike ->
+                        rec.normalModel
+                            |> normalModelGetLikeGoodResponse
+                            |> Maybe.map (Result.withDefault [])
+                            |> Maybe.withDefault []
+
+                    TabHistory ->
+                        rec.normalModel
+                            |> normalModelGetHistoryGoodResponse
+                            |> Maybe.map (Result.withDefault [])
+                            |> Maybe.withDefault []
+                )
+                |> Html.map GoodListMsg
+            ]
+
+        LogInState.LogInStateNone ->
+            [ LogInOrSignUp.view
+                rec.logInOrSignUpModel
+                |> Html.map LogInOrSignUpMsg
+            ]
     )
