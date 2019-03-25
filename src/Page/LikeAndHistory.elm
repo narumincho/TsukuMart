@@ -185,15 +185,15 @@ update logInState msg (Model rec) =
             ( case result of
                 Ok () ->
                     let
-                        likeGoodListMaybe =
+                        likeGoodListResult =
                             Result.map (Good.listMapIf (\g -> Good.getId g == id) (Good.like userId))
                     in
                     Model
                         { rec
                             | normalModel =
                                 rec.normalModel
-                                    |> normalModelMapLikeGoodResponse likeGoodListMaybe
-                                    |> normalModelMapHistoryGoodResponse likeGoodListMaybe
+                                    |> normalModelMapLikeGoodResponse likeGoodListResult
+                                    |> normalModelMapHistoryGoodResponse likeGoodListResult
                         }
 
                 Err () ->
@@ -239,7 +239,8 @@ view logInState isWideScreenMode (Model rec) =
             ]
 
         LogInState.LogInStateNone ->
-            [ LogInOrSignUp.view
+            [ Html.text "ログインか新規登録をして、いいねと閲覧履歴を使えるようにしよう!"
+            , LogInOrSignUp.view
                 rec.logInOrSignUpModel
                 |> Html.map LogInOrSignUpMsg
             ]

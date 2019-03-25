@@ -652,6 +652,15 @@ update msg (Model rec) =
                     , likeAndHistoryEmitListToCmd emitList
                     )
 
+                PagePurchaseGoodList purchaseGoodListModel ->
+                    let
+                        ( newModel, emitList ) =
+                            purchaseGoodListModel |> Page.PurchaseGoodList.update (Page.PurchaseGoodList.GoodLikeResponse userId id response)
+                    in
+                    ( Model { rec | page = PagePurchaseGoodList newModel }
+                    , purchaseGoodListPageEmitListToCmd emitList
+                    )
+
                 _ ->
                     ( Model rec, Cmd.none )
 
@@ -792,6 +801,9 @@ purchaseGoodListPageEmitListToCmd =
 
                 Page.PurchaseGoodList.EmitLogInOrSignUp e ->
                     logInOrSignUpEmitToCmd e
+
+                Page.PurchaseGoodList.EmitGoodList e ->
+                    goodsListEmitToMsg e
         )
         >> Cmd.batch
 
@@ -991,7 +1003,7 @@ urlParser (Model rec) =
                 )
         , SiteMap.purchaseGoodsParser
             |> Url.Parser.map
-                (Page.PurchaseGoodList.initModel rec.logInState
+                (Page.PurchaseGoodList.initModel (getGoodId rec.page) rec.logInState
                     |> Tuple.mapBoth
                         (\m -> Just (PagePurchaseGoodList m))
                         purchaseGoodListPageEmitListToCmd
