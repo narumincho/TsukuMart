@@ -868,6 +868,12 @@ goodsPageEmitListToCmd =
             case emit of
                 Page.Good.EmitGetGoods { goodId } ->
                     Api.getGood goodId GetGoodResponse
+
+                Page.Good.EmitLikeGood userId token id ->
+                    Api.likeGoods token id (LikeGoodResponse userId id)
+
+                Page.Good.EmitUnLikeGood userId token id ->
+                    Api.unlikeGoods token id (UnlikeGoodResponse userId id)
         )
         >> Cmd.batch
 
@@ -1106,6 +1112,15 @@ likeGood userId goodId result logInState page =
             , purchaseGoodListPageEmitListToCmd emitList
             )
 
+        PageGoods goodModel ->
+            let
+                ( newModel, emitList ) =
+                    goodModel |> Page.Good.update (Page.Good.LikeGoodResponse userId result)
+            in
+            ( PageGoods newModel
+            , goodsPageEmitListToCmd emitList
+            )
+
         _ ->
             ( page
             , Cmd.none
@@ -1153,6 +1168,15 @@ unlikeGood userId goodId result logInState page =
             in
             ( PagePurchaseGoodList newModel
             , purchaseGoodListPageEmitListToCmd emitList
+            )
+
+        PageGoods goodModel ->
+            let
+                ( newModel, emitList ) =
+                    goodModel |> Page.Good.update (Page.Good.UnlikeGoodResponse userId result)
+            in
+            ( PageGoods newModel
+            , goodsPageEmitListToCmd emitList
             )
 
         _ ->
@@ -1277,7 +1301,7 @@ titleAndTabDataAndMainView logInState isWideScreenMode page =
 
         PageGoods goodModel ->
             goodModel
-                |> Page.Good.view isWideScreenMode
+                |> Page.Good.view logInState isWideScreenMode
                 |> mapPageData GoodsPageMsg
 
         PageProfile profileModel ->

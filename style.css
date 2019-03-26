@@ -511,9 +511,10 @@ header {
 }
 
 /*===============================================
-                Goods 商品詳細画面
+                Good 商品詳細画面
 ===============================================*/
-.goods {
+
+.good {
     display: grid;
     max-width: 40rem;
     gap: 1rem;
@@ -522,18 +523,18 @@ header {
     width: 100%;
 }
 
-.goods-imageListContainer {
+.good-imageListContainer {
     background-color: gray;
     overflow-x: auto;
     position: relative;
 }
 
-.goods-imageList {
+.good-imageList {
     display: flex;
     flex-direction: row;
 }
 
-.goods-image {
+.good-image {
     position: relative;
     width: 20rem;
     height: 20rem;
@@ -541,28 +542,58 @@ header {
     object-fit: contain;
 }
 
-.goods-name {
+.good-name {
     font-size: 1.5rem;
 }
 
-.goods-like {
-    border: solid #000 2px;
-    border-radius: 1rem;
-    justify-self: left;
-    padding: .5rem 1rem;
-    user-select: none;
+.good-like-container {
+    display: flex;
+    flex-direction: row;
 }
 
-.goods-label {
+.good-like-label {
+    border-radius: .4rem;
+    user-select: none;
+    padding: .5rem;
+    border: solid 1px #aaa;
+}
+
+.good-like {
+    background-color: #aaa;
+    border-radius: .4rem;
+    user-select: none;
+    cursor: pointer;
+    padding: .5rem;
+    border: none;
+}
+
+.good-like-number {
+    font-size: 1.3rem;
+}
+
+.good-like:hover {
+    background-color: #888;
+}
+
+.good-liked {
+    background-color: var(--primaryColor);
+    color: white;
+}
+
+.good-liked:hover {
+    background-color: var(--primaryColorLight);
+}
+
+.good-label {
     background-color: #ddd;
     padding: .2rem .5rem;
 }
 
-.goods-condition {
+.good-condition {
     font-size: 1.5rem;
 }
 
-.goods-priceAndBuyButton {
+.good-priceAndBuyButton {
     position: fixed;
     display: flex;
     width: 100%;
@@ -574,11 +605,11 @@ header {
     color: white;
 }
 
-.goods-priceAndBuyButton-wide {
+.good-priceAndBuyButton-wide {
     width: calc(100% - 20rem);
 }
 
-.goods-price {
+.good-price {
     font-size: 1.5rem;
 }
 
@@ -852,7 +883,6 @@ header {
 .goodList-like-label {
     border-radius: .4rem;
     user-select: none;
-    cursor: pointer;
     padding: .5rem;
     border: solid 1px #aaa;
 }
@@ -942,6 +972,7 @@ header {
     justify-content: center;
     width: 100%;
 }
+
 /*===============================================
            Main Button 押したくなるようなボタン
 ===============================================*/
