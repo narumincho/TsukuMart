@@ -12,7 +12,6 @@ module Api exposing
     , SignUpResponseError(..)
     , SignUpResponseOk(..)
     , Token
-    , debugDeleteAllUser
     , getExhibitionGoodList
     , getFreeGoods
     , getGood
@@ -936,7 +935,7 @@ unlikeGoods token goodsId msg =
         , headers = [ tokenToHeader token ]
         , url = urlBuilder [ "v1", "goods", String.fromInt goodsId, "unlike" ]
         , body = Http.emptyBody
-        , expect = Http.expectStringResponse msg likeGoodsResponseToResult
+        , expect = Http.expectStringResponse msg unlikeGoodsResponseToResult
         , timeout = Nothing
         , tracker = Nothing
         }
@@ -950,37 +949,3 @@ unlikeGoodsResponseToResult response =
 
         _ ->
             Err ()
-
-
-
-{- ==============================================================
-      デバック用 すべてのユーザーを削除 /{version}/debug/user/delete/
-   ==============================================================
--}
-
-
-debugDeleteAllUser : (Result () () -> msg) -> Cmd msg
-debugDeleteAllUser msg =
-    Http.get
-        { url = Url.Builder.crossOrigin apiOrigin [ "v1", "debug", "user", "delete" ] [ Url.Builder.string "all" "true" ]
-        , expect = Http.expectStringResponse msg debugDeleteAllUserResponseToResult
-        }
-
-
-debugDeleteAllUserResponseToResult : Http.Response String -> Result () ()
-debugDeleteAllUserResponseToResult response =
-    case response of
-        Http.BadUrl_ _ ->
-            Err ()
-
-        Http.Timeout_ ->
-            Err ()
-
-        Http.NetworkError_ ->
-            Err ()
-
-        Http.BadStatus_ _ _ ->
-            Ok ()
-
-        Http.GoodStatus_ _ _ ->
-            Ok ()

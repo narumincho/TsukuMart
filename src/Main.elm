@@ -107,7 +107,6 @@ type Msg
     | LogInResponse (Result Api.LogInResponseError Api.LogInResponseOk)
     | ReceiveImageDataUrl String
     | ReceiveImageFileAndBlobUrl Json.Decode.Value
-    | DeleteAllUserResponse (Result () ())
     | GetUserProfileResponse { access : Api.Token, refresh : Api.Token } (Result () Data.User.User)
     | SellGoodResponse (Result Api.SellGoodsResponseError ())
     | GetRecentGoodListResponse (Result () (List Data.Good.Good))
@@ -394,22 +393,6 @@ update msg (Model rec) =
                     in
                     ( Model { rec | page = PageLogIn newModel }
                     , logInPageEmitListToCmd rec.key emitList
-                    )
-
-                _ ->
-                    ( Model rec
-                    , Cmd.none
-                    )
-
-        DeleteAllUserResponse response ->
-            case rec.page of
-                PageSignUp signUpModel ->
-                    let
-                        ( newModel, emitList ) =
-                            Page.SignUp.update (Page.SignUp.DeleteUserAllResponse response) signUpModel
-                    in
-                    ( Model { rec | page = PageSignUp newModel }
-                    , signUpPageEmitListToCmd emitList
                     )
 
                 _ ->
@@ -863,9 +846,6 @@ signUpPageEmitListToCmd =
 
                 Page.SignUp.EmitSendConfirmToken token ->
                     Api.signUpConfirm { confirmToken = token } SignUpConfirmResponse
-
-                Page.SignUp.EmitDeleteUserAll ->
-                    Api.debugDeleteAllUser DeleteAllUserResponse
         )
         >> Cmd.batch
 

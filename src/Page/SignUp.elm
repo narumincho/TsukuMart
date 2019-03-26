@@ -35,7 +35,6 @@ type Model
         }
     | SentSingUpData Data.EmailAddress.EmailAddress (Maybe (Result Api.SignUpResponseError Api.SignUpResponseOk))
     | SentConfirmTokenError (Maybe Api.SignUpConfirmResponseError)
-    | DeletedAllUser Bool
 
 
 type UniversitySelect
@@ -71,7 +70,6 @@ type Emit
     = EmitCatchStudentImage String
     | EmitSignUp Api.SignUpRequest
     | EmitSendConfirmToken String
-    | EmitDeleteUserAll
 
 
 type Msg
@@ -82,8 +80,6 @@ type Msg
     | InputUniversity UniversitySelect
     | InputPassword String
     | InputNickName String
-    | DeleteUserAll
-    | DeleteUserAllResponse (Result () ())
     | SignUp Api.SignUpRequest
     | SignUpResponse (Result Api.SignUpResponseError Api.SignUpResponseOk)
     | SendConfirmToken Api.Token
@@ -191,23 +187,6 @@ update msg model =
             , []
             )
 
-        DeleteUserAll ->
-            ( model
-            , [ EmitDeleteUserAll ]
-            )
-
-        DeleteUserAllResponse response ->
-            ( DeletedAllUser
-                (case response of
-                    Ok () ->
-                        True
-
-                    Err () ->
-                        False
-                )
-            , []
-            )
-
         SignUp signUpRequest ->
             ( SentSingUpData signUpRequest.emailAddress Nothing
             , [ EmitSignUp signUpRequest ]
@@ -279,19 +258,6 @@ view userSignUpPage =
 
                 SentConfirmTokenError signUpConfirmResponseErrorMaybe ->
                     ( "認証トークンの送信", sentConfirmTokenView signUpConfirmResponseErrorMaybe )
-
-                DeletedAllUser result ->
-                    ( "すべてのユーザーの削除"
-                    , Html.text
-                        ("すべてのユーザーの削除処理を"
-                            ++ (if result then
-                                    "成功した"
-
-                                else
-                                    "失敗した"
-                               )
-                        )
-                    )
     in
     ( "新規登録"
     , Tab.single tabText
@@ -323,14 +289,6 @@ normalView sAddressAndPassword university nickName =
                     |> List.map (Tuple.mapSecond (Html.map InputUniversity))
                )
             ++ [ ( "submit", signUpSubmitButton (getSignUpRequest sAddressAndPassword university nickName) ) ]
-            ++ [ ( "deleteAllUser"
-                 , Html.button
-                    [ Html.Events.preventDefaultOn "click"
-                        (Json.Decode.succeed ( DeleteUserAll, True ))
-                    ]
-                    [ Html.text "すべてのユーザーを削除" ]
-                 )
-               ]
         )
 
 
