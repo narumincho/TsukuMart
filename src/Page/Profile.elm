@@ -93,7 +93,7 @@ view logInState (Model { logInOrSignUpModel }) =
     , case logInState of
         LogInState.LogInStateOk { access, profile } ->
             [ Html.div
-                [ Html.Attributes.class "profile-container" ]
+                [ Html.Attributes.class "container" ]
                 [ Html.div
                     [ Html.Attributes.class "profile" ]
                     ([ nickNameView (User.getNickName profile)

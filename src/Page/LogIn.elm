@@ -58,7 +58,7 @@ view (Model logInOrSignUpModel) =
     ( "ログイン"
     , Tab.single "ログイン"
     , [ Html.div
-            [ Html.Attributes.class "logIn-Container" ]
+            [ Html.Attributes.class "container" ]
             [ LogInOrSignUp.view logInOrSignUpModel
                 |> Html.map Msg
             ]

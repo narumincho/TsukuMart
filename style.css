@@ -360,12 +360,6 @@ header {
         Exhibition 出品画面
 ===============================*/
 
-.exhibition-container {
-    display: flex;
-    justify-content: center;
-    width: 100%;
-}
-
 .exhibition {
     display: grid;
     max-width: 40rem;
@@ -519,13 +513,6 @@ header {
 /*===============================================
                 Goods 商品詳細画面
 ===============================================*/
-
-.goods-container {
-    display: flex;
-    justify-content: center;
-    width: 100%;
-}
-
 .goods {
     display: grid;
     max-width: 40rem;
@@ -709,12 +696,6 @@ header {
                 Sign Up 新規登録画面
 ===============================================*/
 
-.signUpContainer {
-    display: flex;
-    justify-content: center;
-    max-width: 100%;
-}
-
 .signUp {
     display: grid;
     max-width: 40rem;
@@ -810,12 +791,6 @@ header {
 /*===============================================
             Profile ユーザーページ画面
 ===============================================*/
-
-.profile-container {
-    display: flex;
-    justify-content: center;
-    width: 100%;
-}
 
 .profile {
     display: grid;
@@ -962,6 +937,11 @@ header {
     font-size: 1.5rem;
 }
 
+.container {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
 /*===============================================
            Main Button 押したくなるようなボタン
 ===============================================*/

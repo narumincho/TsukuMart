@@ -15,7 +15,6 @@ module Api exposing
     , getExhibitionGoodList
     , getFreeGoods
     , getGood
-    , getHistoryGoodList
     , getLikeGoodList
     , getMyProfile
     , getPurchaseGoodList
@@ -605,7 +604,7 @@ getLikeGoodList token msg =
 
 
 {- =================================================================================
-       自分が閲覧した商品を取得    TODO /{version}/currentuser/wish/ wishなのにhistoryとして使っている
+       自分が閲覧した商品を取得    TODO APIが対応していない
    =================================================================================
 -}
 
@@ -614,7 +613,7 @@ getHistoryGoodList : Token -> (Result () (List Good.Good) -> msg) -> Cmd msg
 getHistoryGoodList token msg =
     Http.request
         { method = "GET"
-        , url = urlBuilder [ "v1", "currentuser", "wish" ]
+        , url = urlBuilder [ "v1", "currentuser", "history" ]
         , headers = [ tokenToHeader token ]
         , body = Http.emptyBody
         , expect = Http.expectStringResponse msg getGoodListResponseToResult

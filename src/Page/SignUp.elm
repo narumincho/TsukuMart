@@ -262,7 +262,7 @@ view userSignUpPage =
     ( "新規登録"
     , Tab.single tabText
     , [ Html.div
-            [ Html.Attributes.class "signUpContainer" ]
+            [ Html.Attributes.class "container" ]
             [ mainView ]
       ]
     )

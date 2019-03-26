@@ -754,7 +754,7 @@ likeAndHistoryEmitListToCmd =
                     Api.getLikeGoodList token GetLikeGoodListResponse
 
                 Page.LikeAndHistory.EmitGetHistoryGoodList token ->
-                    Api.getHistoryGoodList token GetHistoryGoodListResponse
+                    Cmd.none
 
                 Page.LikeAndHistory.EmitLogInOrSignUp e ->
                     logInOrSignUpEmitToCmd e

@@ -5,6 +5,7 @@ import Data.Good as Good
 import Data.LogInState as LogInState
 import Data.User
 import Html
+import Html.Attributes
 import Page.Component.GoodList as GoodList
 import Page.Component.LogInOrSignUp as LogInOrSignUp
 import Tab
@@ -261,8 +262,11 @@ view logInState isWideScreenMode (Model rec) =
 
         LogInState.LogInStateNone ->
             [ Html.text "ログインか新規登録をして、いいねと閲覧履歴を使えるようにしよう!"
-            , LogInOrSignUp.view
-                rec.logInOrSignUpModel
-                |> Html.map LogInOrSignUpMsg
+            , Html.div
+                [ Html.Attributes.class "container" ]
+                [ LogInOrSignUp.view
+                    rec.logInOrSignUpModel
+                    |> Html.map LogInOrSignUpMsg
+                ]
             ]
     )

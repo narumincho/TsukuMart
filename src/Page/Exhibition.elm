@@ -419,7 +419,7 @@ view logInState (Model { page, logInOrSignUpModel }) =
     ( "出品"
     , Tab.single tabText
     , [ Html.div
-            [ Html.Attributes.class "exhibition-container" ]
+            [ Html.Attributes.class "container" ]
             [ Html.div
                 [ Html.Attributes.class "exhibition" ]
                 body

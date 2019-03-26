@@ -87,7 +87,7 @@ view isWideScreenMode model =
             ( Good.getName goods
             , Tab.none
             , [ Html.div
-                    [ Html.Attributes.class "goods-container" ]
+                    [ Html.Attributes.class "container" ]
                     [ Html.div
                         [ Html.Attributes.class "goods" ]
                         [ goodsViewImage (Good.getFirstImageUrl goods) (Good.getOthersImageUrlList goods)
