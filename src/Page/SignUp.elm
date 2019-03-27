@@ -69,7 +69,7 @@ type SAddressAndPassword
 type Emit
     = EmitCatchStudentImage String
     | EmitSignUp Api.SignUpRequest
-    | EmitSendConfirmToken String
+    | EmitSendConfirmToken Api.ConfirmToken
 
 
 type Msg
@@ -82,7 +82,7 @@ type Msg
     | InputNickName String
     | SignUp Api.SignUpRequest
     | SignUpResponse (Result Api.SignUpResponseError Api.SignUpResponseOk)
-    | SendConfirmToken Api.Token
+    | SendConfirmToken Api.ConfirmToken
 
 
 {-| すべて空白の新規登録画面を表示するためのModel
@@ -1056,10 +1056,7 @@ signUpResultToString emailAddress signUpResult =
                 [ Html.text
                     ("送信完了。"
                         ++ Data.EmailAddress.toString emailAddress
-                        ++ "にメールを送信しました。届いたメールのリンクをクリックして認証をしてください"
-                        ++ "token = \""
-                        ++ token
-                        ++ "\""
+                        ++ "にメールを送信しました。届いたメールのリンクをクリックして認証をしてください(いまはまだ、メールを送信していない。下のボタンで認証)"
                     )
                 , Html.div
                     [ Html.Events.onClick (SendConfirmToken token)

@@ -86,17 +86,17 @@ type SignUpResponseOk
     = SignUpResponseOk ConfirmToken
 
 
-type alias ConfirmToken =
-    String
+type ConfirmToken
+    = ConfirmToken String
 
 
 confirmTokenToHeader : ConfirmToken -> Http.Header
-confirmTokenToHeader token =
+confirmTokenToHeader (ConfirmToken token) =
     Http.header "Authorization" ("Bearer " ++ token)
 
 
 tokenToHeader : Token -> Http.Header
-tokenToHeader token =
+tokenToHeader (Token token) =
     Http.header "Authorization" ("Bearer " ++ token)
 
 
@@ -194,7 +194,10 @@ signUpResponseBodyDecoder : Json.Decode.Decoder (Result SignUpResponseError Sign
 signUpResponseBodyDecoder =
     Json.Decode.oneOf
         [ Json.Decode.field "confirm_token" Json.Decode.string
-            |> Json.Decode.map (\token -> Ok (SignUpResponseOk token))
+            |> Json.Decode.map
+                (\token ->
+                    Ok (SignUpResponseOk (ConfirmToken token))
+                )
         , Json.Decode.field "error" Json.Decode.string
             |> Json.Decode.map
                 (\reason ->
@@ -305,8 +308,8 @@ type LogInResponseError
     | LogInError -- エラーの理由がわからないエラー
 
 
-type alias Token =
-    String
+type Token
+    = Token String
 
 
 {-| ログイン /auth/token/
@@ -353,8 +356,8 @@ logInResponseBodyDecoder =
             (\access refresh ->
                 Ok
                     (LogInResponseOk
-                        { access = access
-                        , refresh = refresh
+                        { access = Token access
+                        , refresh = Token refresh
                         }
                     )
             )
@@ -452,7 +455,7 @@ tokenRefreshBodyStringDecoder =
     Json.Decode.field "access" Json.Decode.string
         |> Json.Decode.map
             (\access ->
-                Ok (TokenRefreshResponseOk { access = access })
+                Ok (TokenRefreshResponseOk { access = Token access })
             )
 
 
