@@ -33,26 +33,26 @@ type Model
         { good : Good.Good
         , sending : Bool
         }
-    | Loading { goodId : Int }
+    | Loading { goodId : Good.GoodId }
 
 
 type Emit
-    = EmitGetGoods { goodId : Int }
-    | EmitLikeGood Data.User.UserId Api.Token Int
-    | EmitUnLikeGood Data.User.UserId Api.Token Int
+    = EmitGetGoods { goodId : Good.GoodId }
+    | EmitLikeGood Data.User.UserId Api.Token Good.GoodId
+    | EmitUnLikeGood Data.User.UserId Api.Token Good.GoodId
 
 
 type Msg
     = GetGoodsResponse Good.Good
-    | LikeGood Data.User.UserId Api.Token Int
-    | UnLikeGood Data.User.UserId Api.Token Int
+    | LikeGood Data.User.UserId Api.Token Good.GoodId
+    | UnLikeGood Data.User.UserId Api.Token Good.GoodId
     | LikeGoodResponse Data.User.UserId (Result () ())
     | UnlikeGoodResponse Data.User.UserId (Result () ())
 
 
 {-| 指定したIDの商品詳細ページ
 -}
-initModel : Int -> ( Model, List Emit )
+initModel : Good.GoodId -> ( Model, List Emit )
 initModel id =
     ( Loading { goodId = id }
     , [ EmitGetGoods { goodId = id } ]
@@ -70,7 +70,7 @@ initModelFromGoods good =
 
 {-| 表示している商品のIDを取得する
 -}
-getGoodId : Model -> Int
+getGoodId : Model -> Good.GoodId
 getGoodId model =
     case model of
         Normal { good } ->

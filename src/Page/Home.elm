@@ -43,7 +43,7 @@ type Msg
 
 {-| 最初の状態。真ん中のタブ「おすすめ」が選択されている
 -}
-initModel : Maybe Int -> ( Model, List Emit )
+initModel : Maybe Good.GoodId -> ( Model, List Emit )
 initModel goodIdMaybe =
     let
         ( goodListModel, emitList ) =

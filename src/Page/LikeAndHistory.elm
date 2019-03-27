@@ -98,7 +98,7 @@ type Emit
 
 {-| 初期状態 いいねが選ばれている
 -}
-initModel : Maybe Int -> LogInState.LogInState -> ( Model, List Emit )
+initModel : Maybe Good.GoodId -> LogInState.LogInState -> ( Model, List Emit )
 initModel goodIdMaybe logInState =
     let
         ( newGoodListModel, emitList ) =

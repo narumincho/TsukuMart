@@ -37,7 +37,7 @@ type Msg
     | GoodListMsg GoodList.Msg
 
 
-initModel : Maybe Int -> LogInState.LogInState -> ( Model, List Emit )
+initModel : Maybe Data.Good.GoodId -> LogInState.LogInState -> ( Model, List Emit )
 initModel goodIdMaybe logInState =
     let
         ( goodListModel, emitList ) =

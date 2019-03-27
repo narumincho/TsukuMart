@@ -19,19 +19,19 @@ type Model
 
 
 type Msg
-    = LikeGood Data.User.UserId Api.Token Int
-    | UnLikeGood Data.User.UserId Api.Token Int
-    | LikeGoodResponse Data.User.UserId Int (Result () ())
-    | UnlikeGoodResponse Data.User.UserId Int (Result () ())
+    = LikeGood Data.User.UserId Api.Token Good.GoodId
+    | UnLikeGood Data.User.UserId Api.Token Good.GoodId
+    | LikeGoodResponse Data.User.UserId Good.GoodId (Result () ())
+    | UnlikeGoodResponse Data.User.UserId Good.GoodId (Result () ())
 
 
 type Emit
-    = EmitLikeGood Data.User.UserId Api.Token Int
-    | EmitUnlikeGood Data.User.UserId Api.Token Int
+    = EmitLikeGood Data.User.UserId Api.Token Good.GoodId
+    | EmitUnlikeGood Data.User.UserId Api.Token Good.GoodId
     | EmitScrollIntoView String
 
 
-initModel : Maybe Int -> ( Model, List Emit )
+initModel : Maybe Good.GoodId -> ( Model, List Emit )
 initModel goodIdMaybe =
     ( Model { sending = False }
     , case goodIdMaybe of
@@ -108,9 +108,9 @@ goodListItem logInState sending good =
         ]
 
 
-goodIdString : Int -> String
+goodIdString : Good.GoodId -> String
 goodIdString goodId =
-    "good-" ++ String.fromInt goodId
+    "good-" ++ Good.goodIdToString goodId
 
 
 itemPrice : Int -> Html.Html msg

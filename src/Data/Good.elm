@@ -1,6 +1,7 @@
 module Data.Good exposing
     ( Condition
     , Good
+    , GoodId
     , Status
     , conditionAll
     , conditionFromString
@@ -15,6 +16,8 @@ module Data.Good exposing
     , getName
     , getOthersImageUrlList
     , getPrice
+    , goodIdFromInt
+    , goodIdToString
     , isLikedBy
     , like
     , listMapIf
@@ -37,7 +40,7 @@ import Set
 
 type Good
     = Good
-        { id : Int
+        { id : GoodId
         , name : String -- 長さは1～255文字
         , description : String
         , price : Int
@@ -51,10 +54,24 @@ type Good
         }
 
 
+type GoodId
+    = GoodId Int
+
+
+goodIdToString : GoodId -> String
+goodIdToString (GoodId id) =
+    String.fromInt id
+
+
+goodIdFromInt : Int -> GoodId
+goodIdFromInt id =
+    GoodId id
+
+
 make : { id : Int, name : String, description : String, price : Int, condition : Condition, status : Status, image0Url : String, image1Url : Maybe String, image2Url : Maybe String, image3Url : Maybe String, likedByUserList : List User.UserId } -> Good
 make { id, name, description, price, condition, status, image0Url, image1Url, image2Url, image3Url, likedByUserList } =
     Good
-        { id = id
+        { id = GoodId id
         , name = name
         , description = description
         , price = price
@@ -200,7 +217,7 @@ statusFromIdStringLoop idString statusList =
 
 {-| 商品のID
 -}
-getId : Good -> Int
+getId : Good -> GoodId
 getId (Good { id }) =
     id
 
@@ -319,7 +336,7 @@ priceToStringWithoutYen price =
         |> String.join ","
 
 
-searchGoodsFromId : Int -> List Good -> Maybe Good
+searchGoodsFromId : GoodId -> List Good -> Maybe Good
 searchGoodsFromId id goodsList =
     case goodsList of
         x :: xs ->

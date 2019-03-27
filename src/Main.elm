@@ -117,8 +117,8 @@ type Msg
     | GetExhibitionGoodListResponse (Result () (List Data.Good.Good))
     | GetPurchaseGoodListResponse (Result () (List Data.Good.Good))
     | GetGoodResponse (Result () Data.Good.Good)
-    | LikeGoodResponse Data.User.UserId Int (Result () ())
-    | UnlikeGoodResponse Data.User.UserId Int (Result () ())
+    | LikeGoodResponse Data.User.UserId Data.Good.GoodId (Result () ())
+    | UnlikeGoodResponse Data.User.UserId Data.Good.GoodId (Result () ())
     | HomePageMsg Page.Home.Msg
     | LikeAndHistoryPageMsg Page.LikeAndHistory.Msg
     | PurchaseGoodListPageMsg Page.PurchaseGoodList.Msg
@@ -1059,7 +1059,7 @@ urlParser (Model rec) =
 {-| 指定したページにあるメインの商品ID
 GoodListの表示になったときにその商品のところへスクロールできるように
 -}
-getGoodId : Page -> Maybe Int
+getGoodId : Page -> Maybe Data.Good.GoodId
 getGoodId page =
     case page of
         PageGoods goodModel ->
@@ -1071,7 +1071,7 @@ getGoodId page =
 
 {-| 各ページにいいねを押した結果を反映するように通知する
 -}
-likeGood : Data.User.UserId -> Int -> Result () () -> Data.LogInState.LogInState -> Page -> ( Page, Cmd Msg )
+likeGood : Data.User.UserId -> Data.Good.GoodId -> Result () () -> Data.LogInState.LogInState -> Page -> ( Page, Cmd Msg )
 likeGood userId goodId result logInState page =
     let
         goodListMsg =
@@ -1135,7 +1135,7 @@ likeGood userId goodId result logInState page =
 
 {-| 各ページにいいねを外した結果を反映するように通知する
 -}
-unlikeGood : Data.User.UserId -> Int -> Result () () -> Data.LogInState.LogInState -> Page -> ( Page, Cmd Msg )
+unlikeGood : Data.User.UserId -> Data.Good.GoodId -> Result () () -> Data.LogInState.LogInState -> Page -> ( Page, Cmd Msg )
 unlikeGood userId goodId result logInState page =
     let
         goodListMsg =

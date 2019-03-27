@@ -801,10 +801,10 @@ getFreeGoods msg =
 -}
 
 
-getGood : Int -> (Result () Good.Good -> msg) -> Cmd msg
+getGood : Good.GoodId -> (Result () Good.Good -> msg) -> Cmd msg
 getGood id msg =
     Http.get
-        { url = urlBuilder [ "v1", "goods", String.fromInt id ]
+        { url = urlBuilder [ "v1", "goods", Good.goodIdToString id ]
         , expect = Http.expectStringResponse msg getGoodsResponseToResult
         }
 
@@ -902,7 +902,7 @@ statusDecoder =
 -}
 
 
-likeGoods : Token -> Int -> (Result () () -> msg) -> Cmd msg
+likeGoods : Token -> Good.GoodId -> (Result () () -> msg) -> Cmd msg
 likeGoods token goodsId msg =
     toggleLikeTask token goodsId
         |> Task.andThen
@@ -926,12 +926,12 @@ likeGoods token goodsId msg =
         |> Task.attempt msg
 
 
-toggleLikeTask : Token -> Int -> Task.Task () LikeOrUnlike
+toggleLikeTask : Token -> Good.GoodId -> Task.Task () LikeOrUnlike
 toggleLikeTask token goodId =
     Http.task
         { method = "POST"
         , headers = [ tokenToHeader token ]
-        , url = urlBuilder [ "v1", "goods", String.fromInt goodId, "toggle-like" ]
+        , url = urlBuilder [ "v1", "goods", Good.goodIdToString goodId, "toggle-like" ]
         , body = Http.emptyBody
         , resolver = Http.stringResolver toggleLikeGoodsResponseToResult
         , timeout = Nothing
@@ -983,7 +983,7 @@ toggleLikeGoodsResponseBodyDecoder =
 -}
 
 
-unlikeGoods : Token -> Int -> (Result () () -> msg) -> Cmd msg
+unlikeGoods : Token -> Good.GoodId -> (Result () () -> msg) -> Cmd msg
 unlikeGoods token goodsId msg =
     toggleLikeTask token goodsId
         |> Task.andThen
