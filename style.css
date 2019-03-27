@@ -584,6 +584,10 @@ header {
     background-color: var(--primaryColorLight);
 }
 
+.good-like-sending {
+    background-color: #7f2591;
+}
+
 .good-label {
     background-color: #ddd;
     padding: .2rem .5rem;

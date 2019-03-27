@@ -29,7 +29,10 @@ import Tab
 
 
 type Model
-    = Normal Good.Good
+    = Normal
+        { good : Good.Good
+        , sending : Bool
+        }
     | Loading { goodId : Int }
 
 
@@ -60,7 +63,7 @@ initModel id =
 -}
 initModelFromGoods : Good.Good -> ( Model, List Emit )
 initModelFromGoods good =
-    ( Normal good
+    ( Normal { good = good, sending = False }
     , [ EmitGetGoods { goodId = Good.getId good } ]
     )
 
@@ -70,7 +73,7 @@ initModelFromGoods good =
 getGoodId : Model -> Int
 getGoodId model =
     case model of
-        Normal good ->
+        Normal { good } ->
             Good.getId good
 
         Loading { goodId } ->
@@ -81,22 +84,36 @@ update : Msg -> Model -> ( Model, List Emit )
 update msg model =
     case msg of
         GetGoodsResponse goods ->
-            ( Normal goods, [] )
+            ( Normal { good = goods, sending = False }, [] )
 
         LikeGood userId token id ->
-            ( model
+            ( case model of
+                Normal rec ->
+                    Normal { rec | sending = True }
+
+                Loading _ ->
+                    model
             , [ EmitLikeGood userId token id ]
             )
 
         UnLikeGood userId token id ->
-            ( model
+            ( case model of
+                Normal rec ->
+                    Normal { rec | sending = True }
+
+                Loading _ ->
+                    model
             , [ EmitUnLikeGood userId token id ]
             )
 
         LikeGoodResponse userId result ->
             ( case ( result, model ) of
-                ( Ok (), Normal good ) ->
-                    Normal (good |> Good.like userId)
+                ( Ok (), Normal rec ) ->
+                    Normal
+                        { rec
+                            | good = rec.good |> Good.like userId
+                            , sending = False
+                        }
 
                 ( _, _ ) ->
                     model
@@ -105,8 +122,12 @@ update msg model =
 
         UnlikeGoodResponse userId result ->
             ( case ( result, model ) of
-                ( Ok (), Normal good ) ->
-                    Normal (good |> Good.unlike userId)
+                ( Ok (), Normal rec ) ->
+                    Normal
+                        { rec
+                            | good = rec.good |> Good.unlike userId
+                            , sending = False
+                        }
 
                 ( _, _ ) ->
                     model
@@ -123,20 +144,20 @@ view logInState isWideScreenMode model =
             , [ Html.text "読み込み中" ]
             )
 
-        Normal goods ->
-            ( Good.getName goods
+        Normal { good, sending } ->
+            ( Good.getName good
             , Tab.none
             , [ Html.div
                     [ Html.Attributes.class "container" ]
                     [ Html.div
                         [ Html.Attributes.class "good" ]
-                        [ goodsViewImage (Good.getFirstImageUrl goods) (Good.getOthersImageUrlList goods)
-                        , goodsViewName (Good.getName goods)
-                        , goodsViewLike logInState goods
-                        , goodsViewDescription (Good.getDescription goods)
-                        , goodsViewCondition (Good.getCondition goods)
+                        [ goodsViewImage (Good.getFirstImageUrl good) (Good.getOthersImageUrlList good)
+                        , goodsViewName (Good.getName good)
+                        , goodsViewLike logInState sending good
+                        , goodsViewDescription (Good.getDescription good)
+                        , goodsViewCondition (Good.getCondition good)
                         ]
-                    , goodsViewPriceAndBuyButton isWideScreenMode (Good.getPrice goods)
+                    , goodsViewPriceAndBuyButton isWideScreenMode (Good.getPrice good)
                     ]
               ]
             )
@@ -169,40 +190,46 @@ goodsViewName name =
         [ Html.text name ]
 
 
-goodsViewLike : LogInState.LogInState -> Good.Good -> Html.Html Msg
-goodsViewLike logInState good =
+goodsViewLike : LogInState.LogInState -> Bool -> Good.Good -> Html.Html Msg
+goodsViewLike logInState sending good =
     Html.div
         [ Html.Attributes.class "good-like-container" ]
-        [ likeButton logInState good
-        , Html.text "いいねをしたユーザー"
-        ]
+        [ likeButton logInState sending good ]
 
 
-likeButton : LogInState.LogInState -> Good.Good -> Html.Html Msg
-likeButton logInState good =
-    case logInState of
-        LogInState.LogInStateOk { profile, access } ->
-            if good |> Good.isLikedBy (Data.User.getUserId profile) then
-                Html.button
-                    [ Html.Events.onClick
-                        (UnLikeGood (Data.User.getUserId profile) access (Good.getId good))
-                    , Html.Attributes.class "good-liked"
-                    , Html.Attributes.class "good-like"
-                    ]
+likeButton : LogInState.LogInState -> Bool -> Good.Good -> Html.Html Msg
+likeButton logInState sending good =
+    if sending then
+        Html.button
+            [ Html.Attributes.class "good-like-sending"
+            , Html.Attributes.class "good-like"
+            ]
+            (itemLikeBody (Good.getLikedCount good))
+
+    else
+        case logInState of
+            LogInState.LogInStateOk { profile, access } ->
+                if good |> Good.isLikedBy (Data.User.getUserId profile) then
+                    Html.button
+                        [ Html.Events.onClick
+                            (UnLikeGood (Data.User.getUserId profile) access (Good.getId good))
+                        , Html.Attributes.class "good-liked"
+                        , Html.Attributes.class "good-like"
+                        ]
+                        (itemLikeBody (Good.getLikedCount good))
+
+                else
+                    Html.button
+                        [ Html.Events.onClick
+                            (LikeGood (Data.User.getUserId profile) access (Good.getId good))
+                        , Html.Attributes.class "good-like"
+                        ]
+                        (itemLikeBody (Good.getLikedCount good))
+
+            LogInState.LogInStateNone ->
+                Html.div
+                    [ Html.Attributes.class "good-like-label" ]
                     (itemLikeBody (Good.getLikedCount good))
-
-            else
-                Html.button
-                    [ Html.Events.onClick
-                        (LikeGood (Data.User.getUserId profile) access (Good.getId good))
-                    , Html.Attributes.class "good-like"
-                    ]
-                    (itemLikeBody (Good.getLikedCount good))
-
-        LogInState.LogInStateNone ->
-            Html.div
-                [ Html.Attributes.class "good-like-label" ]
-                (itemLikeBody (Good.getLikedCount good))
 
 
 itemLikeBody : Int -> List (Html.Html msg)
