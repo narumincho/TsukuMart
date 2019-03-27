@@ -731,97 +731,6 @@ header {
                 Sign Up 新規登録画面
 ===============================================*/
 
-.signUp {
-    display: grid;
-    max-width: 40rem;
-    gap: 1.5rem;
-    padding: 1.5rem;
-    box-sizing: border-box;
-    width: 100%;
-    word-break: break-word;
-}
-
-.signUp-label {
-    font-size: 1.5rem;
-}
-
-.signUp-select {
-    width: 100%;
-    padding: .5rem;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    box-sizing: border-box;
-}
-
-.signUp-select-item {
-    background-color: #999;
-    padding: .5rem;
-    text-align: center;
-    user-select: none;
-    cursor: pointer;
-    border: none;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.18);
-}
-
-.signUp-select-item:hover {
-    background-color: #bbb;
-    color: #111;
-}
-
-.signUp-select-itemSelect {
-    background-color: var(--primaryColor);
-    padding: .5rem;
-    text-align: center;
-    user-select: none;
-    cursor: pointer;
-    border: none;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.18);
-    color: white;
-}
-
-.signUp-description {
-    font-size: 1rem;
-}
-
-.signUp-input {
-    font-size: 1.2rem;
-    padding: .4rem;
-    width: 100%;
-    border: solid 1px #ccc;
-    box-sizing: border-box;
-    border-radius: .4rem;
-    box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075);
-    transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
-    outline: none;
-}
-
-.signUp-input:focus {
-    box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075), 0 0 8px rgba(102, 175, 233, .6);
-    border: solid 1px #66afe9;
-}
-
-.signUp-image {
-    display: block;
-    width: 100%;
-    box-sizing: border-box;
-    padding: 1rem;
-    border: solid 1px #111;
-}
-
-.signUp-menu {
-    display: block;
-    width: 100%;
-    height: 4rem;
-    border: solid 2px #000;
-    box-sizing: border-box;
-    border-radius: .4rem;
-    font-size: 1.5rem;
-    border: solid 1px #ccc;
-}
-
-.signUp-resultMsg {
-    padding: 1rem;
-}
 
 /*===============================================
             Profile ユーザーページ画面
@@ -1011,4 +920,115 @@ header {
     background-color: #aaa;
     color: #ddd;
     fill: #ddd;
+}
+
+/*===============================================
+        Form ユーザーに情報を入力させる画面
+===============================================*/
+
+.form {
+    display: grid;
+    max-width: 40rem;
+    gap: 1.5rem;
+    padding: 1.5rem;
+    box-sizing: border-box;
+    width: 100%;
+    word-break: break-word;
+}
+
+.form-label {
+    font-size: 1.5rem;
+}
+
+.form-select {
+    width: 100%;
+    padding: .5rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    box-sizing: border-box;
+}
+
+.form-select-item {
+    background-color: #999;
+    padding: .5rem;
+    text-align: center;
+    user-select: none;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.18);
+}
+
+.form-select-item:hover {
+    background-color: #bbb;
+    color: #111;
+}
+
+.form-select-itemSelect {
+    background-color: var(--primaryColor);
+    padding: .5rem;
+    text-align: center;
+    user-select: none;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.18);
+    color: white;
+}
+
+.form-description {
+    font-size: 1rem;
+}
+
+.form-input {
+    font-size: 1.2rem;
+    padding: .4rem;
+    width: 100%;
+    border: solid 1px #ccc;
+    box-sizing: border-box;
+    border-radius: .4rem;
+    box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075);
+    transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
+    outline: none;
+}
+
+.form-input:focus {
+    box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075), 0 0 8px rgba(102, 175, 233, .6);
+    border: solid 1px #66afe9;
+}
+
+.form-textarea {
+    font-size: 1.2rem;
+    height: 6rem;
+    padding: .4rem;
+    width: 100%;
+    border: solid 1px #ccc;
+    box-sizing: border-box;
+    border-radius: .4rem;
+    box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075);
+    transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
+    outline: none;
+    resize: none;
+}
+
+.form-textarea:focus {
+    box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075), 0 0 8px rgba(102, 175, 233, .6);
+    border: solid 1px #66afe9;
+}
+
+.form-image {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 1rem;
+    border: solid 1px #111;
+}
+
+.form-menu {
+    display: block;
+    width: 100%;
+    height: 4rem;
+    border: solid 2px #000;
+    box-sizing: border-box;
+    border-radius: .4rem;
+    font-size: 1.5rem;
+    border: solid 1px #ccc;
 }

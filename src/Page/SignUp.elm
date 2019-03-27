@@ -271,7 +271,7 @@ view userSignUpPage =
 normalView : SAddressAndPassword -> UniversitySelect -> String -> Html.Html Msg
 normalView sAddressAndPassword university nickName =
     Html.Keyed.node "form"
-        [ Html.Attributes.class "signUp" ]
+        [ Html.Attributes.class "form" ]
         ([ ( "s_or_nos"
            , sAddressView sAddressAndPassword
                 |> Html.map InputSAddressAndPassword
@@ -299,7 +299,7 @@ sAddressView userSignUpSAddressAndPassword =
     Html.div
         []
         [ Html.label
-            [ Html.Attributes.class "signUp-label" ]
+            [ Html.Attributes.class "form-label" ]
             [ Html.text "sアドを" ]
         , sAddressSelectView userSignUpSAddressAndPassword
         ]
@@ -317,7 +317,7 @@ sAddressSelectView userSignUpSAddressAndPassword =
                     False
     in
     Html.div
-        [ Html.Attributes.class "signUp-select" ]
+        [ Html.Attributes.class "form-select" ]
         [ Html.div
             ([ Html.Attributes.classList
                 [ ( "signUp-select-item", not leftSelect )
@@ -372,19 +372,19 @@ studentHasSAddressFormList analysisStudentIdOrEmailAddressResult password =
       , Html.div
             []
             [ Html.label
-                [ Html.Attributes.class "signUp-label"
+                [ Html.Attributes.class "form-label"
                 , Html.Attributes.for "signUpStudentIdOrTsukubaEmail"
                 ]
                 [ Html.text "学籍番号か ～@～.tsukuba.ac.jpのメールアドレス" ]
             , Html.input
-                [ Html.Attributes.class "signUp-input"
+                [ Html.Attributes.class "form-input"
                 , Html.Attributes.id "signUpStudentIdOrTsukubaEmail"
                 , Html.Attributes.attribute "autocomplete" "username"
                 , Html.Events.onInput InputStudentIdOrEmailAddress
                 ]
                 []
             , Html.div
-                [ Html.Attributes.class "signUp-description" ]
+                [ Html.Attributes.class "form-description" ]
                 [ Html.text
                     (case analysisStudentIdOrEmailAddressResult of
                         ANone ->
@@ -471,12 +471,12 @@ newStudentForm emailAddress imageUrlMaybe password =
       , Html.div
             []
             [ Html.label
-                [ Html.Attributes.class "signUp-label"
+                [ Html.Attributes.class "form-label"
                 , Html.Attributes.for "signUpEmail"
                 ]
                 [ Html.text "登録用メールアドレス" ]
             , Html.input
-                [ Html.Attributes.class "signUp-input"
+                [ Html.Attributes.class "form-input"
                 , Html.Attributes.type_ "email"
                 , Html.Attributes.id "signUpEmail"
                 , Html.Attributes.attribute "autocomplete" "email"
@@ -484,7 +484,7 @@ newStudentForm emailAddress imageUrlMaybe password =
                 ]
                 []
             , Html.div
-                [ Html.Attributes.class "signUp-description" ]
+                [ Html.Attributes.class "form-description" ]
                 [ Html.text
                     (case emailAddress of
                         Just address ->
@@ -502,21 +502,21 @@ newStudentForm emailAddress imageUrlMaybe password =
       , Html.div
             []
             [ Html.label
-                [ Html.Attributes.class "signUp-label"
+                [ Html.Attributes.class "form-label"
                 , Html.Attributes.for "signUpImage"
                 ]
                 [ Html.text "学生証の写真" ]
             , Html.input
                 [ Html.Attributes.type_ "file"
                 , Html.Attributes.accept "image/png, image/jpeg"
-                , Html.Attributes.class "signUp-input"
+                , Html.Attributes.class "form-input"
                 , Html.Attributes.id "signUpImage"
-                , Html.Attributes.attribute "autocomplete" "studentIdImage"
+                , Html.Attributes.attribute "autocomplete" "student-id-image"
                 , Html.Events.on "change" (Json.Decode.succeed (CatchStudentImage "signUpImage"))
                 ]
                 []
             , Html.img
-                ([ Html.Attributes.class "signUp-image"
+                ([ Html.Attributes.class "form-image"
                  ]
                     ++ (case imageUrlMaybe of
                             Just imageUrl ->
@@ -539,12 +539,12 @@ passwordForm passwordResult =
     Html.div
         []
         [ Html.label
-            [ Html.Attributes.class "signUp-label"
+            [ Html.Attributes.class "form-label"
             , Html.Attributes.for "password"
             ]
             [ Html.text "パスワード" ]
         , Html.input
-            [ Html.Attributes.class "signUp-input"
+            [ Html.Attributes.class "form-input"
             , Html.Attributes.id "password"
             , Html.Attributes.type_ "password"
             , Html.Attributes.minlength 9
@@ -554,7 +554,7 @@ passwordForm passwordResult =
             ]
             []
         , Html.div
-            [ Html.Attributes.class "signUp-description" ]
+            [ Html.Attributes.class "form-description" ]
             [ Html.text
                 (case passwordResult of
                     Ok password ->
@@ -575,12 +575,12 @@ nickNameForm nickName =
       , Html.div
             []
             ([ Html.label
-                [ Html.Attributes.class "signUp-label"
+                [ Html.Attributes.class "form-label"
                 , Html.Attributes.for "nickNameForm"
                 ]
                 [ Html.text "表示名" ]
              , Html.input
-                [ Html.Attributes.class "signUp-input"
+                [ Html.Attributes.class "form-input"
                 , Html.Attributes.id "nickNameForm"
                 , Html.Attributes.attribute "autocomplete" "nickname"
                 , Html.Events.onInput InputNickName
@@ -634,10 +634,10 @@ signUpUniversityViewSchoolOrGraduate university =
     Html.div
         []
         [ Html.label
-            [ Html.Attributes.class "signUp-label" ]
+            [ Html.Attributes.class "form-label" ]
             [ Html.text "所属" ]
         , Html.div
-            [ Html.Attributes.class "signUp-select" ]
+            [ Html.Attributes.class "form-select" ]
             [ Html.div
                 ([ Html.Attributes.classList
                     [ ( "signUp-select-item", not leftSelect )
@@ -789,12 +789,12 @@ signUpUniversityViewSelectGraduate =
     Html.div
         []
         [ Html.label
-            [ Html.Attributes.class "signUp-label"
+            [ Html.Attributes.class "form-label"
             , Html.Attributes.for "signUp-selectGraduate"
             ]
             [ Html.text "研究科" ]
         , Html.select
-            [ Html.Attributes.class "signUp-menu"
+            [ Html.Attributes.class "form-menu"
             , Html.Attributes.id "signUp-selectGraduate"
             , Html.Events.on "change" selectGraduateDecoder
             ]
@@ -825,10 +825,10 @@ signUpUniversityViewGraduateYesNoTsukuba leftSelect =
     Html.div
         []
         [ Html.label
-            [ Html.Attributes.class "signUp-label" ]
+            [ Html.Attributes.class "form-label" ]
             [ Html.text "院進前の所属" ]
         , Html.div
-            [ Html.Attributes.class "signUp-select" ]
+            [ Html.Attributes.class "form-select" ]
             [ Html.div
                 ([ Html.Attributes.classList
                     [ ( "signUp-select-item", not leftSelect )
@@ -870,12 +870,12 @@ signUpUniversityViewSelectSchool =
     Html.div
         []
         [ Html.label
-            [ Html.Attributes.class "signUp-label"
+            [ Html.Attributes.class "form-label"
             , Html.Attributes.for "signUp-selectSchool"
             ]
             [ Html.text "学群" ]
         , Html.select
-            [ Html.Attributes.class "signUp-menu"
+            [ Html.Attributes.class "form-menu"
             , Html.Attributes.id "signUp-selectSchool"
             , Html.Events.on "change" selectSchoolDecoder
             ]
@@ -911,12 +911,12 @@ signUpUniversityViewSelectDepartment school =
                 (Html.div
                     []
                     [ Html.label
-                        [ Html.Attributes.class "signUp-label"
+                        [ Html.Attributes.class "form-label"
                         , Html.Attributes.for "signUp-selectDepartment"
                         ]
                         [ Html.text "学類" ]
                     , Html.select
-                        [ Html.Attributes.class "signUp-menu"
+                        [ Html.Attributes.class "form-menu"
                         , Html.Attributes.id "signUp-selectDepartment"
                         , Html.Events.on "change" (selectDepartmentDecoder school)
                         ]
@@ -1052,7 +1052,7 @@ signUpResultToString : Data.EmailAddress.EmailAddress -> Result Api.SignUpRespon
 signUpResultToString emailAddress signUpResult =
     case signUpResult of
         Ok (Api.SignUpResponseOk token) ->
-            Html.div [ Html.Attributes.class "signUp" ]
+            Html.div [ Html.Attributes.class "form" ]
                 [ Html.text
                     ("送信完了。"
                         ++ Data.EmailAddress.toString emailAddress

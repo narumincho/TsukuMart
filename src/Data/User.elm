@@ -2,13 +2,16 @@ module Data.User exposing
     ( Profile
     , User
     , UserId
-    , getIntroduction
-    , getNickName
-    , getUniversity
+    , getProfile
     , getUserId
     , makeFromApi
+    , profileGetIntroduction
+    , profileGetNickName
+    , profileGetUniversity
+    , setProfile
     , userIdFromInt
     , userIdToInt
+    , userIdToString
     )
 
 import Data.University as University
@@ -37,6 +40,11 @@ userIdToInt (UserId id) =
     id
 
 
+userIdToString : UserId -> String
+userIdToString (UserId id) =
+    String.fromInt id
+
+
 userIdFromInt : Int -> UserId
 userIdFromInt =
     UserId
@@ -59,16 +67,30 @@ getUserId (User id _) =
     id
 
 
-getIntroduction : User -> String
-getIntroduction (User _ (Profile { introduction })) =
+profileGetIntroduction : Profile -> String
+profileGetIntroduction (Profile { introduction }) =
     introduction
 
 
-getUniversity : User -> University.University
-getUniversity (User _ (Profile { university })) =
+profileGetUniversity : Profile -> University.University
+profileGetUniversity (Profile { university }) =
     university
 
 
-getNickName : User -> String
-getNickName (User _ (Profile { nickName })) =
+profileGetNickName : Profile -> String
+profileGetNickName (Profile { nickName }) =
     nickName
+
+
+{-| プロフィールを取得する
+-}
+getProfile : User -> Profile
+getProfile (User _ profile) =
+    profile
+
+
+{-| プロフィールを変更する
+-}
+setProfile : Profile -> User -> User
+setProfile profile (User userId _) =
+    User userId profile

@@ -107,7 +107,7 @@ type Msg
     | LogInResponse (Result Api.LogInResponseError Api.LogInResponseOk)
     | ReceiveImageDataUrl String
     | ReceiveImageFileAndBlobUrl Json.Decode.Value
-    | GetUserProfileResponse { access : Api.Token, refresh : Api.Token } (Result () Data.User.User)
+    | GetUserDataResponse { access : Api.Token, refresh : Api.Token } (Result () Data.User.User)
     | SellGoodResponse (Result Api.SellGoodsResponseError ())
     | GetRecentGoodListResponse (Result () (List Data.Good.Good))
     | GetRecommendGoodListResponse (Result () (List Data.Good.Good))
@@ -119,6 +119,7 @@ type Msg
     | GetGoodResponse (Result () Data.Good.Good)
     | LikeGoodResponse Data.User.UserId Data.Good.GoodId (Result () ())
     | UnlikeGoodResponse Data.User.UserId Data.Good.GoodId (Result () ())
+    | ChangeProfileResponse (Result () Data.User.Profile)
     | HomePageMsg Page.Home.Msg
     | LikeAndHistoryPageMsg Page.LikeAndHistory.Msg
     | PurchaseGoodListPageMsg Page.PurchaseGoodList.Msg
@@ -282,7 +283,7 @@ update msg (Model rec) =
                         }
                     , Cmd.batch
                         [ cmd
-                        , Api.getMyProfile access (GetUserProfileResponse { access = access, refresh = refresh })
+                        , Api.getMyProfile access (GetUserDataResponse { access = access, refresh = refresh })
                         ]
                     )
 
@@ -400,13 +401,13 @@ update msg (Model rec) =
                     , Cmd.none
                     )
 
-        GetUserProfileResponse { access, refresh } response ->
+        GetUserDataResponse { access, refresh } response ->
             ( case response of
-                Ok profile ->
+                Ok user ->
                     Model
                         { rec
                             | logInState =
-                                Data.LogInState.LogInStateOk { access = access, refresh = refresh, profile = profile }
+                                Data.LogInState.LogInStateOk { access = access, refresh = refresh, user = user }
                         }
 
                 Err () ->
@@ -652,6 +653,42 @@ update msg (Model rec) =
             , cmd
             )
 
+        ChangeProfileResponse response ->
+            case response of
+                Ok newProfile ->
+                    case rec.page of
+                        PageProfile profileModel ->
+                            let
+                                ( newModel, emitList ) =
+                                    profileModel
+                                        |> Page.Profile.update Page.Profile.MsgChangeProfileResponse
+                            in
+                            ( Model
+                                { rec
+                                    | logInState =
+                                        case rec.logInState of
+                                            Data.LogInState.LogInStateOk r ->
+                                                Data.LogInState.LogInStateOk
+                                                    { r | user = r.user |> Data.User.setProfile newProfile }
+
+                                            Data.LogInState.LogInStateNone ->
+                                                Data.LogInState.LogInStateNone
+                                    , page = PageProfile newModel
+                                }
+                            , profilePageEmitListToCmd emitList
+                            )
+
+                        _ ->
+                            ( Model rec
+                            , Cmd.none
+                            )
+
+                Err () ->
+                    ( Model
+                        { rec | message = Just "プロフィール更新に失敗しました" }
+                    , Cmd.none
+                    )
+
         HomePageMsg homePageMsg ->
             case rec.page of
                 PageHome homePageModel ->
@@ -857,6 +894,9 @@ profilePageEmitListToCmd =
             case emit of
                 Page.Profile.EmitLogInOrSignUp e ->
                     logInOrSignUpEmitToCmd e
+
+                Page.Profile.EmitChangeProfile token profile ->
+                    Api.updateProfile token profile ChangeProfileResponse
         )
         >> Cmd.batch
 

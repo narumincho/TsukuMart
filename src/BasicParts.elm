@@ -394,7 +394,7 @@ menuMain logInState =
 menuAccount : Data.LogInState.LogInState -> Html.Html msg
 menuAccount logInState =
     case logInState of
-        Data.LogInState.LogInStateOk { profile } ->
+        Data.LogInState.LogInStateOk { user } ->
             Html.a
                 [ Html.Attributes.class "menu-account"
                 , Html.Attributes.class "menu-account-a"
@@ -407,7 +407,7 @@ menuAccount logInState =
                     []
                 , Html.span
                     [ Html.Attributes.class "menu-account-a-name" ]
-                    [ Html.text (Data.User.getNickName profile) ]
+                    [ Html.text (Data.User.profileGetNickName (Data.User.getProfile user)) ]
                 ]
 
         Data.LogInState.LogInStateNone ->

@@ -28,6 +28,7 @@ module Api exposing
     , signUp
     , signUpConfirm
     , unlikeGoods
+    , updateProfile
     )
 
 import Data.EmailAddress as EmailAddress
@@ -583,6 +584,53 @@ getMyProfile token msg =
         , timeout = Nothing
         , tracker = Nothing
         }
+
+
+
+{- ============================================================
+       自分のプロフィールを更新する /{version}/currentuser/profile/
+   ============================================================
+-}
+
+
+updateProfile : Token -> User.Profile -> (Result () User.Profile -> msg) -> Cmd msg
+updateProfile token profile msg =
+    Http.request
+        { method = "PATCH"
+        , headers = [ tokenToHeader token ]
+        , url = urlBuilder [ "v1", "currentuser", "profile" ]
+        , body = Http.jsonBody (updateProfileRequestToJsonBody profile)
+        , expect = Http.expectStringResponse msg (getUserProfileResponseToResult >> Result.map User.getProfile)
+        , timeout = Nothing
+        , tracker = Nothing
+        }
+
+
+updateProfileRequestToJsonBody : User.Profile -> Json.Decode.Value
+updateProfileRequestToJsonBody profile =
+    let
+        { department, graduate } =
+            universityToSimpleRecord (User.profileGetUniversity profile)
+    in
+    Json.Encode.object
+        ([ ( "nick", Json.Encode.string (User.profileGetNickName profile) )
+         , ( "introduction", Json.Encode.string (User.profileGetIntroduction profile) )
+         ]
+            ++ (case graduate of
+                    Just g ->
+                        [ ( "graduate", Json.Encode.string (University.graduateToIdString g) ) ]
+
+                    Nothing ->
+                        []
+               )
+            ++ (case department of
+                    Just d ->
+                        [ ( "department", Json.Encode.string (University.departmentToIdString d) ) ]
+
+                    Nothing ->
+                        []
+               )
+        )
 
 
 

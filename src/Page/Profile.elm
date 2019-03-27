@@ -7,6 +7,7 @@ module Page.Profile exposing
     , view
     )
 
+import Api
 import Data.LogInState as LogInState
 import Data.University
 import Data.User as User
@@ -33,13 +34,15 @@ type Mode
 
 type Emit
     = EmitLogInOrSignUp LogInOrSignUp.Emit
+    | EmitChangeProfile Api.Token User.Profile
 
 
 type Msg
     = MsgLogInOrSignUp LogInOrSignUp.Msg
     | MsgToEditMode
     | MsgBackToViewMode
-    | MsgChangeProfile User.Profile
+    | MsgChangeProfile Api.Token User.Profile
+    | MsgChangeProfileResponse
 
 
 initModel : Model
@@ -76,8 +79,13 @@ update msg (Model rec) =
             , []
             )
 
-        MsgChangeProfile profile ->
+        MsgChangeProfile token profile ->
             ( Model rec
+            , [ EmitChangeProfile token profile ]
+            )
+
+        MsgChangeProfileResponse ->
+            ( Model { rec | mode = ViewMode }
             , []
             )
 
@@ -87,29 +95,45 @@ update msg (Model rec) =
 
 
 view : LogInState.LogInState -> Model -> ( String, Tab.Tab Msg, List (Html.Html Msg) )
-view logInState (Model { logInOrSignUpModel }) =
+view logInState (Model { logInOrSignUpModel, mode }) =
     ( "プロフィール"
     , Tab.single "プロフィール"
-    , case logInState of
-        LogInState.LogInStateOk { access, profile } ->
-            [ Html.div
-                [ Html.Attributes.class "container" ]
-                [ Html.div
-                    [ Html.Attributes.class "profile" ]
-                    ([ nickNameView (User.getNickName profile)
-                     , introductionView (User.getIntroduction profile)
-                     ]
-                        ++ universityView (User.getUniversity profile)
-                        ++ [ editButton ]
-                    )
-                ]
-            ]
+    , [ Html.div
+            [ Html.Attributes.class "container" ]
+            (case logInState of
+                LogInState.LogInStateOk { access, user } ->
+                    case mode of
+                        EditMode ->
+                            userEditView access (User.getProfile user)
 
-        LogInState.LogInStateNone ->
-            [ LogInOrSignUp.view logInOrSignUpModel
-                |> Html.map MsgLogInOrSignUp
-            ]
+                        ViewMode ->
+                            userView user
+
+                LogInState.LogInStateNone ->
+                    [ LogInOrSignUp.view logInOrSignUpModel
+                        |> Html.map MsgLogInOrSignUp
+                    ]
+            )
+      ]
     )
+
+
+userView : User.User -> List (Html.Html Msg)
+userView user =
+    let
+        profile =
+            User.getProfile user
+    in
+    [ Html.div
+        [ Html.Attributes.class "profile" ]
+        ([ nickNameView (User.profileGetNickName profile)
+         , introductionView (User.profileGetIntroduction profile)
+         ]
+            ++ universityView (User.profileGetUniversity profile)
+            ++ [ Html.text ("ユーザーID " ++ (user |> User.getUserId |> User.userIdToString)) ]
+            ++ [ editButton ]
+        )
+    ]
 
 
 nickNameView : String -> Html.Html msg
@@ -140,21 +164,39 @@ universityView university =
     in
     (case graduate of
         Just g ->
-            [ Html.div [] [ Html.text ("研究科:" ++ g) ] ]
+            [ Html.div
+                [ Html.Attributes.class "profile-title" ]
+                [ Html.text "研究科" ]
+            , Html.div
+                []
+                [ Html.text g ]
+            ]
 
         Nothing ->
             []
     )
         ++ (case school of
                 Just s ->
-                    [ Html.div [] [ Html.text ("学群:" ++ s) ] ]
+                    [ Html.div
+                        [ Html.Attributes.class "profile-title" ]
+                        [ Html.text "学群" ]
+                    , Html.div
+                        []
+                        [ Html.text s ]
+                    ]
 
                 Nothing ->
                     []
            )
         ++ (case department of
                 Just d ->
-                    [ Html.div [] [ Html.text ("学類:" ++ d) ] ]
+                    [ Html.div
+                        [ Html.Attributes.class "profile-title" ]
+                        [ Html.text "学類" ]
+                    , Html.div
+                        []
+                        [ Html.text d ]
+                    ]
 
                 Nothing ->
                     []
@@ -179,3 +221,54 @@ editIcon =
         , Svg.Attributes.class "profile-editIcon"
         ]
         [ Svg.path [ Svg.Attributes.d "M3 17.46v3.04c0 .28.22.5.5.5h3.04c.13 0 .26-.05.35-.15L17.81 9.94l-3.75-3.75L3.15 17.1c-.1.1-.15.22-.15.36zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" ] [] ]
+
+
+{-| 編集モードでの表示
+-}
+userEditView : Api.Token -> User.Profile -> List (Html.Html Msg)
+userEditView access profile =
+    [ Html.div
+        [ Html.Attributes.class "form" ]
+        [ Html.text "編集モード"
+        , nickNameEditor (User.profileGetNickName profile)
+        , introductionEditor (User.profileGetIntroduction profile)
+        , Html.text "学群学類コンポーネントをここに置く"
+        , Html.div [] [ Html.text "やめる 保存する" ]
+        ]
+    ]
+
+
+nickNameEditor : String -> Html.Html Msg
+nickNameEditor name =
+    Html.div
+        []
+        [ Html.label
+            [ Html.Attributes.class "form-label"
+            , Html.Attributes.for "nickname-editor"
+            ]
+            [ Html.text "表示名" ]
+        , Html.input
+            [ Html.Attributes.attribute "autocomplete" "nickname"
+            , Html.Attributes.id "nickname-editor"
+            , Html.Attributes.class "form-input"
+            ]
+            []
+        ]
+
+
+introductionEditor : String -> Html.Html Msg
+introductionEditor introduction =
+    Html.div
+        []
+        [ Html.label
+            [ Html.Attributes.class "form-label"
+            , Html.Attributes.for "introduction-editor"
+            ]
+            [ Html.text "紹介文" ]
+        , Html.textarea
+            [ Html.Attributes.attribute "autocomplete" "nickname"
+            , Html.Attributes.id "introduction-editor"
+            , Html.Attributes.class "form-textarea"
+            ]
+            []
+        ]

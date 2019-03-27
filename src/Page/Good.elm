@@ -208,11 +208,14 @@ likeButton logInState sending good =
 
     else
         case logInState of
-            LogInState.LogInStateOk { profile, access } ->
-                if good |> Good.isLikedBy (Data.User.getUserId profile) then
+            LogInState.LogInStateOk { user, access } ->
+                let
+                    userId =
+                        Data.User.getUserId user
+                in
+                if good |> Good.isLikedBy userId then
                     Html.button
-                        [ Html.Events.onClick
-                            (UnLikeGood (Data.User.getUserId profile) access (Good.getId good))
+                        [ Html.Events.onClick (UnLikeGood userId access (Good.getId good))
                         , Html.Attributes.class "good-liked"
                         , Html.Attributes.class "good-like"
                         ]
@@ -220,8 +223,7 @@ likeButton logInState sending good =
 
                 else
                     Html.button
-                        [ Html.Events.onClick
-                            (LikeGood (Data.User.getUserId profile) access (Good.getId good))
+                        [ Html.Events.onClick (LikeGood userId access (Good.getId good))
                         , Html.Attributes.class "good-like"
                         ]
                         (itemLikeBody (Good.getLikedCount good))
