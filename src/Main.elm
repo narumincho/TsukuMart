@@ -1073,11 +1073,15 @@ getGoodId page =
 -}
 likeGood : Data.User.UserId -> Int -> Result () () -> Data.LogInState.LogInState -> Page -> ( Page, Cmd Msg )
 likeGood userId goodId result logInState page =
+    let
+        goodListMsg =
+            Page.Component.GoodList.LikeGoodResponse userId goodId result
+    in
     case page of
         PageHome homeModel ->
             let
                 ( newModel, emitList ) =
-                    homeModel |> Page.Home.update (Page.Home.GoodLikeResponse userId goodId result)
+                    homeModel |> Page.Home.update (Page.Home.GoodListMsg goodListMsg)
             in
             ( PageHome newModel
             , homePageEmitListToCmd emitList
@@ -1088,7 +1092,7 @@ likeGood userId goodId result logInState page =
                 ( newModel, emitList ) =
                     likeAndHistoryModel
                         |> Page.LikeAndHistory.update logInState
-                            (Page.LikeAndHistory.GoodLikeResponse userId goodId result)
+                            (Page.LikeAndHistory.GoodListMsg goodListMsg)
             in
             ( PageLikeAndHistory newModel
             , likeAndHistoryEmitListToCmd emitList
@@ -1097,7 +1101,8 @@ likeGood userId goodId result logInState page =
         PageExhibitionGoodList exhibitionGoodListModel ->
             let
                 ( newModel, emitList ) =
-                    exhibitionGoodListModel |> Page.ExhibitionGoodList.update (Page.ExhibitionGoodList.GoodLikeResponse userId goodId result)
+                    exhibitionGoodListModel
+                        |> Page.ExhibitionGoodList.update (Page.ExhibitionGoodList.GoodListMsg goodListMsg)
             in
             ( PageExhibitionGoodList newModel
             , exhibitionGoodListPageEmitListToCmd emitList
@@ -1106,7 +1111,8 @@ likeGood userId goodId result logInState page =
         PagePurchaseGoodList purchaseGoodListModel ->
             let
                 ( newModel, emitList ) =
-                    purchaseGoodListModel |> Page.PurchaseGoodList.update (Page.PurchaseGoodList.GoodLikeResponse userId goodId result)
+                    purchaseGoodListModel
+                        |> Page.PurchaseGoodList.update (Page.PurchaseGoodList.GoodListMsg goodListMsg)
             in
             ( PagePurchaseGoodList newModel
             , purchaseGoodListPageEmitListToCmd emitList
@@ -1131,11 +1137,15 @@ likeGood userId goodId result logInState page =
 -}
 unlikeGood : Data.User.UserId -> Int -> Result () () -> Data.LogInState.LogInState -> Page -> ( Page, Cmd Msg )
 unlikeGood userId goodId result logInState page =
+    let
+        goodListMsg =
+            Page.Component.GoodList.UnlikeGoodResponse userId goodId result
+    in
     case page of
         PageHome homeModel ->
             let
                 ( newModel, emitList ) =
-                    homeModel |> Page.Home.update (Page.Home.GoodUnlikeResponse userId goodId result)
+                    homeModel |> Page.Home.update (Page.Home.GoodListMsg goodListMsg)
             in
             ( PageHome newModel
             , homePageEmitListToCmd emitList
@@ -1146,7 +1156,7 @@ unlikeGood userId goodId result logInState page =
                 ( newModel, emitList ) =
                     likeAndHistoryModel
                         |> Page.LikeAndHistory.update logInState
-                            (Page.LikeAndHistory.GoodUnlikeResponse userId goodId result)
+                            (Page.LikeAndHistory.GoodListMsg goodListMsg)
             in
             ( PageLikeAndHistory newModel
             , likeAndHistoryEmitListToCmd emitList
@@ -1155,7 +1165,8 @@ unlikeGood userId goodId result logInState page =
         PageExhibitionGoodList exhibitionGoodListModel ->
             let
                 ( newModel, emitList ) =
-                    exhibitionGoodListModel |> Page.ExhibitionGoodList.update (Page.ExhibitionGoodList.GoodUnlikeResponse userId goodId result)
+                    exhibitionGoodListModel
+                        |> Page.ExhibitionGoodList.update (Page.ExhibitionGoodList.GoodListMsg goodListMsg)
             in
             ( PageExhibitionGoodList newModel
             , exhibitionGoodListPageEmitListToCmd emitList
@@ -1164,7 +1175,8 @@ unlikeGood userId goodId result logInState page =
         PagePurchaseGoodList purchaseGoodListModel ->
             let
                 ( newModel, emitList ) =
-                    purchaseGoodListModel |> Page.PurchaseGoodList.update (Page.PurchaseGoodList.GoodUnlikeResponse userId goodId result)
+                    purchaseGoodListModel
+                        |> Page.PurchaseGoodList.update (Page.PurchaseGoodList.GoodListMsg goodListMsg)
             in
             ( PagePurchaseGoodList newModel
             , purchaseGoodListPageEmitListToCmd emitList

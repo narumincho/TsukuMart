@@ -87,8 +87,6 @@ type Msg
     | HistoryGoodListResponse (Result () (List Good.Good))
     | LogInOrSignUpMsg LogInOrSignUp.Msg
     | GoodListMsg GoodList.Msg
-    | GoodLikeResponse Data.User.UserId Int (Result () ())
-    | GoodUnlikeResponse Data.User.UserId Int (Result () ())
 
 
 type Emit
@@ -179,13 +177,8 @@ update logInState msg (Model rec) =
                 ( newModel, emitList ) =
                     rec.goodListModel |> GoodList.update goodListMsg
             in
-            ( Model { rec | goodListModel = newModel }
-            , emitList |> List.map EmitGoodList
-            )
-
-        GoodLikeResponse userId id result ->
-            ( case result of
-                Ok () ->
+            ( case goodListMsg of
+                GoodList.LikeGoodResponse userId id (Ok ()) ->
                     let
                         likeGoodListResult =
                             Result.map (Good.listMapIf (\g -> Good.getId g == id) (Good.like userId))
@@ -196,16 +189,10 @@ update logInState msg (Model rec) =
                                 rec.normalModel
                                     |> normalModelMapLikeGoodResponse likeGoodListResult
                                     |> normalModelMapHistoryGoodResponse likeGoodListResult
+                            , goodListModel = newModel
                         }
 
-                Err () ->
-                    Model rec
-            , []
-            )
-
-        GoodUnlikeResponse userId id result ->
-            ( case result of
-                Ok () ->
+                GoodList.UnlikeGoodResponse userId id (Ok ()) ->
                     let
                         unlikeGoodListResult =
                             Result.map (Good.listMapIf (\g -> Good.getId g == id) (Good.unlike userId))
@@ -216,11 +203,12 @@ update logInState msg (Model rec) =
                                 rec.normalModel
                                     |> normalModelMapLikeGoodResponse unlikeGoodListResult
                                     |> normalModelMapHistoryGoodResponse unlikeGoodListResult
+                            , goodListModel = newModel
                         }
 
-                Err () ->
-                    Model rec
-            , []
+                _ ->
+                    Model { rec | goodListModel = newModel }
+            , emitList |> List.map EmitGoodList
             )
 
 

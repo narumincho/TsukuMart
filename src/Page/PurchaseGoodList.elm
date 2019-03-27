@@ -35,8 +35,6 @@ type Msg
     = GetPurchaseGoodResponse (Result () (List Data.Good.Good))
     | LogInOrSignUpMsg LogInOrSignUp.Msg
     | GoodListMsg GoodList.Msg
-    | GoodLikeResponse Data.User.UserId Int (Result () ())
-    | GoodUnlikeResponse Data.User.UserId Int (Result () ())
 
 
 initModel : Maybe Int -> LogInState.LogInState -> ( Model, List Emit )
@@ -91,13 +89,8 @@ update msg (Model rec) =
                 ( newModel, emitList ) =
                     rec.goodListModel |> GoodList.update goodListMsg
             in
-            ( Model { rec | goodListModel = newModel }
-            , emitList |> List.map EmitGoodList
-            )
-
-        GoodLikeResponse userId id result ->
-            ( case result of
-                Ok () ->
+            ( case goodListMsg of
+                GoodList.LikeGoodResponse userId id (Ok ()) ->
                     let
                         likeGoodList =
                             Data.Good.listMapIf (\g -> Data.Good.getId g == id) (Data.Good.like userId)
@@ -115,16 +108,10 @@ update msg (Model rec) =
 
                                     Error ->
                                         Error
+                            , goodListModel = newModel
                         }
 
-                Err () ->
-                    Model rec
-            , []
-            )
-
-        GoodUnlikeResponse userId id result ->
-            ( case result of
-                Ok () ->
+                GoodList.UnlikeGoodResponse userId id (Ok ()) ->
                     let
                         unlikeGoodList =
                             Data.Good.listMapIf (\g -> Data.Good.getId g == id) (Data.Good.unlike userId)
@@ -142,11 +129,12 @@ update msg (Model rec) =
 
                                     Error ->
                                         Error
+                            , goodListModel = newModel
                         }
 
-                Err () ->
-                    Model rec
-            , []
+                _ ->
+                    Model { rec | goodListModel = newModel }
+            , emitList |> List.map EmitGoodList
             )
 
 

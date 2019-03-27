@@ -9,7 +9,7 @@ module Page.Exhibition exposing
 
 import Api
 import Array
-import Data.Good as Goods
+import Data.Good as Good
 import Data.LogInState
 import File
 import Html
@@ -42,7 +42,7 @@ type EditModel
         { name : String
         , description : String
         , price : Maybe Int
-        , condition : Maybe Goods.Condition
+        , condition : Maybe Good.Condition
         , image : ImageList
         }
 
@@ -73,7 +73,7 @@ type Msg
     | InputGoodsName String
     | InputGoodsDescription String
     | InputGoodsPrice String
-    | InputCondition (Maybe Goods.Condition)
+    | InputCondition (Maybe Good.Condition)
     | ToConfirmPage ( Api.Token, Api.SellGoodsRequest )
     | LogInOrSignUpMsg LogInOrSignUp.Msg
     | SellGoods ( Api.Token, Api.SellGoodsRequest )
@@ -606,7 +606,7 @@ priceView price =
         ]
 
 
-conditionView : Html.Html (Maybe Goods.Condition)
+conditionView : Html.Html (Maybe Good.Condition)
 conditionView =
     Html.div
         []
@@ -621,22 +621,22 @@ conditionView =
             , Html.Events.on "change" selectConditionDecoder
             ]
             ([ Html.option [] [ Html.text "--選択してください--" ] ]
-                ++ (Goods.conditionAll
+                ++ (Good.conditionAll
                         |> List.map
                             (\s ->
-                                Html.option [] [ Html.text (Goods.conditionToJapaneseString s) ]
+                                Html.option [] [ Html.text (Good.conditionToJapaneseString s) ]
                             )
                    )
             )
         ]
 
 
-selectConditionDecoder : Json.Decode.Decoder (Maybe Goods.Condition)
+selectConditionDecoder : Json.Decode.Decoder (Maybe Good.Condition)
 selectConditionDecoder =
     Json.Decode.at
         [ "target", "selectedIndex" ]
         Json.Decode.int
-        |> Json.Decode.map (\index -> Goods.conditionAll |> Array.fromList |> Array.get (index - 1))
+        |> Json.Decode.map (\index -> Good.conditionAll |> Array.fromList |> Array.get (index - 1))
 
 
 toConformPageButton : Api.Token -> Maybe Api.SellGoodsRequest -> Html.Html Msg
@@ -682,11 +682,11 @@ confirmView accessToken request =
             ]
       , Html.div [ Html.Attributes.class "exhibition-confirm-item" ]
             [ Html.span [] [ Html.text "値段" ]
-            , Html.span [ Html.Attributes.class "exhibition-confirm-item-value" ] [ Html.text (Goods.priceToString price) ]
+            , Html.span [ Html.Attributes.class "exhibition-confirm-item-value" ] [ Html.text (Good.priceToString price) ]
             ]
       , Html.div [ Html.Attributes.class "exhibition-confirm-item" ]
             [ Html.span [] [ Html.text "状態" ]
-            , Html.span [ Html.Attributes.class "exhibition-confirm-item-value" ] [ Html.text (Goods.conditionToJapaneseString condition) ]
+            , Html.span [ Html.Attributes.class "exhibition-confirm-item-value" ] [ Html.text (Good.conditionToJapaneseString condition) ]
             ]
       , Html.div [ Html.Attributes.class "exhibition-confirm-msg" ]
             [ Html.text "この商品を出品します。よろしいですか?" ]

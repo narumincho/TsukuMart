@@ -604,25 +604,27 @@ getLikeGoodList token msg =
 
 
 {- =================================================================================
-       自分が閲覧した商品を取得    TODO APIが対応していない
+       自分が閲覧した商品を取得    TODO APIが対応していない とりあえず常に Ok []
    =================================================================================
 -}
 
 
 getHistoryGoodList : Token -> (Result () (List Good.Good) -> msg) -> Cmd msg
 getHistoryGoodList token msg =
-    Http.request
-        { method = "GET"
-        , url = urlBuilder [ "v1", "currentuser", "history" ]
-        , headers = [ tokenToHeader token ]
-        , body = Http.emptyBody
-        , expect = Http.expectStringResponse msg getGoodListResponseToResult
-        , timeout = Nothing
-        , tracker = Nothing
-        }
+    Task.succeed ()
+        |> Task.perform (always (msg (Ok [])))
 
 
 
+--    Http.request
+--        { method = "GET"
+--        , url = urlBuilder [ "v1", "currentuser", "history" ]
+--        , headers = [ tokenToHeader token ]
+--        , body = Http.emptyBody
+--        , expect = Http.expectStringResponse msg getGoodListResponseToResult
+--        , timeout = Nothing
+--        , tracker = Nothing
+--        }
 {- ============================================================
        自分が出品した商品を取得する /{version}/currentuser/goods/
    ============================================================
@@ -644,7 +646,7 @@ getExhibitionGoodList token msg =
 
 
 {- ============================================================
-       自分が購入した商品を取得する TODO とりあえず常に Ok []
+       自分が購入した商品を取得する TODO APIが対応していない とりあえず常に Ok []
    ============================================================
 -}
 
@@ -892,59 +894,111 @@ statusDecoder =
 
 
 {- ==============================================================================
-      商品にいいねをする    /{version}/goods/{goods_id}/like
+      商品にいいねをする    /{version}/goods/{goods_id}/toggle-like/
    ==============================================================================
 -}
 
 
 likeGoods : Token -> Int -> (Result () () -> msg) -> Cmd msg
 likeGoods token goodsId msg =
-    Http.request
+    toggleLikeTask token goodsId
+        |> Task.andThen
+            (\result ->
+                case result of
+                    Like ->
+                        Task.succeed ()
+
+                    Unlike ->
+                        toggleLikeTask token goodsId
+                            |> Task.andThen
+                                (\r ->
+                                    case r of
+                                        Like ->
+                                            Task.succeed ()
+
+                                        Unlike ->
+                                            Task.fail ()
+                                )
+            )
+        |> Task.attempt msg
+
+
+toggleLikeTask : Token -> Int -> Task.Task () LikeOrUnlike
+toggleLikeTask token goodId =
+    Http.task
         { method = "POST"
         , headers = [ tokenToHeader token ]
-        , url = urlBuilder [ "v1", "goods", String.fromInt goodsId, "like" ]
+        , url = urlBuilder [ "v1", "goods", String.fromInt goodId, "toggle-like" ]
         , body = Http.emptyBody
-        , expect = Http.expectStringResponse msg likeGoodsResponseToResult
+        , resolver = Http.stringResolver toggleLikeGoodsResponseToResult
         , timeout = Nothing
-        , tracker = Nothing
         }
 
 
-likeGoodsResponseToResult : Http.Response String -> Result () ()
-likeGoodsResponseToResult response =
+toggleLikeGoodsResponseToResult : Http.Response String -> Result () LikeOrUnlike
+toggleLikeGoodsResponseToResult response =
     case response of
-        Http.GoodStatus_ _ _ ->
-            Ok ()
+        Http.GoodStatus_ _ body ->
+            Json.Decode.decodeString toggleLikeGoodsResponseBodyDecoder body
+                |> Result.mapError (always ())
 
         _ ->
             Err ()
 
 
+type LikeOrUnlike
+    = Like
+    | Unlike
+
+
+toggleLikeGoodsResponseBodyDecoder : Json.Decode.Decoder LikeOrUnlike
+toggleLikeGoodsResponseBodyDecoder =
+    Json.Decode.field "message" Json.Decode.string
+        |> Json.Decode.andThen
+            (\result ->
+                case result of
+                    "Successfully liked" ->
+                        Json.Decode.succeed Like
+
+                    "Successfully unliked" ->
+                        Json.Decode.succeed Unlike
+
+                    _ ->
+                        Json.Decode.fail
+                            ("I can't understand toggle like result=\""
+                                ++ result
+                                ++ "\""
+                                ++ "except \"Successfully liked\" or \"Successfully unliked\""
+                            )
+            )
+
+
 
 {- ==============================================================================
-      商品のいいねをはずす    /{version}/goods/{goods_id}/unlike
+      商品のいいねをはずす    /{version}/goods/{goods_id}/toggle-like/
    ==============================================================================
 -}
 
 
 unlikeGoods : Token -> Int -> (Result () () -> msg) -> Cmd msg
 unlikeGoods token goodsId msg =
-    Http.request
-        { method = "DELETE"
-        , headers = [ tokenToHeader token ]
-        , url = urlBuilder [ "v1", "goods", String.fromInt goodsId, "unlike" ]
-        , body = Http.emptyBody
-        , expect = Http.expectStringResponse msg unlikeGoodsResponseToResult
-        , timeout = Nothing
-        , tracker = Nothing
-        }
+    toggleLikeTask token goodsId
+        |> Task.andThen
+            (\result ->
+                case result of
+                    Like ->
+                        toggleLikeTask token goodsId
+                            |> Task.andThen
+                                (\r ->
+                                    case r of
+                                        Like ->
+                                            Task.fail ()
 
+                                        Unlike ->
+                                            Task.succeed ()
+                                )
 
-unlikeGoodsResponseToResult : Http.Response String -> Result () ()
-unlikeGoodsResponseToResult response =
-    case response of
-        Http.GoodStatus_ _ _ ->
-            Ok ()
-
-        _ ->
-            Err ()
+                    Unlike ->
+                        Task.succeed ()
+            )
+        |> Task.attempt msg

@@ -39,8 +39,6 @@ type Msg
     | GetRecommendGoodListResponse (Result () (List Good.Good))
     | GetFreeGoodListResponse (Result () (List Good.Good))
     | GoodListMsg GoodList.Msg
-    | GoodLikeResponse Data.User.UserId Int (Result () ())
-    | GoodUnlikeResponse Data.User.UserId Int (Result () ())
 
 
 {-| 最初の状態。真ん中のタブ「おすすめ」が選択されている
@@ -130,13 +128,8 @@ update msg (Model rec) =
                 ( newModel, emitList ) =
                     rec.goodListModel |> GoodList.update goodListMsg
             in
-            ( Model { rec | goodListModel = newModel }
-            , emitList |> List.map EmitGoodList
-            )
-
-        GoodLikeResponse userId id result ->
-            ( case result of
-                Ok () ->
+            ( case goodListMsg of
+                GoodList.LikeGoodResponse userId id (Ok ()) ->
                     let
                         likeGoodListMaybe =
                             Maybe.map (Good.listMapIf (\g -> Good.getId g == id) (Good.like userId))
@@ -146,16 +139,10 @@ update msg (Model rec) =
                             | recent = likeGoodListMaybe rec.recent
                             , recommend = likeGoodListMaybe rec.recommend
                             , free = likeGoodListMaybe rec.free
+                            , goodListModel = newModel
                         }
 
-                Err () ->
-                    Model rec
-            , []
-            )
-
-        GoodUnlikeResponse userId id result ->
-            ( case result of
-                Ok () ->
+                GoodList.UnlikeGoodResponse userId id (Ok ()) ->
                     let
                         unlikeGoodListMaybe =
                             Maybe.map (Good.listMapIf (\g -> Good.getId g == id) (Good.unlike userId))
@@ -165,11 +152,12 @@ update msg (Model rec) =
                             | recent = unlikeGoodListMaybe rec.recent
                             , recommend = unlikeGoodListMaybe rec.recommend
                             , free = unlikeGoodListMaybe rec.free
+                            , goodListModel = newModel
                         }
 
-                Err () ->
-                    Model rec
-            , []
+                _ ->
+                    Model { rec | goodListModel = newModel }
+            , emitList |> List.map EmitGoodList
             )
 
 

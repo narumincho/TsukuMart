@@ -913,6 +913,10 @@ header {
     background-color: var(--primaryColorLight);
 }
 
+.goodList-like-sending {
+    background-color: #7f2591;
+}
+
 .exhibitionButton {
     position: fixed;
     bottom: 3rem;

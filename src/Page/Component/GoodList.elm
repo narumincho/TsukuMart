@@ -15,12 +15,14 @@ import SiteMap
 
 
 type Model
-    = Model
+    = Model { sending : Bool }
 
 
 type Msg
     = LikeGood Data.User.UserId Api.Token Int
     | UnLikeGood Data.User.UserId Api.Token Int
+    | LikeGoodResponse Data.User.UserId Int (Result () ())
+    | UnlikeGoodResponse Data.User.UserId Int (Result () ())
 
 
 type Emit
@@ -31,7 +33,7 @@ type Emit
 
 initModel : Maybe Int -> ( Model, List Emit )
 initModel goodIdMaybe =
-    ( Model
+    ( Model { sending = False }
     , case goodIdMaybe of
         Just goodId ->
             [ EmitScrollIntoView (goodIdString goodId) ]
@@ -45,13 +47,23 @@ update : Msg -> Model -> ( Model, List Emit )
 update msg _ =
     case msg of
         LikeGood userId token goodId ->
-            ( Model
+            ( Model { sending = True }
             , [ EmitLikeGood userId token goodId ]
             )
 
         UnLikeGood userId token goodId ->
-            ( Model
+            ( Model { sending = True }
             , [ EmitUnlikeGood userId token goodId ]
+            )
+
+        LikeGoodResponse _ _ _ ->
+            ( Model { sending = False }
+            , []
+            )
+
+        UnlikeGoodResponse _ _ _ ->
+            ( Model { sending = False }
+            , []
             )
 
 
@@ -63,7 +75,7 @@ update msg _ =
 
 
 view : Model -> Data.LogInState.LogInState -> Bool -> List Good.Good -> Html.Html Msg
-view _ logInState isWideMode goodsList =
+view (Model { sending }) logInState isWideMode goodsList =
     Html.div
         [ Html.Attributes.style "display" "grid"
         , Html.Attributes.style "grid-template-columns"
@@ -74,11 +86,11 @@ view _ logInState isWideMode goodsList =
                 "50% 50%"
             )
         ]
-        (goodsList |> List.map (goodListItem logInState))
+        (goodsList |> List.map (goodListItem logInState sending))
 
 
-goodListItem : Data.LogInState.LogInState -> Good.Good -> Html.Html Msg
-goodListItem logInState good =
+goodListItem : Data.LogInState.LogInState -> Bool -> Good.Good -> Html.Html Msg
+goodListItem logInState sending good =
     Html.a
         [ Html.Attributes.class "goodList-item"
         , Html.Attributes.href (SiteMap.goodsUrl (Good.getId good))
@@ -90,7 +102,7 @@ goodListItem logInState good =
             [ Html.text (Good.getName good) ]
         , Html.div
             [ Html.Attributes.class "goodList-priceAndLike" ]
-            [ itemLike logInState good
+            [ itemLike logInState sending good
             , itemPrice (Good.getPrice good)
             ]
         ]
@@ -112,41 +124,50 @@ itemPrice price =
         ]
 
 
-itemLike : Data.LogInState.LogInState -> Good.Good -> Html.Html Msg
-itemLike logInState good =
-    case logInState of
-        Data.LogInState.LogInStateOk { profile, access } ->
-            if good |> Good.isLikedBy (Data.User.getUserId profile) then
-                Html.button
-                    [ Html.Events.custom "click"
-                        (Json.Decode.succeed
-                            { message = UnLikeGood (Data.User.getUserId profile) access (Good.getId good)
-                            , stopPropagation = True
-                            , preventDefault = True
-                            }
-                        )
-                    , Html.Attributes.class "goodList-liked"
-                    , Html.Attributes.class "goodList-like"
-                    ]
-                    (itemLikeBody (Good.getLikedCount good))
+itemLike : Data.LogInState.LogInState -> Bool -> Good.Good -> Html.Html Msg
+itemLike logInState sending good =
+    if sending then
+        Html.button
+            [ Html.Attributes.class "goodList-like"
+            , Html.Attributes.class "goodList-like-sending"
+            , Html.Attributes.disabled True
+            ]
+            (itemLikeBody (Good.getLikedCount good))
 
-            else
-                Html.button
-                    [ Html.Events.custom "click"
-                        (Json.Decode.succeed
-                            { message = LikeGood (Data.User.getUserId profile) access (Good.getId good)
-                            , stopPropagation = True
-                            , preventDefault = True
-                            }
-                        )
-                    , Html.Attributes.class "goodList-like"
-                    ]
-                    (itemLikeBody (Good.getLikedCount good))
+    else
+        case logInState of
+            Data.LogInState.LogInStateOk { profile, access } ->
+                if good |> Good.isLikedBy (Data.User.getUserId profile) then
+                    Html.button
+                        [ Html.Events.custom "click"
+                            (Json.Decode.succeed
+                                { message = UnLikeGood (Data.User.getUserId profile) access (Good.getId good)
+                                , stopPropagation = True
+                                , preventDefault = True
+                                }
+                            )
+                        , Html.Attributes.class "goodList-liked"
+                        , Html.Attributes.class "goodList-like"
+                        ]
+                        (itemLikeBody (Good.getLikedCount good))
 
-        Data.LogInState.LogInStateNone ->
-            Html.div
-                [ Html.Attributes.class "goodList-like-label" ]
-                (itemLikeBody (Good.getLikedCount good))
+                else
+                    Html.button
+                        [ Html.Events.custom "click"
+                            (Json.Decode.succeed
+                                { message = LikeGood (Data.User.getUserId profile) access (Good.getId good)
+                                , stopPropagation = True
+                                , preventDefault = True
+                                }
+                            )
+                        , Html.Attributes.class "goodList-like"
+                        ]
+                        (itemLikeBody (Good.getLikedCount good))
+
+            Data.LogInState.LogInStateNone ->
+                Html.div
+                    [ Html.Attributes.class "goodList-like-label" ]
+                    (itemLikeBody (Good.getLikedCount good))
 
 
 itemLikeBody : Int -> List (Html.Html msg)
