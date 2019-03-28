@@ -1,9 +1,12 @@
 module BasicParts exposing
-    ( HeaderMsg(..)
-    , MenuMsg(..)
-    , MenuState(..)
+    ( MenuModel
+    , Msg
+    , closeMenu
     , header
+    , initMenuModel
+    , menuUpdate
     , menuView
+    , narrowScreenModeInit
     )
 
 import Data.LogInState
@@ -18,15 +21,16 @@ import Svg.Attributes
 import Svg.Events
 
 
-type HeaderMsg
+type Msg
     = OpenMenu
+    | CloseMenu
 
 
 
 {- ================= header ================ -}
 
 
-header : Bool -> Html.Html HeaderMsg
+header : Bool -> Html.Html Msg
 header isWideScreenMode =
     Html.header
         []
@@ -50,7 +54,7 @@ header isWideScreenMode =
         )
 
 
-menuButton : Html.Html HeaderMsg
+menuButton : Html.Html Msg
 menuButton =
     Svg.svg
         [ headerButton
@@ -64,7 +68,7 @@ menuButton =
         ]
 
 
-logo : Html.Html HeaderMsg
+logo : Html.Html Msg
 logo =
     Svg.svg
         [ Svg.Attributes.class "logo"
@@ -279,7 +283,7 @@ logoSubTextFontColor =
     Svg.Attributes.fill "#ffe2a6"
 
 
-searchButton : Html.Html HeaderMsg
+searchButton : Html.Html Msg
 searchButton =
     Svg.svg
         [ Svg.Attributes.viewBox "0 0 24 24"
@@ -290,7 +294,7 @@ searchButton =
         ]
 
 
-notificationsButton : Html.Html HeaderMsg
+notificationsButton : Html.Html Msg
 notificationsButton =
     Svg.svg
         [ Svg.Attributes.viewBox "0 0 24 24"
@@ -301,7 +305,7 @@ notificationsButton =
         ]
 
 
-headerButton : Svg.Attribute HeaderMsg
+headerButton : Svg.Attribute Msg
 headerButton =
     Svg.Attributes.class "headerButton"
 
@@ -310,17 +314,43 @@ headerButton =
 {- ================= menu ================ -}
 
 
-type MenuState
+type MenuModel
     = MenuNotOpenedYet
     | MenuClose
     | MenuOpen
 
 
-type MenuMsg
-    = CloseMenu
+closeMenu : Msg
+closeMenu =
+    CloseMenu
 
 
-menuView : Data.LogInState.LogInState -> Maybe MenuState -> Html.Html MenuMsg
+narrowScreenModeInit : Maybe MenuModel
+narrowScreenModeInit =
+    Just MenuNotOpenedYet
+
+
+initMenuModel : Maybe MenuModel
+initMenuModel =
+    Just MenuNotOpenedYet
+
+
+menuUpdate : Msg -> Maybe MenuModel -> Maybe MenuModel
+menuUpdate msg menuModel =
+    case msg of
+        OpenMenu ->
+            Just MenuOpen
+
+        CloseMenu ->
+            case menuModel of
+                Just MenuOpen ->
+                    Just MenuClose
+
+                _ ->
+                    menuModel
+
+
+menuView : Data.LogInState.LogInState -> Maybe MenuModel -> Html.Html Msg
 menuView logInState menuStateMaybe =
     case menuStateMaybe of
         Just menuState ->

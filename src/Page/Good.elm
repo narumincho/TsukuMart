@@ -194,7 +194,8 @@ goodsViewLike : LogInState.LogInState -> Bool -> Good.Good -> Html.Html Msg
 goodsViewLike logInState sending good =
     Html.div
         [ Html.Attributes.class "good-like-container" ]
-        [ likeButton logInState sending good ]
+        [ likeButton logInState sending good
+        ]
 
 
 likeButton : LogInState.LogInState -> Bool -> Good.Good -> Html.Html Msg

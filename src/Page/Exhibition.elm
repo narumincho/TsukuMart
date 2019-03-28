@@ -162,7 +162,16 @@ updateWhenLogIn msg page =
                     ( EditPage
                         (EditModel
                             { rec
-                                | price = String.toInt priceString
+                                | price =
+                                    String.toInt priceString
+                                        |> Maybe.andThen
+                                            (\price ->
+                                                if 0 < price && price <= 1000000 then
+                                                    Just price
+
+                                                else
+                                                    Nothing
+                                            )
                             }
                         )
                     , []

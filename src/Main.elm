@@ -82,7 +82,7 @@ port changeSelectedIndex : { id : String, index : Int } -> Cmd msg
 type Model
     = Model
         { page : Page -- 開いているページ
-        , menuState : Maybe BasicParts.MenuState -- メニューの開閉
+        , menuState : Maybe BasicParts.MenuModel -- メニューの開閉
         , message : Maybe String -- ちょっとしたことがあったら表示するもの
         , logInState : Data.LogInState.LogInState
         , key : Browser.Navigation.Key
@@ -103,9 +103,7 @@ type Page
 
 
 type Msg
-    = OpenMenu
-    | CloseMenu
-    | ToWideScreenMode
+    = ToWideScreenMode
     | ToNarrowScreenMode
     | UrlChange Url.Url
     | UrlRequest Browser.UrlRequest
@@ -127,6 +125,7 @@ type Msg
     | LikeGoodResponse Data.User.UserId Data.Good.GoodId (Result () ())
     | UnlikeGoodResponse Data.User.UserId Data.Good.GoodId (Result () ())
     | ChangeProfileResponse (Result () Data.User.Profile)
+    | BasicPartMenuMsg BasicParts.Msg
     | HomePageMsg Page.Home.Msg
     | LikeAndHistoryPageMsg Page.LikeAndHistory.Msg
     | PurchaseGoodListPageMsg Page.PurchaseGoodList.Msg
@@ -153,55 +152,88 @@ main =
 init : () -> Url.Url -> Browser.Navigation.Key -> ( Model, Cmd Msg )
 init _ url key =
     let
-        ( newModel, _ ) =
-            Page.Home.initModel Nothing
-
-        initModel =
-            Model
-                { page = PageHome newModel
-                , menuState = Just BasicParts.MenuNotOpenedYet
-                , message = Nothing
-                , logInState = Data.LogInState.LogInStateNone
-                , key = key
-                }
-
-        ( model, cmd ) =
-            urlChange url initModel
+        ( page, message, cmd ) =
+            urlParserInit Data.LogInState.LogInStateNone url
+                |> urlParserResultToModel
     in
-    ( model
-    , Cmd.batch [ cmd ]
+    ( Model
+        { page = page
+        , menuState = BasicParts.initMenuModel
+        , message = message
+        , logInState = Data.LogInState.LogInStateNone
+        , key = key
+        }
+    , cmd
     )
+
+
+urlParserInit : Data.LogInState.LogInState -> Url.Url -> Maybe ( Page, Cmd Msg )
+urlParserInit logInState =
+    Url.Parser.oneOf
+        [ SiteMap.homeParser
+            |> Url.Parser.map
+                (Page.Home.initModel Nothing
+                    |> Tuple.mapBoth PageHome homePageEmitListToCmd
+                )
+        , SiteMap.signUpParser
+            |> Url.Parser.map
+                ( PageSignUp Page.SignUp.initModel
+                , Cmd.none
+                )
+        , SiteMap.logInParser
+            |> Url.Parser.map
+                ( PageLogIn Page.LogIn.initModel
+                , Cmd.none
+                )
+        , SiteMap.likeHistoryParser
+            |> Url.Parser.map
+                (Page.LikeAndHistory.initModel Nothing logInState
+                    |> Tuple.mapBoth
+                        PageLikeAndHistory
+                        likeAndHistoryEmitListToCmd
+                )
+        , SiteMap.exhibitionGoodsParser
+            |> Url.Parser.map
+                (Page.ExhibitionGoodList.initModel Nothing logInState
+                    |> Tuple.mapBoth
+                        PageExhibitionGoodList
+                        exhibitionGoodListPageEmitListToCmd
+                )
+        , SiteMap.purchaseGoodsParser
+            |> Url.Parser.map
+                (Page.PurchaseGoodList.initModel Nothing logInState
+                    |> Tuple.mapBoth
+                        PagePurchaseGoodList
+                        purchaseGoodListPageEmitListToCmd
+                )
+        , SiteMap.exhibitionParser
+            |> Url.Parser.map
+                ( PageExhibition Page.Exhibition.initModel, Cmd.none )
+        , SiteMap.goodsParser
+            |> Url.Parser.map
+                (\id ->
+                    Page.Good.initModel id
+                        |> Tuple.mapBoth
+                            PageGoods
+                            goodsPageEmitListToCmd
+                )
+        , SiteMap.profileParser
+            |> Url.Parser.map
+                (Page.Profile.initModel logInState
+                    |> Tuple.mapBoth
+                        PageProfile
+                        profilePageEmitListToCmd
+                )
+        , SiteMap.siteMapParser
+            |> Url.Parser.map
+                ( PageSiteMapXml, Cmd.none )
+        ]
+        |> Url.Parser.parse
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg (Model rec) =
     case msg of
-        OpenMenu ->
-            ( case rec.menuState of
-                Just _ ->
-                    Model
-                        { rec
-                            | menuState = Just BasicParts.MenuOpen
-                        }
-
-                Nothing ->
-                    Model rec
-            , Cmd.none
-            )
-
-        CloseMenu ->
-            ( case rec.menuState of
-                Just _ ->
-                    Model
-                        { rec
-                            | menuState = Just BasicParts.MenuClose
-                        }
-
-                Nothing ->
-                    Model rec
-            , Cmd.none
-            )
-
         ToWideScreenMode ->
             ( Model
                 { rec | menuState = Nothing }
@@ -210,12 +242,24 @@ update msg (Model rec) =
 
         ToNarrowScreenMode ->
             ( Model
-                { rec | menuState = Just BasicParts.MenuNotOpenedYet }
+                { rec | menuState = BasicParts.narrowScreenModeInit }
             , Cmd.none
             )
 
         UrlChange url ->
-            urlChange url (Model rec)
+            let
+                ( page, message, cmd ) =
+                    urlParser (Model rec) url
+                        |> urlParserResultToModel
+            in
+            ( Model
+                { rec
+                    | page = page
+                    , message = message
+                    , menuState = rec.menuState |> BasicParts.menuUpdate BasicParts.closeMenu
+                }
+            , cmd
+            )
 
         UrlRequest urlRequest ->
             ( Model rec
@@ -574,6 +618,11 @@ update msg (Model rec) =
                         { rec | message = Just "商品情報の取得に失敗しました" }
                     , Cmd.none
                     )
+
+        BasicPartMenuMsg m ->
+            ( Model { rec | menuState = rec.menuState |> BasicParts.menuUpdate m }
+            , Cmd.none
+            )
 
         ExhibitionPageMsg exhibitionMsg ->
             case rec.page of
@@ -983,146 +1032,101 @@ receiveImageFileAndBlobUrlDecoder =
         )
 
 
-urlChange : Url.Url -> Model -> ( Model, Cmd Msg )
-urlChange url (Model rec) =
-    case Url.Parser.parse (urlParser (Model rec)) url of
-        Just ( newPageMaybe, cmd ) ->
-            ( case newPageMaybe of
-                Just newPage ->
-                    Model
-                        { rec
-                            | page = newPage
-                            , menuState =
-                                case rec.menuState of
-                                    Just BasicParts.MenuOpen ->
-                                        Just BasicParts.MenuClose
-
-                                    _ ->
-                                        rec.menuState
-                        }
-
-                Nothing ->
-                    Model
-                        { rec
-                            | menuState =
-                                case rec.menuState of
-                                    Just BasicParts.MenuOpen ->
-                                        Just BasicParts.MenuClose
-
-                                    _ ->
-                                        rec.menuState
-                        }
+urlParserResultToModel : Maybe ( Page, Cmd Msg ) -> ( Page, Maybe String, Cmd Msg )
+urlParserResultToModel parserResult =
+    case parserResult of
+        Just ( page, cmd ) ->
+            ( page
+            , Nothing
             , cmd
             )
 
         Nothing ->
-            ( Model
-                { rec
-                    | message = Just "指定したページが見つからないのでホームに移動しました"
-                    , menuState =
-                        case rec.menuState of
-                            Just BasicParts.MenuOpen ->
-                                Just BasicParts.MenuClose
-
-                            _ ->
-                                rec.menuState
-                }
-            , Cmd.none
+            let
+                ( homeModel, emit ) =
+                    Page.Home.initModel Nothing
+            in
+            ( PageHome homeModel
+            , Just "指定したページが見つからないのでホームに移動しました"
+            , homePageEmitListToCmd emit
             )
 
 
-urlParser : Model -> Url.Parser.Parser (( Maybe Page, Cmd Msg ) -> a) a
+urlParser : Model -> Url.Url -> Maybe ( Page, Cmd Msg )
 urlParser (Model rec) =
     Url.Parser.oneOf
         [ SiteMap.homeParser
             |> Url.Parser.map
                 (Page.Home.initModel (getGoodId rec.page)
                     |> Tuple.mapBoth
-                        (\m -> Just (PageHome m))
+                        (\m -> PageHome m)
                         homePageEmitListToCmd
                 )
         , SiteMap.signUpParser
             |> Url.Parser.map
-                ( Just (PageSignUp Page.SignUp.initModel)
+                ( PageSignUp Page.SignUp.initModel
                 , Cmd.none
                 )
         , SiteMap.logInParser
             |> Url.Parser.map
-                ( Just (PageLogIn Page.LogIn.initModel)
+                ( PageLogIn Page.LogIn.initModel
                 , Cmd.none
                 )
         , SiteMap.likeHistoryParser
             |> Url.Parser.map
                 (Page.LikeAndHistory.initModel (getGoodId rec.page) rec.logInState
                     |> Tuple.mapBoth
-                        (\m -> Just (PageLikeAndHistory m))
+                        (\m -> PageLikeAndHistory m)
                         likeAndHistoryEmitListToCmd
                 )
         , SiteMap.exhibitionGoodsParser
             |> Url.Parser.map
                 (Page.ExhibitionGoodList.initModel (getGoodId rec.page) rec.logInState
                     |> Tuple.mapBoth
-                        (\m -> Just (PageExhibitionGoodList m))
+                        (\m -> PageExhibitionGoodList m)
                         exhibitionGoodListPageEmitListToCmd
                 )
         , SiteMap.purchaseGoodsParser
             |> Url.Parser.map
                 (Page.PurchaseGoodList.initModel (getGoodId rec.page) rec.logInState
                     |> Tuple.mapBoth
-                        (\m -> Just (PagePurchaseGoodList m))
+                        (\m -> PagePurchaseGoodList m)
                         purchaseGoodListPageEmitListToCmd
                 )
         , SiteMap.exhibitionParser
             |> Url.Parser.map
-                (case rec.page of
-                    PageExhibition _ ->
-                        ( Nothing, Cmd.none )
-
-                    _ ->
-                        ( Just (PageExhibition Page.Exhibition.initModel), Cmd.none )
-                )
+                ( PageExhibition Page.Exhibition.initModel, Cmd.none )
         , SiteMap.goodsParser
             |> Url.Parser.map
                 (\id ->
-                    case rec.page of
-                        PageGoods _ ->
-                            ( Nothing
-                            , Task.perform (always ToWideScreenMode)
-                                (Task.succeed ())
-                            )
+                    (case rec.page of
+                        PageHome pageModel ->
+                            case Data.Good.searchGoodsFromId id (Page.Home.getGoodAllGoodList pageModel) of
+                                Just goods ->
+                                    Page.Good.initModelFromGoods goods
+
+                                Nothing ->
+                                    Page.Good.initModel id
 
                         _ ->
-                            let
-                                ( newModel, emitList ) =
-                                    case rec.page of
-                                        PageHome pageModel ->
-                                            case Data.Good.searchGoodsFromId id (Page.Home.getGoodAllGoodList pageModel) of
-                                                Just goods ->
-                                                    Page.Good.initModelFromGoods goods
-
-                                                Nothing ->
-                                                    Page.Good.initModel id
-
-                                        _ ->
-                                            Page.Good.initModel id
-                            in
-                            ( Just (PageGoods newModel)
-                            , goodsPageEmitListToCmd emitList
-                            )
+                            Page.Good.initModel id
+                    )
+                        |> Tuple.mapBoth PageGoods goodsPageEmitListToCmd
                 )
         , SiteMap.profileParser
             |> Url.Parser.map
                 (Page.Profile.initModel rec.logInState
                     |> Tuple.mapBoth
-                        (\m -> Just (PageProfile m))
+                        PageProfile
                         profilePageEmitListToCmd
                 )
         , SiteMap.siteMapParser
             |> Url.Parser.map
-                ( Just PageSiteMapXml
+                ( PageSiteMapXml
                 , Cmd.none
                 )
         ]
+        |> Url.Parser.parse
 
 
 {-| 指定したページにあるメインの商品ID
@@ -1289,9 +1293,9 @@ view (Model { page, menuState, message, logInState }) =
             title ++ " | つくマート"
     , body =
         [ BasicParts.header isWideScreen
-            |> Html.map basicPartsHeaderMsgToMsg
+            |> Html.map BasicPartMenuMsg
         , BasicParts.menuView logInState menuState
-            |> Html.map basicPartMenuMsgToMsg
+            |> Html.map BasicPartMenuMsg
         ]
             ++ mainView
             ++ (case message of
@@ -1326,20 +1330,6 @@ mainViewAndMainTab logInState page isWideScreenMode =
             mainView
       ]
     )
-
-
-basicPartsHeaderMsgToMsg : BasicParts.HeaderMsg -> Msg
-basicPartsHeaderMsgToMsg msg =
-    case msg of
-        BasicParts.OpenMenu ->
-            OpenMenu
-
-
-basicPartMenuMsgToMsg : BasicParts.MenuMsg -> Msg
-basicPartMenuMsgToMsg msg =
-    case msg of
-        BasicParts.CloseMenu ->
-            CloseMenu
 
 
 titleAndTabDataAndMainView : Data.LogInState.LogInState -> Bool -> Page -> ( String, Tab.Tab Msg, List (Html.Html Msg) )

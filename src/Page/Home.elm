@@ -41,7 +41,7 @@ type Msg
     | GoodListMsg GoodList.Msg
 
 
-{-| 最初の状態。真ん中のタブ「おすすめ」が選択されている
+{-| 最初の状態。真ん中のタブ「おすすめ」が選択されている。Maybe Good.GoodIdで指定した商品のところまでスクロールする
 -}
 initModel : Maybe Good.GoodId -> ( Model, List Emit )
 initModel goodIdMaybe =
