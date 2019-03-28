@@ -578,7 +578,7 @@ descriptionView =
 
 
 priceView : Maybe Int -> Html.Html Msg
-priceView price =
+priceView priceMaybe =
     Html.div
         []
         [ Html.label
@@ -593,7 +593,7 @@ priceView price =
                 [ Html.Attributes.type_ "number"
                 , Html.Attributes.class "exhibition-itemPrice-input-input"
                 , Html.Attributes.id "exhibition-price"
-                , Html.Attributes.placeholder "0～100万"
+                , Html.Attributes.placeholder "0 ～ 1000000"
                 , Html.Attributes.min "0"
                 , Html.Attributes.max "1000000"
                 , Html.Events.onInput InputGoodsPrice
@@ -602,6 +602,17 @@ priceView price =
             , Html.span
                 [ Html.Attributes.class "exhibition-itemPrice-yen" ]
                 [ Html.text "円" ]
+            ]
+        , Html.div
+            []
+            [ Html.text
+                (case priceMaybe of
+                    Just price ->
+                        Good.priceToString price
+
+                    Nothing ->
+                        "0 ～ 100万円の価格を入力してください"
+                )
             ]
         ]
 

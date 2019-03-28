@@ -5,6 +5,7 @@ module Data.User exposing
     , getProfile
     , getUserId
     , makeFromApi
+    , makeProfile
     , profileGetIntroduction
     , profileGetNickName
     , profileGetUniversity
@@ -60,6 +61,11 @@ makeFromApi { id, introduction, university, nickName } =
             , nickName = nickName
             }
         )
+
+
+makeProfile : { nickName : String, introduction : String, university : University.University } -> Profile
+makeProfile =
+    Profile
 
 
 getUserId : User -> UserId

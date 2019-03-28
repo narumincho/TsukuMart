@@ -52,6 +52,15 @@
             }
             app.ports.receiveImageFileAndBlobUrl.send(result);
         });
+        /* 指定されたidの要素のテキストの内容を変える */
+        app.ports.inputOrTextAreaReplaceText.subscribe(({ id, text }) => {
+            requestAnimationFrame(() => {
+                const element = document.getElementById(id);
+                if (element !== null) {
+                    element.value = text;
+                }
+            })
+        });
         /* 指定されたidの要素が表示されるようにスクロールさせる */
         app.ports.elementScrollIntoView.subscribe(id => {
             requestAnimationFrame(() => {

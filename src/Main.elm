@@ -72,6 +72,9 @@ port studentImageChange : String -> Cmd msg
 port elementScrollIntoView : String -> Cmd msg
 
 
+port inputOrTextAreaReplaceText : { id : String, text : String } -> Cmd msg
+
+
 type Model
     = Model
         { page : Page -- 開いているページ
@@ -605,7 +608,7 @@ update msg (Model rec) =
                 PageProfile profileModel ->
                     let
                         ( newModel, emitList ) =
-                            Page.Profile.update profileMsg profileModel
+                            Page.Profile.update rec.logInState profileMsg profileModel
                     in
                     ( Model
                         { rec
@@ -661,7 +664,7 @@ update msg (Model rec) =
                             let
                                 ( newModel, emitList ) =
                                     profileModel
-                                        |> Page.Profile.update Page.Profile.MsgChangeProfileResponse
+                                        |> Page.Profile.update rec.logInState Page.Profile.MsgChangeProfileResponse
                             in
                             ( Model
                                 { rec
@@ -897,6 +900,10 @@ profilePageEmitListToCmd =
 
                 Page.Profile.EmitChangeProfile token profile ->
                     Api.updateProfile token profile ChangeProfileResponse
+
+                Page.Profile.EmitReplaceText { id, text } ->
+                    inputOrTextAreaReplaceText
+                        { id = id, text = text }
         )
         >> Cmd.batch
 

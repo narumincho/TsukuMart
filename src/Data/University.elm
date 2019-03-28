@@ -5,15 +5,18 @@ module Data.University exposing
     , University(..)
     , departmentFromIdString
     , departmentToIdString
+    , departmentToIndex
     , departmentToJapaneseString
     , graduateAllValue
     , graduateFromIdString
     , graduateToIdString
+    , graduateToIndex
     , graduateToJapaneseString
     , schoolAll
     , schoolFromDepartment
     , schoolToDepartmentList
     , schoolToIdString
+    , schoolToIndex
     , schoolToJapaneseString
     , schoolToOnlyOneDepartment
     , universityFromIdString
@@ -22,6 +25,10 @@ module Data.University exposing
 
 {-| 研究科、学群、学類
 -}
+
+import Utility
+
+
 
 {- ======================================
              研究科、学群、学類
@@ -112,6 +119,12 @@ schoolAll =
     , SAandd
     , SSport
     ]
+
+
+schoolToIndex : School -> Int
+schoolToIndex school =
+    Utility.getFirstIndex school schoolAll
+        |> Maybe.withDefault 0
 
 
 {-| 学群の識別用の文字列を取得する
@@ -395,6 +408,12 @@ departmentAll =
     ]
 
 
+departmentToIndex : SchoolAndDepartment -> Int
+departmentToIndex department =
+    Utility.getFirstIndex department departmentAll
+        |> Maybe.withDefault 0
+
+
 departmentToIdString : SchoolAndDepartment -> String
 departmentToIdString department =
     case department of
@@ -609,6 +628,12 @@ graduateAllValue =
     , GSlis
     , GGlobal
     ]
+
+
+graduateToIndex : Graduate -> Int
+graduateToIndex graduate =
+    Utility.getFirstIndex graduate graduateAllValue
+        |> Maybe.withDefault 0
 
 
 graduateToJapaneseString : Graduate -> String

@@ -731,7 +731,6 @@ header {
                 Sign Up 新規登録画面
 ===============================================*/
 
-
 /*===============================================
             Profile ユーザーページ画面
 ===============================================*/
@@ -752,6 +751,59 @@ header {
 .profile-editIcon {
     width: 2rem;
     height: 2rem;
+}
+
+.profile-editButtonArea {
+    display: flex;
+    flex-direction: row;
+}
+
+.profile-editOkButton {
+    background-color: var(--primaryColor);
+    color: #ddd;
+    fill: #ddd;
+    padding: 1rem;
+    font-size: 1.5rem;
+    border-radius: .4rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.18);
+    user-select: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-grow: 1;
+}
+
+.profile-editOkButton:hover {
+    background-color: var(--primaryColorLight);
+    color: #111;
+    fill: #111;
+}
+
+.profile-editOkButton:disabled {
+    background-color: #aaa;
+    color: #ddd;
+    fill: #ddd;
+}
+
+.profile-editCancelButton {
+    background-color: #999;
+    color: #111;
+    padding: 1rem;
+    text-align: center;
+    font-size: 1.5rem;
+    border-radius: .4rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.18);
+    border: none;
+    user-select: none;
+    cursor: pointer;
+    text-decoration: none;
+    cursor: pointer;
+    flex-grow: 1;
+}
+
+.profile-editCancelButton:hover {
+    background-color: #bbb;
 }
 
 /*===============================================

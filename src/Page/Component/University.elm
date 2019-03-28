@@ -1,4 +1,4 @@
-module Page.Component.University exposing (Select, getUniversity, initSelect, view)
+module Page.Component.University exposing (Select, getUniversity, initSelect, selectFromUniversity, view)
 
 import Array
 import Data.University
@@ -6,6 +6,7 @@ import Html
 import Html.Attributes
 import Html.Events
 import Json.Decode
+import Json.Encode
 
 
 type Select
@@ -28,6 +29,50 @@ type GraduateSelect
 initSelect : Select
 initSelect =
     UniversitySchool SchoolNone
+
+
+{-| データから選択モデルへ
+-}
+selectFromUniversity : Data.University.University -> Select
+selectFromUniversity university =
+    case university of
+        Data.University.GraduateTsukuba graduate schoolAndDepartment ->
+            UniversityGraduate
+                (GraduateSelect (Just graduate) (Just (SchoolSelectSchoolAndDepartment schoolAndDepartment)))
+
+        Data.University.GraduateNotTsukuba graduate ->
+            UniversityGraduate
+                (GraduateSelect (Just graduate) Nothing)
+
+        Data.University.NotGraduate schoolAndDepartment ->
+            UniversitySchool
+                (SchoolSelectSchoolAndDepartment schoolAndDepartment)
+
+
+schoolSelectGetSchool : SchoolSelect -> Maybe Data.University.School
+schoolSelectGetSchool schoolSelect =
+    case schoolSelect of
+        SchoolNone ->
+            Nothing
+
+        SchoolSelectSchool school ->
+            Just school
+
+        SchoolSelectSchoolAndDepartment schoolAndDepartment ->
+            Just (Data.University.schoolFromDepartment schoolAndDepartment)
+
+
+schoolSelectGetDepartment : SchoolSelect -> Maybe Data.University.SchoolAndDepartment
+schoolSelectGetDepartment schoolSelect =
+    case schoolSelect of
+        SchoolNone ->
+            Nothing
+
+        SchoolSelectSchool _ ->
+            Nothing
+
+        SchoolSelectSchoolAndDepartment schoolAndDepartment ->
+            Just schoolAndDepartment
 
 
 {-| 学群学類研究科の情報を取得する
@@ -142,7 +187,7 @@ schoolView schoolSelect =
     let
         schoolForm =
             ( "selectSchool"
-            , selectSchoolView
+            , selectSchoolView (schoolSelectGetSchool schoolSelect)
                 |> Html.map
                     (\m ->
                         case m of
@@ -160,7 +205,7 @@ schoolView schoolSelect =
             )
 
         departmentSelectForm school =
-            case selectDepartmentView school of
+            case selectDepartmentView school (schoolSelectGetDepartment schoolSelect) of
                 Just v ->
                     Just
                         ( "s=" ++ Data.University.schoolToIdString school
@@ -205,7 +250,7 @@ schoolView schoolSelect =
 graduateView : GraduateSelect -> List ( String, Html.Html GraduateSelect )
 graduateView (GraduateSelect graduateSelect schoolSelect) =
     [ ( "selectGraduate"
-      , selectGraduateView
+      , selectGraduateView graduateSelect
             |> Html.map (\g -> GraduateSelect g schoolSelect)
       )
     , ( "tsukubaUniversitySchoolOrNo"
@@ -234,8 +279,8 @@ graduateView (GraduateSelect graduateSelect schoolSelect) =
            )
 
 
-selectGraduateView : Html.Html (Maybe Data.University.Graduate)
-selectGraduateView =
+selectGraduateView : Maybe Data.University.Graduate -> Html.Html (Maybe Data.University.Graduate)
+selectGraduateView graduateMaybe =
     Html.div
         []
         [ Html.label
@@ -247,6 +292,16 @@ selectGraduateView =
             [ Html.Attributes.class "form-menu"
             , Html.Attributes.id "signUp-selectGraduate"
             , Html.Events.on "change" selectGraduateDecoder
+            , Html.Attributes.property "selectedIndex"
+                (Json.Encode.int
+                    (case graduateMaybe of
+                        Just graduate ->
+                            Data.University.graduateToIndex graduate + 1
+
+                        Nothing ->
+                            0
+                    )
+                )
             ]
             ([ Html.option [] [ Html.text "--選択してください--" ] ]
                 ++ (Data.University.graduateAllValue
@@ -315,8 +370,8 @@ graduateYesNoTsukubaView leftSelect =
 
 {-| 学群の選択
 -}
-selectSchoolView : Html.Html (Maybe Data.University.School)
-selectSchoolView =
+selectSchoolView : Maybe Data.University.School -> Html.Html (Maybe Data.University.School)
+selectSchoolView schoolMaybe =
     Html.div
         []
         [ Html.label
@@ -328,6 +383,16 @@ selectSchoolView =
             [ Html.Attributes.class "form-menu"
             , Html.Attributes.id "signUp-selectSchool"
             , Html.Events.on "change" selectSchoolDecoder
+            , Html.Attributes.property "selectedIndex"
+                (Json.Encode.int
+                    (case schoolMaybe of
+                        Just school ->
+                            Data.University.schoolToIndex school + 1
+
+                        Nothing ->
+                            0
+                    )
+                )
             ]
             ([ Html.option [] [ Html.text "--選択してください--" ] ]
                 ++ (Data.University.schoolAll
@@ -350,8 +415,8 @@ selectSchoolDecoder =
 
 {-| 学類の選択
 -}
-selectDepartmentView : Data.University.School -> Maybe (Html.Html (Maybe Data.University.SchoolAndDepartment))
-selectDepartmentView school =
+selectDepartmentView : Data.University.School -> Maybe Data.University.SchoolAndDepartment -> Maybe (Html.Html (Maybe Data.University.SchoolAndDepartment))
+selectDepartmentView school departmentMaybe =
     case Data.University.schoolToDepartmentList school of
         [] ->
             Nothing
@@ -369,6 +434,16 @@ selectDepartmentView school =
                         [ Html.Attributes.class "form-menu"
                         , Html.Attributes.id "signUp-selectDepartment"
                         , Html.Events.on "change" (selectDepartmentDecoder school)
+                        , Html.Attributes.property "selectedIndex"
+                            (Json.Encode.int
+                                (case departmentMaybe of
+                                    Just department ->
+                                        Data.University.departmentToIndex department + 1
+
+                                    Nothing ->
+                                        0
+                                )
+                            )
                         ]
                         ([ Html.option [] [ Html.text "--選択してください--" ] ]
                             ++ (departmentList

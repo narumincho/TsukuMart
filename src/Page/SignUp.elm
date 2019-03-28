@@ -304,8 +304,8 @@ sAddressSelectView userSignUpSAddressAndPassword =
         [ Html.Attributes.class "form-select" ]
         [ Html.div
             ([ Html.Attributes.classList
-                [ ( "signUp-select-item", not leftSelect )
-                , ( "signUp-select-itemSelect", leftSelect )
+                [ ( "form-select-item", not leftSelect )
+                , ( "form-select-itemSelect", leftSelect )
                 ]
              , Html.Attributes.style "border-radius" ".4rem 0 0 .4rem"
              ]
@@ -326,8 +326,8 @@ sAddressSelectView userSignUpSAddressAndPassword =
             [ Html.text "持っている" ]
         , Html.div
             ([ Html.Attributes.classList
-                [ ( "signUp-select-item", leftSelect )
-                , ( "signUp-select-itemSelect", not leftSelect )
+                [ ( "form-select-item", leftSelect )
+                , ( "form-select-itemSelect", not leftSelect )
                 ]
              , Html.Attributes.style "border-radius" "0 .4rem .4rem 0"
              ]

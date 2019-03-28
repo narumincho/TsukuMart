@@ -14,7 +14,9 @@ import Data.User as User
 import Html
 import Html.Attributes
 import Html.Events
+import Html.Keyed
 import Page.Component.LogInOrSignUp as LogInOrSignUp
+import Page.Component.University as CompUniversity
 import Svg
 import Svg.Attributes
 import Tab
@@ -28,18 +30,29 @@ type Model
 
 
 type Mode
-    = EditMode
+    = EditMode EditModel
     | ViewMode
+
+
+type alias EditModel =
+    { nickName : String
+    , introduction : String
+    , universitySelect : CompUniversity.Select
+    }
 
 
 type Emit
     = EmitLogInOrSignUp LogInOrSignUp.Emit
     | EmitChangeProfile Api.Token User.Profile
+    | EmitReplaceText { id : String, text : String }
 
 
 type Msg
     = MsgLogInOrSignUp LogInOrSignUp.Msg
     | MsgToEditMode
+    | MsgInputNickName String
+    | MsgInputIntroduction String
+    | MsgInputUniversity CompUniversity.Select
     | MsgBackToViewMode
     | MsgChangeProfile Api.Token User.Profile
     | MsgChangeProfileResponse
@@ -57,8 +70,8 @@ initModel =
 {- ====== Update ====== -}
 
 
-update : Msg -> Model -> ( Model, List Emit )
-update msg (Model rec) =
+update : LogInState.LogInState -> Msg -> Model -> ( Model, List Emit )
+update logInState msg (Model rec) =
     case msg of
         MsgLogInOrSignUp logInOrSignUpMsg ->
             let
@@ -70,7 +83,35 @@ update msg (Model rec) =
             )
 
         MsgToEditMode ->
-            ( Model { rec | mode = EditMode }
+            toEditMode logInState (Model rec)
+
+        MsgInputNickName nickName ->
+            ( case rec.mode of
+                EditMode r ->
+                    Model { rec | mode = EditMode { r | nickName = String.trim nickName } }
+
+                ViewMode ->
+                    Model rec
+            , []
+            )
+
+        MsgInputIntroduction introduction ->
+            ( case rec.mode of
+                EditMode r ->
+                    Model { rec | mode = EditMode { r | introduction = introduction } }
+
+                ViewMode ->
+                    Model rec
+            , []
+            )
+
+        MsgInputUniversity select ->
+            ( case rec.mode of
+                EditMode r ->
+                    Model { rec | mode = EditMode { r | universitySelect = select } }
+
+                ViewMode ->
+                    Model rec
             , []
             )
 
@@ -90,6 +131,43 @@ update msg (Model rec) =
             )
 
 
+toEditMode : LogInState.LogInState -> Model -> ( Model, List Emit )
+toEditMode logInState (Model rec) =
+    case logInState of
+        LogInState.LogInStateOk { user } ->
+            let
+                profile =
+                    User.getProfile user
+
+                nickName =
+                    User.profileGetNickName profile
+
+                introduction =
+                    User.profileGetIntroduction profile
+
+                university =
+                    User.profileGetUniversity profile
+            in
+            ( Model
+                { rec
+                    | mode =
+                        EditMode
+                            { nickName = nickName
+                            , introduction = introduction
+                            , universitySelect = CompUniversity.selectFromUniversity university
+                            }
+                }
+            , [ EmitReplaceText { id = nickNameEditorId, text = nickName }
+              , EmitReplaceText { id = introductionEditorId, text = introduction }
+              ]
+            )
+
+        LogInState.LogInStateNone ->
+            ( Model rec
+            , []
+            )
+
+
 
 {- ====== View ====== -}
 
@@ -103,8 +181,8 @@ view logInState (Model { logInOrSignUpModel, mode }) =
             (case logInState of
                 LogInState.LogInStateOk { access, user } ->
                     case mode of
-                        EditMode ->
-                            userEditView access (User.getProfile user)
+                        EditMode editModel ->
+                            userEditView access editModel (User.getProfile user)
 
                         ViewMode ->
                             userView user
@@ -131,7 +209,7 @@ userView user =
          ]
             ++ universityView (User.profileGetUniversity profile)
             ++ [ Html.text ("ユーザーID " ++ (user |> User.getUserId |> User.userIdToString)) ]
-            ++ [ editButton ]
+            ++ [ toEditButton ]
         )
     ]
 
@@ -152,7 +230,8 @@ introductionView introduction =
         [ Html.div
             [ Html.Attributes.class "profile-title" ]
             [ Html.text "紹介文" ]
-        , Html.div [] [ Html.text introduction ]
+        , Html.div []
+            (introduction |> String.lines |> List.map Html.text |> List.intersperse (Html.br [] []))
         ]
 
 
@@ -203,8 +282,8 @@ universityView university =
            )
 
 
-editButton : Html.Html Msg
-editButton =
+toEditButton : Html.Html Msg
+toEditButton =
     Html.button
         [ Html.Attributes.class "mainButton"
         , Html.Events.onClick MsgToEditMode
@@ -225,35 +304,52 @@ editIcon =
 
 {-| 編集モードでの表示
 -}
-userEditView : Api.Token -> User.Profile -> List (Html.Html Msg)
-userEditView access profile =
-    [ Html.div
+userEditView : Api.Token -> EditModel -> User.Profile -> List (Html.Html Msg)
+userEditView access editModel profile =
+    [ Html.Keyed.node "div"
         [ Html.Attributes.class "form" ]
-        [ Html.text "編集モード"
-        , nickNameEditor (User.profileGetNickName profile)
-        , introductionEditor (User.profileGetIntroduction profile)
-        , Html.text "学群学類コンポーネントをここに置く"
-        , Html.div [] [ Html.text "やめる 保存する" ]
-        ]
+        ([ ( "nickNameEditor", nickNameEditor (User.profileGetNickName profile) )
+         , ( "introductionEditor", introductionEditor (User.profileGetIntroduction profile) )
+         ]
+            ++ (CompUniversity.view editModel.universitySelect |> List.map (Tuple.mapSecond (Html.map MsgInputUniversity)))
+            ++ [ ( "button", editButton access editModel )
+               ]
+        )
     ]
 
 
 nickNameEditor : String -> Html.Html Msg
-nickNameEditor name =
+nickNameEditor nickName =
     Html.div
         []
-        [ Html.label
+        ([ Html.label
             [ Html.Attributes.class "form-label"
-            , Html.Attributes.for "nickname-editor"
+            , Html.Attributes.for nickNameEditorId
             ]
             [ Html.text "表示名" ]
-        , Html.input
+         , Html.input
             [ Html.Attributes.attribute "autocomplete" "nickname"
-            , Html.Attributes.id "nickname-editor"
+            , Html.Attributes.id nickNameEditorId
             , Html.Attributes.class "form-input"
+            , Html.Events.onInput MsgInputNickName
             ]
             []
-        ]
+         ]
+            ++ (if String.length nickName < 1 then
+                    [ Html.text "表示名は 1文字以上である必要があります" ]
+
+                else if 50 < String.length nickName then
+                    [ Html.text "表示名は 50文字以内である必要があります" ]
+
+                else
+                    []
+               )
+        )
+
+
+nickNameEditorId : String
+nickNameEditorId =
+    "nickname-editor"
 
 
 introductionEditor : String -> Html.Html Msg
@@ -262,13 +358,64 @@ introductionEditor introduction =
         []
         [ Html.label
             [ Html.Attributes.class "form-label"
-            , Html.Attributes.for "introduction-editor"
+            , Html.Attributes.for introductionEditorId
             ]
             [ Html.text "紹介文" ]
         , Html.textarea
             [ Html.Attributes.attribute "autocomplete" "nickname"
-            , Html.Attributes.id "introduction-editor"
+            , Html.Attributes.id introductionEditorId
             , Html.Attributes.class "form-textarea"
+            , Html.Events.onInput MsgInputIntroduction
             ]
             []
         ]
+
+
+introductionEditorId : String
+introductionEditorId =
+    "introduction-editor"
+
+
+editButton : Api.Token -> EditModel -> Html.Html Msg
+editButton token editModel =
+    Html.div
+        [ Html.Attributes.class "profile-editButtonArea" ]
+        [ Html.button
+            [ Html.Attributes.class "profile-editCancelButton"
+            , Html.Events.onClick MsgBackToViewMode
+            ]
+            [ Html.text "キャンセル" ]
+        , Html.button
+            ([ Html.Attributes.class "profile-editOkButton" ]
+                ++ (case editModelToProfile editModel of
+                        Just profile ->
+                            [ Html.Events.onClick (MsgChangeProfile token profile)
+                            , Html.Attributes.disabled False
+                            ]
+
+                        Nothing ->
+                            [ Html.Attributes.disabled True ]
+                   )
+            )
+            [ Html.text "変更する" ]
+        ]
+
+
+editModelToProfile : EditModel -> Maybe User.Profile
+editModelToProfile { nickName, introduction, universitySelect } =
+    if 1 <= String.length nickName && String.length nickName <= 50 then
+        case CompUniversity.getUniversity universitySelect of
+            Just university ->
+                Just
+                    (User.makeProfile
+                        { nickName = nickName
+                        , introduction = introduction
+                        , university = university
+                        }
+                    )
+
+            Nothing ->
+                Nothing
+
+    else
+        Nothing
