@@ -107,21 +107,13 @@ type Msg
     | ToNarrowScreenMode
     | UrlChange Url.Url
     | UrlRequest Browser.UrlRequest
-    | SignUpResponse (Result Api.SignUpResponseError Api.SignUpResponseOk)
+    | AddLogMessage String
     | SignUpConfirmResponse (Result Api.SignUpConfirmResponseError Api.SignUpConfirmResponseOk)
     | LogInResponse (Result Api.LogInResponseError Api.LogInResponseOk)
     | ReceiveImageDataUrl String
     | ReceiveImageFileAndBlobUrl Json.Decode.Value
     | GetUserDataResponse { access : Api.Token, refresh : Api.Token } (Result () Data.User.User)
     | SellGoodResponse (Result Api.SellGoodsResponseError ())
-    | GetRecentGoodListResponse (Result () (List Data.Good.Good))
-    | GetRecommendGoodListResponse (Result () (List Data.Good.Good))
-    | GetFreeGoodListResponse (Result () (List Data.Good.Good))
-    | GetLikeGoodListResponse (Result () (List Data.Good.Good))
-    | GetHistoryGoodListResponse (Result () (List Data.Good.Good))
-    | GetExhibitionGoodListResponse (Result () (List Data.Good.Good))
-    | GetPurchaseGoodListResponse (Result () (List Data.Good.Good))
-    | GetGoodResponse (Result () Data.Good.Good)
     | LikeGoodResponse Data.User.UserId Data.Good.GoodId (Result () ())
     | UnlikeGoodResponse Data.User.UserId Data.Good.GoodId (Result () ())
     | ChangeProfileResponse (Result () Data.User.Profile)
@@ -271,23 +263,11 @@ update msg (Model rec) =
                     Browser.Navigation.load urlString
             )
 
-        SignUpResponse response ->
-            case rec.page of
-                PageSignUp singUpPageModel ->
-                    let
-                        ( newModel, emitList ) =
-                            Page.SignUp.update
-                                (Page.SignUp.SignUpResponse response)
-                                singUpPageModel
-                    in
-                    ( Model { rec | page = PageSignUp newModel }
-                    , signUpPageEmitListToCmd emitList
-                    )
-
-                _ ->
-                    ( Model rec
-                    , Cmd.none
-                    )
+        AddLogMessage logMessage ->
+            ( Model
+                { rec | message = Just logMessage }
+            , Cmd.none
+            )
 
         LogInResponse logInResponse ->
             case logInResponse of
@@ -474,150 +454,8 @@ update msg (Model rec) =
 
                 Err _ ->
                     Model { rec | message = Just "出品できませんでした" }
-            , Api.getRecommendGoods GetRecommendGoodListResponse
+            , Cmd.none
             )
-
-        GetRecentGoodListResponse result ->
-            case rec.page of
-                PageHome homeModel ->
-                    let
-                        ( newModel, emitList ) =
-                            homeModel
-                                |> Page.Home.update (Page.Home.GetRecentGoodListResponse result)
-                    in
-                    ( Model { rec | page = PageHome newModel }
-                    , homePageEmitListToCmd emitList
-                    )
-
-                _ ->
-                    ( Model rec
-                    , Cmd.none
-                    )
-
-        GetRecommendGoodListResponse result ->
-            case rec.page of
-                PageHome homeModel ->
-                    let
-                        ( newModel, emitList ) =
-                            homeModel
-                                |> Page.Home.update (Page.Home.GetRecommendGoodListResponse result)
-                    in
-                    ( Model { rec | page = PageHome newModel }
-                    , homePageEmitListToCmd emitList
-                    )
-
-                _ ->
-                    ( Model rec
-                    , Cmd.none
-                    )
-
-        GetFreeGoodListResponse result ->
-            case rec.page of
-                PageHome homeModel ->
-                    let
-                        ( newModel, emitList ) =
-                            homeModel |> Page.Home.update (Page.Home.GetFreeGoodListResponse result)
-                    in
-                    ( Model { rec | page = PageHome newModel }
-                    , homePageEmitListToCmd emitList
-                    )
-
-                _ ->
-                    ( Model rec
-                    , Cmd.none
-                    )
-
-        GetLikeGoodListResponse result ->
-            case rec.page of
-                PageLikeAndHistory likeAndHistoryModel ->
-                    let
-                        ( newModel, emitList ) =
-                            likeAndHistoryModel
-                                |> Page.LikeAndHistory.update rec.logInState (Page.LikeAndHistory.LikeGoodListResponse result)
-                    in
-                    ( Model { rec | page = PageLikeAndHistory newModel }
-                    , likeAndHistoryEmitListToCmd emitList
-                    )
-
-                _ ->
-                    ( Model rec
-                    , Cmd.none
-                    )
-
-        GetHistoryGoodListResponse result ->
-            case rec.page of
-                PageLikeAndHistory likeAndHistoryModel ->
-                    let
-                        ( newModel, emitList ) =
-                            likeAndHistoryModel
-                                |> Page.LikeAndHistory.update rec.logInState (Page.LikeAndHistory.HistoryGoodListResponse result)
-                    in
-                    ( Model { rec | page = PageLikeAndHistory newModel }
-                    , likeAndHistoryEmitListToCmd emitList
-                    )
-
-                _ ->
-                    ( Model rec
-                    , Cmd.none
-                    )
-
-        GetExhibitionGoodListResponse result ->
-            case rec.page of
-                PageExhibitionGoodList exhibitionGoodListModel ->
-                    let
-                        ( newModel, emitMaybe ) =
-                            exhibitionGoodListModel
-                                |> Page.ExhibitionGoodList.update (Page.ExhibitionGoodList.GetExhibitionGoodResponse result)
-                    in
-                    ( Model { rec | page = PageExhibitionGoodList newModel }
-                    , exhibitionGoodListPageEmitListToCmd emitMaybe
-                    )
-
-                _ ->
-                    ( Model rec
-                    , Cmd.none
-                    )
-
-        GetPurchaseGoodListResponse result ->
-            case rec.page of
-                PagePurchaseGoodList purchaseGoodListModel ->
-                    let
-                        ( newModel, emitMaybe ) =
-                            purchaseGoodListModel
-                                |> Page.PurchaseGoodList.update (Page.PurchaseGoodList.GetPurchaseGoodResponse result)
-                    in
-                    ( Model { rec | page = PagePurchaseGoodList newModel }
-                    , purchaseGoodListPageEmitListToCmd emitMaybe
-                    )
-
-                _ ->
-                    ( Model rec
-                    , Cmd.none
-                    )
-
-        GetGoodResponse result ->
-            case result of
-                Ok goods ->
-                    case rec.page of
-                        PageGoods pageGoodsModel ->
-                            let
-                                ( newModel, emitList ) =
-                                    Page.Good.update (Page.Good.GetGoodsResponse goods) pageGoodsModel
-                            in
-                            ( Model { rec | page = PageGoods newModel }
-                            , goodsPageEmitListToCmd emitList
-                            )
-
-                        _ ->
-                            ( Model rec
-                            , Cmd.none
-                            )
-
-                Err _ ->
-                    ( Model
-                        { rec | message = Just "商品情報の取得に失敗しました" }
-                    , Cmd.none
-                    )
 
         BasicPartMenuMsg m ->
             ( Model { rec | menuState = rec.menuState |> BasicParts.menuUpdate m }
@@ -824,13 +662,13 @@ homePageEmitListToCmd =
         (\emit ->
             case emit of
                 Page.Home.EmitGetRecentGoodList ->
-                    Api.getRecentGoods GetRecentGoodListResponse
+                    Api.getRecentGoods (\result -> HomePageMsg (Page.Home.GetRecentGoodListResponse result))
 
                 Page.Home.EmitGetRecommendGoodList ->
-                    Api.getRecommendGoods GetRecommendGoodListResponse
+                    Api.getRecommendGoods (\result -> HomePageMsg (Page.Home.GetRecommendGoodListResponse result))
 
                 Page.Home.EmitGetFreeGoodList ->
-                    Api.getFreeGoods GetFreeGoodListResponse
+                    Api.getFreeGoods (\result -> HomePageMsg (Page.Home.GetFreeGoodListResponse result))
 
                 Page.Home.EmitGoodList e ->
                     goodsListEmitToMsg e
@@ -844,7 +682,7 @@ likeAndHistoryEmitListToCmd =
         (\emit ->
             case emit of
                 Page.LikeAndHistory.EmitGetLikeGoodList token ->
-                    Api.getLikeGoodList token GetLikeGoodListResponse
+                    Api.getLikeGoodList token (\result -> LikeAndHistoryPageMsg (Page.LikeAndHistory.LikeGoodListResponse result))
 
                 Page.LikeAndHistory.EmitGetHistoryGoodList token ->
                     Cmd.none
@@ -864,7 +702,7 @@ exhibitionGoodListPageEmitListToCmd =
         (\emit ->
             case emit of
                 Page.ExhibitionGoodList.EmitGetExhibitionGood token ->
-                    Api.getExhibitionGoodList token GetExhibitionGoodListResponse
+                    Api.getExhibitionGoodList token (\result -> ExhibitionGoodListPageMsg (Page.ExhibitionGoodList.GetExhibitionGoodResponse result))
 
                 Page.ExhibitionGoodList.EmitLogInOrSignUp e ->
                     logInOrSignUpEmitToCmd e
@@ -881,7 +719,7 @@ purchaseGoodListPageEmitListToCmd =
         (\emit ->
             case emit of
                 Page.PurchaseGoodList.EmitGetPurchaseGoodList token ->
-                    Api.getPurchaseGoodList token GetPurchaseGoodListResponse
+                    Api.getPurchaseGoodList token (\result -> PurchaseGoodListPageMsg (Page.PurchaseGoodList.GetPurchaseGoodResponse result))
 
                 Page.PurchaseGoodList.EmitLogInOrSignUp e ->
                     logInOrSignUpEmitToCmd e
@@ -935,7 +773,7 @@ signUpPageEmitListToCmd =
                     studentImageChange idString
 
                 Page.SignUp.EmitSignUp signUpRequest ->
-                    Api.signUp signUpRequest SignUpResponse
+                    Api.signUp signUpRequest (\response -> SignUpMsg (Page.SignUp.SignUpResponse response))
 
                 Page.SignUp.EmitSendConfirmToken token ->
                     Api.signUpConfirm { confirmToken = token } SignUpConfirmResponse
@@ -976,13 +814,17 @@ goodsPageEmitListToCmd =
         (\emit ->
             case emit of
                 Page.Good.EmitGetGoods { goodId } ->
-                    Api.getGood goodId GetGoodResponse
+                    Api.getGood goodId (\result -> GoodsPageMsg (Page.Good.GetGoodsResponse result))
 
                 Page.Good.EmitLikeGood userId token id ->
                     Api.likeGoods token id (LikeGoodResponse userId id)
 
                 Page.Good.EmitUnLikeGood userId token id ->
                     Api.unlikeGoods token id (UnlikeGoodResponse userId id)
+
+                Page.Good.EmitAddLogMessage log ->
+                    Task.succeed ()
+                        |> Task.perform (always (AddLogMessage log))
         )
         >> Cmd.batch
 

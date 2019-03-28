@@ -40,10 +40,11 @@ type Emit
     = EmitGetGoods { goodId : Good.GoodId }
     | EmitLikeGood Data.User.UserId Api.Token Good.GoodId
     | EmitUnLikeGood Data.User.UserId Api.Token Good.GoodId
+    | EmitAddLogMessage String
 
 
 type Msg
-    = GetGoodsResponse Good.Good
+    = GetGoodsResponse (Result () Good.Good)
     | LikeGood Data.User.UserId Api.Token Good.GoodId
     | UnLikeGood Data.User.UserId Api.Token Good.GoodId
     | LikeGoodResponse Data.User.UserId (Result () ())
@@ -83,8 +84,17 @@ getGoodId model =
 update : Msg -> Model -> ( Model, List Emit )
 update msg model =
     case msg of
-        GetGoodsResponse goods ->
-            ( Normal { good = goods, sending = False }, [] )
+        GetGoodsResponse goodsResult ->
+            case goodsResult of
+                Ok good ->
+                    ( Normal { good = good, sending = False }
+                    , []
+                    )
+
+                Err () ->
+                    ( model
+                    , [ EmitAddLogMessage "商品情報の取得に失敗しました" ]
+                    )
 
         LikeGood userId token id ->
             ( case model of
