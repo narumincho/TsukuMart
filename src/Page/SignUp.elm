@@ -12,17 +12,16 @@ module Page.SignUp exposing
 -}
 
 import Api
-import Array
 import Data.EmailAddress
 import Data.Password
 import Data.SAddress
 import Data.StudentId
-import Data.University
 import Html
 import Html.Attributes
 import Html.Events
 import Html.Keyed
 import Json.Decode
+import Page.Component.University as CompUniversity
 import Tab
 
 
@@ -30,26 +29,11 @@ type Model
     = Normal
         -- 新規登録入力フォーム
         { sAddressAndPassword : SAddressAndPassword
-        , university : UniversitySelect
+        , university : CompUniversity.Select
         , nickName : String
         }
     | SentSingUpData Data.EmailAddress.EmailAddress (Maybe (Result Api.SignUpResponseError Api.SignUpResponseOk))
     | SentConfirmTokenError (Maybe Api.SignUpConfirmResponseError)
-
-
-type UniversitySelect
-    = UniversitySchool SchoolSelect
-    | UniversityGraduate GraduateSelect
-
-
-type SchoolSelect
-    = UniversitySchoolNone
-    | UniversitySchoolSelectSchool Data.University.School
-    | UniversitySchoolSelectSchoolAndDepartment Data.University.SchoolAndDepartment
-
-
-type GraduateSelect
-    = UniversityGraduateSelect (Maybe Data.University.Graduate) (Maybe SchoolSelect)
 
 
 type SAddressAndPassword
@@ -77,7 +61,7 @@ type Msg
     | CatchStudentImage String
     | ReceiveImageDataUrl String
     | InputSAddressAndPassword SAddressAndPassword
-    | InputUniversity UniversitySelect
+    | InputUniversity CompUniversity.Select
     | InputPassword String
     | InputNickName String
     | SignUp Api.SignUpRequest
@@ -95,7 +79,7 @@ initModel =
                 { studentIdOrTsukubaEmailAddress = analysisStudentIdOrSAddress ""
                 , password = Data.Password.passwordFromString ""
                 }
-        , university = UniversitySchool UniversitySchoolNone
+        , university = CompUniversity.initSelect
         , nickName = ""
         }
 
@@ -268,7 +252,7 @@ view userSignUpPage =
     )
 
 
-normalView : SAddressAndPassword -> UniversitySelect -> String -> Html.Html Msg
+normalView : SAddressAndPassword -> CompUniversity.Select -> String -> Html.Html Msg
 normalView sAddressAndPassword university nickName =
     Html.Keyed.node "form"
         [ Html.Attributes.class "form" ]
@@ -285,7 +269,7 @@ normalView sAddressAndPassword university nickName =
                         newStudentForm emailAddress imageDataUrl password
                )
             ++ nickNameForm nickName
-            ++ (signUpUniversityView university
+            ++ (CompUniversity.view university
                     |> List.map (Tuple.mapSecond (Html.map InputUniversity))
                )
             ++ [ ( "submit", signUpSubmitButton (getSignUpRequest sAddressAndPassword university nickName) ) ]
@@ -601,346 +585,6 @@ nickNameForm nickName =
     ]
 
 
-{-| 新規登録の研究科学群学類入力フォーム
--}
-signUpUniversityView : UniversitySelect -> List ( String, Html.Html UniversitySelect )
-signUpUniversityView signUpSchool =
-    [ ( "schoolOrGraduate", signUpUniversityViewSchoolOrGraduate signUpSchool )
-    ]
-        ++ (case signUpSchool of
-                UniversitySchool schoolSelect ->
-                    signUpUniversityViewSchool schoolSelect
-                        |> List.map (Tuple.mapSecond (Html.map UniversitySchool))
-
-                UniversityGraduate graduateSelect ->
-                    signUpUniversityViewGraduate graduateSelect
-                        |> List.map (Tuple.mapSecond (Html.map UniversityGraduate))
-           )
-
-
-{-| 研究科に所属しているかしていないか?
--}
-signUpUniversityViewSchoolOrGraduate : UniversitySelect -> Html.Html UniversitySelect
-signUpUniversityViewSchoolOrGraduate university =
-    let
-        leftSelect =
-            case university of
-                UniversitySchool _ ->
-                    True
-
-                UniversityGraduate _ ->
-                    False
-    in
-    Html.div
-        []
-        [ Html.label
-            [ Html.Attributes.class "form-label" ]
-            [ Html.text "所属" ]
-        , Html.div
-            [ Html.Attributes.class "form-select" ]
-            [ Html.div
-                ([ Html.Attributes.classList
-                    [ ( "signUp-select-item", not leftSelect )
-                    , ( "signUp-select-itemSelect", leftSelect )
-                    ]
-                 , Html.Attributes.style "border-radius" ".4rem 0 0 .4rem"
-                 ]
-                    ++ (case university of
-                            UniversitySchool _ ->
-                                []
-
-                            UniversityGraduate _ ->
-                                [ Html.Events.onClick (UniversitySchool UniversitySchoolNone) ]
-                       )
-                )
-                [ Html.text "学群生" ]
-            , Html.div
-                ([ Html.Attributes.classList
-                    [ ( "signUp-select-item", leftSelect )
-                    , ( "signUp-select-itemSelect", not leftSelect )
-                    ]
-                 , Html.Attributes.style "border-radius" "0 .4rem .4rem 0"
-                 ]
-                    ++ (case university of
-                            UniversitySchool _ ->
-                                [ Html.Events.onClick
-                                    (UniversityGraduate
-                                        (UniversityGraduateSelect
-                                            Nothing
-                                            (Just UniversitySchoolNone)
-                                        )
-                                    )
-                                ]
-
-                            UniversityGraduate _ ->
-                                []
-                       )
-                )
-                [ Html.text "院生" ]
-            ]
-        ]
-
-
-{-| 研究科に所属していない人のフォーム
--}
-signUpUniversityViewSchool : SchoolSelect -> List ( String, Html.Html SchoolSelect )
-signUpUniversityViewSchool schoolSelect =
-    let
-        schoolView =
-            ( "selectSchool"
-            , signUpUniversityViewSelectSchool
-                |> Html.map
-                    (\m ->
-                        case m of
-                            Just school ->
-                                case Data.University.schoolToOnlyOneDepartment school of
-                                    Just schoolAndDepartment ->
-                                        UniversitySchoolSelectSchoolAndDepartment schoolAndDepartment
-
-                                    Nothing ->
-                                        UniversitySchoolSelectSchool school
-
-                            Nothing ->
-                                UniversitySchoolNone
-                    )
-            )
-
-        departmentSelectView school =
-            case signUpUniversityViewSelectDepartment school of
-                Just v ->
-                    Just
-                        ( "s=" ++ Data.University.schoolToIdString school
-                        , v
-                            |> Html.map
-                                (\m ->
-                                    case m of
-                                        Just z ->
-                                            UniversitySchoolSelectSchoolAndDepartment z
-
-                                        Nothing ->
-                                            UniversitySchoolSelectSchool school
-                                )
-                        )
-
-                Nothing ->
-                    Nothing
-    in
-    case schoolSelect of
-        UniversitySchoolNone ->
-            [ schoolView ]
-
-        UniversitySchoolSelectSchool school ->
-            case departmentSelectView school of
-                Just departV ->
-                    [ schoolView, departV ]
-
-                Nothing ->
-                    [ schoolView ]
-
-        UniversitySchoolSelectSchoolAndDepartment department ->
-            case departmentSelectView (Data.University.schoolFromDepartment department) of
-                Just departV ->
-                    [ schoolView, departV ]
-
-                Nothing ->
-                    [ schoolView ]
-
-
-{-| 研究科に所属している人のフォーム
--}
-signUpUniversityViewGraduate : GraduateSelect -> List ( String, Html.Html GraduateSelect )
-signUpUniversityViewGraduate univAndGraduateSelect =
-    let
-        (UniversityGraduateSelect graduateSelect schoolSelect) =
-            univAndGraduateSelect
-    in
-    [ ( "selectGraduate"
-      , signUpUniversityViewSelectGraduate
-            |> Html.map (\g -> UniversityGraduateSelect g schoolSelect)
-      )
-    , ( "tsukubaUniversitySchoolOrNo"
-      , signUpUniversityViewGraduateYesNoTsukuba (schoolSelect /= Nothing)
-            |> Html.map
-                (always
-                    (UniversityGraduateSelect graduateSelect
-                        (case schoolSelect of
-                            Just _ ->
-                                Nothing
-
-                            Nothing ->
-                                Just UniversitySchoolNone
-                        )
-                    )
-                )
-      )
-    ]
-        ++ (case schoolSelect of
-                Just school ->
-                    signUpUniversityViewSchool school
-                        |> List.map (Tuple.mapSecond (Html.map (\s -> UniversityGraduateSelect graduateSelect (Just s))))
-
-                Nothing ->
-                    []
-           )
-
-
-signUpUniversityViewSelectGraduate : Html.Html (Maybe Data.University.Graduate)
-signUpUniversityViewSelectGraduate =
-    Html.div
-        []
-        [ Html.label
-            [ Html.Attributes.class "form-label"
-            , Html.Attributes.for "signUp-selectGraduate"
-            ]
-            [ Html.text "研究科" ]
-        , Html.select
-            [ Html.Attributes.class "form-menu"
-            , Html.Attributes.id "signUp-selectGraduate"
-            , Html.Events.on "change" selectGraduateDecoder
-            ]
-            ([ Html.option [] [ Html.text "--選択してください--" ] ]
-                ++ (Data.University.graduateAllValue
-                        |> List.map
-                            (\s ->
-                                Html.option [] [ Html.text (Data.University.graduateToJapaneseString s) ]
-                            )
-                   )
-            )
-        ]
-
-
-selectGraduateDecoder : Json.Decode.Decoder (Maybe Data.University.Graduate)
-selectGraduateDecoder =
-    Json.Decode.at
-        [ "target", "selectedIndex" ]
-        Json.Decode.int
-        |> Json.Decode.map (\index -> Data.University.graduateAllValue |> Array.fromList |> Array.get (index - 1))
-
-
-{-| 筑波大学に所属していたかしていなかったか
-Boolは左(筑波大学所属していた)を選択しているか
--}
-signUpUniversityViewGraduateYesNoTsukuba : Bool -> Html.Html ()
-signUpUniversityViewGraduateYesNoTsukuba leftSelect =
-    Html.div
-        []
-        [ Html.label
-            [ Html.Attributes.class "form-label" ]
-            [ Html.text "院進前の所属" ]
-        , Html.div
-            [ Html.Attributes.class "form-select" ]
-            [ Html.div
-                ([ Html.Attributes.classList
-                    [ ( "signUp-select-item", not leftSelect )
-                    , ( "signUp-select-itemSelect", leftSelect )
-                    ]
-                 , Html.Attributes.style "border-radius" ".4rem 0 0 .4rem"
-                 ]
-                    ++ (if leftSelect then
-                            []
-
-                        else
-                            [ Html.Events.onClick () ]
-                       )
-                )
-                [ Html.text "筑波大学に所属していた" ]
-            , Html.div
-                ([ Html.Attributes.classList
-                    [ ( "signUp-select-item", leftSelect )
-                    , ( "signUp-select-itemSelect", not leftSelect )
-                    ]
-                 , Html.Attributes.style "border-radius" "0 .4rem .4rem 0"
-                 ]
-                    ++ (if leftSelect then
-                            [ Html.Events.onClick () ]
-
-                        else
-                            []
-                       )
-                )
-                [ Html.text "筑波大学に所属していなかった" ]
-            ]
-        ]
-
-
-{-| 学群の選択
--}
-signUpUniversityViewSelectSchool : Html.Html (Maybe Data.University.School)
-signUpUniversityViewSelectSchool =
-    Html.div
-        []
-        [ Html.label
-            [ Html.Attributes.class "form-label"
-            , Html.Attributes.for "signUp-selectSchool"
-            ]
-            [ Html.text "学群" ]
-        , Html.select
-            [ Html.Attributes.class "form-menu"
-            , Html.Attributes.id "signUp-selectSchool"
-            , Html.Events.on "change" selectSchoolDecoder
-            ]
-            ([ Html.option [] [ Html.text "--選択してください--" ] ]
-                ++ (Data.University.schoolAll
-                        |> List.map
-                            (\s ->
-                                Html.option [] [ Html.text (Data.University.schoolToJapaneseString s) ]
-                            )
-                   )
-            )
-        ]
-
-
-selectSchoolDecoder : Json.Decode.Decoder (Maybe Data.University.School)
-selectSchoolDecoder =
-    Json.Decode.at
-        [ "target", "selectedIndex" ]
-        Json.Decode.int
-        |> Json.Decode.map (\index -> Data.University.schoolAll |> Array.fromList |> Array.get (index - 1))
-
-
-{-| 学類の選択
--}
-signUpUniversityViewSelectDepartment : Data.University.School -> Maybe (Html.Html (Maybe Data.University.SchoolAndDepartment))
-signUpUniversityViewSelectDepartment school =
-    case Data.University.schoolToDepartmentList school of
-        [] ->
-            Nothing
-
-        departmentList ->
-            Just
-                (Html.div
-                    []
-                    [ Html.label
-                        [ Html.Attributes.class "form-label"
-                        , Html.Attributes.for "signUp-selectDepartment"
-                        ]
-                        [ Html.text "学類" ]
-                    , Html.select
-                        [ Html.Attributes.class "form-menu"
-                        , Html.Attributes.id "signUp-selectDepartment"
-                        , Html.Events.on "change" (selectDepartmentDecoder school)
-                        ]
-                        ([ Html.option [] [ Html.text "--選択してください--" ] ]
-                            ++ (departmentList
-                                    |> List.map
-                                        (\s ->
-                                            Html.option [] [ Html.text (Data.University.departmentToJapaneseString s |> Maybe.withDefault "?") ]
-                                        )
-                               )
-                        )
-                    ]
-                )
-
-
-selectDepartmentDecoder : Data.University.School -> Json.Decode.Decoder (Maybe Data.University.SchoolAndDepartment)
-selectDepartmentDecoder school =
-    Json.Decode.at
-        [ "target", "selectedIndex" ]
-        Json.Decode.int
-        |> Json.Decode.map
-            (\index -> Data.University.schoolToDepartmentList school |> Array.fromList |> Array.get (index - 1))
-
-
 signUpSubmitButton : Maybe Api.SignUpRequest -> Html.Html Msg
 signUpSubmitButton signUpRequestMaybe =
     Html.div
@@ -965,9 +609,9 @@ signUpSubmitButton signUpRequestMaybe =
 
 {-| 画面の情報から新規登録できる情報を入力しているかと、新規登録に必要なデータを取りだす
 -}
-getSignUpRequest : SAddressAndPassword -> UniversitySelect -> String -> Maybe Api.SignUpRequest
+getSignUpRequest : SAddressAndPassword -> CompUniversity.Select -> String -> Maybe Api.SignUpRequest
 getSignUpRequest sAddressAndPassword university nickName =
-    case ( getSignUpRequestEmailAddressAndPasswordAndImage sAddressAndPassword, getSignUpRequestUniversity university ) of
+    case ( getSignUpRequestEmailAddressAndPasswordAndImage sAddressAndPassword, CompUniversity.getUniversity university ) of
         ( Just { emailAddress, password, image }, Just universityData ) ->
             if 1 <= String.length nickName && String.length nickName <= 50 then
                 Just
@@ -1018,22 +662,6 @@ getSignUpRequestEmailAddressAndPasswordAndImage sAddressAndPassword =
 
                 ( _, _, _ ) ->
                     Nothing
-
-
-getSignUpRequestUniversity : UniversitySelect -> Maybe Data.University.University
-getSignUpRequestUniversity universitySelect =
-    case universitySelect of
-        UniversitySchool (UniversitySchoolSelectSchoolAndDepartment schoolAndDepartment) ->
-            Just (Data.University.NotGraduate schoolAndDepartment)
-
-        UniversityGraduate (UniversityGraduateSelect (Just graduate) (Just (UniversitySchoolSelectSchoolAndDepartment schoolAndDepartment))) ->
-            Just (Data.University.GraduateTsukuba graduate schoolAndDepartment)
-
-        UniversityGraduate (UniversityGraduateSelect (Just graduate) Nothing) ->
-            Just (Data.University.GraduateNotTsukuba graduate)
-
-        _ ->
-            Nothing
 
 
 {-| 新規登録のボタンを押した後の画面
