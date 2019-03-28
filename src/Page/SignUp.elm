@@ -29,7 +29,7 @@ type Model
     = Normal
         -- 新規登録入力フォーム
         { sAddressAndPassword : SAddressAndPassword
-        , university : CompUniversity.Select
+        , university : CompUniversity.Model
         , nickName : String
         }
     | SentSingUpData Data.EmailAddress.EmailAddress (Maybe (Result Api.SignUpResponseError Api.SignUpResponseOk))
@@ -54,6 +54,7 @@ type Emit
     = EmitCatchStudentImage String
     | EmitSignUp Api.SignUpRequest
     | EmitSendConfirmToken Api.ConfirmToken
+    | EmitUniversity CompUniversity.Emit
 
 
 type Msg
@@ -61,7 +62,7 @@ type Msg
     | CatchStudentImage String
     | ReceiveImageDataUrl String
     | InputSAddressAndPassword SAddressAndPassword
-    | InputUniversity CompUniversity.Select
+    | InputUniversity CompUniversity.Model
     | InputPassword String
     | InputNickName String
     | SignUp Api.SignUpRequest
@@ -134,7 +135,7 @@ update msg model =
 
                 _ ->
                     model
-            , []
+            , CompUniversity.emit universitySelect |> List.map EmitUniversity
             )
 
         InputPassword string ->
@@ -252,7 +253,7 @@ view userSignUpPage =
     )
 
 
-normalView : SAddressAndPassword -> CompUniversity.Select -> String -> Html.Html Msg
+normalView : SAddressAndPassword -> CompUniversity.Model -> String -> Html.Html Msg
 normalView sAddressAndPassword university nickName =
     Html.Keyed.node "form"
         [ Html.Attributes.class "form" ]
@@ -609,7 +610,7 @@ signUpSubmitButton signUpRequestMaybe =
 
 {-| 画面の情報から新規登録できる情報を入力しているかと、新規登録に必要なデータを取りだす
 -}
-getSignUpRequest : SAddressAndPassword -> CompUniversity.Select -> String -> Maybe Api.SignUpRequest
+getSignUpRequest : SAddressAndPassword -> CompUniversity.Model -> String -> Maybe Api.SignUpRequest
 getSignUpRequest sAddressAndPassword university nickName =
     case ( getSignUpRequestEmailAddressAndPasswordAndImage sAddressAndPassword, CompUniversity.getUniversity university ) of
         ( Just { emailAddress, password, image }, Just universityData ) ->

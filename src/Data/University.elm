@@ -5,7 +5,7 @@ module Data.University exposing
     , University(..)
     , departmentFromIdString
     , departmentToIdString
-    , departmentToIndex
+    , departmentToIndexInSchool
     , departmentToJapaneseString
     , graduateAllValue
     , graduateFromIdString
@@ -408,9 +408,9 @@ departmentAll =
     ]
 
 
-departmentToIndex : SchoolAndDepartment -> Int
-departmentToIndex department =
-    Utility.getFirstIndex department departmentAll
+departmentToIndexInSchool : SchoolAndDepartment -> Int
+departmentToIndexInSchool department =
+    Utility.getFirstIndex department (schoolToDepartmentList (schoolFromDepartment department))
         |> Maybe.withDefault 0
 
 

@@ -14,6 +14,7 @@ import Html.Keyed
 import Json.Decode
 import Page.Component.GoodList
 import Page.Component.LogInOrSignUp
+import Page.Component.University
 import Page.Exhibition
 import Page.ExhibitionGoodList
 import Page.Good
@@ -73,6 +74,9 @@ port elementScrollIntoView : String -> Cmd msg
 
 
 port inputOrTextAreaReplaceText : { id : String, text : String } -> Cmd msg
+
+
+port changeSelectedIndex : { id : String, index : Int } -> Cmd msg
 
 
 type Model
@@ -270,8 +274,8 @@ update msg (Model rec) =
                                             (Page.PurchaseGoodList.LogInOrSignUpMsg Page.Component.LogInOrSignUp.LogInSuccess)
                                         |> Tuple.mapBoth PagePurchaseGoodList purchaseGoodListPageEmitListToCmd
 
-                                PageExhibitionGoodList exhibitonGoodListModel ->
-                                    exhibitonGoodListModel
+                                PageExhibitionGoodList exhibitionGoodListModel ->
+                                    exhibitionGoodListModel
                                         |> Page.ExhibitionGoodList.update
                                             (Page.ExhibitionGoodList.LogInOrSignUpMsg Page.Component.LogInOrSignUp.LogInSuccess)
                                         |> Tuple.mapBoth PageExhibitionGoodList exhibitionGoodListPageEmitListToCmd
@@ -886,6 +890,9 @@ signUpPageEmitListToCmd =
 
                 Page.SignUp.EmitSendConfirmToken token ->
                     Api.signUpConfirm { confirmToken = token } SignUpConfirmResponse
+
+                Page.SignUp.EmitUniversity e ->
+                    universityEmitToMsg e
         )
         >> Cmd.batch
 
@@ -898,12 +905,18 @@ profilePageEmitListToCmd =
                 Page.Profile.EmitLogInOrSignUp e ->
                     logInOrSignUpEmitToCmd e
 
+                Page.Profile.EmitGetProfile { access, refresh } ->
+                    Api.getMyProfile access (GetUserDataResponse { access = access, refresh = refresh })
+
                 Page.Profile.EmitChangeProfile token profile ->
                     Api.updateProfile token profile ChangeProfileResponse
 
                 Page.Profile.EmitReplaceText { id, text } ->
                     inputOrTextAreaReplaceText
                         { id = id, text = text }
+
+                Page.Profile.EmitUniversity e ->
+                    universityEmitToMsg e
         )
         >> Cmd.batch
 
@@ -947,6 +960,13 @@ goodsListEmitToMsg emit =
 
         Page.Component.GoodList.EmitScrollIntoView idString ->
             elementScrollIntoView idString
+
+
+universityEmitToMsg : Page.Component.University.Emit -> Cmd Msg
+universityEmitToMsg emit =
+    case emit of
+        Page.Component.University.EmitChangeSelectedIndex { id, index } ->
+            changeSelectedIndex { id = id, index = index }
 
 
 receiveImageFileAndBlobUrlDecoder : Json.Decode.Decoder (List { file : File.File, blobUrl : String })
@@ -1092,8 +1112,10 @@ urlParser (Model rec) =
                 )
         , SiteMap.profileParser
             |> Url.Parser.map
-                ( Just (PageProfile Page.Profile.initModel)
-                , Cmd.none
+                (Page.Profile.initModel rec.logInState
+                    |> Tuple.mapBoth
+                        (\m -> Just (PageProfile m))
+                        profilePageEmitListToCmd
                 )
         , SiteMap.siteMapParser
             |> Url.Parser.map

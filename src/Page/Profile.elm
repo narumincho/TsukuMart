@@ -37,14 +37,16 @@ type Mode
 type alias EditModel =
     { nickName : String
     , introduction : String
-    , universitySelect : CompUniversity.Select
+    , universitySelect : CompUniversity.Model
     }
 
 
 type Emit
     = EmitLogInOrSignUp LogInOrSignUp.Emit
+    | EmitGetProfile { access : Api.Token, refresh : Api.Token }
     | EmitChangeProfile Api.Token User.Profile
     | EmitReplaceText { id : String, text : String }
+    | EmitUniversity CompUniversity.Emit
 
 
 type Msg
@@ -52,18 +54,25 @@ type Msg
     | MsgToEditMode
     | MsgInputNickName String
     | MsgInputIntroduction String
-    | MsgInputUniversity CompUniversity.Select
+    | MsgInputUniversity CompUniversity.Model
     | MsgBackToViewMode
     | MsgChangeProfile Api.Token User.Profile
     | MsgChangeProfileResponse
 
 
-initModel : Model
-initModel =
-    Model
+initModel : LogInState.LogInState -> ( Model, List Emit )
+initModel logInState =
+    ( Model
         { mode = ViewMode
         , logInOrSignUpModel = LogInOrSignUp.initModel
         }
+    , case logInState of
+        LogInState.LogInStateOk { access, refresh } ->
+            [ EmitGetProfile { access = access, refresh = refresh } ]
+
+        LogInState.LogInStateNone ->
+            []
+    )
 
 
 
@@ -112,7 +121,7 @@ update logInState msg (Model rec) =
 
                 ViewMode ->
                     Model rec
-            , []
+            , CompUniversity.emit select |> List.map EmitUniversity
             )
 
         MsgBackToViewMode ->
@@ -145,8 +154,8 @@ toEditMode logInState (Model rec) =
                 introduction =
                     User.profileGetIntroduction profile
 
-                university =
-                    User.profileGetUniversity profile
+                universitySelect =
+                    CompUniversity.selectFromUniversity (User.profileGetUniversity profile)
             in
             ( Model
                 { rec
@@ -154,12 +163,13 @@ toEditMode logInState (Model rec) =
                         EditMode
                             { nickName = nickName
                             , introduction = introduction
-                            , universitySelect = CompUniversity.selectFromUniversity university
+                            , universitySelect = universitySelect
                             }
                 }
             , [ EmitReplaceText { id = nickNameEditorId, text = nickName }
               , EmitReplaceText { id = introductionEditorId, text = introduction }
               ]
+                ++ (CompUniversity.emit universitySelect |> List.map EmitUniversity)
             )
 
         LogInState.LogInStateNone ->

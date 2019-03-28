@@ -1,4 +1,12 @@
-module Page.Component.University exposing (Select, getUniversity, initSelect, selectFromUniversity, view)
+module Page.Component.University exposing
+    ( Emit(..)
+    , Model
+    , emit
+    , getUniversity
+    , initSelect
+    , selectFromUniversity
+    , view
+    )
 
 import Array
 import Data.University
@@ -6,10 +14,9 @@ import Html
 import Html.Attributes
 import Html.Events
 import Json.Decode
-import Json.Encode
 
 
-type Select
+type Model
     = UniversitySchool SchoolSelect
     | UniversityGraduate GraduateSelect
 
@@ -26,14 +33,14 @@ type GraduateSelect
 
 {-| 何も選択していない状態
 -}
-initSelect : Select
+initSelect : Model
 initSelect =
     UniversitySchool SchoolNone
 
 
 {-| データから選択モデルへ
 -}
-selectFromUniversity : Data.University.University -> Select
+selectFromUniversity : Data.University.University -> Model
 selectFromUniversity university =
     case university of
         Data.University.GraduateTsukuba graduate schoolAndDepartment ->
@@ -77,7 +84,7 @@ schoolSelectGetDepartment schoolSelect =
 
 {-| 学群学類研究科の情報を取得する
 -}
-getUniversity : Select -> Maybe Data.University.University
+getUniversity : Model -> Maybe Data.University.University
 getUniversity universitySelect =
     case universitySelect of
         UniversitySchool (SchoolSelectSchoolAndDepartment schoolAndDepartment) ->
@@ -93,6 +100,70 @@ getUniversity universitySelect =
             Nothing
 
 
+type Emit
+    = EmitChangeSelectedIndex { id : String, index : Int }
+
+
+emit : Model -> List Emit
+emit model =
+    case model of
+        UniversitySchool schoolSelect ->
+            schoolEmit schoolSelect
+
+        UniversityGraduate (GraduateSelect graduate schoolSelect) ->
+            [ EmitChangeSelectedIndex
+                { id = graduateSelectId
+                , index =
+                    case graduate of
+                        Just g ->
+                            Data.University.graduateToIndex g + 1
+
+                        Nothing ->
+                            0
+                }
+            ]
+                ++ (case schoolSelect of
+                        Just s ->
+                            schoolEmit s
+
+                        Nothing ->
+                            []
+                   )
+
+
+schoolEmit : SchoolSelect -> List Emit
+schoolEmit schoolSelect =
+    case schoolSelect of
+        SchoolNone ->
+            [ EmitChangeSelectedIndex
+                { id = schoolSelectId
+                , index = 0
+                }
+            ]
+
+        SchoolSelectSchool school ->
+            [ EmitChangeSelectedIndex
+                { id = schoolSelectId
+                , index = Data.University.schoolToIndex school + 1
+                }
+            , EmitChangeSelectedIndex
+                { id = departmentSelectId
+                , index = 0
+                }
+            ]
+
+        SchoolSelectSchoolAndDepartment schoolAndDepartment ->
+            [ EmitChangeSelectedIndex
+                { id = schoolSelectId
+                , index = Data.University.schoolToIndex (Data.University.schoolFromDepartment schoolAndDepartment) + 1
+                }
+            , EmitChangeSelectedIndex
+                { id = departmentSelectId
+                , index = Data.University.departmentToIndexInSchool schoolAndDepartment + 1
+                }
+            ]
+
+
 
 {- ====================================
                    View
@@ -102,7 +173,7 @@ getUniversity universitySelect =
 
 {-| 研究科学群学類入力フォーム
 -}
-view : Select -> List ( String, Html.Html Select )
+view : Model -> List ( String, Html.Html Model )
 view universitySelect =
     [ ( "schoolOrGraduate", schoolOrGraduateView universitySelect )
     ]
@@ -119,7 +190,7 @@ view universitySelect =
 
 {-| 研究科に所属しているかしていないか?
 -}
-schoolOrGraduateView : Select -> Html.Html Select
+schoolOrGraduateView : Model -> Html.Html Model
 schoolOrGraduateView university =
     let
         leftSelect =
@@ -285,23 +356,13 @@ selectGraduateView graduateMaybe =
         []
         [ Html.label
             [ Html.Attributes.class "form-label"
-            , Html.Attributes.for "signUp-selectGraduate"
+            , Html.Attributes.for graduateSelectId
             ]
             [ Html.text "研究科" ]
         , Html.select
             [ Html.Attributes.class "form-menu"
-            , Html.Attributes.id "signUp-selectGraduate"
+            , Html.Attributes.id graduateSelectId
             , Html.Events.on "change" selectGraduateDecoder
-            , Html.Attributes.property "selectedIndex"
-                (Json.Encode.int
-                    (case graduateMaybe of
-                        Just graduate ->
-                            Data.University.graduateToIndex graduate + 1
-
-                        Nothing ->
-                            0
-                    )
-                )
             ]
             ([ Html.option [] [ Html.text "--選択してください--" ] ]
                 ++ (Data.University.graduateAllValue
@@ -312,6 +373,11 @@ selectGraduateView graduateMaybe =
                    )
             )
         ]
+
+
+graduateSelectId : String
+graduateSelectId =
+    "signUp-selectGraduate"
 
 
 selectGraduateDecoder : Json.Decode.Decoder (Maybe Data.University.Graduate)
@@ -376,23 +442,13 @@ selectSchoolView schoolMaybe =
         []
         [ Html.label
             [ Html.Attributes.class "form-label"
-            , Html.Attributes.for "signUp-selectSchool"
+            , Html.Attributes.for schoolSelectId
             ]
             [ Html.text "学群" ]
         , Html.select
             [ Html.Attributes.class "form-menu"
-            , Html.Attributes.id "signUp-selectSchool"
+            , Html.Attributes.id schoolSelectId
             , Html.Events.on "change" selectSchoolDecoder
-            , Html.Attributes.property "selectedIndex"
-                (Json.Encode.int
-                    (case schoolMaybe of
-                        Just school ->
-                            Data.University.schoolToIndex school + 1
-
-                        Nothing ->
-                            0
-                    )
-                )
             ]
             ([ Html.option [] [ Html.text "--選択してください--" ] ]
                 ++ (Data.University.schoolAll
@@ -403,6 +459,11 @@ selectSchoolView schoolMaybe =
                    )
             )
         ]
+
+
+schoolSelectId : String
+schoolSelectId =
+    "signUp-selectSchool"
 
 
 selectSchoolDecoder : Json.Decode.Decoder (Maybe Data.University.School)
@@ -427,23 +488,13 @@ selectDepartmentView school departmentMaybe =
                     []
                     [ Html.label
                         [ Html.Attributes.class "form-label"
-                        , Html.Attributes.for "signUp-selectDepartment"
+                        , Html.Attributes.for departmentSelectId
                         ]
                         [ Html.text "学類" ]
                     , Html.select
                         [ Html.Attributes.class "form-menu"
-                        , Html.Attributes.id "signUp-selectDepartment"
+                        , Html.Attributes.id departmentSelectId
                         , Html.Events.on "change" (selectDepartmentDecoder school)
-                        , Html.Attributes.property "selectedIndex"
-                            (Json.Encode.int
-                                (case departmentMaybe of
-                                    Just department ->
-                                        Data.University.departmentToIndex department + 1
-
-                                    Nothing ->
-                                        0
-                                )
-                            )
                         ]
                         ([ Html.option [] [ Html.text "--選択してください--" ] ]
                             ++ (departmentList
@@ -455,6 +506,11 @@ selectDepartmentView school departmentMaybe =
                         )
                     ]
                 )
+
+
+departmentSelectId : String
+departmentSelectId =
+    "signUp-selectDepartment"
 
 
 selectDepartmentDecoder : Data.University.School -> Json.Decode.Decoder (Maybe Data.University.SchoolAndDepartment)

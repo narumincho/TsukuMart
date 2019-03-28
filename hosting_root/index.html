@@ -61,6 +61,15 @@
                 }
             })
         });
+        /* 指定されたidの要素のselectedIndexを変更する */
+        app.ports.changeSelectedIndex.subscribe(({ id, index }) => {
+            requestAnimationFrame(() => {
+                const element = document.getElementById(id);
+                if (element !== null) {
+                    element.selectedIndex = index;
+                }
+            })
+        });
         /* 指定されたidの要素が表示されるようにスクロールさせる */
         app.ports.elementScrollIntoView.subscribe(id => {
             requestAnimationFrame(() => {
