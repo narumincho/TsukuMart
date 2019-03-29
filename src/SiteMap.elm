@@ -1,37 +1,93 @@
 module SiteMap exposing
-    ( exhibitionConfirmParser
+    ( UrlParserInitResult(..)
+    , UrlParserResult(..)
     , exhibitionConfirmUrl
-    , exhibitionGoodsParser
     , exhibitionGoodsUrl
-    , exhibitionParser
     , exhibitionUrl
-    , goodsParser
     , goodsUrl
-    , homeParser
     , homeUrl
-    , likeHistoryParser
     , likeHistoryUrl
-    , logInParser
     , logInUrl
-    , profileParser
     , profileUrl
-    , purchaseGoodsParser
     , purchaseGoodsUrl
-    , signUpParser
     , signUpUrl
-    , siteMapParser
     , siteMapUrl
     , siteMapXml
+    , urlParser
+    , urlParserInit
     )
 
 import Data.Good
+import Url
 import Url.Builder
-import Url.Parser exposing ((</>))
+import Url.Parser as Parser exposing ((</>))
 
 
-homeParser : Url.Parser.Parser a a
+type UrlParserInitResult
+    = InitHome
+    | InitSignUp
+    | InitLogIn
+    | InitLikeAndHistory
+    | IntiExhibitionGood
+    | InitPurchaseGood
+    | InitExhibition
+    | InitGood Data.Good.GoodId
+    | InitProfile
+    | InitSiteMap
+
+
+urlParserInit : Url.Url -> Maybe UrlParserInitResult
+urlParserInit =
+    Parser.oneOf
+        [ homeParser |> Parser.map InitHome
+        , signUpParser |> Parser.map InitSignUp
+        , logInParser |> Parser.map InitLogIn
+        , likeHistoryParser |> Parser.map InitLikeAndHistory
+        , exhibitionGoodsParser |> Parser.map IntiExhibitionGood
+        , purchaseGoodsParser |> Parser.map InitPurchaseGood
+        , exhibitionParser |> Parser.map InitExhibition
+        , goodsParser |> Parser.map InitGood
+        , profileParser |> Parser.map InitProfile
+        , siteMapParser |> Parser.map InitSiteMap
+        ]
+        |> Parser.parse
+
+
+type UrlParserResult
+    = Home
+    | SignUp
+    | LogIn
+    | LikeAndHistory
+    | ExhibitionGood
+    | PurchaseGood
+    | Exhibition
+    | ExhibitionConfirm
+    | Good Data.Good.GoodId
+    | Profile
+    | SiteMap
+
+
+urlParser : Url.Url -> Maybe UrlParserResult
+urlParser =
+    Parser.oneOf
+        [ homeParser |> Parser.map Home
+        , signUpParser |> Parser.map SignUp
+        , logInParser |> Parser.map LogIn
+        , likeHistoryParser |> Parser.map LikeAndHistory
+        , exhibitionGoodsParser |> Parser.map ExhibitionGood
+        , purchaseGoodsParser |> Parser.map PurchaseGood
+        , exhibitionParser |> Parser.map Exhibition
+        , exhibitionConfirmParser |> Parser.map ExhibitionConfirm
+        , goodsParser |> Parser.map Good
+        , profileParser |> Parser.map Profile
+        , siteMapParser |> Parser.map SiteMap
+        ]
+        |> Parser.parse
+
+
+homeParser : Parser.Parser a a
 homeParser =
-    Url.Parser.top
+    Parser.top
 
 
 homeUrl : String
@@ -43,9 +99,9 @@ homeUrl =
 {- signup -}
 
 
-signUpParser : Url.Parser.Parser a a
+signUpParser : Parser.Parser a a
 signUpParser =
-    Url.Parser.s signUpPath
+    Parser.s signUpPath
 
 
 signUpUrl : String
@@ -62,9 +118,9 @@ signUpPath =
 {- login -}
 
 
-logInParser : Url.Parser.Parser a a
+logInParser : Parser.Parser a a
 logInParser =
-    Url.Parser.s logInPath
+    Parser.s logInPath
 
 
 logInUrl : String
@@ -81,9 +137,9 @@ logInPath =
 {- like-history -}
 
 
-likeHistoryParser : Url.Parser.Parser a a
+likeHistoryParser : Parser.Parser a a
 likeHistoryParser =
-    Url.Parser.s likeHistoryPath
+    Parser.s likeHistoryPath
 
 
 likeHistoryUrl : String
@@ -100,9 +156,9 @@ likeHistoryPath =
 {- exhibition-goods -}
 
 
-exhibitionGoodsParser : Url.Parser.Parser a a
+exhibitionGoodsParser : Parser.Parser a a
 exhibitionGoodsParser =
-    Url.Parser.s exhibitionGoodsPath
+    Parser.s exhibitionGoodsPath
 
 
 exhibitionGoodsUrl : String
@@ -119,9 +175,9 @@ exhibitionGoodsPath =
 {- purchase-goods -}
 
 
-purchaseGoodsParser : Url.Parser.Parser a a
+purchaseGoodsParser : Parser.Parser a a
 purchaseGoodsParser =
-    Url.Parser.s "purchase-goods"
+    Parser.s "purchase-goods"
 
 
 purchaseGoodsUrl : String
@@ -138,9 +194,9 @@ purchaseGoodsPath =
 {- exhibition -}
 
 
-exhibitionParser : Url.Parser.Parser a a
+exhibitionParser : Parser.Parser a a
 exhibitionParser =
-    Url.Parser.s exhibitionPath
+    Parser.s exhibitionPath
 
 
 exhibitionUrl : String
@@ -153,9 +209,9 @@ exhibitionPath =
     "exhibition"
 
 
-exhibitionConfirmParser : Url.Parser.Parser a a
+exhibitionConfirmParser : Parser.Parser a a
 exhibitionConfirmParser =
-    Url.Parser.s exhibitionPath </> Url.Parser.s exhibitionConfirmPath
+    Parser.s exhibitionPath </> Parser.s exhibitionConfirmPath
 
 
 exhibitionConfirmUrl : String
@@ -172,9 +228,9 @@ exhibitionConfirmPath =
 {- goods -}
 
 
-goodsParser : Url.Parser.Parser (Data.Good.GoodId -> a) a
+goodsParser : Parser.Parser (Data.Good.GoodId -> a) a
 goodsParser =
-    Url.Parser.s goodsPath </> (Url.Parser.int |> Url.Parser.map Data.Good.goodIdFromInt)
+    Parser.s goodsPath </> (Parser.int |> Parser.map Data.Good.goodIdFromInt)
 
 
 goodsUrl : Data.Good.GoodId -> String
@@ -191,9 +247,9 @@ goodsPath =
 {- profile -}
 
 
-profileParser : Url.Parser.Parser a a
+profileParser : Parser.Parser a a
 profileParser =
-    Url.Parser.s profilePath
+    Parser.s profilePath
 
 
 profileUrl : String
@@ -210,9 +266,9 @@ profilePath =
 {- sitemap -}
 
 
-siteMapParser : Url.Parser.Parser a a
+siteMapParser : Parser.Parser a a
 siteMapParser =
-    Url.Parser.s siteMapPath
+    Parser.s siteMapPath
 
 
 siteMapUrl : String

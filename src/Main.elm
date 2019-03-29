@@ -28,7 +28,6 @@ import SiteMap
 import Tab
 import Task
 import Url
-import Url.Parser
 
 
 
@@ -163,71 +162,66 @@ init _ url key =
 
 
 urlParserInit : Data.LogInState.LogInState -> Url.Url -> Maybe ( Page, Cmd Msg )
-urlParserInit logInState =
-    Url.Parser.oneOf
-        [ SiteMap.homeParser
-            |> Url.Parser.map
-                (Page.Home.initModel Nothing
-                    |> Tuple.mapBoth PageHome homePageEmitListToCmd
-                )
-        , SiteMap.signUpParser
-            |> Url.Parser.map
-                ( PageSignUp Page.SignUp.initModel
-                , Cmd.none
-                )
-        , SiteMap.logInParser
-            |> Url.Parser.map
-                ( PageLogIn Page.LogIn.initModel
-                , Cmd.none
-                )
-        , SiteMap.likeHistoryParser
-            |> Url.Parser.map
-                (Page.LikeAndHistory.initModel Nothing logInState
-                    |> Tuple.mapBoth
-                        PageLikeAndHistory
-                        likeAndHistoryEmitListToCmd
-                )
-        , SiteMap.exhibitionGoodsParser
-            |> Url.Parser.map
-                (Page.ExhibitionGoodList.initModel Nothing logInState
-                    |> Tuple.mapBoth
-                        PageExhibitionGoodList
-                        exhibitionGoodListPageEmitListToCmd
-                )
-        , SiteMap.purchaseGoodsParser
-            |> Url.Parser.map
-                (Page.PurchaseGoodList.initModel Nothing logInState
-                    |> Tuple.mapBoth
-                        PagePurchaseGoodList
-                        purchaseGoodListPageEmitListToCmd
-                )
-        , SiteMap.exhibitionParser
-            |> Url.Parser.map
-                (Page.Exhibition.initModel
-                    |> Tuple.mapBoth
-                        PageExhibition
-                        exhibitionPageEmitListToCmd
-                )
-        , SiteMap.goodsParser
-            |> Url.Parser.map
-                (\id ->
-                    Page.Good.initModel id
-                        |> Tuple.mapBoth
-                            PageGoods
-                            goodsPageEmitListToCmd
-                )
-        , SiteMap.profileParser
-            |> Url.Parser.map
-                (Page.Profile.initModel logInState
-                    |> Tuple.mapBoth
-                        PageProfile
-                        profilePageEmitListToCmd
-                )
-        , SiteMap.siteMapParser
-            |> Url.Parser.map
-                ( PageSiteMapXml, Cmd.none )
-        ]
-        |> Url.Parser.parse
+urlParserInit logInState url =
+    SiteMap.urlParserInit url
+        |> Maybe.map (urlParserInitResultToPageAndCmd logInState)
+
+
+urlParserInitResultToPageAndCmd : Data.LogInState.LogInState -> SiteMap.UrlParserInitResult -> ( Page, Cmd Msg )
+urlParserInitResultToPageAndCmd logInState page =
+    case page of
+        SiteMap.InitHome ->
+            Page.Home.initModel Nothing
+                |> Tuple.mapBoth PageHome homePageEmitListToCmd
+
+        SiteMap.InitSignUp ->
+            ( PageSignUp Page.SignUp.initModel
+            , Cmd.none
+            )
+
+        SiteMap.InitLogIn ->
+            ( PageLogIn Page.LogIn.initModel
+            , Cmd.none
+            )
+
+        SiteMap.InitLikeAndHistory ->
+            Page.LikeAndHistory.initModel Nothing logInState
+                |> Tuple.mapBoth
+                    PageLikeAndHistory
+                    likeAndHistoryEmitListToCmd
+
+        SiteMap.IntiExhibitionGood ->
+            Page.ExhibitionGoodList.initModel Nothing logInState
+                |> Tuple.mapBoth
+                    PageExhibitionGoodList
+                    exhibitionGoodListPageEmitListToCmd
+
+        SiteMap.InitPurchaseGood ->
+            Page.PurchaseGoodList.initModel Nothing logInState
+                |> Tuple.mapBoth
+                    PagePurchaseGoodList
+                    purchaseGoodListPageEmitListToCmd
+
+        SiteMap.InitExhibition ->
+            Page.Exhibition.initModel
+                |> Tuple.mapBoth
+                    PageExhibition
+                    exhibitionPageEmitListToCmd
+
+        SiteMap.InitGood goodId ->
+            Page.Good.initModel goodId
+                |> Tuple.mapBoth
+                    PageGoods
+                    goodsPageEmitListToCmd
+
+        SiteMap.InitProfile ->
+            Page.Profile.initModel logInState
+                |> Tuple.mapBoth
+                    PageProfile
+                    profilePageEmitListToCmd
+
+        SiteMap.InitSiteMap ->
+            ( PageSiteMapXml, Cmd.none )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -908,104 +902,98 @@ urlParserResultToModel parserResult =
 
 
 urlParser : Model -> Url.Url -> Maybe ( Page, Cmd Msg )
-urlParser (Model rec) =
-    Url.Parser.oneOf
-        [ SiteMap.homeParser
-            |> Url.Parser.map
-                (Page.Home.initModel (getGoodId rec.page)
-                    |> Tuple.mapBoth PageHome homePageEmitListToCmd
-                )
-        , SiteMap.signUpParser
-            |> Url.Parser.map
-                ( PageSignUp Page.SignUp.initModel
-                , Cmd.none
-                )
-        , SiteMap.logInParser
-            |> Url.Parser.map
-                ( PageLogIn Page.LogIn.initModel
-                , Cmd.none
-                )
-        , SiteMap.likeHistoryParser
-            |> Url.Parser.map
-                (Page.LikeAndHistory.initModel (getGoodId rec.page) rec.logInState
-                    |> Tuple.mapBoth
-                        PageLikeAndHistory
-                        likeAndHistoryEmitListToCmd
-                )
-        , SiteMap.exhibitionGoodsParser
-            |> Url.Parser.map
-                (Page.ExhibitionGoodList.initModel (getGoodId rec.page) rec.logInState
-                    |> Tuple.mapBoth
-                        PageExhibitionGoodList
-                        exhibitionGoodListPageEmitListToCmd
-                )
-        , SiteMap.purchaseGoodsParser
-            |> Url.Parser.map
-                (Page.PurchaseGoodList.initModel (getGoodId rec.page) rec.logInState
-                    |> Tuple.mapBoth
-                        PagePurchaseGoodList
-                        purchaseGoodListPageEmitListToCmd
-                )
-        , SiteMap.exhibitionParser
-            |> Url.Parser.map
-                (case rec.page of
-                    PageExhibition exhibitionModel ->
-                        exhibitionModel
-                            |> Page.Exhibition.update rec.logInState Page.Exhibition.ToEditPage
-                            |> Tuple.mapBoth PageExhibition exhibitionPageEmitListToCmd
+urlParser model url =
+    SiteMap.urlParser url
+        |> Maybe.map (urlParserResultToPageAndCmd model)
 
-                    _ ->
-                        Page.Exhibition.initModel
-                            |> Tuple.mapBoth PageExhibition exhibitionPageEmitListToCmd
-                )
-        , SiteMap.exhibitionConfirmParser
-            |> Url.Parser.map
-                (case rec.page of
-                    PageExhibition pageModel ->
-                        case Page.Exhibition.toConfirmPageMsgFromModel rec.logInState pageModel of
-                            Just msg ->
-                                (pageModel |> Page.Exhibition.update rec.logInState msg)
-                                    |> Tuple.mapBoth
-                                        PageExhibition
-                                        exhibitionPageEmitListToCmd
 
-                            Nothing ->
-                                ( PageExhibition pageModel, Cmd.none )
+urlParserResultToPageAndCmd : Model -> SiteMap.UrlParserResult -> ( Page, Cmd Msg )
+urlParserResultToPageAndCmd (Model rec) result =
+    case result of
+        SiteMap.Home ->
+            Page.Home.initModel (getGoodId rec.page)
+                |> Tuple.mapBoth PageHome homePageEmitListToCmd
 
-                    _ ->
-                        ( rec.page, Cmd.none )
-                )
-        , SiteMap.goodsParser
-            |> Url.Parser.map
-                (\id ->
-                    (case rec.page of
-                        PageHome pageModel ->
-                            case Data.Good.searchGoodsFromId id (Page.Home.getGoodAllGoodList pageModel) of
-                                Just goods ->
-                                    Page.Good.initModelFromGoods goods
+        SiteMap.SignUp ->
+            ( PageSignUp Page.SignUp.initModel
+            , Cmd.none
+            )
 
-                                Nothing ->
-                                    Page.Good.initModel id
+        SiteMap.LogIn ->
+            ( PageLogIn Page.LogIn.initModel
+            , Cmd.none
+            )
 
-                        _ ->
-                            Page.Good.initModel id
-                    )
-                        |> Tuple.mapBoth PageGoods goodsPageEmitListToCmd
-                )
-        , SiteMap.profileParser
-            |> Url.Parser.map
-                (Page.Profile.initModel rec.logInState
-                    |> Tuple.mapBoth
-                        PageProfile
-                        profilePageEmitListToCmd
-                )
-        , SiteMap.siteMapParser
-            |> Url.Parser.map
-                ( PageSiteMapXml
-                , Cmd.none
-                )
-        ]
-        |> Url.Parser.parse
+        SiteMap.LikeAndHistory ->
+            Page.LikeAndHistory.initModel (getGoodId rec.page) rec.logInState
+                |> Tuple.mapBoth
+                    PageLikeAndHistory
+                    likeAndHistoryEmitListToCmd
+
+        SiteMap.ExhibitionGood ->
+            Page.ExhibitionGoodList.initModel (getGoodId rec.page) rec.logInState
+                |> Tuple.mapBoth
+                    PageExhibitionGoodList
+                    exhibitionGoodListPageEmitListToCmd
+
+        SiteMap.PurchaseGood ->
+            Page.PurchaseGoodList.initModel (getGoodId rec.page) rec.logInState
+                |> Tuple.mapBoth
+                    PagePurchaseGoodList
+                    purchaseGoodListPageEmitListToCmd
+
+        SiteMap.Exhibition ->
+            case rec.page of
+                PageExhibition exhibitionModel ->
+                    exhibitionModel
+                        |> Page.Exhibition.update rec.logInState Page.Exhibition.ToEditPage
+                        |> Tuple.mapBoth PageExhibition exhibitionPageEmitListToCmd
+
+                _ ->
+                    Page.Exhibition.initModel
+                        |> Tuple.mapBoth PageExhibition exhibitionPageEmitListToCmd
+
+        SiteMap.ExhibitionConfirm ->
+            case rec.page of
+                PageExhibition pageModel ->
+                    case Page.Exhibition.toConfirmPageMsgFromModel rec.logInState pageModel of
+                        Just msg ->
+                            (pageModel |> Page.Exhibition.update rec.logInState msg)
+                                |> Tuple.mapBoth
+                                    PageExhibition
+                                    exhibitionPageEmitListToCmd
+
+                        Nothing ->
+                            ( PageExhibition pageModel, Cmd.none )
+
+                _ ->
+                    ( rec.page, Cmd.none )
+
+        SiteMap.Good goodId ->
+            (case rec.page of
+                PageHome pageModel ->
+                    case Data.Good.searchGoodsFromId goodId (Page.Home.getGoodAllGoodList pageModel) of
+                        Just goods ->
+                            Page.Good.initModelFromGoods goods
+
+                        Nothing ->
+                            Page.Good.initModel goodId
+
+                _ ->
+                    Page.Good.initModel goodId
+            )
+                |> Tuple.mapBoth PageGoods goodsPageEmitListToCmd
+
+        SiteMap.Profile ->
+            Page.Profile.initModel rec.logInState
+                |> Tuple.mapBoth
+                    PageProfile
+                    profilePageEmitListToCmd
+
+        SiteMap.SiteMap ->
+            ( PageSiteMapXml
+            , Cmd.none
+            )
 
 
 {-| 指定したページにあるメインの商品ID
