@@ -113,7 +113,7 @@ type Msg
     | UrlChange Url.Url
     | UrlRequest Browser.UrlRequest
     | AddLogMessage String
-    | SignUpConfirmResponse (Result Api.SignUpConfirmResponseError Api.SignUpConfirmResponseOk)
+    | SignUpConfirmResponse Api.LogInRequest (Result Api.SignUpConfirmResponseError ())
     | LogInResponse (Result Api.LogInResponseError Api.LogInResponseOk)
     | ReceiveImageDataUrl String
     | ReceiveImageFileAndBlobUrl Json.Decode.Value
@@ -355,7 +355,7 @@ update msg (Model rec) =
                     , cmd
                     )
 
-        SignUpConfirmResponse response ->
+        SignUpConfirmResponse logInRequest response ->
             case response of
                 Ok _ ->
                     let
@@ -369,6 +369,7 @@ update msg (Model rec) =
                         }
                     , Cmd.batch
                         [ Browser.Navigation.pushUrl rec.key SiteMap.homeUrl
+                        , Api.logIn logInRequest LogInResponse
                         , homePageEmitListToCmd emitList
                         ]
                     )
@@ -792,8 +793,8 @@ signUpPageEmitListToCmd =
                 Page.SignUp.EmitSignUp signUpRequest ->
                     Api.signUp signUpRequest (\response -> SignUpMsg (Page.SignUp.SignUpResponse response))
 
-                Page.SignUp.EmitSendConfirmToken token ->
-                    Api.signUpConfirm { confirmToken = token } SignUpConfirmResponse
+                Page.SignUp.EmitSendConfirmToken logInRequest token ->
+                    Api.signUpConfirm { confirmToken = token } (SignUpConfirmResponse logInRequest)
 
                 Page.SignUp.EmitUniversity e ->
                     universityEmitToMsg e

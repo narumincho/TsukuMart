@@ -7,7 +7,6 @@ module Api exposing
     , SellGoodsResponseError
     , SignUpConfirmRequest
     , SignUpConfirmResponseError(..)
-    , SignUpConfirmResponseOk
     , SignUpRequest
     , SignUpResponseError(..)
     , SignUpResponseOk(..)
@@ -231,11 +230,7 @@ type SignUpConfirmResponseError
     | SignUpConfirmResponseError -- エラーの理由がわからないエラー
 
 
-type SignUpConfirmResponseOk
-    = SignUpConfirmResponseOk
-
-
-signUpConfirm : SignUpConfirmRequest -> (Result SignUpConfirmResponseError SignUpConfirmResponseOk -> msg) -> Cmd msg
+signUpConfirm : SignUpConfirmRequest -> (Result SignUpConfirmResponseError () -> msg) -> Cmd msg
 signUpConfirm { confirmToken } msg =
     Http.request
         { method = "POST"
@@ -248,7 +243,7 @@ signUpConfirm { confirmToken } msg =
         }
 
 
-signUpConfirmResponseToResult : Http.Response String -> Result SignUpConfirmResponseError SignUpConfirmResponseOk
+signUpConfirmResponseToResult : Http.Response String -> Result SignUpConfirmResponseError ()
 signUpConfirmResponseToResult response =
     case response of
         Http.BadUrl_ _ ->
@@ -265,12 +260,12 @@ signUpConfirmResponseToResult response =
                 |> Result.withDefault (Err SignUpConfirmResponseError)
 
         Http.GoodStatus_ _ _ ->
-            Ok SignUpConfirmResponseOk
+            Ok ()
 
 
 {-| 新規登録の認証トークン送信のサーバーからの回答(Response)を解析
 -}
-signUpConfirmResponseDecoder : Json.Decode.Decoder (Result SignUpConfirmResponseError SignUpConfirmResponseOk)
+signUpConfirmResponseDecoder : Json.Decode.Decoder (Result SignUpConfirmResponseError ())
 signUpConfirmResponseDecoder =
     Json.Decode.oneOf
         [ Json.Decode.field "ok" Json.Decode.string

@@ -32,7 +32,7 @@ type Model
         , university : CompUniversity.Model
         , nickName : String
         }
-    | SentSingUpData Data.EmailAddress.EmailAddress (Maybe (Result Api.SignUpResponseError Api.SignUpResponseOk))
+    | SentSingUpData Api.LogInRequest (Maybe (Result Api.SignUpResponseError Api.SignUpResponseOk))
     | SentConfirmTokenError (Maybe Api.SignUpConfirmResponseError)
 
 
@@ -53,7 +53,7 @@ type SAddressAndPassword
 type Emit
     = EmitCatchStudentImage String
     | EmitSignUp Api.SignUpRequest
-    | EmitSendConfirmToken Api.ConfirmToken
+    | EmitSendConfirmToken Api.LogInRequest Api.ConfirmToken
     | EmitUniversity CompUniversity.Emit
 
 
@@ -67,7 +67,7 @@ type Msg
     | InputNickName String
     | SignUp Api.SignUpRequest
     | SignUpResponse (Result Api.SignUpResponseError Api.SignUpResponseOk)
-    | SendConfirmToken Api.ConfirmToken
+    | SendConfirmToken Api.LogInRequest Api.ConfirmToken
 
 
 {-| すべて空白の新規登録画面を表示するためのModel
@@ -173,7 +173,7 @@ update msg model =
             )
 
         SignUp signUpRequest ->
-            ( SentSingUpData signUpRequest.emailAddress Nothing
+            ( SentSingUpData { emailAddress = signUpRequest.emailAddress, pass = signUpRequest.pass } Nothing
             , [ EmitSignUp signUpRequest ]
             )
 
@@ -187,9 +187,9 @@ update msg model =
             , []
             )
 
-        SendConfirmToken token ->
+        SendConfirmToken logInRequest token ->
             ( SentConfirmTokenError Nothing
-            , [ EmitSendConfirmToken token ]
+            , [ EmitSendConfirmToken logInRequest token ]
             )
 
 
@@ -591,7 +591,7 @@ signUpSubmitButton signUpRequestMaybe =
     Html.div
         []
         [ Html.button
-            ([ Html.Attributes.classList [("mainButton", True), ("mainButton-disabled", signUpRequestMaybe == Nothing)]
+            ([ Html.Attributes.classList [ ( "mainButton", True ), ( "mainButton-disabled", signUpRequestMaybe == Nothing ) ]
              , Html.Attributes.disabled (signUpRequestMaybe == Nothing)
              ]
                 ++ (case signUpRequestMaybe of
@@ -667,28 +667,28 @@ getSignUpRequestEmailAddressAndPasswordAndImage sAddressAndPassword =
 
 {-| 新規登録のボタンを押した後の画面
 -}
-sentSingUpDataView : Data.EmailAddress.EmailAddress -> Maybe (Result Api.SignUpResponseError Api.SignUpResponseOk) -> Html.Html Msg
-sentSingUpDataView emailAddress signUpResultMaybe =
+sentSingUpDataView : Api.LogInRequest -> Maybe (Result Api.SignUpResponseError Api.SignUpResponseOk) -> Html.Html Msg
+sentSingUpDataView logInRequest signUpResultMaybe =
     case signUpResultMaybe of
         Just signUpResult ->
-            signUpResultToString emailAddress signUpResult
+            signUpResultToString logInRequest signUpResult
 
         Nothing ->
             Html.div [] [ Html.text "新規登録の情報を送信中" ]
 
 
-signUpResultToString : Data.EmailAddress.EmailAddress -> Result Api.SignUpResponseError Api.SignUpResponseOk -> Html.Html Msg
-signUpResultToString emailAddress signUpResult =
+signUpResultToString : Api.LogInRequest -> Result Api.SignUpResponseError Api.SignUpResponseOk -> Html.Html Msg
+signUpResultToString logInRequest signUpResult =
     case signUpResult of
         Ok (Api.SignUpResponseOk token) ->
             Html.div [ Html.Attributes.class "form" ]
                 [ Html.text
                     ("送信完了。"
-                        ++ Data.EmailAddress.toString emailAddress
+                        ++ Data.EmailAddress.toString logInRequest.emailAddress
                         ++ "にメールを送信しました。届いたメールのリンクをクリックして認証をしてください(いまはまだ、メールを送信していない。下のボタンで認証)"
                     )
                 , Html.div
-                    [ Html.Events.onClick (SendConfirmToken token)
+                    [ Html.Events.onClick (SendConfirmToken logInRequest token)
                     , Html.Attributes.style "border" "solid 2px black"
                     , Html.Attributes.style "padding" "4px"
                     ]
