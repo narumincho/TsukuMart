@@ -88,6 +88,7 @@ type Model
         , menuState : Maybe BasicParts.MenuModel -- メニューの開閉
         , message : Maybe String -- ちょっとしたことがあったら表示するもの
         , logInState : Data.LogInState.LogInState
+        , notificationVisible : Bool
         , key : Browser.Navigation.Key
         }
 
@@ -157,6 +158,7 @@ init _ url key =
         , menuState = BasicParts.initMenuModel
         , message = message
         , logInState = Data.LogInState.LogInStateNone
+        , notificationVisible = False
         , key = key
         }
     , cmd

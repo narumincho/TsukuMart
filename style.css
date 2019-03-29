@@ -294,6 +294,19 @@ header {
 }
 
 /*===========================
+    Notification 通知
+===========================*/
+
+.notification {
+    position: fixed;
+    top: 4rem;
+    right: 1rem;
+    width: 80%;
+    height: calc( 100% - 4rem );
+    background-color: #fff;
+}
+
+/*===========================
             Main Tab
 ===========================*/
 

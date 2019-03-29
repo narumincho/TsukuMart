@@ -30,12 +30,13 @@ view model =
             , [ Html.div
                     [ Html.Attributes.class "container" ]
                     [ Html.div []
-                        [ Html.text "つくマートについて" ]
-                    , Html.a
-                        [ Html.Attributes.href SiteMap.aboutPrivacyPolicyUrl
-                        , Html.Attributes.class "mainButton"
+                        [ Html.text "つくマートについて"
+                        , Html.a
+                            [ Html.Attributes.href SiteMap.aboutPrivacyPolicyUrl
+                            , Html.Attributes.class "mainButton"
+                            ]
+                            [ Html.text "プライバシーポリシー" ]
                         ]
-                        [ Html.text "プライバシーポリシー" ]
                     ]
               ]
             )
