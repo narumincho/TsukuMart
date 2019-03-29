@@ -79,6 +79,9 @@ port inputOrTextAreaReplaceText : { id : String, text : String } -> Cmd msg
 port changeSelectedIndex : { id : String, index : Int } -> Cmd msg
 
 
+port addEventListenerDrop : String -> Cmd msg
+
+
 type Model
     = Model
         { page : Page -- 開いているページ
@@ -200,7 +203,11 @@ urlParserInit logInState =
                 )
         , SiteMap.exhibitionParser
             |> Url.Parser.map
-                ( PageExhibition Page.Exhibition.initModel, Cmd.none )
+                (Page.Exhibition.initModel
+                    |> Tuple.mapBoth
+                        PageExhibition
+                        exhibitionPageEmitListToCmd
+                )
         , SiteMap.goodsParser
             |> Url.Parser.map
                 (\id ->
@@ -284,7 +291,7 @@ update msg (Model rec) =
                                     exhibitionPageModel
                                         |> Page.Exhibition.update rec.logInState
                                             (Page.Exhibition.LogInOrSignUpMsg Page.Component.LogInOrSignUp.LogInSuccess)
-                                        |> Tuple.mapBoth PageExhibition (exhibitionPageEmitListToCmd rec.key)
+                                        |> Tuple.mapBoth PageExhibition exhibitionPageEmitListToCmd
 
                                 PageLikeAndHistory likeAndHistoryModel ->
                                     likeAndHistoryModel
@@ -331,7 +338,7 @@ update msg (Model rec) =
                                     exhibitionPageModel
                                         |> Page.Exhibition.update rec.logInState
                                             (Page.Exhibition.LogInOrSignUpMsg Page.Component.LogInOrSignUp.LogInFailure)
-                                        |> Tuple.mapBoth PageExhibition (exhibitionPageEmitListToCmd rec.key)
+                                        |> Tuple.mapBoth PageExhibition exhibitionPageEmitListToCmd
 
                                 _ ->
                                     ( rec.page, Cmd.none )
@@ -401,7 +408,7 @@ update msg (Model rec) =
                                         exhibitionPageModel
                             in
                             ( Model { rec | page = PageExhibition newModel }
-                            , exhibitionPageEmitListToCmd rec.key emitList
+                            , exhibitionPageEmitListToCmd emitList
                             )
 
                         Err _ ->
@@ -470,7 +477,7 @@ update msg (Model rec) =
                             Page.Exhibition.update rec.logInState exhibitionMsg exhibitionPageModel
                     in
                     ( Model { rec | page = PageExhibition newModel }
-                    , exhibitionPageEmitListToCmd rec.key emitList
+                    , exhibitionPageEmitListToCmd emitList
                     )
 
                 _ ->
@@ -744,8 +751,8 @@ logInPageEmitListToCmd key =
         >> Cmd.batch
 
 
-exhibitionPageEmitListToCmd : Browser.Navigation.Key -> List Page.Exhibition.Emit -> Cmd Msg
-exhibitionPageEmitListToCmd key =
+exhibitionPageEmitListToCmd : List Page.Exhibition.Emit -> Cmd Msg
+exhibitionPageEmitListToCmd =
     List.map
         (\emit ->
             case emit of
@@ -755,11 +762,17 @@ exhibitionPageEmitListToCmd key =
                 Page.Exhibition.EmitSellGoods ( token, request ) ->
                     Api.sellGoods token request SellGoodResponse
 
-                Page.Exhibition.EmitCatchImageList string ->
-                    exhibitionImageChange string
+                Page.Exhibition.EmitCatchImageList idString ->
+                    exhibitionImageChange idString
 
-                Page.Exhibition.EmitHistoryPushExhibitionUrl ->
-                    Browser.Navigation.pushUrl key SiteMap.exhibitionUrl
+                Page.Exhibition.EmitAddEventListenerDrop idString ->
+                    addEventListenerDrop idString
+
+                Page.Exhibition.EmitReplaceText { id, text } ->
+                    inputOrTextAreaReplaceText { id = id, text = text }
+
+                Page.Exhibition.EmitChangeSelectedIndex { id, index } ->
+                    changeSelectedIndex { id = id, index = index }
         )
         >> Cmd.batch
 
@@ -900,9 +913,7 @@ urlParser (Model rec) =
         [ SiteMap.homeParser
             |> Url.Parser.map
                 (Page.Home.initModel (getGoodId rec.page)
-                    |> Tuple.mapBoth
-                        (\m -> PageHome m)
-                        homePageEmitListToCmd
+                    |> Tuple.mapBoth PageHome homePageEmitListToCmd
                 )
         , SiteMap.signUpParser
             |> Url.Parser.map
@@ -918,26 +929,52 @@ urlParser (Model rec) =
             |> Url.Parser.map
                 (Page.LikeAndHistory.initModel (getGoodId rec.page) rec.logInState
                     |> Tuple.mapBoth
-                        (\m -> PageLikeAndHistory m)
+                        PageLikeAndHistory
                         likeAndHistoryEmitListToCmd
                 )
         , SiteMap.exhibitionGoodsParser
             |> Url.Parser.map
                 (Page.ExhibitionGoodList.initModel (getGoodId rec.page) rec.logInState
                     |> Tuple.mapBoth
-                        (\m -> PageExhibitionGoodList m)
+                        PageExhibitionGoodList
                         exhibitionGoodListPageEmitListToCmd
                 )
         , SiteMap.purchaseGoodsParser
             |> Url.Parser.map
                 (Page.PurchaseGoodList.initModel (getGoodId rec.page) rec.logInState
                     |> Tuple.mapBoth
-                        (\m -> PagePurchaseGoodList m)
+                        PagePurchaseGoodList
                         purchaseGoodListPageEmitListToCmd
                 )
         , SiteMap.exhibitionParser
             |> Url.Parser.map
-                ( PageExhibition Page.Exhibition.initModel, Cmd.none )
+                (case rec.page of
+                    PageExhibition exhibitionModel ->
+                        exhibitionModel
+                            |> Page.Exhibition.update rec.logInState Page.Exhibition.ToEditPage
+                            |> Tuple.mapBoth PageExhibition exhibitionPageEmitListToCmd
+
+                    _ ->
+                        Page.Exhibition.initModel
+                            |> Tuple.mapBoth PageExhibition exhibitionPageEmitListToCmd
+                )
+        , SiteMap.exhibitionConfirmParser
+            |> Url.Parser.map
+                (case rec.page of
+                    PageExhibition pageModel ->
+                        case Page.Exhibition.toConfirmPageMsgFromModel rec.logInState pageModel of
+                            Just msg ->
+                                (pageModel |> Page.Exhibition.update rec.logInState msg)
+                                    |> Tuple.mapBoth
+                                        PageExhibition
+                                        exhibitionPageEmitListToCmd
+
+                            Nothing ->
+                                ( PageExhibition pageModel, Cmd.none )
+
+                    _ ->
+                        ( rec.page, Cmd.none )
+                )
         , SiteMap.goodsParser
             |> Url.Parser.map
                 (\id ->

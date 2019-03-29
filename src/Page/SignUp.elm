@@ -591,7 +591,7 @@ signUpSubmitButton signUpRequestMaybe =
     Html.div
         []
         [ Html.button
-            ([ Html.Attributes.class "mainButton"
+            ([ Html.Attributes.classList [("mainButton", True), ("mainButton-disabled", signUpRequestMaybe == Nothing)]
              , Html.Attributes.disabled (signUpRequestMaybe == Nothing)
              ]
                 ++ (case signUpRequestMaybe of

@@ -1,5 +1,7 @@
 module SiteMap exposing
-    ( exhibitionGoodsParser
+    ( exhibitionConfirmParser
+    , exhibitionConfirmUrl
+    , exhibitionGoodsParser
     , exhibitionGoodsUrl
     , exhibitionParser
     , exhibitionUrl
@@ -149,6 +151,21 @@ exhibitionUrl =
 exhibitionPath : String
 exhibitionPath =
     "exhibition"
+
+
+exhibitionConfirmParser : Url.Parser.Parser a a
+exhibitionConfirmParser =
+    Url.Parser.s exhibitionPath </> Url.Parser.s exhibitionConfirmPath
+
+
+exhibitionConfirmUrl : String
+exhibitionConfirmUrl =
+    Url.Builder.absolute [ exhibitionPath, exhibitionConfirmPath ] []
+
+
+exhibitionConfirmPath : String
+exhibitionConfirmPath =
+    "confirm"
 
 
 

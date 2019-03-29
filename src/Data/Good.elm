@@ -5,6 +5,7 @@ module Data.Good exposing
     , Status
     , conditionAll
     , conditionFromString
+    , conditionIndex
     , conditionToIdString
     , conditionToJapaneseString
     , getCondition
@@ -36,6 +37,7 @@ module Data.Good exposing
 
 import Data.User as User
 import Set
+import Utility
 
 
 type Good
@@ -103,6 +105,12 @@ conditionAll =
     , ConditionAcceptable
     , ConditionJunk
     ]
+
+
+conditionIndex : Condition -> Int
+conditionIndex condition =
+    Utility.getFirstIndex condition conditionAll
+        |> Maybe.withDefault 0
 
 
 conditionToJapaneseString : Condition -> String

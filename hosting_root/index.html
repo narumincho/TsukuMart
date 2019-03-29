@@ -79,6 +79,24 @@
                 }
             })
         });
+        /* ファイルをドロップして追加 */
+        app.prots.addEventListenerDrop.subscribe(id => {
+            requestAnimationFrame(() => {
+                const element = document.getElementById(id);
+                if (element !== null) {
+                    element.addEventListener("drop", e => {
+                        const result = [];
+                        for (const imageFile of e.dataTransfer.files) {
+                            result.push({
+                                file: imageFile,
+                                blobUrl: URL.createObjectURL(imageFile)
+                            });
+                        }
+                        app.ports.receiveImageFileAndBlobUrl.send(result);
+                    })
+                }
+            })
+        })
 
         navigator.serviceWorker.register("/serviceworker.js", { scope: "/" });
     </script>
