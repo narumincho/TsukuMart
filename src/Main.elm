@@ -12,6 +12,7 @@ import Html
 import Html.Attributes
 import Html.Keyed
 import Json.Decode
+import Page.About
 import Page.Component.GoodList
 import Page.Component.LogInOrSignUp
 import Page.Component.University
@@ -101,6 +102,7 @@ type Page
     | PageExhibition Page.Exhibition.Model
     | PageGoods Page.Good.Model
     | PageProfile Page.Profile.Model
+    | PageAbout Page.About.Model
     | PageSiteMapXml
 
 
@@ -222,6 +224,12 @@ urlParserInitResultToPageAndCmd logInState page =
 
         SiteMap.InitSiteMap ->
             ( PageSiteMapXml, Cmd.none )
+
+        SiteMap.InitAbout ->
+            ( PageAbout Page.About.aboutModel, Cmd.none )
+
+        SiteMap.InitAboutPrivacyPolicy ->
+            ( PageAbout Page.About.privacyPolicyModel, Cmd.none )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -990,6 +998,12 @@ urlParserResultToPageAndCmd (Model rec) result =
                     PageProfile
                     profilePageEmitListToCmd
 
+        SiteMap.About ->
+            ( PageAbout Page.About.aboutModel, Cmd.none )
+
+        SiteMap.AboutPrivacyPolicy ->
+            ( PageAbout Page.About.privacyPolicyModel, Cmd.none )
+
         SiteMap.SiteMap ->
             ( PageSiteMapXml
             , Cmd.none
@@ -1249,6 +1263,10 @@ titleAndTabDataAndMainView logInState isWideScreenMode page =
 
         PageSiteMapXml ->
             siteMapXmlView
+
+        PageAbout aboutModel ->
+            aboutModel
+                |> Page.About.view
 
 
 mapPageData : (a -> b) -> ( String, Tab.Tab a, List (Html.Html a) ) -> ( String, Tab.Tab b, List (Html.Html b) )

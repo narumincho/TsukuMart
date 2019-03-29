@@ -418,6 +418,11 @@ menuMain logInState =
         , Html.Attributes.href SiteMap.purchaseGoodsUrl
         ]
         [ Html.text "購入した商品" ]
+    , Html.a
+        [ Html.Attributes.class "menu-item"
+        , Html.Attributes.href SiteMap.aboutUrl
+        ]
+        [ Html.text "つくマートについて" ]
     ]
 
 

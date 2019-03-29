@@ -1,6 +1,8 @@
-module Page.About exposing (view)
+module Page.About exposing (Model, aboutModel, privacyPolicyModel, view)
 
 import Html
+import Html.Attributes
+import SiteMap
 import Tab
 
 
@@ -25,11 +27,24 @@ view model =
         About ->
             ( "つくマートについて"
             , Tab.none
-            , [ Html.text "つくマートについて" ]
+            , [ Html.div
+                    [ Html.Attributes.class "container" ]
+                    [ Html.div []
+                        [ Html.text "つくマートについて" ]
+                    , Html.a
+                        [ Html.Attributes.href SiteMap.aboutPrivacyPolicyUrl
+                        , Html.Attributes.class "mainButton"
+                        ]
+                        [ Html.text "プライバシーポリシー" ]
+                    ]
+              ]
             )
 
         PrivacyPolicy ->
             ( "プライバシーポリシー"
             , Tab.none
-            , [ Html.text "プライバシーポリシー" ]
+            , [ Html.div
+                    [ Html.Attributes.class "container" ]
+                    [ Html.text "プライバシーポリシー" ]
+              ]
             )

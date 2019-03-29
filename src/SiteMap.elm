@@ -1,6 +1,8 @@
 module SiteMap exposing
     ( UrlParserInitResult(..)
     , UrlParserResult(..)
+    , aboutPrivacyPolicyUrl
+    , aboutUrl
     , exhibitionConfirmUrl
     , exhibitionGoodsUrl
     , exhibitionUrl
@@ -34,6 +36,8 @@ type UrlParserInitResult
     | InitGood Data.Good.GoodId
     | InitProfile
     | InitSiteMap
+    | InitAbout
+    | InitAboutPrivacyPolicy
 
 
 urlParserInit : Url.Url -> Maybe UrlParserInitResult
@@ -49,6 +53,8 @@ urlParserInit =
         , goodsParser |> Parser.map InitGood
         , profileParser |> Parser.map InitProfile
         , siteMapParser |> Parser.map InitSiteMap
+        , aboutParser |> Parser.map InitAbout
+        , aboutPrivacyPolicyParser |> Parser.map InitAboutPrivacyPolicy
         ]
         |> Parser.parse
 
@@ -65,6 +71,8 @@ type UrlParserResult
     | Good Data.Good.GoodId
     | Profile
     | SiteMap
+    | About
+    | AboutPrivacyPolicy
 
 
 urlParser : Url.Url -> Maybe UrlParserResult
@@ -81,6 +89,8 @@ urlParser =
         , goodsParser |> Parser.map Good
         , profileParser |> Parser.map Profile
         , siteMapParser |> Parser.map SiteMap
+        , aboutParser |> Parser.map About
+        , aboutPrivacyPolicyParser |> Parser.map AboutPrivacyPolicy
         ]
         |> Parser.parse
 
@@ -260,6 +270,40 @@ profileUrl =
 profilePath : String
 profilePath =
     "profile"
+
+
+
+{- about -}
+
+
+aboutParser : Parser.Parser a a
+aboutParser =
+    Parser.s aboutPath
+
+
+aboutUrl : String
+aboutUrl =
+    Url.Builder.absolute [ aboutPath ] []
+
+
+aboutPath : String
+aboutPath =
+    "about"
+
+
+aboutPrivacyPolicyParser : Parser.Parser a a
+aboutPrivacyPolicyParser =
+    Parser.s aboutPath </> Parser.s aboutPrivacyPolicyPath
+
+
+aboutPrivacyPolicyUrl : String
+aboutPrivacyPolicyUrl =
+    Url.Builder.absolute [ aboutPath, aboutPrivacyPolicyPath ] []
+
+
+aboutPrivacyPolicyPath : String
+aboutPrivacyPolicyPath =
+    "privacy-policy"
 
 
 
