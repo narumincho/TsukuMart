@@ -237,13 +237,11 @@ view logInState isWideScreenMode (Model rec) =
                         rec.normalModel
                             |> normalModelGetLikeGoodResponse
                             |> Maybe.map (Result.withDefault [])
-                            |> Maybe.withDefault []
 
                     TabHistory ->
                         rec.normalModel
                             |> normalModelGetHistoryGoodResponse
                             |> Maybe.map (Result.withDefault [])
-                            |> Maybe.withDefault []
                 )
                 |> Html.map GoodListMsg
             ]

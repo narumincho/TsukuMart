@@ -74,8 +74,42 @@ update msg _ =
 -}
 
 
-view : Model -> Data.LogInState.LogInState -> Bool -> List Good.Good -> Html.Html Msg
+{-| 商品の一覧表示
+goodList:Maybe (List Good.Good)は、Nothingで読み込み中、Justで商品の指定をする
+-}
+view : Model -> Data.LogInState.LogInState -> Bool -> Maybe (List Good.Good) -> Html.Html Msg
 view (Model { sending }) logInState isWideMode goodsList =
+    case goodsList of
+        Just [] ->
+            zeroGoodsView
+
+        Just (x :: xs) ->
+            goodListView sending logInState isWideMode x xs
+
+        Nothing ->
+            Html.div
+                [ Html.Attributes.class "container" ]
+                [ Html.text "読み込み中" ]
+
+
+zeroGoodsView : Html.Html Msg
+zeroGoodsView =
+    Html.div
+        [ Html.Attributes.class "container" ]
+        [ Html.div
+            [ Html.Attributes.class "goodList-zero" ]
+            [ Html.img
+                [ Html.Attributes.src "/assets/logo_bird.png"
+                , Html.Attributes.class "goodList-zeroImage"
+                ]
+                []
+            , Html.text "ここに表示する商品がありません"
+            ]
+        ]
+
+
+goodListView : Bool -> Data.LogInState.LogInState -> Bool -> Good.Good -> List Good.Good -> Html.Html Msg
+goodListView sending logInState isWideMode good goodList =
     Html.div
         [ Html.Attributes.style "display" "grid"
         , Html.Attributes.style "grid-template-columns"
@@ -86,7 +120,9 @@ view (Model { sending }) logInState isWideMode goodsList =
                 "50% 50%"
             )
         ]
-        (goodsList |> List.map (goodListItem logInState sending))
+        ((good :: goodList)
+            |> List.map (goodListItem logInState sending)
+        )
 
 
 goodListItem : Data.LogInState.LogInState -> Bool -> Good.Good -> Html.Html Msg

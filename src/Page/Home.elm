@@ -182,13 +182,13 @@ view logInState isWideScreenMode (Model rec) =
             isWideScreenMode
             (case rec.tabSelect of
                 TabRecent ->
-                    rec.recent |> Maybe.withDefault []
+                    rec.recent
 
                 TabRecommend ->
-                    rec.recommend |> Maybe.withDefault []
+                    rec.recommend
 
                 TabFree ->
-                    rec.free |> Maybe.withDefault []
+                    rec.free
             )
             |> Html.map GoodListMsg
       ]

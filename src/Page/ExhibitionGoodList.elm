@@ -150,13 +150,13 @@ view logInState isWideScreenMode (Model rec) =
                 isWideScreenMode
                 (case rec.normalModel of
                     Loading ->
-                        []
+                        Nothing
 
                     Normal { exhibitionGoodList } ->
-                        exhibitionGoodList
+                        Just exhibitionGoodList
 
                     Error ->
-                        []
+                        Just []
                 )
                 |> Html.map GoodListMsg
             ]

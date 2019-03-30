@@ -81,17 +81,13 @@
         });
         /* ファイルをドロップして追加 */
         app.ports.addEventListenerDrop.subscribe(id => {
-            console.log("call addEventListenerDrop");
             requestAnimationFrame(() => {
-                console.log("element")
                 const element = document.getElementById(id);
                 if (element !== null) {
-                    console.log("add event lister drop", element);
                     element.addEventListener("dragover", e => {
                         e.preventDefault();
                     })
                     element.addEventListener("drop", e => {
-                        console.log(e.dataTransfer);
                         e.preventDefault();
                         const result = [];
                         for (const imageFile of e.dataTransfer.files) {
@@ -100,7 +96,6 @@
                                 blobUrl: URL.createObjectURL(imageFile)
                             });
                         }
-                        console.log("send", result);
                         app.ports.receiveImageFileAndBlobUrl.send(result);
                     })
                 }
