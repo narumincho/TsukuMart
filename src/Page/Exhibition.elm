@@ -199,7 +199,7 @@ updateWhenLogIn msg page =
                                     String.toInt priceString
                                         |> Maybe.andThen
                                             (\price ->
-                                                if 0 < price && price <= 1000000 then
+                                                if 0 <= price && price <= 1000000 then
                                                     Just price
 
                                                 else
@@ -529,12 +529,12 @@ photoAdd =
     [ Html.label
         [ Html.Attributes.class "exhibition-photo-add"
         , Html.Attributes.id photoAddLabelId
-        , Html.Attributes.for "exhibition-photo-input"
+        , Html.Attributes.for photoAddInputId
         ]
         [ photoAddIcon ]
     , Html.input
         [ Html.Attributes.class "exhibition-photo-input"
-        , Html.Attributes.id "exhibition-photo-input"
+        , Html.Attributes.id photoAddInputId
         , Html.Attributes.type_ "file"
         , Html.Attributes.multiple True
         , Html.Attributes.accept "image/png,image/jpeg"
@@ -547,6 +547,11 @@ photoAdd =
 photoAddLabelId : String
 photoAddLabelId =
     "exhibition-photo-addLabel"
+
+
+photoAddInputId : String
+photoAddInputId =
+    "exhibition-photo-input"
 
 
 photoAddIcon : Html.Html msg
@@ -736,8 +741,8 @@ selectConditionDecoder =
 
 
 toConformPageButton : Bool -> Html.Html Msg
-toConformPageButton abalable =
-    if abalable then
+toConformPageButton available =
+    if available then
         Html.a
             [ Html.Attributes.href SiteMap.exhibitionConfirmUrl
             , Html.Attributes.class "mainButton"
