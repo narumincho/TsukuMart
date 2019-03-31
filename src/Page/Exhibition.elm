@@ -36,6 +36,7 @@ type Page
     = EditPage EditModel
     | ConfirmPage
         { request : RequestData
+        , sending : Bool
         }
 
 
@@ -221,7 +222,7 @@ updateWhenLogIn msg page =
                     )
 
                 ToConfirmPage ( _, request ) ->
-                    ( ConfirmPage { request = request }
+                    ( ConfirmPage { request = request, sending = False }
                     , []
                     )
 
@@ -238,7 +239,7 @@ updateWhenLogIn msg page =
         ConfirmPage rec ->
             case msg of
                 SellGoods data ->
-                    ( ConfirmPage rec
+                    ( ConfirmPage { rec | sending = True }
                     , [ EmitSellGoods data ]
                     )
 
@@ -473,8 +474,8 @@ view logInState (Model { page, logInOrSignUpModel }) =
                         EditPage editModel ->
                             editView editModel
 
-                        ConfirmPage { request } ->
-                            confirmView access request
+                        ConfirmPage { request, sending } ->
+                            confirmView access request sending
     in
     ( "出品"
     , Tab.single tabText
@@ -765,8 +766,8 @@ toConformPageButton available =
 -}
 
 
-confirmView : Api.Token -> RequestData -> ( String, List (Html.Html Msg) )
-confirmView accessToken (RequestData rec) =
+confirmView : Api.Token -> RequestData -> Bool -> ( String, List (Html.Html Msg) )
+confirmView accessToken (RequestData rec) sending =
     ( "出品 確認"
     , [ confirmViewImage rec.image
       , Html.div [ Html.Attributes.class "exhibition-confirm-item" ]
@@ -788,9 +789,18 @@ confirmView accessToken (RequestData rec) =
       , Html.div [ Html.Attributes.class "exhibition-confirm-msg" ]
             [ Html.text "この商品を出品します。よろしいですか?" ]
       , Html.button
-            [ Html.Events.onClick (SellGoods ( accessToken, requestDataToApiRequest (RequestData rec) ))
-            , Html.Attributes.class "mainButton"
-            ]
+            (if sending then
+                [ Html.Attributes.class "mainButton"
+                , Html.Attributes.class "mainButton-disabled"
+                , Html.Attributes.disabled True
+                ]
+
+             else
+                [ Html.Events.onClick (SellGoods ( accessToken, requestDataToApiRequest (RequestData rec) ))
+                , Html.Attributes.class "mainButton"
+                , Html.Attributes.disabled False
+                ]
+            )
             [ Html.text "出品する" ]
       ]
     )
