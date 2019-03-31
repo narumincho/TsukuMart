@@ -62,7 +62,7 @@ update msg (Model r) =
         InputPassword string ->
             ( Model
                 { r
-                    | password = Data.Password.passwordFromString string |> Result.toMaybe
+                    | password = Data.Password.fromString string |> Result.toMaybe
                 }
             , []
             )

@@ -302,7 +302,7 @@ header {
     top: 4rem;
     right: 1rem;
     width: 80%;
-    height: calc( 100% - 4rem );
+    height: calc( 100% - 4rem);
     background-color: #fff;
 }
 
@@ -856,6 +856,10 @@ header {
 
 .goodList-like-sending {
     background-color: #7f2591;
+}
+
+.goodList-loading {
+    z-index: 2;
 }
 
 .goodList-zero {

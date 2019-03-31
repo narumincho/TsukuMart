@@ -1,4 +1,4 @@
-module Data.Password exposing (Error, Password, errorMessage, passwordFromString, toString)
+module Data.Password exposing (Error, Password, errorMessage, fromString, toString)
 
 import Set exposing (Set)
 
@@ -126,8 +126,8 @@ type InvalidCharError
     = InvalidCharError (Set Char)
 
 
-passwordFromString : String -> Result Error Password
-passwordFromString string =
+fromString : String -> Result Error Password
+fromString string =
     let
         charList =
             string

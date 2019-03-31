@@ -4,8 +4,10 @@ import Api
 import BasicParts
 import Browser
 import Browser.Navigation
+import Data.EmailAddress
 import Data.Good
 import Data.LogInState
+import Data.Password
 import Data.User
 import File
 import Html
@@ -82,6 +84,9 @@ port changeSelectedIndex : { id : String, index : Int } -> Cmd msg
 port addEventListenerDrop : String -> Cmd msg
 
 
+port saveEmailAddressAndPasswordLocalStrage : { emailAddress : String, password : String } -> Cmd msg
+
+
 type Model
     = Model
         { page : Page -- 開いているページ
@@ -114,7 +119,7 @@ type Msg
     | UrlRequest Browser.UrlRequest
     | AddLogMessage String
     | SignUpConfirmResponse Api.LogInRequest (Result Api.SignUpConfirmResponseError ())
-    | LogInResponse (Result Api.LogInResponseError Api.LogInResponseOk)
+    | LogInResponse Api.LogInRequest (Result Api.LogInResponseError Api.LogInResponseOk)
     | ReceiveImageDataUrl String
     | ReceiveImageFileAndBlobUrl Json.Decode.Value
     | GetUserDataResponse { access : Api.Token, refresh : Api.Token } (Result () Data.User.User)
@@ -134,7 +139,7 @@ type Msg
     | GoodsPageMsg Page.Good.Msg
 
 
-main : Program () Model Msg
+main : Program { emailAddress : Maybe String, password : Maybe String } Model Msg
 main =
     Browser.application
         { init = init
@@ -146,12 +151,23 @@ main =
         }
 
 
-init : () -> Url.Url -> Browser.Navigation.Key -> ( Model, Cmd Msg )
-init _ url key =
+init : { emailAddress : Maybe String, password : Maybe String } -> Url.Url -> Browser.Navigation.Key -> ( Model, Cmd Msg )
+init { emailAddress, password } url key =
     let
         ( page, message, cmd ) =
             urlParserInit Data.LogInState.LogInStateNone url
                 |> urlParserResultToModel
+
+        logInRequestMaybe =
+            case ( emailAddress |> Maybe.andThen Data.EmailAddress.fromString, password |> Maybe.map Data.Password.fromString ) of
+                ( Just email, Just (Ok pass) ) ->
+                    Just
+                        { emailAddress = email
+                        , pass = pass
+                        }
+
+                ( _, _ ) ->
+                    Nothing
     in
     ( Model
         { page = page
@@ -161,7 +177,12 @@ init _ url key =
         , notificationVisible = False
         , key = key
         }
-    , cmd
+    , case logInRequestMaybe of
+        Just logInRequest ->
+            Cmd.batch [ cmd, Api.logIn logInRequest (LogInResponse logInRequest) ]
+
+        Nothing ->
+            cmd
     )
 
 
@@ -280,7 +301,7 @@ update msg (Model rec) =
             , Cmd.none
             )
 
-        LogInResponse logInResponse ->
+        LogInResponse requestData logInResponse ->
             case logInResponse of
                 Ok (Api.LogInResponseOk { access, refresh }) ->
                     let
@@ -326,6 +347,10 @@ update msg (Model rec) =
                     , Cmd.batch
                         [ cmd
                         , Api.getMyProfile access (GetUserDataResponse { access = access, refresh = refresh })
+                        , saveEmailAddressAndPasswordLocalStrage
+                            { emailAddress = Data.EmailAddress.toString requestData.emailAddress
+                            , password = Data.Password.toString requestData.pass
+                            }
                         ]
                     )
 
@@ -369,7 +394,7 @@ update msg (Model rec) =
                         }
                     , Cmd.batch
                         [ Browser.Navigation.pushUrl rec.key SiteMap.homeUrl
-                        , Api.logIn logInRequest LogInResponse
+                        , Api.logIn logInRequest (LogInResponse logInRequest)
                         , homePageEmitListToCmd emitList
                         ]
                     )
@@ -855,7 +880,7 @@ logInOrSignUpEmitToCmd : Page.Component.LogInOrSignUp.Emit -> Cmd Msg
 logInOrSignUpEmitToCmd emit =
     case emit of
         Page.Component.LogInOrSignUp.EmitLogIn logInRequest ->
-            Api.logIn logInRequest LogInResponse
+            Api.logIn logInRequest (LogInResponse logInRequest)
 
 
 goodsListEmitToMsg : Page.Component.GoodList.Emit -> Cmd Msg

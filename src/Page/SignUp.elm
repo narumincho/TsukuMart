@@ -78,7 +78,7 @@ initModel =
         { sAddressAndPassword =
             StudentHasSAddress
                 { studentIdOrTsukubaEmailAddress = analysisStudentIdOrSAddress ""
-                , password = Data.Password.passwordFromString ""
+                , password = Data.Password.fromString ""
                 }
         , university = CompUniversity.initSelect
         , nickName = ""
@@ -147,11 +147,11 @@ update msg model =
                                 case rec.sAddressAndPassword of
                                     NewStudent r ->
                                         NewStudent
-                                            { r | password = Data.Password.passwordFromString string }
+                                            { r | password = Data.Password.fromString string }
 
                                     StudentHasSAddress r ->
                                         StudentHasSAddress
-                                            { r | password = Data.Password.passwordFromString string }
+                                            { r | password = Data.Password.fromString string }
                         }
 
                 _ ->
