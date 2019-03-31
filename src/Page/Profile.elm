@@ -47,6 +47,7 @@ type Emit
     | EmitChangeProfile Api.Token User.Profile
     | EmitReplaceText { id : String, text : String }
     | EmitUniversity CompUniversity.Emit
+    | EmitLogOut
 
 
 type Msg
@@ -58,6 +59,7 @@ type Msg
     | MsgBackToViewMode
     | MsgChangeProfile Api.Token User.Profile
     | MsgChangeProfileResponse
+    | MsgLogOut
 
 
 initModel : LogInState.LogInState -> ( Model, List Emit )
@@ -137,6 +139,11 @@ update logInState msg (Model rec) =
         MsgChangeProfileResponse ->
             ( Model { rec | mode = ViewMode }
             , []
+            )
+
+        MsgLogOut ->
+            ( Model rec
+            , [ EmitLogOut ]
             )
 
 
@@ -219,7 +226,7 @@ userView user =
          ]
             ++ universityView (User.profileGetUniversity profile)
             ++ [ Html.text ("ユーザーID " ++ (user |> User.getUserId |> User.userIdToString)) ]
-            ++ [ toEditButton ]
+            ++ [ toEditButton, logOutButton ]
         )
     ]
 
@@ -301,6 +308,15 @@ toEditButton =
         [ editIcon
         , Html.text "編集する"
         ]
+
+
+logOutButton : Html.Html Msg
+logOutButton =
+    Html.button
+        [ Html.Attributes.class "subButton"
+        , Html.Events.onClick MsgLogOut
+        ]
+        [ Html.text "ログアウトする" ]
 
 
 editIcon : Html.Html msg

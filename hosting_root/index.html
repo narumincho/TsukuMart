@@ -32,9 +32,13 @@
         addEventListener("resize", windowResizeListener);
         windowResizeListener();
         /* メールアドレスとパスワードを保存する */
-        app.ports.saveEmailAddressAndPasswordLocalStrage.subscribe(({ emailAddress, password }) => {
+        app.ports.saveEmailAddressAndPasswordToLocalStorage.subscribe(({ emailAddress, password }) => {
             localStorage.setItem("emailAddress", emailAddress);
             localStorage.setItem("password", password);
+        });
+        /* メールアドレスとパスワードとその他すべてを削除する */
+        app.ports.deleteEmailAddressAndPasswordFromLocalStorage.subscribe( () => {
+            localStorage.clear();
         });
         /* 指定されたidの<input type="file">から1つファイルの情報を受け取りData URLに変換してElmに送信 */
         app.ports.studentImageChange.subscribe(id => {

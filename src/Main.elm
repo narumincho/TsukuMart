@@ -84,7 +84,10 @@ port changeSelectedIndex : { id : String, index : Int } -> Cmd msg
 port addEventListenerDrop : String -> Cmd msg
 
 
-port saveEmailAddressAndPasswordLocalStrage : { emailAddress : String, password : String } -> Cmd msg
+port saveEmailAddressAndPasswordToLocalStorage : { emailAddress : String, password : String } -> Cmd msg
+
+
+port deleteEmailAddressAndPasswordFromLocalStorage : () -> Cmd msg
 
 
 type Model
@@ -118,6 +121,7 @@ type Msg
     | UrlChange Url.Url
     | UrlRequest Browser.UrlRequest
     | AddLogMessage String
+    | LogOut
     | SignUpConfirmResponse Api.LogInRequest (Result Api.SignUpConfirmResponseError ())
     | LogInResponse Api.LogInRequest (Result Api.LogInResponseError Api.LogInResponseOk)
     | ReceiveImageDataUrl String
@@ -301,6 +305,15 @@ update msg (Model rec) =
             , Cmd.none
             )
 
+        LogOut ->
+            ( Model
+                { rec
+                    | logInState = Data.LogInState.LogInStateNone
+                    , message = Just "ログアウトしました"
+                }
+            , Cmd.none
+            )
+
         LogInResponse requestData logInResponse ->
             case logInResponse of
                 Ok (Api.LogInResponseOk { access, refresh }) ->
@@ -347,7 +360,7 @@ update msg (Model rec) =
                     , Cmd.batch
                         [ cmd
                         , Api.getMyProfile access (GetUserDataResponse { access = access, refresh = refresh })
-                        , saveEmailAddressAndPasswordLocalStrage
+                        , saveEmailAddressAndPasswordToLocalStorage
                             { emailAddress = Data.EmailAddress.toString requestData.emailAddress
                             , password = Data.Password.toString requestData.pass
                             }
@@ -847,6 +860,12 @@ profilePageEmitListToCmd =
 
                 Page.Profile.EmitUniversity e ->
                     universityEmitToMsg e
+
+                Page.Profile.EmitLogOut ->
+                    Cmd.batch
+                        [ deleteEmailAddressAndPasswordFromLocalStorage ()
+                        , Task.perform (always LogOut) (Task.succeed ())
+                        ]
         )
         >> Cmd.batch
 

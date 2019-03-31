@@ -684,24 +684,6 @@ header {
     text-align: center;
 }
 
-.logIn-signUpButton {
-    background-color: #999;
-    color: #111;
-    padding: 1rem;
-    text-align: center;
-    font-size: 1.5rem;
-    border-radius: .4rem;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.18);
-    border: none;
-    user-select: none;
-    cursor: pointer;
-    text-decoration: none;
-    cursor: pointer;
-}
-
-.logIn-signUpButton:hover {
-    background-color: #bbb;
-}
 
 /*===============================================
                 Sign Up 新規登録画面
@@ -972,6 +954,25 @@ header {
     background-color: #aaa;
     color: #ddd;
     fill: #ddd;
+}
+
+.subButton {
+    background-color: #999;
+    color: #111;
+    padding: 1rem;
+    text-align: center;
+    font-size: 1.5rem;
+    border-radius: .4rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.18);
+    border: none;
+    user-select: none;
+    cursor: pointer;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.subButton:hover {
+    background-color: #bbb;
 }
 
 /*===============================================

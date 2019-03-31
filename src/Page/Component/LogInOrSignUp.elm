@@ -252,7 +252,7 @@ orLabel =
 signUpButton : Html.Html msg
 signUpButton =
     Html.a
-        [ Html.Attributes.class "logIn-signUpButton"
+        [ Html.Attributes.class "subButton"
         , Html.Attributes.href SiteMap.signUpUrl
         ]
         [ Html.text "新規登録" ]
