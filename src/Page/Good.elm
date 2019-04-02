@@ -29,11 +29,12 @@ import Tab
 
 
 type Model
-    = Normal
+    = Loading { goodId : Good.GoodId }
+    | Normal
         { good : Good.Good
-        , sending : Bool
+        , sending : Bool -- いいねを送信中か送信中じゃないか
         }
-    | Loading { goodId : Good.GoodId }
+    | Confirm { good : Good.Good }
 
 
 type Emit
@@ -49,6 +50,7 @@ type Msg
     | UnLikeGood Data.User.UserId Api.Token Good.GoodId
     | LikeGoodResponse Data.User.UserId (Result () ())
     | UnlikeGoodResponse Data.User.UserId (Result () ())
+    | ToConfirmPage
 
 
 {-| 指定したIDの商品詳細ページ
@@ -74,11 +76,14 @@ initModelFromGoods good =
 getGoodId : Model -> Good.GoodId
 getGoodId model =
     case model of
+        Loading { goodId } ->
+            goodId
+
         Normal { good } ->
             Good.getId good
 
-        Loading { goodId } ->
-            goodId
+        Confirm { good } ->
+            Good.getId good
 
 
 update : Msg -> Model -> ( Model, List Emit )
@@ -98,20 +103,26 @@ update msg model =
 
         LikeGood userId token id ->
             ( case model of
+                Loading _ ->
+                    model
+
                 Normal rec ->
                     Normal { rec | sending = True }
 
-                Loading _ ->
+                Confirm _ ->
                     model
             , [ EmitLikeGood userId token id ]
             )
 
         UnLikeGood userId token id ->
             ( case model of
+                Loading _ ->
+                    model
+
                 Normal rec ->
                     Normal { rec | sending = True }
 
-                Loading _ ->
+                Confirm _ ->
                     model
             , [ EmitUnLikeGood userId token id ]
             )
@@ -144,6 +155,19 @@ update msg model =
             , []
             )
 
+        ToConfirmPage ->
+            ( case model of
+                Loading _ ->
+                    model
+
+                Normal { good } ->
+                    Confirm { good = good }
+
+                Confirm _ ->
+                    model
+            , []
+            )
+
 
 view : LogInState.LogInState -> Bool -> Model -> ( String, Tab.Tab Msg, List (Html.Html Msg) )
 view logInState isWideScreenMode model =
@@ -168,6 +192,23 @@ view logInState isWideScreenMode model =
                         , goodsViewCondition (Good.getCondition good)
                         ]
                     , goodsViewPriceAndBuyButton isWideScreenMode (Good.getPrice good)
+                    ]
+              ]
+            )
+
+        Confirm { good } ->
+            ( Good.getName good
+            , Tab.none
+            , [ Html.div
+                    [ Html.Attributes.class "container" ]
+                    [ Html.div
+                        [ Html.Attributes.class "good" ]
+                        [ Html.text "購入確認画面"
+                        , goodsViewImage (Good.getFirstImageUrl good) (Good.getOthersImageUrlList good)
+                        , goodsViewName (Good.getName good)
+                        , goodsViewDescription (Good.getDescription good)
+                        , goodsViewCondition (Good.getCondition good)
+                        ]
                     ]
               ]
             )
@@ -263,7 +304,7 @@ goodsViewDescription description =
         ]
 
 
-goodsViewPriceAndBuyButton : Bool -> Int -> Html.Html msg
+goodsViewPriceAndBuyButton : Bool -> Int -> Html.Html Msg
 goodsViewPriceAndBuyButton isWideScreenMode price =
     Html.div
         [ Html.Attributes.classList
@@ -272,7 +313,9 @@ goodsViewPriceAndBuyButton isWideScreenMode price =
             ]
         ]
         [ Html.div [ Html.Attributes.class "good-price" ] [ Html.text (Good.priceToString price) ]
-        , Html.button [] [ Html.text "購入手続きへ" ]
+        , Html.button
+            [ Html.Events.onClick ToConfirmPage ]
+            [ Html.text "購入手続きへ" ]
         ]
 
 
