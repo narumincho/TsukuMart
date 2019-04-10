@@ -53,6 +53,7 @@ type Good
         , image2Url : Maybe String
         , image3Url : Maybe String
         , likedByUserSet : Set.Set Int
+        , seller : User.UserId
         }
 
 
@@ -70,8 +71,8 @@ goodIdFromInt id =
     GoodId id
 
 
-make : { id : Int, name : String, description : String, price : Int, condition : Condition, status : Status, image0Url : String, image1Url : Maybe String, image2Url : Maybe String, image3Url : Maybe String, likedByUserList : List User.UserId } -> Good
-make { id, name, description, price, condition, status, image0Url, image1Url, image2Url, image3Url, likedByUserList } =
+make : { id : Int, name : String, description : String, price : Int, condition : Condition, status : Status, image0Url : String, image1Url : Maybe String, image2Url : Maybe String, image3Url : Maybe String, likedByUserList : List User.UserId, seller : Int } -> Good
+make { id, name, description, price, condition, status, image0Url, image1Url, image2Url, image3Url, likedByUserList, seller } =
     Good
         { id = GoodId id
         , name = name
@@ -84,6 +85,7 @@ make { id, name, description, price, condition, status, image0Url, image1Url, im
         , image2Url = image2Url
         , image3Url = image3Url
         , likedByUserSet = likedByUserList |> List.map User.userIdToInt |> Set.fromList
+        , seller = User.userIdFromInt seller
         }
 
 

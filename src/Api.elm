@@ -386,22 +386,6 @@ logInResponseErrorToString logInResponseError =
            Tokenの更新 /auth/token/refresh/
    =================================================
 -}
-{-
-   HTTPレスポンスコード:401 Unauthorized
-   body:
-      {
-          "detail": "Given token not valid for any token type",
-          "code": "token_not_valid",
-          "messages": [
-              {
-                  "token_class": "AccessToken",
-                  "token_type": "access",
-                  "message": "Token is invalid or expired"
-              }
-          ]
-      }
-      期限切れか無効かを判断することはなさそう。認証が必要なリクエストでこれが帰ってきたら、Tokenの更新の必要がありそうだ。
--}
 
 
 type alias TokenRefreshRequest =
@@ -870,7 +854,7 @@ getGoodsResponseToResult response =
 goodsDecoder : Json.Decode.Decoder Good.Good
 goodsDecoder =
     Json.Decode.succeed
-        (\id name description price condition status image0Url image1Url image2Url image3Url likedByUserList ->
+        (\id name description price condition status image0Url image1Url image2Url image3Url likedByUserList seller ->
             Good.make
                 { id = id
                 , name = name
@@ -883,6 +867,7 @@ goodsDecoder =
                 , image2Url = image2Url
                 , image3Url = image3Url
                 , likedByUserList = likedByUserList |> List.map User.userIdFromInt
+                , seller = seller
                 }
         )
         |> Json.Decode.Pipeline.required "id" Json.Decode.int
@@ -896,6 +881,7 @@ goodsDecoder =
         |> Json.Decode.Pipeline.required "image3" (Json.Decode.nullable Json.Decode.string)
         |> Json.Decode.Pipeline.required "image4" (Json.Decode.nullable Json.Decode.string)
         |> Json.Decode.Pipeline.required "liked_by_prof" (Json.Decode.list Json.Decode.int)
+        |> Json.Decode.Pipeline.required "seller" Json.Decode.int
 
 
 conditionDecoder : Json.Decode.Decoder Good.Condition
