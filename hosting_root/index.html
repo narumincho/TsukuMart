@@ -17,8 +17,7 @@
         /* Elmを起動!! */
         const app = Elm.Main.init({
             flags: {
-                emailAddress: localStorage.getItem("emailAddress"),
-                password: localStorage.getItem("password")
+                refreshToken: localStorage.getItem("refreshToken"),
             }
         });
         const windowResizeListener = (e) => {
@@ -31,13 +30,12 @@
         /* ウィンドウサイズのリサイズ情報をElmに送信 */
         addEventListener("resize", windowResizeListener);
         windowResizeListener();
-        /* メールアドレスとパスワードを保存する */
-        app.ports.saveEmailAddressAndPasswordToLocalStorage.subscribe(({ emailAddress, password }) => {
-            localStorage.setItem("emailAddress", emailAddress);
-            localStorage.setItem("password", password);
+        /* リフレッシュトークンを保存する */
+        app.ports.saveRefreshTokenToLocalStorage.subscribe(refreshToken => {
+            localStorage.setItem("refreshToken", refreshToken);
         });
-        /* メールアドレスとパスワードとその他すべてを削除する */
-        app.ports.deleteEmailAddressAndPasswordFromLocalStorage.subscribe( () => {
+        /* リフレッシュトークンとその他すべてを削除する */
+        app.ports.deleteRefreshTokenAndAllFromLocalStorage.subscribe(() => {
             localStorage.clear();
         });
         /* 指定されたidの<input type="file">から1つファイルの情報を受け取りData URLに変換してElmに送信 */

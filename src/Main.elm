@@ -84,10 +84,10 @@ port changeSelectedIndex : { id : String, index : Int } -> Cmd msg
 port addEventListenerDrop : String -> Cmd msg
 
 
-port saveEmailAddressAndPasswordToLocalStorage : { emailAddress : String, password : String } -> Cmd msg
+port saveRefreshTokenToLocalStorage : String -> Cmd msg
 
 
-port deleteEmailAddressAndPasswordFromLocalStorage : () -> Cmd msg
+port deleteRefreshTokenAndAllFromLocalStorage : () -> Cmd msg
 
 
 type Model
@@ -123,7 +123,7 @@ type Msg
     | AddLogMessage String
     | LogOut
     | SignUpConfirmResponse Api.LogInRequest (Result Api.SignUpConfirmResponseError ())
-    | LogInResponse Api.LogInRequest (Result Api.LogInResponseError Api.LogInResponseOk)
+    | LogInResponse (Result Api.LogInResponseError Api.LogInResponseOk)
     | ReceiveImageDataUrl String
     | ReceiveImageFileAndBlobUrl Json.Decode.Value
     | GetUserDataResponse { access : Api.Token, refresh : Api.Token } (Result () Data.User.User)
@@ -143,7 +143,7 @@ type Msg
     | GoodsPageMsg Page.Good.Msg
 
 
-main : Program { emailAddress : Maybe String, password : Maybe String } Model Msg
+main : Program { refreshToken : Maybe String } Model Msg
 main =
     Browser.application
         { init = init
@@ -155,23 +155,12 @@ main =
         }
 
 
-init : { emailAddress : Maybe String, password : Maybe String } -> Url.Url -> Browser.Navigation.Key -> ( Model, Cmd Msg )
-init { emailAddress, password } url key =
+init : { refreshToken : Maybe String } -> Url.Url -> Browser.Navigation.Key -> ( Model, Cmd Msg )
+init { refreshToken } url key =
     let
         ( page, message, cmd ) =
             urlParserInit Data.LogInState.LogInStateNone url
                 |> urlParserResultToModel
-
-        logInRequestMaybe =
-            case ( emailAddress |> Maybe.andThen Data.EmailAddress.fromString, password |> Maybe.map Data.Password.fromString ) of
-                ( Just email, Just (Ok pass) ) ->
-                    Just
-                        { emailAddress = email
-                        , pass = pass
-                        }
-
-                ( _, _ ) ->
-                    Nothing
     in
     ( Model
         { page = page
@@ -181,9 +170,12 @@ init { emailAddress, password } url key =
         , notificationVisible = False
         , key = key
         }
-    , case logInRequestMaybe of
-        Just logInRequest ->
-            Cmd.batch [ cmd, Api.logIn logInRequest (LogInResponse logInRequest) ]
+    , case refreshToken of
+        Just refreshTokenString ->
+            Cmd.batch
+                [ cmd
+                , Api.tokenRefresh { refresh = Api.tokenFromString refreshTokenString } LogInResponse
+                ]
 
         Nothing ->
             cmd
@@ -314,7 +306,7 @@ update msg (Model rec) =
             , Cmd.none
             )
 
-        LogInResponse requestData logInResponse ->
+        LogInResponse logInResponse ->
             case logInResponse of
                 Ok (Api.LogInResponseOk { access, refresh }) ->
                     let
@@ -360,10 +352,7 @@ update msg (Model rec) =
                     , Cmd.batch
                         [ cmd
                         , Api.getMyProfile access (GetUserDataResponse { access = access, refresh = refresh })
-                        , saveEmailAddressAndPasswordToLocalStorage
-                            { emailAddress = Data.EmailAddress.toString requestData.emailAddress
-                            , password = Data.Password.toString requestData.pass
-                            }
+                        , saveRefreshTokenToLocalStorage (Api.tokenToString refresh)
                         ]
                     )
 
@@ -407,7 +396,7 @@ update msg (Model rec) =
                         }
                     , Cmd.batch
                         [ Browser.Navigation.pushUrl rec.key SiteMap.homeUrl
-                        , Api.logIn logInRequest (LogInResponse logInRequest)
+                        , Api.logIn logInRequest LogInResponse
                         , homePageEmitListToCmd emitList
                         ]
                     )
@@ -863,7 +852,7 @@ profilePageEmitListToCmd =
 
                 Page.Profile.EmitLogOut ->
                     Cmd.batch
-                        [ deleteEmailAddressAndPasswordFromLocalStorage ()
+                        [ deleteRefreshTokenAndAllFromLocalStorage ()
                         , Task.perform (always LogOut) (Task.succeed ())
                         ]
         )
@@ -899,7 +888,7 @@ logInOrSignUpEmitToCmd : Page.Component.LogInOrSignUp.Emit -> Cmd Msg
 logInOrSignUpEmitToCmd emit =
     case emit of
         Page.Component.LogInOrSignUp.EmitLogIn logInRequest ->
-            Api.logIn logInRequest (LogInResponse logInRequest)
+            Api.logIn logInRequest LogInResponse
 
 
 goodsListEmitToMsg : Page.Component.GoodList.Emit -> Cmd Msg

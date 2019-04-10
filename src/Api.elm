@@ -26,6 +26,9 @@ module Api exposing
     , sellGoods
     , signUp
     , signUpConfirm
+    , tokenFromString
+    , tokenRefresh
+    , tokenToString
     , unlikeGoods
     , updateProfile
     )
@@ -308,6 +311,20 @@ type Token
     = Token String
 
 
+{-| 文字列からトークンを生成する。(Local Storageから読むとき用)
+-}
+tokenFromString : String -> Token
+tokenFromString =
+    Token
+
+
+{-| トークンから文字列に変換する。(Local Storageに書くとき用)
+-}
+tokenToString : Token -> String
+tokenToString (Token string) =
+    string
+
+
 {-| ログイン /auth/token/
 メールアドレスとパスワードから様々な情報をやり取りする上で必要なTokenを受け取る。それだけじゃなく、
 -}
@@ -392,51 +409,22 @@ type alias TokenRefreshRequest =
     { refresh : Token }
 
 
-type TokenRefreshResponseOk
-    = TokenRefreshResponseOk { access : Token }
-
-
-type TokenRefreshResponseError
-    = TokenRefreshResponseError
-
-
-tokenRefresh : TokenRefreshRequest -> (Result TokenRefreshResponseError TokenRefreshResponseOk -> msg) -> Cmd msg
-tokenRefresh { refresh } msg =
+tokenRefresh : TokenRefreshRequest -> (Result LogInResponseError LogInResponseOk -> msg) -> Cmd msg
+tokenRefresh tokenRefreshRequest msg =
     Http.post
         { url = urlBuilder [ "auth", "token", "refresh" ]
-        , body = Http.emptyBody
-        , expect = Http.expectStringResponse msg tokenRefreshResponseToResult
+        , body = Http.jsonBody (tokenRefreshBody tokenRefreshRequest)
+        , expect = Http.expectStringResponse msg logInResponseToResult
         }
 
 
-tokenRefreshResponseToResult : Http.Response String -> Result TokenRefreshResponseError TokenRefreshResponseOk
-tokenRefreshResponseToResult response =
-    case response of
-        Http.BadUrl_ _ ->
-            Err TokenRefreshResponseError
-
-        Http.Timeout_ ->
-            Err TokenRefreshResponseError
-
-        Http.NetworkError_ ->
-            Err TokenRefreshResponseError
-
-        Http.BadStatus_ _ body ->
-            Json.Decode.decodeString tokenRefreshBodyStringDecoder body
-                |> Result.withDefault (Err TokenRefreshResponseError)
-
-        Http.GoodStatus_ _ body ->
-            Json.Decode.decodeString tokenRefreshBodyStringDecoder body
-                |> Result.withDefault (Err TokenRefreshResponseError)
-
-
-tokenRefreshBodyStringDecoder : Json.Decode.Decoder (Result TokenRefreshResponseError TokenRefreshResponseOk)
-tokenRefreshBodyStringDecoder =
-    Json.Decode.field "access" Json.Decode.string
-        |> Json.Decode.map
-            (\access ->
-                Ok (TokenRefreshResponseOk { access = Token access })
-            )
+tokenRefreshBody : TokenRefreshRequest -> Json.Encode.Value
+tokenRefreshBody { refresh } =
+    Json.Encode.object
+        [ ( "refresh"
+          , Json.Encode.string (tokenToString refresh)
+          )
+        ]
 
 
 
