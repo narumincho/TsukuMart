@@ -15,6 +15,14 @@
                 "destination": "/assets/**"
             },
             {
+                "source": "/redoc",
+                "destination": "/redoc.html"
+            },
+            {
+                "source": "/api/sign-up",
+                "function": "sendConfirmEmail"
+            },
+            {
                 "source": "**",
                 "destination": "/index.html"
             }

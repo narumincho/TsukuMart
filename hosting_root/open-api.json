@@ -1,0 +1,247 @@
+{
+    "openapi": "3.0.2",
+    "info": {
+        "title": "tsukumart api",
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "https://tsukumart-demo.firebaseapp.com/api/"
+        }
+    ],
+    "tags": [
+        {
+            "name": "auth",
+            "description": "認証"
+        },
+        {
+            "name": "users",
+            "description": "ユーザーについて"
+        },
+        {
+            "name": "currentUser",
+            "description": "自分について"
+        },
+        {
+            "name": "goods",
+            "description": "商品について"
+        }
+    ],
+    "paths": {
+        "/sign-up": {
+            "post": {
+                "tags": [
+                    "auth"
+                ],
+                "summary": "ユーザーの新規登録に必要な情報を送って、認証メールを送信する",
+                "description": "ユーザーの新規登録に必要な情報を送って、認証メールを送信する",
+                "operationId": "getConfirmToken",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "allOf": [
+                                    {
+                                        "oneOf": [
+                                            {
+                                                "type": "object",
+                                                "properties": {
+                                                    "email": {
+                                                        "type": "string",
+                                                        "format": "email"
+                                                    },
+                                                    "image": {
+                                                        "type": "string",
+                                                        "format": "dataUrl"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "email",
+                                                    "image"
+                                                ]
+                                            },
+                                            {
+                                                "type": "object",
+                                                "properties": {
+                                                    "email": {
+                                                        "$ref": "#/components/schemas/SAddress"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "email"
+                                                ]
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "password": {
+                                                "$ref": "#/components/schemas/Password"
+                                            },
+                                            "displayName": {
+                                                "type": "string",
+                                                "$ref": "#/components/schemas/DisplayName"
+                                            }
+                                        },
+                                        "required": [
+                                            "password",
+                                            "displayName"
+                                        ]
+                                    },
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "university": {
+                                                "$ref": "#/components/schemas/University"
+                                            }
+                                        },
+                                        "required": [
+                                            "university"
+                                        ]
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "認証トークンを指定したメールアドレスに送信した"
+                    }
+                }
+            }
+        },
+        "/users": {
+            "get": {
+                "tags": [
+                    "users"
+                ],
+                "summary": "すべてのユーザーを取得する",
+                "description": "すべてのユーザーを取得する",
+                "operationId": "getUser",
+                "responses": {
+                    "200": {
+                        "description": "正常終了"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "users"
+                ],
+                "summary": "ユーザーを追加する",
+                "description": "ユーザーを追加する",
+                "operationId": "singUp",
+                "responses": {
+                    "405": {
+                        "description": "不正な形式"
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "University": {
+                "oneOf": [
+                    {
+                        "type": "object",
+                        "properties": {
+                            "department": {
+                                "$ref": "#/components/schemas/Department"
+                            },
+                            "graduate": {
+                                "$ref": "#/components/schemas/Graduate"
+                            }
+                        },
+                        "required": [
+                            "department",
+                            "graduate"
+                        ]
+                    },
+                    {
+                        "type": "object",
+                        "properties": {
+                            "department": {
+                                "$ref": "#/components/schemas/Department"
+                            }
+                        },
+                        "required": [
+                            "department"
+                        ]
+                    },
+                    {
+                        "type": "object",
+                        "properties": {
+                            "graduate": {
+                                "$ref": "#/components/schemas/Graduate"
+                            }
+                        },
+                        "required": [
+                            "graduate"
+                        ]
+                    }
+                ]
+            },
+            "Graduate": {
+                "type": "string",
+                "enum": [
+                    "education",
+                    "hass",
+                    "gabs",
+                    "pas",
+                    "sie",
+                    "life",
+                    "chs",
+                    "slis",
+                    "global"
+                ]
+            },
+            "Department": {
+                "type": "string",
+                "enum": [
+                    "humanity",
+                    "culture",
+                    "japanese",
+                    "social",
+                    "cis",
+                    "education",
+                    "psyche",
+                    "disability",
+                    "biol",
+                    "bres",
+                    "earth",
+                    "math",
+                    "phys",
+                    "chem",
+                    "coens",
+                    "esys",
+                    "pandps",
+                    "coins",
+                    "mast",
+                    "klis",
+                    "med",
+                    "nurse",
+                    "ms",
+                    "aandd",
+                    "sport"
+                ]
+            },
+            "SAddress": {
+                "type": "string",
+                "pattern": "^s(\\d{7})@[a-zA-Z0-9]+\\.tsukuba\\.ac\\.jp$"
+            },
+            "Password": {
+                "type": "string",
+                "pattern": "^[!-~]{9,50}$"
+            },
+            "DisplayName": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 50
+            }
+        }
+    }
+}
