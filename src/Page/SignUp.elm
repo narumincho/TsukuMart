@@ -380,7 +380,7 @@ studentHasSAddressFormList analysisStudentIdOrEmailAddressResult password =
                                 ++ Data.StudentId.toStringWith20 studentId
                                 ++ " "
                                 ++ (studentId
-                                        |> Data.SAddress.fromStundetId
+                                        |> Data.SAddress.fromStudentId
                                         |> Data.EmailAddress.fromSAddress
                                         |> Data.EmailAddress.toString
                                    )
@@ -637,7 +637,7 @@ getSignUpRequestEmailAddressAndPasswordAndImage sAddressAndPassword =
             case ( studentIdOrTsukubaEmailAddress, password ) of
                 ( AStudentId studentId, Ok pass ) ->
                     Just
-                        { emailAddress = Data.EmailAddress.fromSAddress (Data.SAddress.fromStundetId studentId)
+                        { emailAddress = Data.EmailAddress.fromSAddress (Data.SAddress.fromStudentId studentId)
                         , password = pass
                         , image = Nothing
                         }

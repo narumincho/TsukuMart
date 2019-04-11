@@ -115,7 +115,7 @@ getLogInData studentIdOrEmailAddress passwordMaybe =
     case ( studentIdOrEmailAddress, passwordMaybe ) of
         ( AEStudentId studentId, Just password ) ->
             Just
-                { emailAddress = Data.EmailAddress.fromSAddress (Data.SAddress.fromStundetId studentId)
+                { emailAddress = Data.EmailAddress.fromSAddress (Data.SAddress.fromStudentId studentId)
                 , pass = password
                 }
 
