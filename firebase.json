@@ -20,12 +20,15 @@
             },
             {
                 "source": "/api/sign-up",
-                "function": "sendConfirmEmail"
+                "function": "signUp"
             },
             {
                 "source": "**",
                 "destination": "/index.html"
             }
         ]
+    },
+    "functions": {
+        "source": "functions_root"
     }
 }

@@ -108,7 +108,7 @@ tokenToHeader (Token token) =
 signUp : SignUpRequest -> (Result SignUpResponseError SignUpResponseOk -> msg) -> Cmd msg
 signUp signUpData msg =
     Http.post
-        { url = urlBuilder [ "auth", "signup" ]
+        { url = "/api/sign-up" -- urlBuilder [ "auth", "signup" ]
         , body = Http.jsonBody (signUpJson signUpData)
         , expect = Http.expectStringResponse msg signUpResponseToResult
         }
@@ -118,14 +118,11 @@ signUp signUpData msg =
 -}
 signUpJson : SignUpRequest -> Json.Encode.Value
 signUpJson { emailAddress, pass, image, university, nickName } =
-    let
-        { graduate, department } =
-            universityToSimpleRecord university
-    in
     Json.Encode.object
         ([ ( "email", Json.Encode.string (EmailAddress.toString emailAddress) )
          , ( "password", Json.Encode.string (Password.toString pass) )
-         , ( "nick", Json.Encode.string nickName )
+         , ( "displayName", Json.Encode.string nickName )
+         , ( "university", universityToJson university )
          ]
             ++ (case image of
                     Just imageDataUrl ->
@@ -134,13 +131,23 @@ signUpJson { emailAddress, pass, image, university, nickName } =
                     Nothing ->
                         []
                )
-            ++ (case graduate of
-                    Just g ->
-                        [ ( "graduate", Json.Encode.string (University.graduateToIdString g) ) ]
+        )
 
-                    Nothing ->
-                        []
-               )
+
+universityToJson : University.University -> Json.Encode.Value
+universityToJson university =
+    let
+        { graduate, department } =
+            universityToSimpleRecord university
+    in
+    Json.Encode.object
+        ((case graduate of
+            Just g ->
+                [ ( "graduate", Json.Encode.string (University.graduateToIdString g) ) ]
+
+            Nothing ->
+                []
+         )
             ++ (case department of
                     Just d ->
                         [ ( "department", Json.Encode.string (University.departmentToIdString d) ) ]
@@ -575,29 +582,11 @@ updateProfile token profile msg =
 
 updateProfileRequestToJsonBody : User.Profile -> Json.Decode.Value
 updateProfileRequestToJsonBody profile =
-    let
-        { department, graduate } =
-            universityToSimpleRecord (User.profileGetUniversity profile)
-    in
     Json.Encode.object
-        ([ ( "nick", Json.Encode.string (User.profileGetNickName profile) )
-         , ( "introduction", Json.Encode.string (User.profileGetIntroduction profile) )
-         ]
-            ++ (case graduate of
-                    Just g ->
-                        [ ( "graduate", Json.Encode.string (University.graduateToIdString g) ) ]
-
-                    Nothing ->
-                        []
-               )
-            ++ (case department of
-                    Just d ->
-                        [ ( "department", Json.Encode.string (University.departmentToIdString d) ) ]
-
-                    Nothing ->
-                        []
-               )
-        )
+        [ ( "nick", Json.Encode.string (User.profileGetNickName profile) )
+        , ( "introduction", Json.Encode.string (User.profileGetIntroduction profile) )
+        , ( "university", universityToJson (User.profileGetUniversity profile) )
+        ]
 
 
 
