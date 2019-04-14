@@ -78,11 +78,11 @@ export const getValidUniversity = (o: object): result.Result<University, Error> 
         return result.err(Error.UniversityFieldMustBeObject);
     }
 
-    if ((!o.hasOwnProperty("graduate")) && (!o.hasOwnProperty("department"))) {
+    if ((!university.hasOwnProperty("graduate")) && (!university.hasOwnProperty("department"))) {
         return result.err(Error.NeedGraduateFieldOrDepartmentField);
     }
-    const graduate: Graduate | null = toValidGraduate((o as { graduate: unknown }).graduate);
-    const department: Department | null = toValidDepartment((o as { department: unknown }).department);
+    const graduate: Graduate | null = toValidGraduate((university as { graduate: unknown }).graduate);
+    const department: Department | null = toValidDepartment((university as { department: unknown }).department);
     if (graduate !== null && department !== null) {
         return result.ok({
             c: UniversityC.GraduateTsukuba,

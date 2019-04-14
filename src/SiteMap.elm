@@ -19,10 +19,12 @@ module SiteMap exposing
     , urlParserInit
     )
 
+import Api
 import Data.Good
 import Url
 import Url.Builder
-import Url.Parser as Parser exposing ((</>))
+import Url.Parser as Parser exposing ((</>), (<?>))
+import Url.Parser.Query as QueryParser
 
 
 type UrlParserInitResult
@@ -38,12 +40,22 @@ type UrlParserInitResult
     | InitSiteMap
     | InitAbout
     | InitAboutPrivacyPolicy
+    | InitSendConfirmTokenPage Api.Token
 
 
 urlParserInit : Url.Url -> Maybe UrlParserInitResult
 urlParserInit =
     Parser.oneOf
-        [ homeParser |> Parser.map InitHome
+        [ homeParser
+            |> Parser.map
+                (\token ->
+                    case token of
+                        Just t ->
+                            InitSendConfirmTokenPage (Api.tokenFromString t)
+
+                        Nothing ->
+                            InitHome
+                )
         , signUpParser |> Parser.map InitSignUp
         , logInParser |> Parser.map InitLogIn
         , likeHistoryParser |> Parser.map InitLikeAndHistory
@@ -78,7 +90,7 @@ type UrlParserResult
 urlParser : Url.Url -> Maybe UrlParserResult
 urlParser =
     Parser.oneOf
-        [ homeParser |> Parser.map Home
+        [ homeParser |> Parser.map (always Home)
         , signUpParser |> Parser.map SignUp
         , logInParser |> Parser.map LogIn
         , likeHistoryParser |> Parser.map LikeAndHistory
@@ -95,9 +107,9 @@ urlParser =
         |> Parser.parse
 
 
-homeParser : Parser.Parser a a
+homeParser : Parser.Parser (Maybe String -> a) a
 homeParser =
-    Parser.top
+    Parser.top <?> QueryParser.string "refreshToken"
 
 
 homeUrl : String

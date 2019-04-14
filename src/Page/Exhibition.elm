@@ -492,7 +492,9 @@ view logInState (Model { page, logInOrSignUpModel }) =
 logInStateNoneView : LogInOrSignUp.Model -> ( String, List (Html.Html Msg) )
 logInStateNoneView model =
     ( "出品画面"
-    , [ Html.text "ログインしていません"
+    , [ Html.div
+            [ Html.Attributes.class "logInRecommendText" ]
+            [ Html.text "ログインしていません" ]
       , LogInOrSignUp.view model
             |> Html.map LogInOrSignUpMsg
       ]

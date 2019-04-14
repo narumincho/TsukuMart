@@ -86,13 +86,13 @@ header {
     font-size: 1.3rem;
     padding: 2rem;
     pointer-events: none;
-    animation: invalidLinkErrorMsgAnimation 12s ease 2s 1 normal forwards;
+    animation: msgAnimation 12s ease 2s 1 normal forwards;
     max-width: 100%;
     box-sizing: border-box;
     word-break: break-word;
 }
 
-@keyframes invalidLinkErrorMsgAnimation {
+@keyframes msgAnimation {
     0% {
         opacity: 1;
     }
@@ -906,14 +906,15 @@ header {
     box-sizing: border-box;
 }
 
-.mainView-simpleText {
-    font-size: 1.5rem;
-}
-
 .container {
     display: flex;
     justify-content: center;
     width: 100%;
+}
+
+.logInRecommendText {
+    text-align: center;
+    font-size: 1.5rem;
 }
 
 /*===============================================

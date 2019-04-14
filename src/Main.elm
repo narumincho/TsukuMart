@@ -250,6 +250,14 @@ urlParserInitResultToPageAndCmd logInState page =
         SiteMap.InitAboutPrivacyPolicy ->
             ( PageAbout Page.About.privacyPolicyModel, Cmd.none )
 
+        SiteMap.InitSendConfirmTokenPage token ->
+            case
+                Page.Home.initModel Nothing
+                    |> Tuple.mapBoth PageHome homePageEmitListToCmd
+            of
+                ( p, cmd ) ->
+                    ( p, Cmd.batch [ cmd, Api.tokenRefresh { refresh = token } LogInResponse ] )
+
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg (Model rec) =

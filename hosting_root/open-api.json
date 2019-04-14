@@ -53,7 +53,7 @@
                           },
                           "image": {
                             "type": "string",
-                            "format": "dataUrl"
+                            "format": "dataUrl(image/png|image/jpeg)"
                           }
                         },
                         "required": [
@@ -118,6 +118,9 @@
                   }
                 },
                 "examples": {
+                  "リクエストBody含まれていないか、JSONでないか、直下がオブジェクトでない": {
+                    "value": "request body must be application/json and root is object"
+                  },
                   "emailの指定がされていない": {
                     "value": "need email field"
                   },
@@ -158,7 +161,7 @@
                     "value": "displayName must be string but request type is number"
                   },
                   "displayNameの長さが1～50の範囲に入っていない": {
-                    "value": "`displayName must be 1 <= (displayName length) <= 50 but request displayName length = 99"
+                    "value": "displayName must be 1 <= (displayName length) <= 50 but request displayName length = 99"
                   },
                   "universityの指定がされていない": {
                     "value": "need university field"
@@ -171,6 +174,18 @@
                   },
                   "universityの指定を理解することができなかった": {
                     "value": "university code error"
+                  },
+                  "指定したメールアドレスのユーザーが存在して、そのユーザーは認証済み": {
+                    "value": "email already exists"
+                  },
+                  "すでに指定たメールアドレスで登録したユーザーがいるが、そのユーザーの状態を取得できないか、ユーザーの削除ができない": {
+                    "value": "user error"
+                  },
+                  "Firrebaseの設定でメールアドレスとパスワードによる認証機能がOFFになっている": {
+                    "value": "Firebase Authentication singUp by email is disabled"
+                  },
+                  "謎の理由で一時的ユーザーの作成失敗": {
+                    "value": "unknown error"
                   }
                 }
               }

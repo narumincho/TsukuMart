@@ -247,10 +247,12 @@ view logInState isWideScreenMode (Model rec) =
             ]
 
         LogInState.LogInStateNone ->
-            [ Html.text "ログインか新規登録をして、いいねと閲覧履歴を使えるようにしよう!"
-            , Html.div
+            [ Html.div
                 [ Html.Attributes.class "container" ]
-                [ LogInOrSignUp.view
+                [ Html.div
+                    []
+                    [ Html.text "ログインか新規登録をして、いいねと閲覧履歴を使えるようにしよう!" ]
+                , LogInOrSignUp.view
                     rec.logInOrSignUpModel
                     |> Html.map LogInOrSignUpMsg
                 ]

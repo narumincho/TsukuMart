@@ -15,6 +15,8 @@ const dataBase = admin.firestore();
 const dataBaseUsersCollection = dataBase.collection("users");
 const refreshSecretKey = functions.config().jwt.refresh_secret_key;
 const accessSecretKey = functions.config().jwt.access_secret_key;
+const confirmSecretKey = functions.config().jwt.confirm_secret_key;
+
 
 console.log("run index.js 2019-04-14-09-20");
 
@@ -24,7 +26,7 @@ console.log("run index.js 2019-04-14-09-20");
 export const signUp = functions.https.onRequest((request: functions.https.Request, response: functions.Response) => {
     const requestBody: unknown = request.body;
     if (typeof requestBody !== "object" || requestBody === null) {
-        response.status(400).send("request body must be application/json and root is object")
+        responseSendError([{c:ErrorC.SignUp, error:SignUpError.RequestBodyMustBeJsonAndObject}], response);
         return;
     }
     const passwordResult: result.Result<string, Array<PasswordError>> = getValidPassword(requestBody);
@@ -64,7 +66,7 @@ export const signUp = functions.https.onRequest((request: functions.https.Reques
 });
 
 const sendConfirmEmailSendError = (passwordResult: result.Result<string, Array<PasswordError>>, displayNameResult: result.Result<string, DisplayNameError>, emailAndStudentIdImageResult: result.Result<EmailAndStudentIdImage, EmailAndStudentIdImageError>, universityResult: result.Result<univ.University, univ.Error>, response: functions.Response) => {
-    response.status(400).send(
+    responseSendError(
         result.match(passwordResult,
             ok => [],
             err => err.map(e => ({ c: ErrorC.Password, error: e })) as Array<Error>
@@ -77,8 +79,13 @@ const sendConfirmEmailSendError = (passwordResult: result.Result<string, Array<P
         )).concat(result.match(universityResult,
             ok => [],
             err => [{ c: ErrorC.University, error: err }]
-        )).map(errorToString)
+        ))
+        , response
     );
+}
+
+const responseSendError = (errorList: Array<Error>, response: functions.Response): void => {
+    response.status(400).send(errorList.map(errorToString));
 }
 
 const sendConfirmEmailBody = (password: string, displayName: string, emailAndStudentIdImage: EmailAndStudentIdImage, university: univ.University, response: functions.Response) => {
@@ -101,10 +108,13 @@ const sendConfirmEmailBody = (password: string, displayName: string, emailAndStu
                         {
                             displayName: displayName,
                             university: univ.toSimpleObject(university),
-                            confirmTsukubaStudent: false
+                            confirmTsukubaStudent: false,
+                            emailVerified: false
                         }
                     ).then(() => {
-                        user.sendEmailVerification({ url: "https://tsukumart-demo.firebaseapp.com/" }).then(() => {
+                        user.sendEmailVerification({
+                            url: "https://tsukumart-demo.firebaseapp.com?refreshToken=" + createRefreshKey(user.uid)
+                        }).then(() => {
                             response.status(200).send();
                         })
                     });
@@ -115,53 +125,55 @@ const sendConfirmEmailBody = (password: string, displayName: string, emailAndStu
                     {
                         displayName: displayName,
                         university: univ.toSimpleObject(university),
-                        confirmTsukubaStudent: true
+                        confirmTsukubaStudent: true,
+                        emailVerified: false
                     }
                 ).then(() => {
-                    user.sendEmailVerification({ url: "https://tsukumart-demo.firebaseapp.com/" }).then(() => {
+                    user.sendEmailVerification({
+                        url: "https://tsukumart-demo.firebaseapp.com?refreshToken=" + createRefreshKey(user.uid)
+                    }).then(() => {
                         response.status(200).send();
                     })
                 });
                 return;
         }
     }).catch(error => {
-        const errorCode = error.code;
-        switch (error) {
+        switch (error.code) {
             case "auth/email-already-in-use":
                 console.error(`すでに${email}のメールアドレスでユーザーが登録されています`);
                 admin.auth().getUserByEmail(email).then(user => {
-                    if (user.emailVerified) {
-                        console.log(`${email}のメールアドレスで登録しているユーザーは認証済みです`);
-                        response.status(400).send(`${email}のメールアドレスで登録しているユーザーは認証済みです`);
-                        return;
-                    }
-                    admin.auth().deleteUser(user.uid).then(() => {
-                        console.log("ユーザーの削除成功");
-                        sendConfirmEmailBody(password, displayName, emailAndStudentIdImage, university, response);
-                    }).catch(() => {
-                        console.log("ユーザーの削除失敗")
-                        console.log(`${email}のメールアドレスで登録しているユーザーは認証済みではないので削除しようとしたが失敗した`);
+                    dataBaseUsersCollection.doc(user.uid).get().then((doc) => {
+                        if ((doc.data() as FirebaseFirestore.DocumentData).emailVerified) {
+                            console.log(`${email}のメールアドレスで登録しているユーザーは認証済みです`);
+                            responseSendError([{ c: ErrorC.SignUp, error: SignUpError.EmailAlreadyExists }], response);
+                            return;
+                        }
+                        admin.auth().deleteUser(user.uid).then(() => {
+                            console.log("ユーザーの削除成功");
+                            sendConfirmEmailBody(password, displayName, emailAndStudentIdImage, university, response);
+                        }).catch(() => {
+                            console.log(`${email}のメールアドレスで登録しているユーザーは認証済みではないので削除しようとしたが失敗した`);
+                            responseSendError([{ c: ErrorC.SignUp, error: SignUpError.UserError }], response);
+                        });
                     })
                 }).catch(() => {
                     console.log(`${email}のユーザーの情報取得に失敗`);
-                    response.send("このメールは使えません");
-                })
+                    responseSendError([{ c: ErrorC.SignUp, error: SignUpError.UserError }], response);
+                });
                 return;
             case "auth/invalid-email":
-                response.status(400).send([emailAndStudentIdImageErrorToString({
-                    c: EmailAndStudentIdImageErrorC.InvalidEmail
-                })]);
+                responseSendError([{ c: ErrorC.EmailAndStudentId, error: { c: EmailAndStudentIdImageErrorC.InvalidEmail } }], response);
                 return;
             case "auth/operation-not-allowed":
                 console.error("Firrebaseの設定でメールアドレスとパスワードによる認証機能がOFFになっている");
-                response.status(400).send("Firrebaseの設定でメールアドレスとパスワードによる認証機能がOFFになっている");
+                responseSendError([{ c: ErrorC.SignUp, error: SignUpError.FirebaseAuthenticationSingUpByEmailIsDisabled }], response);
                 return;
             case "auth/weak-password":
-                response.send([passwordErrorToString({ c: PasswordErrorC.WeekPassword })]);
+                responseSendError([{ c: ErrorC.Password, error: { c: PasswordErrorC.WeekPassword } }], response);
                 return;
         }
-        console.error("謎の理由でユーザーの作成失敗", error);
-        response.status(400).send("謎の理由でユーザーの作成失敗");
+        console.error("謎の理由で一時的ユーザーの作成失敗", error);
+        responseSendError([{ c: ErrorC.SignUp, error: SignUpError.Unknown }], response);
         return;
     });
 };
@@ -175,88 +187,15 @@ const studentIdCardImageFileName = (uid: string, mimeType: "image/png" | "image/
     }
 }
 
-const getTokenFromEmailAndPassword = functions.https.onRequest((request, response) => {
-    const requestBody:
-        { email: string, password: string }
-        = request.body;
-    const email = requestBody.email;
-    const password = requestBody.password;
-    firebase.auth().signInWithEmailAndPassword(email, password).then(e => {
-        const user = e.user as firebase.User;
-        const refreshId = (Math.random() * 99999) | 0;
-        dataBaseUsersCollection.doc(user.uid).update(
-            { newestRefreshId: refreshId }
-        ).then(() => {
-            /** リフレッシュトークン */
-            const refreshToken = jwt.sign({
-                sub: user.uid, // ユーザーID
-                ref: false, //リフレッシュトークンでログインしたか
-                cut: refreshId // リフレッシュトークンを識別するもの
-            },
-                refreshSecretKey,
-                { algorithm: "HS256" }
-            );
-            const time = new Date();
-            time.setUTCMinutes(time.getUTCMinutes() + 15);
-            const accessToken = jwt.sign({
-                sub: user.uid,
-                exp: Math.round(time.getTime() / 1000)
-            }, accessSecretKey,
-                { algorithm: "HS256" }
-            );
-            response.send(
-                {
-                    refresh: refreshToken,
-                    access: accessToken
-                }
-            );
-        }).catch((e) => {
-            console.error("newestRefreshIdの書き込みに失敗", e);
-        });
-    }).catch(error => {
-        const errorCode = error.code;
-        const errorMessage = error.message;
-        switch (errorCode) {
-            case "auth/invalid-email":
-                response.send("不正なメールで登録しようとした");
-        }
-    })
-})
 
-const readData = functions.https.onRequest((request, response) => {
-    try {
-        const result = jwt.verify(
-            request.body,
-            refreshSecretKey,
-            { algorithms: ["HS256"] }
-        ) as { sub: string, ref: boolean, cut: number };
-
-        dataBaseUsersCollection.doc(result.sub).get().then(e => {
-            const data = e.data() as { newestRefreshId: number }
-            console.log("データベースで保存されていたリフレッシュトークンID", data.newestRefreshId);
-            console.log("JWTに入っていたリフレッシュトークンID", result.cut);
-            if (typeof data.newestRefreshId === "string" || typeof result.cut === "string") {
-                response.send("型が合いません");
-                return;
-            }
-            if (data.newestRefreshId === result.cut) {
-                response.send("最新のトークン!");
-            } else {
-                response.send("最新のトークンではない");
-            }
-        })
-    } catch (e) {
-        response.send("正当なJWTではなかった");
-    }
-})
-
-type Error = ErrorPassword | ErrorEmailAndStudentIdImageError | ErrorDisplayName | ErrorUniversity;
+type Error = ErrorPassword | ErrorEmailAndStudentIdImageError | ErrorDisplayName | ErrorUniversity | ErrorSinUp;
 
 const enum ErrorC {
     Password,
     EmailAndStudentId,
     DisplayName,
-    University
+    University,
+    SignUp
 }
 
 interface ErrorPassword {
@@ -279,6 +218,20 @@ interface ErrorUniversity {
     error: univ.Error
 }
 
+
+interface ErrorSinUp {
+    c: ErrorC.SignUp,
+    error: SignUpError
+}
+
+enum SignUpError {
+    RequestBodyMustBeJsonAndObject,
+    EmailAlreadyExists,
+    UserError,
+    FirebaseAuthenticationSingUpByEmailIsDisabled,
+    Unknown
+}
+
 const errorToString = (error: Error): string => {
     switch (error.c) {
         case ErrorC.EmailAndStudentId:
@@ -289,6 +242,8 @@ const errorToString = (error: Error): string => {
             return displayNameErrorToString(error.error);
         case ErrorC.University:
             return univ.errorToString(error.error);
+        case ErrorC.SignUp:
+            return signUpErrorToString(error.error);
     }
 };
 
@@ -332,6 +287,21 @@ const displayNameErrorToString = (error: DisplayNameError): string => {
             return `displayName must be string but request type is ${error.typeName}`
         case DisplayNameErrorC.Length:
             return `displayName must be 1 <= (displayName length) <= 50 but request displayName length = ${error.length}`;
+    }
+}
+
+const signUpErrorToString = (error: SignUpError): string => {
+    switch (error) {
+        case SignUpError.RequestBodyMustBeJsonAndObject:
+            return "request body must be application/json and root is object"
+        case SignUpError.EmailAlreadyExists:
+            return "email already exists"
+        case SignUpError.UserError:
+            return "user error"
+        case SignUpError.FirebaseAuthenticationSingUpByEmailIsDisabled:
+            return "Firebase Authentication singUp by email is disabled"
+        case SignUpError.Unknown:
+            return "unknown error"
     }
 }
 
@@ -600,4 +570,91 @@ const unknownToTypeString = (value: unknown): TypeString => {
     return typeof value;
 }
 
-type TypeString = "null" | "string" | "number" | "bigint" | "boolean" | "symbol" | "undefined" | "object" | "function"
+type TypeString = "null" | "string" | "number" | "bigint" | "boolean" | "symbol" | "undefined" | "object" | "function";
+
+
+const getTokenFromEmailAndPassword = functions.https.onRequest((request, response) => {
+    const requestBody:
+        { email: string, password: string }
+        = request.body;
+    const email = requestBody.email;
+    const password = requestBody.password;
+    firebase.auth().signInWithEmailAndPassword(email, password).then(e => {
+        const user = e.user as firebase.User;
+        const refreshId = (Math.random() * 99999) | 0;
+        dataBaseUsersCollection.doc(user.uid).update(
+            { newestRefreshId: refreshId }
+        ).then(() => {
+            /** リフレッシュトークン */
+            const refreshToken = jwt.sign({
+                sub: user.uid, // ユーザーID
+                ref: false, //リフレッシュトークンでログインしたか
+                cut: refreshId // リフレッシュトークンを識別するもの
+            },
+                refreshSecretKey,
+                { algorithm: "HS256" }
+            );
+            const time = new Date();
+            time.setUTCMinutes(time.getUTCMinutes() + 15);
+            /** アクセストークン */
+            const accessToken = jwt.sign({
+                sub: user.uid,
+                exp: Math.round(time.getTime() / 1000)
+            }, accessSecretKey,
+                { algorithm: "HS256" }
+            );
+            response.send(
+                {
+                    refresh: refreshToken,
+                    access: accessToken
+                }
+            );
+        }).catch((e) => {
+            console.error("newestRefreshIdの書き込みに失敗", e);
+        });
+    }).catch(error => {
+        const errorCode = error.code;
+        const errorMessage = error.message;
+        switch (errorCode) {
+            case "auth/invalid-email":
+                response.send("不正なメールで登録しようとした");
+        }
+    })
+})
+
+const readData = functions.https.onRequest((request, response) => {
+    try {
+        const result = jwt.verify(
+            request.body,
+            refreshSecretKey,
+            { algorithms: ["HS256"] }
+        ) as { sub: string, ref: boolean, cut: number };
+
+        dataBaseUsersCollection.doc(result.sub).get().then(e => {
+            const data = e.data() as { newestRefreshId: number }
+            console.log("データベースで保存されていたリフレッシュトークンID", data.newestRefreshId);
+            console.log("JWTに入っていたリフレッシュトークンID", result.cut);
+            if (typeof data.newestRefreshId === "string" || typeof result.cut === "string") {
+                response.send("型が合いません");
+                return;
+            }
+            if (data.newestRefreshId === result.cut) {
+                response.send("最新のトークン!");
+            } else {
+                response.send("最新のトークンではない");
+            }
+        })
+    } catch (e) {
+        response.send("正当なJWTではなかった");
+    }
+})
+
+
+const createRefreshKey = (uid: string): string => {
+    return jwt.sign({
+        sub: uid
+    }, refreshSecretKey,
+        { algorithm: "HS256" }
+    );
+}
+
