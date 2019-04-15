@@ -107,6 +107,9 @@
           }
         },
         "responses": {
+          "200": {
+            "description": "成功。認証トークンの入ったメールアドレスを送信した"
+          },
           "400": {
             "description": "エラー",
             "content": {
@@ -190,9 +193,95 @@
                 }
               }
             }
-          },
+          }
+        }
+      }
+    },
+    "/refresh": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "リフレッシュトークンから各種リソースにアクセスするためのアクセストークンと新しいリフレッシュトークンを得る",
+        "description": "リフレッシュトークンから各種リソースにアクセスするためのアクセストークンと新しいリフレッシュトークンを得る",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "refresh": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "refresh"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
           "200": {
-            "description": "認証トークンの入ったメールアドレスを送信した"
+            "description": "成功。アクセストークンと新しいリフレッシュトークン。送ったリフレッシュトークンは使えなくなる",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "refresh": {
+                      "type": "string"
+                    },
+                    "access": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "リクエストの形式エラー",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "examples": {
+                  "request body must be application/json and root is object": {
+                    "value": "request body must be application/json and root is object"
+                  },
+                  "refeshの指定がされていない": {
+                    "value": "need refresh field"
+                  },
+                  "refeshの指定がstringでされていない": {
+                    "value": "refresh field must be string"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "エラー。無効なアクセストークンを受け取ったか、アクセストークンではないものを受け取った",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "examples": {
+                  "無効なアクセストークンを受け取ったか、アクセストークンではないものを受け取った": {
+                    "value": "invalid refresh token"
+                  }
+                }
+              }
+            }
           }
         }
       }

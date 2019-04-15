@@ -4,6 +4,7 @@ import * as firebase from "firebase";
 import * as jwt from "jsonwebtoken";
 import * as result from "./data/result";
 import * as univ from "./data/university"
+import { ref } from "firebase-functions/lib/providers/database";
 
 admin.initializeApp();
 firebase.initializeApp({
@@ -15,10 +16,9 @@ const dataBase = admin.firestore();
 const dataBaseUsersCollection = dataBase.collection("users");
 const refreshSecretKey = functions.config().jwt.refresh_secret_key;
 const accessSecretKey = functions.config().jwt.access_secret_key;
-const confirmSecretKey = functions.config().jwt.confirm_secret_key;
 
 
-console.log("run index.js 2019-04-14-09-20");
+console.log("run index.js 2019-04-15-08-13");
 
 /**
  *      /api/sign-up
@@ -26,7 +26,7 @@ console.log("run index.js 2019-04-14-09-20");
 export const signUp = functions.https.onRequest((request: functions.https.Request, response: functions.Response) => {
     const requestBody: unknown = request.body;
     if (typeof requestBody !== "object" || requestBody === null) {
-        responseSendError([{c:ErrorC.SignUp, error:SignUpError.RequestBodyMustBeJsonAndObject}], response);
+        responseSendError([{ c: ErrorC.SignUp, error: SignUpError.RequestBodyMustBeJsonAndObject }], response);
         return;
     }
     const passwordResult: result.Result<string, Array<PasswordError>> = getValidPassword(requestBody);
@@ -97,23 +97,24 @@ const sendConfirmEmailBody = (password: string, displayName: string, emailAndStu
         const user = msg.user as firebase.User;
         switch (emailAndStudentIdImage.c) {
             case EmailAndStudentIdImageC.NotSAddressWithImage:
-                console.log("ファイル名", studentIdCardImageFileName(user.uid, emailAndStudentIdImage.mimeType));
+                console.log("ファイル名", studentIdCardImageFilePath(user.uid, emailAndStudentIdImage.mimeType));
                 console.log("ファイルのTypeArray", emailAndStudentIdImage.typedArray);
-                const file = admin.storage().bucket().file(studentIdCardImageFileName(user.uid, emailAndStudentIdImage.mimeType));
+                const file = admin.storage().bucket().file(studentIdCardImageFilePath(user.uid, emailAndStudentIdImage.mimeType));
                 const stream = file.createWriteStream({ metadata: { contentType: emailAndStudentIdImage.mimeType } });
                 stream.write(emailAndStudentIdImage.typedArray);
                 stream.end(() => {
                     console.log("データベースに学生証の写真を載せた");
+                    const refreshId: string = createRefreshId();
                     dataBaseUsersCollection.doc(user.uid).set(
                         {
                             displayName: displayName,
                             university: univ.toSimpleObject(university),
-                            confirmTsukubaStudent: false,
-                            emailVerified: false
+                            newestRefreshId: refreshId,
+                            confirmTsukubaStudent: false
                         }
                     ).then(() => {
                         user.sendEmailVerification({
-                            url: "https://tsukumart-demo.firebaseapp.com?refreshToken=" + createRefreshKey(user.uid)
+                            url: "https://tsukumart-demo.firebaseapp.com/?refreshToken=" + createRefreshToken(user.uid, refreshId)
                         }).then(() => {
                             response.status(200).send();
                         })
@@ -121,16 +122,17 @@ const sendConfirmEmailBody = (password: string, displayName: string, emailAndStu
                 });
                 return;
             case EmailAndStudentIdImageC.SAddress:
+                const refreshId: string = createRefreshId();
                 dataBaseUsersCollection.doc(user.uid).set(
                     {
                         displayName: displayName,
                         university: univ.toSimpleObject(university),
-                        confirmTsukubaStudent: true,
-                        emailVerified: false
+                        newestRefreshId: refreshId,
+                        confirmTsukubaStudent: true
                     }
                 ).then(() => {
                     user.sendEmailVerification({
-                        url: "https://tsukumart-demo.firebaseapp.com?refreshToken=" + createRefreshKey(user.uid)
+                        url: "https://tsukumart-demo.firebaseapp.com/?refreshToken=" + createRefreshToken(user.uid, refreshId)
                     }).then(() => {
                         response.status(200).send();
                     })
@@ -142,20 +144,18 @@ const sendConfirmEmailBody = (password: string, displayName: string, emailAndStu
             case "auth/email-already-in-use":
                 console.error(`すでに${email}のメールアドレスでユーザーが登録されています`);
                 admin.auth().getUserByEmail(email).then(user => {
-                    dataBaseUsersCollection.doc(user.uid).get().then((doc) => {
-                        if ((doc.data() as FirebaseFirestore.DocumentData).emailVerified) {
-                            console.log(`${email}のメールアドレスで登録しているユーザーは認証済みです`);
-                            responseSendError([{ c: ErrorC.SignUp, error: SignUpError.EmailAlreadyExists }], response);
-                            return;
-                        }
-                        admin.auth().deleteUser(user.uid).then(() => {
-                            console.log("ユーザーの削除成功");
-                            sendConfirmEmailBody(password, displayName, emailAndStudentIdImage, university, response);
-                        }).catch(() => {
-                            console.log(`${email}のメールアドレスで登録しているユーザーは認証済みではないので削除しようとしたが失敗した`);
-                            responseSendError([{ c: ErrorC.SignUp, error: SignUpError.UserError }], response);
-                        });
-                    })
+                    if (user.emailVerified) {
+                        console.log(`${email}のメールアドレスで登録しているユーザーは認証済みです`);
+                        responseSendError([{ c: ErrorC.SignUp, error: SignUpError.EmailAlreadyExists }], response);
+                        return;
+                    }
+                    admin.auth().deleteUser(user.uid).then(() => {
+                        console.log("ユーザーの削除成功");
+                        sendConfirmEmailBody(password, displayName, emailAndStudentIdImage, university, response);
+                    }).catch(() => {
+                        console.log(`${email}のメールアドレスで登録しているユーザーは認証済みではないので削除しようとしたが失敗した`);
+                        responseSendError([{ c: ErrorC.SignUp, error: SignUpError.UserError }], response);
+                    });
                 }).catch(() => {
                     console.log(`${email}のユーザーの情報取得に失敗`);
                     responseSendError([{ c: ErrorC.SignUp, error: SignUpError.UserError }], response);
@@ -178,12 +178,12 @@ const sendConfirmEmailBody = (password: string, displayName: string, emailAndStu
     });
 };
 
-const studentIdCardImageFileName = (uid: string, mimeType: "image/png" | "image/jpeg"): string => {
+const studentIdCardImageFilePath = (uid: string, mimeType: "image/png" | "image/jpeg"): string => {
     switch (mimeType) {
         case "image/jpeg":
-            return `studentIdCardImage_${uid}.jpg`;
+            return `studentIdCardImage/${uid}.jpg`;
         case "image/png":
-            return `studentIdCardImage_${uid}.png`
+            return `studentIdCardImage/${uid}.png`
     }
 }
 
@@ -573,88 +573,139 @@ const unknownToTypeString = (value: unknown): TypeString => {
 type TypeString = "null" | "string" | "number" | "bigint" | "boolean" | "symbol" | "undefined" | "object" | "function";
 
 
-const getTokenFromEmailAndPassword = functions.https.onRequest((request, response) => {
-    const requestBody:
-        { email: string, password: string }
-        = request.body;
-    const email = requestBody.email;
-    const password = requestBody.password;
-    firebase.auth().signInWithEmailAndPassword(email, password).then(e => {
-        const user = e.user as firebase.User;
-        const refreshId = (Math.random() * 99999) | 0;
-        dataBaseUsersCollection.doc(user.uid).update(
-            { newestRefreshId: refreshId }
-        ).then(() => {
-            /** リフレッシュトークン */
-            const refreshToken = jwt.sign({
-                sub: user.uid, // ユーザーID
-                ref: false, //リフレッシュトークンでログインしたか
-                cut: refreshId // リフレッシュトークンを識別するもの
-            },
-                refreshSecretKey,
-                { algorithm: "HS256" }
-            );
-            const time = new Date();
-            time.setUTCMinutes(time.getUTCMinutes() + 15);
-            /** アクセストークン */
-            const accessToken = jwt.sign({
-                sub: user.uid,
-                exp: Math.round(time.getTime() / 1000)
-            }, accessSecretKey,
-                { algorithm: "HS256" }
-            );
-            response.send(
-                {
-                    refresh: refreshToken,
-                    access: accessToken
-                }
-            );
-        }).catch((e) => {
-            console.error("newestRefreshIdの書き込みに失敗", e);
-        });
-    }).catch(error => {
-        const errorCode = error.code;
-        const errorMessage = error.message;
-        switch (errorCode) {
-            case "auth/invalid-email":
-                response.send("不正なメールで登録しようとした");
+export const getTokenFromRefesh = functions.https.onRequest((request, response) => {
+    const requestBody: unknown = request.body;
+    if (typeof requestBody !== "object" || requestBody === null) {
+        response.status(400).send(["request body must be application/json and root is object"]);
+        return;
+    }
+    if (requestBody.hasOwnProperty("email") && requestBody.hasOwnProperty("password")) {
+        const email: unknown = (requestBody as { email: unknown }).email;
+        const password: unknown = (requestBody as { password: unknown }).password;
+        if (typeof email !== "string" || typeof password !== "string") {
+            response.status(400).send(["email and password must be string"]);
+            return;
         }
-    })
-})
-
-const readData = functions.https.onRequest((request, response) => {
-    try {
-        const result = jwt.verify(
-            request.body,
-            refreshSecretKey,
-            { algorithms: ["HS256"] }
-        ) as { sub: string, ref: boolean, cut: number };
-
-        dataBaseUsersCollection.doc(result.sub).get().then(e => {
-            const data = e.data() as { newestRefreshId: number }
-            console.log("データベースで保存されていたリフレッシュトークンID", data.newestRefreshId);
-            console.log("JWTに入っていたリフレッシュトークンID", result.cut);
-            if (typeof data.newestRefreshId === "string" || typeof result.cut === "string") {
-                response.send("型が合いません");
-                return;
-            }
-            if (data.newestRefreshId === result.cut) {
-                response.send("最新のトークン!");
-            } else {
-                response.send("最新のトークンではない");
+        firebase.auth().signInWithEmailAndPassword(email, password).then(e => {
+            const uid = (e.user as firebase.User).uid;
+            const refreshId: string = createRefreshId();
+            dataBaseUsersCollection.doc(uid).update(
+                { newestRefreshId: refreshId }
+            ).then(() => {
+                response.send(
+                    {
+                        refresh: createRefreshToken(uid, refreshId),
+                        access: createAccessToken(uid, false)
+                    }
+                );
+            }).catch((e) => {
+                console.error("newestRefreshIdの書き込みに失敗", e);
+            });
+        }).catch(error => {
+            const errorCode = error.code;
+            const errorMessage = error.message;
+            console.log("error code", errorCode, errorMessage);
+            switch (errorCode) {
+                case "auth/invalid-email":
+                    response.status(401).send(["invalid email"]);
+                    return;
+                case "auth/user-disabled":
+                    response.status(401).send(["user disabled"]);
+                    return;
+                case "auth/user-not-found":
+                    response.status(401).send(["user not found"]);
+                    return;
+                case "auth/wrong-password":
+                    response.status(401).send(["wrong password"]);
+                    return;
             }
         })
-    } catch (e) {
-        response.send("正当なJWTではなかった");
     }
+    if (!requestBody.hasOwnProperty("refresh")) {
+        response.status(400).send(["need (refresh) or (email and password) field"]);
+        return;
+    }
+    const refresh: unknown = (requestBody as { refresh: unknown }).refresh;
+    if (typeof refresh !== "string") {
+        response.status(400).send(["refresh field must be string"]);
+        return;
+    }
+    jwt.verify(
+        refresh,
+        refreshSecretKey,
+        { algorithms: ["HS256"] },
+        (err, decoded) => {
+            if (err) {
+                // エラーの場合
+                console.error("jwt.verfyでエラー!", err);
+                response.status(401).send(["invalid refresh token"])
+                return;
+            }
+            if (!decoded.hasOwnProperty("sub") || !decoded.hasOwnProperty("jti")) {
+                console.log("subかjtiがない!");
+                response.status(401).send(["invalid refresh token"]);
+                return;
+            }
+            const result = decoded as { sub: string, jti: number };
+            dataBaseUsersCollection.doc(result.sub).get().then(e => {
+                const data = e.data() as { newestRefreshId: number };
+                console.log("データベースで保存されていたリフレッシュトークンID", data.newestRefreshId);
+                console.log("JWTに入っていたリフレッシュトークンID", result.jti);
+                if (typeof data.newestRefreshId !== "string" || typeof result.jti !== "string") {
+                    console.error("型が合いません");
+                    return;
+                }
+                if (data.newestRefreshId === result.jti) {
+                    const refreshId: string = createRefreshId();
+                    dataBaseUsersCollection.doc(result.sub).update(
+                        { newestRefreshId: refreshId }
+                    ).then(() => {
+                        response.status(200).send(
+                            {
+                                refresh: createRefreshToken(result.sub, refreshId),
+                                access: createAccessToken(result.sub, true)
+                            }
+                        );
+                    });
+                } else {
+                    console.log("古いリフレッシュトークンを受け取った");
+                    response.status(401).send(["invalid refresh token"]);
+                }
+            }).catch(e => {
+                console.error("newestRefreshIdの書き込みに失敗", e);
+            });
+        }
+    );
 })
 
-
-const createRefreshKey = (uid: string): string => {
+const createRefreshToken = (uid: string, refreshId: string): string => {
     return jwt.sign({
-        sub: uid
+        sub: uid,
+        jti: refreshId
     }, refreshSecretKey,
         { algorithm: "HS256" }
     );
 }
 
+const createRefreshId = (): string => {
+    let id = "";
+    const charTable: string = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    for (let i = 0; i < 15; i++) {
+        id += charTable[(Math.random() * charTable.length) | 0]
+    }
+    return id;
+};
+
+
+const createAccessToken = (uid: string, byRefreshToken: boolean): string => {
+    const time = new Date();
+    time.setUTCMinutes(time.getUTCMinutes() + 15); // 有効期限は15分後
+    /** アクセストークン */
+    return jwt.sign({
+        sub: uid,
+        ref: byRefreshToken, //リフレッシュトークンでログインしたか
+        exp: Math.round(time.getTime() / 1000) // 有効期限
+    }, accessSecretKey,
+        { algorithm: "HS256" }
+    );
+}

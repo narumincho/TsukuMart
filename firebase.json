@@ -23,6 +23,10 @@
                 "function": "signUp"
             },
             {
+                "source": "/api/refresh",
+                "function": "getTokenFromRefesh"
+            },
+            {
                 "source": "**",
                 "destination": "/index.html"
             }

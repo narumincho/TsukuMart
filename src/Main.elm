@@ -123,7 +123,7 @@ type Msg
     | AddLogMessage String
     | LogOut
     | SignUpConfirmResponse Api.LogInRequest (Result Api.SignUpConfirmResponseError ())
-    | LogInResponse (Result Api.LogInResponseError Api.LogInResponseOk)
+    | LogInResponse (Result () Api.LogInResponseOk)
     | ReceiveImageDataUrl String
     | ReceiveImageFileAndBlobUrl Json.Decode.Value
     | GetUserDataResponse { access : Api.Token, refresh : Api.Token } (Result () Data.User.User)
@@ -364,7 +364,7 @@ update msg (Model rec) =
                         ]
                     )
 
-                Err logInResponseError ->
+                Err () ->
                     let
                         ( newPage, cmd ) =
                             case rec.page of
@@ -384,7 +384,7 @@ update msg (Model rec) =
                     in
                     ( Model
                         { rec
-                            | message = Just (Api.logInResponseErrorToString logInResponseError)
+                            | message = Just "ログインに失敗しました"
                             , page = newPage
                         }
                     , cmd

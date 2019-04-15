@@ -1,7 +1,6 @@
 module Api exposing
     ( ConfirmToken
     , LogInRequest
-    , LogInResponseError
     , LogInResponseOk(..)
     , SellGoodsRequest(..)
     , SellGoodsResponseError
@@ -22,7 +21,6 @@ module Api exposing
     , getUserProfile
     , likeGoods
     , logIn
-    , logInResponseErrorToString
     , sellGoods
     , signUp
     , signUpConfirm
@@ -309,11 +307,6 @@ type LogInResponseOk
         }
 
 
-type LogInResponseError
-    = LogInErrorNoConfirmOrMistakePasswordOrEmail -- 認証をしていないユーザー? ログインできる?
-    | LogInError -- エラーの理由がわからないエラー
-
-
 type Token
     = Token String
 
@@ -335,10 +328,10 @@ tokenToString (Token string) =
 {-| ログイン /auth/token/
 メールアドレスとパスワードから様々な情報をやり取りする上で必要なTokenを受け取る。それだけじゃなく、
 -}
-logIn : LogInRequest -> (Result LogInResponseError LogInResponseOk -> msg) -> Cmd msg
+logIn : LogInRequest -> (Result () LogInResponseOk -> msg) -> Cmd msg
 logIn logInData msg =
     Http.post
-        { url = urlBuilder [ "auth", "token" ]
+        { url = "/api/token"
         , body = Http.jsonBody (logInRequestToJson logInData)
         , expect = Http.expectStringResponse msg logInResponseToResult
         }
@@ -354,55 +347,33 @@ logInRequestToJson { emailAddress, pass } =
         ]
 
 
-logInResponseToResult : Http.Response String -> Result LogInResponseError LogInResponseOk
+logInResponseToResult : Http.Response String -> Result () LogInResponseOk
 logInResponseToResult response =
     case response of
         Http.BadStatus_ _ body ->
             Json.Decode.decodeString logInResponseBodyDecoder body
-                |> Result.withDefault (Err LogInError)
+                |> Result.withDefault (Err ())
 
-        Http.GoodStatus_ _ body ->
-            Json.Decode.decodeString logInResponseBodyDecoder body
-                |> Result.withDefault (Err LogInError)
+        Http.GoodStatus_ _ _ ->
+            Err ()
 
         _ ->
-            Err LogInError
+            Err ()
 
 
-logInResponseBodyDecoder : Json.Decode.Decoder (Result LogInResponseError LogInResponseOk)
+logInResponseBodyDecoder : Json.Decode.Decoder (Result () LogInResponseOk)
 logInResponseBodyDecoder =
-    Json.Decode.oneOf
-        [ Json.Decode.map2
-            (\access refresh ->
-                Ok
-                    (LogInResponseOk
-                        { access = Token access
-                        , refresh = Token refresh
-                        }
-                    )
-            )
-            (Json.Decode.field "access" Json.Decode.string)
-            (Json.Decode.field "refresh" Json.Decode.string)
-        , Json.Decode.field "non_field_errors" Json.Decode.string
-            |> Json.Decode.map
-                (\e ->
-                    if e == "No active confirmed account found with the given credentials" then
-                        Err LogInErrorNoConfirmOrMistakePasswordOrEmail
-
-                    else
-                        Err LogInError
+    Json.Decode.map2
+        (\access refresh ->
+            Ok
+                (LogInResponseOk
+                    { access = Token access
+                    , refresh = Token refresh
+                    }
                 )
-        ]
-
-
-logInResponseErrorToString : LogInResponseError -> String
-logInResponseErrorToString logInResponseError =
-    case logInResponseError of
-        LogInErrorNoConfirmOrMistakePasswordOrEmail ->
-            "認証をしていないか、メールアドレスかパスワードが間違っています"
-
-        LogInError ->
-            "予期せぬエラーでログインすることができませんでした"
+        )
+        (Json.Decode.field "access" Json.Decode.string)
+        (Json.Decode.field "refresh" Json.Decode.string)
 
 
 
@@ -416,10 +387,10 @@ type alias TokenRefreshRequest =
     { refresh : Token }
 
 
-tokenRefresh : TokenRefreshRequest -> (Result LogInResponseError LogInResponseOk -> msg) -> Cmd msg
+tokenRefresh : TokenRefreshRequest -> (Result () LogInResponseOk -> msg) -> Cmd msg
 tokenRefresh tokenRefreshRequest msg =
     Http.post
-        { url = urlBuilder [ "auth", "token", "refresh" ]
+        { url = "/api/token"
         , body = Http.jsonBody (tokenRefreshBody tokenRefreshRequest)
         , expect = Http.expectStringResponse msg logInResponseToResult
         }
