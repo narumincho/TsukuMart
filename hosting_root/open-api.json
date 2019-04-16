@@ -35,7 +35,7 @@
         ],
         "summary": "ユーザーの新規登録に必要な情報を送って、認証メールを送信する",
         "description": "ユーザーの新規登録に必要な情報を送って、認証メールを送信する",
-        "operationId": "getConfirmToken",
+        "operationId": "signUp",
         "requestBody": {
           "required": true,
           "content": {
@@ -197,7 +197,7 @@
         }
       }
     },
-    "/refresh": {
+    "/token": {
       "post": {
         "tags": [
           "auth"
@@ -209,14 +209,34 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "refresh": {
-                    "type": "string"
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "refresh": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "refresh"
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "email": {
+                        "type": "string",
+                        "format": "email"
+                      },
+                      "password": {
+                        "$ref": "#/components/schemas/Password"
+                      }
+                    },
+                    "required": [
+                      "email",
+                      "password"
+                    ]
                   }
-                },
-                "required": [
-                  "refresh"
                 ]
               }
             }
@@ -255,8 +275,11 @@
                   "request body must be application/json and root is object": {
                     "value": "request body must be application/json and root is object"
                   },
-                  "refeshの指定がされていない": {
-                    "value": "need refresh field"
+                  "(refesh)か(emailとpassword)の指定がされていない": {
+                    "value": "need (refresh) or (email and password) field"
+                  },
+                  "emailとpasswrodの指定がstringでされていな": {
+                    "value": "email and password must be string"
                   },
                   "refeshの指定がstringでされていない": {
                     "value": "refresh field must be string"
@@ -297,6 +320,53 @@
         "responses": {
           "200": {
             "description": "正常終了"
+          }
+        }
+      }
+    },
+    "/goods": {
+      "get": {
+        "tags": [
+          "goods"
+        ],
+        "summary": "すべての商品を取得する",
+        "description": "すべての商品を取得する",
+        "operationId": "getGoods",
+        "responses": {
+          "200": {
+            "description": "正常終了"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "goods"
+        ],
+        "summary": "商品を出品する",
+        "description": "商品を出品する",
+        "operationId": "postGoods",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "price": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "name", "description"
+                ]
+              }
+            }
           }
         }
       }

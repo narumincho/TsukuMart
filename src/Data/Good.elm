@@ -1,13 +1,17 @@
 module Data.Good exposing
-    ( Condition
+    ( Comment
+    , Condition
     , Good
     , GoodId
     , Status
+    , addComment
+    , addCommentList
     , conditionAll
     , conditionFromString
     , conditionIndex
     , conditionToIdString
     , conditionToJapaneseString
+    , getCommentList
     , getCondition
     , getDescription
     , getFirstImageUrl
@@ -22,7 +26,7 @@ module Data.Good exposing
     , isLikedBy
     , like
     , listMapIf
-    , make
+    , makeFromApi
     , priceToString
     , priceToStringWithoutYen
     , searchGoodsFromId
@@ -54,6 +58,7 @@ type Good
         , image3Url : Maybe String
         , likedByUserSet : Set.Set Int
         , seller : User.UserId
+        , commentList : Maybe (List Comment)
         }
 
 
@@ -71,8 +76,16 @@ goodIdFromInt id =
     GoodId id
 
 
-make : { id : Int, name : String, description : String, price : Int, condition : Condition, status : Status, image0Url : String, image1Url : Maybe String, image2Url : Maybe String, image3Url : Maybe String, likedByUserList : List User.UserId, seller : Int } -> Good
-make { id, name, description, price, condition, status, image0Url, image1Url, image2Url, image3Url, likedByUserList, seller } =
+type alias Comment =
+    { text : String
+    , createdAt : String
+    , userName : String
+    , userId : User.UserId
+    }
+
+
+makeFromApi : { id : Int, name : String, description : String, price : Int, condition : Condition, status : Status, image0Url : String, image1Url : Maybe String, image2Url : Maybe String, image3Url : Maybe String, likedByUserList : List User.UserId, seller : Int } -> Good
+makeFromApi { id, name, description, price, condition, status, image0Url, image1Url, image2Url, image3Url, likedByUserList, seller } =
     Good
         { id = GoodId id
         , name = name
@@ -86,6 +99,23 @@ make { id, name, description, price, condition, status, image0Url, image1Url, im
         , image3Url = image3Url
         , likedByUserSet = likedByUserList |> List.map User.userIdToInt |> Set.fromList
         , seller = User.userIdFromInt seller
+        , commentList = Nothing
+        }
+
+
+addCommentList : List { text : String, createdAt : String, userName : String, userId : User.UserId } -> Good -> Good
+addCommentList commentList (Good rec) =
+    Good
+        { rec
+            | commentList = Just commentList
+        }
+
+
+addComment : { text : String, createdAt : String, userName : String, userId : User.UserId } -> Good -> Good
+addComment comment (Good rec) =
+    Good
+        { rec
+            | commentList = Just ((rec.commentList |> Maybe.withDefault []) ++ [ comment ])
         }
 
 
@@ -293,6 +323,13 @@ getFirstImageUrl (Good { image0Url }) =
 getOthersImageUrlList : Good -> List String
 getOthersImageUrlList (Good { image1Url, image2Url, image3Url }) =
     [ image1Url, image2Url, image3Url ] |> List.map maybeToList |> List.concat
+
+
+{-| 商品のコメントを取得する
+-}
+getCommentList : Good -> Maybe (List Comment)
+getCommentList (Good { commentList }) =
+    commentList
 
 
 maybeToList : Maybe a -> List a

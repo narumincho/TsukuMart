@@ -13,6 +13,7 @@ module Api exposing
     , getExhibitionGoodList
     , getFreeGoods
     , getGood
+    , getGoodsComment
     , getLikeGoodList
     , getMyProfile
     , getPurchaseGoodList
@@ -21,6 +22,7 @@ module Api exposing
     , getUserProfile
     , likeGoods
     , logIn
+    , postGoodsComment
     , sellGoods
     , signUp
     , signUpConfirm
@@ -106,7 +108,7 @@ tokenToHeader (Token token) =
 signUp : SignUpRequest -> (Result SignUpResponseError SignUpResponseOk -> msg) -> Cmd msg
 signUp signUpData msg =
     Http.post
-        { url = "/api/sign-up" -- urlBuilder [ "auth", "signup" ]
+        { url = urlBuilder [ "auth", "signup" ]
         , body = Http.jsonBody (signUpJson signUpData)
         , expect = Http.expectStringResponse msg signUpResponseToResult
         }
@@ -116,11 +118,14 @@ signUp signUpData msg =
 -}
 signUpJson : SignUpRequest -> Json.Encode.Value
 signUpJson { emailAddress, pass, image, university, nickName } =
+    let
+        { graduate, department } =
+            universityToSimpleRecord university
+    in
     Json.Encode.object
         ([ ( "email", Json.Encode.string (EmailAddress.toString emailAddress) )
          , ( "password", Json.Encode.string (Password.toString pass) )
-         , ( "displayName", Json.Encode.string nickName )
-         , ( "university", universityToJson university )
+         , ( "nick", Json.Encode.string nickName )
          ]
             ++ (case image of
                     Just imageDataUrl ->
@@ -128,6 +133,21 @@ signUpJson { emailAddress, pass, image, university, nickName } =
 
                     Nothing ->
                         []
+               )
+            ++ ((case graduate of
+                    Just g ->
+                        [ ( "graduate", Json.Encode.string (University.graduateToIdString g) ) ]
+
+                    Nothing ->
+                        []
+                )
+                    ++ (case department of
+                            Just d ->
+                                [ ( "department", Json.Encode.string (University.departmentToIdString d) ) ]
+
+                            Nothing ->
+                                []
+                       )
                )
         )
 
@@ -331,7 +351,7 @@ tokenToString (Token string) =
 logIn : LogInRequest -> (Result () LogInResponseOk -> msg) -> Cmd msg
 logIn logInData msg =
     Http.post
-        { url = "/api/token"
+        { url = urlBuilder [ "auth", "token" ]
         , body = Http.jsonBody (logInRequestToJson logInData)
         , expect = Http.expectStringResponse msg logInResponseToResult
         }
@@ -350,12 +370,12 @@ logInRequestToJson { emailAddress, pass } =
 logInResponseToResult : Http.Response String -> Result () LogInResponseOk
 logInResponseToResult response =
     case response of
-        Http.BadStatus_ _ body ->
+        Http.BadStatus_ _ _ ->
+            Err ()
+
+        Http.GoodStatus_ _ body ->
             Json.Decode.decodeString logInResponseBodyDecoder body
                 |> Result.withDefault (Err ())
-
-        Http.GoodStatus_ _ _ ->
-            Err ()
 
         _ ->
             Err ()
@@ -390,7 +410,7 @@ type alias TokenRefreshRequest =
 tokenRefresh : TokenRefreshRequest -> (Result () LogInResponseOk -> msg) -> Cmd msg
 tokenRefresh tokenRefreshRequest msg =
     Http.post
-        { url = "/api/token"
+        { url = urlBuilder [ "auth", "token" ]
         , body = Http.jsonBody (tokenRefreshBody tokenRefreshRequest)
         , expect = Http.expectStringResponse msg logInResponseToResult
         }
@@ -803,7 +823,7 @@ goodsDecoder : Json.Decode.Decoder Good.Good
 goodsDecoder =
     Json.Decode.succeed
         (\id name description price condition status image0Url image1Url image2Url image3Url likedByUserList seller ->
-            Good.make
+            Good.makeFromApi
                 { id = id
                 , name = name
                 , description = description
@@ -829,7 +849,7 @@ goodsDecoder =
         |> Json.Decode.Pipeline.required "image3" (Json.Decode.nullable Json.Decode.string)
         |> Json.Decode.Pipeline.required "image4" (Json.Decode.nullable Json.Decode.string)
         |> Json.Decode.Pipeline.required "liked_by_prof" (Json.Decode.list Json.Decode.int)
-        |> Json.Decode.Pipeline.required "seller" Json.Decode.int
+        |> Json.Decode.Pipeline.required "seller" (Json.Decode.field "user" Json.Decode.int)
 
 
 conditionDecoder : Json.Decode.Decoder Good.Condition
@@ -982,3 +1002,84 @@ unlikeGoods token goodsId msg =
                         Task.succeed ()
             )
         |> Task.attempt msg
+
+
+
+{- ==============================================================================
+      商品のコメントを取得する    /{version}/goods/{goods_id}/comment/
+   ==============================================================================
+-}
+
+
+getGoodsComment : Good.GoodId -> (Result () (List Good.Comment) -> msg) -> Cmd msg
+getGoodsComment goodId msg =
+    Http.get
+        { url = urlBuilder [ "v1", "goods", Good.goodIdToString goodId, "comment" ]
+        , expect = Http.expectStringResponse msg getGoodsCommentResponseToResult
+        }
+
+
+getGoodsCommentResponseToResult : Http.Response String -> Result () (List Good.Comment)
+getGoodsCommentResponseToResult response =
+    case response of
+        Http.GoodStatus_ _ body ->
+            Json.Decode.decodeString commentListDecoder body
+                |> Result.withDefault (Err ())
+
+        _ ->
+            Err ()
+
+
+commentListDecoder : Json.Decode.Decoder (Result () (List Good.Comment))
+commentListDecoder =
+    Debug.log "decoder "
+        (Json.Decode.list commentDecoder
+            |> Json.Decode.map Ok
+        )
+
+
+commentDecoder : Json.Decode.Decoder Good.Comment
+commentDecoder =
+    Json.Decode.map4
+        (\text createdAt userName userId ->
+            { text = text
+            , createdAt = createdAt
+            , userName = userName
+            , userId = User.userIdFromInt userId
+            }
+        )
+        (Json.Decode.field "text" Json.Decode.string)
+        (Json.Decode.field "created_at" Json.Decode.string)
+        (Json.Decode.field "prof" (Json.Decode.field "nick" Json.Decode.string))
+        (Json.Decode.field "prof" (Json.Decode.field "user" Json.Decode.int))
+
+
+
+{- ==============================================================================
+      商品にコメントをする    /{version}/goods/{goods_id}/comment/
+   ==============================================================================
+-}
+
+
+postGoodsComment : Token -> Good.GoodId -> String -> (Result () Good.Comment -> msg) -> Cmd msg
+postGoodsComment token goodId comment msg =
+    Http.request
+        { method = "POST"
+        , url = urlBuilder [ "v1", "goods", Good.goodIdToString goodId, "comment" ]
+        , headers = [ tokenToHeader token ]
+        , body = Http.jsonBody (Json.Encode.object [ ( "text", Json.Encode.string comment ) ])
+        , expect = Http.expectStringResponse msg postGoodsCommentResponseToResult
+        , timeout = Nothing
+        , tracker = Nothing
+        }
+
+
+postGoodsCommentResponseToResult : Http.Response String -> Result () Good.Comment
+postGoodsCommentResponseToResult response =
+    case response of
+        Http.GoodStatus_ _ body ->
+            Json.Decode.decodeString (commentDecoder |> Json.Decode.map Ok) body
+                |> Result.withDefault (Err ())
+
+        _ ->
+            Err ()

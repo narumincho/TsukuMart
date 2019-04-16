@@ -593,6 +593,34 @@ header {
     font-size: 1.5rem;
 }
 
+.good-commentList {
+    display: grid;
+    gap: 1rem;
+}
+
+.good-comment {
+    padding: 1rem;
+}
+
+.good-comment-content {
+    display: flex;
+    flex-direction: row;
+}
+
+.good-comment-text {
+    flex-grow: 1;
+    font-size: 1.5rem;
+    background-color: #ddd;
+    padding: 1rem;
+    border-radius: .5rem;
+}
+
+.good-comment-sendButton {
+    padding: 1rem 2rem;
+    width: 100%;
+    border-radius: .5rem;
+}
+
 /*===============================================
                 Log In ログイン画面
 ===============================================*/
@@ -683,7 +711,6 @@ header {
     font-size: 1rem;
     text-align: center;
 }
-
 
 /*===============================================
                 Sign Up 新規登録画面

@@ -20,7 +20,6 @@ import Data.User
 import Html
 import Html.Attributes
 import Html.Events
-import SiteMap
 import Tab
 
 
@@ -33,12 +32,15 @@ type Model
     | Normal
         { good : Good.Good
         , sending : Bool -- いいねを送信中か送信中じゃないか
+        , comment : String
         }
     | Confirm { good : Good.Good }
 
 
 type Emit
     = EmitGetGoods { goodId : Good.GoodId }
+    | EmitGetGoodComment { goodId : Good.GoodId }
+    | EmitPostGoodComment Api.Token { goodId : Good.GoodId } String
     | EmitLikeGood Data.User.UserId Api.Token Good.GoodId
     | EmitUnLikeGood Data.User.UserId Api.Token Good.GoodId
     | EmitAddLogMessage String
@@ -46,11 +48,15 @@ type Emit
 
 type Msg
     = GetGoodsResponse (Result () Good.Good)
+    | GetGoodsCommentResponse (Result () (List Good.Comment))
+    | PostGoodsCommentResponse (Result () Good.Comment)
     | LikeGood Data.User.UserId Api.Token Good.GoodId
     | UnLikeGood Data.User.UserId Api.Token Good.GoodId
     | LikeGoodResponse Data.User.UserId (Result () ())
     | UnlikeGoodResponse Data.User.UserId (Result () ())
     | ToConfirmPage
+    | InputComment String
+    | SendComment Api.Token
 
 
 {-| 指定したIDの商品詳細ページ
@@ -66,7 +72,7 @@ initModel id =
 -}
 initModelFromGoods : Good.Good -> ( Model, List Emit )
 initModelFromGoods good =
-    ( Normal { good = good, sending = False }
+    ( Normal { good = good, sending = False, comment = "" }
     , [ EmitGetGoods { goodId = Good.getId good } ]
     )
 
@@ -90,16 +96,49 @@ update : Msg -> Model -> ( Model, List Emit )
 update msg model =
     case msg of
         GetGoodsResponse goodsResult ->
-            case goodsResult of
-                Ok good ->
-                    ( Normal { good = good, sending = False }
-                    , []
+            case ( model, goodsResult ) of
+                ( Normal rec, Ok good ) ->
+                    ( Normal { rec | good = good }
+                    , [ EmitGetGoodComment { goodId = Good.getId good } ]
                     )
 
-                Err () ->
+                ( _, Ok good ) ->
+                    ( Normal { good = good, sending = False, comment = "" }
+                    , [ EmitGetGoodComment { goodId = Good.getId good } ]
+                    )
+
+                ( _, Err () ) ->
                     ( model
                     , [ EmitAddLogMessage "商品情報の取得に失敗しました" ]
                     )
+
+        GetGoodsCommentResponse commentListResult ->
+            case ( model, commentListResult ) of
+                ( Normal rec, Ok commentList ) ->
+                    ( Normal { rec | good = rec.good |> Good.addCommentList commentList }
+                    , []
+                    )
+
+                ( _, Err () ) ->
+                    ( model
+                    , [ EmitAddLogMessage "コメント取得に失敗しました" ]
+                    )
+
+                ( _, _ ) ->
+                    ( model
+                    , [ EmitAddLogMessage "画面がNormalでないときにコメントを受け取ってしまった" ]
+                    )
+
+        PostGoodsCommentResponse result ->
+            case ( model, result ) of
+                ( Normal rec, Ok comment ) ->
+                    ( Normal { rec | good = rec.good |> Good.addComment comment }, [] )
+
+                ( _, Err () ) ->
+                    ( model, [ EmitAddLogMessage "コメントの送信に失敗しました" ] )
+
+                ( _, _ ) ->
+                    ( model, [] )
 
         LikeGood userId token id ->
             ( case model of
@@ -168,6 +207,30 @@ update msg model =
             , []
             )
 
+        InputComment string ->
+            case model of
+                Normal rec ->
+                    ( Normal { rec | comment = string }
+                    , []
+                    )
+
+                _ ->
+                    ( model
+                    , []
+                    )
+
+        SendComment token ->
+            case model of
+                Normal { comment, good } ->
+                    ( model
+                    , [ EmitPostGoodComment token { goodId = Good.getId good } comment ]
+                    )
+
+                _ ->
+                    ( model
+                    , []
+                    )
+
 
 view : LogInState.LogInState -> Bool -> Model -> ( String, Tab.Tab Msg, List (Html.Html Msg) )
 view logInState isWideScreenMode model =
@@ -188,8 +251,9 @@ view logInState isWideScreenMode model =
                         [ goodsViewImage (Good.getFirstImageUrl good) (Good.getOthersImageUrlList good)
                         , goodsViewName (Good.getName good)
                         , goodsViewLike logInState sending good
-                        , goodsViewDescription (Good.getDescription good)
+                        , descriptionView (Good.getDescription good)
                         , goodsViewCondition (Good.getCondition good)
+                        , commentListView logInState (Good.getCommentList good)
                         ]
                     , goodsViewPriceAndBuyButton isWideScreenMode (Good.getPrice good)
                     ]
@@ -206,7 +270,7 @@ view logInState isWideScreenMode model =
                         [ Html.text "購入確認画面"
                         , goodsViewImage (Good.getFirstImageUrl good) (Good.getOthersImageUrlList good)
                         , goodsViewName (Good.getName good)
-                        , goodsViewDescription (Good.getDescription good)
+                        , descriptionView (Good.getDescription good)
                         , goodsViewCondition (Good.getCondition good)
                         ]
                     ]
@@ -295,12 +359,62 @@ itemLikeBody count =
     ]
 
 
-goodsViewDescription : String -> Html.Html msg
-goodsViewDescription description =
+descriptionView : String -> Html.Html msg
+descriptionView description =
     Html.div
         [ Html.Attributes.class "good-description" ]
         [ Html.div [ Html.Attributes.class "good-label" ] [ Html.text "商品の説明" ]
         , Html.div [] [ Html.text description ]
+        ]
+
+
+commentListView : LogInState.LogInState -> Maybe (List Good.Comment) -> Html.Html Msg
+commentListView logInState commentListMaybe =
+    Html.div
+        [ Html.Attributes.class "good-commentList" ]
+        (case commentListMaybe of
+            Just commentList ->
+                (commentList |> List.map commentView)
+                    ++ (case logInState of
+                            LogInState.LogInStateOk { access } ->
+                                [ commentInputArea access ]
+
+                            LogInState.LogInStateNone ->
+                                []
+                       )
+
+            Nothing ->
+                [ Html.text "読み込み中" ]
+        )
+
+
+commentView : Good.Comment -> Html.Html msg
+commentView { text, createdAt, userName } =
+    Html.div
+        [ Html.Attributes.class "good-comment" ]
+        [ Html.div
+            [ Html.Attributes.class "good-comment-content" ]
+            [ Html.div [] [ Html.text userName ]
+            , Html.div [ Html.Attributes.class "good-comment-text" ] [ Html.text text ]
+            ]
+        , Html.div [] [ Html.text createdAt ]
+        ]
+
+
+commentInputArea : Api.Token -> Html.Html Msg
+commentInputArea token =
+    Html.div
+        []
+        [ Html.textarea
+            [ Html.Events.onInput InputComment
+            , Html.Attributes.class "form-textarea"
+            ]
+            []
+        , Html.button
+            [ Html.Events.onClick (SendComment token)
+            , Html.Attributes.class "good-comment-sendButton"
+            ]
+            [ Html.text "コメントを送信" ]
         ]
 
 

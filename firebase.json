@@ -23,8 +23,8 @@
                 "function": "signUp"
             },
             {
-                "source": "/api/refresh",
-                "function": "getTokenFromRefesh"
+                "source": "/api/token",
+                "function": "getToken"
             },
             {
                 "source": "**",

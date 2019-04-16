@@ -4,10 +4,8 @@ import Api
 import BasicParts
 import Browser
 import Browser.Navigation
-import Data.EmailAddress
 import Data.Good
 import Data.LogInState
-import Data.Password
 import Data.User
 import File
 import Html
@@ -261,6 +259,10 @@ urlParserInitResultToPageAndCmd logInState page =
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg (Model rec) =
+    let
+        _ =
+            Debug.log "msg=" msg
+    in
     case msg of
         ToWideScreenMode ->
             ( Model
@@ -874,6 +876,12 @@ goodsPageEmitListToCmd =
             case emit of
                 Page.Good.EmitGetGoods { goodId } ->
                     Api.getGood goodId (\result -> GoodsPageMsg (Page.Good.GetGoodsResponse result))
+
+                Page.Good.EmitGetGoodComment { goodId } ->
+                    Api.getGoodsComment goodId (\result -> GoodsPageMsg (Page.Good.GetGoodsCommentResponse result))
+
+                Page.Good.EmitPostGoodComment token { goodId } comment ->
+                    Api.postGoodsComment token goodId comment (\result -> GoodsPageMsg (Page.Good.PostGoodsCommentResponse result))
 
                 Page.Good.EmitLikeGood userId token id ->
                     Api.likeGoods token id (LikeGoodResponse userId id)

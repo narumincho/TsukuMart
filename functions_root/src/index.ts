@@ -5,6 +5,7 @@ import * as jwt from "jsonwebtoken";
 import * as result from "./data/result";
 import * as univ from "./data/university"
 import { ref } from "firebase-functions/lib/providers/database";
+import { request } from "http";
 
 admin.initializeApp();
 firebase.initializeApp({
@@ -573,59 +574,67 @@ const unknownToTypeString = (value: unknown): TypeString => {
 type TypeString = "null" | "string" | "number" | "bigint" | "boolean" | "symbol" | "undefined" | "object" | "function";
 
 
-export const getTokenFromRefesh = functions.https.onRequest((request, response) => {
+export const getToken = functions.https.onRequest((request, response) => {
     const requestBody: unknown = request.body;
     if (typeof requestBody !== "object" || requestBody === null) {
         response.status(400).send(["request body must be application/json and root is object"]);
         return;
     }
     if (requestBody.hasOwnProperty("email") && requestBody.hasOwnProperty("password")) {
-        const email: unknown = (requestBody as { email: unknown }).email;
-        const password: unknown = (requestBody as { password: unknown }).password;
-        if (typeof email !== "string" || typeof password !== "string") {
-            response.status(400).send(["email and password must be string"]);
-            return;
-        }
-        firebase.auth().signInWithEmailAndPassword(email, password).then(e => {
-            const uid = (e.user as firebase.User).uid;
-            const refreshId: string = createRefreshId();
-            dataBaseUsersCollection.doc(uid).update(
-                { newestRefreshId: refreshId }
-            ).then(() => {
-                response.send(
-                    {
-                        refresh: createRefreshToken(uid, refreshId),
-                        access: createAccessToken(uid, false)
-                    }
-                );
-            }).catch((e) => {
-                console.error("newestRefreshIdの書き込みに失敗", e);
-            });
-        }).catch(error => {
-            const errorCode = error.code;
-            const errorMessage = error.message;
-            console.log("error code", errorCode, errorMessage);
-            switch (errorCode) {
-                case "auth/invalid-email":
-                    response.status(401).send(["invalid email"]);
-                    return;
-                case "auth/user-disabled":
-                    response.status(401).send(["user disabled"]);
-                    return;
-                case "auth/user-not-found":
-                    response.status(401).send(["user not found"]);
-                    return;
-                case "auth/wrong-password":
-                    response.status(401).send(["wrong password"]);
-                    return;
-            }
-        })
-    }
-    if (!requestBody.hasOwnProperty("refresh")) {
-        response.status(400).send(["need (refresh) or (email and password) field"]);
+        const email = (requestBody as { email: unknown }).email;
+        const password = (requestBody as { password: unknown }).password;
+        getTokenFromEmailAndPassword(email, password, response);
         return;
     }
-    const refresh: unknown = (requestBody as { refresh: unknown }).refresh;
+    if (requestBody.hasOwnProperty("refresh")) {
+        getTokenFromRefesh((requestBody as { refresh: unknown }).refresh, response);
+        return;
+    }
+    response.status(400).send(["need (refresh) or (email and password) field"]);
+});
+
+const getTokenFromEmailAndPassword = (email: unknown, password: unknown, response: functions.Response): void => {
+    if (typeof email !== "string" || typeof password !== "string") {
+        response.status(400).send(["email and password must be string"]);
+        return;
+    }
+    firebase.auth().signInWithEmailAndPassword(email, password).then(e => {
+        const uid = (e.user as firebase.User).uid;
+        const refreshId: string = createRefreshId();
+        dataBaseUsersCollection.doc(uid).update(
+            { newestRefreshId: refreshId }
+        ).then(() => {
+            response.send(
+                {
+                    refresh: createRefreshToken(uid, refreshId),
+                    access: createAccessToken(uid, false)
+                }
+            );
+        }).catch((e) => {
+            console.error("newestRefreshIdの書き込みに失敗", e);
+        });
+    }).catch(error => {
+        const errorCode = error.code;
+        const errorMessage = error.message;
+        console.log("error code", errorCode, errorMessage);
+        switch (errorCode) {
+            case "auth/invalid-email":
+                response.status(401).send(["invalid email"]);
+                return;
+            case "auth/user-disabled":
+                response.status(401).send(["user disabled"]);
+                return;
+            case "auth/user-not-found":
+                response.status(401).send(["user not found"]);
+                return;
+            case "auth/wrong-password":
+                response.status(401).send(["wrong password"]);
+                return;
+        }
+    })
+};
+
+const getTokenFromRefesh = (refresh: unknown, response: functions.Response) => {
     if (typeof refresh !== "string") {
         response.status(400).send(["refresh field must be string"]);
         return;
@@ -676,7 +685,7 @@ export const getTokenFromRefesh = functions.https.onRequest((request, response) 
             });
         }
     );
-})
+};
 
 const createRefreshToken = (uid: string, refreshId: string): string => {
     return jwt.sign({
