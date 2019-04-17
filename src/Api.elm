@@ -134,38 +134,13 @@ signUpJson { emailAddress, pass, image, university, nickName } =
                     Nothing ->
                         []
                )
-            ++ ((case graduate of
+            ++ (case graduate of
                     Just g ->
                         [ ( "graduate", Json.Encode.string (University.graduateToIdString g) ) ]
 
                     Nothing ->
                         []
-                )
-                    ++ (case department of
-                            Just d ->
-                                [ ( "department", Json.Encode.string (University.departmentToIdString d) ) ]
-
-                            Nothing ->
-                                []
-                       )
                )
-        )
-
-
-universityToJson : University.University -> Json.Encode.Value
-universityToJson university =
-    let
-        { graduate, department } =
-            universityToSimpleRecord university
-    in
-    Json.Encode.object
-        ((case graduate of
-            Just g ->
-                [ ( "graduate", Json.Encode.string (University.graduateToIdString g) ) ]
-
-            Nothing ->
-                []
-         )
             ++ (case department of
                     Just d ->
                         [ ( "department", Json.Encode.string (University.departmentToIdString d) ) ]
@@ -370,9 +345,6 @@ logInRequestToJson { emailAddress, pass } =
 logInResponseToResult : Http.Response String -> Result () LogInResponseOk
 logInResponseToResult response =
     case response of
-        Http.BadStatus_ _ _ ->
-            Err ()
-
         Http.GoodStatus_ _ body ->
             Json.Decode.decodeString logInResponseBodyDecoder body
                 |> Result.withDefault (Err ())
@@ -410,19 +382,41 @@ type alias TokenRefreshRequest =
 tokenRefresh : TokenRefreshRequest -> (Result () LogInResponseOk -> msg) -> Cmd msg
 tokenRefresh tokenRefreshRequest msg =
     Http.post
-        { url = urlBuilder [ "auth", "token" ]
+        { url = urlBuilder [ "auth", "token", "refresh" ]
         , body = Http.jsonBody (tokenRefreshBody tokenRefreshRequest)
-        , expect = Http.expectStringResponse msg logInResponseToResult
+        , expect = Http.expectStringResponse msg (refeshTokenResponseToResult tokenRefreshRequest.refresh)
         }
 
 
 tokenRefreshBody : TokenRefreshRequest -> Json.Encode.Value
 tokenRefreshBody { refresh } =
     Json.Encode.object
-        [ ( "refresh"
-          , Json.Encode.string (tokenToString refresh)
-          )
-        ]
+        [ ( "refresh", Json.Encode.string (tokenToString refresh) ) ]
+
+
+refeshTokenResponseToResult : Token -> Http.Response String -> Result () LogInResponseOk
+refeshTokenResponseToResult refresh response =
+    case response of
+        Http.GoodStatus_ _ body ->
+            Json.Decode.decodeString (refeshTokenResponseDecoder refresh) body
+                |> Result.withDefault (Err ())
+
+        _ ->
+            Err ()
+
+
+refeshTokenResponseDecoder : Token -> Json.Decode.Decoder (Result () LogInResponseOk)
+refeshTokenResponseDecoder refresh =
+    Json.Decode.field "access" Json.Decode.string
+        |> Json.Decode.map
+            (\access ->
+                Ok
+                    (LogInResponseOk
+                        { access = tokenFromString access
+                        , refresh = refresh
+                        }
+                    )
+            )
 
 
 
@@ -573,11 +567,29 @@ updateProfile token profile msg =
 
 updateProfileRequestToJsonBody : User.Profile -> Json.Decode.Value
 updateProfileRequestToJsonBody profile =
+    let
+        { graduate, department } =
+            universityToSimpleRecord (User.profileGetUniversity profile)
+    in
     Json.Encode.object
-        [ ( "nick", Json.Encode.string (User.profileGetNickName profile) )
-        , ( "introduction", Json.Encode.string (User.profileGetIntroduction profile) )
-        , ( "university", universityToJson (User.profileGetUniversity profile) )
-        ]
+        ([ ( "nick", Json.Encode.string (User.profileGetNickName profile) )
+         , ( "introduction", Json.Encode.string (User.profileGetIntroduction profile) )
+         ]
+            ++ (case graduate of
+                    Just g ->
+                        [ ( "graduate", Json.Encode.string (University.graduateToIdString g) ) ]
+
+                    Nothing ->
+                        []
+               )
+            ++ (case department of
+                    Just d ->
+                        [ ( "department", Json.Encode.string (University.departmentToIdString d) ) ]
+
+                    Nothing ->
+                        []
+               )
+        )
 
 
 
@@ -849,7 +861,7 @@ goodsDecoder =
         |> Json.Decode.Pipeline.required "image3" (Json.Decode.nullable Json.Decode.string)
         |> Json.Decode.Pipeline.required "image4" (Json.Decode.nullable Json.Decode.string)
         |> Json.Decode.Pipeline.required "liked_by_prof" (Json.Decode.list Json.Decode.int)
-        |> Json.Decode.Pipeline.required "seller" (Json.Decode.field "user" Json.Decode.int)
+        |> Json.Decode.Pipeline.required "seller" Json.Decode.int
 
 
 conditionDecoder : Json.Decode.Decoder Good.Condition

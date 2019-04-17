@@ -4,8 +4,6 @@ import * as firebase from "firebase";
 import * as jwt from "jsonwebtoken";
 import * as result from "./data/result";
 import * as univ from "./data/university"
-import { ref } from "firebase-functions/lib/providers/database";
-import { request } from "http";
 
 admin.initializeApp();
 firebase.initializeApp({
@@ -18,8 +16,7 @@ const dataBaseUsersCollection = dataBase.collection("users");
 const refreshSecretKey = functions.config().jwt.refresh_secret_key;
 const accessSecretKey = functions.config().jwt.access_secret_key;
 
-
-console.log("run index.js 2019-04-15-08-13");
+console.log("run index.js 2019-04-17-10-19");
 
 /**
  *      /api/sign-up
@@ -688,6 +685,7 @@ const getTokenFromRefesh = (refresh: unknown, response: functions.Response) => {
 };
 
 const createRefreshToken = (uid: string, refreshId: string): string => {
+    /** リフレッシュトークン 有効期限はなし */
     return jwt.sign({
         sub: uid,
         jti: refreshId
