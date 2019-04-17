@@ -103,8 +103,13 @@ tokenToHeader (Token token) =
     Http.header "Authorization" ("Bearer " ++ token)
 
 
-{-| 新規登録のリクエスト(Cmd) /auth/signup/
+
+{- ========================================================================
+                新規登録 /auth/signup/
+   ========================================================================
 -}
+
+
 signUp : SignUpRequest -> (Result SignUpResponseError SignUpResponseOk -> msg) -> Cmd msg
 signUp signUpData msg =
     Http.post
@@ -384,7 +389,7 @@ tokenRefresh tokenRefreshRequest msg =
     Http.post
         { url = urlBuilder [ "auth", "token", "refresh" ]
         , body = Http.jsonBody (tokenRefreshBody tokenRefreshRequest)
-        , expect = Http.expectStringResponse msg (refeshTokenResponseToResult tokenRefreshRequest.refresh)
+        , expect = Http.expectStringResponse msg (refreshTokenResponseToResult tokenRefreshRequest.refresh)
         }
 
 
@@ -394,19 +399,19 @@ tokenRefreshBody { refresh } =
         [ ( "refresh", Json.Encode.string (tokenToString refresh) ) ]
 
 
-refeshTokenResponseToResult : Token -> Http.Response String -> Result () LogInResponseOk
-refeshTokenResponseToResult refresh response =
+refreshTokenResponseToResult : Token -> Http.Response String -> Result () LogInResponseOk
+refreshTokenResponseToResult refresh response =
     case response of
         Http.GoodStatus_ _ body ->
-            Json.Decode.decodeString (refeshTokenResponseDecoder refresh) body
+            Json.Decode.decodeString (refreshTokenResponseDecoder refresh) body
                 |> Result.withDefault (Err ())
 
         _ ->
             Err ()
 
 
-refeshTokenResponseDecoder : Token -> Json.Decode.Decoder (Result () LogInResponseOk)
-refeshTokenResponseDecoder refresh =
+refreshTokenResponseDecoder : Token -> Json.Decode.Decoder (Result () LogInResponseOk)
+refreshTokenResponseDecoder refresh =
     Json.Decode.field "access" Json.Decode.string
         |> Json.Decode.map
             (\access ->
@@ -778,8 +783,41 @@ getGoodListResponseToResult response =
 
 getGoodListResponseBodyJsonDecoder : Json.Decode.Decoder (Result () (List Good.Good))
 getGoodListResponseBodyJsonDecoder =
-    Json.Decode.list goodsDecoder
+    Json.Decode.list goodsNormalResponseDecoder
         |> Json.Decode.map Ok
+
+
+goodsNormalResponseDecoder : Json.Decode.Decoder Good.Good
+goodsNormalResponseDecoder =
+    Json.Decode.succeed
+        (\id name description price condition status image0Url image1Url image2Url image3Url likedByUserList seller ->
+            Good.makeNormalFromApi
+                { id = id
+                , name = name
+                , description = description
+                , price = price
+                , condition = condition
+                , status = status
+                , image0Url = image0Url
+                , image1Url = image1Url
+                , image2Url = image2Url
+                , image3Url = image3Url
+                , likedByUserList = likedByUserList |> List.map User.userIdFromInt
+                , seller = seller
+                }
+        )
+        |> Json.Decode.Pipeline.required "id" Json.Decode.int
+        |> Json.Decode.Pipeline.required "name" Json.Decode.string
+        |> Json.Decode.Pipeline.required "description" Json.Decode.string
+        |> Json.Decode.Pipeline.required "price" Json.Decode.int
+        |> Json.Decode.Pipeline.required "condition" conditionDecoder
+        |> Json.Decode.Pipeline.required "status" statusDecoder
+        |> Json.Decode.Pipeline.required "image1" Json.Decode.string
+        |> Json.Decode.Pipeline.required "image2" (Json.Decode.nullable Json.Decode.string)
+        |> Json.Decode.Pipeline.required "image3" (Json.Decode.nullable Json.Decode.string)
+        |> Json.Decode.Pipeline.required "image4" (Json.Decode.nullable Json.Decode.string)
+        |> Json.Decode.Pipeline.required "liked_by_prof" (Json.Decode.list Json.Decode.int)
+        |> Json.Decode.Pipeline.required "seller" Json.Decode.int
 
 
 
@@ -819,23 +857,19 @@ getGood id msg =
 getGoodsResponseToResult : Http.Response String -> Result () Good.Good
 getGoodsResponseToResult response =
     case response of
-        Http.BadStatus_ _ body ->
-            Json.Decode.decodeString (goodsDecoder |> Json.Decode.map Ok) body
-                |> Result.withDefault (Err ())
-
         Http.GoodStatus_ _ body ->
-            Json.Decode.decodeString (goodsDecoder |> Json.Decode.map Ok) body
+            Json.Decode.decodeString (goodsDetailResponseDecoder |> Json.Decode.map Ok) body
                 |> Result.withDefault (Err ())
 
         _ ->
             Err ()
 
 
-goodsDecoder : Json.Decode.Decoder Good.Good
-goodsDecoder =
+goodsDetailResponseDecoder : Json.Decode.Decoder Good.Good
+goodsDetailResponseDecoder =
     Json.Decode.succeed
-        (\id name description price condition status image0Url image1Url image2Url image3Url likedByUserList seller ->
-            Good.makeFromApi
+        (\id name description price condition status image0Url image1Url image2Url image3Url likedByUserList seller sellerName ->
+            Good.makeDetailFromApi
                 { id = id
                 , name = name
                 , description = description
@@ -848,6 +882,7 @@ goodsDecoder =
                 , image3Url = image3Url
                 , likedByUserList = likedByUserList |> List.map User.userIdFromInt
                 , seller = seller
+                , sellerName = sellerName
                 }
         )
         |> Json.Decode.Pipeline.required "id" Json.Decode.int
@@ -861,7 +896,8 @@ goodsDecoder =
         |> Json.Decode.Pipeline.required "image3" (Json.Decode.nullable Json.Decode.string)
         |> Json.Decode.Pipeline.required "image4" (Json.Decode.nullable Json.Decode.string)
         |> Json.Decode.Pipeline.required "liked_by_prof" (Json.Decode.list Json.Decode.int)
-        |> Json.Decode.Pipeline.required "seller" Json.Decode.int
+        |> Json.Decode.Pipeline.required "seller" (Json.Decode.field "user" Json.Decode.int)
+        |> Json.Decode.Pipeline.required "seller" (Json.Decode.field "nick" Json.Decode.string)
 
 
 conditionDecoder : Json.Decode.Decoder Good.Condition
@@ -1073,25 +1109,45 @@ commentDecoder =
 -}
 
 
-postGoodsComment : Token -> Good.GoodId -> String -> (Result () Good.Comment -> msg) -> Cmd msg
-postGoodsComment token goodId comment msg =
+postGoodsComment : User.User -> Token -> Good.GoodId -> String -> (Result () Good.Comment -> msg) -> Cmd msg
+postGoodsComment user token goodId comment msg =
     Http.request
         { method = "POST"
         , url = urlBuilder [ "v1", "goods", Good.goodIdToString goodId, "comment" ]
         , headers = [ tokenToHeader token ]
         , body = Http.jsonBody (Json.Encode.object [ ( "text", Json.Encode.string comment ) ])
-        , expect = Http.expectStringResponse msg postGoodsCommentResponseToResult
+        , expect = Http.expectStringResponse msg (postGoodsCommentResponseToResult user)
         , timeout = Nothing
         , tracker = Nothing
         }
 
 
-postGoodsCommentResponseToResult : Http.Response String -> Result () Good.Comment
-postGoodsCommentResponseToResult response =
+postGoodsCommentResponseToResult : User.User -> Http.Response String -> Result () Good.Comment
+postGoodsCommentResponseToResult user response =
     case response of
         Http.GoodStatus_ _ body ->
-            Json.Decode.decodeString (commentDecoder |> Json.Decode.map Ok) body
+            Json.Decode.decodeString
+                (commentNormalDecoder
+                    (user |> User.getProfile |> User.profileGetNickName)
+                    (User.getUserId user)
+                    |> Json.Decode.map Ok
+                )
+                body
                 |> Result.withDefault (Err ())
 
         _ ->
             Err ()
+
+
+commentNormalDecoder : String -> User.UserId -> Json.Decode.Decoder Good.Comment
+commentNormalDecoder userName userId =
+    Json.Decode.map2
+        (\text createdAt ->
+            { text = text
+            , createdAt = createdAt
+            , userName = userName
+            , userId = userId
+            }
+        )
+        (Json.Decode.field "text" Json.Decode.string)
+        (Json.Decode.field "created_at" Json.Decode.string)

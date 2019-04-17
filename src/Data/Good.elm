@@ -21,12 +21,14 @@ module Data.Good exposing
     , getName
     , getOthersImageUrlList
     , getPrice
+    , getSellerName
     , goodIdFromInt
     , goodIdToString
     , isLikedBy
     , like
     , listMapIf
-    , makeFromApi
+    , makeDetailFromApi
+    , makeNormalFromApi
     , priceToString
     , priceToStringWithoutYen
     , searchGoodsFromId
@@ -58,6 +60,7 @@ type Good
         , image3Url : Maybe String
         , likedByUserSet : Set.Set Int
         , seller : User.UserId
+        , sellerName : Maybe String
         , commentList : Maybe (List Comment)
         }
 
@@ -84,8 +87,8 @@ type alias Comment =
     }
 
 
-makeFromApi : { id : Int, name : String, description : String, price : Int, condition : Condition, status : Status, image0Url : String, image1Url : Maybe String, image2Url : Maybe String, image3Url : Maybe String, likedByUserList : List User.UserId, seller : Int } -> Good
-makeFromApi { id, name, description, price, condition, status, image0Url, image1Url, image2Url, image3Url, likedByUserList, seller } =
+makeNormalFromApi : { id : Int, name : String, description : String, price : Int, condition : Condition, status : Status, image0Url : String, image1Url : Maybe String, image2Url : Maybe String, image3Url : Maybe String, likedByUserList : List User.UserId, seller : Int } -> Good
+makeNormalFromApi { id, name, description, price, condition, status, image0Url, image1Url, image2Url, image3Url, likedByUserList, seller } =
     Good
         { id = GoodId id
         , name = name
@@ -99,6 +102,27 @@ makeFromApi { id, name, description, price, condition, status, image0Url, image1
         , image3Url = image3Url
         , likedByUserSet = likedByUserList |> List.map User.userIdToInt |> Set.fromList
         , seller = User.userIdFromInt seller
+        , sellerName = Nothing
+        , commentList = Nothing
+        }
+
+
+makeDetailFromApi : { id : Int, name : String, description : String, price : Int, condition : Condition, status : Status, image0Url : String, image1Url : Maybe String, image2Url : Maybe String, image3Url : Maybe String, likedByUserList : List User.UserId, seller : Int, sellerName : String } -> Good
+makeDetailFromApi { id, name, description, price, condition, status, image0Url, image1Url, image2Url, image3Url, likedByUserList, seller, sellerName } =
+    Good
+        { id = GoodId id
+        , name = name
+        , description = description
+        , price = price
+        , condition = condition
+        , status = status
+        , image0Url = image0Url
+        , image1Url = image1Url
+        , image2Url = image2Url
+        , image3Url = image3Url
+        , likedByUserSet = likedByUserList |> List.map User.userIdToInt |> Set.fromList
+        , seller = User.userIdFromInt seller
+        , sellerName = Just sellerName
         , commentList = Nothing
         }
 
@@ -323,6 +347,13 @@ getFirstImageUrl (Good { image0Url }) =
 getOthersImageUrlList : Good -> List String
 getOthersImageUrlList (Good { image1Url, image2Url, image3Url }) =
     [ image1Url, image2Url, image3Url ] |> List.map maybeToList |> List.concat
+
+
+{-| 出品者の名前を取得する
+-}
+getSellerName : Good -> Maybe String
+getSellerName (Good { sellerName }) =
+    sellerName
 
 
 {-| 商品のコメントを取得する

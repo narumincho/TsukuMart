@@ -880,8 +880,8 @@ goodsPageEmitListToCmd =
                 Page.Good.EmitGetGoodComment { goodId } ->
                     Api.getGoodsComment goodId (\result -> GoodsPageMsg (Page.Good.GetGoodsCommentResponse result))
 
-                Page.Good.EmitPostGoodComment token { goodId } comment ->
-                    Api.postGoodsComment token goodId comment (\result -> GoodsPageMsg (Page.Good.PostGoodsCommentResponse result))
+                Page.Good.EmitPostGoodComment user token { goodId } comment ->
+                    Api.postGoodsComment user token goodId comment (\result -> GoodsPageMsg (Page.Good.PostGoodsCommentResponse result))
 
                 Page.Good.EmitLikeGood userId token id ->
                     Api.likeGoods token id (LikeGoodResponse userId id)

@@ -40,7 +40,7 @@ type Model
 type Emit
     = EmitGetGoods { goodId : Good.GoodId }
     | EmitGetGoodComment { goodId : Good.GoodId }
-    | EmitPostGoodComment Api.Token { goodId : Good.GoodId } String
+    | EmitPostGoodComment Data.User.User Api.Token { goodId : Good.GoodId } String
     | EmitLikeGood Data.User.UserId Api.Token Good.GoodId
     | EmitUnLikeGood Data.User.UserId Api.Token Good.GoodId
     | EmitAddLogMessage String
@@ -56,7 +56,7 @@ type Msg
     | UnlikeGoodResponse Data.User.UserId (Result () ())
     | ToConfirmPage
     | InputComment String
-    | SendComment Api.Token
+    | SendComment Data.User.User Api.Token
 
 
 {-| 指定したIDの商品詳細ページ
@@ -219,11 +219,11 @@ update msg model =
                     , []
                     )
 
-        SendComment token ->
+        SendComment user token ->
             case model of
                 Normal { comment, good } ->
                     ( model
-                    , [ EmitPostGoodComment token { goodId = Good.getId good } comment ]
+                    , [ EmitPostGoodComment user token { goodId = Good.getId good } comment ]
                     )
 
                 _ ->
@@ -251,6 +251,7 @@ view logInState isWideScreenMode model =
                         [ goodsViewImage (Good.getFirstImageUrl good) (Good.getOthersImageUrlList good)
                         , goodsViewName (Good.getName good)
                         , goodsViewLike logInState sending good
+                        , sellerNameView (Good.getSellerName good)
                         , descriptionView (Good.getDescription good)
                         , goodsViewCondition (Good.getCondition good)
                         , commentListView logInState (Good.getCommentList good)
@@ -359,6 +360,22 @@ itemLikeBody count =
     ]
 
 
+sellerNameView : Maybe String -> Html.Html msg
+sellerNameView nameMaybe =
+    Html.div
+        []
+        [ Html.div [ Html.Attributes.class "good-label" ] [ Html.text "出品者" ]
+        , Html.div []
+            [ case nameMaybe of
+                Just name ->
+                    Html.text name
+
+                Nothing ->
+                    Html.text "出品者の名前を取得中"
+            ]
+        ]
+
+
 descriptionView : String -> Html.Html msg
 descriptionView description =
     Html.div
@@ -376,8 +393,8 @@ commentListView logInState commentListMaybe =
             Just commentList ->
                 (commentList |> List.map commentView)
                     ++ (case logInState of
-                            LogInState.LogInStateOk { access } ->
-                                [ commentInputArea access ]
+                            LogInState.LogInStateOk { access, user } ->
+                                [ commentInputArea access user ]
 
                             LogInState.LogInStateNone ->
                                 []
@@ -401,8 +418,8 @@ commentView { text, createdAt, userName } =
         ]
 
 
-commentInputArea : Api.Token -> Html.Html Msg
-commentInputArea token =
+commentInputArea : Api.Token -> Data.User.User -> Html.Html Msg
+commentInputArea token user =
     Html.div
         []
         [ Html.textarea
@@ -411,7 +428,7 @@ commentInputArea token =
             ]
             []
         , Html.button
-            [ Html.Events.onClick (SendComment token)
+            [ Html.Events.onClick (SendComment user token)
             , Html.Attributes.class "good-comment-sendButton"
             ]
             [ Html.text "コメントを送信" ]
