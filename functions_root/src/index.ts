@@ -17,7 +17,6 @@ const refreshSecretKey = functions.config().jwt.refresh_secret_key;
 const accessSecretKey = functions.config().jwt.access_secret_key;
 
 console.log("run index.js 2019-04-17-10-19");
-
 /**
  *      /api/sign-up
  */

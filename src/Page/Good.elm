@@ -43,6 +43,7 @@ type Emit
     | EmitPostGoodComment Data.User.User Api.Token { goodId : Good.GoodId } String
     | EmitLikeGood Data.User.UserId Api.Token Good.GoodId
     | EmitUnLikeGood Data.User.UserId Api.Token Good.GoodId
+    | EmitTradeStart Api.Token Good.GoodId
     | EmitAddLogMessage String
 
 
@@ -54,6 +55,8 @@ type Msg
     | UnLikeGood Data.User.UserId Api.Token Good.GoodId
     | LikeGoodResponse Data.User.UserId (Result () ())
     | UnlikeGoodResponse Data.User.UserId (Result () ())
+    | TradeStart Api.Token Good.GoodId
+    | TradeStartResponse (Result () ())
     | ToConfirmPage
     | InputComment String
     | SendComment Data.User.User Api.Token
@@ -194,6 +197,21 @@ update msg model =
             , []
             )
 
+        TradeStart token goodId ->
+            ( model
+            , [ EmitTradeStart token goodId ]
+            )
+
+        TradeStartResponse result ->
+            ( model
+            , case result of
+                Ok () ->
+                    [ EmitAddLogMessage "取引開始" ]
+
+                Err () ->
+                    [ EmitAddLogMessage "取引開始を失敗しました" ]
+            )
+
         ToConfirmPage ->
             ( case model of
                 Loading _ ->
@@ -268,11 +286,12 @@ view logInState isWideScreenMode model =
                     [ Html.Attributes.class "container" ]
                     [ Html.div
                         [ Html.Attributes.class "good" ]
-                        [ Html.text "購入確認画面"
+                        [ Html.text "購入確認画面。この商品の取引を開始しますか?"
                         , goodsViewImage (Good.getFirstImageUrl good) (Good.getOthersImageUrlList good)
                         , goodsViewName (Good.getName good)
                         , descriptionView (Good.getDescription good)
                         , goodsViewCondition (Good.getCondition good)
+                        , tradeStartButton logInState (Good.getId good)
                         ]
                     ]
               ]
@@ -460,4 +479,20 @@ goodsViewCondition condition =
             [ Html.Attributes.class "good-condition" ]
             [ Html.text (Good.conditionToJapaneseString condition)
             ]
+        ]
+
+
+tradeStartButton : LogInState.LogInState -> Good.GoodId -> Html.Html Msg
+tradeStartButton logInState goodId =
+    Html.div
+        []
+        [ Html.button
+            (case logInState of
+                LogInState.LogInStateOk { access } ->
+                    [ Html.Events.onClick (TradeStart access goodId) ]
+
+                LogInState.LogInStateNone ->
+                    []
+            )
+            [ Html.text "取引を開始する" ]
         ]

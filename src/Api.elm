@@ -19,6 +19,7 @@ module Api exposing
     , getPurchaseGoodList
     , getRecentGoods
     , getRecommendGoods
+    , getTradeComment
     , getUserProfile
     , likeGoods
     , logIn
@@ -29,6 +30,7 @@ module Api exposing
     , tokenFromString
     , tokenRefresh
     , tokenToString
+    , tradeStart
     , unlikeGoods
     , updateProfile
     )
@@ -58,7 +60,6 @@ urlBuilder pathList =
 
 
 
---    Url.Builder.absolute ([ "api" ] ++ pathList ++ [ "" ]) []
 {- =================================================
                  新規登録 /auth/signup/
    =================================================
@@ -1063,12 +1064,12 @@ getGoodsComment : Good.GoodId -> (Result () (List Good.Comment) -> msg) -> Cmd m
 getGoodsComment goodId msg =
     Http.get
         { url = urlBuilder [ "v1", "goods", Good.goodIdToString goodId, "comment" ]
-        , expect = Http.expectStringResponse msg getGoodsCommentResponseToResult
+        , expect = Http.expectStringResponse msg commentResponseToResult
         }
 
 
-getGoodsCommentResponseToResult : Http.Response String -> Result () (List Good.Comment)
-getGoodsCommentResponseToResult response =
+commentResponseToResult : Http.Response String -> Result () (List Good.Comment)
+commentResponseToResult response =
     case response of
         Http.GoodStatus_ _ body ->
             Json.Decode.decodeString commentListDecoder body
@@ -1080,10 +1081,8 @@ getGoodsCommentResponseToResult response =
 
 commentListDecoder : Json.Decode.Decoder (Result () (List Good.Comment))
 commentListDecoder =
-    Debug.log "decoder "
-        (Json.Decode.list commentDecoder
-            |> Json.Decode.map Ok
-        )
+    Json.Decode.list commentDecoder
+        |> Json.Decode.map Ok
 
 
 commentDecoder : Json.Decode.Decoder Good.Comment
@@ -1151,3 +1150,54 @@ commentNormalDecoder userName userId =
         )
         (Json.Decode.field "text" Json.Decode.string)
         (Json.Decode.field "created_at" Json.Decode.string)
+
+
+
+{- ==============================================================================
+      商品の取引を開始する    /{version}/goods/{goods_id}/trade-start/
+   ==============================================================================
+-}
+
+
+tradeStart : Token -> Good.GoodId -> (Result () () -> msg) -> Cmd msg
+tradeStart token goodId msg =
+    Http.request
+        { method = "POST"
+        , url = urlBuilder [ "v1", "goods", Good.goodIdToString goodId, "trade-start" ]
+        , headers = [ tokenToHeader token ]
+        , body = Http.emptyBody
+        , expect = Http.expectStringResponse msg tradeStartResponseToResult
+        , timeout = Nothing
+        , tracker = Nothing
+        }
+
+
+tradeStartResponseToResult : Http.Response String -> Result () ()
+tradeStartResponseToResult response =
+    case response of
+        Http.GoodStatus_ _ _ ->
+            Ok ()
+
+        _ ->
+            Err ()
+
+
+
+{- ==============================================================================
+      商品の取引のコメントを取得する    /{version}/trade/{trade_id}/comment/
+      trade_idってないよなgood_idでいいのかな
+   ==============================================================================
+-}
+
+
+getTradeComment : Token -> Good.GoodId -> (Result () (List Good.Comment) -> msg) -> Cmd msg
+getTradeComment token goodId msg =
+    Http.request
+        { method = "GET"
+        , url = urlBuilder [ "v1", "trade", Good.goodIdToString goodId, "comment" ]
+        , headers = [ tokenToHeader token ]
+        , body = Http.emptyBody
+        , expect = Http.expectStringResponse msg commentResponseToResult
+        , timeout = Nothing
+        , tracker = Nothing
+        }

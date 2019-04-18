@@ -259,10 +259,6 @@ urlParserInitResultToPageAndCmd logInState page =
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg (Model rec) =
-    let
-        _ =
-            Debug.log "msg=" msg
-    in
     case msg of
         ToWideScreenMode ->
             ( Model
@@ -888,6 +884,9 @@ goodsPageEmitListToCmd =
 
                 Page.Good.EmitUnLikeGood userId token id ->
                     Api.unlikeGoods token id (UnlikeGoodResponse userId id)
+
+                Page.Good.EmitTradeStart token id ->
+                    Api.tradeStart token id (\result -> GoodsPageMsg (Page.Good.TradeStartResponse result))
 
                 Page.Good.EmitAddLogMessage log ->
                     Task.succeed ()
