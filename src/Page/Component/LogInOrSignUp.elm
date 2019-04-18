@@ -23,17 +23,19 @@ type Model
     = Model
         { analysisStudentIdOrEmailAddressResult : AnalysisStudentIdOrEmailAddressResult
         , password : Maybe Data.Password.Password
+        , saveRefreshToken : Bool
         , sending : Bool -- ログイン処理で送信中か
         }
 
 
 type Emit
-    = EmitLogIn Api.LogInRequest
+    = EmitLogIn Api.LogInRequest Bool
 
 
 type Msg
     = InputStudentIdOrEmailAddress String
     | InputPassword String
+    | CheckSaveRefreshToken Bool
     | LogIn Api.LogInRequest
     | LogInSuccess
     | LogInFailure
@@ -52,6 +54,7 @@ initModel =
     Model
         { analysisStudentIdOrEmailAddressResult = analysisStudentIdOrEmailAddress ""
         , password = Nothing
+        , saveRefreshToken = True
         , sending = False
         }
 
@@ -73,9 +76,15 @@ update msg (Model r) =
             , []
             )
 
+        CheckSaveRefreshToken check ->
+            ( Model
+                { r | saveRefreshToken = check }
+            , []
+            )
+
         LogIn request ->
             ( Model { r | sending = True }
-            , [ EmitLogIn request ]
+            , [ EmitLogIn request r.saveRefreshToken ]
             )
 
         LogInSuccess ->
@@ -137,13 +146,14 @@ getLogInData studentIdOrEmailAddress passwordMaybe =
 
 
 view : Model -> Html.Html Msg
-view (Model { analysisStudentIdOrEmailAddressResult, password, sending }) =
+view (Model { analysisStudentIdOrEmailAddressResult, password, saveRefreshToken, sending }) =
     Html.div
         [ Html.Attributes.class "logIn" ]
         [ Html.form
             [ Html.Attributes.class "logIn-group" ]
             ([ logInIdView analysisStudentIdOrEmailAddressResult
              , logInPasswordView
+             , logInSaveRefreshTokenCheck saveRefreshToken
              , logInButton sending (getLogInData analysisStudentIdOrEmailAddressResult password)
              ]
                 ++ (if sending then
@@ -210,6 +220,23 @@ logInPasswordView =
             , Html.Events.onInput InputPassword
             ]
             []
+        ]
+
+
+logInSaveRefreshTokenCheck : Bool -> Html.Html Msg
+logInSaveRefreshTokenCheck saveRefreshToken =
+    Html.div
+        []
+        [ Html.input
+            [ Html.Attributes.type_ "checkbox"
+            , Html.Attributes.id "saveRefreshToken"
+            , Html.Events.onCheck CheckSaveRefreshToken
+            , Html.Attributes.checked saveRefreshToken
+            ]
+            []
+        , Html.label
+            [ Html.Attributes.for "saveRefreshToken" ]
+            [ Html.text "ログイン情報を保存する" ]
         ]
 
 

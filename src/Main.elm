@@ -121,7 +121,7 @@ type Msg
     | AddLogMessage String
     | LogOut
     | SignUpConfirmResponse Api.LogInRequest (Result Api.SignUpConfirmResponseError ())
-    | LogInResponse (Result () Api.LogInResponseOk)
+    | LogInResponse Bool (Result () Api.LogInResponseOk)
     | ReceiveImageDataUrl String
     | ReceiveImageFileAndBlobUrl Json.Decode.Value
     | GetUserDataResponse { access : Api.Token, refresh : Api.Token } (Result () Data.User.User)
@@ -172,7 +172,7 @@ init { refreshToken } url key =
         Just refreshTokenString ->
             Cmd.batch
                 [ cmd
-                , Api.tokenRefresh { refresh = Api.tokenFromString refreshTokenString } LogInResponse
+                , Api.tokenRefresh { refresh = Api.tokenFromString refreshTokenString } (LogInResponse True)
                 ]
 
         Nothing ->
@@ -254,7 +254,7 @@ urlParserInitResultToPageAndCmd logInState page =
                     |> Tuple.mapBoth PageHome homePageEmitListToCmd
             of
                 ( p, cmd ) ->
-                    ( p, Cmd.batch [ cmd, Api.tokenRefresh { refresh = token } LogInResponse ] )
+                    ( p, Cmd.batch [ cmd, Api.tokenRefresh { refresh = token } (LogInResponse True) ] )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -312,7 +312,7 @@ update msg (Model rec) =
             , Cmd.none
             )
 
-        LogInResponse logInResponse ->
+        LogInResponse saveRefreshToken logInResponse ->
             case logInResponse of
                 Ok (Api.LogInResponseOk { access, refresh }) ->
                     let
@@ -358,7 +358,11 @@ update msg (Model rec) =
                     , Cmd.batch
                         [ cmd
                         , Api.getMyProfile access (GetUserDataResponse { access = access, refresh = refresh })
-                        , saveRefreshTokenToLocalStorage (Api.tokenToString refresh)
+                        , if saveRefreshToken then
+                            saveRefreshTokenToLocalStorage (Api.tokenToString refresh)
+
+                          else
+                            deleteRefreshTokenAndAllFromLocalStorage ()
                         ]
                     )
 
@@ -402,7 +406,6 @@ update msg (Model rec) =
                         }
                     , Cmd.batch
                         [ Browser.Navigation.pushUrl rec.key SiteMap.homeUrl
-                        , Api.logIn logInRequest LogInResponse
                         , homePageEmitListToCmd emitList
                         ]
                     )
@@ -902,8 +905,8 @@ goodsPageEmitListToCmd =
 logInOrSignUpEmitToCmd : Page.Component.LogInOrSignUp.Emit -> Cmd Msg
 logInOrSignUpEmitToCmd emit =
     case emit of
-        Page.Component.LogInOrSignUp.EmitLogIn logInRequest ->
-            Api.logIn logInRequest LogInResponse
+        Page.Component.LogInOrSignUp.EmitLogIn logInRequest saveRefreshToken ->
+            Api.logIn logInRequest (LogInResponse saveRefreshToken)
 
 
 goodsListEmitToMsg : Page.Component.GoodList.Emit -> Cmd Msg

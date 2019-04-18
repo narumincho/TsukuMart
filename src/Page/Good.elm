@@ -487,12 +487,14 @@ tradeStartButton logInState goodId =
     Html.div
         []
         [ Html.button
-            (case logInState of
-                LogInState.LogInStateOk { access } ->
-                    [ Html.Events.onClick (TradeStart access goodId) ]
+            ([ Html.Attributes.class "mainButton" ]
+                ++ (case logInState of
+                        LogInState.LogInStateOk { access } ->
+                            [ Html.Events.onClick (TradeStart access goodId) ]
 
-                LogInState.LogInStateNone ->
-                    []
+                        LogInState.LogInStateNone ->
+                            [ Html.Attributes.class "mainButton-disabled" ]
+                   )
             )
             [ Html.text "取引を開始する" ]
         ]
