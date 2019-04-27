@@ -21,6 +21,7 @@ import Html
 import Html.Attributes
 import Html.Events
 import Tab
+import Time
 
 
 
@@ -45,6 +46,8 @@ type Emit
     | EmitUnLikeGood Data.User.UserId Api.Token Good.GoodId
     | EmitTradeStart Api.Token Good.GoodId
     | EmitAddLogMessage String
+    | EmitUpdateNowTime
+    | EmitTimeStringToTimePosix Good.GoodId (List String)
 
 
 type Msg
@@ -60,6 +63,7 @@ type Msg
     | ToConfirmPage
     | InputComment String
     | SendComment Data.User.User Api.Token
+    | ReceiveTimeStringToMillisecond { goodId : Int, second : List Int }
 
 
 {-| 指定したIDの商品詳細ページ
@@ -102,12 +106,16 @@ update msg model =
             case ( model, goodsResult ) of
                 ( Normal rec, Ok good ) ->
                     ( Normal { rec | good = good }
-                    , [ EmitGetGoodComment { goodId = Good.getId good } ]
+                    , [ EmitGetGoodComment { goodId = Good.getId good }
+                      , EmitUpdateNowTime
+                      ]
                     )
 
                 ( _, Ok good ) ->
                     ( Normal { good = good, sending = False, comment = "" }
-                    , [ EmitGetGoodComment { goodId = Good.getId good } ]
+                    , [ EmitGetGoodComment { goodId = Good.getId good }
+                      , EmitUpdateNowTime
+                      ]
                     )
 
                 ( _, Err () ) ->
@@ -118,8 +126,11 @@ update msg model =
         GetGoodsCommentResponse commentListResult ->
             case ( model, commentListResult ) of
                 ( Normal rec, Ok commentList ) ->
-                    ( Normal { rec | good = rec.good |> Good.addCommentList commentList }
-                    , []
+                    ( Normal { rec | good = rec.good |> Good.setCommentList commentList }
+                    , [ EmitTimeStringToTimePosix
+                            (rec.good |> Good.getId)
+                            (commentList |> Good.getCommentCreatedAtString)
+                      ]
                     )
 
                 ( _, Err () ) ->
@@ -249,9 +260,19 @@ update msg model =
                     , []
                     )
 
+        ReceiveTimeStringToMillisecond { goodId, second } ->
+            ( case model of
+                Normal r ->
+                    Normal { r | good = r.good |> Good.replaceCommentTimeStringToTimePosix (second |> List.map Time.millisToPosix) }
 
-view : LogInState.LogInState -> Bool -> Model -> ( String, Tab.Tab Msg, List (Html.Html Msg) )
-view logInState isWideScreenMode model =
+                _ ->
+                    model
+            , []
+            )
+
+
+view : LogInState.LogInState -> Bool -> Maybe ( Time.Posix, Time.Zone ) -> Model -> ( String, Tab.Tab Msg, List (Html.Html Msg) )
+view logInState isWideScreenMode nowMaybe model =
     case model of
         Loading _ ->
             ( "商品詳細ページ"
@@ -272,7 +293,7 @@ view logInState isWideScreenMode model =
                         , sellerNameView (Good.getSellerName good)
                         , descriptionView (Good.getDescription good)
                         , goodsViewCondition (Good.getCondition good)
-                        , commentListView logInState (Good.getCommentList good)
+                        , commentListView nowMaybe logInState (Good.getCommentList good)
                         ]
                     , goodsViewPriceAndBuyButton isWideScreenMode (Good.getPrice good)
                     ]
@@ -404,13 +425,13 @@ descriptionView description =
         ]
 
 
-commentListView : LogInState.LogInState -> Maybe (List Good.Comment) -> Html.Html Msg
-commentListView logInState commentListMaybe =
+commentListView : Maybe ( Time.Posix, Time.Zone ) -> LogInState.LogInState -> Maybe (List Good.Comment) -> Html.Html Msg
+commentListView nowMaybe logInState commentListMaybe =
     Html.div
         [ Html.Attributes.class "good-commentList" ]
         (case commentListMaybe of
             Just commentList ->
-                (commentList |> List.map commentView)
+                (commentList |> List.map (commentView nowMaybe))
                     ++ (case logInState of
                             LogInState.LogInStateOk { access, user } ->
                                 [ commentInputArea access user ]
@@ -424,8 +445,8 @@ commentListView logInState commentListMaybe =
         )
 
 
-commentView : Good.Comment -> Html.Html msg
-commentView { text, createdAt, userName } =
+commentView : Maybe ( Time.Posix, Time.Zone ) -> Good.Comment -> Html.Html msg
+commentView nowMaybe { text, createdAt, userName } =
     Html.div
         [ Html.Attributes.class "good-comment" ]
         [ Html.div
@@ -433,7 +454,7 @@ commentView { text, createdAt, userName } =
             [ Html.div [] [ Html.text userName ]
             , Html.div [ Html.Attributes.class "good-comment-text" ] [ Html.text text ]
             ]
-        , Html.div [] [ Html.text createdAt ]
+        , Html.div [] [ Html.text (Good.createdAtToString nowMaybe createdAt) ]
         ]
 
 

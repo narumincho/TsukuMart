@@ -28,6 +28,7 @@ import Page.SignUp
 import SiteMap
 import Tab
 import Task
+import Time
 import Url
 
 
@@ -88,6 +89,12 @@ port saveRefreshTokenToLocalStorage : String -> Cmd msg
 port deleteRefreshTokenAndAllFromLocalStorage : () -> Cmd msg
 
 
+port sendTimeStringToMillisecond : { goodId : Int, timeString : List String } -> Cmd msg
+
+
+port receiveTimeStringToMillisecond : ({ goodId : Int, second : List Int } -> msg) -> Sub msg
+
+
 type Model
     = Model
         { page : Page -- 開いているページ
@@ -96,6 +103,7 @@ type Model
         , logInState : Data.LogInState.LogInState
         , notificationVisible : Bool
         , key : Browser.Navigation.Key
+        , now : Maybe ( Time.Posix, Time.Zone )
         }
 
 
@@ -139,6 +147,7 @@ type Msg
     | SignUpMsg Page.SignUp.Msg
     | ProfilePageMsg Page.Profile.Msg
     | GoodsPageMsg Page.Good.Msg
+    | GetNowTime (Result () ( Time.Posix, Time.Zone ))
 
 
 main : Program { refreshToken : Maybe String } Model Msg
@@ -167,16 +176,25 @@ init { refreshToken } url key =
         , logInState = Data.LogInState.LogInStateNone
         , notificationVisible = False
         , key = key
+        , now = Nothing
         }
-    , case refreshToken of
-        Just refreshTokenString ->
-            Cmd.batch
-                [ cmd
-                , Api.tokenRefresh { refresh = Api.tokenFromString refreshTokenString } (LogInResponse True)
+    , Cmd.batch
+        ((case refreshToken of
+            Just refreshTokenString ->
+                [ Api.tokenRefresh { refresh = Api.tokenFromString refreshTokenString } (LogInResponse True)
                 ]
 
-        Nothing ->
-            cmd
+            Nothing ->
+                []
+         )
+            ++ [ cmd
+               , Task.map2
+                    Tuple.pair
+                    Time.now
+                    Time.here
+                    |> Task.attempt GetNowTime
+               ]
+        )
     )
 
 
@@ -699,6 +717,20 @@ update msg (Model rec) =
                     , Cmd.none
                     )
 
+        GetNowTime result ->
+            case result of
+                Ok posixAndZone ->
+                    ( Model
+                        { rec | now = Just posixAndZone }
+                    , Cmd.none
+                    )
+
+                Err () ->
+                    ( Model
+                        { rec | message = Just "時間の取得に失敗しました" }
+                    , Cmd.none
+                    )
+
 
 
 {- ===================== Page Emit To Msg ======================== -}
@@ -894,6 +926,16 @@ goodsPageEmitListToCmd =
                 Page.Good.EmitAddLogMessage log ->
                     Task.succeed ()
                         |> Task.perform (always (AddLogMessage log))
+
+                Page.Good.EmitUpdateNowTime ->
+                    Task.map2
+                        Tuple.pair
+                        Time.now
+                        Time.here
+                        |> Task.attempt GetNowTime
+
+                Page.Good.EmitTimeStringToTimePosix goodId list ->
+                    sendTimeStringToMillisecond { goodId = goodId |> Data.Good.goodIdToInt, timeString = list }
         )
         >> Cmd.batch
 
@@ -1212,13 +1254,13 @@ unlikeGood userId goodId result logInState page =
 {-| 見た目を決める
 -}
 view : Model -> { title : String, body : List (Html.Html Msg) }
-view (Model { page, menuState, message, logInState }) =
+view (Model { page, menuState, message, logInState, now }) =
     let
         isWideScreen =
             menuState == Nothing
 
         ( title, mainView ) =
-            mainViewAndMainTab logInState page isWideScreen
+            mainViewAndMainTab logInState page isWideScreen now
     in
     { title =
         if title == "" then
@@ -1243,11 +1285,11 @@ view (Model { page, menuState, message, logInState }) =
     }
 
 
-mainViewAndMainTab : Data.LogInState.LogInState -> Page -> Bool -> ( String, List (Html.Html Msg) )
-mainViewAndMainTab logInState page isWideScreenMode =
+mainViewAndMainTab : Data.LogInState.LogInState -> Page -> Bool -> Maybe ( Time.Posix, Time.Zone ) -> ( String, List (Html.Html Msg) )
+mainViewAndMainTab logInState page isWideScreenMode nowMaybe =
     let
         ( title, tabData, mainView ) =
-            titleAndTabDataAndMainView logInState isWideScreenMode page
+            titleAndTabDataAndMainView logInState isWideScreenMode nowMaybe page
     in
     ( title
     , [ Tab.view isWideScreenMode tabData
@@ -1267,8 +1309,8 @@ mainViewAndMainTab logInState page isWideScreenMode =
     )
 
 
-titleAndTabDataAndMainView : Data.LogInState.LogInState -> Bool -> Page -> ( String, Tab.Tab Msg, List (Html.Html Msg) )
-titleAndTabDataAndMainView logInState isWideScreenMode page =
+titleAndTabDataAndMainView : Data.LogInState.LogInState -> Bool -> Maybe ( Time.Posix, Time.Zone ) -> Page -> ( String, Tab.Tab Msg, List (Html.Html Msg) )
+titleAndTabDataAndMainView logInState isWideScreenMode nowMaybe page =
     case page of
         PageHome homeModel ->
             homeModel
@@ -1307,7 +1349,7 @@ titleAndTabDataAndMainView logInState isWideScreenMode page =
 
         PageGoods goodModel ->
             goodModel
-                |> Page.Good.view logInState isWideScreenMode
+                |> Page.Good.view logInState isWideScreenMode nowMaybe
                 |> mapPageData GoodsPageMsg
 
         PageProfile profileModel ->
@@ -1352,6 +1394,7 @@ subscription (Model { menuState }) =
     Sub.batch
         [ receiveImageDataUrl ReceiveImageDataUrl
         , receiveImageFileAndBlobUrl ReceiveImageFileAndBlobUrl
+        , receiveTimeStringToMillisecond (\msg -> GoodsPageMsg (Page.Good.ReceiveTimeStringToMillisecond msg))
         , case menuState of
             Just _ ->
                 toWideScreenMode (always ToWideScreenMode)

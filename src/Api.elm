@@ -1090,7 +1090,7 @@ commentDecoder =
     Json.Decode.map4
         (\text createdAt userName userId ->
             { text = text
-            , createdAt = createdAt
+            , createdAt = Good.CreatedTimeString createdAt
             , userName = userName
             , userId = User.userIdFromInt userId
             }
@@ -1143,7 +1143,7 @@ commentNormalDecoder userName userId =
     Json.Decode.map2
         (\text createdAt ->
             { text = text
-            , createdAt = createdAt
+            , createdAt = Good.CreatedTimeString createdAt
             , userName = userName
             , userId = userId
             }

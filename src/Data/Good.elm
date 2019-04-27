@@ -1,16 +1,18 @@
 module Data.Good exposing
     ( Comment
     , Condition
+    , CreatedTime(..)
     , Good
     , GoodId
     , Status
     , addComment
-    , addCommentList
     , conditionAll
     , conditionFromString
     , conditionIndex
     , conditionToIdString
     , conditionToJapaneseString
+    , createdAtToString
+    , getCommentCreatedAtString
     , getCommentList
     , getCondition
     , getDescription
@@ -23,6 +25,7 @@ module Data.Good exposing
     , getPrice
     , getSellerName
     , goodIdFromInt
+    , goodIdToInt
     , goodIdToString
     , isLikedBy
     , like
@@ -31,7 +34,9 @@ module Data.Good exposing
     , makeNormalFromApi
     , priceToString
     , priceToStringWithoutYen
+    , replaceCommentTimeStringToTimePosix
     , searchGoodsFromId
+    , setCommentList
     , statusAll
     , statusFromIdString
     , statusToIdString
@@ -43,6 +48,8 @@ module Data.Good exposing
 
 import Data.User as User
 import Set
+import Time
+import Time.Extra
 import Utility
 
 
@@ -74,6 +81,11 @@ goodIdToString (GoodId id) =
     String.fromInt id
 
 
+goodIdToInt : GoodId -> Int
+goodIdToInt (GoodId id) =
+    id
+
+
 goodIdFromInt : Int -> GoodId
 goodIdFromInt id =
     GoodId id
@@ -81,10 +93,15 @@ goodIdFromInt id =
 
 type alias Comment =
     { text : String
-    , createdAt : String
+    , createdAt : CreatedTime
     , userName : String
     , userId : User.UserId
     }
+
+
+type CreatedTime
+    = CreatedTimeString String
+    | CreatedTimePosix Time.Posix
 
 
 makeNormalFromApi : { id : Int, name : String, description : String, price : Int, condition : Condition, status : Status, image0Url : String, image1Url : Maybe String, image2Url : Maybe String, image3Url : Maybe String, likedByUserList : List User.UserId, seller : Int } -> Good
@@ -127,20 +144,56 @@ makeDetailFromApi { id, name, description, price, condition, status, image0Url, 
         }
 
 
-addCommentList : List { text : String, createdAt : String, userName : String, userId : User.UserId } -> Good -> Good
-addCommentList commentList (Good rec) =
-    Good
-        { rec
-            | commentList = Just commentList
-        }
+setCommentList : List Comment -> Good -> Good
+setCommentList commentList (Good rec) =
+    Good { rec | commentList = Just commentList }
 
 
-addComment : { text : String, createdAt : String, userName : String, userId : User.UserId } -> Good -> Good
+addComment : Comment -> Good -> Good
 addComment comment (Good rec) =
-    Good
-        { rec
-            | commentList = Just ((rec.commentList |> Maybe.withDefault []) ++ [ comment ])
-        }
+    case rec.commentList of
+        Just commentList ->
+            Good
+                { rec
+                    | commentList =
+                        Just
+                            (commentList ++ [ comment ])
+                }
+
+        _ ->
+            Good rec
+
+
+replaceCommentTimeStringToTimePosix : List Time.Posix -> Good -> Good
+replaceCommentTimeStringToTimePosix timeList (Good rec) =
+    case rec.commentList of
+        Just commentList ->
+            Good
+                { rec
+                    | commentList = Just (commentTimeStringToTimePosix commentList timeList)
+                }
+
+        _ ->
+            Good rec
+
+
+commentTimeStringToTimePosix : List Comment -> List Time.Posix -> List Comment
+commentTimeStringToTimePosix commentList commentTimePosix =
+    case ( commentList, commentTimePosix ) of
+        ( cs :: csx, cp :: cpx ) ->
+            { userName = cs.userName
+            , createdAt = CreatedTimePosix cp
+            , userId = cs.userId
+            , text = cs.text
+            }
+                :: commentTimeStringToTimePosix csx cpx
+
+        ( cs :: csx, [] ) ->
+            cs
+                :: commentTimeStringToTimePosix csx []
+
+        ( [], _ ) ->
+            []
 
 
 type Condition
@@ -349,6 +402,16 @@ getOthersImageUrlList (Good { image1Url, image2Url, image3Url }) =
     [ image1Url, image2Url, image3Url ] |> List.map maybeToList |> List.concat
 
 
+maybeToList : Maybe a -> List a
+maybeToList aMaybe =
+    case aMaybe of
+        Just a ->
+            [ a ]
+
+        Nothing ->
+            []
+
+
 {-| 出品者の名前を取得する
 -}
 getSellerName : Good -> Maybe String
@@ -363,14 +426,144 @@ getCommentList (Good { commentList }) =
     commentList
 
 
-maybeToList : Maybe a -> List a
-maybeToList aMaybe =
-    case aMaybe of
-        Just a ->
-            [ a ]
+getCommentCreatedAtString : List Comment -> List String
+getCommentCreatedAtString commentList =
+    commentList
+        |> List.map
+            (\{ createdAt } ->
+                case createdAt of
+                    CreatedTimePosix _ ->
+                        "済み"
 
-        Nothing ->
-            []
+                    CreatedTimeString timeString ->
+                        timeString
+            )
+
+
+createdAtToString : Maybe ( Time.Posix, Time.Zone ) -> CreatedTime -> String
+createdAtToString nowMaybe createdTime =
+    case ( createdTime, nowMaybe ) of
+        ( CreatedTimeString string, _ ) ->
+            string
+
+        ( CreatedTimePosix posix, Just ( nowPosix, zone ) ) ->
+            let
+                diffDay =
+                    nowPosix
+                        |> Time.Extra.diff Time.Extra.Day zone posix
+            in
+            if diffDay < 30 then
+                let
+                    diffHour =
+                        nowPosix
+                            |> Time.Extra.diff Time.Extra.Hour zone posix
+
+                    diffMinute =
+                        nowPosix
+                            |> Time.Extra.diff Time.Extra.Minute zone posix
+
+                    diffSecond =
+                        nowPosix
+                            |> Time.Extra.diff Time.Extra.Second zone posix
+                in
+                if diffDay /= 0 then
+                    String.fromInt diffDay ++ "日前"
+
+                else if diffHour /= 0 then
+                    String.fromInt diffHour ++ "時間前"
+
+                else if diffMinute /= 0 then
+                    String.fromInt diffMinute ++ "分前"
+
+                else
+                    String.fromInt diffSecond ++ "秒前"
+
+            else
+                posixAndZoneToString posix zone
+
+        ( CreatedTimePosix posix, Nothing ) ->
+            posixAndZoneToString posix Time.utc ++ "(UTC)"
+
+
+posixAndZoneToString : Time.Posix -> Time.Zone -> String
+posixAndZoneToString posix zone =
+    timeToString
+        { year = Time.toYear zone posix
+        , month = Time.toMonth zone posix
+        , day = Time.toDay zone posix
+        , hour = Time.toHour zone posix
+        , minute = Time.toMinute zone posix
+        , second = Time.toSecond zone posix
+        }
+
+
+timeToString : { year : Int, month : Time.Month, day : Int, hour : Int, minute : Int, second : Int } -> String
+timeToString { year, month, day, hour, minute, second } =
+    String.concat
+        [ year |> String.fromInt |> String.padLeft 4 '0'
+        , "/"
+        , month |> monthToString |> String.padLeft 2 '0'
+        , "/"
+        , day |> String.fromInt |> String.padLeft 2 '0'
+        , " "
+        , hour |> String.fromInt |> String.padLeft 2 '0'
+        , ":"
+        , minute |> String.fromInt |> String.padLeft 2 '0'
+        , ":"
+        , second |> String.fromInt |> String.padLeft 2 '0'
+        ]
+
+
+monthToString : Time.Month -> String
+monthToString month =
+    case month of
+        Time.Jan ->
+            "1"
+
+        Time.Feb ->
+            "2"
+
+        Time.Mar ->
+            "3"
+
+        Time.Apr ->
+            "4"
+
+        Time.May ->
+            "5"
+
+        Time.Jun ->
+            "6"
+
+        Time.Jul ->
+            "7"
+
+        Time.Aug ->
+            "8"
+
+        Time.Sep ->
+            "9"
+
+        Time.Oct ->
+            "10"
+
+        Time.Nov ->
+            "11"
+
+        Time.Dec ->
+            "12"
+
+
+
+{-
+   Just (now, zone) ->
+    時間差表示と絶対時間
+
+
+   Nothing ->
+    UTCの絶対時間のみ
+
+-}
 
 
 {-| いいねをしたユーザーIDを取得する

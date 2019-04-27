@@ -111,7 +111,14 @@
                     })
                 }
             })
-        })
+        });
+        /* 時間のパース */
+        app.ports.sendTimeStringToMillisecond.subscribe(({ goodId, timeString }) => {
+            app.ports.receiveTimeStringToMillisecond.send({
+                goodId: goodId,
+                second: timeString.map(e => (new Date(e)).getTime())
+            });
+        });
 
         navigator.serviceWorker.register("/serviceworker.js", { scope: "/" });
     </script>
