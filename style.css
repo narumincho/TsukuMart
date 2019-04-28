@@ -599,11 +599,17 @@ header {
 }
 
 .good-comment {
-    padding: 1rem;
+    display: grid;
+    grid-template-columns: 1fr;
 }
 
-.good-comment-content {
+.good-comment-userName {
     display: flex;
+    flex-direction: row-reverse;
+}
+
+.good-comment-sellerName {
+    text-align: left;
     flex-direction: row;
 }
 
@@ -612,7 +618,17 @@ header {
     font-size: 1.5rem;
     background-color: #ddd;
     padding: 1rem;
-    border-radius: .5rem;
+    border-radius: .5rem 0 .5rem .5rem;
+}
+
+.good-comment-text-seller {
+    background-color: var(--primaryColorLight);
+    border-radius: 0 .5rem .5rem .5rem;
+}
+
+.good-comment-time {
+    display: flex;
+    flex-direction: row-reverse;
 }
 
 .good-comment-sendButton {

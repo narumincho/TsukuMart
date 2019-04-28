@@ -146,7 +146,16 @@ update msg model =
         PostGoodsCommentResponse result ->
             case ( model, result ) of
                 ( Normal rec, Ok comment ) ->
-                    ( Normal { rec | good = rec.good |> Good.addComment comment }, [] )
+                    let
+                        newGood =
+                            rec.good |> Good.addComment comment
+                    in
+                    ( Normal { rec | good = newGood }
+                    , [ EmitTimeStringToTimePosix
+                            (newGood |> Good.getId)
+                            (newGood |> Good.getCommentList |> Maybe.withDefault [] |> Good.getCommentCreatedAtString)
+                      ]
+                    )
 
                 ( _, Err () ) ->
                     ( model, [ EmitAddLogMessage "コメントの送信に失敗しました" ] )
@@ -293,7 +302,7 @@ view logInState isWideScreenMode nowMaybe model =
                         , sellerNameView (Good.getSellerName good)
                         , descriptionView (Good.getDescription good)
                         , goodsViewCondition (Good.getCondition good)
-                        , commentListView nowMaybe logInState (Good.getCommentList good)
+                        , commentListView nowMaybe (Good.getSellerId good) logInState (Good.getCommentList good)
                         ]
                     , goodsViewPriceAndBuyButton isWideScreenMode (Good.getPrice good)
                     ]
@@ -425,36 +434,66 @@ descriptionView description =
         ]
 
 
-commentListView : Maybe ( Time.Posix, Time.Zone ) -> LogInState.LogInState -> Maybe (List Good.Comment) -> Html.Html Msg
-commentListView nowMaybe logInState commentListMaybe =
+commentListView : Maybe ( Time.Posix, Time.Zone ) -> Data.User.UserId -> LogInState.LogInState -> Maybe (List Good.Comment) -> Html.Html Msg
+commentListView nowMaybe sellerId logInState commentListMaybe =
     Html.div
         [ Html.Attributes.class "good-commentList" ]
         (case commentListMaybe of
             Just commentList ->
-                (commentList |> List.map (commentView nowMaybe))
-                    ++ (case logInState of
-                            LogInState.LogInStateOk { access, user } ->
-                                [ commentInputArea access user ]
+                (case logInState of
+                    LogInState.LogInStateOk { access, user } ->
+                        [ commentInputArea access user ]
 
-                            LogInState.LogInStateNone ->
-                                []
-                       )
+                    LogInState.LogInStateNone ->
+                        []
+                )
+                    ++ (commentList |> List.reverse |> List.map (commentView nowMaybe sellerId))
 
             Nothing ->
                 [ Html.text "読み込み中" ]
         )
 
 
-commentView : Maybe ( Time.Posix, Time.Zone ) -> Good.Comment -> Html.Html msg
-commentView nowMaybe { text, createdAt, userName } =
+commentView : Maybe ( Time.Posix, Time.Zone ) -> Data.User.UserId -> Good.Comment -> Html.Html msg
+commentView nowMaybe sellerId { text, createdAt, userName, userId } =
+    if sellerId == userId then
+        sellerCommentView nowMaybe createdAt userName text
+
+    else
+        notSellerCommentView nowMaybe createdAt userName text
+
+
+sellerCommentView : Maybe ( Time.Posix, Time.Zone ) -> Good.CreatedTime -> String -> String -> Html.Html msg
+sellerCommentView nowMaybe createdTime userName text =
     Html.div
         [ Html.Attributes.class "good-comment" ]
         [ Html.div
-            [ Html.Attributes.class "good-comment-content" ]
-            [ Html.div [] [ Html.text userName ]
-            , Html.div [ Html.Attributes.class "good-comment-text" ] [ Html.text text ]
+            [ Html.Attributes.class "good-comment-sellerName" ]
+            [ Html.text userName ]
+        , Html.div
+            [ Html.Attributes.class "good-comment-text"
+            , Html.Attributes.class "good-comment-text-seller"
             ]
-        , Html.div [] [ Html.text (Good.createdAtToString nowMaybe createdAt) ]
+            [ Html.text text ]
+        , Html.div
+            [ Html.Attributes.class "good-comment-time" ]
+            [ Html.text (Good.createdAtToString nowMaybe createdTime) ]
+        ]
+
+
+notSellerCommentView : Maybe ( Time.Posix, Time.Zone ) -> Good.CreatedTime -> String -> String -> Html.Html msg
+notSellerCommentView nowMaybe createdTime userName text =
+    Html.div
+        [ Html.Attributes.class "good-comment" ]
+        [ Html.div
+            [ Html.Attributes.class "good-comment-userName" ]
+            [ Html.text userName ]
+        , Html.div
+            [ Html.Attributes.class "good-comment-text" ]
+            [ Html.text text ]
+        , Html.div
+            [ Html.Attributes.class "good-comment-time" ]
+            [ Html.text (Good.createdAtToString nowMaybe createdTime) ]
         ]
 
 

@@ -23,6 +23,7 @@ module Data.Good exposing
     , getName
     , getOthersImageUrlList
     , getPrice
+    , getSellerId
     , getSellerName
     , goodIdFromInt
     , goodIdToInt
@@ -412,6 +413,13 @@ maybeToList aMaybe =
             []
 
 
+{-| 出品者のUser IDを取得する
+-}
+getSellerId : Good -> User.UserId
+getSellerId (Good { seller }) =
+    seller
+
+
 {-| 出品者の名前を取得する
 -}
 getSellerName : Good -> Maybe String
@@ -447,13 +455,12 @@ createdAtToString nowMaybe createdTime =
             string
 
         ( CreatedTimePosix posix, Just ( nowPosix, zone ) ) ->
-            let
-                diffDay =
-                    nowPosix
-                        |> Time.Extra.diff Time.Extra.Day zone posix
-            in
-            if diffDay < 30 then
+            if (nowPosix |> Time.Extra.diff Time.Extra.Month zone posix) == 0 then
                 let
+                    diffDay =
+                        nowPosix
+                            |> Time.Extra.diff Time.Extra.Day zone posix
+
                     diffHour =
                         nowPosix
                             |> Time.Extra.diff Time.Extra.Hour zone posix

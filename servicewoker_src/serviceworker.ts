@@ -18,7 +18,7 @@ const cachesName = "image-chase";
 
     const cacheFn = async (request: Request): Promise<Response> => {
         console.log(request.url, "リクエストを検知")
-        if (request.url.endsWith(".png") || request.url.endsWith(".jpg")) {
+        if (request.url.endsWith(".png") || request.url.endsWith(".jpg") || request.url.endsWith(".jpeg")) {
             const cache: Cache = await self.caches.open(cachesName);
             const responseFromCache: Response | undefined = await cache.match(request);
             if (responseFromCache === undefined) {
