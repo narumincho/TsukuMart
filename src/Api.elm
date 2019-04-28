@@ -10,6 +10,7 @@ module Api exposing
     , SignUpResponseError(..)
     , SignUpResponseOk(..)
     , Token
+    , deleteGoods
     , getExhibitionGoodList
     , getFreeGoods
     , getGood
@@ -939,6 +940,18 @@ statusDecoder =
                                 ++ "\""
                             )
             )
+
+
+
+{- ==============================================================================
+      商品を削除する   /{version}/goods/{id}/ TODO 商品を削除する
+   ==============================================================================
+-}
+
+
+deleteGoods : Token -> Good.GoodId -> Cmd msg
+deleteGoods token goodId =
+    Cmd.none
 
 
 

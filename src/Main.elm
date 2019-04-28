@@ -936,6 +936,9 @@ goodsPageEmitListToCmd =
 
                 Page.Good.EmitTimeStringToTimePosix goodId list ->
                     sendTimeStringToMillisecond { goodId = goodId |> Data.Good.goodIdToInt, timeString = list }
+
+                Page.Good.EmitDeleteGood token goodId ->
+                    Api.deleteGoods token goodId
         )
         >> Cmd.batch
 

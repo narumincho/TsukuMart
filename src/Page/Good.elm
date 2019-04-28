@@ -48,6 +48,7 @@ type Emit
     | EmitAddLogMessage String
     | EmitUpdateNowTime
     | EmitTimeStringToTimePosix Good.GoodId (List String)
+    | EmitDeleteGood Api.Token Good.GoodId
 
 
 type Msg
@@ -64,6 +65,7 @@ type Msg
     | InputComment String
     | SendComment Data.User.User Api.Token
     | ReceiveTimeStringToMillisecond { goodId : Int, second : List Int }
+    | DeleteGood Api.Token Good.GoodId
 
 
 {-| 指定したIDの商品詳細ページ
@@ -279,6 +281,11 @@ update msg model =
             , []
             )
 
+        DeleteGood token goodId ->
+            ( model
+            , [ EmitDeleteGood token goodId ]
+            )
+
 
 view : LogInState.LogInState -> Bool -> Maybe ( Time.Posix, Time.Zone ) -> Model -> ( String, Tab.Tab Msg, List (Html.Html Msg) )
 view logInState isWideScreenMode nowMaybe model =
@@ -296,14 +303,26 @@ view logInState isWideScreenMode nowMaybe model =
                     [ Html.Attributes.class "container" ]
                     [ Html.div
                         [ Html.Attributes.class "good" ]
-                        [ goodsViewImage (Good.getFirstImageUrl good) (Good.getOthersImageUrlList good)
-                        , goodsViewName (Good.getName good)
-                        , goodsViewLike logInState sending good
-                        , sellerNameView (Good.getSellerName good)
-                        , descriptionView (Good.getDescription good)
-                        , goodsViewCondition (Good.getCondition good)
-                        , commentListView nowMaybe (Good.getSellerId good) logInState (Good.getCommentList good)
-                        ]
+                        ([ goodsViewImage (Good.getFirstImageUrl good) (Good.getOthersImageUrlList good)
+                         , goodsViewName (Good.getName good)
+                         , goodsViewLike logInState sending good
+                         , sellerNameView (Good.getSellerName good)
+                         , descriptionView (Good.getDescription good)
+                         , goodsViewCondition (Good.getCondition good)
+                         , commentListView nowMaybe (Good.getSellerId good) logInState (Good.getCommentList good)
+                         ]
+                            ++ (case logInState of
+                                    LogInState.LogInStateOk { access, user } ->
+                                        if Data.User.getUserId user == Good.getSellerId good then
+                                            [ deleteView (Good.getId good) access ]
+
+                                        else
+                                            []
+
+                                    LogInState.LogInStateNone ->
+                                        []
+                               )
+                        )
                     , goodsViewPriceAndBuyButton isWideScreenMode (Good.getPrice good)
                     ]
               ]
@@ -434,6 +453,31 @@ descriptionView description =
         ]
 
 
+goodsViewCondition : Good.Condition -> Html.Html msg
+goodsViewCondition condition =
+    Html.div []
+        [ Html.div
+            [ Html.Attributes.class "good-label" ]
+            [ Html.text "商品の状態" ]
+        , Html.div
+            [ Html.Attributes.class "good-condition" ]
+            [ Html.text (Good.conditionToJapaneseString condition)
+            ]
+        ]
+
+
+deleteView : Good.GoodId -> Api.Token -> Html.Html Msg
+deleteView goodId token =
+    Html.div
+        []
+        [ Html.button
+            [ Html.Attributes.class "good-deleteButton"
+            , Html.Events.onClick (DeleteGood token goodId)
+            ]
+            [ Html.text "削除する" ]
+        ]
+
+
 commentListView : Maybe ( Time.Posix, Time.Zone ) -> Data.User.UserId -> LogInState.LogInState -> Maybe (List Good.Comment) -> Html.Html Msg
 commentListView nowMaybe sellerId logInState commentListMaybe =
     Html.div
@@ -526,19 +570,6 @@ goodsViewPriceAndBuyButton isWideScreenMode price =
         , Html.button
             [ Html.Events.onClick ToConfirmPage ]
             [ Html.text "購入手続きへ" ]
-        ]
-
-
-goodsViewCondition : Good.Condition -> Html.Html msg
-goodsViewCondition condition =
-    Html.div []
-        [ Html.div
-            [ Html.Attributes.class "good-label" ]
-            [ Html.text "商品の状態" ]
-        , Html.div
-            [ Html.Attributes.class "good-condition" ]
-            [ Html.text (Good.conditionToJapaneseString condition)
-            ]
         ]
 
 
