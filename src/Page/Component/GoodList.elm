@@ -104,6 +104,7 @@ zeroGoodsView =
             [ Html.img
                 [ Html.Attributes.src "/assets/logo_bird.png"
                 , Html.Attributes.class "goodList-zeroImage"
+                , Html.Attributes.alt "ざんねん。商品がありません"
                 ]
                 []
             , Html.text "ここに表示する商品がありません"
@@ -135,7 +136,7 @@ goodListItem logInState sending good =
         , Html.Attributes.href (SiteMap.goodsUrl (Good.getId good))
         , Html.Attributes.id (goodIdString (Good.getId good))
         ]
-        [ itemImage (Good.getFirstImageUrl good)
+        [ itemImage (Good.getName good) (Good.getFirstImageUrl good)
         , Html.div
             [ Html.Attributes.class "goodList-name" ]
             [ Html.text (Good.getName good) ]
@@ -222,10 +223,11 @@ itemLikeBody count =
     ]
 
 
-itemImage : String -> Html.Html msg
-itemImage url =
+itemImage : String -> String -> Html.Html msg
+itemImage name url =
     Html.img
         [ Html.Attributes.class "goodList-image"
         , Html.Attributes.src url
+        , Html.Attributes.alt (name ++ "の画像")
         ]
         []

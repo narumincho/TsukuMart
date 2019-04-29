@@ -1,12 +1,15 @@
 {
     "name": "つくマート",
+    "short_name": "つくマート",
     "icons": [
         {
-            "src": "./assets/icon.png",
+            "src": "./assets/icon192.png",
             "type": "image/png",
             "sizes": "192x192"
         }
     ],
     "start_url": "/",
-    "display": "standalone"
+    "display": "standalone",
+    "background_color": "#733fa7",
+    "theme_color": "#733fa7"
 }

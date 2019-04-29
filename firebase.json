@@ -19,6 +19,10 @@
                 "destination": "/redoc.html"
             },
             {
+                "source": "/robots.txt",
+                "destination": "/robots.txt"
+            },
+            {
                 "source": "/api/sign-up",
                 "function": "signUp"
             },
