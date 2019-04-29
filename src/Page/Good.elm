@@ -20,6 +20,7 @@ import Data.User
 import Html
 import Html.Attributes
 import Html.Events
+import Icon
 import Tab
 import Time
 
@@ -29,13 +30,20 @@ import Time
 
 
 type Model
-    = Loading { goodId : Good.GoodId }
+    = Loading
+        { goodId : Good.GoodId
+        }
     | Normal
         { good : Good.Good
         , sending : Bool -- いいねを送信中か送信中じゃないか
         , comment : String
         }
-    | Confirm { good : Good.Good }
+    | Edit
+        { good : Good.Good
+        }
+    | Confirm
+        { good : Good.Good
+        }
 
 
 type Emit
@@ -66,6 +74,7 @@ type Msg
     | SendComment Data.User.User Api.Token
     | ReceiveTimeStringToMillisecond { goodId : Int, second : List Int }
     | DeleteGood Api.Token Good.GoodId
+    | EditGood
 
 
 {-| 指定したIDの商品詳細ページ
@@ -95,6 +104,9 @@ getGoodId model =
             goodId
 
         Normal { good } ->
+            Good.getId good
+
+        Edit { good } ->
             Good.getId good
 
         Confirm { good } ->
@@ -173,6 +185,9 @@ update msg model =
                 Normal rec ->
                     Normal { rec | sending = True }
 
+                Edit _ ->
+                    model
+
                 Confirm _ ->
                     model
             , [ EmitLikeGood userId token id ]
@@ -185,6 +200,9 @@ update msg model =
 
                 Normal rec ->
                     Normal { rec | sending = True }
+
+                Edit _ ->
+                    model
 
                 Confirm _ ->
                     model
@@ -242,6 +260,9 @@ update msg model =
                 Normal { good } ->
                     Confirm { good = good }
 
+                Edit _ ->
+                    model
+
                 Confirm _ ->
                     model
             , []
@@ -286,6 +307,22 @@ update msg model =
             , [ EmitDeleteGood token goodId ]
             )
 
+        EditGood ->
+            ( case model of
+                Loading _ ->
+                    model
+
+                Normal { good } ->
+                    Edit { good = good }
+
+                Edit _ ->
+                    model
+
+                Confirm _ ->
+                    model
+            , []
+            )
+
 
 view : LogInState.LogInState -> Bool -> Maybe ( Time.Posix, Time.Zone ) -> Model -> ( String, Tab.Tab Msg, List (Html.Html Msg) )
 view logInState isWideScreenMode nowMaybe model =
@@ -314,7 +351,9 @@ view logInState isWideScreenMode nowMaybe model =
                             ++ (case logInState of
                                     LogInState.LogInStateOk { access, user } ->
                                         if Data.User.getUserId user == Good.getSellerId good then
-                                            [ deleteView (Good.getId good) access ]
+                                            [ editButton
+                                            , deleteView (Good.getId good) access
+                                            ]
 
                                         else
                                             []
@@ -325,6 +364,15 @@ view logInState isWideScreenMode nowMaybe model =
                         )
                     , goodsViewPriceAndBuyButton isWideScreenMode (Good.getPrice good)
                     ]
+              ]
+            )
+
+        Edit { good } ->
+            ( Good.getName good
+            , Tab.none
+            , [ Html.div
+                    [ Html.Attributes.class "container" ]
+                    [ Html.text "編集画面" ]
               ]
             )
 
@@ -466,16 +514,24 @@ goodsViewCondition condition =
         ]
 
 
+editButton : Html.Html Msg
+editButton =
+    Html.button
+        [ Html.Attributes.class "subButton"
+        , Html.Events.onClick EditGood
+        ]
+        [ Icon.editIcon
+        , Html.text "編集する"
+        ]
+
+
 deleteView : Good.GoodId -> Api.Token -> Html.Html Msg
 deleteView goodId token =
-    Html.div
-        []
-        [ Html.button
-            [ Html.Attributes.class "good-deleteButton"
-            , Html.Events.onClick (DeleteGood token goodId)
-            ]
-            [ Html.text "削除する" ]
+    Html.button
+        [ Html.Attributes.class "good-deleteButton"
+        , Html.Events.onClick (DeleteGood token goodId)
         ]
+        [ Html.text "削除する" ]
 
 
 commentListView : Maybe ( Time.Posix, Time.Zone ) -> Data.User.UserId -> LogInState.LogInState -> Maybe (List Good.Comment) -> Html.Html Msg

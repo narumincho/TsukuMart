@@ -502,7 +502,6 @@ header {
 .good-imageListContainer {
     background-color: gray;
     overflow-x: auto;
-    position: relative;
 }
 
 .good-imageList {

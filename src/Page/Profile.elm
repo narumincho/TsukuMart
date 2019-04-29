@@ -15,6 +15,7 @@ import Html
 import Html.Attributes
 import Html.Events
 import Html.Keyed
+import Icon
 import Page.Component.LogInOrSignUp as LogInOrSignUp
 import Page.Component.University as CompUniversity
 import Svg
@@ -305,7 +306,7 @@ toEditButton =
         [ Html.Attributes.class "mainButton"
         , Html.Events.onClick MsgToEditMode
         ]
-        [ editIcon
+        [ Icon.editIcon
         , Html.text "編集する"
         ]
 
@@ -317,15 +318,6 @@ logOutButton =
         , Html.Events.onClick MsgLogOut
         ]
         [ Html.text "ログアウトする" ]
-
-
-editIcon : Html.Html msg
-editIcon =
-    Svg.svg
-        [ Svg.Attributes.viewBox "0 0 24 24"
-        , Svg.Attributes.class "profile-editIcon"
-        ]
-        [ Svg.path [ Svg.Attributes.d "M3 17.46v3.04c0 .28.22.5.5.5h3.04c.13 0 .26-.05.35-.15L17.81 9.94l-3.75-3.75L3.15 17.1c-.1.1-.15.22-.15.36zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" ] [] ]
 
 
 {-| 編集モードでの表示
