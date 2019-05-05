@@ -14,6 +14,7 @@ module Page.Good exposing
 -}
 
 import Api
+import Array
 import Data.Good as Good
 import Data.LogInState as LogInState
 import Data.User
@@ -21,6 +22,7 @@ import Html
 import Html.Attributes
 import Html.Events
 import Icon
+import Json.Decode
 import Tab
 import Time
 
@@ -38,11 +40,19 @@ type Model
         , sending : Bool -- いいねを送信中か送信中じゃないか
         , comment : String
         }
-    | Edit
-        { good : Good.Good
-        }
+    | Edit EditModel
     | Confirm
         { good : Good.Good
+        }
+
+
+type EditModel
+    = EditModel
+        { goodId : Good.GoodId
+        , name : String
+        , description : String
+        , price : Maybe Int
+        , condition : Maybe Good.Condition
         }
 
 
@@ -57,6 +67,7 @@ type Emit
     | EmitUpdateNowTime
     | EmitTimeStringToTimePosix Good.GoodId (List String)
     | EmitDeleteGood Api.Token Good.GoodId
+    | EmitReplaceText { id : String, text : String }
 
 
 type Msg
@@ -75,6 +86,11 @@ type Msg
     | ReceiveTimeStringToMillisecond { goodId : Int, second : List Int }
     | DeleteGood Api.Token Good.GoodId
     | EditGood
+    | MsgBackToViewMode
+    | InputGoodName String
+    | InputGoodDescription String
+    | InputGoodPrice String
+    | InputGoodCondition (Maybe Good.Condition)
 
 
 {-| 指定したIDの商品詳細ページ
@@ -106,8 +122,8 @@ getGoodId model =
         Normal { good } ->
             Good.getId good
 
-        Edit { good } ->
-            Good.getId good
+        Edit (EditModel { goodId }) ->
+            goodId
 
         Confirm { good } ->
             Good.getId good
@@ -308,17 +324,101 @@ update msg model =
             )
 
         EditGood ->
+            case model of
+                Loading _ ->
+                    ( model, [] )
+
+                Normal { good } ->
+                    ( Edit
+                        (EditModel
+                            { goodId = Good.getId good
+                            , name = Good.getName good
+                            , description = Good.getDescription good
+                            , price = Just (Good.getPrice good)
+                            , condition = Just (Good.getCondition good)
+                            }
+                        )
+                    , [ EmitReplaceText
+                            { id = nameEditorId, text = Good.getName good }
+                      ]
+                    )
+
+                Edit _ ->
+                    ( model, [] )
+
+                Confirm _ ->
+                    ( model, [] )
+
+        MsgBackToViewMode ->
+            case model of
+                Edit (EditModel { goodId }) ->
+                    ( Loading { goodId = goodId }
+                    , [ EmitGetGoods { goodId = goodId } ]
+                    )
+
+                _ ->
+                    ( model, [] )
+
+        InputGoodName name ->
             ( case model of
                 Loading _ ->
                     model
 
-                Normal { good } ->
-                    Edit { good = good }
-
-                Edit _ ->
+                Normal _ ->
                     model
 
+                Edit (EditModel r) ->
+                    Edit
+                        (EditModel
+                            { r | name = name }
+                        )
+
                 Confirm _ ->
+                    model
+            , []
+            )
+
+        InputGoodDescription description ->
+            ( case model of
+                Loading _ ->
+                    model
+
+                Normal _ ->
+                    model
+
+                Edit (EditModel r) ->
+                    Edit
+                        (EditModel
+                            { r | description = description }
+                        )
+
+                Confirm _ ->
+                    model
+            , []
+            )
+
+        InputGoodPrice priceString ->
+            ( case model of
+                Edit (EditModel r) ->
+                    Edit
+                        (EditModel
+                            { r | price = String.toInt priceString }
+                        )
+
+                _ ->
+                    model
+            , []
+            )
+
+        InputGoodCondition condition ->
+            ( case model of
+                Edit (EditModel r) ->
+                    Edit
+                        (EditModel
+                            { r | condition = condition }
+                        )
+
+                _ ->
                     model
             , []
             )
@@ -367,12 +467,31 @@ view logInState isWideScreenMode nowMaybe model =
               ]
             )
 
-        Edit { good } ->
-            ( Good.getName good
+        Edit editModel ->
+            let
+                (EditModel { name, price }) =
+                    editModel
+            in
+            ( name
             , Tab.none
             , [ Html.div
                     [ Html.Attributes.class "container" ]
-                    [ Html.text "編集画面" ]
+                    [ Html.div
+                        [ Html.Attributes.class "good" ]
+                        (case logInState of
+                            LogInState.LogInStateOk { access } ->
+                                [ Html.text "編集画面"
+                                , nameEditView
+                                , descriptionEditorView
+                                , priceEditView price
+                                , conditionView |> Html.map InputGoodCondition
+                                , editOkCancelButton access editModel
+                                ]
+
+                            LogInState.LogInStateNone ->
+                                [ Html.text "ログインしていないときに商品の編集はできません" ]
+                        )
+                    ]
               ]
             )
 
@@ -644,4 +763,160 @@ tradeStartButton logInState goodId =
                    )
             )
             [ Html.text "取引を開始する" ]
+        ]
+
+
+nameEditView : Html.Html Msg
+nameEditView =
+    Html.div
+        []
+        [ Html.label
+            [ Html.Attributes.for nameEditorId
+            , Html.Attributes.class "form-label"
+            ]
+            [ Html.text "商品名" ]
+        , Html.input
+            [ Html.Attributes.placeholder "40文字まで"
+            , Html.Attributes.class "form-input"
+            , Html.Attributes.id nameEditorId
+            , Html.Attributes.maxlength 40
+            , Html.Events.onInput InputGoodName
+            ]
+            []
+        ]
+
+
+nameEditorId : String
+nameEditorId =
+    "name-edit"
+
+
+descriptionEditorView : Html.Html Msg
+descriptionEditorView =
+    Html.div
+        []
+        [ Html.label
+            [ Html.Attributes.for descriptionEditorId
+            , Html.Attributes.class "form-label"
+            ]
+            [ Html.text "商品の説明" ]
+        , Html.textarea
+            [ Html.Attributes.class "form-textarea"
+            , Html.Attributes.id descriptionEditorId
+            , Html.Events.onInput InputGoodDescription
+            ]
+            []
+        ]
+
+
+descriptionEditorId : String
+descriptionEditorId =
+    "description-edit"
+
+
+priceEditView : Maybe Int -> Html.Html Msg
+priceEditView priceMaybe =
+    Html.div
+        []
+        [ Html.label
+            [ Html.Attributes.for priceEditorId
+            , Html.Attributes.class "form-label"
+            ]
+            [ Html.text "販売価格" ]
+        , Html.div
+            [ Html.Attributes.class "exhibition-itemPrice-input"
+            ]
+            [ Html.input
+                [ Html.Attributes.type_ "number"
+                , Html.Attributes.class "exhibition-itemPrice-input-input"
+                , Html.Attributes.id priceEditorId
+                , Html.Attributes.placeholder "0 ～ 1000000"
+                , Html.Attributes.min "0"
+                , Html.Attributes.max "1000000"
+                , Html.Events.onInput InputGoodPrice
+                ]
+                []
+            , Html.span
+                [ Html.Attributes.class "exhibition-itemPrice-yen" ]
+                [ Html.text "円" ]
+            ]
+        , Html.div
+            [ Html.Attributes.class "exhibition-priceView" ]
+            [ Html.text
+                (case priceMaybe of
+                    Just price ->
+                        Good.priceToString price
+
+                    Nothing ->
+                        "0 ～ 100万円の価格を入力してください"
+                )
+            ]
+        ]
+
+
+priceEditorId : String
+priceEditorId =
+    "price-edit"
+
+
+conditionView : Html.Html (Maybe Good.Condition)
+conditionView =
+    Html.div
+        []
+        [ Html.label
+            [ Html.Attributes.for conditionEditorId
+            , Html.Attributes.class "form-label"
+            ]
+            [ Html.text "商品の状態" ]
+        , Html.select
+            [ Html.Attributes.id conditionEditorId
+            , Html.Attributes.class "form-menu"
+            , Html.Events.on "change" selectConditionDecoder
+            ]
+            ([ Html.option [] [ Html.text "--選択してください--" ] ]
+                ++ (Good.conditionAll
+                        |> List.map
+                            (\s ->
+                                Html.option [] [ Html.text (Good.conditionToJapaneseString s) ]
+                            )
+                   )
+            )
+        ]
+
+
+conditionEditorId : String
+conditionEditorId =
+    "exhibition-selectCondition"
+
+
+selectConditionDecoder : Json.Decode.Decoder (Maybe Good.Condition)
+selectConditionDecoder =
+    Json.Decode.at
+        [ "target", "selectedIndex" ]
+        Json.Decode.int
+        |> Json.Decode.map (\index -> Good.conditionAll |> Array.fromList |> Array.get (index - 1))
+
+
+editOkCancelButton : Api.Token -> EditModel -> Html.Html Msg
+editOkCancelButton token editModel =
+    Html.div
+        [ Html.Attributes.class "profile-editButtonArea" ]
+        [ Html.button
+            [ Html.Attributes.class "profile-editCancelButton"
+            , Html.Events.onClick MsgBackToViewMode
+            ]
+            [ Html.text "キャンセル" ]
+        , Html.button
+            ([ Html.Attributes.class "profile-editOkButton" ]
+             --                ++ (case editModelToProfile editModel of
+             --                        Just profile ->
+             --                            [ Html.Events.onClick (MsgChangeProfile token profile)
+             --                            , Html.Attributes.disabled False
+             --                            ]
+             --
+             --                        Nothing ->
+             --                            [ Html.Attributes.disabled True ]
+             --                   )
+            )
+            [ Html.text "変更する" ]
         ]

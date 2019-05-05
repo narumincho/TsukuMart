@@ -3,7 +3,6 @@ module Api exposing
     , LogInRequest
     , LogInResponseOk(..)
     , SellGoodsRequest(..)
-    , SellGoodsResponseError
     , SignUpConfirmRequest
     , SignUpConfirmResponseError(..)
     , SignUpRequest
@@ -446,12 +445,7 @@ type SellGoodsRequest
         }
 
 
-type SellGoodsResponseError
-    = SellGoodsResponseErrorNameBlank -- 商品名の指定がない
-    | SellGoodsResponseError -- 不明なエラー
-
-
-sellGoods : Token -> SellGoodsRequest -> (Result SellGoodsResponseError () -> msg) -> Cmd msg
+sellGoods : Token -> SellGoodsRequest -> (Result () () -> msg) -> Cmd msg
 sellGoods token createGoodsRequest msg =
     Http.request
         { method = "POST"
@@ -496,40 +490,43 @@ createGoodsRequestJsonBody (SellGoodsRequest { name, description, price, conditi
            )
 
 
-createGoodsResponseToResult : Http.Response String -> Result SellGoodsResponseError ()
+createGoodsResponseToResult : Http.Response String -> Result () ()
 createGoodsResponseToResult response =
     case response of
         Http.BadUrl_ _ ->
-            Err SellGoodsResponseError
+            Err ()
 
         Http.Timeout_ ->
-            Err SellGoodsResponseError
+            Err ()
 
         Http.NetworkError_ ->
-            Err SellGoodsResponseError
+            Err ()
 
-        Http.BadStatus_ _ body ->
-            Json.Decode.decodeString createGoodsResponseBodyDecoder body
-                |> Result.withDefault (Err SellGoodsResponseError)
+        Http.BadStatus_ _ _ ->
+            Err ()
 
-        Http.GoodStatus_ _ body ->
+        Http.GoodStatus_ _ _ ->
             Ok ()
 
 
-createGoodsResponseBodyDecoder : Json.Decode.Decoder (Result SellGoodsResponseError ())
-createGoodsResponseBodyDecoder =
-    Json.Decode.oneOf
-        [ Json.Decode.field "name"
-            (Json.Decode.list Json.Decode.string)
-            |> Json.Decode.map
-                (\list ->
-                    if list == [ "This field may not be blank." ] then
-                        Err SellGoodsResponseErrorNameBlank
 
-                    else
-                        Err SellGoodsResponseError
-                )
-        ]
+{- ==============================================================================
+      商品の情報を編集する   /{version}/currentuser/goods/{id}/
+   ==============================================================================
+-}
+
+
+putGood : Token -> Good.GoodId -> SellGoodsRequest -> (Result () () -> msg) -> Cmd msg
+putGood token goodId createGoodsRequest msg =
+    Http.request
+        { method = "PUT"
+        , headers = [ tokenToHeader token ]
+        , url = urlBuilder [ "v1", "currentuser", "goods", Good.goodIdToString goodId ]
+        , body = Http.multipartBody (createGoodsRequestJsonBody createGoodsRequest)
+        , expect = Http.expectStringResponse msg createGoodsResponseToResult
+        , timeout = Nothing
+        , tracker = Nothing
+        }
 
 
 

@@ -510,7 +510,6 @@ header {
 }
 
 .good-image {
-    position: relative;
     width: 20rem;
     height: 20rem;
     padding: 1rem;
@@ -621,7 +620,7 @@ header {
 }
 
 .good-comment-text-seller {
-    background-color: var(--primaryColorLight);
+    background-color: #c8a2db;
     border-radius: 0 .5rem .5rem .5rem;
 }
 
@@ -651,6 +650,7 @@ header {
     box-sizing: border-box;
     cursor: pointer;
 }
+
 /*===============================================
                 Log In ログイン画面
 ===============================================*/

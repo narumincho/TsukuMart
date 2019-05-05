@@ -5,12 +5,9 @@
         "strict": true,
         "moduleResolution": "node",
         "removeComments": true,
-        "outDir": "../"
+        "outDir": "./"
     },
-    "include": [
-        "./index.ts"
-    ],
-    "exclude": [
-        "index.js"
+    "files": [
+        "./src/index.ts"
     ]
 }

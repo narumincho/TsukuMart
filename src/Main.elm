@@ -13,6 +13,7 @@ import Html.Attributes
 import Html.Keyed
 import Json.Decode
 import Page.About
+import Page.Component.GoodEditor
 import Page.Component.GoodList
 import Page.Component.LogInOrSignUp
 import Page.Component.University
@@ -133,7 +134,7 @@ type Msg
     | ReceiveImageDataUrl String
     | ReceiveImageFileAndBlobUrl Json.Decode.Value
     | GetUserDataResponse { access : Api.Token, refresh : Api.Token } (Result () Data.User.User)
-    | SellGoodResponse (Result Api.SellGoodsResponseError ())
+    | SellGoodResponse (Result () ())
     | LikeGoodResponse Data.User.UserId Data.Good.GoodId (Result () ())
     | UnlikeGoodResponse Data.User.UserId Data.Good.GoodId (Result () ())
     | ChangeProfileResponse (Result () Data.User.Profile)
@@ -463,7 +464,9 @@ update msg (Model rec) =
                                 ( newModel, emitList ) =
                                     Page.Exhibition.update
                                         rec.logInState
-                                        (Page.Exhibition.InputImageList data)
+                                        (Page.Exhibition.GoodEditorMsg
+                                            (Page.Component.GoodEditor.InputImageList data)
+                                        )
                                         exhibitionPageModel
                             in
                             ( Model { rec | page = PageExhibition newModel }
@@ -751,7 +754,7 @@ homePageEmitListToCmd =
                     Api.getFreeGoods (\result -> HomePageMsg (Page.Home.GetFreeGoodListResponse result))
 
                 Page.Home.EmitGoodList e ->
-                    goodsListEmitToMsg e
+                    goodsListEmitToCmd e
         )
         >> Cmd.batch
 
@@ -771,7 +774,7 @@ likeAndHistoryEmitListToCmd =
                     logInOrSignUpEmitToCmd e
 
                 Page.LikeAndHistory.EmitGoodList e ->
-                    goodsListEmitToMsg e
+                    goodsListEmitToCmd e
         )
         >> Cmd.batch
 
@@ -788,7 +791,7 @@ exhibitionGoodListPageEmitListToCmd =
                     logInOrSignUpEmitToCmd e
 
                 Page.ExhibitionGoodList.EmitGoodList e ->
-                    goodsListEmitToMsg e
+                    goodsListEmitToCmd e
         )
         >> Cmd.batch
 
@@ -805,7 +808,7 @@ purchaseGoodListPageEmitListToCmd =
                     logInOrSignUpEmitToCmd e
 
                 Page.PurchaseGoodList.EmitGoodList e ->
-                    goodsListEmitToMsg e
+                    goodsListEmitToCmd e
         )
         >> Cmd.batch
 
@@ -835,17 +838,8 @@ exhibitionPageEmitListToCmd =
                 Page.Exhibition.EmitSellGoods ( token, request ) ->
                     Api.sellGoods token request SellGoodResponse
 
-                Page.Exhibition.EmitCatchImageList idString ->
-                    exhibitionImageChange idString
-
-                Page.Exhibition.EmitAddEventListenerDrop idString ->
-                    addEventListenerDrop idString
-
-                Page.Exhibition.EmitReplaceText { id, text } ->
-                    inputOrTextAreaReplaceText { id = id, text = text }
-
-                Page.Exhibition.EmitChangeSelectedIndex { id, index } ->
-                    changeSelectedIndex { id = id, index = index }
+                Page.Exhibition.EmitGoodEditor e ->
+                    goodEditorEmitToCmd e
         )
         >> Cmd.batch
 
@@ -865,7 +859,7 @@ signUpPageEmitListToCmd =
                     Api.signUpConfirm { confirmToken = token } (SignUpConfirmResponse logInRequest)
 
                 Page.SignUp.EmitUniversity e ->
-                    universityEmitToMsg e
+                    universityEmitToCmd e
         )
         >> Cmd.batch
 
@@ -889,7 +883,7 @@ profilePageEmitListToCmd =
                         { id = id, text = text }
 
                 Page.Profile.EmitUniversity e ->
-                    universityEmitToMsg e
+                    universityEmitToCmd e
 
                 Page.Profile.EmitLogOut ->
                     Cmd.batch
@@ -939,6 +933,9 @@ goodsPageEmitListToCmd =
 
                 Page.Good.EmitDeleteGood token goodId ->
                     Api.deleteGoods token goodId
+
+                Page.Good.EmitReplaceText { id, text } ->
+                    inputOrTextAreaReplaceText { id = id, text = text }
         )
         >> Cmd.batch
 
@@ -954,8 +951,8 @@ logInOrSignUpEmitToCmd emit =
             Api.logIn logInRequest (LogInResponse saveRefreshToken)
 
 
-goodsListEmitToMsg : Page.Component.GoodList.Emit -> Cmd Msg
-goodsListEmitToMsg emit =
+goodsListEmitToCmd : Page.Component.GoodList.Emit -> Cmd Msg
+goodsListEmitToCmd emit =
     case emit of
         Page.Component.GoodList.EmitLikeGood userId token id ->
             Api.likeGoods token id (LikeGoodResponse userId id)
@@ -967,11 +964,27 @@ goodsListEmitToMsg emit =
             elementScrollIntoView idString
 
 
-universityEmitToMsg : Page.Component.University.Emit -> Cmd Msg
-universityEmitToMsg emit =
+universityEmitToCmd : Page.Component.University.Emit -> Cmd Msg
+universityEmitToCmd emit =
     case emit of
         Page.Component.University.EmitChangeSelectedIndex { id, index } ->
             changeSelectedIndex { id = id, index = index }
+
+
+goodEditorEmitToCmd : Page.Component.GoodEditor.Emit -> Cmd Msg
+goodEditorEmitToCmd emit =
+    case emit of
+        Page.Component.GoodEditor.EmitAddEventListenerDrop idString ->
+            addEventListenerDrop idString
+
+        Page.Component.GoodEditor.EmitReplaceText { id, text } ->
+            inputOrTextAreaReplaceText { id = id, text = text }
+
+        Page.Component.GoodEditor.EmitChangeSelectedIndex { id, index } ->
+            changeSelectedIndex { id = id, index = index }
+
+        Page.Component.GoodEditor.EmitCatchImageList idString ->
+            exhibitionImageChange idString
 
 
 receiveImageFileAndBlobUrlDecoder : Json.Decode.Decoder (List { file : File.File, blobUrl : String })
