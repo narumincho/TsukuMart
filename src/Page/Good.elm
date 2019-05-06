@@ -623,7 +623,9 @@ deleteView goodId token =
         [ Html.Attributes.class "good-deleteButton"
         , Html.Events.onClick (DeleteGood token goodId)
         ]
-        [ Html.text "削除する" ]
+        [ Icon.deleteIcon
+        , Html.text "削除する"
+        ]
 
 
 {-|

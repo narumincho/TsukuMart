@@ -615,6 +615,7 @@ header {
     display: flex;
     justify-content: flex-end;
 }
+
 .good-comment-sellerBox {
     display: flex;
     justify-content: flex-start;
@@ -659,7 +660,8 @@ header {
 
 .good-deleteButton {
     background-color: #bd2e2e;
-    color: #ddd;
+    color: #111;
+    fill: #111;
     padding: 1rem;
     width: 100%;
     font-size: 1.5rem;
@@ -671,6 +673,11 @@ header {
     justify-content: center;
     box-sizing: border-box;
     cursor: pointer;
+    border: none;
+}
+
+.good-deleteButton:hover {
+    background-color: #dd5454;
 }
 
 /*===============================================
@@ -783,11 +790,6 @@ header {
 
 .profile-title {
     font-size: 1.5rem;
-}
-
-.profile-editIcon {
-    width: 2rem;
-    height: 2rem;
 }
 
 .profile-editButtonArea {
@@ -1041,7 +1043,6 @@ header {
     background-color: #999;
     color: #111;
     padding: 1rem;
-    text-align: center;
     font-size: 1.5rem;
     border-radius: .4rem;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.18);
@@ -1050,10 +1051,18 @@ header {
     cursor: pointer;
     text-decoration: none;
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .subButton:hover {
     background-color: #bbb;
+}
+
+.icon {
+    width: 2rem;
+    height: 2rem;
 }
 
 /*===============================================
