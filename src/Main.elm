@@ -57,7 +57,13 @@ import Url
 port receiveImageFileAndBlobUrl : (Json.Decode.Value -> msg) -> Sub msg
 
 
+port receiveGoodImageFileAsFileAndBlobUrl : (Json.Decode.Value -> msg) -> Sub msg
+
+
 port exhibitionImageChange : String -> Cmd msg
+
+
+port getGoodImageFileAsFileAndBlobUrl : List String -> Cmd msg
 
 
 port toWideScreenMode : (() -> msg) -> Sub msg
@@ -149,6 +155,7 @@ type Msg
     | ProfilePageMsg Page.Profile.Msg
     | GoodsPageMsg Page.Good.Msg
     | GetNowTime (Result () ( Time.Posix, Time.Zone ))
+    | ReceiveGoodImageFileAsFileAndBlobUrl Json.Decode.Value
 
 
 main : Program { refreshToken : Maybe String } Model Msg
@@ -734,6 +741,31 @@ update msg (Model rec) =
                     , Cmd.none
                     )
 
+        ReceiveGoodImageFileAsFileAndBlobUrl value ->
+            case rec.page of
+                PageGoods goodPageModel ->
+                    case Json.Decode.decodeValue receiveImageFileAndBlobUrlDecoder value of
+                        Ok data ->
+                            let
+                                ( newModel, emitList ) =
+                                    Page.Good.update
+                                        (Page.Good.ReceiveGoodImageAsFileAndBlobUrl data)
+                                        goodPageModel
+                            in
+                            ( Model { rec | page = PageGoods newModel }
+                            , goodsPageEmitListToCmd emitList
+                            )
+
+                        Err _ ->
+                            ( Model rec
+                            , Cmd.none
+                            )
+
+                _ ->
+                    ( Model rec
+                    , Cmd.none
+                    )
+
 
 
 {- ===================== Page Emit To Msg ======================== -}
@@ -770,6 +802,7 @@ likeAndHistoryEmitListToCmd =
                 Page.LikeAndHistory.EmitGetHistoryGoodList token ->
                     Cmd.none
 
+                -- TODO
                 Page.LikeAndHistory.EmitLogInOrSignUp e ->
                     logInOrSignUpEmitToCmd e
 
@@ -785,7 +818,10 @@ exhibitionGoodListPageEmitListToCmd =
         (\emit ->
             case emit of
                 Page.ExhibitionGoodList.EmitGetExhibitionGood token ->
-                    Api.getExhibitionGoodList token (\result -> ExhibitionGoodListPageMsg (Page.ExhibitionGoodList.GetExhibitionGoodResponse result))
+                    Api.getExhibitionGoodList token
+                        (\result ->
+                            ExhibitionGoodListPageMsg (Page.ExhibitionGoodList.GetExhibitionGoodResponse result)
+                        )
 
                 Page.ExhibitionGoodList.EmitLogInOrSignUp e ->
                     logInOrSignUpEmitToCmd e
@@ -934,8 +970,14 @@ goodsPageEmitListToCmd =
                 Page.Good.EmitDeleteGood token goodId ->
                     Api.deleteGoods token goodId
 
-                Page.Good.EmitReplaceText { id, text } ->
-                    inputOrTextAreaReplaceText { id = id, text = text }
+                Page.Good.EmitGoodEditor e ->
+                    goodEditorEmitToCmd e
+
+                Page.Good.EmitUpdateGoodData token goodId requestData ->
+                    Api.updateGood token goodId requestData (\m -> GoodsPageMsg (Page.Good.GoodUpdateResponse m))
+
+                Page.Good.EmitGetGoodImageAsFileAndBlobUrl urlList ->
+                    getGoodImageFileAsFileAndBlobUrl urlList
         )
         >> Cmd.batch
 
@@ -1410,6 +1452,7 @@ subscription (Model { menuState }) =
     Sub.batch
         [ receiveImageDataUrl ReceiveImageDataUrl
         , receiveImageFileAndBlobUrl ReceiveImageFileAndBlobUrl
+        , receiveGoodImageFileAsFileAndBlobUrl ReceiveGoodImageFileAsFileAndBlobUrl
         , receiveTimeStringToMillisecond (\msg -> GoodsPageMsg (Page.Good.ReceiveTimeStringToMillisecond msg))
         , case menuState of
             Just _ ->

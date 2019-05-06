@@ -5,14 +5,17 @@ module Page.Component.GoodEditor exposing
     , Model
     , Msg(..)
     , RequestData
+    , imageListFromList
     , imageListToBlobUrlList
     , initModel
+    , requestDataToApiRequest
     , resendEmit
     , toRequestData
     , update
     , view
     )
 
+import Api
 import Array
 import Data.Good as Good
 import File
@@ -73,10 +76,39 @@ type alias RequestData =
 
 
 initModel : { name : String, description : String, price : Maybe Int, condition : Maybe Good.Condition, image : Maybe ImageList } -> ( Model, List Emit )
-initModel rec =
-    ( Model rec
-    , resendEmit (Model rec)
+initModel { name, description, price, condition, image } =
+    let
+        model =
+            Model
+                { name = name
+                , description = description
+                , price = price
+                , condition = condition
+                , image = image
+                }
+    in
+    ( model
+    , resendEmit model
     )
+
+
+imageListFromList : List Image -> Maybe ImageList
+imageListFromList imageList =
+    case imageList of
+        x0 :: [] ->
+            Just (Image1 x0)
+
+        x0 :: x1 :: [] ->
+            Just (Image2 x0 x1)
+
+        x0 :: x1 :: x2 :: [] ->
+            Just (Image3 x0 x1 x2)
+
+        x0 :: x1 :: x2 :: x3 :: [] ->
+            Just (Image4 x0 x1 x2 x3)
+
+        _ ->
+            Nothing
 
 
 resendEmit : Model -> List Emit
@@ -279,6 +311,40 @@ toRequestData (Model { name, description, price, condition, image }) =
 
         ( _, _ ) ->
             Nothing
+
+
+requestDataToApiRequest : RequestData -> Api.SellGoodsRequest
+requestDataToApiRequest { name, description, price, condition, image } =
+    let
+        { image0, image1, image2, image3 } =
+            itemToRequest image
+    in
+    Api.SellGoodsRequest
+        { name = name
+        , description = description
+        , price = price
+        , condition = condition
+        , image0 = image0
+        , image1 = image1
+        , image2 = image2
+        , image3 = image3
+        }
+
+
+itemToRequest : ImageList -> { image0 : File.File, image1 : Maybe File.File, image2 : Maybe File.File, image3 : Maybe File.File }
+itemToRequest image =
+    case image of
+        Image1 i0 ->
+            { image0 = i0.file, image1 = Nothing, image2 = Nothing, image3 = Nothing }
+
+        Image2 i0 i1 ->
+            { image0 = i0.file, image1 = Just i1.file, image2 = Nothing, image3 = Nothing }
+
+        Image3 i0 i1 i2 ->
+            { image0 = i0.file, image1 = Just i1.file, image2 = Just i2.file, image3 = Nothing }
+
+        Image4 i0 i1 i2 i3 ->
+            { image0 = i0.file, image1 = Just i1.file, image2 = Just i2.file, image3 = Just i3.file }
 
 
 {-| 指定された名前が正常か調べる。Nothingなら異常なし、Just Stringはエラーメッセージ

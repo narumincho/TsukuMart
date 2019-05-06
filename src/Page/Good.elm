@@ -14,7 +14,6 @@ module Page.Good exposing
 -}
 
 import Api
-import Array
 import Data.Good as Good
 import Data.LogInState as LogInState
 import Data.User
@@ -22,7 +21,9 @@ import Html
 import Html.Attributes
 import Html.Events
 import Icon
-import Json.Decode
+import Page.Component.GoodEditor as GoodEditor
+import Svg
+import Svg.Attributes
 import Tab
 import Time
 
@@ -35,24 +36,20 @@ type Model
     = Loading
         { goodId : Good.GoodId
         }
+    | WaitNewData
+        { good : Good.Good
+        }
     | Normal
         { good : Good.Good
         , sending : Bool -- いいねを送信中か送信中じゃないか
         , comment : String
         }
-    | Edit EditModel
+    | Edit
+        { beforeGood : Good.Good
+        , editorModel : GoodEditor.Model
+        }
     | Confirm
         { good : Good.Good
-        }
-
-
-type EditModel
-    = EditModel
-        { goodId : Good.GoodId
-        , name : String
-        , description : String
-        , price : Maybe Int
-        , condition : Maybe Good.Condition
         }
 
 
@@ -67,7 +64,9 @@ type Emit
     | EmitUpdateNowTime
     | EmitTimeStringToTimePosix Good.GoodId (List String)
     | EmitDeleteGood Api.Token Good.GoodId
-    | EmitReplaceText { id : String, text : String }
+    | EmitGoodEditor GoodEditor.Emit
+    | EmitUpdateGoodData Api.Token Good.GoodId Api.SellGoodsRequest
+    | EmitGetGoodImageAsFileAndBlobUrl (List String)
 
 
 type Msg
@@ -87,10 +86,10 @@ type Msg
     | DeleteGood Api.Token Good.GoodId
     | EditGood
     | MsgBackToViewMode
-    | InputGoodName String
-    | InputGoodDescription String
-    | InputGoodPrice String
-    | InputGoodCondition (Maybe Good.Condition)
+    | GoodEditorMsg GoodEditor.Msg
+    | UpdateGoodData Api.Token Good.GoodId GoodEditor.RequestData
+    | ReceiveGoodImageAsFileAndBlobUrl (List GoodEditor.Image)
+    | GoodUpdateResponse (Result () ())
 
 
 {-| 指定したIDの商品詳細ページ
@@ -119,11 +118,14 @@ getGoodId model =
         Loading { goodId } ->
             goodId
 
+        WaitNewData { good } ->
+            Good.getId good
+
         Normal { good } ->
             Good.getId good
 
-        Edit (EditModel { goodId }) ->
-            goodId
+        Edit { beforeGood } ->
+            Good.getId beforeGood
 
         Confirm { good } ->
             Good.getId good
@@ -195,32 +197,20 @@ update msg model =
 
         LikeGood userId token id ->
             ( case model of
-                Loading _ ->
-                    model
-
                 Normal rec ->
                     Normal { rec | sending = True }
 
-                Edit _ ->
-                    model
-
-                Confirm _ ->
+                _ ->
                     model
             , [ EmitLikeGood userId token id ]
             )
 
         UnLikeGood userId token id ->
             ( case model of
-                Loading _ ->
-                    model
-
                 Normal rec ->
                     Normal { rec | sending = True }
 
-                Edit _ ->
-                    model
-
-                Confirm _ ->
+                _ ->
                     model
             , [ EmitUnLikeGood userId token id ]
             )
@@ -270,16 +260,10 @@ update msg model =
 
         ToConfirmPage ->
             ( case model of
-                Loading _ ->
-                    model
-
                 Normal { good } ->
                     Confirm { good = good }
 
-                Edit _ ->
-                    model
-
-                Confirm _ ->
+                _ ->
                     model
             , []
             )
@@ -325,103 +309,74 @@ update msg model =
 
         EditGood ->
             case model of
-                Loading _ ->
-                    ( model, [] )
-
                 Normal { good } ->
-                    ( Edit
-                        (EditModel
-                            { goodId = Good.getId good
-                            , name = Good.getName good
-                            , description = Good.getDescription good
-                            , price = Just (Good.getPrice good)
-                            , condition = Just (Good.getCondition good)
-                            }
-                        )
-                    , [ EmitReplaceText
-                            { id = nameEditorId, text = Good.getName good }
+                    ( model
+                    , [ EmitGetGoodImageAsFileAndBlobUrl
+                            (Good.getFirstImageUrl good :: Good.getOthersImageUrlList good)
                       ]
                     )
 
-                Edit _ ->
+                _ ->
                     ( model, [] )
 
-                Confirm _ ->
+        ReceiveGoodImageAsFileAndBlobUrl goodImageList ->
+            case model of
+                Normal { good } ->
+                    let
+                        ( goodEditorModel, goodEditorEmit ) =
+                            GoodEditor.initModel
+                                { name = Good.getName good
+                                , description = Good.getDescription good
+                                , price = Just (Good.getPrice good)
+                                , condition = Just (Good.getCondition good)
+                                , image = GoodEditor.imageListFromList goodImageList
+                                }
+                    in
+                    ( Edit
+                        { beforeGood = good
+                        , editorModel = goodEditorModel
+                        }
+                    , goodEditorEmit |> List.map EmitGoodEditor
+                    )
+
+                _ ->
                     ( model, [] )
 
         MsgBackToViewMode ->
             case model of
-                Edit (EditModel { goodId }) ->
-                    ( Loading { goodId = goodId }
-                    , [ EmitGetGoods { goodId = goodId } ]
+                Edit { beforeGood } ->
+                    ( WaitNewData { good = beforeGood }
+                    , [ EmitGetGoods { goodId = Good.getId beforeGood } ]
                     )
 
                 _ ->
                     ( model, [] )
 
-        InputGoodName name ->
-            ( case model of
-                Loading _ ->
-                    model
-
-                Normal _ ->
-                    model
-
-                Edit (EditModel r) ->
-                    Edit
-                        (EditModel
-                            { r | name = name }
-                        )
-
-                Confirm _ ->
-                    model
-            , []
-            )
-
-        InputGoodDescription description ->
-            ( case model of
-                Loading _ ->
-                    model
-
-                Normal _ ->
-                    model
-
-                Edit (EditModel r) ->
-                    Edit
-                        (EditModel
-                            { r | description = description }
-                        )
-
-                Confirm _ ->
-                    model
-            , []
-            )
-
-        InputGoodPrice priceString ->
-            ( case model of
-                Edit (EditModel r) ->
-                    Edit
-                        (EditModel
-                            { r | price = String.toInt priceString }
-                        )
+        GoodEditorMsg goodEditorMsg ->
+            case model of
+                Edit r ->
+                    GoodEditor.update goodEditorMsg r.editorModel
+                        |> Tuple.mapBoth
+                            (\editorModel -> Edit { r | editorModel = editorModel })
+                            (List.map EmitGoodEditor)
 
                 _ ->
-                    model
-            , []
+                    ( model, [] )
+
+        UpdateGoodData token goodId requestData ->
+            ( model
+            , [ EmitUpdateGoodData token goodId (GoodEditor.requestDataToApiRequest requestData) ]
             )
 
-        InputGoodCondition condition ->
-            ( case model of
-                Edit (EditModel r) ->
-                    Edit
-                        (EditModel
-                            { r | condition = condition }
-                        )
+        GoodUpdateResponse result ->
+            case result of
+                Ok () ->
+                    update MsgBackToViewMode model
 
-                _ ->
-                    model
-            , []
-            )
+                Err () ->
+                    ( model
+                    , []
+                    )
 
 
 view : LogInState.LogInState -> Bool -> Maybe ( Time.Posix, Time.Zone ) -> Model -> ( String, Tab.Tab Msg, List (Html.Html Msg) )
@@ -431,6 +386,25 @@ view logInState isWideScreenMode nowMaybe model =
             ( "商品詳細ページ"
             , Tab.none
             , [ Html.text "読み込み中" ]
+            )
+
+        WaitNewData { good } ->
+            ( Good.getName good
+            , Tab.none
+            , [ Html.div
+                    [ Html.Attributes.class "container" ]
+                    [ Html.div
+                        [ Html.Attributes.class "good" ]
+                        [ Html.text "最新の情報を取得中…"
+                        , goodsViewImage (Good.getFirstImageUrl good) (Good.getOthersImageUrlList good)
+                        , goodsViewName (Good.getName good)
+                        , goodsViewLike LogInState.LogInStateNone False good
+                        , sellerNameView (Good.getSellerName good)
+                        , descriptionView (Good.getDescription good)
+                        , goodsViewCondition (Good.getCondition good)
+                        ]
+                    ]
+              ]
             )
 
         Normal { good, sending } ->
@@ -467,12 +441,8 @@ view logInState isWideScreenMode nowMaybe model =
               ]
             )
 
-        Edit editModel ->
-            let
-                (EditModel { name, price }) =
-                    editModel
-            in
-            ( name
+        Edit { editorModel, beforeGood } ->
+            ( Good.getName beforeGood ++ "編集中"
             , Tab.none
             , [ Html.div
                     [ Html.Attributes.class "container" ]
@@ -481,12 +451,15 @@ view logInState isWideScreenMode nowMaybe model =
                         (case logInState of
                             LogInState.LogInStateOk { access } ->
                                 [ Html.text "編集画面"
-                                , nameEditView
-                                , descriptionEditorView
-                                , priceEditView price
-                                , conditionView |> Html.map InputGoodCondition
-                                , editOkCancelButton access editModel
                                 ]
+                                    ++ (GoodEditor.view editorModel
+                                            |> List.map (Html.map GoodEditorMsg)
+                                       )
+                                    ++ [ editOkCancelButton
+                                            access
+                                            (Good.getId beforeGood)
+                                            (GoodEditor.toRequestData editorModel)
+                                       ]
 
                             LogInState.LogInStateNone ->
                                 [ Html.text "ログインしていないときに商品の編集はできません" ]
@@ -653,66 +626,126 @@ deleteView goodId token =
         [ Html.text "削除する" ]
 
 
+{-|
+
+    コメントの表示
+
+-}
 commentListView : Maybe ( Time.Posix, Time.Zone ) -> Data.User.UserId -> LogInState.LogInState -> Maybe (List Good.Comment) -> Html.Html Msg
 commentListView nowMaybe sellerId logInState commentListMaybe =
     Html.div
         [ Html.Attributes.class "good-commentList" ]
         (case commentListMaybe of
             Just commentList ->
-                (case logInState of
+                case logInState of
                     LogInState.LogInStateOk { access, user } ->
                         [ commentInputArea access user ]
+                            ++ (commentList
+                                    |> List.reverse
+                                    |> List.map (commentView nowMaybe sellerId (Just (Data.User.getUserId user)))
+                               )
 
                     LogInState.LogInStateNone ->
-                        []
-                )
-                    ++ (commentList |> List.reverse |> List.map (commentView nowMaybe sellerId))
+                        commentList |> List.reverse |> List.map (commentView nowMaybe sellerId Nothing)
 
             Nothing ->
                 [ Html.text "読み込み中" ]
         )
 
 
-commentView : Maybe ( Time.Posix, Time.Zone ) -> Data.User.UserId -> Good.Comment -> Html.Html msg
-commentView nowMaybe sellerId { text, createdAt, userName, userId } =
-    if sellerId == userId then
-        sellerCommentView nowMaybe createdAt userName text
+commentView : Maybe ( Time.Posix, Time.Zone ) -> Data.User.UserId -> Maybe Data.User.UserId -> Good.Comment -> Html.Html msg
+commentView nowMaybe sellerId myIdMaybe { text, createdAt, userName, userId } =
+    let
+        isSellerComment =
+            sellerId == userId
 
-    else
-        notSellerCommentView nowMaybe createdAt userName text
-
-
-sellerCommentView : Maybe ( Time.Posix, Time.Zone ) -> Good.CreatedTime -> String -> String -> Html.Html msg
-sellerCommentView nowMaybe createdTime userName text =
+        isMyComment =
+            myIdMaybe == Just userId
+    in
     Html.div
         [ Html.Attributes.class "good-comment" ]
         [ Html.div
-            [ Html.Attributes.class "good-comment-sellerName" ]
+            [ Html.Attributes.class
+                (if isSellerComment then
+                    "good-comment-sellerName"
+
+                 else
+                    "good-comment-name"
+                )
+            ]
             [ Html.text userName ]
         , Html.div
-            [ Html.Attributes.class "good-comment-text"
-            , Html.Attributes.class "good-comment-text-seller"
+            [ Html.Attributes.class
+                (if isSellerComment then
+                    "good-comment-sellerBox"
+
+                 else
+                    "good-comment-box"
+                )
             ]
-            [ Html.text text ]
+            ((if isSellerComment then
+                [ commentTriangleLeft isMyComment ]
+
+              else
+                []
+             )
+                ++ [ Html.div
+                        [ Html.Attributes.classList
+                            [ ( "good-comment-text", True )
+                            , ( "good-comment-text-mine", isMyComment )
+                            , ( "good-comment-text-seller", isSellerComment )
+                            ]
+                        ]
+                        [ Html.text text ]
+                   ]
+                ++ (if isSellerComment then
+                        []
+
+                    else
+                        [ commentTriangleRight isMyComment ]
+                   )
+            )
         , Html.div
             [ Html.Attributes.class "good-comment-time" ]
-            [ Html.text (Good.createdAtToString nowMaybe createdTime) ]
+            [ Html.text (Good.createdAtToString nowMaybe createdAt) ]
         ]
 
 
-notSellerCommentView : Maybe ( Time.Posix, Time.Zone ) -> Good.CreatedTime -> String -> String -> Html.Html msg
-notSellerCommentView nowMaybe createdTime userName text =
-    Html.div
-        [ Html.Attributes.class "good-comment" ]
-        [ Html.div
-            [ Html.Attributes.class "good-comment-userName" ]
-            [ Html.text userName ]
-        , Html.div
-            [ Html.Attributes.class "good-comment-text" ]
-            [ Html.text text ]
-        , Html.div
-            [ Html.Attributes.class "good-comment-time" ]
-            [ Html.text (Good.createdAtToString nowMaybe createdTime) ]
+commentTriangleLeft : Bool -> Html.Html msg
+commentTriangleLeft isMine =
+    Svg.svg
+        ([ Svg.Attributes.viewBox "0 0 10 10"
+         , Svg.Attributes.class "good-comment-text-triangle"
+         ]
+            ++ (if isMine then
+                    [ Svg.Attributes.class "good-comment-text-triangle-mine" ]
+
+                else
+                    []
+               )
+        )
+        [ Svg.polygon
+            [ Svg.Attributes.points "10 0 0 0 10 10" ]
+            []
+        ]
+
+
+commentTriangleRight : Bool -> Html.Html msg
+commentTriangleRight isMine =
+    Svg.svg
+        ([ Svg.Attributes.viewBox "0 0 10 10"
+         , Svg.Attributes.class "good-comment-text-triangle"
+         ]
+            ++ (if isMine then
+                    [ Svg.Attributes.class "good-comment-text-triangle-mine" ]
+
+                else
+                    []
+               )
+        )
+        [ Svg.polygon
+            [ Svg.Attributes.points "0 0 10 0 0 10" ]
+            []
         ]
 
 
@@ -766,139 +799,8 @@ tradeStartButton logInState goodId =
         ]
 
 
-nameEditView : Html.Html Msg
-nameEditView =
-    Html.div
-        []
-        [ Html.label
-            [ Html.Attributes.for nameEditorId
-            , Html.Attributes.class "form-label"
-            ]
-            [ Html.text "商品名" ]
-        , Html.input
-            [ Html.Attributes.placeholder "40文字まで"
-            , Html.Attributes.class "form-input"
-            , Html.Attributes.id nameEditorId
-            , Html.Attributes.maxlength 40
-            , Html.Events.onInput InputGoodName
-            ]
-            []
-        ]
-
-
-nameEditorId : String
-nameEditorId =
-    "name-edit"
-
-
-descriptionEditorView : Html.Html Msg
-descriptionEditorView =
-    Html.div
-        []
-        [ Html.label
-            [ Html.Attributes.for descriptionEditorId
-            , Html.Attributes.class "form-label"
-            ]
-            [ Html.text "商品の説明" ]
-        , Html.textarea
-            [ Html.Attributes.class "form-textarea"
-            , Html.Attributes.id descriptionEditorId
-            , Html.Events.onInput InputGoodDescription
-            ]
-            []
-        ]
-
-
-descriptionEditorId : String
-descriptionEditorId =
-    "description-edit"
-
-
-priceEditView : Maybe Int -> Html.Html Msg
-priceEditView priceMaybe =
-    Html.div
-        []
-        [ Html.label
-            [ Html.Attributes.for priceEditorId
-            , Html.Attributes.class "form-label"
-            ]
-            [ Html.text "販売価格" ]
-        , Html.div
-            [ Html.Attributes.class "exhibition-itemPrice-input"
-            ]
-            [ Html.input
-                [ Html.Attributes.type_ "number"
-                , Html.Attributes.class "exhibition-itemPrice-input-input"
-                , Html.Attributes.id priceEditorId
-                , Html.Attributes.placeholder "0 ～ 1000000"
-                , Html.Attributes.min "0"
-                , Html.Attributes.max "1000000"
-                , Html.Events.onInput InputGoodPrice
-                ]
-                []
-            , Html.span
-                [ Html.Attributes.class "exhibition-itemPrice-yen" ]
-                [ Html.text "円" ]
-            ]
-        , Html.div
-            [ Html.Attributes.class "exhibition-priceView" ]
-            [ Html.text
-                (case priceMaybe of
-                    Just price ->
-                        Good.priceToString price
-
-                    Nothing ->
-                        "0 ～ 100万円の価格を入力してください"
-                )
-            ]
-        ]
-
-
-priceEditorId : String
-priceEditorId =
-    "price-edit"
-
-
-conditionView : Html.Html (Maybe Good.Condition)
-conditionView =
-    Html.div
-        []
-        [ Html.label
-            [ Html.Attributes.for conditionEditorId
-            , Html.Attributes.class "form-label"
-            ]
-            [ Html.text "商品の状態" ]
-        , Html.select
-            [ Html.Attributes.id conditionEditorId
-            , Html.Attributes.class "form-menu"
-            , Html.Events.on "change" selectConditionDecoder
-            ]
-            ([ Html.option [] [ Html.text "--選択してください--" ] ]
-                ++ (Good.conditionAll
-                        |> List.map
-                            (\s ->
-                                Html.option [] [ Html.text (Good.conditionToJapaneseString s) ]
-                            )
-                   )
-            )
-        ]
-
-
-conditionEditorId : String
-conditionEditorId =
-    "exhibition-selectCondition"
-
-
-selectConditionDecoder : Json.Decode.Decoder (Maybe Good.Condition)
-selectConditionDecoder =
-    Json.Decode.at
-        [ "target", "selectedIndex" ]
-        Json.Decode.int
-        |> Json.Decode.map (\index -> Good.conditionAll |> Array.fromList |> Array.get (index - 1))
-
-
-editOkCancelButton : Api.Token -> EditModel -> Html.Html Msg
-editOkCancelButton token editModel =
+editOkCancelButton : Api.Token -> Good.GoodId -> Maybe GoodEditor.RequestData -> Html.Html Msg
+editOkCancelButton token goodId requestDataMaybe =
     Html.div
         [ Html.Attributes.class "profile-editButtonArea" ]
         [ Html.button
@@ -908,15 +810,15 @@ editOkCancelButton token editModel =
             [ Html.text "キャンセル" ]
         , Html.button
             ([ Html.Attributes.class "profile-editOkButton" ]
-             --                ++ (case editModelToProfile editModel of
-             --                        Just profile ->
-             --                            [ Html.Events.onClick (MsgChangeProfile token profile)
-             --                            , Html.Attributes.disabled False
-             --                            ]
-             --
-             --                        Nothing ->
-             --                            [ Html.Attributes.disabled True ]
-             --                   )
+                ++ (case requestDataMaybe of
+                        Just requestDate ->
+                            [ Html.Events.onClick (UpdateGoodData token goodId requestDate)
+                            , Html.Attributes.disabled False
+                            ]
+
+                        Nothing ->
+                            [ Html.Attributes.disabled True ]
+                   )
             )
             [ Html.text "変更する" ]
         ]

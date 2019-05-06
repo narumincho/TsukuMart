@@ -33,7 +33,7 @@ module Api exposing
     , tradeStart
     , unlikeGoods
     , updateProfile
-    )
+    , updateGood)
 
 import Data.EmailAddress as EmailAddress
 import Data.Good as Good
@@ -516,8 +516,8 @@ createGoodsResponseToResult response =
 -}
 
 
-putGood : Token -> Good.GoodId -> SellGoodsRequest -> (Result () () -> msg) -> Cmd msg
-putGood token goodId createGoodsRequest msg =
+updateGood : Token -> Good.GoodId -> SellGoodsRequest -> (Result () () -> msg) -> Cmd msg
+updateGood token goodId createGoodsRequest msg =
     Http.request
         { method = "PUT"
         , headers = [ tokenToHeader token ]
@@ -937,7 +937,6 @@ statusDecoder =
                                 ++ "\""
                             )
             )
-
 
 
 {- ==============================================================================

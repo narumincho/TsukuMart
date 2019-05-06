@@ -303,7 +303,7 @@ confirmView accessToken requestData sending =
                 ]
 
              else
-                [ Html.Events.onClick (SellGoods ( accessToken, requestDataToApiRequest requestData ))
+                [ Html.Events.onClick (SellGoods ( accessToken, GoodEditor.requestDataToApiRequest requestData ))
                 , Html.Attributes.class "mainButton"
                 , Html.Attributes.disabled False
                 ]
@@ -333,37 +333,3 @@ confirmViewImage imageList =
                     )
             )
         ]
-
-
-requestDataToApiRequest : GoodEditor.RequestData -> Api.SellGoodsRequest
-requestDataToApiRequest { name, description, price, condition, image } =
-    let
-        { image0, image1, image2, image3 } =
-            itemToRequest image
-    in
-    Api.SellGoodsRequest
-        { name = name
-        , description = description
-        , price = price
-        , condition = condition
-        , image0 = image0
-        , image1 = image1
-        , image2 = image2
-        , image3 = image3
-        }
-
-
-itemToRequest : GoodEditor.ImageList -> { image0 : File.File, image1 : Maybe File.File, image2 : Maybe File.File, image3 : Maybe File.File }
-itemToRequest image =
-    case image of
-        GoodEditor.Image1 i0 ->
-            { image0 = i0.file, image1 = Nothing, image2 = Nothing, image3 = Nothing }
-
-        GoodEditor.Image2 i0 i1 ->
-            { image0 = i0.file, image1 = Just i1.file, image2 = Nothing, image3 = Nothing }
-
-        GoodEditor.Image3 i0 i1 i2 ->
-            { image0 = i0.file, image1 = Just i1.file, image2 = Just i2.file, image3 = Nothing }
-
-        GoodEditor.Image4 i0 i1 i2 i3 ->
-            { image0 = i0.file, image1 = Just i1.file, image2 = Just i2.file, image3 = Just i3.file }
