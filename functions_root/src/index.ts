@@ -4,19 +4,20 @@ import * as firebase from "firebase";
 import * as jwt from "jsonwebtoken";
 import * as result from "./data/result";
 import * as univ from "./data/university"
+import * as secret from "./secret";
 
 admin.initializeApp();
 firebase.initializeApp({
-    apiKey: functions.config().api.key,
+    apiKey: secret.apiKey,
     projectId: "tsukumart-demo"
 });
 
 const dataBase = admin.firestore();
 const dataBaseUsersCollection = dataBase.collection("users");
-const refreshSecretKey = functions.config().jwt.refresh_secret_key;
-const accessSecretKey = functions.config().jwt.access_secret_key;
+const refreshSecretKey = secret.refreshTokenSecretKey;
+const accessSecretKey = secret.accessTokenSecretKey;
 
-console.log("run index.js 2019-04-17-10-19");
+console.log("run index.js 2019-05-23");
 /**
  *      /api/sign-up
  */
