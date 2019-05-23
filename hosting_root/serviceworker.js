@@ -1,5 +1,6 @@
 "use strict";
 // Tsukumart Service Worker
+// 2019/05/07
 const cachesName = "image-chase";
 ((self) => {
     self.addEventListener("install", e => {

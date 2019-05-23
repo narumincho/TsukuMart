@@ -3,10 +3,11 @@
         "target": "es2018",
         "strict": true,
         "lib": [
-            "es2017",
+            "es2019",
             "webworker"
         ],
-        "outDir": "../hosting_root/"
+        "removeComments": true,
+        "outDir": "../hosting_root/",
     },
     "include": [
         "serviceworker.ts"

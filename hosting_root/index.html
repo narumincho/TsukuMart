@@ -125,7 +125,9 @@
         app.ports.getGoodImageFileAsFileAndBlobUrl.subscribe(async (urlList) => {
             const result = [];
             for (const url of urlList) {
-                const imageFile = await ((await fetch(url, { mode: "cors" })).blob())
+                // const imageFile = await ((await fetch(url, { mode: "cors" })).blob())
+                const imageFile = await imageToBlob(await loadImageFromURL(url))
+                console.log("blob", imageFile);
                 result.push({
                     file: imageFile,
                     blobUrl: URL.createObjectURL(imageFile)
@@ -133,6 +135,32 @@
             }
             app.ports.receiveGoodImageFileAsFileAndBlobUrl.send(result);
         });
+        
+        /** fetch でだめなら image.src = url で ok? */
+        const loadImageFromURL = (url) => new Promise((resolve, reject) => {
+            const image = new Image();
+            image.crossOrigin = "anonymous";
+            image.addEventListener("load", () => {
+                resolve(image);
+            });
+            image.addEventListener("error", (err) => {
+                reject(err);
+            });
+            image.src = url;
+        });
+
+        /** Imageをcanvasに描画すれば、アクセス制限からのがれられる? */
+        const imageToBlob = (image) => new Promise((resolve, reject) => {
+            const canvas = document.createElement("canvas");
+            canvas.width = image.width;
+            canvas.height = image.height;
+            canvas.getContext("2d").drawImage(
+                image,
+                0, 0,
+                image.width, image.height
+            )
+            canvas.toBlob(resolve, "image/png", 1);
+        })
 
         navigator.serviceWorker.register("/serviceworker.js", { scope: "/" });
     </script>

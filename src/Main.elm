@@ -485,6 +485,26 @@ update msg (Model rec) =
                             , Cmd.none
                             )
 
+                PageGoods goodPageModel ->
+                    case Json.Decode.decodeValue receiveImageFileAndBlobUrlDecoder value of
+                        Ok data ->
+                            let
+                                ( newModel, emitList ) =
+                                    Page.Good.update
+                                        (Page.Good.GoodEditorMsg
+                                            (Page.Component.GoodEditor.InputImageList data)
+                                        )
+                                        goodPageModel
+                            in
+                            ( Model { rec | page = PageGoods newModel }
+                            , goodsPageEmitListToCmd emitList
+                            )
+
+                        Err _ ->
+                            ( Model rec
+                            , Cmd.none
+                            )
+
                 _ ->
                     ( Model rec
                     , Cmd.none
@@ -756,7 +776,7 @@ update msg (Model rec) =
                             , goodsPageEmitListToCmd emitList
                             )
 
-                        Err _ ->
+                        Err err ->
                             ( Model rec
                             , Cmd.none
                             )
