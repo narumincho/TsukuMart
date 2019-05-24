@@ -2,8 +2,8 @@ import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 import * as firebase from "firebase";
 import * as jwt from "jsonwebtoken";
-import * as result from "./data/result";
-import * as univ from "./data/university"
+import * as result from "./lib/result";
+import * as univ from "./lib/university"
 import * as secret from "./secret";
 
 admin.initializeApp();

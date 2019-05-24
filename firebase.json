@@ -1,6 +1,6 @@
 {
     "hosting": {
-        "public": "hosting_root",
+        "public": "client/dist",
         "rewrites": [
             {
                 "source": "/main.js",
@@ -37,6 +37,6 @@
         ]
     },
     "functions": {
-        "source": "functions_root"
+        "source": "server/dist"
     }
 }
