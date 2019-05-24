@@ -23,7 +23,7 @@ import Page.Good
 import Page.Home
 import Page.LikeAndHistory
 import Page.LogIn
-import Page.Profile
+import Page.MyProfile
 import Page.PurchaseGoodList
 import Page.SignUp
 import SiteMap
@@ -123,7 +123,7 @@ type Page
     | PagePurchaseGoodList Page.PurchaseGoodList.Model
     | PageExhibition Page.Exhibition.Model
     | PageGoods Page.Good.Model
-    | PageProfile Page.Profile.Model
+    | PageProfile Page.MyProfile.Model
     | PageAbout Page.About.Model
     | PageSiteMapXml
 
@@ -152,7 +152,7 @@ type Msg
     | LogInPageMsg Page.LogIn.Msg
     | ExhibitionPageMsg Page.Exhibition.Msg
     | SignUpMsg Page.SignUp.Msg
-    | ProfilePageMsg Page.Profile.Msg
+    | ProfilePageMsg Page.MyProfile.Msg
     | GoodsPageMsg Page.Good.Msg
     | GetNowTime (Result () ( Time.Posix, Time.Zone ))
     | ReceiveGoodImageFileAsFileAndBlobUrl Json.Decode.Value
@@ -260,7 +260,7 @@ urlParserInitResultToPageAndCmd logInState page =
                     goodsPageEmitListToCmd
 
         SiteMap.InitProfile ->
-            Page.Profile.initModel logInState
+            Page.MyProfile.initModel logInState
                 |> Tuple.mapBoth
                     PageProfile
                     profilePageEmitListToCmd
@@ -595,7 +595,7 @@ update msg (Model rec) =
                 PageProfile profileModel ->
                     let
                         ( newModel, emitList ) =
-                            Page.Profile.update rec.logInState profileMsg profileModel
+                            Page.MyProfile.update rec.logInState profileMsg profileModel
                     in
                     ( Model
                         { rec
@@ -651,7 +651,7 @@ update msg (Model rec) =
                             let
                                 ( newModel, emitList ) =
                                     profileModel
-                                        |> Page.Profile.update rec.logInState Page.Profile.MsgChangeProfileResponse
+                                        |> Page.MyProfile.update rec.logInState Page.MyProfile.MsgChangeProfileResponse
                             in
                             ( Model
                                 { rec
@@ -920,28 +920,28 @@ signUpPageEmitListToCmd =
         >> Cmd.batch
 
 
-profilePageEmitListToCmd : List Page.Profile.Emit -> Cmd Msg
+profilePageEmitListToCmd : List Page.MyProfile.Emit -> Cmd Msg
 profilePageEmitListToCmd =
     List.map
         (\emit ->
             case emit of
-                Page.Profile.EmitLogInOrSignUp e ->
+                Page.MyProfile.EmitLogInOrSignUp e ->
                     logInOrSignUpEmitToCmd e
 
-                Page.Profile.EmitGetProfile { access, refresh } ->
+                Page.MyProfile.EmitGetProfile { access, refresh } ->
                     Api.getMyProfile access (GetUserDataResponse { access = access, refresh = refresh })
 
-                Page.Profile.EmitChangeProfile token profile ->
+                Page.MyProfile.EmitChangeProfile token profile ->
                     Api.updateProfile token profile ChangeProfileResponse
 
-                Page.Profile.EmitReplaceText { id, text } ->
+                Page.MyProfile.EmitReplaceText { id, text } ->
                     inputOrTextAreaReplaceText
                         { id = id, text = text }
 
-                Page.Profile.EmitUniversity e ->
+                Page.MyProfile.EmitUniversity e ->
                     universityEmitToCmd e
 
-                Page.Profile.EmitLogOut ->
+                Page.MyProfile.EmitLogOut ->
                     Cmd.batch
                         [ deleteRefreshTokenAndAllFromLocalStorage ()
                         , Task.perform (always LogOut) (Task.succeed ())
@@ -1167,7 +1167,7 @@ urlParserResultToPageAndCmd (Model rec) result =
                 |> Tuple.mapBoth PageGoods goodsPageEmitListToCmd
 
         SiteMap.Profile ->
-            Page.Profile.initModel rec.logInState
+            Page.MyProfile.initModel rec.logInState
                 |> Tuple.mapBoth
                     PageProfile
                     profilePageEmitListToCmd
@@ -1432,7 +1432,7 @@ titleAndTabDataAndMainView logInState isWideScreenMode nowMaybe page =
 
         PageProfile profileModel ->
             profileModel
-                |> Page.Profile.view logInState
+                |> Page.MyProfile.view logInState
                 |> mapPageData ProfilePageMsg
 
         PageSiteMapXml ->
