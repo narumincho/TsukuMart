@@ -5,9 +5,7 @@
         "strict": true,
         "moduleResolution": "node",
         "removeComments": true,
-        "outDir": "./"
+        "outDir": "../dist"
     },
-    "files": [
-        "./src/index.ts"
-    ]
+    "files": ["./src/index.ts"]
 }
