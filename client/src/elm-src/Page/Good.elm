@@ -650,7 +650,9 @@ commentListView nowMaybe sellerId logInState commentListMaybe =
                                )
 
                     LogInState.LogInStateNone ->
-                        commentList |> List.reverse |> List.map (commentView nowMaybe sellerId Nothing)
+                        commentList
+                            |> List.reverse
+                            |> List.map (commentView nowMaybe sellerId Nothing)
 
             Nothing ->
                 [ Html.text "読み込み中" ]
@@ -668,7 +670,7 @@ commentView nowMaybe sellerId myIdMaybe { text, createdAt, userName, userId } =
     in
     Html.div
         [ Html.Attributes.class "good-comment" ]
-        [ Html.div
+        [ Html.a
             [ Html.Attributes.class
                 (if isSellerComment then
                     "good-comment-sellerName"
@@ -676,6 +678,7 @@ commentView nowMaybe sellerId myIdMaybe { text, createdAt, userName, userId } =
                  else
                     "good-comment-name"
                 )
+            , Html.Attributes.href (SiteMap.userUrl userId)
             ]
             [ Html.text userName ]
         , Html.div

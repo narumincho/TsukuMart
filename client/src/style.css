@@ -39,13 +39,13 @@ header {
 }
 
 .h1 {
-    padding: .5rem;
+    padding: 0.5rem;
     flex-grow: 1;
     margin: 0;
 }
 
 .h1-wide {
-    padding: .5rem .5rem .5rem 2rem;
+    padding: 0.5rem 0.5rem 0.5rem 2rem;
 }
 
 .h1:hover {
@@ -82,7 +82,7 @@ header {
     background-color: #ddd;
     color: #111;
     border: solid 2px #111;
-    border-radius: .4rem;
+    border-radius: 0.4rem;
     font-size: 1.3rem;
     padding: 2rem;
     pointer-events: none;
@@ -184,7 +184,7 @@ header {
 
 @keyframes shadow-appear {
     0% {
-        background-color: rgba(0, 0, 0, 0)
+        background-color: rgba(0, 0, 0, 0);
     }
     100% {
         background-color: rgba(0, 0, 0, 0.7);
@@ -193,7 +193,7 @@ header {
 
 @keyframes shadow-disappear {
     0% {
-        background-color: rgba(0, 0, 0, 0.7)
+        background-color: rgba(0, 0, 0, 0.7);
     }
     100% {
         background-color: rgba(0, 0, 0, 0);
@@ -249,7 +249,7 @@ header {
     color: #111;
     text-align: center;
     padding: 1rem 0;
-    border-radius: .4rem;
+    border-radius: 0.4rem;
     text-decoration: none;
     user-select: none;
 }
@@ -263,7 +263,7 @@ header {
     color: #111;
     text-align: center;
     padding: 1rem 0;
-    border-radius: .4rem;
+    border-radius: 0.4rem;
     text-decoration: none;
     user-select: none;
 }
@@ -302,7 +302,7 @@ header {
     top: 4rem;
     right: 1rem;
     width: 80%;
-    height: calc( 100% - 4rem);
+    height: calc(100% - 4rem);
     background-color: #fff;
 }
 
@@ -326,7 +326,7 @@ header {
     position: fixed;
     left: 20rem;
     top: 4rem;
-    width: calc( 100% - 20rem);
+    width: calc(100% - 20rem);
 }
 
 .mainTab-item {
@@ -421,8 +421,8 @@ header {
     width: 2rem;
     height: 2rem;
     position: absolute;
-    right: .5rem;
-    top: .5rem;
+    right: 0.5rem;
+    top: 0.5rem;
     fill: black;
     stroke: white;
     cursor: pointer;
@@ -526,18 +526,18 @@ header {
 }
 
 .good-like-label {
-    border-radius: .4rem;
+    border-radius: 0.4rem;
     user-select: none;
-    padding: .5rem;
+    padding: 0.5rem;
     border: solid 1px #aaa;
 }
 
 .good-like {
     background-color: #aaa;
-    border-radius: .4rem;
+    border-radius: 0.4rem;
     user-select: none;
     cursor: pointer;
-    padding: .5rem;
+    padding: 0.5rem;
     border: none;
 }
 
@@ -564,7 +564,7 @@ header {
 
 .good-label {
     background-color: #ddd;
-    padding: .2rem .5rem;
+    padding: 0.2rem 0.5rem;
 }
 
 .good-condition {
@@ -575,7 +575,7 @@ header {
     position: fixed;
     display: flex;
     width: 100%;
-    padding: .5rem;
+    padding: 0.5rem;
     justify-content: space-between;
     box-sizing: border-box;
     bottom: 0;
@@ -623,8 +623,8 @@ header {
 
 .good-comment-text {
     background-color: #ddd;
-    padding: .5rem;
-    border-radius: .5rem 0 .5rem .5rem;
+    padding: 0.5rem;
+    border-radius: 0.5rem 0 0.5rem 0.5rem;
 }
 
 .good-comment-text-mine {
@@ -632,7 +632,7 @@ header {
 }
 
 .good-comment-text-seller {
-    border-radius: 0 .5rem .5rem .5rem;
+    border-radius: 0 0.5rem 0.5rem 0.5rem;
 }
 
 .good-comment-text-triangle {
@@ -647,7 +647,7 @@ header {
 
 .good-comment-time {
     display: flex;
-    font-size: .8rem;
+    font-size: 0.8rem;
     color: #666;
     justify-content: flex-end;
 }
@@ -655,7 +655,7 @@ header {
 .good-comment-sendButton {
     padding: 1rem 2rem;
     width: 100%;
-    border-radius: .5rem;
+    border-radius: 0.5rem;
 }
 
 .good-deleteButton {
@@ -665,7 +665,7 @@ header {
     padding: 1rem;
     width: 100%;
     font-size: 1.5rem;
-    border-radius: .4rem;
+    border-radius: 0.4rem;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.18);
     user-select: none;
     display: flex;
@@ -726,18 +726,18 @@ header {
 
 .logIn-input {
     font-size: 1.2rem;
-    padding: .4rem;
+    padding: 0.4rem;
     width: 100%;
     border: solid 1px #ccc;
-    box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075);
+    box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
     box-sizing: border-box;
-    border-radius: .4rem;
-    transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
+    border-radius: 0.4rem;
+    transition: border-color ease-in-out 0.15s, box-shadow ease-in-out 0.15s;
     outline: none;
 }
 
 .logIn-input:focus {
-    box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075), 0 0 8px #66afe999;
+    box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px #66afe999;
     border: solid 1px #66afe9;
 }
 
@@ -747,7 +747,7 @@ header {
     padding: 1rem;
     text-align: center;
     font-size: 1.5rem;
-    border-radius: .4rem;
+    border-radius: 0.4rem;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.18);
     border: none;
     user-select: none;
@@ -803,7 +803,7 @@ header {
     fill: #ddd;
     padding: 1rem;
     font-size: 1.5rem;
-    border-radius: .4rem;
+    border-radius: 0.4rem;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.18);
     user-select: none;
     cursor: pointer;
@@ -831,7 +831,7 @@ header {
     padding: 1rem;
     text-align: center;
     font-size: 1.5rem;
-    border-radius: .4rem;
+    border-radius: 0.4rem;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.18);
     border: none;
     user-select: none;
@@ -854,7 +854,7 @@ header {
     flex-direction: column;
     justify-content: flex-end;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
-    padding: .5rem;
+    padding: 0.5rem;
     text-decoration: none;
     color: black;
 }
@@ -881,22 +881,23 @@ header {
 
 .goodList-image {
     width: 100%;
+    height: 12rem;
     object-fit: contain;
 }
 
 .goodList-like-label {
-    border-radius: .4rem;
+    border-radius: 0.4rem;
     user-select: none;
-    padding: .5rem;
+    padding: 0.5rem;
     border: solid 1px #aaa;
 }
 
 .goodList-like {
     background-color: #aaa;
-    border-radius: .4rem;
+    border-radius: 0.4rem;
     user-select: none;
     cursor: pointer;
-    padding: .5rem;
+    padding: 0.5rem;
     border: none;
 }
 
@@ -1010,7 +1011,7 @@ header {
     padding: 1rem;
     width: 100%;
     font-size: 1.5rem;
-    border-radius: .4rem;
+    border-radius: 0.4rem;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.18);
     user-select: none;
     display: flex;
@@ -1044,7 +1045,7 @@ header {
     color: #111;
     padding: 1rem;
     font-size: 1.5rem;
-    border-radius: .4rem;
+    border-radius: 0.4rem;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.18);
     border: none;
     user-select: none;
@@ -1085,7 +1086,7 @@ header {
 
 .form-select {
     width: 100%;
-    padding: .5rem;
+    padding: 0.5rem;
     display: grid;
     grid-template-columns: 1fr 1fr;
     box-sizing: border-box;
@@ -1093,7 +1094,7 @@ header {
 
 .form-select-item {
     background-color: #999;
-    padding: .5rem;
+    padding: 0.5rem;
     text-align: center;
     user-select: none;
     cursor: pointer;
@@ -1108,7 +1109,7 @@ header {
 
 .form-select-itemSelect {
     background-color: var(--primaryColor);
-    padding: .5rem;
+    padding: 0.5rem;
     text-align: center;
     user-select: none;
     cursor: pointer;
@@ -1123,37 +1124,39 @@ header {
 
 .form-input {
     font-size: 1.2rem;
-    padding: .4rem;
+    padding: 0.4rem;
     width: 100%;
     border: solid 1px #ccc;
     box-sizing: border-box;
-    border-radius: .4rem;
-    box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075);
-    transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
+    border-radius: 0.4rem;
+    box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
+    transition: border-color ease-in-out 0.15s, box-shadow ease-in-out 0.15s;
     outline: none;
 }
 
 .form-input:focus {
-    box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075), 0 0 8px rgba(102, 175, 233, .6);
+    box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075),
+        0 0 8px rgba(102, 175, 233, 0.6);
     border: solid 1px #66afe9;
 }
 
 .form-textarea {
     font-size: 1.2rem;
     height: 6rem;
-    padding: .4rem;
+    padding: 0.4rem;
     width: 100%;
     border: solid 1px #ccc;
     box-sizing: border-box;
-    border-radius: .4rem;
-    box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075);
-    transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
+    border-radius: 0.4rem;
+    box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
+    transition: border-color ease-in-out 0.15s, box-shadow ease-in-out 0.15s;
     outline: none;
     resize: none;
 }
 
 .form-textarea:focus {
-    box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075), 0 0 8px rgba(102, 175, 233, .6);
+    box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075),
+        0 0 8px rgba(102, 175, 233, 0.6);
     border: solid 1px #66afe9;
 }
 
@@ -1171,7 +1174,7 @@ header {
     height: 4rem;
     border: solid 2px #000;
     box-sizing: border-box;
-    border-radius: .4rem;
+    border-radius: 0.4rem;
     font-size: 1.5rem;
     border: solid 1px #ccc;
 }

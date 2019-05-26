@@ -283,7 +283,7 @@ userUrl userId =
 
 userPath : String
 userPath =
-    "profile"
+    "user"
 
 
 
