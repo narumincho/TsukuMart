@@ -32,8 +32,9 @@ module Api exposing
     , tokenToString
     , tradeStart
     , unlikeGoods
+    , updateGood
     , updateProfile
-    , updateGood)
+    )
 
 import Data.EmailAddress as EmailAddress
 import Data.Good as Good
@@ -543,7 +544,7 @@ getMyProfile token msg =
         , headers = [ tokenToHeader token ]
         , url = urlBuilder [ "v1", "currentuser", "profile" ]
         , body = Http.emptyBody
-        , expect = Http.expectStringResponse msg getUserProfileResponseToResult
+        , expect = Http.expectStringResponse msg getUserResponseToResult
         , timeout = Nothing
         , tracker = Nothing
         }
@@ -563,7 +564,7 @@ updateProfile token profile msg =
         , headers = [ tokenToHeader token ]
         , url = urlBuilder [ "v1", "currentuser", "profile" ]
         , body = Http.jsonBody (updateProfileRequestToJsonBody profile)
-        , expect = Http.expectStringResponse msg (getUserProfileResponseToResult >> Result.map User.getProfile)
+        , expect = Http.expectStringResponse msg (getUserResponseToResult >> Result.map User.getProfile)
         , timeout = Nothing
         , tracker = Nothing
         }
@@ -678,34 +679,34 @@ getPurchaseGoodList token msg =
 -}
 
 
-getUserProfile : User.UserId -> (Result () User.User -> msg) -> Cmd msg
+getUserProfile : User.UserId -> (Result () User.Profile -> msg) -> Cmd msg
 getUserProfile userId msg =
     Http.get
         { url = urlBuilder [ "v1", "profile", userId |> User.userIdToInt |> String.fromInt ]
-        , expect = Http.expectStringResponse msg getUserProfileResponseToResult
+        , expect = Http.expectStringResponse msg (getUserResponseToResult >> Result.map User.getProfile)
         }
 
 
-getUserProfileResponseToResult : Http.Response String -> Result () User.User
-getUserProfileResponseToResult response =
+getUserResponseToResult : Http.Response String -> Result () User.User
+getUserResponseToResult response =
     case response of
         Http.BadStatus_ _ body ->
-            Json.Decode.decodeString getUserProfileResponseBodyDecoder body
+            Json.Decode.decodeString getUserResponseBodyDecoder body
                 |> Result.withDefault (Err ())
 
         Http.GoodStatus_ _ body ->
-            Json.Decode.decodeString getUserProfileResponseBodyDecoder body
+            Json.Decode.decodeString getUserResponseBodyDecoder body
                 |> Result.withDefault (Err ())
 
         _ ->
             Err ()
 
 
-getUserProfileResponseBodyDecoder : Json.Decode.Decoder (Result () User.User)
-getUserProfileResponseBodyDecoder =
+getUserResponseBodyDecoder : Json.Decode.Decoder (Result () User.User)
+getUserResponseBodyDecoder =
     Json.Decode.oneOf
         [ Json.Decode.map5
-            getUserProfileResponseValueListToResult
+            getUserResponseValueListToResult
             (Json.Decode.field "user" Json.Decode.int)
             (Json.Decode.field "nick" Json.Decode.string)
             (Json.Decode.field "introduction" Json.Decode.string)
@@ -714,8 +715,8 @@ getUserProfileResponseBodyDecoder =
         ]
 
 
-getUserProfileResponseValueListToResult : Int -> String -> String -> Maybe String -> Maybe String -> Result () User.User
-getUserProfileResponseValueListToResult id nickName introduction departmentMaybe graduateMaybe =
+getUserResponseValueListToResult : Int -> String -> String -> Maybe String -> Maybe String -> Result () User.User
+getUserResponseValueListToResult id nickName introduction departmentMaybe graduateMaybe =
     case University.universityFromIdString { departmentMaybe = departmentMaybe, graduateMaybe = graduateMaybe } of
         Just university ->
             Ok
@@ -937,6 +938,7 @@ statusDecoder =
                                 ++ "\""
                             )
             )
+
 
 
 {- ==============================================================================

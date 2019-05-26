@@ -1,4 +1,4 @@
-module Page.MyProfile exposing
+module Page.User exposing
     ( Emit(..)
     , Model
     , Msg(..)
@@ -26,7 +26,7 @@ type Model
         { id : User.UserId
         , name : String
         }
-    | Normal
+    | Normal User.User
     | Edit EditModel
 
 
@@ -44,6 +44,7 @@ type Emit
     | EmitReplaceElementText { id : String, text : String }
     | EmitUniversity CompUniversity.Emit
     | EmitLogOut
+    | EmitAddLogMessage String
 
 
 type Msg
@@ -53,9 +54,9 @@ type Msg
     | MsgInputUniversity CompUniversity.Model
     | MsgBackToViewMode
     | MsgChangeProfile Api.Token User.Profile
-    | MsgChangeProfileResponse
+    | MsgChangeProfileResponse (Result () User.Profile)
     | MsgLogOut
-    | MsgUserProfileResponse (Result () User.User)
+    | MsgUserProfileResponse (Result () User.Profile)
 
 
 initModel : LogInState.LogInState -> User.UserId -> Maybe String -> ( Model, List Emit )
@@ -63,7 +64,7 @@ initModel logInState userId userNameMaybe =
     case logInState of
         LogInState.LogInStateOk { access, refresh, user } ->
             if User.getUserId user == userId then
-                ( Normal
+                ( Normal user
                 , [ EmitGetMyProfile { access = access, refresh = refresh } ]
                 )
 
@@ -139,7 +140,12 @@ update logInState msg model =
             )
 
         MsgBackToViewMode ->
-            ( Normal
+            ( case logInState of
+                LogInState.LogInStateOk { user } ->
+                    Normal user
+
+                LogInState.LogInStateNone ->
+                    model
             , []
             )
 
@@ -148,24 +154,43 @@ update logInState msg model =
             , [ EmitChangeProfile token profile ]
             )
 
-        MsgChangeProfileResponse ->
-            ( Normal
-            , []
-            )
+        MsgChangeProfileResponse result ->
+            case ( logInState, result ) of
+                ( LogInState.LogInStateOk { user }, Ok profile ) ->
+                    ( Normal (User.makeFromUserIdAndProfile (User.getUserId user) profile)
+                    , [ EmitAddLogMessage "ユーザー情報を更新しました" ]
+                    )
+
+                ( _, _ ) ->
+                    ( model
+                    , [ EmitAddLogMessage "ユーザー情報を更新に失敗しました" ]
+                    )
 
         MsgLogOut ->
             ( model
             , [ EmitLogOut ]
             )
+
         MsgUserProfileResponse result ->
-            case result of
-                Ok profile ->
-                    ( Normal
+            case ( model, result ) of
+                ( LoadingWithUserId userId, Ok profile ) ->
+                    ( Normal (User.makeFromUserIdAndProfile userId profile)
                     , []
                     )
-                Err () ->
-                    ( Normal
+
+                ( LoadingWithUserIdAndName { id }, Ok profile ) ->
+                    ( Normal (User.makeFromUserIdAndProfile id profile)
                     , []
+                    )
+
+                ( _, Ok _ ) ->
+                    ( model
+                    , []
+                    )
+
+                ( _, Err () ) ->
+                    ( model
+                    , [ EmitAddLogMessage "ユーザー情報の取得に失敗しました" ]
                     )
 
 
@@ -207,11 +232,15 @@ view logInState model =
     , [ Html.div
             [ Html.Attributes.class "container" ]
             (case ( logInState, model ) of
-                ( LogInState.LogInStateOk { access, user }, Normal ) ->
-                    viewView user
+                ( LogInState.LogInStateOk { user }, Normal normalUser ) ->
+                    if User.getUserId user == User.getUserId normalUser then
+                        normalMyProfileView user
 
-                ( LogInState.LogInStateNone, Normal ) ->
-                    [ Html.text "自分以外のプロフィールは準備中" ]
+                    else
+                        normalView normalUser
+
+                ( LogInState.LogInStateNone, Normal user ) ->
+                    normalView user
 
                 ( _, LoadingWithUserId userId ) ->
                     loadingWithUserIdView userId
@@ -241,8 +270,16 @@ loadingWithUserIdAndNameView userName =
     ]
 
 
-viewView : User.User -> List (Html.Html Msg)
-viewView user =
+normalView : User.User -> List (Html.Html Msg)
+normalView user =
+    [ Html.div
+        [ Html.Attributes.class "profile" ]
+        (userView user)
+    ]
+
+
+normalMyProfileView : User.User -> List (Html.Html Msg)
+normalMyProfileView user =
     [ Html.div
         [ Html.Attributes.class "profile" ]
         (userView user

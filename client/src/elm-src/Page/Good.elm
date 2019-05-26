@@ -22,6 +22,7 @@ import Html.Attributes
 import Html.Events
 import Icon
 import Page.Component.GoodEditor as GoodEditor
+import SiteMap
 import Svg
 import Svg.Attributes
 import Tab
@@ -399,7 +400,7 @@ view logInState isWideScreenMode nowMaybe model =
                         , goodsViewImage (Good.getFirstImageUrl good) (Good.getOthersImageUrlList good)
                         , goodsViewName (Good.getName good)
                         , goodsViewLike LogInState.LogInStateNone False good
-                        , sellerNameView (Good.getSellerName good)
+                        , sellerNameView (Good.getSellerId good) (Good.getSellerName good)
                         , descriptionView (Good.getDescription good)
                         , goodsViewCondition (Good.getCondition good)
                         ]
@@ -417,7 +418,7 @@ view logInState isWideScreenMode nowMaybe model =
                         ([ goodsViewImage (Good.getFirstImageUrl good) (Good.getOthersImageUrlList good)
                          , goodsViewName (Good.getName good)
                          , goodsViewLike logInState sending good
-                         , sellerNameView (Good.getSellerName good)
+                         , sellerNameView (Good.getSellerId good) (Good.getSellerName good)
                          , descriptionView (Good.getDescription good)
                          , goodsViewCondition (Good.getCondition good)
                          , commentListView nowMaybe (Good.getSellerId good) logInState (Good.getCommentList good)
@@ -568,12 +569,13 @@ itemLikeBody count =
     ]
 
 
-sellerNameView : Maybe String -> Html.Html msg
-sellerNameView nameMaybe =
+sellerNameView : Data.User.UserId -> Maybe String -> Html.Html msg
+sellerNameView userId nameMaybe =
     Html.div
         []
         [ Html.div [ Html.Attributes.class "good-label" ] [ Html.text "出品者" ]
-        , Html.div []
+        , Html.a
+            [ Html.Attributes.href (SiteMap.userUrl userId) ]
             [ case nameMaybe of
                 Just name ->
                     Html.text name

@@ -13,7 +13,7 @@ module Data.User exposing
     , userIdFromInt
     , userIdToInt
     , userIdToString
-    )
+    , makeFromUserIdAndProfile)
 
 import Data.University as University
 
@@ -67,6 +67,10 @@ makeProfile : { nickName : String, introduction : String, university : Universit
 makeProfile =
     Profile
 
+
+makeFromUserIdAndProfile : UserId -> Profile -> User
+makeFromUserIdAndProfile =
+    User
 
 getUserId : User -> UserId
 getUserId (User id _) =
