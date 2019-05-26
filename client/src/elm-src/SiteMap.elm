@@ -10,17 +10,18 @@ module SiteMap exposing
     , homeUrl
     , likeHistoryUrl
     , logInUrl
-    , profileUrl
     , purchaseGoodsUrl
     , signUpUrl
     , siteMapUrl
     , siteMapXml
     , urlParser
     , urlParserInit
+    , userUrl
     )
 
 import Api
 import Data.Good
+import Data.User
 import Url
 import Url.Builder
 import Url.Parser as Parser exposing ((</>), (<?>))
@@ -36,7 +37,7 @@ type UrlParserInitResult
     | InitPurchaseGood
     | InitExhibition
     | InitGood Data.Good.GoodId
-    | InitProfile
+    | InitUser Data.User.UserId
     | InitSiteMap
     | InitAbout
     | InitAboutPrivacyPolicy
@@ -63,7 +64,7 @@ urlParserInit =
         , purchaseGoodsParser |> Parser.map InitPurchaseGood
         , exhibitionParser |> Parser.map InitExhibition
         , goodsParser |> Parser.map InitGood
-        , profileParser |> Parser.map InitProfile
+        , userParser |> Parser.map InitUser
         , siteMapParser |> Parser.map InitSiteMap
         , aboutParser |> Parser.map InitAbout
         , aboutPrivacyPolicyParser |> Parser.map InitAboutPrivacyPolicy
@@ -81,7 +82,7 @@ type UrlParserResult
     | Exhibition
     | ExhibitionConfirm
     | Good Data.Good.GoodId
-    | Profile
+    | User Data.User.UserId
     | SiteMap
     | About
     | AboutPrivacyPolicy
@@ -99,7 +100,7 @@ urlParser =
         , exhibitionParser |> Parser.map Exhibition
         , exhibitionConfirmParser |> Parser.map ExhibitionConfirm
         , goodsParser |> Parser.map Good
-        , profileParser |> Parser.map Profile
+        , userParser |> Parser.map User
         , siteMapParser |> Parser.map SiteMap
         , aboutParser |> Parser.map About
         , aboutPrivacyPolicyParser |> Parser.map AboutPrivacyPolicy
@@ -266,21 +267,22 @@ goodsPath =
 
 
 
-{- profile -}
+{- user -}
 
 
-profileParser : Parser.Parser a a
-profileParser =
-    Parser.s profilePath
+userParser : Parser.Parser (Data.User.UserId -> a) a
+userParser =
+    Parser.s userPath
+        </> (Parser.int |> Parser.map Data.User.userIdFromInt)
 
 
-profileUrl : String
-profileUrl =
-    Url.Builder.absolute [ profilePath ] []
+userUrl : Data.User.UserId -> String
+userUrl userId =
+    Url.Builder.absolute [ userPath, Data.User.userIdToString userId ] []
 
 
-profilePath : String
-profilePath =
+userPath : String
+userPath =
     "profile"
 
 

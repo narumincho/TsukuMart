@@ -433,7 +433,7 @@ menuAccount logInState =
             Html.a
                 [ Html.Attributes.class "menu-account"
                 , Html.Attributes.class "menu-account-a"
-                , Html.Attributes.href SiteMap.profileUrl
+                , Html.Attributes.href (SiteMap.userUrl (Data.User.getUserId user))
                 ]
                 [ Html.img
                     [ Html.Attributes.class "menu-account-a-icon"

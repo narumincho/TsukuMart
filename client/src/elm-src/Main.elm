@@ -259,8 +259,8 @@ urlParserInitResultToPageAndCmd logInState page =
                     PageGoods
                     goodsPageEmitListToCmd
 
-        SiteMap.InitProfile ->
-            Page.MyProfile.initModel logInState
+        SiteMap.InitUser userId ->
+            Page.MyProfile.initModel logInState userId Nothing
                 |> Tuple.mapBoth
                     PageProfile
                     profilePageEmitListToCmd
@@ -925,16 +925,13 @@ profilePageEmitListToCmd =
     List.map
         (\emit ->
             case emit of
-                Page.MyProfile.EmitLogInOrSignUp e ->
-                    logInOrSignUpEmitToCmd e
-
-                Page.MyProfile.EmitGetProfile { access, refresh } ->
+                Page.MyProfile.EmitGetMyProfile { access, refresh } ->
                     Api.getMyProfile access (GetUserDataResponse { access = access, refresh = refresh })
 
                 Page.MyProfile.EmitChangeProfile token profile ->
                     Api.updateProfile token profile ChangeProfileResponse
 
-                Page.MyProfile.EmitReplaceText { id, text } ->
+                Page.MyProfile.EmitReplaceElementText { id, text } ->
                     inputOrTextAreaReplaceText
                         { id = id, text = text }
 
@@ -946,6 +943,9 @@ profilePageEmitListToCmd =
                         [ deleteRefreshTokenAndAllFromLocalStorage ()
                         , Task.perform (always LogOut) (Task.succeed ())
                         ]
+
+                Page.MyProfile.EmitGetUserProfile userId ->
+                    Api.getUserProfile userId (\e -> ProfilePageMsg (Page.MyProfile.MsgUserProfileResponse e))
         )
         >> Cmd.batch
 
@@ -1166,8 +1166,8 @@ urlParserResultToPageAndCmd (Model rec) result =
             )
                 |> Tuple.mapBoth PageGoods goodsPageEmitListToCmd
 
-        SiteMap.Profile ->
-            Page.MyProfile.initModel rec.logInState
+        SiteMap.User userId ->
+            Page.MyProfile.initModel rec.logInState userId Nothing
                 |> Tuple.mapBoth
                     PageProfile
                     profilePageEmitListToCmd
