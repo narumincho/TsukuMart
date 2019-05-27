@@ -49,6 +49,7 @@ import Json.Decode
 import Json.Decode.Pipeline
 import Json.Encode
 import Task
+import Url
 import Url.Builder
 
 
@@ -1223,20 +1224,76 @@ getTradeComment token goodId msg =
 -}
 
 
-logInOrSignUpUrlRequest : Data.SocialLoginService.SocialLoginService -> (Result () () -> msg) -> Cmd msg
+logInOrSignUpUrlRequest : Data.SocialLoginService.SocialLoginService -> (Result () Url.Url -> msg) -> Cmd msg
 logInOrSignUpUrlRequest service callBack =
     Http.post
-        { url = "/api"
-        , body =
-            Http.jsonBody
-                (Json.Encode.object
-                    [ ( "query", Json.Encode.string "{}" )
-                    ]
-                )
+        { url = "https://tsukumart-demo.firebaseapp.com/api"
+        , body = logInOrSignUpUrlRequestBody service
         , expect = Http.expectStringResponse callBack logInOrSignUpUrlResponseToResult
         }
 
 
-logInOrSignUpUrlResponseToResult : Http.Response String -> Result () ()
+logInOrSignUpUrlRequestBody : Data.SocialLoginService.SocialLoginService -> Http.Body
+logInOrSignUpUrlRequestBody service =
+    Http.jsonBody
+        (Json.Encode.object
+            [ ( "query"
+              , Json.Encode.string
+                    ("mutation {"
+                        ++ (case service of
+                                Data.SocialLoginService.Google ->
+                                    "getGoogleLogInUrl"
+
+                                Data.SocialLoginService.GitHub ->
+                                    "getGitHubLogInUrl"
+
+                                Data.SocialLoginService.Twitter ->
+                                    "getTwitterLogInUrl"
+
+                                Data.SocialLoginService.Line ->
+                                    "getLineLogInUrl"
+                           )
+                        ++ "}"
+                    )
+              )
+            , ( "variables", Json.Encode.null )
+            ]
+        )
+
+
+logInOrSignUpUrlResponseToResult : Http.Response String -> Result () Url.Url
 logInOrSignUpUrlResponseToResult response =
-    Ok ()
+    case response of
+        Http.BadUrl_ _ ->
+            Err ()
+
+        Http.Timeout_ ->
+            Err ()
+
+        Http.NetworkError_ ->
+            Err ()
+
+        Http.BadStatus_ _ _ ->
+            Err ()
+
+        Http.GoodStatus_ _ body ->
+            body
+                |> Json.Decode.decodeString
+                    (Json.Decode.field "data"
+                        (Json.Decode.oneOf
+                            [ Json.Decode.field "getGoogleLogInUrl" Json.Decode.string
+                            , Json.Decode.field "getGitHubLogInUrl" Json.Decode.string
+                            , Json.Decode.field "getTwitterLogInUrl" Json.Decode.string
+                            , Json.Decode.field "getLineLogInUrl" Json.Decode.string
+                            ]
+                        )
+                    )
+                |> Result.map Url.fromString
+                |> (\x ->
+                        case x of
+                            Ok (Just url) ->
+                                Ok url
+
+                            _ ->
+                                Err ()
+                   )

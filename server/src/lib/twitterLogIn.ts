@@ -18,7 +18,7 @@ export const getLoginUrl = async (
     tokenSecret: string;
     url: URL;
 }> => {
-    const reqponse = await axios.post(
+    const response = await axios.post(
         requestTokenUrl.toString(),
         { oauth_callback: callbackUrl },
         {
@@ -33,8 +33,7 @@ export const getLoginUrl = async (
             }
         }
     );
-
-    const query = new URLSearchParams(reqponse.data.toString());
+    const query = new URLSearchParams(response.data.toString());
 
     // Redirect visitor to this URL to authorize the app
     authUrl.searchParams.set("oauth_token", query.get("oauth_token") as string);
@@ -180,10 +179,10 @@ const getAuthorizationHeaderValue = (
         ["oauth_timestamp", getTimeStampString()],
         ["oauth_version", "1.0"]
     ]);
-    const headerString = toHeaderString(
+    return toHeaderString(
         new Map([
             ...data,
-            ...requestData, // urlからのパラメーターは不要なのか? headerにつけるのはoauth_のキーから始まるもののみ
+            ...requestData,
             [
                 "oauth_signature",
                 getSignature(
@@ -197,7 +196,6 @@ const getAuthorizationHeaderValue = (
             ]
         ])
     );
-    return headerString;
 };
 
 /**
@@ -250,11 +248,11 @@ const getBaseString = (
  * -> sort
  */
 const getParameterString = (
-    requestUrlSerchParms: URLSearchParams,
+    requestUrlSearchParams: URLSearchParams,
     requestData: Map<string, string>,
     oauthData: Map<string, string>
 ): string =>
-    [...oauthData, ...requestData, ...requestUrlSerchParms.entries()]
+    [...oauthData, ...requestData, ...requestUrlSearchParams.entries()]
         .sort()
         .map(([key, value]) => percentEncode(key) + "=" + percentEncode(value))
         .join("&");

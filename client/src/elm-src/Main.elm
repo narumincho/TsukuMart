@@ -156,6 +156,7 @@ type Msg
     | GoodsPageMsg Page.Good.Msg
     | GetNowTime (Result () ( Time.Posix, Time.Zone ))
     | ReceiveGoodImageFileAsFileAndBlobUrl Json.Decode.Value
+    | LogInOrSignUpUrlResponse (Result () Url.Url)
 
 
 main : Program { refreshToken : Maybe String } Model Msg
@@ -711,6 +712,19 @@ update msg (Model rec) =
                     , Cmd.none
                     )
 
+        LogInOrSignUpUrlResponse result ->
+            case result of
+                Ok url ->
+                    ( Model rec
+                    , Browser.Navigation.load (Url.toString url)
+                    )
+
+                Err () ->
+                    ( Model
+                        { rec | message = Just "ログイン用のURL取得に失敗" }
+                    , Cmd.none
+                    )
+
 
 
 {- ===================== Page Emit To Msg ======================== -}
@@ -939,7 +953,7 @@ logInOrSignUpEmitToCmd : Page.Component.LogInOrSignUp.Emit -> Cmd Msg
 logInOrSignUpEmitToCmd emit =
     case emit of
         Page.Component.LogInOrSignUp.EmitLogInOrSignUp service ->
-            Api.logInOrSignUpUrlRequest service LogInResponse
+            Api.logInOrSignUpUrlRequest service LogInOrSignUpUrlResponse
 
 
 goodsListEmitToCmd : Page.Component.GoodList.Emit -> Cmd Msg

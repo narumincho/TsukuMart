@@ -41,15 +41,6 @@ type Msg
     | MouseDownLogInButton Data.SocialLoginService.SocialLoginService
     | MouseUp
 
-
-{-| 学籍番号かメールアドレスの解析結果
--}
-type AnalysisStudentIdOrEmailAddressResult
-    = AENone
-    | AEStudentId Data.StudentId.StudentId
-    | AEEmailAddress Data.EmailAddress.EmailAddress
-
-
 initModel : Model
 initModel =
     Model
@@ -113,7 +104,7 @@ view : Model -> Html.Html Msg
 view (Model { mouseState, waitLogInUrl }) =
     Html.div
         [ A.class "logIn" ]
-        [ Html.form
+        [ Html.div
             [ A.class "logIn-group" ]
             ([ Html.div
                 []
