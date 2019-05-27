@@ -449,16 +449,11 @@ menuAccount logInState =
             Html.div
                 [ Html.Attributes.class "menu-account" ]
                 [ Html.div [ Html.Attributes.class "menu-noLogin" ] [ Html.text "ログインしていません" ]
-                , Html.div [ Html.Attributes.class "menu-logInsignUpButtonContainer" ]
+                , Html.div [ Html.Attributes.class "menu-logInSignUpButtonContainer" ]
                     [ Html.a
                         [ Html.Attributes.class "menu-logInButton"
                         , Html.Attributes.href SiteMap.logInUrl
                         ]
-                        [ Html.text "ログイン" ]
-                    , Html.a
-                        [ Html.Attributes.class "menu-signUpButton"
-                        , Html.Attributes.href SiteMap.signUpUrl
-                        ]
-                        [ Html.text "新規登録" ]
+                        [ Html.text "ログイン/新規登録" ]
                     ]
                 ]

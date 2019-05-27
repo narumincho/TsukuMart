@@ -23,6 +23,7 @@ module Api exposing
     , getUserProfile
     , likeGoods
     , logIn
+    , logInOrSignUpUrlRequest
     , postGoodsComment
     , sellGoods
     , signUp
@@ -39,6 +40,7 @@ module Api exposing
 import Data.EmailAddress as EmailAddress
 import Data.Good as Good
 import Data.Password as Password
+import Data.SocialLoginService
 import Data.University as University
 import Data.User as User
 import File
@@ -386,7 +388,7 @@ type alias TokenRefreshRequest =
     { refresh : Token }
 
 
-tokenRefresh : TokenRefreshRequest -> (Result () LogInResponseOk -> msg) -> Cmd msg
+tokenRefresh : TokenRefreshRequest -> (Result () () -> msg) -> Cmd msg
 tokenRefresh tokenRefreshRequest msg =
     Http.post
         { url = urlBuilder [ "auth", "token", "refresh" ]
@@ -401,7 +403,7 @@ tokenRefreshBody { refresh } =
         [ ( "refresh", Json.Encode.string (tokenToString refresh) ) ]
 
 
-refreshTokenResponseToResult : Token -> Http.Response String -> Result () LogInResponseOk
+refreshTokenResponseToResult : Token -> Http.Response String -> Result () ()
 refreshTokenResponseToResult refresh response =
     case response of
         Http.GoodStatus_ _ body ->
@@ -412,17 +414,17 @@ refreshTokenResponseToResult refresh response =
             Err ()
 
 
-refreshTokenResponseDecoder : Token -> Json.Decode.Decoder (Result () LogInResponseOk)
+refreshTokenResponseDecoder : Token -> Json.Decode.Decoder (Result () ())
 refreshTokenResponseDecoder refresh =
     Json.Decode.field "access" Json.Decode.string
         |> Json.Decode.map
             (\access ->
-                Ok
-                    (LogInResponseOk
-                        { access = tokenFromString access
-                        , refresh = refresh
-                        }
-                    )
+                Ok ()
+             --                    (LogInResponseOk
+             --                        { access = tokenFromString access
+             --                        , refresh = refresh
+             --                        }
+             --                    )
             )
 
 
@@ -1212,3 +1214,29 @@ getTradeComment token goodId msg =
         , timeout = Nothing
         , tracker = Nothing
         }
+
+
+
+{- ==============================================================================
+                         ソーシャルログインでログイン/新規登録
+   ==============================================================================
+-}
+
+
+logInOrSignUpUrlRequest : Data.SocialLoginService.SocialLoginService -> (Result () () -> msg) -> Cmd msg
+logInOrSignUpUrlRequest service callBack =
+    Http.post
+        { url = "/api"
+        , body =
+            Http.jsonBody
+                (Json.Encode.object
+                    [ ( "query", Json.Encode.string "{}" )
+                    ]
+                )
+        , expect = Http.expectStringResponse callBack logInOrSignUpUrlResponseToResult
+        }
+
+
+logInOrSignUpUrlResponseToResult : Http.Response String -> Result () ()
+logInOrSignUpUrlResponseToResult response =
+    Ok ()

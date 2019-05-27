@@ -40,14 +40,7 @@ update msg (Model logInOrSignUpModel) =
                 |> LogInOrSignUp.update logInOrSignUpMsg
                 |> Tuple.mapBoth Model
                     (\e ->
-                        (e |> List.map LogInOrSignUpEmit)
-                            ++ (case logInOrSignUpMsg of
-                                    LogInOrSignUp.LogInSuccess ->
-                                        [ EmitPageToHome ]
-
-                                    _ ->
-                                        []
-                               )
+                        e |> List.map LogInOrSignUpEmit
                     )
 
 

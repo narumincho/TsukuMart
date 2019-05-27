@@ -154,18 +154,7 @@ updateWhenNoLogIn msg (Model rec) =
         LogInOrSignUpMsg m ->
             let
                 exEmit =
-                    case m of
-                        LogInOrSignUp.LogInSuccess ->
-                            case rec.page of
-                                EditPage goodEditorModel ->
-                                    GoodEditor.resendEmit goodEditorModel
-                                        |> List.map EmitGoodEditor
-
-                                _ ->
-                                    []
-
-                        _ ->
-                            []
+                    []
             in
             rec.logInOrSignUpModel
                 |> LogInOrSignUp.update m

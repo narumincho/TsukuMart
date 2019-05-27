@@ -238,10 +238,9 @@ header {
     user-select: none;
 }
 
-.menu-logInsignUpButtonContainer {
+.menu-logInSignUpButtonContainer {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
+    grid-template-columns: 1fr;
 }
 
 .menu-logInButton {
@@ -255,20 +254,6 @@ header {
 }
 
 .menu-logInButton:hover {
-    background-color: #ccc;
-}
-
-.menu-signUpButton {
-    background-color: #aaa;
-    color: #111;
-    text-align: center;
-    padding: 1rem 0;
-    border-radius: 0.4rem;
-    text-decoration: none;
-    user-select: none;
-}
-
-.menu-signUpButton:hover {
     background-color: #ccc;
 }
 

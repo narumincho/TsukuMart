@@ -23,9 +23,9 @@ import Page.Good
 import Page.Home
 import Page.LikeAndHistory
 import Page.LogIn
-import Page.User
 import Page.PurchaseGoodList
 import Page.SignUp
+import Page.User
 import SiteMap
 import Tab
 import Task
@@ -136,7 +136,7 @@ type Msg
     | AddLogMessage String
     | LogOut
     | SignUpConfirmResponse Api.LogInRequest (Result Api.SignUpConfirmResponseError ())
-    | LogInResponse Bool (Result () Api.LogInResponseOk)
+    | LogInResponse (Result () ())
     | ReceiveImageDataUrl String
     | ReceiveImageFileAndBlobUrl Json.Decode.Value
     | GetUserDataResponse { access : Api.Token, refresh : Api.Token } (Result () Data.User.User)
@@ -189,7 +189,7 @@ init { refreshToken } url key =
     , Cmd.batch
         ((case refreshToken of
             Just refreshTokenString ->
-                [ Api.tokenRefresh { refresh = Api.tokenFromString refreshTokenString } (LogInResponse True)
+                [ Api.tokenRefresh { refresh = Api.tokenFromString refreshTokenString } LogInResponse
                 ]
 
             Nothing ->
@@ -280,7 +280,7 @@ urlParserInitResultToPageAndCmd logInState page =
                     |> Tuple.mapBoth PageHome homePageEmitListToCmd
             of
                 ( p, cmd ) ->
-                    ( p, Cmd.batch [ cmd, Api.tokenRefresh { refresh = token } (LogInResponse True) ] )
+                    ( p, Cmd.batch [ cmd, Api.tokenRefresh { refresh = token } LogInResponse ] )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -338,85 +338,10 @@ update msg (Model rec) =
             , Cmd.none
             )
 
-        LogInResponse saveRefreshToken logInResponse ->
-            case logInResponse of
-                Ok (Api.LogInResponseOk { access, refresh }) ->
-                    let
-                        ( newPage, cmd ) =
-                            case rec.page of
-                                PageLogIn logInPageModel ->
-                                    logInPageModel
-                                        |> Page.LogIn.update (Page.LogIn.Msg Page.Component.LogInOrSignUp.LogInSuccess)
-                                        |> Tuple.mapBoth PageLogIn (logInPageEmitListToCmd rec.key)
-
-                                PageExhibition exhibitionPageModel ->
-                                    exhibitionPageModel
-                                        |> Page.Exhibition.update rec.logInState
-                                            (Page.Exhibition.LogInOrSignUpMsg Page.Component.LogInOrSignUp.LogInSuccess)
-                                        |> Tuple.mapBoth PageExhibition exhibitionPageEmitListToCmd
-
-                                PageLikeAndHistory likeAndHistoryModel ->
-                                    likeAndHistoryModel
-                                        |> Page.LikeAndHistory.update rec.logInState
-                                            (Page.LikeAndHistory.LogInOrSignUpMsg Page.Component.LogInOrSignUp.LogInSuccess)
-                                        |> Tuple.mapBoth PageLikeAndHistory likeAndHistoryEmitListToCmd
-
-                                PagePurchaseGoodList purchaseGoodListModel ->
-                                    purchaseGoodListModel
-                                        |> Page.PurchaseGoodList.update
-                                            (Page.PurchaseGoodList.LogInOrSignUpMsg Page.Component.LogInOrSignUp.LogInSuccess)
-                                        |> Tuple.mapBoth PagePurchaseGoodList purchaseGoodListPageEmitListToCmd
-
-                                PageExhibitionGoodList exhibitionGoodListModel ->
-                                    exhibitionGoodListModel
-                                        |> Page.ExhibitionGoodList.update
-                                            (Page.ExhibitionGoodList.LogInOrSignUpMsg Page.Component.LogInOrSignUp.LogInSuccess)
-                                        |> Tuple.mapBoth PageExhibitionGoodList exhibitionGoodListPageEmitListToCmd
-
-                                _ ->
-                                    ( rec.page, Cmd.none )
-                    in
-                    ( Model
-                        { rec
-                            | message = Just "ログインしました"
-                            , page = newPage
-                        }
-                    , Cmd.batch
-                        [ cmd
-                        , Api.getMyProfile access (GetUserDataResponse { access = access, refresh = refresh })
-                        , if saveRefreshToken then
-                            saveRefreshTokenToLocalStorage (Api.tokenToString refresh)
-
-                          else
-                            deleteRefreshTokenAndAllFromLocalStorage ()
-                        ]
-                    )
-
-                Err () ->
-                    let
-                        ( newPage, cmd ) =
-                            case rec.page of
-                                PageLogIn logInPageModel ->
-                                    logInPageModel
-                                        |> Page.LogIn.update (Page.LogIn.Msg Page.Component.LogInOrSignUp.LogInFailure)
-                                        |> Tuple.mapBoth PageLogIn (logInPageEmitListToCmd rec.key)
-
-                                PageExhibition exhibitionPageModel ->
-                                    exhibitionPageModel
-                                        |> Page.Exhibition.update rec.logInState
-                                            (Page.Exhibition.LogInOrSignUpMsg Page.Component.LogInOrSignUp.LogInFailure)
-                                        |> Tuple.mapBoth PageExhibition exhibitionPageEmitListToCmd
-
-                                _ ->
-                                    ( rec.page, Cmd.none )
-                    in
-                    ( Model
-                        { rec
-                            | message = Just "ログインに失敗しました"
-                            , page = newPage
-                        }
-                    , cmd
-                    )
+        LogInResponse _ ->
+            ( Model rec
+            , Cmd.none
+            )
 
         SignUpConfirmResponse logInRequest response ->
             case response of
@@ -946,10 +871,10 @@ profilePageEmitListToCmd =
 
                 Page.User.EmitGetUserProfile userId ->
                     Api.getUserProfile userId (\e -> ProfilePageMsg (Page.User.MsgUserProfileResponse e))
+
                 Page.User.EmitAddLogMessage log ->
                     Task.succeed ()
                         |> Task.perform (always (AddLogMessage log))
-
         )
         >> Cmd.batch
 
@@ -1013,8 +938,8 @@ goodsPageEmitListToCmd =
 logInOrSignUpEmitToCmd : Page.Component.LogInOrSignUp.Emit -> Cmd Msg
 logInOrSignUpEmitToCmd emit =
     case emit of
-        Page.Component.LogInOrSignUp.EmitLogIn logInRequest saveRefreshToken ->
-            Api.logIn logInRequest (LogInResponse saveRefreshToken)
+        Page.Component.LogInOrSignUp.EmitLogInOrSignUp service ->
+            Api.logInOrSignUpUrlRequest service LogInResponse
 
 
 goodsListEmitToCmd : Page.Component.GoodList.Emit -> Cmd Msg

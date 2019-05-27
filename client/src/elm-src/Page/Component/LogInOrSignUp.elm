@@ -7,38 +7,39 @@ module Page.Component.LogInOrSignUp exposing
     , view
     )
 
-import Api
 import Data.EmailAddress
-import Data.Password
-import Data.SAddress
+import Data.SocialLoginService
 import Data.StudentId
 import Html
-import Html.Attributes
+import Html.Attributes as A
 import Html.Events
-import Json.Decode
-import SiteMap
+import Svg
+import Svg.Attributes
 
 
 type Model
     = Model
-        { analysisStudentIdOrEmailAddressResult : AnalysisStudentIdOrEmailAddressResult
-        , password : Maybe Data.Password.Password
-        , saveRefreshToken : Bool
-        , sending : Bool -- ログイン処理で送信中か
+        { mouseState : MouseState
+        , waitLogInUrl : Maybe Data.SocialLoginService.SocialLoginService -- ログインするためURLを取得中かどうか
         }
 
 
+type MouseState
+    = MouseStateNone
+    | MouseStateEnter Data.SocialLoginService.SocialLoginService
+    | MouseStateDown Data.SocialLoginService.SocialLoginService
+
+
 type Emit
-    = EmitLogIn Api.LogInRequest Bool
+    = EmitLogInOrSignUp Data.SocialLoginService.SocialLoginService
 
 
 type Msg
-    = InputStudentIdOrEmailAddress String
-    | InputPassword String
-    | CheckSaveRefreshToken Bool
-    | LogIn Api.LogInRequest
-    | LogInSuccess
-    | LogInFailure
+    = LogInOrSignUpRequest Data.SocialLoginService.SocialLoginService
+    | MouseEnterLogInButton Data.SocialLoginService.SocialLoginService
+    | MouseLeave
+    | MouseDownLogInButton Data.SocialLoginService.SocialLoginService
+    | MouseUp
 
 
 {-| 学籍番号かメールアドレスの解析結果
@@ -52,90 +53,53 @@ type AnalysisStudentIdOrEmailAddressResult
 initModel : Model
 initModel =
     Model
-        { analysisStudentIdOrEmailAddressResult = analysisStudentIdOrEmailAddress ""
-        , password = Nothing
-        , saveRefreshToken = True
-        , sending = False
+        { mouseState = MouseStateNone
+        , waitLogInUrl = Nothing
         }
 
 
 update : Msg -> Model -> ( Model, List Emit )
 update msg (Model r) =
     case msg of
-        InputPassword string ->
+        LogInOrSignUpRequest service ->
+            ( Model { r | waitLogInUrl = Just service }
+            , [ EmitLogInOrSignUp service ]
+            )
+
+        MouseEnterLogInButton service ->
+            ( Model
+                { r | mouseState = MouseStateEnter service }
+            , []
+            )
+
+        MouseLeave ->
+            ( Model
+                { r | mouseState = MouseStateNone }
+            , []
+            )
+
+        MouseDownLogInButton service ->
+            ( Model
+                { r | mouseState = MouseStateDown service }
+            , []
+            )
+
+        MouseUp ->
             ( Model
                 { r
-                    | password = Data.Password.fromString string |> Result.toMaybe
+                    | mouseState =
+                        case r.mouseState of
+                            MouseStateNone ->
+                                MouseStateNone
+
+                            MouseStateEnter element ->
+                                MouseStateEnter element
+
+                            MouseStateDown element ->
+                                MouseStateEnter element
                 }
             , []
             )
-
-        InputStudentIdOrEmailAddress string ->
-            ( Model
-                { r | analysisStudentIdOrEmailAddressResult = analysisStudentIdOrEmailAddress string }
-            , []
-            )
-
-        CheckSaveRefreshToken check ->
-            ( Model
-                { r | saveRefreshToken = check }
-            , []
-            )
-
-        LogIn request ->
-            ( Model { r | sending = True }
-            , [ EmitLogIn request r.saveRefreshToken ]
-            )
-
-        LogInSuccess ->
-            ( Model { r | sending = False }
-            , []
-            )
-
-        LogInFailure ->
-            ( Model { r | sending = False }
-            , []
-            )
-
-
-{-| ログイン画面で使う入力の解析
--}
-analysisStudentIdOrEmailAddress : String -> AnalysisStudentIdOrEmailAddressResult
-analysisStudentIdOrEmailAddress string =
-    let
-        charList =
-            String.toList (String.trim string)
-    in
-    case Data.StudentId.fromCharList charList of
-        Just studentId ->
-            AEStudentId studentId
-
-        Nothing ->
-            case Data.EmailAddress.fromCharList charList of
-                Just emailAddress ->
-                    AEEmailAddress emailAddress
-
-                Nothing ->
-                    AENone
-
-
-getLogInData : AnalysisStudentIdOrEmailAddressResult -> Maybe Data.Password.Password -> Maybe { emailAddress : Data.EmailAddress.EmailAddress, pass : Data.Password.Password }
-getLogInData studentIdOrEmailAddress passwordMaybe =
-    case ( studentIdOrEmailAddress, passwordMaybe ) of
-        ( AEStudentId studentId, Just password ) ->
-            Just
-                { emailAddress = Data.EmailAddress.fromSAddress (Data.SAddress.fromStudentId studentId)
-                , pass = password
-                }
-
-        ( AEEmailAddress emailAddress, Just password ) ->
-            Just
-                { emailAddress = emailAddress
-                , pass = password
-                }
-
-        ( _, _ ) ->
-            Nothing
 
 
 
@@ -146,140 +110,196 @@ getLogInData studentIdOrEmailAddress passwordMaybe =
 
 
 view : Model -> Html.Html Msg
-view (Model { analysisStudentIdOrEmailAddressResult, password, saveRefreshToken, sending }) =
+view (Model { mouseState, waitLogInUrl }) =
     Html.div
-        [ Html.Attributes.class "logIn" ]
+        [ A.class "logIn" ]
         [ Html.form
-            [ Html.Attributes.class "logIn-group" ]
-            ([ logInIdView analysisStudentIdOrEmailAddressResult
-             , logInPasswordView
-             , logInSaveRefreshTokenCheck saveRefreshToken
-             , logInButton sending (getLogInData analysisStudentIdOrEmailAddressResult password)
+            [ A.class "logIn-group" ]
+            ([ Html.div
+                []
+                [ Html.text "ログイン/新規登録するためには以下のどれかのアカウントが必要です" ]
              ]
-                ++ (if sending then
-                        [ Html.text "送信中" ]
-
-                    else
-                        []
-                   )
-            )
-        , orLabel
-        , Html.div
-            [ Html.Attributes.class "logIn-group" ]
-            [ signUpButton ]
-        ]
-
-
-logInIdView : AnalysisStudentIdOrEmailAddressResult -> Html.Html Msg
-logInIdView analysisStudentIdOrEmailAddressResult =
-    Html.div
-        []
-        [ Html.label
-            [ Html.Attributes.class "logIn-subTitle", Html.Attributes.for "logInId" ]
-            [ Html.text "学籍番号かメールアドレス" ]
-        , Html.input
-            [ Html.Attributes.class "logIn-input"
-            , Html.Attributes.id "logInId"
-            , Html.Attributes.attribute "autocomplete" "email"
-            , Html.Events.onInput InputStudentIdOrEmailAddress
-            ]
-            []
-        , Html.div
-            []
-            [ Html.text
-                (case analysisStudentIdOrEmailAddressResult of
-                    AENone ->
-                        ""
-
-                    AEStudentId studentId ->
-                        "学籍番号" ++ Data.StudentId.toStringWith20 studentId
-
-                    AEEmailAddress emailAddress ->
-                        "メールアドレス" ++ Data.EmailAddress.toString emailAddress
-                )
-            ]
-        ]
-
-
-logInPasswordView : Html.Html Msg
-logInPasswordView =
-    Html.div
-        []
-        [ Html.label
-            [ Html.Attributes.class "logIn-subTitle"
-            , Html.Attributes.for "logInPassword"
-            ]
-            [ Html.text "パスワード" ]
-        , Html.input
-            [ Html.Attributes.type_ "password"
-            , Html.Attributes.class "logIn-input"
-            , Html.Attributes.id "logInPassword"
-            , Html.Attributes.minlength 9
-            , Html.Attributes.maxlength 50
-            , Html.Attributes.attribute "autocomplete" "current-password"
-            , Html.Events.onInput InputPassword
-            ]
-            []
-        ]
-
-
-logInSaveRefreshTokenCheck : Bool -> Html.Html Msg
-logInSaveRefreshTokenCheck saveRefreshToken =
-    Html.div
-        []
-        [ Html.input
-            [ Html.Attributes.type_ "checkbox"
-            , Html.Attributes.id "saveRefreshToken"
-            , Html.Events.onCheck CheckSaveRefreshToken
-            , Html.Attributes.checked saveRefreshToken
-            ]
-            []
-        , Html.label
-            [ Html.Attributes.for "saveRefreshToken" ]
-            [ Html.text "ログイン情報を保存する" ]
-        ]
-
-
-logInButton : Bool -> Maybe Api.LogInRequest -> Html.Html Msg
-logInButton sending logInDataMaybe =
-    Html.div
-        []
-        [ Html.button
-            ([ Html.Attributes.class "logIn-logInButton"
-             ]
-                ++ (case logInDataMaybe of
-                        Just logInData ->
-                            if sending then
-                                [ Html.Attributes.disabled True ]
-
-                            else
-                                [ Html.Events.preventDefaultOn "click"
-                                    (Json.Decode.succeed
-                                        ( LogIn logInData
-                                        , True
-                                        )
-                                    )
-                                , Html.Attributes.disabled False
+                ++ (case waitLogInUrl of
+                        Just service ->
+                            [ Html.div []
+                                [ Html.text
+                                    (Data.SocialLoginService.serviceName service)
                                 ]
+                            ]
 
                         Nothing ->
-                            [ Html.Attributes.disabled True ]
+                            serviceLogInButtonListView mouseState
                    )
             )
-            [ Html.text "ログイン" ]
         ]
 
 
-orLabel : Html.Html msg
-orLabel =
-    Html.div [ Html.Attributes.class "logIn-orLabel" ]
-        [ Html.text "or" ]
+serviceLogInButtonListView : MouseState -> List (Html.Html Msg)
+serviceLogInButtonListView mouseState =
+    [ logInButtonNoLine mouseState googleIcon Data.SocialLoginService.Google
+    , logInButtonNoLine mouseState gitHubIcon Data.SocialLoginService.GitHub
+    , logInButtonNoLine mouseState twitterIcon Data.SocialLoginService.Twitter
+    , Html.button
+        [ Html.Events.onClick (LogInOrSignUpRequest Data.SocialLoginService.Line)
+        , Html.Events.onMouseEnter (MouseEnterLogInButton Data.SocialLoginService.Line)
+        , Html.Events.onMouseLeave MouseLeave
+        , Html.Events.onMouseDown (MouseDownLogInButton Data.SocialLoginService.Line)
+        , Html.Events.onMouseUp MouseUp
+        , A.style "background-color"
+            (case mouseState of
+                MouseStateEnter Data.SocialLoginService.Line ->
+                    "#00e000"
 
+                MouseStateDown Data.SocialLoginService.Line ->
+                    "#00b300"
 
-signUpButton : Html.Html msg
-signUpButton =
-    Html.a
-        [ Html.Attributes.class "subButton"
-        , Html.Attributes.href SiteMap.signUpUrl
+                _ ->
+                    "#00c300"
+            )
+        , A.style "border-radius" "4px"
+        , A.style "border" "none"
+        , A.style "color" "#FFF"
+        , A.style "display" "flex"
+        , A.style "align-items" "center"
+        , A.style "padding" "0"
+        , A.style "cursor" "pointer"
         ]
-        [ Html.text "新規登録" ]
+        [ Html.img
+            [ A.src "/assets/line_icon120.png"
+            , A.style "width" "36px"
+            , A.style "height" "36px"
+            , A.style "border-right"
+                ("solid 1px "
+                    ++ (case mouseState of
+                            MouseStateEnter Data.SocialLoginService.Line ->
+                                "#00c900"
+
+                            MouseStateDown Data.SocialLoginService.Line ->
+                                "#009800"
+
+                            _ ->
+                                "#00b300"
+                       )
+                )
+            , A.style "padding" "2px"
+            ]
+            []
+        , logInButtonText "LINEでログイン"
+        ]
+    ]
+
+
+logInButtonNoLine : MouseState -> Html.Html Msg -> Data.SocialLoginService.SocialLoginService -> Html.Html Msg
+logInButtonNoLine mouseSate icon service =
+    Html.button
+        [ Html.Events.onClick (LogInOrSignUpRequest service)
+        , Html.Events.onMouseEnter (MouseEnterLogInButton service)
+        , Html.Events.onMouseLeave MouseLeave
+        , Html.Events.onMouseDown (MouseDownLogInButton service)
+        , Html.Events.onMouseUp MouseUp
+        , A.style "background-color"
+            (case mouseSate of
+                MouseStateDown s ->
+                    if s == service then
+                        "#ccc"
+
+                    else
+                        "#e8e8e8"
+
+                MouseStateEnter s ->
+                    if s == service then
+                        "#fff"
+
+                    else
+                        "#e8e8e8"
+
+                MouseStateNone ->
+                    "e8e8e8"
+            )
+        , A.style "border-radius" "4px"
+        , A.style "border" "none"
+        , A.style "color" "#111"
+        , A.style "display" "flex"
+        , A.style "align-items" "center"
+        , A.style "padding" "0"
+        , A.style "cursor" "pointer"
+        ]
+        [ icon
+        , logInButtonText (Data.SocialLoginService.serviceName service ++ "でログイン")
+        ]
+
+
+logInButtonText : String -> Html.Html msg
+logInButtonText text =
+    Html.div
+        [ A.style "flex-grow" "1"
+        , A.style "font-weight" "bold"
+        ]
+        [ Html.text text ]
+
+
+gitHubIcon : Html.Html msg
+gitHubIcon =
+    Svg.svg
+        [ Svg.Attributes.viewBox "0 0 20 20"
+        , Svg.Attributes.style "width:36px;height:36px;padding:4px"
+        ]
+        [ Svg.path
+            [ Svg.Attributes.d
+                "M10 0C4.476 0 0 4.477 0 10c0 4.418 2.865 8.166 6.84 9.49.5.09.68-.218.68-.483 0-.237-.007-.866-.012-1.7-2.782.603-3.37-1.34-3.37-1.34-.454-1.157-1.11-1.464-1.11-1.464-.907-.62.07-.608.07-.608 1.003.07 1.53 1.03 1.53 1.03.893 1.53 2.342 1.087 2.912.83.09-.645.35-1.085.634-1.335-2.22-.253-4.555-1.11-4.555-4.943 0-1.09.39-1.984 1.03-2.683-.105-.253-.448-1.27.096-2.647 0 0 .84-.268 2.75 1.026C8.294 4.95 9.15 4.84 10 4.836c.85.004 1.705.115 2.504.337 1.91-1.294 2.747-1.026 2.747-1.026.548 1.377.204 2.394.1 2.647.64.7 1.03 1.592 1.03 2.683 0 3.842-2.34 4.687-4.566 4.935.36.308.678.92.678 1.852 0 1.336-.01 2.415-.01 2.743 0 .267.18.578.687.48C17.14 18.163 20 14.417 20 10c0-5.522-4.478-10-10-10"
+            , Svg.Attributes.stroke "none"
+            , Svg.Attributes.fill "#000000"
+            ]
+            []
+        ]
+
+
+googleIcon : Html.Html msg
+googleIcon =
+    Svg.svg
+        [ Svg.Attributes.viewBox "0 0 20 20"
+        , Svg.Attributes.style "width:36px;height:36px;padding:4px"
+        ]
+        [ Svg.path
+            [ Svg.Attributes.d "M19.6 10.23c0-.82-.1-1.42-.25-2.05H10v3.72h5.5c-.15.96-.74 2.31-2.04 3.22v2.45h3.16c1.89-1.73 2.98-4.3 2.98-7.34z"
+            , Svg.Attributes.stroke "none"
+            , Svg.Attributes.fill "rgb(66,133,244)"
+            ]
+            []
+        , Svg.path
+            [ Svg.Attributes.d
+                "M13.46 15.13c-.83.59-1.96 1-3.46 1-2.64 0-4.88-1.74-5.68-4.15H1.07v2.52C2.72 17.75 6.09 20 10 20c2.7 0 4.96-.89 6.62-2.42l-3.16-2.45z"
+            , Svg.Attributes.stroke "none"
+            , Svg.Attributes.fill "rgb(52,168,83)"
+            ]
+            []
+        , Svg.path
+            [ Svg.Attributes.d
+                "M3.99 10c0-.69.12-1.35.32-1.97V5.51H1.07A9.973 9.973 0 0 0 0 10c0 1.61.39 3.14 1.07 4.49l3.24-2.52c-.2-.62-.32-1.28-.32-1.97z"
+            , Svg.Attributes.stroke "none"
+            , Svg.Attributes.fill "rgb(251,188,5)"
+            ]
+            []
+        , Svg.path
+            [ Svg.Attributes.d
+                "M10 3.88c1.88 0 3.13.81 3.85 1.48l2.84-2.76C14.96.99 12.7 0 10 0 6.09 0 2.72 2.25 1.07 5.51l3.24 2.52C5.12 5.62 7.36 3.88 10 3.88z"
+            , Svg.Attributes.stroke "none"
+            , Svg.Attributes.fill "rgb(234,67,53)"
+            ]
+            []
+        ]
+
+
+twitterIcon : Html.Html msg
+twitterIcon =
+    Svg.svg
+        [ Svg.Attributes.viewBox "0 0 20 20"
+        , Svg.Attributes.style "width:36px;height:36px;padding:4px"
+        ]
+        [ Svg.path
+            [ Svg.Attributes.d "M20 3.924c-.736.326-1.527.547-2.357.646.848-.508 1.498-1.312 1.804-2.27-.792.47-1.67.812-2.605.996C16.092 2.498 15.027 2 13.847 2 11.58 2 9.743 3.837 9.743 6.103c0 .322.037.635.107.935-3.41-.17-6.434-1.804-8.458-4.287-.352.61-.555 1.314-.555 2.066 0 1.423.724 2.68 1.825 3.415-.672-.02-1.305-.206-1.858-.513v.052c0 1.987 1.414 3.645 3.29 4.022-.344.096-.706.146-1.08.146-.265 0-.522-.026-.772-.074.522 1.63 2.037 2.818 3.833 2.85C4.67 15.81 2.9 16.468.98 16.468c-.332 0-.66-.02-.98-.057 1.816 1.166 3.973 1.846 6.29 1.846 7.547 0 11.674-6.253 11.674-11.675 0-.18-.004-.355-.01-.53.8-.58 1.496-1.3 2.046-2.125"
+            , Svg.Attributes.stroke "none"
+            , Svg.Attributes.fill "rgb(85,172,238)"
+            ]
+            []
+        ]
