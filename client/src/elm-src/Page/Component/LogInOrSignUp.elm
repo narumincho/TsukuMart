@@ -166,8 +166,8 @@ serviceLogInButtonListView mouseState =
         ]
         [ Html.img
             [ A.src "/assets/line_icon120.png"
-            , A.style "width" "36px"
-            , A.style "height" "36px"
+            , A.style "width" "44px"
+            , A.style "height" "44px"
             , A.style "border-right"
                 ("solid 1px "
                     ++ (case mouseState of
@@ -181,7 +181,7 @@ serviceLogInButtonListView mouseState =
                                 "#00b300"
                        )
                 )
-            , A.style "padding" "2px"
+            , A.style "padding" "4px"
             ]
             []
         , logInButtonText "LINEでログイン"
@@ -204,17 +204,17 @@ logInButtonNoLine mouseSate icon service =
                         "#ccc"
 
                     else
-                        "#e8e8e8"
+                        "#ddd"
 
                 MouseStateEnter s ->
                     if s == service then
-                        "#fff"
+                        "#eee"
 
                     else
-                        "#e8e8e8"
+                        "#ddd"
 
                 MouseStateNone ->
-                    "e8e8e8"
+                    "#ddd"
             )
         , A.style "border-radius" "4px"
         , A.style "border" "none"
@@ -242,7 +242,7 @@ gitHubIcon : Html.Html msg
 gitHubIcon =
     Svg.svg
         [ Svg.Attributes.viewBox "0 0 20 20"
-        , Svg.Attributes.style "width:36px;height:36px;padding:4px"
+        , Svg.Attributes.style "width:40px;height:40px;padding:6px"
         ]
         [ Svg.path
             [ Svg.Attributes.d
@@ -258,7 +258,7 @@ googleIcon : Html.Html msg
 googleIcon =
     Svg.svg
         [ Svg.Attributes.viewBox "0 0 20 20"
-        , Svg.Attributes.style "width:36px;height:36px;padding:4px"
+        , Svg.Attributes.style "width:40px;height:40px;padding:6px"
         ]
         [ Svg.path
             [ Svg.Attributes.d "M19.6 10.23c0-.82-.1-1.42-.25-2.05H10v3.72h5.5c-.15.96-.74 2.31-2.04 3.22v2.45h3.16c1.89-1.73 2.98-4.3 2.98-7.34z"
@@ -294,7 +294,7 @@ twitterIcon : Html.Html msg
 twitterIcon =
     Svg.svg
         [ Svg.Attributes.viewBox "0 0 20 20"
-        , Svg.Attributes.style "width:36px;height:36px;padding:4px"
+        , Svg.Attributes.style "width:40px;height:40px;padding:6px"
         ]
         [ Svg.path
             [ Svg.Attributes.d "M20 3.924c-.736.326-1.527.547-2.357.646.848-.508 1.498-1.312 1.804-2.27-.792.47-1.67.812-2.605.996C16.092 2.498 15.027 2 13.847 2 11.58 2 9.743 3.837 9.743 6.103c0 .322.037.635.107.935-3.41-.17-6.434-1.804-8.458-4.287-.352.61-.555 1.314-.555 2.066 0 1.423.724 2.68 1.825 3.415-.672-.02-1.305-.206-1.858-.513v.052c0 1.987 1.414 3.645 3.29 4.022-.344.096-.706.146-1.08.146-.265 0-.522-.026-.772-.074.522 1.63 2.037 2.818 3.833 2.85C4.67 15.81 2.9 16.468.98 16.468c-.332 0-.66-.02-.98-.057 1.816 1.166 3.973 1.846 6.29 1.846 7.547 0 11.674-6.253 11.674-11.675 0-.18-.004-.355-.01-.53.8-.58 1.496-1.3 2.046-2.125"

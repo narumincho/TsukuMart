@@ -15,20 +15,28 @@
                 "destination": "/assets/**"
             },
             {
-                "source": "/redoc",
-                "destination": "/redoc.html"
-            },
-            {
                 "source": "/robots.txt",
                 "destination": "/robots.txt"
             },
             {
-                "source": "/api/sign-up",
-                "function": "signUp"
+                "source": "/api",
+                "function": "api"
             },
             {
-                "source": "/api/token",
-                "function": "getToken"
+                "source": "/social_login/google_receiver",
+                "function": "googleLogInReceiver"
+            },
+            {
+                "source": "/social_login/github_receiver",
+                "function": "gitHubLogInReceiver"
+            },
+            {
+                "source": "/social_login/twitter_receiver",
+                "function": "twitterLogInReceiver"
+            },
+            {
+                "source": "/social_login/line_receiver",
+                "function": "lineLogInReceiver"
             },
             {
                 "source": "**",

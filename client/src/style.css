@@ -682,7 +682,6 @@ header {
 
 .logIn-group {
     display: grid;
-    background-color: #eee;
     gap: 1.5rem;
     padding: 1.5rem;
 }
