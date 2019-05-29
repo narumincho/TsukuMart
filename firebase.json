@@ -19,6 +19,10 @@
                 "destination": "/robots.txt"
             },
             {
+                "source": "/image/**",
+                "function": "image"
+            },
+            {
                 "source": "/api",
                 "function": "api"
             },
