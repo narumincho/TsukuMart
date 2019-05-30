@@ -29,6 +29,7 @@ type Model
     = Normal
         -- 新規登録入力フォーム
         { sAddressAndPassword : SAddressAndPassword
+        , imageUrl : String
         , university : CompUniversity.Model
         , nickName : String
         }
@@ -72,8 +73,8 @@ type Msg
 
 {-| すべて空白の新規登録画面を表示するためのModel
 -}
-initModel : Model
-initModel =
+initModel : String -> String -> Model
+initModel name imageUrl =
     Normal
         { sAddressAndPassword =
             StudentHasSAddress
@@ -81,7 +82,8 @@ initModel =
                 , password = Data.Password.fromString ""
                 }
         , university = CompUniversity.initSelect
-        , nickName = ""
+        , nickName = name
+        , imageUrl = imageUrl
         }
 
 
@@ -235,8 +237,8 @@ view userSignUpPage =
     let
         ( tabText, mainView ) =
             case userSignUpPage of
-                Normal { sAddressAndPassword, university, nickName } ->
-                    ( "新規登録", normalView sAddressAndPassword university nickName )
+                Normal { sAddressAndPassword, university, nickName, imageUrl } ->
+                    ( "新規登録", normalView sAddressAndPassword university nickName imageUrl )
 
                 SentSingUpData emailAddress maybe ->
                     ( "新規登録情報の送信", sentSingUpDataView emailAddress maybe )
@@ -253,8 +255,8 @@ view userSignUpPage =
     )
 
 
-normalView : SAddressAndPassword -> CompUniversity.Model -> String -> Html.Html Msg
-normalView sAddressAndPassword university nickName =
+normalView : SAddressAndPassword -> CompUniversity.Model -> String -> String -> Html.Html Msg
+normalView sAddressAndPassword university nickName imageUrl =
     Html.Keyed.node "form"
         [ Html.Attributes.class "form" ]
         ([ ( "s_or_nos"
@@ -269,6 +271,7 @@ normalView sAddressAndPassword university nickName =
                     NewStudent { emailAddress, imageDataUrl, password } ->
                         newStudentForm emailAddress imageDataUrl password
                )
+            ++ imageForm imageUrl
             ++ nickNameForm nickName
             ++ (CompUniversity.view university
                     |> List.map (Tuple.mapSecond (Html.map InputUniversity))
@@ -550,6 +553,18 @@ passwordForm passwordResult =
                 )
             ]
         ]
+
+
+{-| アカウント画像フォーム
+-}
+imageForm : String -> List ( String, Html.Html Msg )
+imageForm imageUrl =
+    [ ( "imageForm"
+      , Html.div
+            []
+            [ Html.img [ Html.Attributes.src imageUrl ] [] ]
+      )
+    ]
 
 
 {-| 表示名フォーム

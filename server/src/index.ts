@@ -1,8 +1,7 @@
 import * as functions from "firebase-functions";
-import * as admin from "firebase-admin";
+import { initializedFirebaseAdmin } from "./lib/firebaseInit";
 import * as firebase from "firebase";
 import * as jwt from "jsonwebtoken";
-import * as result from "./lib/result";
 import * as univ from "./lib/university";
 import * as secret from "./secret";
 import * as graphqlExpress from "express-graphql";
@@ -12,32 +11,21 @@ import { AxiosResponse } from "axios";
 import { URL, URLSearchParams } from "url";
 import axios from "axios";
 import * as storage from "@google-cloud/storage";
+import * as database from "./lib/database";
 
-admin.initializeApp();
-firebase.initializeApp({
-    apiKey: secret.apiKey,
-    projectId: "tsukumart-demo"
-});
-
-const dataBase = admin.firestore();
-const dataBaseUserCollection = dataBase.collection("users");
-const googleLogInStateCollection = dataBase.collection("googleState");
 const googleLogInClientId =
     "253948313366-d7d6tju8iuo2h1pi9pdjsambnm0b99o3.apps.googleusercontent.com";
 const googleLogInSecret = secret.googleLogInSecret;
 const googleLogInRedirectUri =
     "https://tsukumart-demo.firebaseapp.com/social_login/google_receiver";
-const gitHubLogInStateCollection = dataBase.collection("gitHubState");
 const gitHubLogInClientId = "a20a09e6e876c0dbc348";
 const gitHubLogInSecret = secret.gitHubLogInSecret;
 const gitHubLogInRedirectUri =
     "https://tsukumart-demo.firebaseapp.com/social_login/github_receiver";
-const dataBaseTwitterStateCollection = dataBase.collection("twitterState");
 const twitterLogInClientId = "FpPSOcAoWSBtyrPaUcihCKRzi";
 const twitterLogInSecret = secret.twitterLogInSecret;
 const twitterLogInRedirectUri =
     "https://tsukumart-demo.firebaseapp.com/social_login/twitter_receiver";
-const dataBaseLineStateCollection = dataBase.collection("lineState");
 const lineLogInClientId = "1578506920";
 const lineLogInSecret = secret.lineLogInSecret;
 const lineLogInRedirectUri =
@@ -67,37 +55,30 @@ const schema = new graphql.GraphQLSchema({
         fields: {
             getGoogleLogInUrl: {
                 type: graphql.GraphQLNonNull(graphql.GraphQLString),
-                resolve: async (source, args, context, info) => {
-                    const ref = await googleLogInStateCollection.add({});
-                    return (
-                        "https://accounts.google.com/o/oauth2/v2/auth?" +
-                        new URLSearchParams({
-                            response_type: "code",
-                            client_id: googleLogInClientId,
-                            redirect_uri: googleLogInRedirectUri,
-                            scope: "profile openid",
-                            state: ref.id
-                        }).toString()
-                    );
-                },
+                resolve: async (source, args, context, info) =>
+                    "https://accounts.google.com/o/oauth2/v2/auth?" +
+                    new URLSearchParams({
+                        response_type: "code",
+                        client_id: googleLogInClientId,
+                        redirect_uri: googleLogInRedirectUri,
+                        scope: "profile openid",
+                        state: await database.generateAndWriteGoogleLogInState()
+                    }).toString(),
+
                 description:
                     "Googleで新規登録かログインするためのURLを得る。受け取ったURLをlocation.hrefに代入するとかして、Googleの認証画面へ"
             },
             getGitHubLogInUrl: {
                 type: graphql.GraphQLNonNull(graphql.GraphQLString),
-                resolve: async (source, args, context, info) => {
-                    const ref = await gitHubLogInStateCollection.add({});
-                    return (
-                        "https://github.com/login/oauth/authorize?" +
-                        new URLSearchParams({
-                            response_type: "code",
-                            client_id: gitHubLogInClientId,
-                            redirect_uri: gitHubLogInRedirectUri,
-                            scope: "read:user",
-                            state: ref.id
-                        }).toString()
-                    );
-                },
+                resolve: async (source, args, context, info) =>
+                    "https://github.com/login/oauth/authorize?" +
+                    new URLSearchParams({
+                        response_type: "code",
+                        client_id: gitHubLogInClientId,
+                        redirect_uri: gitHubLogInRedirectUri,
+                        scope: "read:user",
+                        state: await database.generateAndWriteGitHubLogInState()
+                    }).toString(),
                 description:
                     "GitHubで新規登録かログインするためのURLを得る。受け取ったURLをlocation.hrefに代入するとかして、GitHubの認証画面へ"
             },
@@ -112,9 +93,7 @@ const schema = new graphql.GraphQLSchema({
                         twitterLogInSecret,
                         twitterLogInRedirectUri
                     );
-                    await dataBaseTwitterStateCollection.doc("last").set({
-                        tokenSecret: tokenSecret
-                    });
+                    await database.saveTwitterLogInTokenSecret(tokenSecret);
                     return url;
                 },
                 description:
@@ -122,19 +101,15 @@ const schema = new graphql.GraphQLSchema({
             },
             getLineLogInUrl: {
                 type: graphql.GraphQLNonNull(graphql.GraphQLString),
-                resolve: async (source, args, context, info) => {
-                    const ref = await dataBaseLineStateCollection.add({});
-                    return (
-                        "https://access.line.me/oauth2/v2.1/authorize?" +
-                        new URLSearchParams({
-                            response_type: "code",
-                            client_id: lineLogInClientId,
-                            redirect_uri: lineLogInRedirectUri,
-                            scope: "profile openid",
-                            state: ref.id
-                        }).toString()
-                    );
-                },
+                resolve: async (source, args, context, info) =>
+                    "https://access.line.me/oauth2/v2.1/authorize?" +
+                    new URLSearchParams({
+                        response_type: "code",
+                        client_id: lineLogInClientId,
+                        redirect_uri: lineLogInRedirectUri,
+                        scope: "profile openid",
+                        state: await database.generateAndWriteLineLogInState()
+                    }).toString(),
                 description:
                     "LINEで新規登録かログインするためのURLを得る。受け取ったURLをlocation.hrefに代入するとかして、LINEの認証画面へ"
             }
@@ -161,21 +136,16 @@ export const googleLogInReceiver = functions.https.onRequest(
             response.redirect("/");
             return;
         }
-        const docRef: FirebaseFirestore.DocumentReference = googleLogInStateCollection.doc(
-            state
-        );
-        const doc: FirebaseFirestore.DocumentSnapshot = await docRef.get();
-        if (!doc.exists) {
+        if (!(await database.checkExistsGoogleLogInState(state))) {
             console.log(
                 "Googleのログインで生成していないstateを指定された",
                 state
             );
             response.send(
-                `Google LogIn Error: definy do not generate state =${state}`
+                `Google LogIn Error: Tsukumart do not generate state =${state}`
             );
             return;
         }
-        await docRef.delete();
 
         // ここでhttps://www.googleapis.com/oauth2/v4/tokenにqueryのcodeをつけて送信。IDトークンを取得する
         const googleData = googleTokenResponseToData(
@@ -197,26 +167,21 @@ export const googleLogInReceiver = functions.https.onRequest(
                 }
             )
         );
-        console.log("googleData", googleData);
-        // 取得したidトークンからプロフィール画像と名前とLINEのIDを取得する
-        const existsData: FirebaseFirestore.QuerySnapshot = await dataBaseUserCollection
-            .where("googleAccountId", "==", googleData.sub)
-            .get();
-        // そのあと、Definyにユーザーが存在するなら、そのユーザーのリフレッシュトークンを返す
-        if (!existsData.empty) {
-            console.log("Googleで登録したユーザーがいた");
-            response.send("Googleで登録したユーザーがいた");
-            return;
-        }
-        // ユーザーが存在しないならメール送信トークンを返す
-        console.log("Googleで登録したユーザーがいなかった");
-        const sendEmailToken = createSendEmailToken("google", googleData.sub);
         const imageUrl = await getAndSaveUserImage(new URL(googleData.picture));
+        const sendEmailToken = createSendEmailToken(
+            await database.addUserInUserBeforeInputData(
+                "google",
+                googleData.sub,
+                googleData.name,
+                imageUrl
+            )
+        );
         response.redirect(
-            "/?" +
+            "/signup?" +
                 new URLSearchParams(
                     new Map([
                         ["sendEmailToken", sendEmailToken],
+                        ["name", googleData.name],
                         ["imageUrl", imageUrl.toString()]
                     ])
                 ).toString()
@@ -286,7 +251,8 @@ export const image = functions.https.onRequest(async (request, response) => {
         return;
     }
     try {
-        const file = admin
+        response.setHeader("Cache-Control", "public max-age=3600");
+        const file = initializedFirebaseAdmin
             .storage()
             .bucket()
             .file(folderName + "/" + fileName);
@@ -337,23 +303,21 @@ const createRandomId = (): string => {
  * @param folderName フォルダの名
  */
 const createStorageFile = (folderName: string): storage.File =>
-    admin
+    initializedFirebaseAdmin
         .storage()
         .bucket()
         .file(folderName + "/" + createRandomId());
 
 /**
- *
- * @param sub
+ * 情報をまだ入力していないユーザーのトークン
+ * @param accountService
  */
-const createSendEmailToken = (accountService: AccountService, id: string) => {
+const createSendEmailToken = (id: string) => {
     const time = new Date();
     time.setUTCMinutes(time.getUTCMinutes() + 30); // 有効期限は30分後
     return jwt.sign(
-        { [accountService]: id, exp: Math.round(time.getTime() / 1000) },
+        { sub: id, exp: Math.round(time.getTime() / 1000) },
         secret.beforeInputUniversity,
         { algorithm: "HS256" }
     );
 };
-
-type AccountService = "google" | "github" | "twitter" | "line";

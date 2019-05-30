@@ -33,27 +33,6 @@ import Time
 import Url
 
 
-
-{-
-   Windows PowerSellを起動して入力する
-
-   # Elmのコンパイル
-   Set-Location D:/tsukumart ; elm make src/Main.elm --output main.js --optimize ; uglifyjs main.js -o hosting_root/main.js ; Remove-Item main.js
-
-   # CSSのコンパイル
-   Set-Location D:/tsukumart ; cleancss style.css -o hosting_root/style.css
-
-   # デモ用のサーバーにデータを送信
-
-   Set-Location D:/tsukumart ; firebase deploy --project tsukumart-demo
-
-   # すべて一度に
-   Set-Location D:/tsukumart ; elm make src/Main.elm --output main.js --optimize ; uglifyjs main.js -o hosting_root/main.js ; Remove-Item main.js ; cleancss style.css -o hosting_root/style.css ; firebase deploy --project tsukumart-demo
-
-   ブラウザのアドレスバーに https://tsukumart-demo.firebaseapp.com/ を入力すると出力結果を見ることができる
--}
-
-
 port receiveImageFileAndBlobUrl : (Json.Decode.Value -> msg) -> Sub msg
 
 
@@ -216,12 +195,12 @@ urlParserInit logInState url =
 urlParserInitResultToPageAndCmd : Data.LogInState.LogInState -> SiteMap.UrlParserInitResult -> ( Page, Cmd Msg )
 urlParserInitResultToPageAndCmd logInState page =
     case page of
-        SiteMap.InitHome ->
+        SiteMap.InitHome _ ->
             Page.Home.initModel Nothing
                 |> Tuple.mapBoth PageHome homePageEmitListToCmd
 
-        SiteMap.InitSignUp ->
-            ( PageSignUp Page.SignUp.initModel
+        SiteMap.InitSignUp { sendEmailToken, name, imageUrl } ->
+            ( PageSignUp (Page.SignUp.initModel name imageUrl)
             , Cmd.none
             )
 
@@ -1038,11 +1017,6 @@ urlParserResultToPageAndCmd (Model rec) result =
         SiteMap.Home ->
             Page.Home.initModel (getGoodId rec.page)
                 |> Tuple.mapBoth PageHome homePageEmitListToCmd
-
-        SiteMap.SignUp ->
-            ( PageSignUp Page.SignUp.initModel
-            , Cmd.none
-            )
 
         SiteMap.LogIn ->
             ( PageLogIn Page.LogIn.initModel

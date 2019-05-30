@@ -11,7 +11,6 @@ module SiteMap exposing
     , likeHistoryUrl
     , logInUrl
     , purchaseGoodsUrl
-    , signUpUrl
     , siteMapUrl
     , siteMapXml
     , urlParser
@@ -22,15 +21,15 @@ module SiteMap exposing
 import Api
 import Data.Good
 import Data.User
+import Dict
+import Erl
 import Url
 import Url.Builder
-import Url.Parser as Parser exposing ((</>), (<?>))
-import Url.Parser.Query as QueryParser
 
 
 type UrlParserInitResult
-    = InitHome
-    | InitSignUp
+    = InitHome (Maybe String)
+    | InitSignUp { sendEmailToken : String, name : String, imageUrl : String }
     | InitLogIn
     | InitLikeAndHistory
     | IntiExhibitionGood
@@ -45,36 +44,53 @@ type UrlParserInitResult
 
 
 urlParserInit : Url.Url -> Maybe UrlParserInitResult
-urlParserInit =
-    Parser.oneOf
-        [ homeParser
-            |> Parser.map
-                (\token ->
-                    case token of
-                        Just t ->
-                            InitSendConfirmTokenPage (Api.tokenFromString t)
+urlParserInit url =
+    let
+        { path, query } =
+            url
+                |> Url.toString
+                |> Erl.parse
 
-                        Nothing ->
-                            InitHome
-                )
-        , signUpParser |> Parser.map InitSignUp
-        , logInParser |> Parser.map InitLogIn
-        , likeHistoryParser |> Parser.map InitLikeAndHistory
-        , exhibitionGoodsParser |> Parser.map IntiExhibitionGood
-        , purchaseGoodsParser |> Parser.map InitPurchaseGood
-        , exhibitionParser |> Parser.map InitExhibition
-        , goodsParser |> Parser.map InitGood
-        , userParser |> Parser.map InitUser
-        , siteMapParser |> Parser.map InitSiteMap
-        , aboutParser |> Parser.map InitAbout
-        , aboutPrivacyPolicyParser |> Parser.map InitAboutPrivacyPolicy
-        ]
-        |> Parser.parse
+        queryDict =
+            query |> Dict.fromList
+    in
+    [ homeParser |> parserMap InitHome
+    , signUpParser |> parserMap InitSignUp
+    , logInParser |> parserMap (always InitLogIn)
+    , likeHistoryParser |> parserMap (always InitLikeAndHistory)
+    , exhibitionGoodsParser |> parserMap (always InitExhibition)
+    , purchaseGoodsParser |> parserMap (always InitPurchaseGood)
+    , exhibitionParser |> parserMap (always InitExhibition)
+    , goodsParser |> parserMap InitGood
+    , userParser |> parserMap InitUser
+    , siteMapParser |> parserMap (always InitSiteMap)
+    , aboutParser |> parserMap (always InitAbout)
+    , aboutPrivacyPolicyParser |> parserMap (always InitAboutPrivacyPolicy)
+    ]
+        |> List.map (\f -> f path queryDict)
+        |> oneOf
+
+
+parserMap : (a -> b) -> (List String -> Dict.Dict String String -> Maybe a) -> (List String -> Dict.Dict String String -> Maybe b)
+parserMap f parser path query =
+    parser path query |> Maybe.map f
+
+
+oneOf : List (Maybe a) -> Maybe a
+oneOf list =
+    case list of
+        (Just x) :: _ ->
+            Just x
+
+        Nothing :: xs ->
+            oneOf xs
+
+        [] ->
+            Nothing
 
 
 type UrlParserResult
     = Home
-    | SignUp
     | LogIn
     | LikeAndHistory
     | ExhibitionGood
@@ -89,28 +105,41 @@ type UrlParserResult
 
 
 urlParser : Url.Url -> Maybe UrlParserResult
-urlParser =
-    Parser.oneOf
-        [ homeParser |> Parser.map (always Home)
-        , signUpParser |> Parser.map SignUp
-        , logInParser |> Parser.map LogIn
-        , likeHistoryParser |> Parser.map LikeAndHistory
-        , exhibitionGoodsParser |> Parser.map ExhibitionGood
-        , purchaseGoodsParser |> Parser.map PurchaseGood
-        , exhibitionParser |> Parser.map Exhibition
-        , exhibitionConfirmParser |> Parser.map ExhibitionConfirm
-        , goodsParser |> Parser.map Good
-        , userParser |> Parser.map User
-        , siteMapParser |> Parser.map SiteMap
-        , aboutParser |> Parser.map About
-        , aboutPrivacyPolicyParser |> Parser.map AboutPrivacyPolicy
-        ]
-        |> Parser.parse
+urlParser url =
+    let
+        { path, query } =
+            url
+                |> Url.toString
+                |> Erl.parse
+
+        queryDict =
+            query |> Dict.fromList
+    in
+    [ homeParser |> parserMap (always Home)
+    , logInParser |> parserMap (always LogIn)
+    , likeHistoryParser |> parserMap (always LikeAndHistory)
+    , exhibitionGoodsParser |> parserMap (always ExhibitionGood)
+    , purchaseGoodsParser |> parserMap (always PurchaseGood)
+    , exhibitionParser |> parserMap (always Exhibition)
+    , exhibitionConfirmParser |> parserMap (always ExhibitionConfirm)
+    , goodsParser |> parserMap Good
+    , userParser |> parserMap User
+    , siteMapParser |> parserMap (always SiteMap)
+    , aboutParser |> parserMap (always About)
+    , aboutPrivacyPolicyParser |> parserMap (always AboutPrivacyPolicy)
+    ]
+        |> List.map (\f -> f path queryDict)
+        |> oneOf
 
 
-homeParser : Parser.Parser (Maybe String -> a) a
-homeParser =
-    Parser.top <?> QueryParser.string "refreshToken"
+homeParser : List String -> Dict.Dict String String -> Maybe (Maybe String)
+homeParser path query =
+    case path of
+        [] ->
+            Just (query |> Dict.get "refreshToken")
+
+        _ ->
+            Nothing
 
 
 homeUrl : String
@@ -122,28 +151,31 @@ homeUrl =
 {- signup -}
 
 
-signUpParser : Parser.Parser a a
-signUpParser =
-    Parser.s signUpPath
+signUpParser : List String -> Dict.Dict String String -> Maybe { sendEmailToken : String, name : String, imageUrl : String }
+signUpParser path query =
+    case ( path, ( query |> Dict.get "sendEmailToken", query |> Dict.get "name", query |> Dict.get "imageUrl" ) ) of
+        ( [ "signup" ], ( Just sendEmailToken, Just name, Just imageUrl ) ) ->
+            Just
+                { sendEmailToken = sendEmailToken
+                , name = name
+                , imageUrl = imageUrl
+                }
 
-
-signUpUrl : String
-signUpUrl =
-    Url.Builder.absolute [ signUpPath ] []
-
-
-signUpPath : String
-signUpPath =
-    "signup"
+        ( _, ( _, _, _ ) ) ->
+            Nothing
 
 
 
 {- login -}
 
 
-logInParser : Parser.Parser a a
-logInParser =
-    Parser.s logInPath
+logInParser : List String -> Dict.Dict String String -> Maybe ()
+logInParser path query =
+    if path == [ logInPath ] then
+        Just ()
+
+    else
+        Nothing
 
 
 logInUrl : String
@@ -160,9 +192,13 @@ logInPath =
 {- like-history -}
 
 
-likeHistoryParser : Parser.Parser a a
-likeHistoryParser =
-    Parser.s likeHistoryPath
+likeHistoryParser : List String -> Dict.Dict String String -> Maybe ()
+likeHistoryParser path query =
+    if path == [ likeHistoryPath ] then
+        Just ()
+
+    else
+        Nothing
 
 
 likeHistoryUrl : String
@@ -179,9 +215,13 @@ likeHistoryPath =
 {- exhibition-goods -}
 
 
-exhibitionGoodsParser : Parser.Parser a a
-exhibitionGoodsParser =
-    Parser.s exhibitionGoodsPath
+exhibitionGoodsParser : List String -> Dict.Dict String String -> Maybe ()
+exhibitionGoodsParser path query =
+    if path == [ exhibitionGoodsPath ] then
+        Just ()
+
+    else
+        Nothing
 
 
 exhibitionGoodsUrl : String
@@ -198,9 +238,13 @@ exhibitionGoodsPath =
 {- purchase-goods -}
 
 
-purchaseGoodsParser : Parser.Parser a a
-purchaseGoodsParser =
-    Parser.s "purchase-goods"
+purchaseGoodsParser : List String -> Dict.Dict String String -> Maybe ()
+purchaseGoodsParser path query =
+    if path == [ purchaseGoodsPath ] then
+        Just ()
+
+    else
+        Nothing
 
 
 purchaseGoodsUrl : String
@@ -217,9 +261,13 @@ purchaseGoodsPath =
 {- exhibition -}
 
 
-exhibitionParser : Parser.Parser a a
-exhibitionParser =
-    Parser.s exhibitionPath
+exhibitionParser : List String -> Dict.Dict String String -> Maybe ()
+exhibitionParser path query =
+    if path == [ exhibitionPath ] then
+        Just ()
+
+    else
+        Nothing
 
 
 exhibitionUrl : String
@@ -232,9 +280,13 @@ exhibitionPath =
     "exhibition"
 
 
-exhibitionConfirmParser : Parser.Parser a a
-exhibitionConfirmParser =
-    Parser.s exhibitionPath </> Parser.s exhibitionConfirmPath
+exhibitionConfirmParser : List String -> Dict.Dict String String -> Maybe ()
+exhibitionConfirmParser path query =
+    if path == [ exhibitionPath, exhibitionConfirmPath ] then
+        Just ()
+
+    else
+        Nothing
 
 
 exhibitionConfirmUrl : String
@@ -251,9 +303,14 @@ exhibitionConfirmPath =
 {- goods -}
 
 
-goodsParser : Parser.Parser (Data.Good.GoodId -> a) a
-goodsParser =
-    Parser.s goodsPath </> (Parser.int |> Parser.map Data.Good.goodIdFromInt)
+goodsParser : List String -> Dict.Dict String String -> Maybe Data.Good.GoodId
+goodsParser path query =
+    case path of
+        [ "goods", goodIdString ] ->
+            goodIdString |> String.toInt |> Maybe.map Data.Good.goodIdFromInt
+
+        _ ->
+            Nothing
 
 
 goodsUrl : Data.Good.GoodId -> String
@@ -270,10 +327,14 @@ goodsPath =
 {- user -}
 
 
-userParser : Parser.Parser (Data.User.UserId -> a) a
-userParser =
-    Parser.s userPath
-        </> (Parser.int |> Parser.map Data.User.userIdFromInt)
+userParser : List String -> Dict.Dict String String -> Maybe Data.User.UserId
+userParser path query =
+    case path of
+        [ "user", userId ] ->
+            userId |> String.toInt |> Maybe.map Data.User.userIdFromInt
+
+        _ ->
+            Nothing
 
 
 userUrl : Data.User.UserId -> String
@@ -290,9 +351,13 @@ userPath =
 {- about -}
 
 
-aboutParser : Parser.Parser a a
-aboutParser =
-    Parser.s aboutPath
+aboutParser : List String -> Dict.Dict String String -> Maybe ()
+aboutParser path query =
+    if path == [ aboutPath ] then
+        Just ()
+
+    else
+        Nothing
 
 
 aboutUrl : String
@@ -305,9 +370,13 @@ aboutPath =
     "about"
 
 
-aboutPrivacyPolicyParser : Parser.Parser a a
-aboutPrivacyPolicyParser =
-    Parser.s aboutPath </> Parser.s aboutPrivacyPolicyPath
+aboutPrivacyPolicyParser : List String -> Dict.Dict String String -> Maybe ()
+aboutPrivacyPolicyParser path query =
+    if path == [ aboutPath, aboutPrivacyPolicyPath ] then
+        Just ()
+
+    else
+        Nothing
 
 
 aboutPrivacyPolicyUrl : String
@@ -324,9 +393,13 @@ aboutPrivacyPolicyPath =
 {- sitemap -}
 
 
-siteMapParser : Parser.Parser a a
-siteMapParser =
-    Parser.s siteMapPath
+siteMapParser : List String -> Dict.Dict String String -> Maybe ()
+siteMapParser path query =
+    if path == [ siteMapPath ] then
+        Just ()
+
+    else
+        Nothing
 
 
 siteMapUrl : String
