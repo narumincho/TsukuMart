@@ -31,7 +31,7 @@ Write-Output "Minify CSS OK"
 Write-Output "ServiceWoker Compile ...";
 $Host.UI.RawUI.ForegroundColor = "Gray";
 Set-Location -Path ./servicewoker_src
-tsc;
+npx tsc;
 $Host.UI.RawUI.ForegroundColor = "Yellow";
 Write-Output "ServiceWoker Compile OK"
 

@@ -114,7 +114,7 @@ type Msg
     | UrlRequest Browser.UrlRequest
     | AddLogMessage String
     | LogOut
-    | SignUpConfirmResponse Api.LogInRequest (Result Api.SignUpConfirmResponseError ())
+    | SignUpConfirmResponse (Result String ())
     | LogInResponse (Result () ())
     | ReceiveImageDataUrl String
     | ReceiveImageFileAndBlobUrl Json.Decode.Value
@@ -135,7 +135,7 @@ type Msg
     | GoodsPageMsg Page.Good.Msg
     | GetNowTime (Result () ( Time.Posix, Time.Zone ))
     | ReceiveGoodImageFileAsFileAndBlobUrl Json.Decode.Value
-    | LogInOrSignUpUrlResponse (Result () Url.Url)
+    | LogInOrSignUpUrlResponse (Result String Url.Url)
 
 
 main : Program { refreshToken : Maybe String } Model Msg
@@ -323,7 +323,7 @@ update msg (Model rec) =
             , Cmd.none
             )
 
-        SignUpConfirmResponse logInRequest response ->
+        SignUpConfirmResponse response ->
             case response of
                 Ok _ ->
                     let
@@ -342,10 +342,7 @@ update msg (Model rec) =
                     )
 
                 Err e ->
-                    ( Model
-                        { rec
-                            | page = PageSignUp (Page.SignUp.sentConfirmTokenModel e)
-                        }
+                    ( Model rec
                     , Cmd.none
                     )
 
@@ -698,9 +695,9 @@ update msg (Model rec) =
                     , Browser.Navigation.load (Url.toString url)
                     )
 
-                Err () ->
+                Err string ->
                     ( Model
-                        { rec | message = Just "ログイン用のURL取得に失敗" }
+                        { rec | message = Just ("ログイン用のURL取得に失敗" ++ string) }
                     , Cmd.none
                     )
 
@@ -823,14 +820,11 @@ signUpPageEmitListToCmd =
     List.map
         (\emit ->
             case emit of
-                Page.SignUp.EmitCatchStudentImage idString ->
+                Page.SignUp.EmitAccountImage idString ->
                     studentImageChange idString
 
                 Page.SignUp.EmitSignUp signUpRequest ->
-                    Api.signUp signUpRequest (\response -> SignUpMsg (Page.SignUp.SignUpResponse response))
-
-                Page.SignUp.EmitSendConfirmToken logInRequest token ->
-                    Api.signUpConfirm { confirmToken = token } (SignUpConfirmResponse logInRequest)
+                    Api.sendConfirmEmail signUpRequest (\response -> SignUpConfirmResponse response)
 
                 Page.SignUp.EmitUniversity e ->
                     universityEmitToCmd e

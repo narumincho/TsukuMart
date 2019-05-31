@@ -112,6 +112,39 @@ const schema = new graphql.GraphQLSchema({
                     }).toString(),
                 description:
                     "LINEで新規登録かログインするためのURLを得る。受け取ったURLをlocation.hrefに代入するとかして、LINEの認証画面へ"
+            },
+            sendConformEmail: {
+                type: graphql.GraphQLNonNull(graphql.GraphQLBoolean),
+                resolve: async (source, args, context, info) => false,
+                args: {
+                    name: {
+                        type: graphql.GraphQLNonNull(graphql.GraphQLString),
+                        description: "表示名"
+                    },
+                    image: {
+                        type: graphql.GraphQLString,
+                        description:
+                            "画像(DataURL) ソーシャルログインで使ったサービスのままならnull"
+                    },
+                    schoolAndDepartment: {
+                        type: new graphql.GraphQLEnumType({
+                            name: "",
+                            values: {
+                                humanity: {
+                                    description: "人文・文化学群 / 人文学類"
+                                },
+                                culture: {
+                                    description: "人文・文化学群 / 比較文化学類"
+                                },
+                                japanese: {
+                                    description:
+                                        "人文・文化学群 / 日本語・日本文化学類"
+                                }
+                            }
+                        })
+                    }
+                },
+                description: "ユーザー情報を登録して認証メールを送信する"
             }
         }
     })

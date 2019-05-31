@@ -1,13 +1,8 @@
 module Api exposing
-    ( ConfirmToken
-    , LogInRequest
-    , LogInResponseOk(..)
+    ( LogInResponseOk(..)
     , SellGoodsRequest(..)
-    , SignUpConfirmRequest
-    , SignUpConfirmResponseError(..)
     , SignUpRequest
     , SignUpResponseError(..)
-    , SignUpResponseOk(..)
     , Token
     , deleteGoods
     , getExhibitionGoodList
@@ -22,12 +17,10 @@ module Api exposing
     , getTradeComment
     , getUserProfile
     , likeGoods
-    , logIn
     , logInOrSignUpUrlRequest
     , postGoodsComment
     , sellGoods
-    , signUp
-    , signUpConfirm
+    , sendConfirmEmail
     , tokenFromString
     , tokenRefresh
     , tokenToString
@@ -39,7 +32,6 @@ module Api exposing
 
 import Data.EmailAddress as EmailAddress
 import Data.Good as Good
-import Data.Password as Password
 import Data.SocialLoginService
 import Data.University as University
 import Data.User as User
@@ -74,7 +66,6 @@ urlBuilder pathList =
 -}
 type alias SignUpRequest =
     { emailAddress : EmailAddress.EmailAddress
-    , pass : Password.Password
     , image : Maybe String
     , university : University.University
     , nickName : String
@@ -90,19 +81,6 @@ type SignUpResponseError
     | SignUpError
 
 
-type SignUpResponseOk
-    = SignUpResponseOk ConfirmToken
-
-
-type ConfirmToken
-    = ConfirmToken String
-
-
-confirmTokenToHeader : ConfirmToken -> Http.Header
-confirmTokenToHeader (ConfirmToken token) =
-    Http.header "Authorization" ("Bearer " ++ token)
-
-
 tokenToHeader : Token -> Http.Header
 tokenToHeader (Token token) =
     Http.header "Authorization" ("Bearer " ++ token)
@@ -110,55 +88,27 @@ tokenToHeader (Token token) =
 
 
 {- ========================================================================
-                新規登録 /auth/signup/
+                  ユーザー情報を登録して認証メールを送信
    ========================================================================
 -}
 
 
-signUp : SignUpRequest -> (Result SignUpResponseError SignUpResponseOk -> msg) -> Cmd msg
-signUp signUpData msg =
-    Http.post
-        { url = urlBuilder [ "auth", "signup" ]
-        , body = Http.jsonBody (signUpJson signUpData)
-        , expect = Http.expectStringResponse msg signUpResponseToResult
-        }
+sendConfirmEmail : SignUpRequest -> (Result String () -> msg) -> Cmd msg
+sendConfirmEmail signUpData callBack =
+    graphQlApiRequest
+        ("mutation {\n"
+            ++ "sendConformEmail"
+            ++ "}"
+        )
+        sendConfirmEmailRequestBody
+        callBack
 
 
 {-| 新規登録のJSONを生成
 -}
-signUpJson : SignUpRequest -> Json.Encode.Value
-signUpJson { emailAddress, pass, image, university, nickName } =
-    let
-        { graduate, department } =
-            universityToSimpleRecord university
-    in
-    Json.Encode.object
-        ([ ( "email", Json.Encode.string (EmailAddress.toString emailAddress) )
-         , ( "password", Json.Encode.string (Password.toString pass) )
-         , ( "nick", Json.Encode.string nickName )
-         ]
-            ++ (case image of
-                    Just imageDataUrl ->
-                        [ ( "image", Json.Encode.string imageDataUrl ) ]
-
-                    Nothing ->
-                        []
-               )
-            ++ (case graduate of
-                    Just g ->
-                        [ ( "graduate", Json.Encode.string (University.graduateToIdString g) ) ]
-
-                    Nothing ->
-                        []
-               )
-            ++ (case department of
-                    Just d ->
-                        [ ( "department", Json.Encode.string (University.departmentToIdString d) ) ]
-
-                    Nothing ->
-                        []
-               )
-        )
+sendConfirmEmailRequestBody : Json.Decode.Decoder ()
+sendConfirmEmailRequestBody =
+    Json.Decode.fail "まだできていない"
 
 
 universityToSimpleRecord : University.University -> { graduate : Maybe University.Graduate, department : Maybe University.SchoolAndDepartment }
@@ -180,129 +130,11 @@ universityToSimpleRecord universityData =
             }
 
 
-{-| 新規登録のサーバーからの回答(Response)を解析
--}
-signUpResponseToResult : Http.Response String -> Result SignUpResponseError SignUpResponseOk
-signUpResponseToResult response =
-    case response of
-        Http.BadUrl_ _ ->
-            Err SignUpErrorBadUrl
-
-        Http.Timeout_ ->
-            Err SignUpErrorTimeout
-
-        Http.NetworkError_ ->
-            Err SignUpErrorNetworkError
-
-        Http.BadStatus_ _ body ->
-            Json.Decode.decodeString signUpResponseBodyDecoder body
-                |> Result.withDefault (Err SignUpError)
-
-        Http.GoodStatus_ _ body ->
-            Json.Decode.decodeString signUpResponseBodyDecoder body
-                |> Result.withDefault (Err SignUpError)
-
-
-signUpResponseBodyDecoder : Json.Decode.Decoder (Result SignUpResponseError SignUpResponseOk)
-signUpResponseBodyDecoder =
-    Json.Decode.oneOf
-        [ Json.Decode.field "confirm_token" Json.Decode.string
-            |> Json.Decode.map
-                (\token ->
-                    Ok (SignUpResponseOk (ConfirmToken token))
-                )
-        , Json.Decode.field "error" Json.Decode.string
-            |> Json.Decode.map
-                (\reason ->
-                    case reason of
-                        "email exists" ->
-                            Err SignUpErrorAlreadySignUp
-
-                        "invalid data" ->
-                            Err SignUpInvalidData
-
-                        _ ->
-                            Err SignUpError
-                )
-        ]
-
-
-
-{- ========================================================================
-     新規登録の認証トークン送信(リリース前の一時的な処置) /auth/signup/confirm/
-   ========================================================================
--}
-
-
-type alias SignUpConfirmRequest =
-    { confirmToken : ConfirmToken }
-
-
-type SignUpConfirmResponseError
-    = SignUpConfirmResponseErrorAlreadyConfirmed -- すでに認証トークンを送っている
-    | SignUpConfirmResponseError -- エラーの理由がわからないエラー
-
-
-signUpConfirm : SignUpConfirmRequest -> (Result SignUpConfirmResponseError () -> msg) -> Cmd msg
-signUpConfirm { confirmToken } msg =
-    Http.request
-        { method = "POST"
-        , headers = [ confirmTokenToHeader confirmToken ]
-        , url = urlBuilder [ "auth", "signup", "confirm" ]
-        , body = Http.emptyBody
-        , expect = Http.expectStringResponse msg signUpConfirmResponseToResult
-        , timeout = Nothing
-        , tracker = Nothing
-        }
-
-
-signUpConfirmResponseToResult : Http.Response String -> Result SignUpConfirmResponseError ()
-signUpConfirmResponseToResult response =
-    case response of
-        Http.BadUrl_ _ ->
-            Err SignUpConfirmResponseError
-
-        Http.Timeout_ ->
-            Err SignUpConfirmResponseError
-
-        Http.NetworkError_ ->
-            Err SignUpConfirmResponseError
-
-        Http.BadStatus_ _ body ->
-            Json.Decode.decodeString signUpConfirmResponseDecoder body
-                |> Result.withDefault (Err SignUpConfirmResponseError)
-
-        Http.GoodStatus_ _ _ ->
-            Ok ()
-
-
-{-| 新規登録の認証トークン送信のサーバーからの回答(Response)を解析
--}
-signUpConfirmResponseDecoder : Json.Decode.Decoder (Result SignUpConfirmResponseError ())
-signUpConfirmResponseDecoder =
-    Json.Decode.oneOf
-        [ Json.Decode.field "ok" Json.Decode.string
-            |> Json.Decode.map
-                (\ok ->
-                    case ok of
-                        "confirmed" ->
-                            Err SignUpConfirmResponseErrorAlreadyConfirmed
-
-                        _ ->
-                            Err SignUpConfirmResponseError
-                )
-        ]
-
-
 
 {- =================================================
                  ログイン /auth/token/
    =================================================
 -}
-
-
-type alias LogInRequest =
-    { emailAddress : EmailAddress.EmailAddress, pass : Password.Password }
 
 
 type LogInResponseOk
@@ -328,54 +160,6 @@ tokenFromString =
 tokenToString : Token -> String
 tokenToString (Token string) =
     string
-
-
-{-| ログイン /auth/token/
-メールアドレスとパスワードから様々な情報をやり取りする上で必要なTokenを受け取る。それだけじゃなく、
--}
-logIn : LogInRequest -> (Result () LogInResponseOk -> msg) -> Cmd msg
-logIn logInData msg =
-    Http.post
-        { url = urlBuilder [ "auth", "token" ]
-        , body = Http.jsonBody (logInRequestToJson logInData)
-        , expect = Http.expectStringResponse msg logInResponseToResult
-        }
-
-
-{-| logInのJSONを作成
--}
-logInRequestToJson : LogInRequest -> Json.Encode.Value
-logInRequestToJson { emailAddress, pass } =
-    Json.Encode.object
-        [ ( "email", Json.Encode.string (EmailAddress.toString emailAddress) )
-        , ( "password", Json.Encode.string (Password.toString pass) )
-        ]
-
-
-logInResponseToResult : Http.Response String -> Result () LogInResponseOk
-logInResponseToResult response =
-    case response of
-        Http.GoodStatus_ _ body ->
-            Json.Decode.decodeString logInResponseBodyDecoder body
-                |> Result.withDefault (Err ())
-
-        _ ->
-            Err ()
-
-
-logInResponseBodyDecoder : Json.Decode.Decoder (Result () LogInResponseOk)
-logInResponseBodyDecoder =
-    Json.Decode.map2
-        (\access refresh ->
-            Ok
-                (LogInResponseOk
-                    { access = Token access
-                    , refresh = Token refresh
-                    }
-                )
-        )
-        (Json.Decode.field "access" Json.Decode.string)
-        (Json.Decode.field "refresh" Json.Decode.string)
 
 
 
@@ -1224,76 +1008,120 @@ getTradeComment token goodId msg =
 -}
 
 
-logInOrSignUpUrlRequest : Data.SocialLoginService.SocialLoginService -> (Result () Url.Url -> msg) -> Cmd msg
+logInOrSignUpUrlRequest : Data.SocialLoginService.SocialLoginService -> (Result String Url.Url -> msg) -> Cmd msg
 logInOrSignUpUrlRequest service callBack =
+    graphQlApiRequest
+        ("mutation {"
+            ++ (case service of
+                    Data.SocialLoginService.Google ->
+                        "getGoogleLogInUrl"
+
+                    Data.SocialLoginService.GitHub ->
+                        "getGitHubLogInUrl"
+
+                    Data.SocialLoginService.Twitter ->
+                        "getTwitterLogInUrl"
+
+                    Data.SocialLoginService.Line ->
+                        "getLineLogInUrl"
+               )
+            ++ "}"
+        )
+        logInOrSignUpUrlResponseToResult
+        callBack
+
+
+logInOrSignUpUrlResponseToResult : Json.Decode.Decoder Url.Url
+logInOrSignUpUrlResponseToResult =
+    Json.Decode.oneOf
+        [ Json.Decode.field "getGoogleLogInUrl" Json.Decode.string
+        , Json.Decode.field "getGitHubLogInUrl" Json.Decode.string
+        , Json.Decode.field "getTwitterLogInUrl" Json.Decode.string
+        , Json.Decode.field "getLineLogInUrl" Json.Decode.string
+        ]
+        |> Json.Decode.andThen
+            (\urlString ->
+                case Url.fromString urlString of
+                    Just url ->
+                        Json.Decode.succeed url
+
+                    Nothing ->
+                        Json.Decode.fail "url"
+            )
+
+
+graphQlApiRequest : String -> Json.Decode.Decoder a -> (Result String a -> msg) -> Cmd msg
+graphQlApiRequest queryOrMutation responseDecoder callBack =
     Http.post
         { url = "https://tsukumart-demo.firebaseapp.com/api"
-        , body = logInOrSignUpUrlRequestBody service
-        , expect = Http.expectStringResponse callBack logInOrSignUpUrlResponseToResult
+        , body = graphQlRequestBody queryOrMutation
+        , expect = Http.expectStringResponse callBack (graphQlResponseDecoder responseDecoder)
         }
 
 
-logInOrSignUpUrlRequestBody : Data.SocialLoginService.SocialLoginService -> Http.Body
-logInOrSignUpUrlRequestBody service =
+graphQlRequestBody : String -> Http.Body
+graphQlRequestBody queryOrMutation =
     Http.jsonBody
         (Json.Encode.object
             [ ( "query"
-              , Json.Encode.string
-                    ("mutation {"
-                        ++ (case service of
-                                Data.SocialLoginService.Google ->
-                                    "getGoogleLogInUrl"
-
-                                Data.SocialLoginService.GitHub ->
-                                    "getGitHubLogInUrl"
-
-                                Data.SocialLoginService.Twitter ->
-                                    "getTwitterLogInUrl"
-
-                                Data.SocialLoginService.Line ->
-                                    "getLineLogInUrl"
-                           )
-                        ++ "}"
-                    )
+              , Json.Encode.string queryOrMutation
               )
             , ( "variables", Json.Encode.null )
             ]
         )
 
 
-logInOrSignUpUrlResponseToResult : Http.Response String -> Result () Url.Url
-logInOrSignUpUrlResponseToResult response =
+graphQlResponseDecoder : Json.Decode.Decoder a -> Http.Response String -> Result String a
+graphQlResponseDecoder decoder response =
     case response of
         Http.BadUrl_ _ ->
-            Err ()
+            Err "BadURL"
 
         Http.Timeout_ ->
-            Err ()
+            Err "Timeout"
 
         Http.NetworkError_ ->
-            Err ()
+            Err "NetworkError"
 
-        Http.BadStatus_ _ _ ->
-            Err ()
+        Http.BadStatus_ _ body ->
+            body
+                |> Json.Decode.decodeString
+                    (Json.Decode.field "errors"
+                        (Json.Decode.list
+                            (Json.Decode.succeed
+                                (\message line column ->
+                                    "message" ++ message ++ " at " ++ line ++ ":" ++ column
+                                )
+                                |> Json.Decode.Pipeline.required "message" Json.Decode.string
+                                |> Json.Decode.Pipeline.requiredAt [ "locations", "line" ] Json.Decode.string
+                                |> Json.Decode.Pipeline.requiredAt [ "locations", "column" ] Json.Decode.string
+                            )
+                        )
+                    )
+                |> (\result ->
+                        case result of
+                            Ok errMsg ->
+                                Err errMsg
+
+                            Err decodeError ->
+                                Err [ "err message decoder error" ++ Json.Decode.errorToString decodeError ]
+                   )
+                |> Result.mapError (String.join ", ")
 
         Http.GoodStatus_ _ body ->
             body
                 |> Json.Decode.decodeString
                     (Json.Decode.field "data"
-                        (Json.Decode.oneOf
-                            [ Json.Decode.field "getGoogleLogInUrl" Json.Decode.string
-                            , Json.Decode.field "getGitHubLogInUrl" Json.Decode.string
-                            , Json.Decode.field "getTwitterLogInUrl" Json.Decode.string
-                            , Json.Decode.field "getLineLogInUrl" Json.Decode.string
-                            ]
-                        )
+                        decoder
                     )
-                |> Result.map Url.fromString
-                |> (\x ->
-                        case x of
-                            Ok (Just url) ->
-                                Ok url
+                |> Result.mapError Json.Decode.errorToString
 
-                            _ ->
-                                Err ()
-                   )
+
+resultInverse : Result a b -> Result b a
+resultInverse result =
+    case result of
+        Ok b ->
+            Err b
+
+        Err a ->
+            Ok a
