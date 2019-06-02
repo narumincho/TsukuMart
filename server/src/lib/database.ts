@@ -1,4 +1,7 @@
 import { initializedFirebaseAdmin } from "./firebaseInit";
+import { URL } from "url";
+import * as storage from "@google-cloud/storage";
+import * as stream from "stream";
 
 const dataBase = initializedFirebaseAdmin.firestore();
 const userCollection: FirebaseFirestore.CollectionReference = dataBase.collection(
@@ -90,3 +93,58 @@ export const addUserInUserBeforeInputData = async (
 };
 
 export type AccountService = "google" | "github" | "twitter" | "line";
+
+/**
+ * ユーザーのプロフィール画像をCloud Storageに保存する。ごくまれにファイル名がかぶるかも。
+ * @param arrayBuffer バイナリ
+ * @param mimeType https://ja.wikipedia.org/wiki/%E3%83%A1%E3%83%87%E3%82%A3%E3%82%A2%E3%82%BF%E3%82%A4%E3%83%97
+ */
+export const saveUserImage = async (
+    arrayBuffer: ArrayBuffer,
+    mimeType: string
+): Promise<URL> => {
+    const userImageFile: storage.File = await createStorageFile("user-image");
+    await userImageFile.save(arrayBuffer, { contentType: mimeType });
+    return new URL(
+        "https://tsukumart-demo.firebaseapp.com/image/" + userImageFile.name
+    );
+};
+/**
+ * Firebase Cloud Storageで新しくファイルを作成する
+ * 被らないIDで保存したかったが、すでに存在しているかのチェックがうまくいかない
+ * ごくまれにかぶるかも
+ * @param folderName フォルダの名
+ */
+const createStorageFile = (folderName: string): storage.File =>
+    initializedFirebaseAdmin
+        .storage()
+        .bucket()
+        .file(folderName + "/" + createRandomId());
+
+/**
+ * ランダムなIDを生成する
+ */
+const createRandomId = (): string => {
+    let id = "";
+    const charTable: string =
+        "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    for (let i = 0; i < 20; i++) {
+        id += charTable[(Math.random() * charTable.length) | 0];
+    }
+    return id;
+};
+
+/**
+ * 画像ファイルのReadStreamを得る
+ * @param folderName フォルダ名
+ * @param fileName ファイル名
+ */
+export const getImageReadStream = (
+    folderName: string,
+    fileName: string
+): stream.Readable =>
+    initializedFirebaseAdmin
+        .storage()
+        .bucket()
+        .file(folderName + "/" + fileName)
+        .createReadStream();
