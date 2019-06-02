@@ -80,7 +80,7 @@ export const generateAndWriteLineLogInState = async (): Promise<string> =>
  * @param imageUrl つくマートのサーバーにダウンロードしたアカウント画像のURL
  */
 export const addUserInUserBeforeInputData = async (
-    accountService: AccountService,
+    accountService: type.AccountService,
     accountServiceId: string,
     name: string,
     imageUrl: URL
@@ -100,7 +100,7 @@ export const addUserInUserBeforeInputData = async (
 export const getUserInUserBeforeInputData = async (
     id: string
 ): Promise<{
-    accountService: AccountService;
+    accountService: type.AccountService;
     accountServiceId: string;
     name: string;
     imageUrl: URL;
@@ -111,7 +111,7 @@ export const getUserInUserBeforeInputData = async (
         throw new Error("存在しない情報入力前のユーザーを指定された");
     }
     const data = docRef.data() as {
-        accountService: AccountService;
+        accountService: type.AccountService;
         accountServiceId: string;
         name: string;
         imageUrl: string;
@@ -123,7 +123,6 @@ export const getUserInUserBeforeInputData = async (
         imageUrl: new URL(data.imageUrl)
     };
 };
-export type AccountService = "google" | "github" | "twitter" | "line";
 
 /**
  * ユーザーのプロフィール画像をCloud Storageに保存する。ごくまれにファイル名がかぶるかも。

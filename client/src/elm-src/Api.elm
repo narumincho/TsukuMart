@@ -1011,21 +1011,21 @@ getTradeComment token goodId msg =
 logInOrSignUpUrlRequest : Data.SocialLoginService.SocialLoginService -> (Result String Url.Url -> msg) -> Cmd msg
 logInOrSignUpUrlRequest service callBack =
     graphQlApiRequest
-        ("mutation {"
+        ("mutation { getLogInUrl(service: "
             ++ (case service of
                     Data.SocialLoginService.Google ->
-                        "getGoogleLogInUrl"
+                        "google"
 
                     Data.SocialLoginService.GitHub ->
-                        "getGitHubLogInUrl"
+                        "gitHub"
 
                     Data.SocialLoginService.Twitter ->
-                        "getTwitterLogInUrl"
+                        "twitter"
 
                     Data.SocialLoginService.Line ->
-                        "getLineLogInUrl"
+                        "line"
                )
-            ++ "}"
+            ++ ") }"
         )
         logInOrSignUpUrlResponseToResult
         callBack
@@ -1033,12 +1033,7 @@ logInOrSignUpUrlRequest service callBack =
 
 logInOrSignUpUrlResponseToResult : Json.Decode.Decoder Url.Url
 logInOrSignUpUrlResponseToResult =
-    Json.Decode.oneOf
-        [ Json.Decode.field "getGoogleLogInUrl" Json.Decode.string
-        , Json.Decode.field "getGitHubLogInUrl" Json.Decode.string
-        , Json.Decode.field "getTwitterLogInUrl" Json.Decode.string
-        , Json.Decode.field "getLineLogInUrl" Json.Decode.string
-        ]
+    Json.Decode.field "getLogInUrl" Json.Decode.string
         |> Json.Decode.andThen
             (\urlString ->
                 case Url.fromString urlString of
@@ -1115,13 +1110,3 @@ graphQlResponseDecoder decoder response =
                         decoder
                     )
                 |> Result.mapError Json.Decode.errorToString
-
-
-resultInverse : Result a b -> Result b a
-resultInverse result =
-    case result of
-        Ok b ->
-            Err b
-
-        Err a ->
-            Ok a

@@ -52,7 +52,30 @@ const dataUrlTypeConfig: g.GraphQLScalarTypeConfig<DataURLInternal, string> = {
 export const urlType = new g.GraphQLScalarType(urlTypeScalarTypeConfig);
 export const dataUrlType = new g.GraphQLScalarType(dataUrlTypeConfig);
 
-export type SchoolAndDepartment = keyof (typeof schoolAndDepartmentValue);
+const accountServiceValue = {
+    google: {
+        description:
+            "Google https://developers.google.com/identity/sign-in/web/"
+    },
+    gitHub: {
+        description:
+            "GitHub https://developer.github.com/v3/guides/basics-of-authentication/"
+    },
+    twitter: {
+        description:
+            "Twitter https://developer.twitter.com/en/docs/twitter-for-websites/log-in-with-twitter/login-in-with-twitter.html"
+    },
+    line: {
+        description: "LINE https://developers.line.biz/ja/docs/line-login/"
+    }
+};
+export type AccountService = keyof (typeof accountServiceValue);
+
+export const accountService = new g.GraphQLEnumType({
+    name: "accountService",
+    values: accountServiceValue,
+    description: "ソーシャルログインを提供するサービス"
+});
 
 const schoolAndDepartmentValue = {
     humanity: { description: "人文・文化学群 / 人文学類" },
@@ -84,13 +107,13 @@ const schoolAndDepartmentValue = {
     sport: { description: "体育専門学群" }
 };
 
+export type SchoolAndDepartment = keyof (typeof schoolAndDepartmentValue);
+
 export const schoolAndDepartment = new g.GraphQLEnumType({
     name: "schoolAndDepartment",
     values: schoolAndDepartmentValue,
     description: "学群学類ID"
 });
-
-export type graduate = keyof (typeof graduateValue);
 
 const graduateValue = {
     education: { description: "教育研究科" },
@@ -103,6 +126,7 @@ const graduateValue = {
     slis: { description: "図書館情報メディア研究科" },
     global: { description: "グローバル研究院" }
 };
+export type graduate = keyof (typeof graduateValue);
 
 export const graduateType = new g.GraphQLEnumType({
     name: "graduate",
