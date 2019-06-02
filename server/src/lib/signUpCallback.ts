@@ -92,8 +92,8 @@ const googleTokenResponseToData = (
 };
 
 /**
- * 情報をまだ入力していないユーザーのトークン
- * @param accountService
+ * 認証メールを送るのに必要なトークン
+ * @param id データベースで作成したID
  */
 const createSendEmailToken = (id: string) => {
     const time = new Date();

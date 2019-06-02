@@ -2,6 +2,7 @@ import { initializedFirebaseAdmin } from "./firebaseInit";
 import { URL } from "url";
 import * as storage from "@google-cloud/storage";
 import * as stream from "stream";
+import * as type from "./type";
 
 const dataBase = initializedFirebaseAdmin.firestore();
 const userCollection: FirebaseFirestore.CollectionReference = dataBase.collection(
@@ -74,17 +75,17 @@ export const generateAndWriteLineLogInState = async (): Promise<string> =>
 /**
  * ユーザー情報を入力する前のユーザーを保存する
  * @param accountService 使うアカウントのサービス
- * @param id それぞれのアカウントのユーザーID
+ * @param accountServiceId それぞれのアカウントのユーザーID
  * @param name 各サービスのアカウント名
  * @param imageUrl つくマートのサーバーにダウンロードしたアカウント画像のURL
  */
 export const addUserInUserBeforeInputData = async (
     accountService: AccountService,
-    id: string,
+    accountServiceId: string,
     name: string,
     imageUrl: URL
 ): Promise<string> => {
-    const documentId = accountService + "_" + id;
+    const documentId = accountService + "_" + accountServiceId;
     await userBeforeInputDataCollection.doc(documentId).set({
         name: name,
         imageUrl: imageUrl.toString()
@@ -92,6 +93,36 @@ export const addUserInUserBeforeInputData = async (
     return documentId;
 };
 
+/**
+ * ユーザー情報を入力する前のユーザー情報を取得する
+ * @param id
+ */
+export const getUserInUserBeforeInputData = async (
+    id: string
+): Promise<{
+    accountService: AccountService;
+    accountServiceId: string;
+    name: string;
+    imageUrl: URL;
+}> => {
+    const docRef = await (await userBeforeInputDataCollection.doc(id)).get();
+    if (!docRef.exists) {
+        console.log("存在しない情報入力前のユーザーを指定された");
+        throw new Error("存在しない情報入力前のユーザーを指定された");
+    }
+    const data = docRef.data() as {
+        accountService: AccountService;
+        accountServiceId: string;
+        name: string;
+        imageUrl: string;
+    };
+    return {
+        accountService: data.accountService,
+        accountServiceId: data.accountServiceId,
+        name: data.name,
+        imageUrl: new URL(data.imageUrl)
+    };
+};
 export type AccountService = "google" | "github" | "twitter" | "line";
 
 /**
@@ -108,6 +139,14 @@ export const saveUserImage = async (
     return new URL(
         "https://tsukumart-demo.firebaseapp.com/image/" + userImageFile.name
     );
+};
+
+/**
+ * ユーザーのプロフィール画像をCloud Storageから削除する
+ * @param fileName ファイル名
+ */
+export const deleteUserImage = async (fileName: string): Promise<void> => {
+    await deleteStorageFile("user-image", fileName);
 };
 /**
  * Firebase Cloud Storageで新しくファイルを作成する
@@ -135,6 +174,22 @@ const createRandomId = (): string => {
 };
 
 /**
+ * Firebase Cloud Storageで保存したファイルを削除する
+ * @param folderName フォルダ名
+ * @param fileName ファイル名
+ */
+const deleteStorageFile = async (
+    folderName: string,
+    fileName: string
+): Promise<void> => {
+    await initializedFirebaseAdmin
+        .storage()
+        .bucket()
+        .file(folderName + "/" + fileName)
+        .delete();
+};
+
+/**
  * 画像ファイルのReadStreamを得る
  * @param folderName フォルダ名
  * @param fileName ファイル名
@@ -148,3 +203,19 @@ export const getImageReadStream = (
         .bucket()
         .file(folderName + "/" + fileName)
         .createReadStream();
+
+export const addUser = async (
+    logInAccountServiceId: string,
+    name: string,
+    imageUrl: URL,
+    schoolAndDepartment: type.SchoolAndDepartment,
+    graduate: type.graduate
+): Promise<void> => {
+    const docRef = await userCollection.add({
+        logInAccountService: logInAccountServiceId,
+        name: name,
+        imageUrl: imageUrl.toString(),
+        schoolAndDepartment: schoolAndDepartment,
+        graduate: graduate
+    });
+};

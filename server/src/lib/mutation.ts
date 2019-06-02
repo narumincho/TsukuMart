@@ -3,7 +3,7 @@ import { URLSearchParams } from "url";
 import * as key from "./key";
 import * as database from "./database";
 import * as logInWithTwitter from "./twitterLogIn";
-import { document } from "firebase-functions/lib/providers/firestore";
+import * as type from "./type";
 
 const getGoogleLogInUrl: g.GraphQLFieldConfig<void, void, {}> = {
     type: g.GraphQLNonNull(g.GraphQLString),
@@ -69,11 +69,44 @@ const getLineLogInUrl: g.GraphQLFieldConfig<void, void, {}> = {
 const sendConformEmail: g.GraphQLFieldConfig<
     void,
     void,
-    { name: string; image: string | null; schoolAndDepartment: string }
+    {
+        sendEmailToken: string;
+        name: string;
+        image: string | null;
+        schoolAndDepartment: type.SchoolAndDepartment;
+        graduate: type.graduate;
+    }
 > = {
-    type: g.GraphQLNonNull(g.GraphQLBoolean),
-    resolve: async (source, args, context, info) => {},
+    type: g.GraphQLNonNull(
+        new g.GraphQLEnumType({
+            name: "",
+            values: { ok: { description: "成功した" } }
+        })
+    ),
+    resolve: async (source, args, context, info) => {
+        const image = args.image;
+        const sendEmailToken = args.sendEmailToken;
+
+        if (image !== null) {
+            const imageDataUrlMimeType = image.match(
+                /^data:(image\/png|image\/jpeg);base64,(.+)$/
+            );
+            if (imageDataUrlMimeType === null) {
+                throw new Error("invalid DataURL support image/png image/jpeg");
+            }
+            const newImageUrl = await database.saveUserImage(
+                Buffer.from(imageDataUrlMimeType[2], "base64"),
+                imageDataUrlMimeType[1]
+            );
+            return "o";
+        }
+        return "o";
+    },
     args: {
+        sendEmailToken: {
+            type: g.GraphQLNonNull(g.GraphQLString),
+            description: "認証メールを送るのに必要なトークン"
+        },
         name: {
             type: g.GraphQLNonNull(g.GraphQLString),
             description: "表示名"
@@ -84,24 +117,12 @@ const sendConformEmail: g.GraphQLFieldConfig<
                 "画像(DataURL) ソーシャルログインで使ったサービスのままならnull"
         },
         schoolAndDepartment: {
-            type: new g.GraphQLEnumType({
-                name: "schoolAndDepartment",
-                values: {
-                    humanity: {
-                        description: "人文・文化学群 / 人文学類",
-                        value: "humanity"
-                    },
-                    culture: {
-                        description: "人文・文化学群 / 比較文化学類",
-                        value: "culture"
-                    },
-                    japanese: {
-                        description: "人文・文化学群 / 日本語・日本文化学類",
-                        value: "japanese"
-                    }
-                }
-            }),
-            description: "学群学類ID"
+            type: g.GraphQLNonNull(type.schoolAndDepartment),
+            description: type.schoolAndDepartment.description
+        },
+        graduate: {
+            type: g.GraphQLNonNull(type.graduateType),
+            description: type.graduateType.description
         }
     },
     description: "ユーザー情報を登録して認証メールを送信する"
