@@ -71,7 +71,7 @@ const accountServiceValues = {
 };
 export type AccountService = keyof (typeof accountServiceValues);
 
-export const accountService = new g.GraphQLEnumType({
+export const accountServiceType = new g.GraphQLEnumType({
     name: "AccountService",
     values: accountServiceValues,
     description: "ソーシャルログインを提供するサービス"
@@ -122,7 +122,7 @@ const schoolAndDepartmentValues = {
 
 export type SchoolAndDepartment = keyof (typeof schoolAndDepartmentValues);
 
-export const schoolAndDepartment = new g.GraphQLEnumType({
+export const schoolAndDepartmentType = new g.GraphQLEnumType({
     name: "schoolAndDepartment",
     values: schoolAndDepartmentValues,
     description: "学群学類ID"
@@ -139,10 +139,52 @@ const graduateValues = {
     slis: { description: "図書館情報メディア研究科" },
     global: { description: "グローバル研究院" }
 };
-export type graduate = keyof (typeof graduateValues);
+export type Graduate = keyof (typeof graduateValues);
 
 export const graduateType = new g.GraphQLEnumType({
     name: "graduate",
     values: graduateValues,
     description: "研究科ID"
+});
+
+export type University =
+    | { schoolAndDepartment: SchoolAndDepartment }
+    | { graduate: Graduate }
+    | { schoolAndDepartment: SchoolAndDepartment; graduate: Graduate };
+
+export const universityType = new g.GraphQLUnionType({
+    name: "university",
+    types: [
+        new g.GraphQLObjectType({
+            name: "schoolAndDepartment",
+            fields: {
+                schoolAndDepartment: {
+                    type: schoolAndDepartmentType
+                }
+            },
+            description: "大学生"
+        }),
+        new g.GraphQLObjectType({
+            name: "graduate",
+            fields: {
+                graduate: {
+                    type: graduateType
+                }
+            },
+            description: "筑波大学以外からの院生"
+        }),
+        new g.GraphQLObjectType({
+            name: "schoolAndDepartmentAndGraduate",
+            fields: {
+                schoolAndDepartment: {
+                    type: schoolAndDepartmentType
+                },
+                graduate: {
+                    type: graduateType
+                }
+            },
+            description: "筑波大学からの院生"
+        })
+    ],
+    description: "大学での所属"
 });

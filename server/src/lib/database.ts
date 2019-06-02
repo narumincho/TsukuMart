@@ -208,7 +208,7 @@ export const addUser = async (
     name: string,
     imageUrl: URL,
     schoolAndDepartment: type.SchoolAndDepartment,
-    graduate: type.graduate
+    graduate: type.Graduate
 ): Promise<void> => {
     const docRef = await userCollection.add({
         logInAccountService: logInAccountServiceId,

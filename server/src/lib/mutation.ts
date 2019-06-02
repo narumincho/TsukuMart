@@ -5,7 +5,7 @@ import * as database from "./database";
 import * as logInWithTwitter from "./twitterLogIn";
 import * as type from "./type";
 import Maybe from "graphql/tsutils/Maybe";
-// import * as typeSafe from "./typeSafeMutation";
+import * as typeSafe from "./typeSafeMutation";
 
 const getLogInUrlMutationField: MutationField<
     { service: type.AccountService },
@@ -77,8 +77,8 @@ const getLogInUrlMutationField: MutationField<
     },
     args: {
         service: {
-            type: type.accountService,
-            description: type.accountService.description
+            type: type.accountServiceType,
+            description: type.accountServiceType.description
         }
     },
     description:
@@ -91,7 +91,7 @@ const sendConformEmailMutationField: MutationField<
         name: string;
         image: type.DataURLInternal | null;
         schoolAndDepartment: type.SchoolAndDepartment;
-        graduate: type.graduate;
+        graduate: type.Graduate;
     },
     type.Unit
 > = {
@@ -130,8 +130,8 @@ const sendConformEmailMutationField: MutationField<
                 "画像(DataURL) ソーシャルログインで使ったサービスのままならnull"
         },
         schoolAndDepartment: {
-            type: g.GraphQLNonNull(type.schoolAndDepartment),
-            description: type.schoolAndDepartment.description
+            type: g.GraphQLNonNull(type.schoolAndDepartmentType),
+            description: type.schoolAndDepartmentType.description
         },
         graduate: {
             type: g.GraphQLNonNull(type.graduateType),
