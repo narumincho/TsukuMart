@@ -5,6 +5,7 @@ import * as database from "./database";
 import * as logInWithTwitter from "./twitterLogIn";
 import * as type from "./type";
 import Maybe from "graphql/tsutils/Maybe";
+// import * as typeSafe from "./typeSafeMutation";
 
 const getLogInUrlMutationField: MutationField<
     { service: type.AccountService },
@@ -92,15 +93,10 @@ const sendConformEmailMutationField: MutationField<
         schoolAndDepartment: type.SchoolAndDepartment;
         graduate: type.graduate;
     },
-    "unit"
+    type.Unit
 > = {
-    type: g.GraphQLNonNull(
-        new g.GraphQLEnumType({
-            name: "unit",
-            values: { unit: {} }
-        })
-    ),
-    resolve: async (source, args, context, info): Promise<"unit"> => {
+    type: g.GraphQLNonNull(type.unit),
+    resolve: async (source, args, context, info): Promise<type.Unit> => {
         const image = args.image;
         const sendEmailToken = args.sendEmailToken;
 
@@ -115,9 +111,9 @@ const sendConformEmailMutationField: MutationField<
                 image.data,
                 image.mimeType
             );
-            return "unit";
+            return "ok";
         }
-        return "unit";
+        return "ok";
     },
     args: {
         sendEmailToken: {
@@ -172,11 +168,6 @@ export const mutation: g.GraphQLObjectType<
 /**
  * getterで上手くできそう { get field(){return expr}}
  */
-
-new g.GraphQLScalarType({
-    name: "unit",
-    serialize: value => value
-});
 
 /**
  * GraphQLFieldConfigの厳しいバージョン。resolveの引数と戻りの型がチェックされる

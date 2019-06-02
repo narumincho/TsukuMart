@@ -52,7 +52,7 @@ const dataUrlTypeConfig: g.GraphQLScalarTypeConfig<DataURLInternal, string> = {
 export const urlType = new g.GraphQLScalarType(urlTypeScalarTypeConfig);
 export const dataUrlType = new g.GraphQLScalarType(dataUrlTypeConfig);
 
-const accountServiceValue = {
+const accountServiceValues = {
     google: {
         description:
             "Google https://developers.google.com/identity/sign-in/web/"
@@ -69,15 +69,28 @@ const accountServiceValue = {
         description: "LINE https://developers.line.biz/ja/docs/line-login/"
     }
 };
-export type AccountService = keyof (typeof accountServiceValue);
+export type AccountService = keyof (typeof accountServiceValues);
 
 export const accountService = new g.GraphQLEnumType({
-    name: "accountService",
-    values: accountServiceValue,
+    name: "AccountService",
+    values: accountServiceValues,
     description: "ソーシャルログインを提供するサービス"
 });
 
-const schoolAndDepartmentValue = {
+const unitValues = {
+    ok: {
+        description: "成功した"
+    }
+};
+export type Unit = keyof (typeof unitValues);
+
+export const unit = new g.GraphQLEnumType({
+    name: "Unit",
+    values: unitValues,
+    description: "Mutationで無事処理が成功したことを表現する型"
+});
+
+const schoolAndDepartmentValues = {
     humanity: { description: "人文・文化学群 / 人文学類" },
     culture: { description: "人文・文化学群 / 比較文化学類" },
     japanese: {
@@ -107,15 +120,15 @@ const schoolAndDepartmentValue = {
     sport: { description: "体育専門学群" }
 };
 
-export type SchoolAndDepartment = keyof (typeof schoolAndDepartmentValue);
+export type SchoolAndDepartment = keyof (typeof schoolAndDepartmentValues);
 
 export const schoolAndDepartment = new g.GraphQLEnumType({
     name: "schoolAndDepartment",
-    values: schoolAndDepartmentValue,
+    values: schoolAndDepartmentValues,
     description: "学群学類ID"
 });
 
-const graduateValue = {
+const graduateValues = {
     education: { description: "教育研究科" },
     hass: { description: "人文社会科学研究科" },
     gabs: { description: "ビジネス科学研究科" },
@@ -126,10 +139,10 @@ const graduateValue = {
     slis: { description: "図書館情報メディア研究科" },
     global: { description: "グローバル研究院" }
 };
-export type graduate = keyof (typeof graduateValue);
+export type graduate = keyof (typeof graduateValues);
 
 export const graduateType = new g.GraphQLEnumType({
     name: "graduate",
-    values: graduateValue,
+    values: graduateValues,
     description: "研究科ID"
 });
