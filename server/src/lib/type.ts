@@ -1,4 +1,56 @@
 import * as g from "graphql";
+import { URL } from "url";
+
+const urlTypeScalarTypeConfig: g.GraphQLScalarTypeConfig<URL, string> = {
+    name: "URL",
+    description: "URL",
+    serialize: (url: URL): string => url.toString(),
+    parseValue: (value: string): URL => new URL(value),
+    parseLiteral: (ast): URL | null => {
+        if (ast.kind !== "StringValue") {
+            return null;
+        }
+        try {
+            return new URL(ast.value);
+        } catch {
+            return null;
+        }
+    }
+};
+
+export type DataURLInternal = { mimeType: string; data: Buffer };
+
+const dataUrlParser = (value: string): DataURLInternal => {
+    const imageDataUrlMimeType = value.match(/^data:(.+);base64,(.+)$/);
+    if (imageDataUrlMimeType === null) {
+        throw new Error("invalid DataURL");
+    }
+    return {
+        mimeType: imageDataUrlMimeType[1],
+        data: Buffer.from(imageDataUrlMimeType[2], "base64")
+    };
+};
+
+const dataUrlTypeConfig: g.GraphQLScalarTypeConfig<DataURLInternal, string> = {
+    name: "DataURL",
+    description: "DataURL base64エンコードのみサポート",
+    serialize: (value: DataURLInternal): string =>
+        "data:" + value.mimeType + ";base64," + value.data.toString(),
+    parseValue: dataUrlParser,
+    parseLiteral: ast => {
+        if (ast.kind !== "StringValue") {
+            return null;
+        }
+        try {
+            return dataUrlParser(ast.value);
+        } catch {
+            return null;
+        }
+    }
+};
+
+export const urlType = new g.GraphQLScalarType(urlTypeScalarTypeConfig);
+export const dataUrlType = new g.GraphQLScalarType(dataUrlTypeConfig);
 
 export type SchoolAndDepartment = keyof (typeof schoolAndDepartmentValue);
 

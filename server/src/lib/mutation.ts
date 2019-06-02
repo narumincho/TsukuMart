@@ -1,27 +1,30 @@
 import * as g from "graphql";
-import { URLSearchParams } from "url";
+import { URLSearchParams, URL } from "url";
 import * as key from "./key";
 import * as database from "./database";
 import * as logInWithTwitter from "./twitterLogIn";
 import * as type from "./type";
+import Maybe from "graphql/tsutils/Maybe";
 
-const getGoogleLogInUrl: g.GraphQLFieldConfig<void, void, {}> = {
-    type: g.GraphQLNonNull(g.GraphQLString),
-    resolve: async (source, args, context, info) =>
-        "https://accounts.google.com/o/oauth2/v2/auth?" +
-        new URLSearchParams({
-            response_type: "code",
-            client_id: key.googleLogInClientId,
-            redirect_uri: key.googleLogInRedirectUri,
-            scope: "profile openid",
-            state: await database.generateAndWriteGoogleLogInState()
-        }).toString(),
-
+const getGoogleLogInUrl: GraphQLFieldConfigTypeSafe<{}, URL> = {
+    type: type.urlType,
+    resolve: async (source, args, context, info) => {
+        const url = new URL("https://accounts.google.com/o/oauth2/v2/auth");
+        url.searchParams.append("response_type", "code");
+        url.searchParams.append("client_id", key.googleLogInClientId);
+        url.searchParams.append("redirect_uri", key.googleLogInRedirectUri);
+        url.searchParams.append("scope", "profile openid");
+        url.searchParams.append(
+            "state",
+            await database.generateAndWriteGoogleLogInState()
+        );
+        return url;
+    },
     description:
         "Googleで新規登録かログインするためのURLを得る。受け取ったURLをlocation.hrefに代入するとかして、Googleの認証画面へ"
 };
 
-const getGitHubLogInUrl: g.GraphQLFieldConfig<void, void, {}> = {
+const getGitHubLogInUrl: GraphQLFieldConfigTypeSafe<{}, string> = {
     type: g.GraphQLNonNull(g.GraphQLString),
     resolve: async (source, args, context, info) =>
         "https://github.com/login/oauth/authorize?" +
@@ -36,7 +39,7 @@ const getGitHubLogInUrl: g.GraphQLFieldConfig<void, void, {}> = {
         "GitHubで新規登録かログインするためのURLを得る。受け取ったURLをlocation.hrefに代入するとかして、GitHubの認証画面へ"
 };
 
-const getTwitterLogInUrl: g.GraphQLFieldConfig<void, void, {}> = {
+const getTwitterLogInUrl: GraphQLFieldConfigTypeSafe<{}, string> = {
     type: g.GraphQLNonNull(g.GraphQLString),
     resolve: async (source, args, context, info) => {
         const { tokenSecret, url } = await logInWithTwitter.getLoginUrl(
@@ -45,13 +48,13 @@ const getTwitterLogInUrl: g.GraphQLFieldConfig<void, void, {}> = {
             key.twitterLogInRedirectUri
         );
         await database.saveTwitterLogInTokenSecret(tokenSecret);
-        return url;
+        return url.toString();
     },
     description:
         "Twitterで新規登録かログインするためのURLを得る。受け取ったURLをlocation.hrefに代入するとかして、Twitterの認証画面へ"
 };
 
-const getLineLogInUrl: g.GraphQLFieldConfig<void, void, {}> = {
+const getLineLogInUrl: GraphQLFieldConfigTypeSafe<{}, string> = {
     type: g.GraphQLNonNull(g.GraphQLString),
     resolve: async (source, args, context, info) =>
         "https://access.line.me/oauth2/v2.1/authorize?" +
@@ -66,41 +69,40 @@ const getLineLogInUrl: g.GraphQLFieldConfig<void, void, {}> = {
         "LINEで新規登録かログインするためのURLを得る。受け取ったURLをlocation.hrefに代入するとかして、LINEの認証画面へ"
 };
 
-const sendConformEmail: g.GraphQLFieldConfig<
-    void,
-    void,
+const sendConformEmail: GraphQLFieldConfigTypeSafe<
     {
         sendEmailToken: string;
         name: string;
-        image: string | null;
+        image: type.DataURLInternal | null;
         schoolAndDepartment: type.SchoolAndDepartment;
         graduate: type.graduate;
-    }
+    },
+    "unit"
 > = {
     type: g.GraphQLNonNull(
         new g.GraphQLEnumType({
-            name: "",
-            values: { ok: { description: "成功した" } }
+            name: "unit",
+            values: { unit: {} }
         })
     ),
-    resolve: async (source, args, context, info) => {
+    resolve: async (source, args, context, info): Promise<"unit"> => {
         const image = args.image;
         const sendEmailToken = args.sendEmailToken;
 
         if (image !== null) {
-            const imageDataUrlMimeType = image.match(
-                /^data:(image\/png|image\/jpeg);base64,(.+)$/
-            );
-            if (imageDataUrlMimeType === null) {
+            if (
+                image.mimeType !== "image/png" &&
+                image.mimeType !== "image/jpeg"
+            ) {
                 throw new Error("invalid DataURL support image/png image/jpeg");
             }
             const newImageUrl = await database.saveUserImage(
-                Buffer.from(imageDataUrlMimeType[2], "base64"),
-                imageDataUrlMimeType[1]
+                image.data,
+                image.mimeType
             );
-            return "o";
+            return "unit";
         }
-        return "o";
+        return "unit";
     },
     args: {
         sendEmailToken: {
@@ -112,7 +114,7 @@ const sendConformEmail: g.GraphQLFieldConfig<
             description: "表示名"
         },
         image: {
-            type: g.GraphQLString,
+            type: type.dataUrlType,
             description:
                 "画像(DataURL) ソーシャルログインで使ったサービスのままならnull"
         },
@@ -147,3 +149,29 @@ export const mutation: g.GraphQLObjectType<
 /**
  * getterで上手くできそう { get field(){return expr}}
  */
+
+new g.GraphQLScalarType({
+    name: "unit",
+    serialize: value => value
+});
+
+/**
+ * GraphQLFieldConfigの厳しいバージョン。resolveの引数と戻りの型がチェックされる
+ */
+interface GraphQLFieldConfigTypeSafe<TArgs, TOutput> {
+    type: g.GraphQLOutputType;
+    args?: {
+        [key: string]: {
+            type: g.GraphQLInputType;
+            defaultValue?: any;
+            description: Maybe<string>;
+        };
+    };
+    resolve: (
+        source: void,
+        args: TArgs,
+        context: void,
+        info: g.GraphQLResolveInfo
+    ) => Promise<TOutput>;
+    description: string;
+}
