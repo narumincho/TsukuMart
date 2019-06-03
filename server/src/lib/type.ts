@@ -154,7 +154,7 @@ export type University = {
 };
 
 export const universityType = new g.GraphQLInputObjectType({
-    name: "university",
+    name: "University",
     fields: {
         schoolAndDepartment: {
             type: schoolAndDepartmentType

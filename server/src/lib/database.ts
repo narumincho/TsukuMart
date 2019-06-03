@@ -32,18 +32,55 @@ export const generateAndWriteGoogleLogInState = async (): Promise<string> =>
     (await googleLogInStateCollection.add({})).id;
 
 /**
- * 指定したStateがつくマート自身が発行したものかどうか調べる
+ * 指定したStateがつくマート自身が発行したものかどうか調べ、あったらそのStateを削除する
  * @param state
  */
-export const checkExistsGoogleLogInState = async (
-    state: string
+export const checkExistsLogInState = async (
+    state: string,
+    service: "google" | "gitHub" | "line"
 ): Promise<boolean> => {
-    const docRef: FirebaseFirestore.DocumentReference = googleLogInStateCollection.doc(
-        state
-    );
-    const result = (await docRef.get()).exists;
-    await docRef.delete();
-    return result;
+    switch (service) {
+        case "google": {
+            const docRef: FirebaseFirestore.DocumentReference = googleLogInStateCollection.doc(
+                state
+            );
+            const exists = (await docRef.get()).exists;
+            if (exists) {
+                await docRef.delete();
+            }
+            return exists;
+        }
+        case "gitHub": {
+            const docRef: FirebaseFirestore.DocumentReference = gitHubLogInStateCollection.doc(
+                state
+            );
+            const exists = (await docRef.get()).exists;
+            if (exists) {
+                await docRef.delete();
+            }
+            return exists;
+        }
+        case "line": {
+            const docRef: FirebaseFirestore.DocumentReference = lineLogInStateCollection.doc(
+                state
+            );
+            const exists = (await docRef.get()).exists;
+            if (exists) {
+                await docRef.delete();
+            }
+            return exists;
+        }
+    }
+};
+
+export const getTwitterLastTokenSecret = async (): Promise<string> => {
+    const lastData:
+        | FirebaseFirestore.DocumentData
+        | undefined = (await twitterLogInTokenSecretDocumentRef.get()).data();
+    if (lastData === undefined) {
+        throw new Error("Twitterの最後に保存したtokenSecretがない");
+    }
+    return lastData.tokenSecret;
 };
 
 /**
@@ -78,6 +115,7 @@ export const generateAndWriteLineLogInState = async (): Promise<string> =>
  * @param accountServiceId それぞれのアカウントのユーザーID
  * @param name 各サービスのアカウント名
  * @param imageUrl つくマートのサーバーにダウンロードしたアカウント画像のURL
+ * @returns ユーザー情報を入力する前のユーザーID
  */
 export const addUserInUserBeforeInputData = async (
     accountService: type.AccountService,
