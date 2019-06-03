@@ -88,7 +88,7 @@ const sendConformEmailMutationField = type.makeGraphQLFieldConfig({
         const university = args.university;
         const sendEmailToken = args.sendEmailToken;
 
-        if (image !== null) {
+        if (image !== null && image !== undefined) {
             if (
                 image.mimeType !== "image/png" &&
                 image.mimeType !== "image/jpeg"

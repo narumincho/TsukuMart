@@ -277,7 +277,7 @@ type InputTypeToGraphQLType<
     O extends InputType<any>
 > = O["nullableOrNonNull"] extends NullableOrNonNull.NonNull
     ? InputTypeInternalToGraphQLType<O["type"]>
-    : InputTypeInternalToGraphQLType<O["type"]> | null;
+    : Maybe<InputTypeInternalToGraphQLType<O["type"]>>;
 
 type InputTypeInternalToGraphQLType<
     O extends InputTypeInternal
