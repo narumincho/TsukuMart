@@ -5,14 +5,10 @@ import * as database from "./database";
 import * as logInWithTwitter from "./twitterLogIn";
 import * as type from "./type";
 import Maybe from "graphql/tsutils/Maybe";
-import * as typeSafe from "./typeSafeMutation";
 
-const getLogInUrlMutationField: MutationField<
-    { service: type.AccountService },
-    URL
-> = {
-    type: type.urlType,
-    resolve: async (source, args, context, info) => {
+const getLogInUrlMutationField = type.makeGraphQLFieldConfig({
+    type: type.OutputType.Url,
+    resolve: async args => {
         const accountService = args.service;
         switch (accountService) {
             case "google": {
@@ -77,27 +73,19 @@ const getLogInUrlMutationField: MutationField<
     },
     args: {
         service: {
-            type: type.accountServiceType,
-            description: type.accountServiceType.description
+            type: type.accountServiceInputType,
+            description: type.inputTypeDescription(type.accountServiceInputType)
         }
     },
     description:
         "新規登録かログインするためのURLを得る。受け取ったURLをlocation.hrefに代入するとかして、各サービスの認証画面へ"
-};
+});
 
-const sendConformEmailMutationField: MutationField<
-    {
-        sendEmailToken: string;
-        name: string;
-        image: type.DataURLInternal | null;
-        schoolAndDepartment: type.SchoolAndDepartment;
-        graduate: type.Graduate;
-    },
-    type.Unit
-> = {
-    type: g.GraphQLNonNull(type.unit),
-    resolve: async (source, args, context, info): Promise<type.Unit> => {
+const sendConformEmailMutationField = type.makeGraphQLFieldConfig({
+    type: type.OutputType.Unit,
+    resolve: async (args): Promise<type.Unit> => {
         const image = args.image;
+        const university = args.university;
         const sendEmailToken = args.sendEmailToken;
 
         if (image !== null) {
@@ -117,29 +105,25 @@ const sendConformEmailMutationField: MutationField<
     },
     args: {
         sendEmailToken: {
-            type: g.GraphQLNonNull(g.GraphQLString),
+            type: type.stringInputType,
             description: "認証メールを送るのに必要なトークン"
         },
         name: {
-            type: g.GraphQLNonNull(g.GraphQLString),
+            type: type.stringInputType,
             description: "表示名"
         },
         image: {
-            type: type.dataUrlType,
+            type: type.nullableInputType(type.dataUrlInputType),
             description:
                 "画像(DataURL) ソーシャルログインで使ったサービスのままならnull"
         },
-        schoolAndDepartment: {
-            type: g.GraphQLNonNull(type.schoolAndDepartmentType),
-            description: type.schoolAndDepartmentType.description
-        },
-        graduate: {
-            type: g.GraphQLNonNull(type.graduateType),
-            description: type.graduateType.description
+        university: {
+            type: type.universityInputType,
+            description: type.inputTypeDescription(type.universityInputType)
         }
     },
     description: "ユーザー情報を登録して認証メールを送信する"
-};
+});
 
 const getLogInUrl: g.GraphQLFieldConfig<
     void,
