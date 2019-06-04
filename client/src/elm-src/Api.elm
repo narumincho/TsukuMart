@@ -65,10 +65,11 @@ urlBuilder pathList =
 {-| 新規登録に必要な情報。この内容をサーバーに送信する
 -}
 type alias SignUpRequest =
-    { emailAddress : EmailAddress.EmailAddress
+    { sendEmailToken : String
+    , emailAddress : EmailAddress.EmailAddress
     , image : Maybe String
     , university : University.University
-    , nickName : String
+    , displayName : String
     }
 
 
@@ -94,21 +95,54 @@ tokenToHeader (Token token) =
 
 
 sendConfirmEmail : SignUpRequest -> (Result String () -> msg) -> Cmd msg
-sendConfirmEmail signUpData callBack =
+sendConfirmEmail { sendEmailToken, displayName, university, emailAddress } callBack =
     graphQlApiRequest
-        ("mutation {\n"
-            ++ "sendConformEmail"
+        ("mutation {"
+            ++ "sendConformEmail("
+            ++ ("sendEmailToken:\"" ++ sendEmailToken ++ "\" ")
+            ++ (", name: \"" ++ displayName ++ "\" ")
+            ++ (", university: " ++ universityToQuery university)
+            ++ (", email: \"" ++ EmailAddress.toString emailAddress ++ "\"")
+            ++ ")"
             ++ "}"
         )
         sendConfirmEmailRequestBody
         callBack
 
 
+universityToQuery : University.University -> String
+universityToQuery university =
+    "{"
+        ++ (case university of
+                University.GraduateTsukuba graduate schoolAndDepartment ->
+                    "graduate:"
+                        ++ University.graduateToIdString graduate
+                        ++ ", schoolAndDepartment:"
+                        ++ University.departmentToIdString schoolAndDepartment
+
+                University.GraduateNotTsukuba graduate ->
+                    "graduate:" ++ University.graduateToIdString graduate
+
+                University.NotGraduate schoolAndDepartment ->
+                    "schoolAndDepartment:" ++ University.departmentToIdString schoolAndDepartment
+           )
+        ++ "}"
+
+
 {-| 新規登録のJSONを生成
 -}
 sendConfirmEmailRequestBody : Json.Decode.Decoder ()
 sendConfirmEmailRequestBody =
-    Json.Decode.fail "まだできていない"
+    Json.Decode.field "sendConformEmail"
+        Json.Decode.string
+        |> Json.Decode.andThen
+            (\result ->
+                if result == "" then
+                    Json.Decode.succeed ()
+
+                else
+                    Json.Decode.fail "okでなかった"
+            )
 
 
 universityToSimpleRecord : University.University -> { graduate : Maybe University.Graduate, department : Maybe University.SchoolAndDepartment }

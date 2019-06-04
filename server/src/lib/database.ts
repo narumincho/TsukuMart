@@ -4,8 +4,12 @@ import * as storage from "@google-cloud/storage";
 import * as stream from "stream";
 import * as type from "./type";
 import * as firebase from "firebase";
+import * as key from "./key";
 
-firebase.initializeApp({});
+firebase.initializeApp({
+    apiKey: key.apiKey,
+    projectId: "tsukumart-demo"
+});
 
 const dataBase = initializedFirebaseAdmin.firestore();
 const userCollection: FirebaseFirestore.CollectionReference = dataBase.collection(

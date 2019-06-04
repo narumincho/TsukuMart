@@ -26,10 +26,11 @@ import Tab
 type Model
     = Normal
         -- 新規登録入力フォーム
-        { sAddressAndPassword : AnalysisStudentIdOrSAddressResult
+        { sAddressOrStudentId : AnalysisStudentIdOrSAddressResult
         , imageUrl : String
         , university : CompUniversity.Model
         , nickName : String
+        , sendEmailToken: String
         }
     | SentSingUpData
 
@@ -55,13 +56,14 @@ type Msg
 
 {-| すべて空白の新規登録画面を表示するためのModel
 -}
-initModel : String -> String -> ( Model, List Emit )
-initModel name imageUrl =
+initModel : {name:String, imageUrl:String,sendEmailToken:String } -> ( Model, List Emit )
+initModel {name,imageUrl,sendEmailToken} =
     ( Normal
-        { sAddressAndPassword = analysisStudentIdOrSAddress ""
+        { sAddressOrStudentId = analysisStudentIdOrSAddress ""
         , university = CompUniversity.initSelect
         , nickName = name
         , imageUrl = imageUrl
+        , sendEmailToken = sendEmailToken
         }
     , [ EmitReplaceText
             { id = displayNameFormId
@@ -77,7 +79,7 @@ update msg model =
         InputStudentIdOrEmailAddress string ->
             ( case model of
                 Normal rec ->
-                    Normal { rec | sAddressAndPassword = analysisStudentIdOrSAddress string }
+                    Normal { rec | sAddressOrStudentId = analysisStudentIdOrSAddress string }
 
                 _ ->
                     model
@@ -99,10 +101,10 @@ update msg model =
             , []
             )
 
-        InputSAddress sAddressAndPassword ->
+        InputSAddress sAddressOrStudentId ->
             ( case model of
                 Normal rec ->
-                    Normal { rec | sAddressAndPassword = sAddressAndPassword }
+                    Normal { rec | sAddressOrStudentId = sAddressOrStudentId }
 
                 _ ->
                     model
@@ -152,8 +154,8 @@ view userSignUpPage =
     let
         ( tabText, mainView ) =
             case userSignUpPage of
-                Normal { sAddressAndPassword, university, nickName, imageUrl } ->
-                    ( "新規登録", normalView sAddressAndPassword university nickName imageUrl )
+                Normal { sAddressOrStudentId, university, nickName, imageUrl, sendEmailToken } ->
+                    ( "新規登録", normalView sAddressOrStudentId university nickName imageUrl sendEmailToken )
 
                 SentSingUpData ->
                     ( "認証メールの送信をしました", sentSingUpDataView )
@@ -167,8 +169,8 @@ view userSignUpPage =
     )
 
 
-normalView : AnalysisStudentIdOrSAddressResult -> CompUniversity.Model -> String -> String -> Html.Html Msg
-normalView studentIdOrTsukubaEmailAddress university nickName imageUrl =
+normalView : AnalysisStudentIdOrSAddressResult -> CompUniversity.Model -> String -> String -> String -> Html.Html Msg
+normalView studentIdOrTsukubaEmailAddress university nickName imageUrl sendEmailToken =
     Html.Keyed.node "form"
         [ Html.Attributes.class "form" ]
         (studentHasSAddressFormList studentIdOrTsukubaEmailAddress
@@ -177,7 +179,7 @@ normalView studentIdOrTsukubaEmailAddress university nickName imageUrl =
             ++ (CompUniversity.view university
                     |> List.map (Tuple.mapSecond (Html.map InputUniversity))
                )
-            ++ [ ( "submit", signUpSubmitButton (getSendEmailRequest studentIdOrTsukubaEmailAddress university nickName imageUrl) ) ]
+            ++ [ ( "submit", signUpSubmitButton (getSendEmailRequest studentIdOrTsukubaEmailAddress university nickName imageUrl sendEmailToken) ) ]
         )
 
 
@@ -354,13 +356,14 @@ signUpSubmitButton signUpRequestMaybe =
 
 {-| 画面の情報から新規登録できる情報を入力しているかと、新規登録に必要なデータを取りだす
 -}
-getSendEmailRequest : AnalysisStudentIdOrSAddressResult -> CompUniversity.Model -> String -> String -> Maybe Api.SignUpRequest
-getSendEmailRequest studentIdOrSAddress university nickName imageUrl =
+getSendEmailRequest : AnalysisStudentIdOrSAddressResult -> CompUniversity.Model -> String -> String -> String -> Maybe Api.SignUpRequest
+getSendEmailRequest studentIdOrSAddress university nickName imageUrl sendEmailToken =
     case ( analysisStudentIdOrSAddressResultToEmailAddress studentIdOrSAddress, CompUniversity.getUniversity university ) of
         ( Just emailAddress, Just universityData ) ->
             if 1 <= String.length nickName && String.length nickName <= 50 then
                 Just
-                    { emailAddress = emailAddress
+                    { sendEmailToken = sendEmailToken
+                    , emailAddress = emailAddress
                     , image =
                         if isDataUrl imageUrl then
                             Just imageUrl
@@ -368,7 +371,7 @@ getSendEmailRequest studentIdOrSAddress university nickName imageUrl =
                         else
                             Nothing
                     , university = universityData
-                    , nickName = nickName
+                    , displayName = nickName
                     }
 
             else
@@ -379,8 +382,8 @@ getSendEmailRequest studentIdOrSAddress university nickName imageUrl =
 
 
 analysisStudentIdOrSAddressResultToEmailAddress : AnalysisStudentIdOrSAddressResult -> Maybe Data.EmailAddress.EmailAddress
-analysisStudentIdOrSAddressResultToEmailAddress sAddressAndPassword =
-    case sAddressAndPassword of
+analysisStudentIdOrSAddressResultToEmailAddress sAddressOrStudentId =
+    case sAddressOrStudentId of
         AStudentId studentId ->
             Just (Data.EmailAddress.fromSAddress (Data.SAddress.fromStudentId studentId))
 

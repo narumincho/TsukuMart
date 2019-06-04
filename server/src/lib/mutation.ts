@@ -157,7 +157,7 @@ const emailVerification = type.makeGraphQLFieldConfig({
             refreshToken: ""
         };
     },
-    description: ""
+    description: "認証トークンを送信する"
 });
 
 export const mutation = new g.GraphQLObjectType({
