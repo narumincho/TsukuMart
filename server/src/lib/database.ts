@@ -3,7 +3,9 @@ import { URL } from "url";
 import * as storage from "@google-cloud/storage";
 import * as stream from "stream";
 import * as type from "./type";
-import * as firebase from "firebase-admin";
+import * as firebase from "firebase";
+
+firebase.initializeApp({});
 
 const dataBase = initializedFirebaseAdmin.firestore();
 const userCollection: FirebaseFirestore.CollectionReference = dataBase.collection(
@@ -253,21 +255,28 @@ export const addUserBeforeEmailVerificationAndSendEmail = async (
     imageUrl: URL,
     email: string,
     university: type.University
-): Promise<string> => {
+): Promise<void> => {
     const docRef = await userBeforeEmailVerification.add({
         logInAccountService: logInAccountServiceId,
         name: name,
         imageUrl: imageUrl.toString(),
         university: university
     });
-    const user = await initializedFirebaseAdmin
+    const userRecord = await initializedFirebaseAdmin
         .auth()
-        .createUser({ uid: docRef.id });
-    return await initializedFirebaseAdmin
+        .createUser({ uid: docRef.id, email: email });
+    const customToken = await initializedFirebaseAdmin
         .auth()
-        .generateEmailVerificationLink(email, {
-            url: "https://tsukumart-demo.firebaseapp.com/verificationEmail"
-        });
+        .createCustomToken(userRecord.uid);
+    const userCredential = await firebase
+        .auth()
+        .signInWithCustomToken(customToken);
+    if (userCredential.user === null) {
+        throw new Error("userCredential.user is null");
+    }
+    await userCredential.user.sendEmailVerification({
+        url: "https://tsukumart-demo.firebaseapp.com/verificationEmail"
+    });
 };
 
 // export const addUser = async (

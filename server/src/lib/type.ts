@@ -123,7 +123,7 @@ const schoolAndDepartmentValues = {
 
 export type SchoolAndDepartment = keyof (typeof schoolAndDepartmentValues);
 
-export const schoolAndDepartmentType = new g.GraphQLEnumType({
+const schoolAndDepartmentType = new g.GraphQLEnumType({
     name: "schoolAndDepartment",
     values: schoolAndDepartmentValues,
     description: "学群学類ID"
@@ -142,7 +142,7 @@ const graduateValues = {
 };
 export type Graduate = keyof (typeof graduateValues);
 
-export const graduateType = new g.GraphQLEnumType({
+const graduateType = new g.GraphQLEnumType({
     name: "graduate",
     values: graduateValues,
     description: "研究科ID"
@@ -171,7 +171,7 @@ const enum UniversityC {
 /**
  *
  * @param universityUnsafe
- * @throws Error "University need (graduate) or (schoolAndDepartment) or (graduate and schoolAndDepartment)"
+ * @throws "University need (graduate) or (schoolAndDepartment) or (graduate and schoolAndDepartment)"
  */
 export const universityUnsafeToUniversity = (
     universityUnsafe: UniversityUnsafe
@@ -203,7 +203,7 @@ export const universityUnsafeToUniversity = (
     );
 };
 
-export const universityType = new g.GraphQLInputObjectType({
+const universityType = new g.GraphQLInputObjectType({
     name: "University",
     fields: {
         schoolAndDepartment: {
@@ -225,8 +225,8 @@ export const makeGraphQLFieldConfig = <
         [key in string]: { type: InputType<any>; description: Maybe<string> }
     }
 >(arg: {
-    type: O;
     args: Args;
+    type: O;
     resolve: (
         args: { [K in keyof Args]: InputTypeToGraphQLType<Args[K]["type"]> }
     ) => Promise<OutTypeValueToGraphQLType<O>>;
@@ -254,6 +254,25 @@ export const makeGraphQLFieldConfig = <
     };
 };
 
+const refreshTokenAndAccessTokenType = new g.GraphQLObjectType({
+    name: "refreshTokenAndAccessToken",
+    fields: {
+        refreshToken: {
+            type: g.GraphQLNonNull(g.GraphQLString),
+            description: "アクセストークンを更新するためのトークン"
+        },
+        accessToken: {
+            type: g.GraphQLNonNull(g.GraphQLString),
+            description:
+                "各種リソースにアクセスするのに必要なトークン。署名つき証明書"
+        }
+    }
+});
+
+export type RefreshTokenAndAccessToken = {
+    refreshToken: string;
+    accessToken: string;
+};
 /** ==============================
  *          Input Type
  * ===============================
@@ -390,7 +409,8 @@ export const inputTypeDescription = (
 export enum OutputType {
     String,
     Unit,
-    Url
+    Url,
+    RefreshTokenAndAccessToken
 }
 
 type OutTypeValueToGraphQLType<
@@ -401,6 +421,8 @@ type OutTypeValueToGraphQLType<
     ? Unit
     : O extends OutputType.Url
     ? URL
+    : O extends OutputType.RefreshTokenAndAccessToken
+    ? RefreshTokenAndAccessToken
     : never;
 
 const outputTypeToGraphQLType = (outType: OutputType): g.GraphQLOutputType => {
@@ -411,6 +433,8 @@ const outputTypeToGraphQLType = (outType: OutputType): g.GraphQLOutputType => {
             return g.GraphQLNonNull(unitType);
         case OutputType.Url:
             return g.GraphQLNonNull(urlType);
+        case OutputType.RefreshTokenAndAccessToken:
+            return g.GraphQLNonNull(refreshTokenAndAccessTokenType);
     }
 };
 
@@ -424,5 +448,7 @@ export const outputTypeDescription = (
             return unitType.description;
         case OutputType.Url:
             return urlType.description;
+        case OutputType.RefreshTokenAndAccessToken:
+            return refreshTokenAndAccessTokenType.description;
     }
 };
