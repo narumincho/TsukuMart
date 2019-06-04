@@ -119,7 +119,7 @@ const createSendEmailToken = (id: string) => {
     const time = new Date();
     time.setUTCMinutes(time.getUTCMinutes() + 30); // 有効期限は30分後
     const payload = { sub: id, exp: Math.round(time.getTime() / 1000) };
-    return jwt.sign(payload, key.beforeInputUniversity, { algorithm: "HS256" });
+    return jwt.sign(payload, key.sendEmailTokenSecret, { algorithm: "HS256" });
 };
 
 const getAndSaveUserImage = async (imageUrl: URL): Promise<URL> => {

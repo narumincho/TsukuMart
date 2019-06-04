@@ -5,8 +5,9 @@ import * as database from "./database";
 import * as logInWithTwitter from "./twitterLogIn";
 import * as type from "./type";
 import Maybe from "graphql/tsutils/Maybe";
+import * as jwt from "jsonwebtoken";
 
-const getLogInUrlMutationField = type.makeGraphQLFieldConfig({
+const getLogInUrl = type.makeGraphQLFieldConfig({
     type: type.OutputType.Url,
     resolve: async args => {
         const accountService = args.service;
@@ -81,27 +82,28 @@ const getLogInUrlMutationField = type.makeGraphQLFieldConfig({
         "新規登録かログインするためのURLを得る。受け取ったURLをlocation.hrefに代入するとかして、各サービスの認証画面へ"
 });
 
-const sendConformEmailMutationField = type.makeGraphQLFieldConfig({
-    type: type.OutputType.Unit,
-    resolve: async (args): Promise<type.Unit> => {
+const sendConformEmail = type.makeGraphQLFieldConfig({
+    type: type.OutputType.String,
+    resolve: async args => {
+        const name = args.name;
         const image = args.image;
-        const university = args.university;
+        const universityUnsafe = args.university;
         const sendEmailToken = args.sendEmailToken;
+        const email = args.email;
+        const logInAccountServiceId = sendEmailTokenVerify(args.sendEmailToken);
 
-        if (image !== null && image !== undefined) {
-            if (
-                image.mimeType !== "image/png" &&
-                image.mimeType !== "image/jpeg"
-            ) {
-                throw new Error("invalid DataURL support image/png image/jpeg");
-            }
-            const newImageUrl = await database.saveUserImage(
-                image.data,
-                image.mimeType
-            );
-            return "ok";
-        }
-        return "ok";
+        const userBeforeInputData = await database.getUserInUserBeforeInputData(
+            logInAccountServiceId
+        );
+        const university = type.universityUnsafeToUniversity(universityUnsafe);
+        const link = await database.addUserBeforeEmailVerificationAndSendEmail(
+            logInAccountServiceId,
+            args.name,
+            userBeforeInputData.imageUrl,
+            email,
+            university
+        );
+        return link;
     },
     args: {
         sendEmailToken: {
@@ -120,27 +122,28 @@ const sendConformEmailMutationField = type.makeGraphQLFieldConfig({
         university: {
             type: type.universityInputType,
             description: type.inputTypeDescription(type.universityInputType)
+        },
+        email: {
+            type: type.stringInputType,
+            description: "メールアドレス"
         }
     },
     description: "ユーザー情報を登録して認証メールを送信する"
 });
 
-const getLogInUrl: g.GraphQLFieldConfig<
-    void,
-    void,
-    any
-> = getLogInUrlMutationField;
+const sendEmailTokenVerify = (sendEmailToken: string): string => {
+    const decoded = jwt.verify(sendEmailToken, key.sendEmailTokenSecret);
+    if (typeof decoded === "string") {
+        throw new Error("sendEmailToken include string only");
+    }
+    const decodedMarked = decoded as { sub: unknown };
+    if (typeof decodedMarked.sub !== "string") {
+        throw new Error("sendEmailToken sub is not string");
+    }
+    return decodedMarked.sub;
+};
 
-const sendConformEmail: g.GraphQLFieldConfig<
-    void,
-    void,
-    any
-> = sendConformEmailMutationField;
-export const mutation: g.GraphQLObjectType<
-    void,
-    void,
-    any
-> = new g.GraphQLObjectType({
+export const mutation = new g.GraphQLObjectType({
     name: "Mutation",
     description: "データを作成、更新ができる",
     fields: {
@@ -148,28 +151,3 @@ export const mutation: g.GraphQLObjectType<
         sendConformEmail
     }
 });
-
-/**
- * getterで上手くできそう { get field(){return expr}}
- */
-
-/**
- * GraphQLFieldConfigの厳しいバージョン。resolveの引数と戻りの型がチェックされる
- */
-interface MutationField<TArgs, TOutput> {
-    type: g.GraphQLOutputType;
-    args?: {
-        [key: string]: {
-            type: g.GraphQLInputType;
-            defaultValue?: any;
-            description: Maybe<string>;
-        };
-    };
-    resolve: (
-        source: void,
-        args: TArgs,
-        context: void,
-        info: g.GraphQLResolveInfo
-    ) => Promise<TOutput>;
-    description: string;
-}

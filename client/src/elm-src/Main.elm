@@ -199,10 +199,9 @@ urlParserInitResultToPageAndCmd logInState page =
             Page.Home.initModel Nothing
                 |> Tuple.mapBoth PageHome homePageEmitListToCmd
 
-        SiteMap.InitSignUp { sendEmailToken, name, imageUrl } ->
-            ( PageSignUp (Page.SignUp.initModel name imageUrl)
-            , Cmd.none
-            )
+        SiteMap.InitSignUp { name, imageUrl } ->
+            Page.SignUp.initModel name imageUrl
+                |> Tuple.mapBoth PageSignUp signUpPageEmitListToCmd
 
         SiteMap.InitLogIn ->
             ( PageLogIn Page.LogIn.initModel
@@ -820,6 +819,9 @@ signUpPageEmitListToCmd =
     List.map
         (\emit ->
             case emit of
+                Page.SignUp.EmitReplaceText { id, text } ->
+                    inputOrTextAreaReplaceText { id = id, text = text }
+
                 Page.SignUp.EmitAccountImage idString ->
                     studentImageChange idString
 

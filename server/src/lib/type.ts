@@ -148,9 +148,59 @@ export const graduateType = new g.GraphQLEnumType({
     description: "研究科ID"
 });
 
-export type University = {
-    schoolAndDepartment: SchoolAndDepartment | null;
-    graduate: Graduate | null;
+export type UniversityUnsafe = {
+    schoolAndDepartment: Maybe<SchoolAndDepartment>;
+    graduate: Maybe<Graduate>;
+};
+
+export type University =
+    | {
+          c: UniversityC.GraduateTsukuba;
+          schoolAndDepartment: SchoolAndDepartment;
+          graduate: Graduate;
+      }
+    | { c: UniversityC.GraduateNotTsukuba; graduate: Graduate }
+    | { c: UniversityC.NotGraduate; schoolAndDepartment: SchoolAndDepartment };
+
+const enum UniversityC {
+    GraduateTsukuba,
+    GraduateNotTsukuba,
+    NotGraduate
+}
+
+/**
+ *
+ * @param universityUnsafe
+ * @throws Error "University need (graduate) or (schoolAndDepartment) or (graduate and schoolAndDepartment)"
+ */
+export const universityUnsafeToUniversity = (
+    universityUnsafe: UniversityUnsafe
+): University => {
+    if (
+        typeof universityUnsafe.graduate === "string" &&
+        typeof universityUnsafe.schoolAndDepartment === "string"
+    ) {
+        return {
+            c: UniversityC.GraduateTsukuba,
+            graduate: universityUnsafe.graduate,
+            schoolAndDepartment: universityUnsafe.schoolAndDepartment
+        };
+    }
+    if (typeof universityUnsafe.graduate === "string") {
+        return {
+            c: UniversityC.GraduateNotTsukuba,
+            graduate: universityUnsafe.graduate
+        };
+    }
+    if (typeof universityUnsafe.schoolAndDepartment === "string") {
+        return {
+            c: UniversityC.NotGraduate,
+            schoolAndDepartment: universityUnsafe.schoolAndDepartment
+        };
+    }
+    throw new Error(
+        "University need (graduate) or (schoolAndDepartment) or (graduate and schoolAndDepartment)"
+    );
 };
 
 export const universityType = new g.GraphQLInputObjectType({
@@ -288,7 +338,7 @@ type InputTypeInternalToGraphQLType<
     : O extends InputTypeInternal.DataUrl
     ? DataURLInternal
     : O extends InputTypeInternal.University
-    ? University
+    ? UniversityUnsafe
     : never;
 
 const inputTypeToGraphQLType = (

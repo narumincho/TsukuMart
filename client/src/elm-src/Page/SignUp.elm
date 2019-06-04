@@ -40,6 +40,7 @@ type Emit
     = EmitAccountImage String
     | EmitSignUp Api.SignUpRequest
     | EmitUniversity CompUniversity.Emit
+    | EmitReplaceText { id : String, text : String }
 
 
 type Msg
@@ -54,14 +55,20 @@ type Msg
 
 {-| すべて空白の新規登録画面を表示するためのModel
 -}
-initModel : String -> String -> Model
+initModel : String -> String -> ( Model, List Emit )
 initModel name imageUrl =
-    Normal
+    ( Normal
         { sAddressAndPassword = analysisStudentIdOrSAddress ""
         , university = CompUniversity.initSelect
         , nickName = name
         , imageUrl = imageUrl
         }
+    , [ EmitReplaceText
+            { id = displayNameFormId
+            , text = name
+            }
+      ]
+    )
 
 
 update : Msg -> Model -> ( Model, List Emit )
@@ -166,7 +173,7 @@ normalView studentIdOrTsukubaEmailAddress university nickName imageUrl =
         [ Html.Attributes.class "form" ]
         (studentHasSAddressFormList studentIdOrTsukubaEmailAddress
             ++ imageForm imageUrl
-            ++ nickNameForm nickName
+            ++ displayNameForm nickName
             ++ (CompUniversity.view university
                     |> List.map (Tuple.mapSecond (Html.map InputUniversity))
                )
@@ -286,19 +293,19 @@ imageForm imageUrl =
 
 {-| 表示名フォーム
 -}
-nickNameForm : String -> List ( String, Html.Html Msg )
-nickNameForm nickName =
+displayNameForm : String -> List ( String, Html.Html Msg )
+displayNameForm nickName =
     [ ( "nickNameForm"
       , Html.div
             []
             ([ Html.label
                 [ Html.Attributes.class "form-label"
-                , Html.Attributes.for "nickNameForm"
+                , Html.Attributes.for displayNameFormId
                 ]
                 [ Html.text "表示名" ]
              , Html.input
                 [ Html.Attributes.class "form-input"
-                , Html.Attributes.id "nickNameForm"
+                , Html.Attributes.id displayNameFormId
                 , Html.Attributes.attribute "autocomplete" "nickname"
                 , Html.Events.onInput InputNickName
                 ]
@@ -316,6 +323,11 @@ nickNameForm nickName =
             )
       )
     ]
+
+
+displayNameFormId : String
+displayNameFormId =
+    "displayNameForm"
 
 
 signUpSubmitButton : Maybe Api.SignUpRequest -> Html.Html Msg

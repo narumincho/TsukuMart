@@ -3,6 +3,7 @@ import { URL } from "url";
 import * as storage from "@google-cloud/storage";
 import * as stream from "stream";
 import * as type from "./type";
+import * as firebase from "firebase-admin";
 
 const dataBase = initializedFirebaseAdmin.firestore();
 const userCollection: FirebaseFirestore.CollectionReference = dataBase.collection(
@@ -10,6 +11,9 @@ const userCollection: FirebaseFirestore.CollectionReference = dataBase.collectio
 );
 const userBeforeInputDataCollection: FirebaseFirestore.CollectionReference = dataBase.collection(
     "userBeforeInputData"
+);
+const userBeforeEmailVerification: FirebaseFirestore.CollectionReference = dataBase.collection(
+    "userBeforeEmailVerification"
 );
 const googleLogInStateCollection: FirebaseFirestore.CollectionReference = dataBase.collection(
     "googleState"
@@ -133,17 +137,19 @@ export const addUserInUserBeforeInputData = async (
 
 /**
  * ユーザー情報を入力する前のユーザー情報を取得する
- * @param id
+ * @param logInAccountServiceId サービス名_サービス内でのID
  */
 export const getUserInUserBeforeInputData = async (
-    id: string
+    logInAccountServiceId: string
 ): Promise<{
     accountService: type.AccountService;
     accountServiceId: string;
     name: string;
     imageUrl: URL;
 }> => {
-    const docRef = await (await userBeforeInputDataCollection.doc(id)).get();
+    const docRef = await (await userBeforeInputDataCollection.doc(
+        logInAccountServiceId
+    )).get();
     if (!docRef.exists) {
         console.log("存在しない情報入力前のユーザーを指定された");
         throw new Error("存在しない情報入力前のユーザーを指定された");
@@ -241,18 +247,41 @@ export const getImageReadStream = (
         .file(folderName + "/" + fileName)
         .createReadStream();
 
-export const addUser = async (
+export const addUserBeforeEmailVerificationAndSendEmail = async (
     logInAccountServiceId: string,
     name: string,
     imageUrl: URL,
-    schoolAndDepartment: type.SchoolAndDepartment,
-    graduate: type.Graduate
-): Promise<void> => {
-    const docRef = await userCollection.add({
+    email: string,
+    university: type.University
+): Promise<string> => {
+    const docRef = await userBeforeEmailVerification.add({
         logInAccountService: logInAccountServiceId,
         name: name,
         imageUrl: imageUrl.toString(),
-        schoolAndDepartment: schoolAndDepartment,
-        graduate: graduate
+        university: university
     });
+    const user = await initializedFirebaseAdmin
+        .auth()
+        .createUser({ uid: docRef.id });
+    return await initializedFirebaseAdmin
+        .auth()
+        .generateEmailVerificationLink(email, {
+            url: "https://tsukumart-demo.firebaseapp.com/verificationEmail"
+        });
 };
+
+// export const addUser = async (
+//     logInAccountServiceId: string,
+//     name: string,
+//     imageUrl: URL,
+//     schoolAndDepartment: type.SchoolAndDepartment,
+//     graduate: type.Graduate
+// ): Promise<void> => {
+//     const docRef = await userCollection.add({
+//         logInAccountService: logInAccountServiceId,
+//         name: name,
+//         imageUrl: imageUrl.toString(),
+//         schoolAndDepartment: schoolAndDepartment,
+//         graduate: graduate
+//     });
+// };
