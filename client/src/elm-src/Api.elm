@@ -42,17 +42,6 @@ import Json.Decode.Pipeline
 import Json.Encode
 import Task
 import Url
-import Url.Builder
-
-
-apiOrigin : String
-apiOrigin =
-    "https://api.tsukumart.com"
-
-
-urlBuilder : List String -> String
-urlBuilder pathList =
-    Url.Builder.crossOrigin apiOrigin (pathList ++ [ "" ]) []
 
 
 
@@ -209,11 +198,7 @@ type alias TokenRefreshRequest =
 
 tokenRefresh : TokenRefreshRequest -> (Result () () -> msg) -> Cmd msg
 tokenRefresh tokenRefreshRequest msg =
-    Http.post
-        { url = urlBuilder [ "auth", "token", "refresh" ]
-        , body = Http.jsonBody (tokenRefreshBody tokenRefreshRequest)
-        , expect = Http.expectStringResponse msg (refreshTokenResponseToResult tokenRefreshRequest.refresh)
-        }
+    Cmd.none
 
 
 tokenRefreshBody : TokenRefreshRequest -> Json.Encode.Value
@@ -269,15 +254,7 @@ type SellGoodsRequest
 
 sellGoods : Token -> SellGoodsRequest -> (Result () () -> msg) -> Cmd msg
 sellGoods token createGoodsRequest msg =
-    Http.request
-        { method = "POST"
-        , headers = [ tokenToHeader token ]
-        , url = urlBuilder [ "v1", "currentuser", "goods" ]
-        , body = Http.multipartBody (createGoodsRequestJsonBody createGoodsRequest)
-        , expect = Http.expectStringResponse msg createGoodsResponseToResult
-        , timeout = Nothing
-        , tracker = Nothing
-        }
+    Cmd.none
 
 
 createGoodsRequestJsonBody : SellGoodsRequest -> List Http.Part
@@ -340,15 +317,7 @@ createGoodsResponseToResult response =
 
 updateGood : Token -> Good.GoodId -> SellGoodsRequest -> (Result () () -> msg) -> Cmd msg
 updateGood token goodId createGoodsRequest msg =
-    Http.request
-        { method = "PUT"
-        , headers = [ tokenToHeader token ]
-        , url = urlBuilder [ "v1", "currentuser", "goods", Good.goodIdToString goodId ]
-        , body = Http.multipartBody (createGoodsRequestJsonBody createGoodsRequest)
-        , expect = Http.expectStringResponse msg createGoodsResponseToResult
-        , timeout = Nothing
-        , tracker = Nothing
-        }
+    Cmd.none
 
 
 
@@ -360,15 +329,7 @@ updateGood token goodId createGoodsRequest msg =
 
 getMyProfile : Token -> (Result () User.User -> msg) -> Cmd msg
 getMyProfile token msg =
-    Http.request
-        { method = "GET"
-        , headers = [ tokenToHeader token ]
-        , url = urlBuilder [ "v1", "currentuser", "profile" ]
-        , body = Http.emptyBody
-        , expect = Http.expectStringResponse msg getUserResponseToResult
-        , timeout = Nothing
-        , tracker = Nothing
-        }
+    Cmd.none
 
 
 
@@ -380,15 +341,7 @@ getMyProfile token msg =
 
 updateProfile : Token -> User.Profile -> (Result () User.Profile -> msg) -> Cmd msg
 updateProfile token profile msg =
-    Http.request
-        { method = "PATCH"
-        , headers = [ tokenToHeader token ]
-        , url = urlBuilder [ "v1", "currentuser", "profile" ]
-        , body = Http.jsonBody (updateProfileRequestToJsonBody profile)
-        , expect = Http.expectStringResponse msg (getUserResponseToResult >> Result.map User.getProfile)
-        , timeout = Nothing
-        , tracker = Nothing
-        }
+    Cmd.none
 
 
 updateProfileRequestToJsonBody : User.Profile -> Json.Decode.Value
@@ -427,15 +380,7 @@ updateProfileRequestToJsonBody profile =
 
 getLikeGoodList : Token -> (Result () (List Good.Good) -> msg) -> Cmd msg
 getLikeGoodList token msg =
-    Http.request
-        { method = "GET"
-        , url = urlBuilder [ "v1", "currentuser", "likes" ]
-        , headers = [ tokenToHeader token ]
-        , body = Http.emptyBody
-        , expect = Http.expectStringResponse msg getGoodListResponseToResult
-        , timeout = Nothing
-        , tracker = Nothing
-        }
+    Cmd.none
 
 
 
@@ -469,15 +414,7 @@ getHistoryGoodList token msg =
 
 getExhibitionGoodList : Token -> (Result () (List Good.Good) -> msg) -> Cmd msg
 getExhibitionGoodList token msg =
-    Http.request
-        { method = "GET"
-        , url = urlBuilder [ "v1", "currentuser", "goods" ]
-        , headers = [ tokenToHeader token ]
-        , body = Http.emptyBody
-        , expect = Http.expectStringResponse msg getGoodListResponseToResult
-        , timeout = Nothing
-        , tracker = Nothing
-        }
+    Cmd.none
 
 
 
@@ -502,10 +439,7 @@ getPurchaseGoodList token msg =
 
 getUserProfile : User.UserId -> (Result () User.Profile -> msg) -> Cmd msg
 getUserProfile userId msg =
-    Http.get
-        { url = urlBuilder [ "v1", "profile", userId |> User.userIdToInt |> String.fromInt ]
-        , expect = Http.expectStringResponse msg (getUserResponseToResult >> Result.map User.getProfile)
-        }
+    Cmd.none
 
 
 getUserResponseToResult : Http.Response String -> Result () User.User
@@ -562,14 +496,7 @@ getUserResponseValueListToResult id nickName introduction departmentMaybe gradua
 
 getRecentGoods : (Result () (List Good.Good) -> msg) -> Cmd msg
 getRecentGoods msg =
-    Http.get
-        { url = urlBuilder [ "v1", "goods" ]
-        , expect =
-            Http.expectStringResponse msg
-                (getGoodListResponseToResult
-                    >> Result.map List.reverse
-                )
-        }
+    Cmd.none
 
 
 
@@ -581,10 +508,7 @@ getRecentGoods msg =
 
 getRecommendGoods : (Result () (List Good.Good) -> msg) -> Cmd msg
 getRecommendGoods msg =
-    Http.get
-        { url = urlBuilder [ "v1", "goods" ]
-        , expect = Http.expectStringResponse msg getGoodListResponseToResult
-        }
+    Cmd.none
 
 
 getGoodListResponseToResult : Http.Response String -> Result () (List Good.Good)
@@ -643,21 +567,14 @@ goodsNormalResponseDecoder =
 
 
 {- =================================================================================
-       0円の商品を取得    TODO /{version}/goods/で取得したものからクライアント側で選んでいる
+       0円の商品を取得
    =================================================================================
 -}
 
 
 getFreeGoods : (Result () (List Good.Good) -> msg) -> Cmd msg
 getFreeGoods msg =
-    Http.get
-        { url = urlBuilder [ "v1", "goods" ]
-        , expect =
-            Http.expectStringResponse msg
-                (getGoodListResponseToResult
-                    >> Result.map (List.filter (\g -> Good.getPrice g == 0))
-                )
-        }
+    Cmd.none
 
 
 
@@ -669,10 +586,7 @@ getFreeGoods msg =
 
 getGood : Good.GoodId -> (Result () Good.Good -> msg) -> Cmd msg
 getGood id msg =
-    Http.get
-        { url = urlBuilder [ "v1", "goods", Good.goodIdToString id ]
-        , expect = Http.expectStringResponse msg getGoodsResponseToResult
-        }
+    Cmd.none
 
 
 getGoodsResponseToResult : Http.Response String -> Result () Good.Good
@@ -782,76 +696,7 @@ deleteGoods token goodId =
 
 likeGoods : Token -> Good.GoodId -> (Result () () -> msg) -> Cmd msg
 likeGoods token goodsId msg =
-    toggleLikeTask token goodsId
-        |> Task.andThen
-            (\result ->
-                case result of
-                    Like ->
-                        Task.succeed ()
-
-                    Unlike ->
-                        toggleLikeTask token goodsId
-                            |> Task.andThen
-                                (\r ->
-                                    case r of
-                                        Like ->
-                                            Task.succeed ()
-
-                                        Unlike ->
-                                            Task.fail ()
-                                )
-            )
-        |> Task.attempt msg
-
-
-toggleLikeTask : Token -> Good.GoodId -> Task.Task () LikeOrUnlike
-toggleLikeTask token goodId =
-    Http.task
-        { method = "POST"
-        , headers = [ tokenToHeader token ]
-        , url = urlBuilder [ "v1", "goods", Good.goodIdToString goodId, "toggle-like" ]
-        , body = Http.emptyBody
-        , resolver = Http.stringResolver toggleLikeGoodsResponseToResult
-        , timeout = Nothing
-        }
-
-
-toggleLikeGoodsResponseToResult : Http.Response String -> Result () LikeOrUnlike
-toggleLikeGoodsResponseToResult response =
-    case response of
-        Http.GoodStatus_ _ body ->
-            Json.Decode.decodeString toggleLikeGoodsResponseBodyDecoder body
-                |> Result.mapError (always ())
-
-        _ ->
-            Err ()
-
-
-type LikeOrUnlike
-    = Like
-    | Unlike
-
-
-toggleLikeGoodsResponseBodyDecoder : Json.Decode.Decoder LikeOrUnlike
-toggleLikeGoodsResponseBodyDecoder =
-    Json.Decode.field "message" Json.Decode.string
-        |> Json.Decode.andThen
-            (\result ->
-                case result of
-                    "Successfully liked" ->
-                        Json.Decode.succeed Like
-
-                    "Successfully unliked" ->
-                        Json.Decode.succeed Unlike
-
-                    _ ->
-                        Json.Decode.fail
-                            ("I can't understand toggle like result=\""
-                                ++ result
-                                ++ "\""
-                                ++ "except \"Successfully liked\" or \"Successfully unliked\""
-                            )
-            )
+    Cmd.none
 
 
 
@@ -863,26 +708,7 @@ toggleLikeGoodsResponseBodyDecoder =
 
 unlikeGoods : Token -> Good.GoodId -> (Result () () -> msg) -> Cmd msg
 unlikeGoods token goodsId msg =
-    toggleLikeTask token goodsId
-        |> Task.andThen
-            (\result ->
-                case result of
-                    Like ->
-                        toggleLikeTask token goodsId
-                            |> Task.andThen
-                                (\r ->
-                                    case r of
-                                        Like ->
-                                            Task.fail ()
-
-                                        Unlike ->
-                                            Task.succeed ()
-                                )
-
-                    Unlike ->
-                        Task.succeed ()
-            )
-        |> Task.attempt msg
+    Cmd.none
 
 
 
@@ -894,10 +720,7 @@ unlikeGoods token goodsId msg =
 
 getGoodsComment : Good.GoodId -> (Result () (List Good.Comment) -> msg) -> Cmd msg
 getGoodsComment goodId msg =
-    Http.get
-        { url = urlBuilder [ "v1", "goods", Good.goodIdToString goodId, "comment" ]
-        , expect = Http.expectStringResponse msg commentResponseToResult
-        }
+    Cmd.none
 
 
 commentResponseToResult : Http.Response String -> Result () (List Good.Comment)
@@ -942,15 +765,7 @@ commentDecoder =
 
 postGoodsComment : User.User -> Token -> Good.GoodId -> String -> (Result () Good.Comment -> msg) -> Cmd msg
 postGoodsComment user token goodId comment msg =
-    Http.request
-        { method = "POST"
-        , url = urlBuilder [ "v1", "goods", Good.goodIdToString goodId, "comment" ]
-        , headers = [ tokenToHeader token ]
-        , body = Http.jsonBody (Json.Encode.object [ ( "text", Json.Encode.string comment ) ])
-        , expect = Http.expectStringResponse msg (postGoodsCommentResponseToResult user)
-        , timeout = Nothing
-        , tracker = Nothing
-        }
+    Cmd.none
 
 
 postGoodsCommentResponseToResult : User.User -> Http.Response String -> Result () Good.Comment
@@ -993,15 +808,7 @@ commentNormalDecoder userName userId =
 
 tradeStart : Token -> Good.GoodId -> (Result () () -> msg) -> Cmd msg
 tradeStart token goodId msg =
-    Http.request
-        { method = "POST"
-        , url = urlBuilder [ "v1", "goods", Good.goodIdToString goodId, "trade-start" ]
-        , headers = [ tokenToHeader token ]
-        , body = Http.emptyBody
-        , expect = Http.expectStringResponse msg tradeStartResponseToResult
-        , timeout = Nothing
-        , tracker = Nothing
-        }
+    Cmd.none
 
 
 tradeStartResponseToResult : Http.Response String -> Result () ()
@@ -1024,15 +831,7 @@ tradeStartResponseToResult response =
 
 getTradeComment : Token -> Good.GoodId -> (Result () (List Good.Comment) -> msg) -> Cmd msg
 getTradeComment token goodId msg =
-    Http.request
-        { method = "GET"
-        , url = urlBuilder [ "v1", "trade", Good.goodIdToString goodId, "comment" ]
-        , headers = [ tokenToHeader token ]
-        , body = Http.emptyBody
-        , expect = Http.expectStringResponse msg commentResponseToResult
-        , timeout = Nothing
-        , tracker = Nothing
-        }
+    Cmd.none
 
 
 
@@ -1082,7 +881,7 @@ logInOrSignUpUrlResponseToResult =
 graphQlApiRequest : String -> Json.Decode.Decoder a -> (Result String a -> msg) -> Cmd msg
 graphQlApiRequest queryOrMutation responseDecoder callBack =
     Http.post
-        { url = "https://tsukumart-demo.firebaseapp.com/api"
+        { url = "https://asia-northeast1-tsukumart-demo.cloudfunctions.net/apiInTokyo"
         , body = graphQlRequestBody queryOrMutation
         , expect = Http.expectStringResponse callBack (graphQlResponseDecoder responseDecoder)
         }

@@ -184,7 +184,8 @@ export const saveUserImage = async (
     const userImageFile: storage.File = await createStorageFile("user-image");
     await userImageFile.save(arrayBuffer, { contentType: mimeType });
     return new URL(
-        "https://tsukumart-demo.firebaseapp.com/image/" + userImageFile.name
+        "https://asia-northeast1-tsukumart-f0971.cloudfunctions.net/image/" +
+            userImageFile.name
     );
 };
 

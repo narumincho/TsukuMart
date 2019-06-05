@@ -19,32 +19,12 @@
                 "destination": "/robots.txt"
             },
             {
-                "source": "/image/**",
-                "function": "image"
-            },
-            {
-                "source": "/api",
-                "function": "api"
-            },
-            {
-                "source": "/social_login/google_receiver",
-                "function": "googleLogInReceiver"
-            },
-            {
-                "source": "/social_login/github_receiver",
-                "function": "gitHubLogInReceiver"
-            },
-            {
-                "source": "/social_login/twitter_receiver",
-                "function": "twitterLogInReceiver"
-            },
-            {
-                "source": "/social_login/line_receiver",
-                "function": "lineLogInReceiver"
+                "source": "/",
+                "function": "indexHtml"
             },
             {
                 "source": "**",
-                "destination": "/index.html"
+                "function": "indexHtml"
             }
         ]
     },

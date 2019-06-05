@@ -16,12 +16,6 @@ Remove-Item ./beforeMinifiy.js;
 $Host.UI.RawUI.ForegroundColor = "Yellow";
 Write-Output "Minify JavaScript OK";
 
-Write-Output "Copy index.html ...";
-$Host.UI.RawUI.ForegroundColor = "Gray";
-Copy-Item -Path ./index.html -Destination ../dist/index.html
-$Host.UI.RawUI.ForegroundColor = "Yellow";
-Write-Output "Copy index.html OK";
-
 Write-Output "Minify CSS ...";
 $Host.UI.RawUI.ForegroundColor = "Gray";
 cleancss ./style.css -o ../dist/style.css;
@@ -38,7 +32,7 @@ Write-Output "ServiceWoker Compile OK"
 
 Write-Output "Upload to Firebase ...";
 $Host.UI.RawUI.ForegroundColor = "Gray";
-firebase deploy --project tsukumart-demo --only hosting;
+firebase deploy --project tsukumart-f0971 --only hosting;
 $Host.UI.RawUI.ForegroundColor = "Yellow";
 Write-Output "Upload to Firebase OK";
 Write-Output "Complete!";
