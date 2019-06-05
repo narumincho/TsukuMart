@@ -63,7 +63,6 @@ type Emit
     | EmitTradeStart Api.Token Good.GoodId
     | EmitAddLogMessage String
     | EmitUpdateNowTime
-    | EmitTimeStringToTimePosix Good.GoodId (List String)
     | EmitDeleteGood Api.Token Good.GoodId
     | EmitGoodEditor GoodEditor.Emit
     | EmitUpdateGoodData Api.Token Good.GoodId Api.SellGoodsRequest
@@ -160,10 +159,7 @@ update msg model =
             case ( model, commentListResult ) of
                 ( Normal rec, Ok commentList ) ->
                     ( Normal { rec | good = rec.good |> Good.setCommentList commentList }
-                    , [ EmitTimeStringToTimePosix
-                            (rec.good |> Good.getId)
-                            (commentList |> Good.getCommentCreatedAtString)
-                      ]
+                    , []
                     )
 
                 ( _, Err () ) ->
@@ -184,10 +180,7 @@ update msg model =
                             rec.good |> Good.addComment comment
                     in
                     ( Normal { rec | good = newGood }
-                    , [ EmitTimeStringToTimePosix
-                            (newGood |> Good.getId)
-                            (newGood |> Good.getCommentList |> Maybe.withDefault [] |> Good.getCommentCreatedAtString)
-                      ]
+                    , []
                     )
 
                 ( _, Err () ) ->

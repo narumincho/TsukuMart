@@ -1,4 +1,4 @@
-import { initializedFirebaseAdmin } from "./firebaseInit";
+import * as admin from "firebase-admin";
 import { URL, URLSearchParams } from "url";
 import * as storage from "@google-cloud/storage";
 import * as stream from "stream";
@@ -6,19 +6,27 @@ import * as type from "./type";
 import * as firebase from "firebase";
 import * as key from "./key";
 import * as jwt from "jsonwebtoken";
+import { user } from "firebase-functions/lib/providers/auth";
+import { image } from "..";
+
+const initializedAdmin = admin.initializeApp();
 
 firebase.initializeApp({
     apiKey: key.apiKey,
     projectId: "tsukumart-demo"
 });
 
-const dataBase = initializedFirebaseAdmin.firestore();
+const dataBase = initializedAdmin.firestore();
 const userBeforeInputDataCollection: FirebaseFirestore.CollectionReference = dataBase.collection(
     "userBeforeInputData"
 );
-const userCollection: FirebaseFirestore.CollectionReference = dataBase.collection(
+const userBeforeEmailVerificationCollection: FirebaseFirestore.CollectionReference = dataBase.collection(
     "userBeforeEmailVerification"
 );
+const userCollection: FirebaseFirestore.CollectionReference = dataBase.collection(
+    "user"
+);
+
 const googleLogInStateCollection: FirebaseFirestore.CollectionReference = dataBase.collection(
     "googleState"
 );
@@ -54,6 +62,7 @@ export const checkExistsLogInState = async (
             );
             const exists = (await docRef.get()).exists;
             if (exists) {
+                console.log("googleのstateを削除");
                 await docRef.delete();
             }
             return exists;
@@ -81,6 +90,7 @@ export const checkExistsLogInState = async (
     }
 };
 
+/** 最後に保存したTokenSecretを取得する */
 export const getTwitterLastTokenSecret = async (): Promise<string> => {
     const lastData:
         | FirebaseFirestore.DocumentData
@@ -146,29 +156,20 @@ export const addUserInUserBeforeInputData = async (
 export const getUserInUserBeforeInputData = async (
     logInAccountServiceId: string
 ): Promise<{
-    accountService: type.AccountService;
-    accountServiceId: string;
     name: string;
     imageUrl: URL;
 }> => {
     const docRef = await (await userBeforeInputDataCollection.doc(
         logInAccountServiceId
     )).get();
-    if (!docRef.exists) {
+    const userBeforeInputData = docRef.data();
+    if (userBeforeInputData === undefined) {
         console.log("存在しない情報入力前のユーザーを指定された");
         throw new Error("存在しない情報入力前のユーザーを指定された");
     }
-    const data = docRef.data() as {
-        accountService: type.AccountService;
-        accountServiceId: string;
-        name: string;
-        imageUrl: string;
-    };
     return {
-        accountService: data.accountService,
-        accountServiceId: data.accountServiceId,
-        name: data.name,
-        imageUrl: new URL(data.imageUrl)
+        name: userBeforeInputData.name,
+        imageUrl: new URL(userBeforeInputData.imageUrl)
     };
 };
 
@@ -203,7 +204,7 @@ export const deleteUserImage = async (fileName: string): Promise<void> => {
  * @param folderName フォルダの名
  */
 const createStorageFile = (folderName: string): storage.File =>
-    initializedFirebaseAdmin
+    initializedAdmin
         .storage()
         .bucket()
         .file(folderName + "/" + createRandomId());
@@ -230,7 +231,7 @@ const deleteStorageFile = async (
     folderName: string,
     fileName: string
 ): Promise<void> => {
-    await initializedFirebaseAdmin
+    await initializedAdmin
         .storage()
         .bucket()
         .file(folderName + "/" + fileName)
@@ -246,7 +247,7 @@ export const getImageReadStream = (
     folderName: string,
     fileName: string
 ): stream.Readable =>
-    initializedFirebaseAdmin
+    initializedAdmin
         .storage()
         .bucket()
         .file(folderName + "/" + fileName)
@@ -259,18 +260,15 @@ export const addUserBeforeEmailVerificationAndSendEmail = async (
     email: string,
     university: type.University
 ): Promise<void> => {
-    const refreshId = createRefreshId();
-    const docRef = await userCollection.add({
-        logInAccountService: logInAccountServiceId,
+    await userBeforeEmailVerificationCollection.doc(logInAccountServiceId).set({
         name: name,
         imageUrl: imageUrl.toString(),
-        university: university,
-        refreshId: refreshId
+        university: university // TODO 平坦化すべき
     });
-    const userRecord = await initializedFirebaseAdmin
+    const userRecord = await initializedAdmin
         .auth()
-        .createUser({ uid: docRef.id, email: email });
-    const customToken = await initializedFirebaseAdmin
+        .createUser({ uid: logInAccountServiceId, email: email });
+    const customToken = await initializedAdmin
         .auth()
         .createCustomToken(userRecord.uid);
     const userCredential = await firebase
@@ -279,16 +277,60 @@ export const addUserBeforeEmailVerificationAndSendEmail = async (
     if (userCredential.user === null) {
         throw new Error("userCredential.user is null");
     }
-    await userCredential.user.sendEmailVerification({
-        url:
-            "https://tsukumart-demo.firebaseapp.com/verificationEmail?" +
-            new URLSearchParams(
-                new Map([
-                    ["refreshToken", createRefreshToken(docRef.id, refreshId)],
-                    ["accesToken", createAccessToken(docRef.id, true)]
-                ])
-            )
+    await userCredential.user.sendEmailVerification();
+};
+
+export const getAccessTokenAndRefreshToken = async (
+    logInAccountServiceId: string
+): Promise<{ refreshToken: string; accessToken: string }> => {
+    const userBeforeEmailVerification = (await userBeforeEmailVerificationCollection
+        .doc(logInAccountServiceId)
+        .get()).data();
+    if (userBeforeEmailVerification !== undefined) {
+        if (
+            (await initializedAdmin.auth().getUser(logInAccountServiceId))
+                .emailVerified
+        ) {
+            const name: string = userBeforeEmailVerification.name;
+            const imageUrl: string = userBeforeEmailVerification.imageUrl;
+            const university: {} = userBeforeEmailVerification.university;
+            const refreshId = createRefreshId();
+            const newUser = await userCollection.add({
+                logInAccountServiceId: logInAccountServiceId,
+                displayName: name,
+                imageUrl: imageUrl,
+                university: university,
+                introduction: "",
+                lastRefreshId: refreshId,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            await userBeforeEmailVerificationCollection
+                .doc(logInAccountServiceId)
+                .delete();
+
+            return {
+                accessToken: createAccessToken(newUser.id, false),
+                refreshToken: createRefreshToken(newUser.id, refreshId)
+            };
+        }
+        throw new Error("email not verified");
+    }
+    const docList = (await userCollection
+        .where("logInAccountServiceId", "==", logInAccountServiceId)
+        .get()).docs;
+    if (docList.length === 0) {
+        throw new Error("user dose not exists");
+    }
+    const refreshId = createRefreshId();
+    const queryDocumentSnapshot = docList[0];
+    queryDocumentSnapshot.ref.set({
+        lastRefreshId: refreshId
     });
+    const userData = queryDocumentSnapshot.data();
+    return {
+        accessToken: createAccessToken(userData.id, false),
+        refreshToken: createRefreshToken(userData.id, refreshId)
+    };
 };
 
 /**

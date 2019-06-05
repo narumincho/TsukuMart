@@ -51,10 +51,10 @@ port toWideScreenMode : (() -> msg) -> Sub msg
 port toNarrowScreenMode : (() -> msg) -> Sub msg
 
 
-port receiveImageDataUrl : (String -> msg) -> Sub msg
+port receiveImageDataUrlList : (String -> msg) -> Sub msg
 
 
-port studentImageChange : String -> Cmd msg
+port requestReceiveImageList : String -> Cmd msg
 
 
 port elementScrollIntoView : String -> Cmd msg
@@ -73,9 +73,6 @@ port saveRefreshTokenToLocalStorage : String -> Cmd msg
 
 
 port deleteRefreshTokenAndAllFromLocalStorage : () -> Cmd msg
-
-
-port sendTimeStringToMillisecond : { goodId : Int, timeString : List String } -> Cmd msg
 
 
 port receiveTimeStringToMillisecond : ({ goodId : Int, second : List Int } -> msg) -> Sub msg
@@ -827,7 +824,7 @@ signUpPageEmitListToCmd =
                     inputOrTextAreaReplaceText { id = id, text = text }
 
                 Page.SignUp.EmitAccountImage idString ->
-                    studentImageChange idString
+                    requestReceiveImageList idString
 
                 Page.SignUp.EmitSignUp signUpRequest ->
                     Api.sendConfirmEmail signUpRequest (\response -> SignUpConfirmResponse response)
@@ -905,9 +902,6 @@ goodsPageEmitListToCmd =
                         Time.now
                         Time.here
                         |> Task.attempt GetNowTime
-
-                Page.Good.EmitTimeStringToTimePosix goodId list ->
-                    sendTimeStringToMillisecond { goodId = goodId |> Data.Good.goodIdToInt, timeString = list }
 
                 Page.Good.EmitDeleteGood token goodId ->
                     Api.deleteGoods token goodId
@@ -1387,7 +1381,7 @@ siteMapXmlView =
 subscription : Model -> Sub Msg
 subscription (Model { menuState }) =
     Sub.batch
-        [ receiveImageDataUrl ReceiveImageDataUrl
+        [ receiveImageDataUrlList ReceiveImageDataUrl
         , receiveImageFileAndBlobUrl ReceiveImageFileAndBlobUrl
         , receiveGoodImageFileAsFileAndBlobUrl ReceiveGoodImageFileAsFileAndBlobUrl
         , receiveTimeStringToMillisecond (\msg -> GoodsPageMsg (Page.Good.ReceiveTimeStringToMillisecond msg))

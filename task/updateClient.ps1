@@ -22,9 +22,15 @@ cleancss ./style.css -o ../dist/style.css;
 $Host.UI.RawUI.ForegroundColor = "Yellow";
 Write-Output "Minify CSS OK"
 
+Write-Output "Call Compile ...";
+$Host.UI.RawUI.ForegroundColor = "Gray";
+npx tsc;
+$Host.UI.RawUI.ForegroundColor = "Yellow";
+Write-Output "Call Compile OK"
+
 Write-Output "ServiceWoker Compile ...";
 $Host.UI.RawUI.ForegroundColor = "Gray";
-Set-Location -Path ./servicewoker_src
+Set-Location -Path ./servicewoker_src;
 npx tsc;
 $Host.UI.RawUI.ForegroundColor = "Yellow";
 Write-Output "ServiceWoker Compile OK"

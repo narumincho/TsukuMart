@@ -85,12 +85,11 @@ const getLogInUrl = type.makeGraphQLFieldConfig({
 const sendConformEmail = type.makeGraphQLFieldConfig({
     type: type.unitOutputType,
     resolve: async args => {
-        const name = args.name;
-        const image = args.image;
         const universityUnsafe = args.university;
-        const sendEmailToken = args.sendEmailToken;
-        const email = args.email;
         const logInAccountServiceId = sendEmailTokenVerify(args.sendEmailToken);
+        // if (!args.email.match(/s(\d{7})@[a-zA-Z0-9]+\.tsukuba\.ac\.jp/)) {
+        //     throw new Error("email address must be tsukuba.ac.jp domain");
+        // }
 
         const userBeforeInputData = await database.getUserInUserBeforeInputData(
             logInAccountServiceId
@@ -100,7 +99,7 @@ const sendConformEmail = type.makeGraphQLFieldConfig({
             logInAccountServiceId,
             args.name,
             userBeforeInputData.imageUrl,
-            email,
+            args.email,
             university
         );
         return "ok";

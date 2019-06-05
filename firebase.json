@@ -7,6 +7,10 @@
                 "destination": "/main.js"
             },
             {
+                "source": "/call.js",
+                "destination": "/call.js"
+            },
+            {
                 "source": "/style.css",
                 "destination": "/style.css"
             },
