@@ -1,6 +1,7 @@
 import * as g from "graphql";
 import { URL } from "url";
 import Maybe from "graphql/tsutils/Maybe";
+import { isArray } from "util";
 
 const urlTypeScalarTypeConfig: g.GraphQLScalarTypeConfig<URL, string> = {
     name: "URL",
@@ -50,8 +51,8 @@ const dataUrlTypeConfig: g.GraphQLScalarTypeConfig<DataURLInternal, string> = {
     }
 };
 
-const urlType = new g.GraphQLScalarType(urlTypeScalarTypeConfig);
-const dataUrlType = new g.GraphQLScalarType(dataUrlTypeConfig);
+const urlGraphQLType = new g.GraphQLScalarType(urlTypeScalarTypeConfig);
+const dataUrlGraphQLType = new g.GraphQLScalarType(dataUrlTypeConfig);
 
 const accountServiceValues = {
     google: {
@@ -72,7 +73,7 @@ const accountServiceValues = {
 };
 export type AccountService = keyof (typeof accountServiceValues);
 
-const accountServiceType = new g.GraphQLEnumType({
+const accountServiceGraphQLType = new g.GraphQLEnumType({
     name: "AccountService",
     values: accountServiceValues,
     description: "ソーシャルログインを提供するサービス"
@@ -85,7 +86,7 @@ const unitValues = {
 };
 export type Unit = keyof (typeof unitValues);
 
-const unitType = new g.GraphQLEnumType({
+const unitGraphQLType = new g.GraphQLEnumType({
     name: "Unit",
     values: unitValues,
     description: "Mutationで無事処理が成功したことを表現する型"
@@ -123,7 +124,7 @@ const schoolAndDepartmentValues = {
 
 export type SchoolAndDepartment = keyof (typeof schoolAndDepartmentValues);
 
-const schoolAndDepartmentType = new g.GraphQLEnumType({
+const schoolAndDepartmentGraphQLType = new g.GraphQLEnumType({
     name: "schoolAndDepartment",
     values: schoolAndDepartmentValues,
     description: "学群学類ID"
@@ -142,7 +143,7 @@ const graduateValues = {
 };
 export type Graduate = keyof (typeof graduateValues);
 
-const graduateType = new g.GraphQLEnumType({
+const graduateGraphQLType = new g.GraphQLEnumType({
     name: "graduate",
     values: graduateValues,
     description: "研究科ID"
@@ -203,33 +204,46 @@ export const universityUnsafeToUniversity = (
     );
 };
 
-const universityType = new g.GraphQLInputObjectType({
-    name: "University",
-    fields: {
-        schoolAndDepartment: {
-            type: schoolAndDepartmentType
-        },
-        graduate: {
-            type: graduateType
-        }
+const universityField = {
+    schoolAndDepartment: {
+        type: schoolAndDepartmentGraphQLType,
+        description: "学群学類ID 筑波大学以外からの編入ならnull"
     },
+    graduate: {
+        type: graduateGraphQLType,
+        description: "研究科ID 大学生の場合はnull"
+    }
+};
+
+const universityGraphQLInputType = new g.GraphQLInputObjectType({
+    name: "University",
+    fields: universityField,
     description: "大学での所属"
 });
 
-const noExtendTypeObjectKeys = <O>(object: O): Array<keyof O> =>
-    Object.keys(object) as Array<keyof O>;
+const universityGraphQLObjectType = new g.GraphQLObjectType({
+    name: "University",
+    fields: universityField,
+    description: "大学での所属"
+});
 
+/**
+ * 型安全にGraphQLFieldConfigをつくる
+ */
 export const makeGraphQLFieldConfig = <
-    O extends OutputType,
+    O extends OutputType<OutputTypeInternal, boolean>,
     Args extends {
-        [key in string]: { type: InputType<any>; description: Maybe<string> }
+        [key in string]: {
+            type: InputType<InputTypeInternal, boolean>;
+            description: Maybe<string>;
+        }
     }
 >(arg: {
     args: Args;
     type: O;
     resolve: (
         args: { [K in keyof Args]: InputTypeToGraphQLType<Args[K]["type"]> }
-    ) => Promise<OutTypeValueToGraphQLType<O>>;
+    ) => Promise<OutputTypeToGraphQLType<O>>;
     description: string;
 }): g.GraphQLFieldConfig<void, void, any> => {
     return {
@@ -254,7 +268,10 @@ export const makeGraphQLFieldConfig = <
     };
 };
 
-const refreshTokenAndAccessTokenType = new g.GraphQLObjectType({
+const noExtendTypeObjectKeys = <O>(object: O): Array<keyof O> =>
+    Object.keys(object) as Array<keyof O>;
+
+const refreshTokenAndAccessTokenGraphQLType = new g.GraphQLObjectType({
     name: "refreshTokenAndAccessToken",
     fields: {
         refreshToken: {
@@ -273,13 +290,40 @@ export type RefreshTokenAndAccessToken = {
     refreshToken: string;
     accessToken: string;
 };
+
+const userGraphQLType = new g.GraphQLObjectType({
+    name: "User",
+    fields: () => ({
+        id: {
+            type: g.GraphQLNonNull(g.GraphQLString)
+        },
+        name: {
+            type: g.GraphQLNonNull(g.GraphQLString)
+        },
+        introduction: {
+            type: g.GraphQLNonNull(g.GraphQLString)
+        },
+        university: {
+            type: universityGraphQLObjectType
+        }
+    }),
+    description: "ユーザー"
+});
+
+type UserUnsafe = {
+    id: string;
+    name: string;
+    introduction: string;
+    university: UniversityUnsafe;
+};
 /** ==============================
  *          Input Type
  * ===============================
  */
-type InputType<I extends InputTypeInternal> =
-    | NonNullInputType<I>
-    | NullableInputType<I>;
+type InputType<Internal extends InputTypeInternal, Nullable extends boolean> = {
+    type: Internal;
+    nullable: Nullable;
+};
 
 enum InputTypeInternal {
     String,
@@ -288,26 +332,11 @@ enum InputTypeInternal {
     University
 }
 
-interface NullableInputType<I extends InputTypeInternal> {
-    type: I;
-    nullableOrNonNull: NullableOrNonNull.Nullable;
-}
-
-interface NonNullInputType<I extends InputTypeInternal> {
-    type: I;
-    nullableOrNonNull: NullableOrNonNull.NonNull;
-}
-
-enum NullableOrNonNull {
-    Nullable,
-    NonNull
-}
-
 export const nullableInputType = <O extends InputTypeInternal>(
-    nonNullInputType: NonNullInputType<O>
-): NullableInputType<O> => ({
+    nonNullInputType: InputType<O, false>
+): InputType<O, true> => ({
     type: nonNullInputType.type,
-    nullableOrNonNull: NullableOrNonNull.Nullable
+    nullable: true
 });
 
 /**
@@ -315,7 +344,7 @@ export const nullableInputType = <O extends InputTypeInternal>(
  */
 export const stringInputType = {
     type: InputTypeInternal.String,
-    nullableOrNonNull: NullableOrNonNull.NonNull
+    nullable: false
 } as const;
 
 /**
@@ -323,7 +352,7 @@ export const stringInputType = {
  */
 export const accountServiceInputType = {
     type: InputTypeInternal.AccountService,
-    nullableOrNonNull: NullableOrNonNull.NonNull
+    nullable: false
 } as const;
 
 /**
@@ -331,7 +360,7 @@ export const accountServiceInputType = {
  */
 export const dataUrlInputType = {
     type: InputTypeInternal.DataUrl,
-    nullableOrNonNull: NullableOrNonNull.NonNull
+    nullable: false
 } as const;
 
 /**
@@ -339,14 +368,16 @@ export const dataUrlInputType = {
  */
 export const universityInputType = {
     type: InputTypeInternal.University,
-    nullableOrNonNull: NullableOrNonNull.NonNull
+    nullable: false
 } as const;
 
 type InputTypeToGraphQLType<
-    O extends InputType<any>
-> = O["nullableOrNonNull"] extends NullableOrNonNull.NonNull
-    ? InputTypeInternalToGraphQLType<O["type"]>
-    : Maybe<InputTypeInternalToGraphQLType<O["type"]>>;
+    O extends InputType<InputTypeInternal, boolean>
+> = O extends InputType<infer Internal, true>
+    ? Maybe<InputTypeInternalToGraphQLType<Internal>>
+    : O extends InputType<infer Internal, false>
+    ? InputTypeInternalToGraphQLType<Internal>
+    : never;
 
 type InputTypeInternalToGraphQLType<
     O extends InputTypeInternal
@@ -361,15 +392,12 @@ type InputTypeInternalToGraphQLType<
     : never;
 
 const inputTypeToGraphQLType = (
-    inputType: InputType<any>
+    inputType: InputType<InputTypeInternal, boolean>
 ): g.GraphQLInputType => {
-    switch (inputType.nullableOrNonNull) {
-        case NullableOrNonNull.NonNull:
-            return g.GraphQLNonNull(
-                inputTypeInternalToGraphQLType(inputType.type)
-            );
-        case NullableOrNonNull.Nullable:
-            return inputTypeInternalToGraphQLType(inputType.type);
+    if (inputType.nullable) {
+        return g.GraphQLNonNull(inputTypeInternalToGraphQLType(inputType.type));
+    } else {
+        return inputTypeInternalToGraphQLType(inputType.type);
     }
 };
 
@@ -380,75 +408,141 @@ const inputTypeInternalToGraphQLType = (
         case InputTypeInternal.String:
             return g.GraphQLString;
         case InputTypeInternal.AccountService:
-            return accountServiceType;
+            return accountServiceGraphQLType;
         case InputTypeInternal.DataUrl:
-            return dataUrlType;
+            return dataUrlGraphQLType;
         case InputTypeInternal.University:
-            return universityType;
+            return universityGraphQLInputType;
     }
 };
 
 export const inputTypeDescription = (
-    inputType: InputType<any>
+    inputType: InputType<InputTypeInternal, boolean>
 ): Maybe<string> => {
     switch (inputType.type) {
         case InputTypeInternal.String:
             return g.GraphQLString.description;
         case InputTypeInternal.AccountService:
-            return accountServiceType.description;
+            return accountServiceGraphQLType.description;
         case InputTypeInternal.DataUrl:
-            return dataUrlType.description;
+            return dataUrlGraphQLType.description;
         case InputTypeInternal.University:
-            return universityType.description;
+            return universityGraphQLInputType.description;
     }
 };
 /** ==============================
  *          Output Type
  * ===============================
  */
-export enum OutputType {
+export type OutputType<O extends OutputTypeInternal, IsList extends boolean> = {
+    internal: O;
+    isList: IsList;
+};
+
+enum OutputTypeInternal {
     String,
     Unit,
     Url,
-    RefreshTokenAndAccessToken
+    RefreshTokenAndAccessToken,
+    User
 }
 
-type OutTypeValueToGraphQLType<
-    O extends OutputType
-> = O extends OutputType.String
-    ? string
-    : O extends OutputType.Unit
-    ? Unit
-    : O extends OutputType.Url
-    ? URL
-    : O extends OutputType.RefreshTokenAndAccessToken
-    ? RefreshTokenAndAccessToken
+export const stringOutputType: OutputType<OutputTypeInternal.String, false> = {
+    internal: OutputTypeInternal.String,
+    isList: false
+};
+
+export const unitOutputType: OutputType<OutputTypeInternal.Unit, false> = {
+    internal: OutputTypeInternal.Unit,
+    isList: false
+};
+
+export const urlOutputType: OutputType<OutputTypeInternal.Url, false> = {
+    internal: OutputTypeInternal.Url,
+    isList: false
+};
+
+export const refreshTokenAndAccessTokenOutputType: OutputType<
+    OutputTypeInternal.RefreshTokenAndAccessToken,
+    false
+> = {
+    internal: OutputTypeInternal.RefreshTokenAndAccessToken,
+    isList: false
+};
+
+export const userOutputType: OutputType<OutputTypeInternal.User, false> = {
+    internal: OutputTypeInternal.User,
+    isList: false
+};
+
+export const listOutputType = <Internal extends OutputTypeInternal>(
+    outputType: OutputType<Internal, false>
+): OutputType<Internal, true> => ({
+    internal: outputType.internal,
+    isList: true
+});
+
+type OutputTypeToGraphQLType<
+    O extends OutputType<OutputTypeInternal, boolean>
+> = O extends OutputType<infer Internal, true>
+    ? Array<OutputTypeInternalToGraphQLType<Internal>>
+    : O extends OutputType<infer Internal, false>
+    ? OutputTypeInternalToGraphQLType<Internal>
     : never;
 
-const outputTypeToGraphQLType = (outType: OutputType): g.GraphQLOutputType => {
-    switch (outType) {
-        case OutputType.String:
+type OutputTypeInternalToGraphQLType<
+    Internal extends OutputTypeInternal
+> = Internal extends OutputTypeInternal.String
+    ? string
+    : Internal extends OutputTypeInternal.Unit
+    ? Unit
+    : Internal extends OutputTypeInternal.Url
+    ? URL
+    : Internal extends OutputTypeInternal.RefreshTokenAndAccessToken
+    ? RefreshTokenAndAccessToken
+    : Internal extends OutputTypeInternal.User
+    ? UserUnsafe
+    : never;
+
+const outputTypeToGraphQLType = (
+    outType: OutputType<OutputTypeInternal, boolean>
+): g.GraphQLOutputType => {
+    if (outType.isList) {
+        return g.GraphQLList(outputTypeInternalToGraphQLType(outType.internal));
+    }
+    return outputTypeInternalToGraphQLType(outType.internal);
+};
+
+const outputTypeInternalToGraphQLType = (
+    internal: OutputTypeInternal
+): g.GraphQLOutputType => {
+    switch (internal) {
+        case OutputTypeInternal.String:
             return g.GraphQLNonNull(g.GraphQLString);
-        case OutputType.Unit:
-            return g.GraphQLNonNull(unitType);
-        case OutputType.Url:
-            return g.GraphQLNonNull(urlType);
-        case OutputType.RefreshTokenAndAccessToken:
-            return g.GraphQLNonNull(refreshTokenAndAccessTokenType);
+        case OutputTypeInternal.Unit:
+            return g.GraphQLNonNull(unitGraphQLType);
+        case OutputTypeInternal.Url:
+            return g.GraphQLNonNull(urlGraphQLType);
+        case OutputTypeInternal.RefreshTokenAndAccessToken:
+            return g.GraphQLNonNull(refreshTokenAndAccessTokenGraphQLType);
+        case OutputTypeInternal.User:
+            return g.GraphQLNonNull(userGraphQLType);
     }
 };
 
 export const outputTypeDescription = (
-    outputType: OutputType
+    outputType: OutputType<OutputTypeInternal, boolean>
 ): Maybe<string> => {
-    switch (outputType) {
-        case OutputType.String:
+    switch (outputType.internal) {
+        case OutputTypeInternal.String:
             return g.GraphQLString.description;
-        case OutputType.Unit:
-            return unitType.description;
-        case OutputType.Url:
-            return urlType.description;
-        case OutputType.RefreshTokenAndAccessToken:
-            return refreshTokenAndAccessTokenType.description;
+        case OutputTypeInternal.Unit:
+            return unitGraphQLType.description;
+        case OutputTypeInternal.Url:
+            return urlGraphQLType.description;
+        case OutputTypeInternal.RefreshTokenAndAccessToken:
+            return refreshTokenAndAccessTokenGraphQLType.description;
+        case OutputTypeInternal.User:
+            return userGraphQLType.description;
     }
 };

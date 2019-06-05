@@ -2,24 +2,14 @@ import * as functions from "firebase-functions";
 import * as graphqlExpress from "express-graphql";
 import * as graphql from "graphql";
 import * as database from "./lib/database";
+import * as query from "./lib/query";
 import * as mutation from "./lib/mutation";
 import * as signUpCallback from "./lib/signUpCallback";
 
 console.log("run index.js 2019-05-27");
 
 const schema = new graphql.GraphQLSchema({
-    query: new graphql.GraphQLObjectType({
-        name: "Query",
-        description:
-            "データを取得できる。データを取得したときに影響は他に及ばさない",
-        fields: {
-            hello: {
-                description: "世界に挨拶する",
-                type: graphql.GraphQLNonNull(graphql.GraphQLString),
-                resolve: () => "Hello World!"
-            }
-        }
-    }),
+    query: query.query,
     mutation: mutation.mutation
 });
 

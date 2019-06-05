@@ -1,10 +1,11 @@
 import { initializedFirebaseAdmin } from "./firebaseInit";
-import { URL } from "url";
+import { URL, URLSearchParams } from "url";
 import * as storage from "@google-cloud/storage";
 import * as stream from "stream";
 import * as type from "./type";
 import * as firebase from "firebase";
 import * as key from "./key";
+import * as jwt from "jsonwebtoken";
 
 firebase.initializeApp({
     apiKey: key.apiKey,
@@ -12,13 +13,10 @@ firebase.initializeApp({
 });
 
 const dataBase = initializedFirebaseAdmin.firestore();
-const userCollection: FirebaseFirestore.CollectionReference = dataBase.collection(
-    "users"
-);
 const userBeforeInputDataCollection: FirebaseFirestore.CollectionReference = dataBase.collection(
     "userBeforeInputData"
 );
-const userBeforeEmailVerification: FirebaseFirestore.CollectionReference = dataBase.collection(
+const userCollection: FirebaseFirestore.CollectionReference = dataBase.collection(
     "userBeforeEmailVerification"
 );
 const googleLogInStateCollection: FirebaseFirestore.CollectionReference = dataBase.collection(
@@ -260,11 +258,13 @@ export const addUserBeforeEmailVerificationAndSendEmail = async (
     email: string,
     university: type.University
 ): Promise<void> => {
-    const docRef = await userBeforeEmailVerification.add({
+    const refreshId = createRefreshId();
+    const docRef = await userCollection.add({
         logInAccountService: logInAccountServiceId,
         name: name,
         imageUrl: imageUrl.toString(),
-        university: university
+        university: university,
+        refreshId: refreshId
     });
     const userRecord = await initializedFirebaseAdmin
         .auth()
@@ -279,22 +279,54 @@ export const addUserBeforeEmailVerificationAndSendEmail = async (
         throw new Error("userCredential.user is null");
     }
     await userCredential.user.sendEmailVerification({
-        url: "https://tsukumart-demo.firebaseapp.com/verificationEmail"
+        url:
+            "https://tsukumart-demo.firebaseapp.com/verificationEmail?" +
+            new URLSearchParams(
+                new Map([
+                    ["refreshToken", createRefreshToken(docRef.id, refreshId)],
+                    ["accesToken", createAccessToken(docRef.id, true)]
+                ])
+            )
     });
 };
 
-// export const addUser = async (
-//     logInAccountServiceId: string,
-//     name: string,
-//     imageUrl: URL,
-//     schoolAndDepartment: type.SchoolAndDepartment,
-//     graduate: type.Graduate
-// ): Promise<void> => {
-//     const docRef = await userCollection.add({
-//         logInAccountService: logInAccountServiceId,
-//         name: name,
-//         imageUrl: imageUrl.toString(),
-//         schoolAndDepartment: schoolAndDepartment,
-//         graduate: graduate
-//     });
-// };
+/**
+ * アクセストークンを作成する
+ * @param userId
+ * @param byRefreshToken
+ */
+const createAccessToken = (userId: string, byRefreshToken: boolean): string => {
+    const time = new Date();
+    time.setUTCMinutes(time.getUTCMinutes() + 15); // 有効期限は15分後
+    const payload = {
+        sub: userId,
+        ref: byRefreshToken, //リフレッシュトークンでログインしたか
+        exp: Math.round(time.getTime() / 1000) // 有効期限
+    };
+    /** アクセストークン */
+    return jwt.sign(payload, key.accessTokenSecretKey, { algorithm: "HS256" });
+};
+
+/**
+ * リフレッシュトークンを作成する
+ * @param userId
+ * @param refreshId
+ */
+const createRefreshToken = (userId: string, refreshId: string): string => {
+    /** リフレッシュトークン 有効期限はなし */
+    const payload = {
+        sub: userId,
+        jti: refreshId
+    };
+    return jwt.sign(payload, key.refreshTokenSecretKey, { algorithm: "HS256" });
+};
+
+const createRefreshId = (): string => {
+    let id = "";
+    const charTable: string =
+        "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    for (let i = 0; i < 15; i++) {
+        id += charTable[(Math.random() * charTable.length) | 0];
+    }
+    return id;
+};

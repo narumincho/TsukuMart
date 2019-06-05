@@ -8,7 +8,7 @@ import Maybe from "graphql/tsutils/Maybe";
 import * as jwt from "jsonwebtoken";
 
 const getLogInUrl = type.makeGraphQLFieldConfig({
-    type: type.OutputType.Url,
+    type: type.urlOutputType,
     resolve: async args => {
         const accountService = args.service;
         switch (accountService) {
@@ -83,7 +83,7 @@ const getLogInUrl = type.makeGraphQLFieldConfig({
 });
 
 const sendConformEmail = type.makeGraphQLFieldConfig({
-    type: type.OutputType.Unit,
+    type: type.unitOutputType,
     resolve: async args => {
         const name = args.name;
         const image = args.image;
@@ -143,29 +143,11 @@ const sendEmailTokenVerify = (sendEmailToken: string): string => {
     return decodedMarked.sub;
 };
 
-const emailVerification = type.makeGraphQLFieldConfig({
-    args: {
-        emailVerificationToken: {
-            type: type.stringInputType,
-            description: "認証メールのURLに含まれていたメール認証トークン"
-        }
-    },
-    type: type.OutputType.RefreshTokenAndAccessToken,
-    resolve: async args => {
-        return {
-            accessToken: "",
-            refreshToken: ""
-        };
-    },
-    description: "認証トークンを送信する"
-});
-
 export const mutation = new g.GraphQLObjectType({
     name: "Mutation",
     description: "データを作成、更新ができる",
     fields: {
         getLogInUrl,
-        sendConformEmail,
-        emailVerification
+        sendConformEmail
     }
 });
