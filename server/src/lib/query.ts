@@ -22,11 +22,37 @@ const userAll = type.makeGraphQLFieldConfig({
                 university: {
                     graduate: "education",
                     schoolAndDepartment: "mast"
-                }
+                },
+                exhibitionProductAll: []
             }
         ];
     },
     description: "すべてのユーザーを取得する"
+});
+
+const productAll = type.makeGraphQLFieldConfig({
+    args: {},
+    type: type.listOutputType(type.productOutputType),
+    resolve: async () => {
+        return [
+            {
+                id: "id",
+                name: "商品名",
+                price: 100,
+                seller: {
+                    id: "id",
+                    name: "出品者",
+                    introduction: "紹介文",
+                    university: {
+                        graduate: null,
+                        schoolAndDepartment: "cis"
+                    },
+                    exhibitionProductAll: []
+                }
+            }
+        ];
+    },
+    description: "すべての商品(売れたものも含まれる)を取得する"
 });
 
 export const query = new g.GraphQLObjectType({
@@ -35,6 +61,7 @@ export const query = new g.GraphQLObjectType({
         "データを取得できる。データを取得したときに影響は他に及ばさない",
     fields: {
         hello,
-        userAll
+        userAll,
+        productAll
     }
 });

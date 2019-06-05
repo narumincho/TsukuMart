@@ -1,8 +1,11 @@
 import * as g from "graphql";
 import { URL } from "url";
 import Maybe from "graphql/tsutils/Maybe";
-import { isArray } from "util";
 
+/** ===================================
+ *              URL
+ * ====================================
+ */
 const urlTypeScalarTypeConfig: g.GraphQLScalarTypeConfig<URL, string> = {
     name: "URL",
     description: "URL",
@@ -20,8 +23,6 @@ const urlTypeScalarTypeConfig: g.GraphQLScalarTypeConfig<URL, string> = {
     }
 };
 
-export type DataURLInternal = { mimeType: string; data: Buffer };
-
 const dataUrlParser = (value: string): DataURLInternal => {
     const imageDataUrlMimeType = value.match(/^data:(.+);base64,(.+)$/);
     if (imageDataUrlMimeType === null) {
@@ -32,6 +33,14 @@ const dataUrlParser = (value: string): DataURLInternal => {
         data: Buffer.from(imageDataUrlMimeType[2], "base64")
     };
 };
+
+const urlGraphQLType = new g.GraphQLScalarType(urlTypeScalarTypeConfig);
+
+/** ===================================
+ *           Data URL
+ * ====================================
+ */
+export type DataURLInternal = { mimeType: string; data: Buffer };
 
 const dataUrlTypeConfig: g.GraphQLScalarTypeConfig<DataURLInternal, string> = {
     name: "DataURL",
@@ -51,9 +60,12 @@ const dataUrlTypeConfig: g.GraphQLScalarTypeConfig<DataURLInternal, string> = {
     }
 };
 
-const urlGraphQLType = new g.GraphQLScalarType(urlTypeScalarTypeConfig);
 const dataUrlGraphQLType = new g.GraphQLScalarType(dataUrlTypeConfig);
 
+/** ===================================
+ *           AccountService
+ * ====================================
+ */
 const accountServiceValues = {
     google: {
         description:
@@ -71,6 +83,7 @@ const accountServiceValues = {
         description: "LINE https://developers.line.biz/ja/docs/line-login/"
     }
 };
+
 export type AccountService = keyof (typeof accountServiceValues);
 
 const accountServiceGraphQLType = new g.GraphQLEnumType({
@@ -78,6 +91,10 @@ const accountServiceGraphQLType = new g.GraphQLEnumType({
     values: accountServiceValues,
     description: "ソーシャルログインを提供するサービス"
 });
+/** ===================================
+ *               Unit
+ * ====================================
+ */
 
 const unitValues = {
     ok: {
@@ -91,6 +108,10 @@ const unitGraphQLType = new g.GraphQLEnumType({
     values: unitValues,
     description: "Mutationで無事処理が成功したことを表現する型"
 });
+/** ===================================
+ *            University
+ * ====================================
+ */
 
 const schoolAndDepartmentValues = {
     humanity: { description: "人文・文化学群 / 人文学類" },
@@ -216,7 +237,7 @@ const universityField = {
 };
 
 const universityGraphQLInputType = new g.GraphQLInputObjectType({
-    name: "University",
+    name: "UniversityInput",
     fields: universityField,
     description: "大学での所属"
 });
@@ -227,50 +248,10 @@ const universityGraphQLObjectType = new g.GraphQLObjectType({
     description: "大学での所属"
 });
 
-/**
- * 型安全にGraphQLFieldConfigをつくる
+/** ===================================
+ *    Refresh Token And Access Token
+ * ====================================
  */
-export const makeGraphQLFieldConfig = <
-    O extends OutputType<OutputTypeInternal, boolean>,
-    Args extends {
-        [key in string]: {
-            type: InputType<InputTypeInternal, boolean>;
-            description: Maybe<string>;
-        }
-    }
->(arg: {
-    args: Args;
-    type: O;
-    resolve: (
-        args: { [K in keyof Args]: InputTypeToGraphQLType<Args[K]["type"]> }
-    ) => Promise<OutputTypeToGraphQLType<O>>;
-    description: string;
-}): g.GraphQLFieldConfig<void, void, any> => {
-    return {
-        type: outputTypeToGraphQLType(arg.type),
-        args: noExtendTypeObjectKeys(arg.args).reduce(
-            (result, key) => {
-                result[key] = {
-                    type: inputTypeToGraphQLType(arg.args[key].type),
-                    description: arg.args[key].description
-                };
-                return result;
-            },
-            {} as { [k in keyof Args]: g.GraphQLArgumentConfig }
-        ),
-        resolve: (
-            source: void,
-            args,
-            context: void,
-            info: g.GraphQLResolveInfo
-        ) => arg.resolve(args),
-        description: arg.description
-    };
-};
-
-const noExtendTypeObjectKeys = <O>(object: O): Array<keyof O> =>
-    Object.keys(object) as Array<keyof O>;
-
 const refreshTokenAndAccessTokenGraphQLType = new g.GraphQLObjectType({
     name: "refreshTokenAndAccessToken",
     fields: {
@@ -290,7 +271,10 @@ export type RefreshTokenAndAccessToken = {
     refreshToken: string;
     accessToken: string;
 };
-
+/** ==============================
+ *            User
+ * ===============================
+ */
 const userGraphQLType = new g.GraphQLObjectType({
     name: "User",
     fields: () => ({
@@ -305,16 +289,53 @@ const userGraphQLType = new g.GraphQLObjectType({
         },
         university: {
             type: universityGraphQLObjectType
+        },
+        exhibitionProductAll: {
+            type: g.GraphQLList(productGraphQLType)
         }
     }),
     description: "ユーザー"
 });
 
-type UserUnsafe = {
+type UserInternal = {
     id: string;
     name: string;
     introduction: string;
     university: UniversityUnsafe;
+    exhibitionProductAll: Array<ProductInternal>;
+};
+
+/** ==============================
+ *           Product
+ * ===============================
+ */
+const productGraphQLType: g.GraphQLObjectType<
+    void,
+    void,
+    {}
+> = new g.GraphQLObjectType({
+    name: "Item",
+    fields: () => ({
+        id: {
+            type: g.GraphQLNonNull(g.GraphQLString)
+        },
+        name: {
+            type: g.GraphQLNonNull(g.GraphQLString)
+        },
+        price: {
+            type: g.GraphQLNonNull(g.GraphQLInt)
+        },
+        seller: {
+            type: userGraphQLType
+        }
+    })
+});
+
+type ProductInternal = {
+    id: string;
+    name: string;
+    price: number;
+    seller: UserInternal;
 };
 /** ==============================
  *          Input Type
@@ -444,7 +465,8 @@ enum OutputTypeInternal {
     Unit,
     Url,
     RefreshTokenAndAccessToken,
-    User
+    User,
+    Product
 }
 
 export const stringOutputType: OutputType<OutputTypeInternal.String, false> = {
@@ -475,6 +497,14 @@ export const userOutputType: OutputType<OutputTypeInternal.User, false> = {
     isList: false
 };
 
+export const productOutputType: OutputType<
+    OutputTypeInternal.Product,
+    false
+> = {
+    internal: OutputTypeInternal.Product,
+    isList: false
+};
+
 export const listOutputType = <Internal extends OutputTypeInternal>(
     outputType: OutputType<Internal, false>
 ): OutputType<Internal, true> => ({
@@ -501,7 +531,9 @@ type OutputTypeInternalToGraphQLType<
     : Internal extends OutputTypeInternal.RefreshTokenAndAccessToken
     ? RefreshTokenAndAccessToken
     : Internal extends OutputTypeInternal.User
-    ? UserUnsafe
+    ? UserInternal
+    : Internal extends OutputTypeInternal.Product
+    ? ProductInternal
     : never;
 
 const outputTypeToGraphQLType = (
@@ -527,6 +559,8 @@ const outputTypeInternalToGraphQLType = (
             return g.GraphQLNonNull(refreshTokenAndAccessTokenGraphQLType);
         case OutputTypeInternal.User:
             return g.GraphQLNonNull(userGraphQLType);
+        case OutputTypeInternal.Product:
+            return g.GraphQLNonNull(productGraphQLType);
     }
 };
 
@@ -544,5 +578,55 @@ export const outputTypeDescription = (
             return refreshTokenAndAccessTokenGraphQLType.description;
         case OutputTypeInternal.User:
             return userGraphQLType.description;
+        case OutputTypeInternal.Product:
+            return productGraphQLType.description;
     }
 };
+
+/*============================================
+==============================================
+*/
+
+/**
+ * 型安全にGraphQLFieldConfigをつくる
+ */
+export const makeGraphQLFieldConfig = <
+    O extends OutputType<OutputTypeInternal, boolean>,
+    Args extends {
+        [key in string]: {
+            type: InputType<InputTypeInternal, boolean>;
+            description: Maybe<string>;
+        }
+    }
+>(arg: {
+    args: Args;
+    type: O;
+    resolve: (
+        args: { [K in keyof Args]: InputTypeToGraphQLType<Args[K]["type"]> }
+    ) => Promise<OutputTypeToGraphQLType<O>>;
+    description: string;
+}): g.GraphQLFieldConfig<void, void, any> => {
+    return {
+        type: outputTypeToGraphQLType(arg.type),
+        args: noExtendTypeObjectKeys(arg.args).reduce(
+            (result, key) => {
+                result[key] = {
+                    type: inputTypeToGraphQLType(arg.args[key].type),
+                    description: arg.args[key].description
+                };
+                return result;
+            },
+            {} as { [k in keyof Args]: g.GraphQLArgumentConfig }
+        ),
+        resolve: (
+            source: void,
+            args,
+            context: void,
+            info: g.GraphQLResolveInfo
+        ) => arg.resolve(args),
+        description: arg.description
+    };
+};
+
+const noExtendTypeObjectKeys = <O>(object: O): Array<keyof O> =>
+    Object.keys(object) as Array<keyof O>;
