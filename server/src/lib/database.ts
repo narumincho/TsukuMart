@@ -1,5 +1,5 @@
 import * as admin from "firebase-admin";
-import { URL, URLSearchParams } from "url";
+import { URL } from "url";
 import * as storage from "@google-cloud/storage";
 import * as stream from "stream";
 import * as type from "./type";
@@ -186,7 +186,7 @@ export const addUserInUserBeforeInputData = async (
 };
 
 /**
- * ユーザー情報を入力する前のユーザー情報を取得する
+ * ユーザー情報を入力する前のユーザー情報を取得し削除する
  * @param logInAccountServiceId サービス名_サービス内でのID
  */
 export const getUserInUserBeforeInputData = async (
@@ -195,14 +195,16 @@ export const getUserInUserBeforeInputData = async (
     name: string;
     imageUrl: URL;
 }> => {
-    const docRef = await (await userBeforeInputDataCollection.doc(
+    const docRef = await userBeforeInputDataCollection.doc(
         logInAccountServiceIdToString(logInAccountServiceId)
-    )).get();
-    const userBeforeInputData = docRef.data();
+    );
+    const doc = await docRef.get();
+    const userBeforeInputData = doc.data();
     if (userBeforeInputData === undefined) {
         console.log("存在しない情報入力前のユーザーを指定された");
         throw new Error("存在しない情報入力前のユーザーを指定された");
     }
+    docRef.delete();
     return {
         name: userBeforeInputData.name,
         imageUrl: new URL(userBeforeInputData.imageUrl)
@@ -297,8 +299,10 @@ export const addUserBeforeEmailVerificationAndSendEmail = async (
     university: type.University
 ): Promise<void> => {
     const flatUniversity = type.universityToFlat(university);
+    const password: string = createRandomId();
     const userRecord = await initializedAdmin.auth().createUser({
-        email: email
+        email: email,
+        password: password
     });
     await userBeforeEmailVerificationCollection
         .doc(logInAccountServiceIdToString(logInAccountServiceId))
@@ -309,13 +313,9 @@ export const addUserBeforeEmailVerificationAndSendEmail = async (
             schoolAndDepartment: flatUniversity.schoolAndDepartment,
             graduate: flatUniversity.graduate
         });
-    type.universityUnsafeToUniversity;
-    const customToken = await initializedAdmin
-        .auth()
-        .createCustomToken(userRecord.uid);
     const userCredential = await firebase
         .auth()
-        .signInWithCustomToken(customToken);
+        .signInWithEmailAndPassword(email, password);
     if (userCredential.user === null) {
         throw new Error("userCredential.user is null");
     }
