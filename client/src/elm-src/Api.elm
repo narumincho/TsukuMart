@@ -881,7 +881,7 @@ logInOrSignUpUrlResponseToResult =
 graphQlApiRequest : String -> Json.Decode.Decoder a -> (Result String a -> msg) -> Cmd msg
 graphQlApiRequest queryOrMutation responseDecoder callBack =
     Http.post
-        { url = "https://asia-northeast1-tsukumart-demo.cloudfunctions.net/api"
+        { url = "https://asia-northeast1-tsukumart-f0971.cloudfunctions.net/api"
         , body = graphQlRequestBody queryOrMutation
         , expect = Http.expectStringResponse callBack (graphQlResponseDecoder responseDecoder)
         }
@@ -894,7 +894,6 @@ graphQlRequestBody queryOrMutation =
             [ ( "query"
               , Json.Encode.string queryOrMutation
               )
-            , ( "variables", Json.Encode.null )
             ]
         )
 

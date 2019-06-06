@@ -41,6 +41,7 @@ type Msg
     | MouseDownLogInButton Data.SocialLoginService.SocialLoginService
     | MouseUp
 
+
 initModel : Model
 initModel =
     Model
@@ -114,7 +115,9 @@ view (Model { mouseState, waitLogInUrl }) =
                         Just service ->
                             [ Html.div []
                                 [ Html.text
-                                    (Data.SocialLoginService.serviceName service)
+                                    (Data.SocialLoginService.serviceName service
+                                        ++ "のログイン画面へのURLを取得中"
+                                    )
                                 ]
                             ]
 

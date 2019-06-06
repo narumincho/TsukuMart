@@ -25,10 +25,17 @@ export const indexHtml = functions
     <meta name="viewport" content="width=device-width,initial-scale=1.0">
     <meta name="description" content="筑波大生専用手渡しフリーマーケットサービス">
     <meta name="theme-color" content="#733fa7">
-    <title>つくマート 読み込み中</title>
+    <title>つくマート</title>
     <link rel="stylesheet" href="/style.css">
     <link rel="icon" href="/assets/logo_bird.png">
     <link rel="manifest" href="/manifest.json">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta property="og:url" content="https://tsukumart-f0971.web.app${
+        request.url
+    }">
+    <meta property="og:title" content="つくマート">
+    <meta property="og:description" content="記事の要約 デバッグ=${Math.random()}">
+    <meta property="og:image" content="https://tsukumart-f0971.web.app/assets/logo_bird.png">
     <script src="/main.js" defer></script>
     <script src="/call.js" type="module"></script>
 </head>
@@ -49,11 +56,15 @@ export const api = functions
         memory: "2GB"
     })
     .https.onRequest(async (request, response) => {
+        console.log("API called");
         response.setHeader("Access-Control-Allow-Origin", "*");
-        // response.setHeader("Access-Control-Allow-Methods", "OPTIONS POST");
-        response.setHeader("Access-Control-Allow-Headers", "Content-Type");
-        response.setHeader("Access-Control-Max-Age", 3600);
         if (request.method === "OPTIONS") {
+            response.setHeader(
+                "Access-Control-Allow-Methods",
+                "POST, GET, OPTIONS"
+            );
+            response.setHeader("Access-Control-Allow-Headers", "Content-Type");
+            response.setHeader("Access-Control-Max-Age", 3600);
             response.status(200).send("");
             return;
         }
@@ -90,14 +101,23 @@ export const lineLogInReceiver = functions
 export const image = functions
     .region("asia-northeast1")
     .https.onRequest(async (request, response) => {
-        const pathSplited: Array<string> = request.path.split("/");
-        const folderName: string | undefined = pathSplited[2];
-        const fileName: string | undefined = pathSplited[3];
         response.setHeader("Access-Control-Allow-Origin", "*");
-        response.setHeader("Access-Control-Allow-Headers", "Content-Type");
-        response.setHeader("Access-Control-Max-Age", 3600);
+        if (request.method === "OPTIONS") {
+            response.setHeader(
+                "Access-Control-Allow-Methods",
+                "POST, GET, OPTIONS"
+            );
+            response.setHeader("Access-Control-Allow-Headers", "Content-Type");
+            response.setHeader("Access-Control-Max-Age", 3600);
+            response.status(200).send("");
+            return;
+        }
+        const pathSplited: Array<string> = request.path.split("/");
+        const folderName: string | undefined = pathSplited[1];
+        const fileName: string | undefined = pathSplited[2];
         if (folderName === undefined || fileName == undefined) {
-            response.send("invalid image path");
+            console.log("ファイルの指定がおかしい", request.path);
+            response.status(404).send("invalid image path");
             return;
         }
         try {

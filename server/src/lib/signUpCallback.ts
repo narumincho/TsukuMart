@@ -1,17 +1,39 @@
 import * as express from "express";
 import * as database from "./database";
-import { URLSearchParams, URL } from "url";
+import { URL, URLSearchParams } from "url";
 import axios from "axios";
 import { AxiosResponse } from "axios";
 import * as key from "./key";
 import * as jwt from "jsonwebtoken";
 import * as logInWithTwitter from "./twitterLogIn";
+import * as utilUrl from "./util/url";
+
+/**
+ * 新規登録フォームへのURLを作成
+ * @param sendEmailToken
+ * @param name
+ * @param imageUrl
+ */
+const signUpUrl = (
+    sendEmailToken: string,
+    name: string,
+    imageUrl: URL
+): URL => {
+    return utilUrl.fromString(
+        "tsukumart-f0971.web.app/signup",
+        new Map([
+            ["sendEmailToken", sendEmailToken],
+            ["name", name],
+            ["imageUrl", imageUrl.toString()]
+        ])
+    );
+};
 
 /* =====================================================================
  *                              Google
  * =====================================================================
  */
-/** GitHubでログインをしたあとのリダイレクト先 */
+/** Googleでログインをしたあとのリダイレクト先 */
 export const googleLogInReceiver = async (
     request: express.Request,
     response: express.Response
@@ -22,7 +44,7 @@ export const googleLogInReceiver = async (
         console.log(
             "Googleからcodeかstateが送られて来なかった。ユーザーがキャンセルした?"
         );
-        response.redirect("/");
+        response.redirect("https://tsukumart-f0971.web.app/");
         return;
     }
     if (!(await database.checkExistsLogInState(state, "google"))) {
@@ -36,16 +58,18 @@ export const googleLogInReceiver = async (
     // ここでhttps://www.googleapis.com/oauth2/v4/tokenにqueryのcodeをつけて送信。IDトークンを取得する
     const googleData = googleTokenResponseToData(
         await axios.post(
-            "https://www.googleapis.com/oauth2/v4/token",
-            new URLSearchParams(
-                new Map([
-                    ["grant_type", "authorization_code"],
-                    ["code", code],
-                    ["redirect_uri", key.googleLogInRedirectUri],
-                    ["client_id", key.googleLogInClientId],
-                    ["client_secret", key.googleLogInSecret]
-                ])
-            ).toString(),
+            utilUrl
+                .fromString(
+                    "www.googleapis.com/oauth2/v4/token",
+                    new Map([
+                        ["grant_type", "authorization_code"],
+                        ["code", code],
+                        ["redirect_uri", key.googleLogInRedirectUri],
+                        ["client_id", key.googleLogInClientId],
+                        ["client_secret", key.googleLogInSecret]
+                    ])
+                )
+                .toString(),
             {
                 headers: {
                     "Content-Type": "application/x-www-form-urlencoded"
@@ -53,25 +77,37 @@ export const googleLogInReceiver = async (
             }
         )
     );
-    const imageUrl = await getAndSaveUserImage(new URL(googleData.picture));
-    const sendEmailToken = createSendEmailToken(
-        await database.addUserInUserBeforeInputData(
-            "google",
-            googleData.id,
-            googleData.name,
-            imageUrl
-        )
-    );
-    response.redirect(
-        "/signup?" +
-            new URLSearchParams(
-                new Map([
-                    ["sendEmailToken", sendEmailToken],
-                    ["name", googleData.name],
-                    ["imageUrl", imageUrl.toString()]
-                ])
-            ).toString()
-    );
+    try {
+        // ユーザーを探す
+        const token = await database.getAccessTokenAndRefreshToken({
+            accountService: "google",
+            accountServiceId: googleData.id
+        });
+        response.redirect(
+            utilUrl
+                .fromString(
+                    "tsukumart-f0971.web.app",
+                    new Map([
+                        ["refreshToken", token.refreshToken],
+                        ["accessToken", token.accessToken]
+                    ])
+                )
+                .toString()
+        );
+    } catch {
+        const imageUrl = await getAndSaveUserImage(new URL(googleData.picture));
+        const sendEmailToken = createSendEmailToken(
+            await database.addUserInUserBeforeInputData(
+                "google",
+                googleData.id,
+                googleData.name,
+                imageUrl
+            )
+        );
+        response.redirect(
+            signUpUrl(sendEmailToken, googleData.name, imageUrl).toString()
+        );
+    }
 };
 
 const googleTokenResponseToData = (
@@ -115,10 +151,13 @@ const googleTokenResponseToData = (
  * 認証メールを送るのに必要なトークン
  * @param id データベースで作成したID
  */
-const createSendEmailToken = (id: string) => {
+const createSendEmailToken = (id: database.LogInAccountServiceId) => {
     const time = new Date();
     time.setUTCMinutes(time.getUTCMinutes() + 30); // 有効期限は30分後
-    const payload = { sub: id, exp: Math.round(time.getTime() / 1000) };
+    const payload = {
+        sub: database.logInAccountServiceIdToString(id),
+        exp: Math.round(time.getTime() / 1000)
+    };
     return jwt.sign(payload, key.sendEmailTokenSecret, { algorithm: "HS256" });
 };
 
@@ -148,7 +187,7 @@ export const gitHubLogInReceiver = async (
         console.log(
             "GitHubからcodeかstateが送られて来なかった。ユーザーがキャンセルした?"
         );
-        response.redirect("/");
+        response.redirect("https://tsukumart-f0971.web.app/");
         return;
     }
     if (!database.checkExistsLogInState(state, "gitHub")) {
@@ -201,27 +240,39 @@ query {
             }
         }
     )).data.data.viewer;
-    // ユーザーが存在しないなら作成し、リフレッシュトークンを返す
+    try {
+        // ユーザーを探す
+        const token = await database.getAccessTokenAndRefreshToken({
+            accountService: "gitHub",
+            accountServiceId: gitHubData.id
+        });
+        response.redirect(
+            "https://tsukumart-f0971.web.app?" +
+                new URLSearchParams(
+                    new Map([
+                        ["refreshToken", token.refreshToken],
+                        ["accessToken", token.accessToken]
+                    ])
+                ).toString()
+        );
+    } catch {
+        // ユーザーが存在しないなら作成し、リフレッシュトークンを返す
 
-    const imageUrl = await getAndSaveUserImage(new URL(gitHubData.avatarUrl));
-    const sendEmailToken = createSendEmailToken(
-        await database.addUserInUserBeforeInputData(
-            "gitHub",
-            gitHubData.id,
-            gitHubData.name,
-            imageUrl
-        )
-    );
-    response.redirect(
-        "/signup?" +
-            new URLSearchParams(
-                new Map([
-                    ["sendEmailToken", sendEmailToken],
-                    ["name", gitHubData.name],
-                    ["imageUrl", imageUrl.toString()]
-                ])
-            ).toString()
-    );
+        const imageUrl = await getAndSaveUserImage(
+            new URL(gitHubData.avatarUrl)
+        );
+        const sendEmailToken = createSendEmailToken(
+            await database.addUserInUserBeforeInputData(
+                "gitHub",
+                gitHubData.id,
+                gitHubData.name,
+                imageUrl
+            )
+        );
+        response.redirect(
+            signUpUrl(sendEmailToken, gitHubData.name, imageUrl).toString()
+        );
+    }
 };
 
 /* =====================================================================
@@ -239,7 +290,7 @@ export const twitterLogInReceiver = async (
         console.error(
             "Twitterからoauth_tokenかoauth_verifierが送られて来なかった。ユーザーがキャンセルした?"
         );
-        response.redirect("/");
+        response.redirect("https://tsukumart-f0971.web.app/");
         return;
     }
     const twitterData = await logInWithTwitter.authn(
@@ -250,52 +301,62 @@ export const twitterLogInReceiver = async (
         await database.getTwitterLastTokenSecret()
     );
 
-    switch (twitterData.c) {
-        case logInWithTwitter.AuthReturnC.NormalAccount: {
-            const imageUrl = await getAndSaveUserImage(twitterData.imageUrl);
-            const sendEmailToken = createSendEmailToken(
-                await database.addUserInUserBeforeInputData(
-                    "google",
-                    twitterData.twitterUserId,
-                    twitterData.name,
-                    imageUrl
-                )
-            );
-            response.redirect(
-                "/signup?" +
-                    new URLSearchParams(
-                        new Map([
-                            ["sendEmailToken", sendEmailToken],
-                            ["name", twitterData.name],
-                            ["imageUrl", imageUrl.toString()]
-                        ])
+    try {
+        // ユーザーを探す
+        const token = await database.getAccessTokenAndRefreshToken({
+            accountService: "twitter",
+            accountServiceId: twitterData.twitterUserId
+        });
+        response.redirect(
+            "https://tsukumart-f0971.web.app?" +
+                new URLSearchParams(
+                    new Map([
+                        ["refreshToken", token.refreshToken],
+                        ["accessToken", token.accessToken]
+                    ])
+                ).toString()
+        );
+    } catch {
+        switch (twitterData.c) {
+            case logInWithTwitter.AuthReturnC.NormalAccount: {
+                const imageUrl = await getAndSaveUserImage(
+                    twitterData.imageUrl
+                );
+                const sendEmailToken = createSendEmailToken(
+                    await database.addUserInUserBeforeInputData(
+                        "twitter",
+                        twitterData.twitterUserId,
+                        twitterData.name,
+                        imageUrl
+                    )
+                );
+                response.redirect(
+                    signUpUrl(
+                        sendEmailToken,
+                        twitterData.name,
+                        imageUrl
                     ).toString()
-            );
-        }
-        case logInWithTwitter.AuthReturnC.SecretAccount: {
-            const imageUrl = await getAndSaveUserImage(
-                new URL(
-                    "https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png"
-                )
-            );
-            const sendEmailToken = createSendEmailToken(
-                await database.addUserInUserBeforeInputData(
-                    "google",
-                    twitterData.twitterUserId,
-                    "",
-                    imageUrl
-                )
-            );
-            response.redirect(
-                "/signup?" +
-                    new URLSearchParams(
-                        new Map([
-                            ["sendEmailToken", sendEmailToken],
-                            ["name", ""],
-                            ["imageUrl", imageUrl.toString()]
-                        ])
-                    ).toString()
-            );
+                );
+                return;
+            }
+            case logInWithTwitter.AuthReturnC.SecretAccount: {
+                const imageUrl = await getAndSaveUserImage(
+                    new URL(
+                        "https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png"
+                    )
+                );
+                const sendEmailToken = createSendEmailToken(
+                    await database.addUserInUserBeforeInputData(
+                        "twitter",
+                        twitterData.twitterUserId,
+                        "",
+                        imageUrl
+                    )
+                );
+                response.redirect(
+                    signUpUrl(sendEmailToken, "", imageUrl).toString()
+                );
+            }
         }
     }
 };
@@ -315,7 +376,7 @@ export const lineLogInReceiver = async (
         console.log(
             "LINEからcodeかstateが送られて来なかった。ユーザーがキャンセルした?"
         );
-        response.redirect("/");
+        response.redirect("https://tsukumart-f0971.web.app/");
         return;
     }
     if (!(await database.checkExistsLogInState(state, "line"))) {
@@ -346,26 +407,35 @@ export const lineLogInReceiver = async (
             }
         )
     );
-
-    const imageUrl = await getAndSaveUserImage(new URL(lineData.picture));
-    const sendEmailToken = createSendEmailToken(
-        await database.addUserInUserBeforeInputData(
-            "line",
-            lineData.id,
-            lineData.name,
-            imageUrl
-        )
-    );
-    response.redirect(
-        "/signup?" +
-            new URLSearchParams(
-                new Map([
-                    ["sendEmailToken", sendEmailToken],
-                    ["name", lineData.name],
-                    ["imageUrl", imageUrl.toString()]
-                ])
-            ).toString()
-    );
+    try {
+        // ユーザーを探す
+        const token = await database.getAccessTokenAndRefreshToken({
+            accountService: "line",
+            accountServiceId: lineData.id
+        });
+        response.redirect(
+            "https://tsukumart-f0971.web.app?" +
+                new URLSearchParams(
+                    new Map([
+                        ["refreshToken", token.refreshToken],
+                        ["accessToken", token.accessToken]
+                    ])
+                ).toString()
+        );
+    } catch {
+        const imageUrl = await getAndSaveUserImage(new URL(lineData.picture));
+        const sendEmailToken = createSendEmailToken(
+            await database.addUserInUserBeforeInputData(
+                "line",
+                lineData.id,
+                lineData.name,
+                imageUrl
+            )
+        );
+        response.redirect(
+            signUpUrl(sendEmailToken, lineData.name, imageUrl).toString()
+        );
+    }
 };
 
 /**

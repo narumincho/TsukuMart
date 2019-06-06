@@ -1,11 +1,10 @@
 import * as g from "graphql";
-import { URLSearchParams, URL } from "url";
 import * as key from "./key";
 import * as database from "./database";
 import * as logInWithTwitter from "./twitterLogIn";
 import * as type from "./type";
-import Maybe from "graphql/tsutils/Maybe";
 import * as jwt from "jsonwebtoken";
+import * as UtilUrl from "./util/url";
 
 const getLogInUrl = type.makeGraphQLFieldConfig({
     type: type.urlOutputType,
@@ -13,36 +12,34 @@ const getLogInUrl = type.makeGraphQLFieldConfig({
         const accountService = args.service;
         switch (accountService) {
             case "google": {
-                const url = new URL(
-                    "https://accounts.google.com/o/oauth2/v2/auth"
+                return UtilUrl.fromString(
+                    "accounts.google.com/o/oauth2/v2/auth",
+                    new Map([
+                        ["response_type", "code"],
+                        ["client_id", key.googleLogInClientId],
+                        ["redirect_uri", key.googleLogInRedirectUri],
+                        ["scope", "profile openid"],
+                        [
+                            "state",
+                            await database.generateAndWriteGoogleLogInState()
+                        ]
+                    ])
                 );
-                url.searchParams.append("response_type", "code");
-                url.searchParams.append("client_id", key.googleLogInClientId);
-                url.searchParams.append(
-                    "redirect_uri",
-                    key.googleLogInRedirectUri
-                );
-                url.searchParams.append("scope", "profile openid");
-                url.searchParams.append(
-                    "state",
-                    await database.generateAndWriteGoogleLogInState()
-                );
-                return url;
             }
             case "gitHub": {
-                const url = new URL("https://github.com/login/oauth/authorize");
-                url.searchParams.append("response_type", "code");
-                url.searchParams.append("client_id", key.gitHubLogInClientId);
-                url.searchParams.append(
-                    "redirect_uri",
-                    key.gitHubLogInRedirectUri
+                return UtilUrl.fromString(
+                    "github.com/login/oauth/authorize",
+                    new Map([
+                        ["response_type", "code"],
+                        ["client_id", key.gitHubLogInClientId],
+                        ["redirect_uri", key.gitHubLogInRedirectUri],
+                        ["scope", "read:user"],
+                        [
+                            "state",
+                            await database.generateAndWriteGitHubLogInState()
+                        ]
+                    ])
                 );
-                url.searchParams.append("scope", "read:user");
-                url.searchParams.append(
-                    "state",
-                    await database.generateAndWriteGitHubLogInState()
-                );
-                return url;
             }
             case "twitter": {
                 const { tokenSecret, url } = await logInWithTwitter.getLoginUrl(
@@ -54,21 +51,19 @@ const getLogInUrl = type.makeGraphQLFieldConfig({
                 return url;
             }
             case "line": {
-                const url = new URL(
-                    "https://access.line.me/oauth2/v2.1/authorize"
+                return UtilUrl.fromString(
+                    "access.line.me/oauth2/v2.1/authorize",
+                    new Map([
+                        ["response_type", "code"],
+                        ["client_id", key.lineLogInClientId],
+                        ["redirect_uri", key.lineLogInRedirectUri],
+                        ["scope", "profile openid"],
+                        [
+                            "state",
+                            await database.generateAndWriteLineLogInState()
+                        ]
+                    ])
                 );
-                url.searchParams.append("response_type", "code");
-                url.searchParams.append("client_id", key.lineLogInClientId);
-                url.searchParams.append(
-                    "redirect_uri",
-                    key.lineLogInRedirectUri
-                );
-                url.searchParams.append("scope", "profile openid");
-                url.searchParams.append(
-                    "state",
-                    await database.generateAndWriteLineLogInState()
-                );
-                return url;
             }
         }
     },
@@ -130,7 +125,9 @@ const sendConformEmail = type.makeGraphQLFieldConfig({
     description: "ユーザー情報を登録して認証メールを送信する"
 });
 
-const sendEmailTokenVerify = (sendEmailToken: string): string => {
+const sendEmailTokenVerify = (
+    sendEmailToken: string
+): database.LogInAccountServiceId => {
     const decoded = jwt.verify(sendEmailToken, key.sendEmailTokenSecret);
     if (typeof decoded === "string") {
         throw new Error("sendEmailToken include string only");
@@ -139,7 +136,7 @@ const sendEmailTokenVerify = (sendEmailToken: string): string => {
     if (typeof decodedMarked.sub !== "string") {
         throw new Error("sendEmailToken sub is not string");
     }
-    return decodedMarked.sub;
+    return database.logInAccountServiceIdFromString(decodedMarked.sub);
 };
 
 export const mutation = new g.GraphQLObjectType({

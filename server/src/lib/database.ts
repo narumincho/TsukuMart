@@ -6,14 +6,13 @@ import * as type from "./type";
 import * as firebase from "firebase";
 import * as key from "./key";
 import * as jwt from "jsonwebtoken";
-import { user } from "firebase-functions/lib/providers/auth";
-import { image } from "..";
+import * as url from "./util/url";
 
 const initializedAdmin = admin.initializeApp();
 
 firebase.initializeApp({
     apiKey: key.apiKey,
-    projectId: "tsukumart-demo"
+    projectId: "tsukumart-f0971"
 });
 
 const dataBase = initializedAdmin.firestore();
@@ -39,6 +38,38 @@ const twitterLogInTokenSecretDocumentRef: FirebaseFirestore.DocumentReference = 
 const lineLogInStateCollection: FirebaseFirestore.CollectionReference = dataBase.collection(
     "lineState"
 );
+
+/**
+ * ソーシャルログインで利用するサービス名とそのアカウントIDをセットにしたもの
+ */
+export type LogInAccountServiceId = {
+    accountService: type.AccountService;
+    accountServiceId: string;
+};
+
+export const logInAccountServiceIdToString = (
+    logInAccountServiceId: LogInAccountServiceId
+) =>
+    logInAccountServiceId.accountService +
+    "_" +
+    logInAccountServiceId.accountServiceId;
+
+export const logInAccountServiceIdFromString = (
+    string: string
+): LogInAccountServiceId => {
+    const result = string.match(/^(.+?)_(.+)$/);
+    if (result === null) {
+        throw new Error("logInAccountServiceId is invalid");
+    }
+    const accountService = type.checkAccountServiceValues(result[1]);
+    if (accountService === null) {
+        throw new Error("logInAccount is invalid" + result[1]);
+    }
+    return {
+        accountService: accountService,
+        accountServiceId: result[2]
+    };
+};
 
 /**
  * Googleへの OpenId ConnectのStateを生成して保存する
@@ -140,12 +171,17 @@ export const addUserInUserBeforeInputData = async (
     accountServiceId: string,
     name: string,
     imageUrl: URL
-): Promise<string> => {
-    const documentId = accountService + "_" + accountServiceId;
-    await userBeforeInputDataCollection.doc(documentId).set({
-        name: name,
-        imageUrl: imageUrl.toString()
-    });
+): Promise<LogInAccountServiceId> => {
+    const documentId: LogInAccountServiceId = {
+        accountService: accountService,
+        accountServiceId: accountServiceId
+    };
+    await userBeforeInputDataCollection
+        .doc(logInAccountServiceIdToString(documentId))
+        .set({
+            name: name,
+            imageUrl: imageUrl.toString()
+        });
     return documentId;
 };
 
@@ -154,13 +190,13 @@ export const addUserInUserBeforeInputData = async (
  * @param logInAccountServiceId サービス名_サービス内でのID
  */
 export const getUserInUserBeforeInputData = async (
-    logInAccountServiceId: string
+    logInAccountServiceId: LogInAccountServiceId
 ): Promise<{
     name: string;
     imageUrl: URL;
 }> => {
     const docRef = await (await userBeforeInputDataCollection.doc(
-        logInAccountServiceId
+        logInAccountServiceIdToString(logInAccountServiceId)
     )).get();
     const userBeforeInputData = docRef.data();
     if (userBeforeInputData === undefined) {
@@ -254,20 +290,26 @@ export const getImageReadStream = (
         .createReadStream();
 
 export const addUserBeforeEmailVerificationAndSendEmail = async (
-    logInAccountServiceId: string,
+    logInAccountServiceId: LogInAccountServiceId,
     name: string,
     imageUrl: URL,
     email: string,
     university: type.University
 ): Promise<void> => {
-    await userBeforeEmailVerificationCollection.doc(logInAccountServiceId).set({
-        name: name,
-        imageUrl: imageUrl.toString(),
-        university: university // TODO 平坦化すべき
+    const flatUniversity = type.universityToFlat(university);
+    const userRecord = await initializedAdmin.auth().createUser({
+        email: email
     });
-    const userRecord = await initializedAdmin
-        .auth()
-        .createUser({ uid: logInAccountServiceId, email: email });
+    await userBeforeEmailVerificationCollection
+        .doc(logInAccountServiceIdToString(logInAccountServiceId))
+        .set({
+            sendVerificationEmailUserId: userRecord.uid,
+            name: name,
+            imageUrl: imageUrl.toString(),
+            schoolAndDepartment: flatUniversity.schoolAndDepartment,
+            graduate: flatUniversity.graduate
+        });
+    type.universityUnsafeToUniversity;
     const customToken = await initializedAdmin
         .auth()
         .createCustomToken(userRecord.uid);
@@ -281,31 +323,57 @@ export const addUserBeforeEmailVerificationAndSendEmail = async (
 };
 
 export const getAccessTokenAndRefreshToken = async (
-    logInAccountServiceId: string
+    logInAccountServiceId: LogInAccountServiceId
 ): Promise<{ refreshToken: string; accessToken: string }> => {
+    const docList = (await userCollection
+        .where(
+            "logInAccountServiceId",
+            "==",
+            logInAccountServiceIdToString(logInAccountServiceId)
+        )
+        .get()).docs;
+    if (docList.length !== 0) {
+        const refreshId = createRefreshId();
+        const queryDocumentSnapshot = docList[0];
+        queryDocumentSnapshot.ref.set({
+            lastRefreshId: refreshId
+        });
+        const userData = queryDocumentSnapshot.data();
+        return {
+            accessToken: createAccessToken(userData.id, false),
+            refreshToken: createRefreshToken(userData.id, refreshId)
+        };
+    }
+
     const userBeforeEmailVerification = (await userBeforeEmailVerificationCollection
-        .doc(logInAccountServiceId)
+        .doc(logInAccountServiceIdToString(logInAccountServiceId))
         .get()).data();
     if (userBeforeEmailVerification !== undefined) {
         if (
-            (await initializedAdmin.auth().getUser(logInAccountServiceId))
-                .emailVerified
+            (await initializedAdmin
+                .auth()
+                .getUser(
+                    userBeforeEmailVerification.sendVerificationEmailUserId
+                )).emailVerified
         ) {
             const name: string = userBeforeEmailVerification.name;
             const imageUrl: string = userBeforeEmailVerification.imageUrl;
-            const university: {} = userBeforeEmailVerification.university;
             const refreshId = createRefreshId();
+            const flatUniversity = type.universityToFlat(
+                userBeforeEmailVerification.university
+            );
             const newUser = await userCollection.add({
                 logInAccountServiceId: logInAccountServiceId,
                 displayName: name,
                 imageUrl: imageUrl,
-                university: university,
+                schoolAndDepartment: flatUniversity.schoolAndDepartment,
+                graduate: flatUniversity.graduate,
                 introduction: "",
                 lastRefreshId: refreshId,
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             });
             await userBeforeEmailVerificationCollection
-                .doc(logInAccountServiceId)
+                .doc(logInAccountServiceIdToString(logInAccountServiceId))
                 .delete();
 
             return {
@@ -315,22 +383,8 @@ export const getAccessTokenAndRefreshToken = async (
         }
         throw new Error("email not verified");
     }
-    const docList = (await userCollection
-        .where("logInAccountServiceId", "==", logInAccountServiceId)
-        .get()).docs;
-    if (docList.length === 0) {
-        throw new Error("user dose not exists");
-    }
-    const refreshId = createRefreshId();
-    const queryDocumentSnapshot = docList[0];
-    queryDocumentSnapshot.ref.set({
-        lastRefreshId: refreshId
-    });
-    const userData = queryDocumentSnapshot.data();
-    return {
-        accessToken: createAccessToken(userData.id, false),
-        refreshToken: createRefreshToken(userData.id, refreshId)
-    };
+
+    throw new Error("user dose not exists");
 };
 
 /**
@@ -373,3 +427,40 @@ const createRefreshId = (): string => {
     }
     return id;
 };
+
+/**
+ * すべてのユーザーの情報を取得する
+ */
+export const getAllUser = async (): Promise<
+    Array<{
+        displayName: string;
+        imageUrl: URL;
+        university: type.University;
+    }>
+> => {
+    const allUserQuerySnapshot = await userCollection.get();
+    const allUserDocData = await querySnapshotPromise(allUserQuerySnapshot);
+    return allUserDocData.map(docData => ({
+        displayName: docData.displayName as string,
+        imageUrl: new URL(docData.imageUrl),
+        university: type.universityUnsafeToUniversity({
+            graduate: docData.graduate,
+            schoolAndDepartment: docData.schoolAndDepartment
+        }),
+        introduction: docData.introduction
+    }));
+};
+
+const querySnapshotPromise = (
+    querySnapshot: FirebaseFirestore.QuerySnapshot
+): Promise<Array<FirebaseFirestore.DocumentData>> =>
+    new Promise((resolve, reject) => {
+        const size = querySnapshot.size;
+        const resultList: Array<FirebaseFirestore.DocumentData> = [];
+        querySnapshot.forEach(result => {
+            resultList.push(result.data());
+            if (resultList.length === size - 1) {
+                resolve(resultList);
+            }
+        });
+    });

@@ -91,6 +91,19 @@ const accountServiceGraphQLType = new g.GraphQLEnumType({
     values: accountServiceValues,
     description: "ソーシャルログインを提供するサービス"
 });
+
+export const checkAccountServiceValues = (
+    string: string
+): AccountService | null => {
+    switch (string) {
+        case "google":
+        case "gitHub":
+        case "twitter":
+        case "line":
+            return string;
+    }
+    return null;
+};
 /** ===================================
  *               Unit
  * ====================================
@@ -225,6 +238,31 @@ export const universityUnsafeToUniversity = (
     );
 };
 
+export const universityToFlat = (
+    university: University
+): {
+    schoolAndDepartment: SchoolAndDepartment | null;
+    graduate: Graduate | null;
+} => {
+    switch (university.c) {
+        case UniversityC.GraduateTsukuba:
+            return {
+                schoolAndDepartment: university.schoolAndDepartment,
+                graduate: university.graduate
+            };
+        case UniversityC.GraduateNotTsukuba:
+            return {
+                schoolAndDepartment: null,
+                graduate: university.graduate
+            };
+        case UniversityC.NotGraduate:
+            return {
+                schoolAndDepartment: university.schoolAndDepartment,
+                graduate: null
+            };
+    }
+};
+
 const universityField = {
     schoolAndDepartment: {
         type: schoolAndDepartmentGraphQLType,
@@ -346,7 +384,7 @@ type InputType<Internal extends InputTypeInternal, Nullable extends boolean> = {
     nullable: Nullable;
 };
 
-enum InputTypeInternal {
+const enum InputTypeInternal {
     String,
     AccountService,
     DataUrl,
@@ -416,9 +454,9 @@ const inputTypeToGraphQLType = (
     inputType: InputType<InputTypeInternal, boolean>
 ): g.GraphQLInputType => {
     if (inputType.nullable) {
-        return g.GraphQLNonNull(inputTypeInternalToGraphQLType(inputType.type));
-    } else {
         return inputTypeInternalToGraphQLType(inputType.type);
+    } else {
+        return g.GraphQLNonNull(inputTypeInternalToGraphQLType(inputType.type));
     }
 };
 
@@ -460,7 +498,7 @@ export type OutputType<O extends OutputTypeInternal, IsList extends boolean> = {
     isList: IsList;
 };
 
-enum OutputTypeInternal {
+const enum OutputTypeInternal {
     String,
     Unit,
     Url,

@@ -30,9 +30,9 @@ type Model
         , imageUrl : String
         , university : CompUniversity.Model
         , nickName : String
-        , sendEmailToken: String
+        , sendEmailToken : String
         }
-    | SentSingUpData
+    | SentSingUpData { emailAddress : Data.EmailAddress.EmailAddress }
 
 
 {-| ここから発生するイベント
@@ -56,8 +56,8 @@ type Msg
 
 {-| すべて空白の新規登録画面を表示するためのModel
 -}
-initModel : {name:String, imageUrl:String,sendEmailToken:String } -> ( Model, List Emit )
-initModel {name,imageUrl,sendEmailToken} =
+initModel : { name : String, imageUrl : String, sendEmailToken : String } -> ( Model, List Emit )
+initModel { name, imageUrl, sendEmailToken } =
     ( Normal
         { sAddressOrStudentId = analysisStudentIdOrSAddress ""
         , university = CompUniversity.initSelect
@@ -136,6 +136,7 @@ update msg model =
 
         SignUp signUpRequest ->
             ( SentSingUpData
+                { emailAddress = signUpRequest.emailAddress }
             , [ EmitSignUp signUpRequest ]
             )
 
@@ -157,8 +158,8 @@ view userSignUpPage =
                 Normal { sAddressOrStudentId, university, nickName, imageUrl, sendEmailToken } ->
                     ( "新規登録", normalView sAddressOrStudentId university nickName imageUrl sendEmailToken )
 
-                SentSingUpData ->
-                    ( "認証メールの送信をしました", sentSingUpDataView )
+                SentSingUpData { emailAddress } ->
+                    ( "認証メールの送信をしました", sentSingUpDataView emailAddress )
     in
     ( "新規登録"
     , Tab.single tabText
@@ -225,7 +226,7 @@ studentHasSAddressFormList analysisStudentIdOrEmailAddressResult =
                         ASAddress sAddress ->
                             "筑波大学のメールアドレス " ++ Data.SAddress.toEmailAddressString sAddress
 
-                        AEmailButIsNotTsukuba ->
+                        AEmailButIsNotTsukuba _ ->
                             "筑波大学のメールアドレスではありません"
                     )
                 ]
@@ -258,8 +259,8 @@ analysisStudentIdOrSAddress string =
 
                         Nothing ->
                             case Data.EmailAddress.fromCharList charList of
-                                Just _ ->
-                                    AEmailButIsNotTsukuba
+                                Just emailAddress ->
+                                    AEmailButIsNotTsukuba emailAddress
 
                                 Nothing ->
                                     ANone
@@ -270,7 +271,7 @@ type AnalysisStudentIdOrSAddressResult
     | AStudentId Data.StudentId.StudentId
     | ASAddress Data.SAddress.SAddress
     | APartStudentId Data.StudentId.PartStudentId
-    | AEmailButIsNotTsukuba
+    | AEmailButIsNotTsukuba Data.EmailAddress.EmailAddress
 
 
 analysisEmailAddress : String -> Maybe Data.EmailAddress.EmailAddress
@@ -396,8 +397,8 @@ analysisStudentIdOrSAddressResultToEmailAddress sAddressOrStudentId =
         APartStudentId _ ->
             Nothing
 
-        AEmailButIsNotTsukuba ->
-            Nothing
+        AEmailButIsNotTsukuba emailAddress ->
+            Just emailAddress
 
 
 isDataUrl : String -> Bool
@@ -407,6 +408,10 @@ isDataUrl =
 
 {-| 新規登録のボタンを押した後の画面
 -}
-sentSingUpDataView : Html.Html Msg
-sentSingUpDataView =
-    Html.div [] [ Html.text "認証メールの送信をしました" ]
+sentSingUpDataView : Data.EmailAddress.EmailAddress -> Html.Html Msg
+sentSingUpDataView emailAddress =
+    Html.div
+        []
+        [ Html.text
+            (Data.EmailAddress.toString emailAddress ++ "に認証メールの送信をしました")
+        ]
