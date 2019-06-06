@@ -9,6 +9,17 @@ import * as logInWithTwitter from "./twitterLogIn";
 import * as utilUrl from "./util/url";
 
 /**
+ * アクセストークンとリフレッシュトークンが含まれたURLを作成
+ * @param refreshToken リフレッシュトークン
+ * @param accessToken アクセストークン
+ */
+const tokenUrl = (refreshToken: string, accessToken: string): URL =>
+    utilUrl.fromString(
+        "tsukumart-f0971.web.app",
+        new Map([["refreshToken", refreshToken], ["accessToken", accessToken]])
+    );
+
+/**
  * 新規登録フォームへのURLを作成
  * @param sendEmailToken
  * @param name
@@ -84,15 +95,7 @@ export const googleLogInReceiver = async (
             accountServiceId: googleData.id
         });
         response.redirect(
-            utilUrl
-                .fromString(
-                    "tsukumart-f0971.web.app",
-                    new Map([
-                        ["refreshToken", token.refreshToken],
-                        ["accessToken", token.accessToken]
-                    ])
-                )
-                .toString()
+            tokenUrl(token.refreshToken, token.accessToken).toString()
         );
     } catch {
         const imageUrl = await getAndSaveUserImage(new URL(googleData.picture));
@@ -247,15 +250,10 @@ query {
             accountServiceId: gitHubData.id
         });
         response.redirect(
-            "https://tsukumart-f0971.web.app?" +
-                new URLSearchParams(
-                    new Map([
-                        ["refreshToken", token.refreshToken],
-                        ["accessToken", token.accessToken]
-                    ])
-                ).toString()
+            tokenUrl(token.refreshToken, token.accessToken).toString()
         );
-    } catch {
+    } catch (e) {
+        console.log("ユーザーを探すところでエラー発生" + e);
         // ユーザーが存在しないなら作成し、リフレッシュトークンを返す
 
         const imageUrl = await getAndSaveUserImage(
@@ -308,13 +306,7 @@ export const twitterLogInReceiver = async (
             accountServiceId: twitterData.twitterUserId
         });
         response.redirect(
-            "https://tsukumart-f0971.web.app?" +
-                new URLSearchParams(
-                    new Map([
-                        ["refreshToken", token.refreshToken],
-                        ["accessToken", token.accessToken]
-                    ])
-                ).toString()
+            tokenUrl(token.refreshToken, token.accessToken).toString()
         );
     } catch {
         switch (twitterData.c) {
@@ -414,13 +406,7 @@ export const lineLogInReceiver = async (
             accountServiceId: lineData.id
         });
         response.redirect(
-            "https://tsukumart-f0971.web.app?" +
-                new URLSearchParams(
-                    new Map([
-                        ["refreshToken", token.refreshToken],
-                        ["accessToken", token.accessToken]
-                    ])
-                ).toString()
+            tokenUrl(token.refreshToken, token.accessToken).toString()
         );
     } catch {
         const imageUrl = await getAndSaveUserImage(new URL(lineData.picture));

@@ -356,21 +356,18 @@ export const getAccessTokenAndRefreshToken = async (
                     userBeforeEmailVerification.sendVerificationEmailUserId
                 )).emailVerified
         ) {
-            const name: string = userBeforeEmailVerification.name;
+            console.log("メールで認証済み", userBeforeEmailVerification);
             const imageUrl: string = userBeforeEmailVerification.imageUrl;
             const refreshId = createRefreshId();
-            const flatUniversity = type.universityToFlat(
-                userBeforeEmailVerification.university
-            );
             const newUser = await userCollection.add({
                 logInAccountServiceId: logInAccountServiceId,
-                displayName: name,
-                imageUrl: imageUrl,
-                schoolAndDepartment: flatUniversity.schoolAndDepartment,
-                graduate: flatUniversity.graduate,
+                displayName: userBeforeEmailVerification.name as string,
+                imageUrl: imageUrl as string,
+                schoolAndDepartment: userBeforeEmailVerification.schoolAndDepartment as type.SchoolAndDepartment | null,
+                graduate: userBeforeEmailVerification.graduate as type.Graduate | null,
                 introduction: "",
                 lastRefreshId: refreshId,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                createdAt: admin.firestore.FieldValue.serverTimestamp()
             });
             await userBeforeEmailVerificationCollection
                 .doc(logInAccountServiceIdToString(logInAccountServiceId))
@@ -381,9 +378,11 @@ export const getAccessTokenAndRefreshToken = async (
                 refreshToken: createRefreshToken(newUser.id, refreshId)
             };
         }
+        console.log("メールで認証済みでない" + logInAccountServiceId);
         throw new Error("email not verified");
     }
 
+    console.log("ユーザーが存在しなかった" + logInAccountServiceId);
     throw new Error("user dose not exists");
 };
 
