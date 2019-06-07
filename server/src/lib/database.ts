@@ -6,7 +6,9 @@ import * as type from "./type";
 import * as firebase from "firebase";
 import * as key from "./key";
 import * as jwt from "jsonwebtoken";
-import * as url from "./util/url";
+import * as utilUrl from "./util/url";
+import { user } from "firebase-functions/lib/providers/auth";
+import * as firestore from "@google-cloud/firestore";
 
 const initializedAdmin = admin.initializeApp();
 
@@ -22,7 +24,7 @@ const userBeforeInputDataCollection: FirebaseFirestore.CollectionReference = dat
 const userBeforeEmailVerificationCollection: FirebaseFirestore.CollectionReference = dataBase.collection(
     "userBeforeEmailVerification"
 );
-const userCollection: FirebaseFirestore.CollectionReference = dataBase.collection(
+const userCollectionRef: FirebaseFirestore.CollectionReference = dataBase.collection(
     "user"
 );
 
@@ -38,6 +40,74 @@ const twitterLogInTokenSecretDocumentRef: FirebaseFirestore.DocumentReference = 
 const lineLogInStateCollection: FirebaseFirestore.CollectionReference = dataBase.collection(
     "lineState"
 );
+
+type UserDocData = {
+    logInAccountServiceId: string;
+    displayName: string;
+    imageUrl: string;
+    schoolAndDepartment: type.SchoolAndDepartment | null;
+    graduate: type.Graduate | null;
+    introduction: string;
+    lastRefreshId: string;
+    createdAt: FirebaseFirestore.FieldValue;
+};
+/* ==========================================
+            LOW データベースへのIO
+   ==========================================
+*/
+/**
+ * ユーザーを取得する
+ * @param id
+ */
+const getUserDataFromId = async (id: string): Promise<UserDocData> => {
+    const userData = (await (await userCollectionRef.doc(id)).get()).data();
+    if (userData === undefined) {
+        throw new Error("userId=" + id + "dose not exsits");
+    }
+    return userData as UserDocData;
+};
+
+/**
+ * ユーザーを追加する
+ * @param userData
+ */
+const addUserData = async (userData: UserDocData): Promise<string> => {
+    return (await userCollectionRef.add({
+        logInAccountServiceId: userData.logInAccountServiceId,
+        displayName: userData.displayName,
+        imageUrl: userData.imageUrl,
+        schoolAndDepartment: userData.schoolAndDepartment,
+        graduate: userData.graduate,
+        introduction: userData.introduction,
+        lastRefreshId: userData.lastRefreshId,
+        createdAt: userData.createdAt
+    })).id;
+};
+
+/**
+ * すべてのユーザーに対して加工する
+ * @param f 関数
+ */
+const mapAllUser = async <T>(
+    f: (user: UserDocData) => T
+): Promise<Array<T>> => {
+    const allUserQuerySnapshot = await userCollectionRef.get();
+    const allUserDocData = await querySnapshotPromise(allUserQuerySnapshot);
+    return allUserDocData.map(user => f(user as UserDocData));
+};
+
+/**
+ * ユーザーの条件を指定して検索する
+ * @param filedName
+ * @param operator
+ * @param value
+ */
+const getUserListFrom = async <Filed extends keyof UserDocData>(
+    filedName: Filed,
+    operator: firestore.WhereFilterOp,
+    value: UserDocData[Filed]
+): Promise<firestore.QueryDocumentSnapshot[]> =>
+    (await userCollectionRef.where(filedName, operator, value).get()).docs;
 
 /**
  * ソーシャルログインで利用するサービス名とそのアカウントIDをセットにしたもの
@@ -325,13 +395,11 @@ export const addUserBeforeEmailVerificationAndSendEmail = async (
 export const getAccessTokenAndRefreshToken = async (
     logInAccountServiceId: LogInAccountServiceId
 ): Promise<{ refreshToken: string; accessToken: string }> => {
-    const docList = (await userCollection
-        .where(
-            "logInAccountServiceId",
-            "==",
-            logInAccountServiceIdToString(logInAccountServiceId)
-        )
-        .get()).docs;
+    const docList = await getUserListFrom(
+        "logInAccountServiceId",
+        "==",
+        logInAccountServiceIdToString(logInAccountServiceId)
+    );
     if (docList.length !== 0) {
         const refreshId = createRefreshId();
         const queryDocumentSnapshot = docList[0];
@@ -359,10 +427,12 @@ export const getAccessTokenAndRefreshToken = async (
             console.log("メールで認証済み", userBeforeEmailVerification);
             const imageUrl: string = userBeforeEmailVerification.imageUrl;
             const refreshId = createRefreshId();
-            const newUser = await userCollection.add({
-                logInAccountServiceId: logInAccountServiceId,
+            const newUserId = await addUserData({
+                logInAccountServiceId: logInAccountServiceIdToString(
+                    logInAccountServiceId
+                ),
                 displayName: userBeforeEmailVerification.name as string,
-                imageUrl: imageUrl as string,
+                imageUrl: imageUrl,
                 schoolAndDepartment: userBeforeEmailVerification.schoolAndDepartment as type.SchoolAndDepartment | null,
                 graduate: userBeforeEmailVerification.graduate as type.Graduate | null,
                 introduction: "",
@@ -374,8 +444,8 @@ export const getAccessTokenAndRefreshToken = async (
                 .delete();
 
             return {
-                accessToken: createAccessToken(newUser.id, false),
-                refreshToken: createRefreshToken(newUser.id, refreshId)
+                accessToken: createAccessToken(newUserId, false),
+                refreshToken: createRefreshToken(newUserId, refreshId)
             };
         }
         console.log("メールで認証済みでない" + logInAccountServiceId);
@@ -436,11 +506,9 @@ export const getAllUser = async (): Promise<
         imageUrl: URL;
         university: type.University;
     }>
-> => {
-    const allUserQuerySnapshot = await userCollection.get();
-    const allUserDocData = await querySnapshotPromise(allUserQuerySnapshot);
-    return allUserDocData.map(docData => ({
-        displayName: docData.displayName as string,
+> =>
+    mapAllUser(docData => ({
+        displayName: docData.displayName,
         imageUrl: new URL(docData.imageUrl),
         university: type.universityUnsafeToUniversity({
             graduate: docData.graduate,
@@ -448,7 +516,6 @@ export const getAllUser = async (): Promise<
         }),
         introduction: docData.introduction
     }));
-};
 
 const querySnapshotPromise = (
     querySnapshot: FirebaseFirestore.QuerySnapshot

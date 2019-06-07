@@ -28,7 +28,7 @@ import Url.Builder
 
 
 type UrlParserInitResult
-    = InitHome (Maybe String)
+    = InitHome (Maybe { refreshToken : String, accessToken : String })
     | InitSignUp { sendEmailToken : String, name : String, imageUrl : String }
     | InitLogIn
     | InitLikeAndHistory
@@ -132,11 +132,19 @@ urlParser url =
         |> oneOf
 
 
-homeParser : List String -> Dict.Dict String String -> Maybe (Maybe String)
+homeParser : List String -> Dict.Dict String String -> Maybe (Maybe { refreshToken : String, accessToken : String })
 homeParser path query =
-    case path of
-        [] ->
-            Just (query |> Dict.get "refreshToken")
+    case ( path, query |> Dict.get "refreshToken", query |> Dict.get "accessToken" ) of
+        ( [], Just refreshToken, Just accessToken ) ->
+            Just
+                (Just
+                    { refreshToken = refreshToken
+                    , accessToken = accessToken
+                    }
+                )
+
+        ( [], _, _ ) ->
+            Just Nothing
 
         _ ->
             Nothing

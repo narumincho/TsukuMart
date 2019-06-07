@@ -192,7 +192,22 @@ urlParserInit logInState url =
 urlParserInitResultToPageAndCmd : Data.LogInState.LogInState -> SiteMap.UrlParserInitResult -> ( Page, Cmd Msg )
 urlParserInitResultToPageAndCmd logInState page =
     case page of
-        SiteMap.InitHome _ ->
+        SiteMap.InitHome (Just { refreshToken, accessToken }) ->
+            case
+                Page.Home.initModel Nothing
+                    |> Tuple.mapBoth PageHome homePageEmitListToCmd
+            of
+                ( p, msg ) ->
+                    ( p
+                    , Cmd.batch
+                        [ msg
+                        , Task.perform
+                            (always (LogInResponse (Ok ())))
+                            (Task.succeed ())
+                        ]
+                    )
+
+        SiteMap.InitHome Nothing ->
             Page.Home.initModel Nothing
                 |> Tuple.mapBoth PageHome homePageEmitListToCmd
 
@@ -318,8 +333,19 @@ update msg (Model rec) =
             , Cmd.none
             )
 
-        LogInResponse _ ->
-            ( Model rec
+        LogInResponse result ->
+            ( Model
+                { rec
+                    | message =
+                        Just
+                            (case result of
+                                Ok () ->
+                                    "ログインしました"
+
+                                Err () ->
+                                    "ログインに失敗しました"
+                            )
+                }
             , Cmd.none
             )
 
