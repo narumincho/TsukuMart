@@ -317,19 +317,26 @@ const userGraphQLType = new g.GraphQLObjectType({
     name: "User",
     fields: () => ({
         id: {
-            type: g.GraphQLNonNull(g.GraphQLString)
+            type: g.GraphQLNonNull(g.GraphQLString),
+            description: "ユーザーを識別するためのID"
         },
-        name: {
-            type: g.GraphQLNonNull(g.GraphQLString)
+        displayName: {
+            type: g.GraphQLNonNull(g.GraphQLString),
+            description: "表示"
         },
         introduction: {
-            type: g.GraphQLNonNull(g.GraphQLString)
+            type: g.GraphQLNonNull(g.GraphQLString),
+            description: "紹介文"
         },
         university: {
-            type: universityGraphQLObjectType
+            type: g.GraphQLNonNull(universityGraphQLObjectType),
+            description: "所属"
         },
-        exhibitionProductAll: {
-            type: g.GraphQLList(productGraphQLType)
+        selledProductAll: {
+            type: g.GraphQLNonNull(
+                g.GraphQLList(g.GraphQLNonNull(productGraphQLType))
+            ),
+            description: "出品した商品すべて"
         }
     }),
     description: "ユーザー"
@@ -337,12 +344,65 @@ const userGraphQLType = new g.GraphQLObjectType({
 
 type UserInternal = {
     id: string;
-    name: string;
+    displayName: string;
     introduction: string;
     university: UniversityUnsafe;
-    exhibitionProductAll: Array<ProductInternal>;
+    selledProductAll: Array<ProductInternal>;
 };
+/** ==============================
+ *         User Private
+ * ===============================
+ */
+const userPrivateGraphQLType = new g.GraphQLObjectType({
+    name: "UserPrivate",
+    fields: () => ({
+        id: {
+            type: g.GraphQLNonNull(g.GraphQLString),
+            description: "ユーザーを識別するためのID"
+        },
+        displayName: {
+            type: g.GraphQLNonNull(g.GraphQLString),
+            description: "表示"
+        },
+        introduction: {
+            type: g.GraphQLNonNull(g.GraphQLString),
+            description: "紹介文"
+        },
+        university: {
+            type: g.GraphQLNonNull(universityGraphQLObjectType),
+            description: "所属"
+        },
+        selledProductAll: {
+            type: g.GraphQLNonNull(
+                g.GraphQLList(g.GraphQLNonNull(productGraphQLType))
+            ),
+            description: "出品した商品すべて"
+        },
+        buyedProductAll: {
+            type: g.GraphQLNonNull(
+                g.GraphQLList(g.GraphQLNonNull(productGraphQLType))
+            ),
+            description: "購入した商品すべて"
+        },
+        likedProductAll: {
+            type: g.GraphQLNonNull(
+                g.GraphQLList(g.GraphQLNonNull(productGraphQLType))
+            ),
+            description: "いいねした商品すべて"
+        }
+    }),
+    description: "個人的な情報を含んだユーザーの情報"
+});
 
+type UserPrivateInternal = {
+    id: string;
+    displayName: string;
+    introduction: string;
+    university: UniversityUnsafe;
+    selledProductAll: Array<ProductInternal>;
+    buyedProductAll: Array<ProductInternal>;
+    likedProductAll: Array<ProductInternal>;
+};
 /** ==============================
  *           Product
  * ===============================
@@ -364,7 +424,7 @@ const productGraphQLType: g.GraphQLObjectType<
             type: g.GraphQLNonNull(g.GraphQLInt)
         },
         seller: {
-            type: userGraphQLType
+            type: g.GraphQLNonNull(userGraphQLType)
         }
     })
 });
@@ -504,6 +564,7 @@ const enum OutputTypeInternal {
     Url,
     RefreshTokenAndAccessToken,
     User,
+    UserPrivate,
     Product
 }
 
@@ -532,6 +593,14 @@ export const refreshTokenAndAccessTokenOutputType: OutputType<
 
 export const userOutputType: OutputType<OutputTypeInternal.User, false> = {
     internal: OutputTypeInternal.User,
+    isList: false
+};
+
+export const userPrivateOutputType: OutputType<
+    OutputTypeInternal.UserPrivate,
+    false
+> = {
+    internal: OutputTypeInternal.UserPrivate,
     isList: false
 };
 
@@ -570,6 +639,8 @@ type OutputTypeInternalToGraphQLType<
     ? RefreshTokenAndAccessToken
     : Internal extends OutputTypeInternal.User
     ? UserInternal
+    : Internal extends OutputTypeInternal.UserPrivate
+    ? UserPrivateInternal
     : Internal extends OutputTypeInternal.Product
     ? ProductInternal
     : never;
@@ -578,7 +649,9 @@ const outputTypeToGraphQLType = (
     outType: OutputType<OutputTypeInternal, boolean>
 ): g.GraphQLOutputType => {
     if (outType.isList) {
-        return g.GraphQLList(outputTypeInternalToGraphQLType(outType.internal));
+        return g.GraphQLNonNull(
+            g.GraphQLList(outputTypeInternalToGraphQLType(outType.internal))
+        );
     }
     return outputTypeInternalToGraphQLType(outType.internal);
 };
@@ -597,6 +670,8 @@ const outputTypeInternalToGraphQLType = (
             return g.GraphQLNonNull(refreshTokenAndAccessTokenGraphQLType);
         case OutputTypeInternal.User:
             return g.GraphQLNonNull(userGraphQLType);
+        case OutputTypeInternal.UserPrivate:
+            return g.GraphQLNonNull(userPrivateGraphQLType);
         case OutputTypeInternal.Product:
             return g.GraphQLNonNull(productGraphQLType);
     }
@@ -616,6 +691,8 @@ export const outputTypeDescription = (
             return refreshTokenAndAccessTokenGraphQLType.description;
         case OutputTypeInternal.User:
             return userGraphQLType.description;
+        case OutputTypeInternal.UserPrivate:
+            return userPrivateGraphQLType.description;
         case OutputTypeInternal.Product:
             return productGraphQLType.description;
     }

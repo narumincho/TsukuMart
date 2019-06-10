@@ -1,6 +1,5 @@
 module Api exposing
-    ( LogInResponseOk(..)
-    , SellGoodsRequest(..)
+    ( SellGoodsRequest(..)
     , SignUpRequest
     , SignUpResponseError(..)
     , Token
@@ -153,33 +152,15 @@ universityToSimpleRecord universityData =
             }
 
 
-
-{- =================================================
-                 ログイン /auth/token/
-   =================================================
--}
-
-
-type LogInResponseOk
-    = LogInResponseOk
-        { access : Token
-        , refresh : Token
-        }
-
-
 type Token
     = Token String
 
 
-{-| 文字列からトークンを生成する。(Local Storageから読むとき用)
--}
 tokenFromString : String -> Token
 tokenFromString =
     Token
 
 
-{-| トークンから文字列に変換する。(Local Storageに書くとき用)
--}
 tokenToString : Token -> String
 tokenToString (Token string) =
     string
@@ -196,26 +177,9 @@ type alias TokenRefreshRequest =
     { refresh : Token }
 
 
-tokenRefresh : TokenRefreshRequest -> (Result () () -> msg) -> Cmd msg
+tokenRefresh : TokenRefreshRequest -> (Result String { accessToken : Token, refreshToken : Token } -> msg) -> Cmd msg
 tokenRefresh tokenRefreshRequest msg =
     Cmd.none
-
-
-tokenRefreshBody : TokenRefreshRequest -> Json.Encode.Value
-tokenRefreshBody { refresh } =
-    Json.Encode.object
-        [ ( "refresh", Json.Encode.string (tokenToString refresh) ) ]
-
-
-refreshTokenResponseToResult : Token -> Http.Response String -> Result () ()
-refreshTokenResponseToResult refresh response =
-    case response of
-        Http.GoodStatus_ _ body ->
-            Json.Decode.decodeString (refreshTokenResponseDecoder refresh) body
-                |> Result.withDefault (Err ())
-
-        _ ->
-            Err ()
 
 
 refreshTokenResponseDecoder : Token -> Json.Decode.Decoder (Result () ())

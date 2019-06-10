@@ -110,9 +110,9 @@ type Msg
     | UrlChange Url.Url
     | UrlRequest Browser.UrlRequest
     | AddLogMessage String
+    | LogInResponse (Result String { accessToken : Api.Token, refreshToken : Api.Token })
     | LogOut
     | SignUpConfirmResponse (Result String ())
-    | LogInResponse (Result () ())
     | ReceiveImageDataUrl String
     | ReceiveImageFileAndBlobUrl Json.Decode.Value
     | GetUserDataResponse { access : Api.Token, refresh : Api.Token } (Result () Data.User.User)
@@ -202,7 +202,15 @@ urlParserInitResultToPageAndCmd logInState page =
                     , Cmd.batch
                         [ msg
                         , Task.perform
-                            (always (LogInResponse (Ok ())))
+                            (always
+                                (LogInResponse
+                                    (Ok
+                                        { accessToken = accessToken
+                                        , refreshToken = refreshToken
+                                        }
+                                    )
+                                )
+                            )
                             (Task.succeed ())
                         ]
                     )
@@ -339,11 +347,11 @@ update msg (Model rec) =
                     | message =
                         Just
                             (case result of
-                                Ok () ->
+                                Ok _ ->
                                     "ログインしました"
 
-                                Err () ->
-                                    "ログインに失敗しました"
+                                Err string ->
+                                    "ログインに失敗しました" ++ string
                             )
                 }
             , Cmd.none
