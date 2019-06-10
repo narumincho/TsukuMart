@@ -25,6 +25,7 @@ import Page.LikeAndHistory
 import Page.LogIn
 import Page.PurchaseGoodList
 import Page.SignUp
+import Page.SiteMap
 import Page.User
 import SiteMap
 import Tab
@@ -1311,13 +1312,13 @@ view (Model { page, menuState, message, logInState, now }) =
 mainViewAndMainTab : Data.LogInState.LogInState -> Page -> Bool -> Maybe ( Time.Posix, Time.Zone ) -> ( String, List (Html.Html Msg) )
 mainViewAndMainTab logInState page isWideScreenMode nowMaybe =
     let
-        ( title, tabData, mainView ) =
+        { title, tab, html } =
             titleAndTabDataAndMainView logInState isWideScreenMode nowMaybe page
     in
     ( title
-    , [ Tab.view isWideScreenMode tabData
+    , [ Tab.view isWideScreenMode tab
       , Html.div
-            (if Tab.isNone tabData then
+            (if Tab.isNone tab then
                 [ Html.Attributes.classList
                     [ ( "mainView-noMainTab", True ), ( "mainView-wide-noMainTab", isWideScreenMode ) ]
                 ]
@@ -1327,12 +1328,21 @@ mainViewAndMainTab logInState page isWideScreenMode nowMaybe =
                     [ ( "mainView", True ), ( "mainView-wide", isWideScreenMode ) ]
                 ]
             )
-            mainView
+            html
       ]
     )
 
 
-titleAndTabDataAndMainView : Data.LogInState.LogInState -> Bool -> Maybe ( Time.Posix, Time.Zone ) -> Page -> ( String, Tab.Tab Msg, List (Html.Html Msg) )
+titleAndTabDataAndMainView :
+    Data.LogInState.LogInState
+    -> Bool
+    -> Maybe ( Time.Posix, Time.Zone )
+    -> Page
+    ->
+        { title : String
+        , tab : Tab.Tab Msg
+        , html : List (Html.Html Msg)
+        }
 titleAndTabDataAndMainView logInState isWideScreenMode nowMaybe page =
     case page of
         PageHome homeModel ->
@@ -1381,16 +1391,28 @@ titleAndTabDataAndMainView logInState isWideScreenMode nowMaybe page =
                 |> mapPageData ProfilePageMsg
 
         PageSiteMapXml ->
-            siteMapXmlView
+            Page.SiteMap.view
 
         PageAbout aboutModel ->
             aboutModel
                 |> Page.About.view
 
 
-mapPageData : (a -> b) -> ( String, Tab.Tab a, List (Html.Html a) ) -> ( String, Tab.Tab b, List (Html.Html b) )
-mapPageData f ( title, tab, htmlList ) =
-    ( title, tab |> Tab.map f, htmlList |> List.map (Html.map f) )
+mapPageData :
+    (eachPageMsg -> Msg)
+    -> { title : Maybe String, tab : Tab.Tab eachPageMsg, html : List (Html.Html eachPageMsg) }
+    -> { title : String, tab : Tab.Tab Msg, html : List (Html.Html Msg) }
+mapPageData f { title, tab, html } =
+    { title =
+        case title of
+            Just titleText ->
+                titleText ++ "| つくマート"
+
+            Nothing ->
+                "つくマート"
+    , tab = tab |> Tab.map f
+    , html = html |> List.map (Html.map f)
+    }
 
 
 messageView : String -> Html.Html msg
@@ -1399,18 +1421,6 @@ messageView message =
         [ Html.Attributes.class "message"
         ]
         [ Html.text message ]
-
-
-siteMapXmlView : ( String, Tab.Tab msg, List (Html.Html msg) )
-siteMapXmlView =
-    ( "sitemap.xml"
-    , Tab.single "sitemap.xml"
-    , [ Html.div
-            [ Html.Attributes.style "white-space" "pre-wrap" ]
-            [ Html.text SiteMap.siteMapXml ]
-      ]
-    )
-
 
 subscription : Model -> Sub Msg
 subscription (Model { menuState }) =

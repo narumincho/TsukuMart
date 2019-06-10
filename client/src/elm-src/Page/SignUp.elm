@@ -150,7 +150,7 @@ update msg model =
 
 {-| 新規登録画面の表示
 -}
-view : Model -> ( String, Tab.Tab Msg, List (Html.Html Msg) )
+view : Model -> { title : Maybe String, tab : Tab.Tab Msg, html : List (Html.Html Msg) }
 view userSignUpPage =
     let
         ( tabText, mainView ) =
@@ -161,13 +161,14 @@ view userSignUpPage =
                 SentSingUpData { emailAddress } ->
                     ( "認証メールの送信をしました", sentSingUpDataView emailAddress )
     in
-    ( "新規登録"
-    , Tab.single tabText
-    , [ Html.div
+    { title = Just "新規登録"
+    , tab = Tab.single tabText
+    , html =
+        [ Html.div
             [ Html.Attributes.class "container" ]
             [ mainView ]
-      ]
-    )
+        ]
+    }
 
 
 normalView : AnalysisStudentIdOrSAddressResult -> CompUniversity.Model -> String -> String -> String -> Html.Html Msg

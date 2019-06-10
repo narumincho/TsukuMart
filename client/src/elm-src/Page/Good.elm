@@ -373,19 +373,25 @@ update msg model =
                     )
 
 
-view : LogInState.LogInState -> Bool -> Maybe ( Time.Posix, Time.Zone ) -> Model -> ( String, Tab.Tab Msg, List (Html.Html Msg) )
+view :
+    LogInState.LogInState
+    -> Bool
+    -> Maybe ( Time.Posix, Time.Zone )
+    -> Model
+    -> { title : Maybe String, tab : Tab.Tab Msg, html : List (Html.Html Msg) }
 view logInState isWideScreenMode nowMaybe model =
     case model of
         Loading _ ->
-            ( "商品詳細ページ"
-            , Tab.none
-            , [ Html.text "読み込み中" ]
-            )
+            { title = Just "商品詳細ページ 読み込み中"
+            , tab = Tab.none
+            , html = [ Html.text "読み込み中" ]
+            }
 
         WaitNewData { good } ->
-            ( Good.getName good
-            , Tab.none
-            , [ Html.div
+            { title = Just (Good.getName good)
+            , tab = Tab.none
+            , html =
+                [ Html.div
                     [ Html.Attributes.class "container" ]
                     [ Html.div
                         [ Html.Attributes.class "good" ]
@@ -398,13 +404,14 @@ view logInState isWideScreenMode nowMaybe model =
                         , goodsViewCondition (Good.getCondition good)
                         ]
                     ]
-              ]
-            )
+                ]
+            }
 
         Normal { good, sending } ->
-            ( Good.getName good
-            , Tab.none
-            , [ Html.div
+            { title = Just (Good.getName good)
+            , tab = Tab.none
+            , html =
+                [ Html.div
                     [ Html.Attributes.class "container" ]
                     [ Html.div
                         [ Html.Attributes.class "good" ]
@@ -432,13 +439,14 @@ view logInState isWideScreenMode nowMaybe model =
                         )
                     , goodsViewPriceAndBuyButton isWideScreenMode (Good.getPrice good)
                     ]
-              ]
-            )
+                ]
+            }
 
         Edit { editorModel, beforeGood } ->
-            ( Good.getName beforeGood ++ "編集中"
-            , Tab.none
-            , [ Html.div
+            { title = Just (Good.getName beforeGood)
+            , tab = Tab.none
+            , html =
+                [ Html.div
                     [ Html.Attributes.class "container" ]
                     [ Html.div
                         [ Html.Attributes.class "good" ]
@@ -459,13 +467,14 @@ view logInState isWideScreenMode nowMaybe model =
                                 [ Html.text "ログインしていないときに商品の編集はできません" ]
                         )
                     ]
-              ]
-            )
+                ]
+            }
 
         Confirm { good } ->
-            ( Good.getName good
-            , Tab.none
-            , [ Html.div
+            { title = Just (Good.getName good)
+            , tab = Tab.none
+            , html =
+                [ Html.div
                     [ Html.Attributes.class "container" ]
                     [ Html.div
                         [ Html.Attributes.class "good" ]
@@ -477,8 +486,8 @@ view logInState isWideScreenMode nowMaybe model =
                         , tradeStartButton logInState (Good.getId good)
                         ]
                     ]
-              ]
-            )
+                ]
+            }
 
 
 goodsViewImage : String -> List String -> Html.Html msg

@@ -212,49 +212,55 @@ update logInState msg (Model rec) =
             )
 
 
-view : LogInState.LogInState -> Bool -> Model -> ( String, Tab.Tab Msg, List (Html.Html Msg) )
+view :
+    LogInState.LogInState
+    -> Bool
+    -> Model
+    -> { title : Maybe String, tab : Tab.Tab Msg, html : List (Html.Html Msg) }
 view logInState isWideScreenMode (Model rec) =
-    ( "いいね・閲覧した商品"
-    , Tab.multi
-        { textAndMsgList =
-            [ ( "いいね", SelectTab TabLike ), ( "閲覧履歴", SelectTab TabHistory ) ]
-        , selectIndex =
-            case rec.normalModel |> normalModelGetSelectTab of
-                TabLike ->
-                    0
-
-                TabHistory ->
-                    1
-        }
-    , case logInState of
-        LogInState.LogInStateOk _ ->
-            [ GoodList.view
-                rec.goodListModel
-                logInState
-                isWideScreenMode
-                (case normalModelGetSelectTab rec.normalModel of
+    { title = Just "いいね・閲覧した商品"
+    , tab =
+        Tab.multi
+            { textAndMsgList =
+                [ ( "いいね", SelectTab TabLike ), ( "閲覧履歴", SelectTab TabHistory ) ]
+            , selectIndex =
+                case rec.normalModel |> normalModelGetSelectTab of
                     TabLike ->
-                        rec.normalModel
-                            |> normalModelGetLikeGoodResponse
-                            |> Maybe.map (Result.withDefault [])
+                        0
 
                     TabHistory ->
-                        rec.normalModel
-                            |> normalModelGetHistoryGoodResponse
-                            |> Maybe.map (Result.withDefault [])
-                )
-                |> Html.map GoodListMsg
-            ]
+                        1
+            }
+    , html =
+        case logInState of
+            LogInState.LogInStateOk _ ->
+                [ GoodList.view
+                    rec.goodListModel
+                    logInState
+                    isWideScreenMode
+                    (case normalModelGetSelectTab rec.normalModel of
+                        TabLike ->
+                            rec.normalModel
+                                |> normalModelGetLikeGoodResponse
+                                |> Maybe.map (Result.withDefault [])
 
-        LogInState.LogInStateNone ->
-            [ Html.div
-                [ Html.Attributes.class "container" ]
-                [ Html.div
-                    []
-                    [ Html.text "ログインか新規登録をして、いいねと閲覧履歴を使えるようにしよう!" ]
-                , LogInOrSignUp.view
-                    rec.logInOrSignUpModel
-                    |> Html.map LogInOrSignUpMsg
+                        TabHistory ->
+                            rec.normalModel
+                                |> normalModelGetHistoryGoodResponse
+                                |> Maybe.map (Result.withDefault [])
+                    )
+                    |> Html.map GoodListMsg
                 ]
-            ]
-    )
+
+            LogInState.LogInStateNone ->
+                [ Html.div
+                    [ Html.Attributes.class "container" ]
+                    [ Html.div
+                        []
+                        [ Html.text "ログインか新規登録をして、いいねと閲覧履歴を使えるようにしよう!" ]
+                    , LogInOrSignUp.view
+                        rec.logInOrSignUpModel
+                        |> Html.map LogInOrSignUpMsg
+                    ]
+                ]
+    }

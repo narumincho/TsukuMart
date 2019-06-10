@@ -125,20 +125,6 @@ const sendConformEmail = type.makeGraphQLFieldConfig({
     description: "ユーザー情報を登録して認証メールを送信する"
 });
 
-const sendEmailTokenVerify = (
-    sendEmailToken: string
-): database.LogInAccountServiceId => {
-    const decoded = jwt.verify(sendEmailToken, key.sendEmailTokenSecret);
-    if (typeof decoded === "string") {
-        throw new Error("sendEmailToken include string only");
-    }
-    const decodedMarked = decoded as { sub: unknown };
-    if (typeof decodedMarked.sub !== "string") {
-        throw new Error("sendEmailToken sub is not string");
-    }
-    return database.logInAccountServiceIdFromString(decodedMarked.sub);
-};
-
 export const mutation = new g.GraphQLObjectType({
     name: "Mutation",
     description: "データを作成、更新ができる",

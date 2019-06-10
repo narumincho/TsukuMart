@@ -11,7 +11,6 @@ module SiteMap exposing
     , likeHistoryUrl
     , logInUrl
     , purchaseGoodsUrl
-    , siteMapUrl
     , siteMapXml
     , urlParser
     , urlParserInit
@@ -410,11 +409,6 @@ siteMapParser path query =
         Nothing
 
 
-siteMapUrl : String
-siteMapUrl =
-    Url.Builder.absolute [ siteMapPath ] []
-
-
 siteMapPath : String
 siteMapPath =
     "sitemap"
@@ -436,5 +430,5 @@ siteMapXml =
 urlNode : String -> String
 urlNode string =
     "  <url>\n"
-        ++ ("    <loc>http://tsukumart.com" ++ string ++ "</loc>\n")
+        ++ ("    <loc>https://tsukumart.com" ++ string ++ "</loc>\n")
         ++ "  </url>\n"

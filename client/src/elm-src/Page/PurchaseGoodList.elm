@@ -138,11 +138,15 @@ update msg (Model rec) =
             )
 
 
-view : LogInState.LogInState -> Bool -> Model -> ( String, Tab.Tab Msg, List (Html.Html Msg) )
+view :
+    LogInState.LogInState
+    -> Bool
+    -> Model
+    -> { title : Maybe String, tab : Tab.Tab Msg, html : List (Html.Html Msg) }
 view logInState isWideScreenMode (Model rec) =
-    ( "購入した商品"
-    , Tab.single "購入した商品"
-    , case logInState of
+    { title = Just "購入した商品"
+    , tab = Tab.single "購入した商品"
+    , html = case logInState of
         LogInState.LogInStateOk _ ->
             [ GoodList.view
                 rec.goodListModel
@@ -172,4 +176,4 @@ view logInState isWideScreenMode (Model rec) =
                     |> Html.map LogInOrSignUpMsg
                 ]
             ]
-    )
+    }

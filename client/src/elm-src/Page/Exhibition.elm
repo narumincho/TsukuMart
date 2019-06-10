@@ -173,7 +173,7 @@ updateWhenNoLogIn msg (Model rec) =
 -}
 
 
-view : Data.LogInState.LogInState -> Model -> ( String, Tab.Tab Msg, List (Html.Html Msg) )
+view : Data.LogInState.LogInState -> Model -> { title : Maybe String, tab : Tab.Tab Msg, html : List (Html.Html Msg) }
 view logInState (Model { page, logInOrSignUpModel }) =
     let
         ( tabText, body ) =
@@ -189,16 +189,17 @@ view logInState (Model { page, logInOrSignUpModel }) =
                         ConfirmPage { request, sending } ->
                             confirmView access request sending
     in
-    ( "出品"
-    , Tab.single tabText
-    , [ Html.div
+    { title = Just "出品"
+    , tab = Tab.single tabText
+    , html =
+        [ Html.div
             [ Html.Attributes.class "container" ]
             [ Html.div
                 [ Html.Attributes.class "exhibition" ]
                 body
             ]
-      ]
-    )
+        ]
+    }
 
 
 logInStateNoneView : LogInOrSignUp.Model -> ( String, List (Html.Html Msg) )

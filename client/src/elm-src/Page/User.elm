@@ -225,11 +225,15 @@ toEditMode user =
 {- ====== View ====== -}
 
 
-view : LogInState.LogInState -> Model -> ( String, Tab.Tab Msg, List (Html.Html Msg) )
+view :
+    LogInState.LogInState
+    -> Model
+    -> { title : Maybe String, tab : Tab.Tab Msg, html : List (Html.Html Msg) }
 view logInState model =
-    ( "プロフィール"
-    , Tab.single "プロフィール"
-    , [ Html.div
+    { title = Just "プロフィール"
+    , tab = Tab.single "プロフィール"
+    , html =
+        [ Html.div
             [ Html.Attributes.class "container" ]
             (case ( logInState, model ) of
                 ( LogInState.LogInStateOk { user }, Normal normalUser ) ->
@@ -254,8 +258,8 @@ view logInState model =
                 ( LogInState.LogInStateNone, Edit _ ) ->
                     [ Html.text "自分以外のプロフィールが編集できない" ]
             )
-      ]
-    )
+        ]
+    }
 
 
 loadingWithUserIdView : User.UserId -> List (Html.Html msg)

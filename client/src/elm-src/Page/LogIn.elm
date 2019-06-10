@@ -46,14 +46,15 @@ update msg (Model logInOrSignUpModel) =
 
 {-| ログイン画面
 -}
-view : Model -> ( String, Tab.Tab Msg, List (Html.Html Msg) )
+view : Model -> { title : Maybe String, tab : Tab.Tab Msg, html : List (Html.Html Msg) }
 view (Model logInOrSignUpModel) =
-    ( "ログイン"
-    , Tab.single "ログイン"
-    , [ Html.div
+    { title = Just "ログイン"
+    , tab = Tab.single "ログイン"
+    , html =
+        [ Html.div
             [ Html.Attributes.class "container" ]
             [ LogInOrSignUp.view logInOrSignUpModel
                 |> Html.map Msg
             ]
-      ]
-    )
+        ]
+    }

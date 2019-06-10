@@ -152,6 +152,8 @@ universityToSimpleRecord universityData =
             }
 
 
+{-| アクセストークンやリフレッシュトークン
+-}
 type Token
     = Token String
 
@@ -173,13 +175,16 @@ tokenToString (Token string) =
 -}
 
 
-type alias TokenRefreshRequest =
-    { refresh : Token }
-
-
-tokenRefresh : TokenRefreshRequest -> (Result String { accessToken : Token, refreshToken : Token } -> msg) -> Cmd msg
+tokenRefresh : { refresh : Token } -> (Result String { accessToken : Token, refreshToken : Token } -> msg) -> Cmd msg
 tokenRefresh tokenRefreshRequest msg =
-    Cmd.none
+    graphQlApiRequest
+        ""
+        (Json.Decode.succeed
+            { accessToken = tokenFromString ""
+            , refreshToken = tokenFromString ""
+            }
+        )
+        msg
 
 
 refreshTokenResponseDecoder : Token -> Json.Decode.Decoder (Result () ())

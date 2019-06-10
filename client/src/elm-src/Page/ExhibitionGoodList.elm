@@ -138,38 +138,43 @@ update msg (Model rec) =
             )
 
 
-view : LogInState.LogInState -> Bool -> Model -> ( String, Tab.Tab Msg, List (Html.Html Msg) )
+view :
+    LogInState.LogInState
+    -> Bool
+    -> Model
+    -> { title : Maybe String, tab : Tab.Tab Msg, html : List (Html.Html Msg) }
 view logInState isWideScreenMode (Model rec) =
-    ( "出品した商品"
-    , Tab.single "出品した商品"
-    , case logInState of
-        LogInState.LogInStateOk _ ->
-            [ GoodList.view
-                rec.goodListModel
-                logInState
-                isWideScreenMode
-                (case rec.normalModel of
-                    Loading ->
-                        Nothing
+    { title = Just "出品した商品"
+    , tab = Tab.single "出品した商品"
+    , html =
+        case logInState of
+            LogInState.LogInStateOk _ ->
+                [ GoodList.view
+                    rec.goodListModel
+                    logInState
+                    isWideScreenMode
+                    (case rec.normalModel of
+                        Loading ->
+                            Nothing
 
-                    Normal { exhibitionGoodList } ->
-                        Just exhibitionGoodList
+                        Normal { exhibitionGoodList } ->
+                            Just exhibitionGoodList
 
-                    Error ->
-                        Just []
-                )
-                |> Html.map GoodListMsg
-            ]
-
-        LogInState.LogInStateNone ->
-            [ Html.div
-                [ Html.Attributes.class "container" ]
-                [ Html.div
-                    [ Html.Attributes.class "logInRecommendText" ]
-                    [ Html.text "ログインか新規登録をして、出品した商品一覧機能を使えるようにしよう!" ]
-                , LogInOrSignUp.view
-                    rec.logInOrSignUpModel
-                    |> Html.map LogInOrSignUpMsg
+                        Error ->
+                            Just []
+                    )
+                    |> Html.map GoodListMsg
                 ]
-            ]
-    )
+
+            LogInState.LogInStateNone ->
+                [ Html.div
+                    [ Html.Attributes.class "container" ]
+                    [ Html.div
+                        [ Html.Attributes.class "logInRecommendText" ]
+                        [ Html.text "ログインか新規登録をして、出品した商品一覧機能を使えるようにしよう!" ]
+                    , LogInOrSignUp.view
+                        rec.logInOrSignUpModel
+                        |> Html.map LogInOrSignUpMsg
+                    ]
+                ]
+    }

@@ -161,23 +161,29 @@ update msg (Model rec) =
             )
 
 
-view : LogInState.LogInState -> Bool -> Model -> ( String, Tab.Tab Msg, List (Html.Html Msg) )
+view :
+    LogInState.LogInState
+    -> Bool
+    -> Model
+    -> { title : Maybe String, tab : Tab.Tab Msg, html : List (Html.Html Msg) }
 view logInState isWideScreenMode (Model rec) =
-    ( ""
-    , Tab.multi
-        { textAndMsgList = [ ( "新着", SelectTab TabRecent ), ( "おすすめ", SelectTab TabRecommend ), ( "0円", SelectTab TabFree ) ]
-        , selectIndex =
-            case rec.tabSelect of
-                TabRecent ->
-                    0
+    { title = Nothing
+    , tab =
+        Tab.multi
+            { textAndMsgList = [ ( "新着", SelectTab TabRecent ), ( "おすすめ", SelectTab TabRecommend ), ( "0円", SelectTab TabFree ) ]
+            , selectIndex =
+                case rec.tabSelect of
+                    TabRecent ->
+                        0
 
-                TabRecommend ->
-                    1
+                    TabRecommend ->
+                        1
 
-                TabFree ->
-                    2
-        }
-    , [ GoodList.view rec.goodListModel
+                    TabFree ->
+                        2
+            }
+    , html =
+        [ GoodList.view rec.goodListModel
             logInState
             isWideScreenMode
             (case rec.tabSelect of
@@ -191,15 +197,15 @@ view logInState isWideScreenMode (Model rec) =
                     rec.free
             )
             |> Html.map GoodListMsg
-      ]
-        ++ (case logInState of
-                LogInState.LogInStateOk _ ->
-                    [ exhibitButton ]
+        ]
+            ++ (case logInState of
+                    LogInState.LogInStateOk _ ->
+                        [ exhibitButton ]
 
-                LogInState.LogInStateNone ->
-                    []
-           )
-    )
+                    LogInState.LogInStateNone ->
+                        []
+               )
+    }
 
 
 exhibitButton : Html.Html Msg

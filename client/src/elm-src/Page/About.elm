@@ -21,13 +21,14 @@ privacyPolicyModel =
     PrivacyPolicy
 
 
-view : Model -> ( String, Tab.Tab msg, List (Html.Html msg) )
+view : Model -> { title : String, tab : Tab.Tab msg, html : List (Html.Html msg) }
 view model =
     case model of
         About ->
-            ( "つくマートについて"
-            , Tab.none
-            , [ Html.div
+            { title = "つくマートについて"
+            , tab = Tab.none
+            , html =
+                [ Html.div
                     [ Html.Attributes.class "container" ]
                     [ Html.div []
                         [ Html.text "つくマートについて"
@@ -38,14 +39,15 @@ view model =
                             [ Html.text "プライバシーポリシー" ]
                         ]
                     ]
-              ]
-            )
+                ]
+            }
 
         PrivacyPolicy ->
-            ( "プライバシーポリシー"
-            , Tab.none
-            , [ Html.div
+            { title = "プライバシーポリシー"
+            , tab = Tab.none
+            , html =
+                [ Html.div
                     [ Html.Attributes.class "container" ]
                     [ Html.text "プライバシーポリシー" ]
-              ]
-            )
+                ]
+            }
