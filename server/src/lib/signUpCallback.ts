@@ -1,11 +1,11 @@
+import axios, { AxiosResponse } from "axios";
 import * as express from "express";
-import * as database from "./database";
-import { URL, URLSearchParams } from "url";
-import axios from "axios";
-import { AxiosResponse } from "axios";
-import * as key from "./key";
 import * as jwt from "jsonwebtoken";
+import { URL, URLSearchParams } from "url";
+import * as database from "./database";
+import * as key from "./key";
 import * as logInWithTwitter from "./twitterLogIn";
+import * as type from "./type";
 import * as utilUrl from "./util/url";
 
 /**
@@ -88,27 +88,31 @@ export const googleLogInReceiver = async (
             }
         )
     );
+    const logInServiceAndId: type.LogInServiceAndId = {
+        service: "google",
+        serviceId: googleData.id
+    };
     try {
         // ユーザーを探す
-        const token = await database.getAccessTokenAndRefreshToken({
-            accountService: "google",
-            accountServiceId: googleData.id
-        });
+        const token = await database.getAccessTokenAndRefreshToken(
+            logInServiceAndId
+        );
         response.redirect(
             tokenUrl(token.refreshToken, token.accessToken).toString()
         );
     } catch {
         const imageUrl = await getAndSaveUserImage(new URL(googleData.picture));
-        const sendEmailToken = createSendEmailToken(
-            await database.addUserInUserBeforeInputData(
-                "google",
-                googleData.id,
-                googleData.name,
-                imageUrl
-            )
+        await database.addUserInUserBeforeInputData(
+            logInServiceAndId,
+            googleData.name,
+            imageUrl
         );
         response.redirect(
-            signUpUrl(sendEmailToken, googleData.name, imageUrl).toString()
+            signUpUrl(
+                createSendEmailToken(logInServiceAndId),
+                googleData.name,
+                imageUrl
+            ).toString()
         );
     }
 };
@@ -154,11 +158,11 @@ const googleTokenResponseToData = (
  * 認証メールを送るのに必要なトークン
  * @param id データベースで作成したID
  */
-const createSendEmailToken = (id: database.LogInAccountServiceId) => {
+const createSendEmailToken = (id: type.LogInServiceAndId) => {
     const time = new Date();
     time.setUTCMinutes(time.getUTCMinutes() + 30); // 有効期限は30分後
     const payload = {
-        sub: database.logInAccountServiceIdToString(id),
+        sub: type.logInServiceAndIdToString(id),
         exp: Math.round(time.getTime() / 1000)
     };
     return jwt.sign(payload, key.sendEmailTokenSecret, { algorithm: "HS256" });
@@ -243,12 +247,15 @@ query {
             }
         }
     )).data.data.viewer;
+    const logInServiceAndId: type.LogInServiceAndId = {
+        service: "gitHub",
+        serviceId: gitHubData.id
+    };
     try {
         // ユーザーを探す
-        const token = await database.getAccessTokenAndRefreshToken({
-            accountService: "gitHub",
-            accountServiceId: gitHubData.id
-        });
+        const token = await database.getAccessTokenAndRefreshToken(
+            logInServiceAndId
+        );
         response.redirect(
             tokenUrl(token.refreshToken, token.accessToken).toString()
         );
@@ -259,14 +266,12 @@ query {
         const imageUrl = await getAndSaveUserImage(
             new URL(gitHubData.avatarUrl)
         );
-        const sendEmailToken = createSendEmailToken(
-            await database.addUserInUserBeforeInputData(
-                "gitHub",
-                gitHubData.id,
-                gitHubData.name,
-                imageUrl
-            )
+        await database.addUserInUserBeforeInputData(
+            logInServiceAndId,
+            gitHubData.name,
+            imageUrl
         );
+        const sendEmailToken = createSendEmailToken(logInServiceAndId);
         response.redirect(
             signUpUrl(sendEmailToken, gitHubData.name, imageUrl).toString()
         );
@@ -299,12 +304,15 @@ export const twitterLogInReceiver = async (
         await database.getTwitterLastTokenSecret()
     );
 
+    const logInServiceAndId: type.LogInServiceAndId = {
+        service: "twitter",
+        serviceId: twitterData.twitterUserId
+    };
     try {
         // ユーザーを探す
-        const token = await database.getAccessTokenAndRefreshToken({
-            accountService: "twitter",
-            accountServiceId: twitterData.twitterUserId
-        });
+        const token = await database.getAccessTokenAndRefreshToken(
+            logInServiceAndId
+        );
         response.redirect(
             tokenUrl(token.refreshToken, token.accessToken).toString()
         );
@@ -314,17 +322,14 @@ export const twitterLogInReceiver = async (
                 const imageUrl = await getAndSaveUserImage(
                     twitterData.imageUrl
                 );
-                const sendEmailToken = createSendEmailToken(
-                    await database.addUserInUserBeforeInputData(
-                        "twitter",
-                        twitterData.twitterUserId,
-                        twitterData.name,
-                        imageUrl
-                    )
+                await database.addUserInUserBeforeInputData(
+                    logInServiceAndId,
+                    twitterData.name,
+                    imageUrl
                 );
                 response.redirect(
                     signUpUrl(
-                        sendEmailToken,
+                        createSendEmailToken(logInServiceAndId),
                         twitterData.name,
                         imageUrl
                     ).toString()
@@ -337,16 +342,17 @@ export const twitterLogInReceiver = async (
                         "https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png"
                     )
                 );
-                const sendEmailToken = createSendEmailToken(
-                    await database.addUserInUserBeforeInputData(
-                        "twitter",
-                        twitterData.twitterUserId,
-                        "",
-                        imageUrl
-                    )
+                await database.addUserInUserBeforeInputData(
+                    logInServiceAndId,
+                    "",
+                    imageUrl
                 );
                 response.redirect(
-                    signUpUrl(sendEmailToken, "", imageUrl).toString()
+                    signUpUrl(
+                        createSendEmailToken(logInServiceAndId),
+                        "",
+                        imageUrl
+                    ).toString()
                 );
             }
         }
@@ -399,27 +405,32 @@ export const lineLogInReceiver = async (
             }
         )
     );
+    const logInServiceAndId: type.LogInServiceAndId = {
+        service: "line",
+        serviceId: lineData.id
+    };
+
     try {
         // ユーザーを探す
-        const token = await database.getAccessTokenAndRefreshToken({
-            accountService: "line",
-            accountServiceId: lineData.id
-        });
+        const token = await database.getAccessTokenAndRefreshToken(
+            logInServiceAndId
+        );
         response.redirect(
             tokenUrl(token.refreshToken, token.accessToken).toString()
         );
     } catch {
         const imageUrl = await getAndSaveUserImage(new URL(lineData.picture));
-        const sendEmailToken = createSendEmailToken(
-            await database.addUserInUserBeforeInputData(
-                "line",
-                lineData.id,
-                lineData.name,
-                imageUrl
-            )
+        await database.addUserInUserBeforeInputData(
+            logInServiceAndId,
+            lineData.name,
+            imageUrl
         );
         response.redirect(
-            signUpUrl(sendEmailToken, lineData.name, imageUrl).toString()
+            signUpUrl(
+                createSendEmailToken(logInServiceAndId),
+                lineData.name,
+                imageUrl
+            ).toString()
         );
     }
 };

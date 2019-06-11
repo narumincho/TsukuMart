@@ -1,7 +1,7 @@
 import * as functions from "firebase-functions";
 import * as graphqlExpress from "express-graphql";
 import * as graphql from "graphql";
-import * as database from "./lib/database";
+import * as databaseLow from "./lib/databaseLow";
 import * as query from "./lib/query";
 import * as mutation from "./lib/mutation";
 import * as signUpCallback from "./lib/signUpCallback";
@@ -122,7 +122,7 @@ export const image = functions
         }
         try {
             response.setHeader("Cache-Control", "public max-age=3600");
-            database.getImageReadStream(folderName, fileName).pipe(response);
+            databaseLow.getImageReadStream(folderName, fileName).pipe(response);
         } catch (e) {
             console.log(
                 "指定した、ファイルがない",

@@ -6,6 +6,9 @@ import * as type from "./type";
 import * as jwt from "jsonwebtoken";
 import * as UtilUrl from "./util/url";
 
+/**
+ * 新規登録かログインするためのURLを得る。
+ */
 const getLogInUrl = type.makeGraphQLFieldConfig({
     type: type.urlOutputType,
     resolve: async args => {
@@ -47,7 +50,7 @@ const getLogInUrl = type.makeGraphQLFieldConfig({
                     key.twitterLogInSecret,
                     key.twitterLogInRedirectUri
                 );
-                await database.saveTwitterLogInTokenSecret(tokenSecret);
+                await database.writeTwitterLogInTokenSecret(tokenSecret);
                 return url;
             }
             case "line": {
@@ -77,11 +80,14 @@ const getLogInUrl = type.makeGraphQLFieldConfig({
         "新規登録かログインするためのURLを得る。受け取ったURLをlocation.hrefに代入するとかして、各サービスの認証画面へ"
 });
 
+/**
+ * ユーザー情報を登録して認証メールを送信する
+ */
 const sendConformEmail = type.makeGraphQLFieldConfig({
     type: type.unitOutputType,
     resolve: async args => {
         const universityUnsafe = args.university;
-        const logInAccountServiceId = sendEmailTokenVerify(args.sendEmailToken);
+        const logInAccountServiceId = verifySendEmailToken(args.sendEmailToken);
         // if (!args.email.match(/s(\d{7})@[a-zA-Z0-9]+\.tsukuba\.ac\.jp/)) {
         //     throw new Error("email address must be tsukuba.ac.jp domain");
         // }
@@ -125,11 +131,39 @@ const sendConformEmail = type.makeGraphQLFieldConfig({
     description: "ユーザー情報を登録して認証メールを送信する"
 });
 
+const verifySendEmailToken = (
+    sendEmailToken: string
+): type.LogInServiceAndId => {
+    const decoded = jwt.verify(sendEmailToken, key.sendEmailTokenSecret);
+    const decodedMarked = decoded as { sub: unknown };
+    if (typeof decodedMarked.sub !== "string") {
+        throw new Error("sendEmailToken sub is not string");
+    }
+    return type.logInServiceAndIdFromString(decodedMarked.sub);
+};
+
+/**
+ * アクセストークンの取得とリフレッシュトークンの更新
+ */
+const getAccessTokenAndUpdateRefreshToken = type.makeGraphQLFieldConfig({
+    type: type.refreshTokenAndAccessTokenOutputType,
+    args: {
+        refreshToken: {
+            type: type.stringInputType,
+            description: "リフレッシュトークン"
+        }
+    },
+    resolve: async args =>
+        await database.getAccessTokenAndUpdateRefreshToken(args.refreshToken),
+    description: "アクセストークンの取得とリフレッシュトークンの更新"
+});
+
 export const mutation = new g.GraphQLObjectType({
     name: "Mutation",
     description: "データを作成、更新ができる",
     fields: {
         getLogInUrl,
-        sendConformEmail
+        sendConformEmail,
+        getAccessTokenAndUpdateRefreshToken
     }
 });

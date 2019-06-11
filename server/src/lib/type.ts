@@ -435,6 +435,40 @@ type ProductInternal = {
     price: number;
     seller: UserInternal;
 };
+
+/* ===============================
+ *      LogInService And Id
+ * ===============================
+ */
+/**
+ * ソーシャルログインで利用するサービス名とそのアカウントIDをセットにしたもの
+ */
+export type LogInServiceAndId = {
+    service: AccountService;
+    serviceId: string;
+};
+
+export const logInServiceAndIdToString = (
+    logInAccountServiceId: LogInServiceAndId
+) => logInAccountServiceId.service + "_" + logInAccountServiceId.serviceId;
+
+export const logInServiceAndIdFromString = (
+    string: string
+): LogInServiceAndId => {
+    const result = string.match(/^(.+?)_(.+)$/);
+    if (result === null) {
+        throw new Error("logInAccountServiceId is invalid");
+    }
+    const service = checkAccountServiceValues(result[1]);
+    if (service === null) {
+        throw new Error("logInAccount is invalid" + result[1]);
+    }
+    return {
+        service: service,
+        serviceId: result[2]
+    };
+};
+
 /** ==============================
  *          Input Type
  * ===============================
