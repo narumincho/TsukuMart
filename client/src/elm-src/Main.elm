@@ -343,20 +343,20 @@ update msg (Model rec) =
             )
 
         LogInResponse result ->
-            ( Model
-                { rec
-                    | message =
-                        Just
-                            (case result of
-                                Ok _ ->
-                                    "ログインしました"
+            case result of
+                Ok { accessToken, refreshToken } ->
+                    ( Model
+                        { rec
+                            | message = Just "ログインしました"
+                        }
+                    , saveRefreshTokenToLocalStorage (Api.tokenToString refreshToken)
+                    )
 
-                                Err string ->
-                                    "ログインに失敗しました" ++ string
-                            )
-                }
-            , Cmd.none
-            )
+                Err string ->
+                    ( Model
+                        { rec | message = Just ("ログインに失敗しました" ++ string) }
+                    , Cmd.none
+                    )
 
         SignUpConfirmResponse response ->
             case response of
@@ -1421,6 +1421,7 @@ messageView message =
         [ Html.Attributes.class "message"
         ]
         [ Html.text message ]
+
 
 subscription : Model -> Sub Msg
 subscription (Model { menuState }) =

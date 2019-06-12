@@ -2,7 +2,7 @@
 requestAnimationFrame(() => {
     const app = window.Elm.Main.init({
         flags: {
-            refreshToken: ""
+            refreshToken: null
         }
     });
     const windowResizeListener = () => {
@@ -15,6 +15,9 @@ requestAnimationFrame(() => {
     };
     addEventListener("resize", windowResizeListener);
     windowResizeListener();
+    app.ports.saveRefreshTokenToLocalStorage.subscribe(refreshToken => {
+        localStorage.setItem("refreshToken", refreshToken);
+    });
     app.ports.deleteRefreshTokenAndAllFromLocalStorage.subscribe(() => {
         localStorage.clear();
     });

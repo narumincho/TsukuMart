@@ -1,8 +1,7 @@
-"use strict";
 interface Window {
     Elm: {
         Main: {
-            init: (flags: {}) => ElmApp;
+            init: (args: { flags: { refreshToken: string | null } }) => ElmApp;
         };
     };
 }
@@ -20,7 +19,7 @@ requestAnimationFrame(() => {
     /* Elmを起動!! */
     const app = window.Elm.Main.init({
         flags: {
-            refreshToken: ""
+            refreshToken: null
         }
     });
     const windowResizeListener = () => {
@@ -34,9 +33,9 @@ requestAnimationFrame(() => {
     addEventListener("resize", windowResizeListener);
     windowResizeListener();
     /* リフレッシュトークンを保存する */
-    // app.ports.saveRefreshTokenToLocalStorage.subscribe(refreshToken => {
-    //     localStorage.setItem("refreshToken", refreshToken);
-    // });
+    app.ports.saveRefreshTokenToLocalStorage.subscribe(refreshToken => {
+        localStorage.setItem("refreshToken", refreshToken);
+    });
     /* リフレッシュトークンとその他すべてを削除する */
     app.ports.deleteRefreshTokenAndAllFromLocalStorage.subscribe(() => {
         localStorage.clear();

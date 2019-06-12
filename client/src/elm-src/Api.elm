@@ -85,36 +85,38 @@ tokenToHeader (Token token) =
 sendConfirmEmail : SignUpRequest -> (Result String () -> msg) -> Cmd msg
 sendConfirmEmail { sendEmailToken, displayName, university, emailAddress } callBack =
     graphQlApiRequest
-        ("mutation {"
-            ++ "sendConformEmail("
-            ++ ("sendEmailToken:\"" ++ sendEmailToken ++ "\" ")
-            ++ (", name: \"" ++ displayName ++ "\" ")
-            ++ (", university: " ++ universityToQuery university)
-            ++ (", email: \"" ++ EmailAddress.toString emailAddress ++ "\"")
-            ++ ")"
-            ++ "}"
+        (Mutation
+            [ Field
+                { name = "sendConformEmail"
+                , args =
+                    [ ( "sendEmailToken", GraphQLString sendEmailToken )
+                    , ( "name", GraphQLString displayName )
+                    , ( "university", universityToGraphQLValue university )
+                    , ( "email", GraphQLString (EmailAddress.toString emailAddress) )
+                    ]
+                , return = []
+                }
+            ]
         )
         sendConfirmEmailRequestBody
         callBack
 
 
-universityToQuery : University.University -> String
-universityToQuery university =
-    "{"
-        ++ (case university of
-                University.GraduateTsukuba graduate schoolAndDepartment ->
-                    "graduate:"
-                        ++ University.graduateToIdString graduate
-                        ++ ", schoolAndDepartment:"
-                        ++ University.departmentToIdString schoolAndDepartment
+universityToGraphQLValue : University.University -> GraphQLValue
+universityToGraphQLValue university =
+    GraphQLObject
+        (case university of
+            University.GraduateTsukuba graduate schoolAndDepartment ->
+                [ ( "graduate", GraphQLEnum (University.graduateToIdString graduate) )
+                , ( "schoolAndDepartment", GraphQLEnum (University.departmentToIdString schoolAndDepartment) )
+                ]
 
-                University.GraduateNotTsukuba graduate ->
-                    "graduate:" ++ University.graduateToIdString graduate
+            University.GraduateNotTsukuba graduate ->
+                [ ( "graduate", GraphQLEnum (University.graduateToIdString graduate) ) ]
 
-                University.NotGraduate schoolAndDepartment ->
-                    "schoolAndDepartment:" ++ University.departmentToIdString schoolAndDepartment
-           )
-        ++ "}"
+            University.NotGraduate schoolAndDepartment ->
+                [ ( "schoolAndDepartment", GraphQLEnum (University.departmentToIdString schoolAndDepartment) ) ]
+        )
 
 
 {-| 新規登録のJSONを生成
@@ -176,9 +178,19 @@ tokenToString (Token string) =
 
 
 tokenRefresh : { refresh : Token } -> (Result String { accessToken : Token, refreshToken : Token } -> msg) -> Cmd msg
-tokenRefresh tokenRefreshRequest msg =
+tokenRefresh { refresh } msg =
     graphQlApiRequest
-        ""
+        (Mutation
+            [ Field
+                { name = "getAccessTokenAndUpdateRefreshToken"
+                , args = [ ( "refreshToken", GraphQLString (tokenToString refresh) ) ]
+                , return =
+                    [ Field { name = "refreshToken", args = [], return = [] }
+                    , Field { name = "accessToken", args = [], return = [] }
+                    ]
+                }
+            ]
+        )
         (Json.Decode.succeed
             { accessToken = tokenFromString ""
             , refreshToken = tokenFromString ""
@@ -813,21 +825,30 @@ getTradeComment token goodId msg =
 logInOrSignUpUrlRequest : Data.SocialLoginService.SocialLoginService -> (Result String Url.Url -> msg) -> Cmd msg
 logInOrSignUpUrlRequest service callBack =
     graphQlApiRequest
-        ("mutation { getLogInUrl(service: "
-            ++ (case service of
-                    Data.SocialLoginService.Google ->
-                        "google"
+        (Mutation
+            [ Field
+                { name = "getLogInUrl"
+                , args =
+                    [ ( "service"
+                      , GraphQLEnum
+                            (case service of
+                                Data.SocialLoginService.Google ->
+                                    "google"
 
-                    Data.SocialLoginService.GitHub ->
-                        "gitHub"
+                                Data.SocialLoginService.GitHub ->
+                                    "gitHub"
 
-                    Data.SocialLoginService.Twitter ->
-                        "twitter"
+                                Data.SocialLoginService.Twitter ->
+                                    "twitter"
 
-                    Data.SocialLoginService.Line ->
-                        "line"
-               )
-            ++ ") }"
+                                Data.SocialLoginService.Line ->
+                                    "line"
+                            )
+                      )
+                    ]
+                , return = []
+                }
+            ]
         )
         logInOrSignUpUrlResponseToResult
         callBack
@@ -847,13 +868,97 @@ logInOrSignUpUrlResponseToResult =
             )
 
 
-graphQlApiRequest : String -> Json.Decode.Decoder a -> (Result String a -> msg) -> Cmd msg
-graphQlApiRequest queryOrMutation responseDecoder callBack =
+
+{- ==============================================================================
+                              Graph QL Api Request
+   ==============================================================================
+-}
+
+
+type Query
+    = Mutation (List Field)
+    | Query (List Field)
+
+
+type Field
+    = Field
+        { name : String
+        , args : List ( String, GraphQLValue )
+        , return : List Field
+        }
+
+
+type GraphQLValue
+    = GraphQLString String
+    | GraphQLEnum String
+    | GraphQLInt Int
+    | GraphQLFloat Float
+    | GraphQLObject (List ( String, GraphQLValue ))
+
+
+graphQlApiRequest : Query -> Json.Decode.Decoder a -> (Result String a -> msg) -> Cmd msg
+graphQlApiRequest query responseDecoder callBack =
     Http.post
         { url = "https://asia-northeast1-tsukumart-f0971.cloudfunctions.net/api"
-        , body = graphQlRequestBody queryOrMutation
+        , body = graphQlRequestBody (queryToString query)
         , expect = Http.expectStringResponse callBack (graphQlResponseDecoder responseDecoder)
         }
+
+
+queryToString : Query -> String
+queryToString query =
+    case query of
+        Mutation fieldList ->
+            "mutation {\n" ++ (fieldList |> List.map fieldToString |> String.join "\n") ++ "}"
+
+        Query fieldList ->
+            "{\n" ++ (fieldList |> List.map fieldToString |> String.join "\n") ++ "}"
+
+
+fieldToString : Field -> String
+fieldToString (Field { name, args, return }) =
+    name
+        ++ (if args == [] then
+                ""
+
+            else
+                "("
+                    ++ (args
+                            |> List.map (\( argsName, argsValue ) -> argsName ++ ": " ++ graphQLValueToString argsValue)
+                            |> String.join ", "
+                       )
+                    ++ ")"
+           )
+        ++ (if return == [] then
+                ""
+
+            else
+                " {\n" ++ (return |> List.map fieldToString |> String.join "\n") ++ "}"
+           )
+
+
+graphQLValueToString : GraphQLValue -> String
+graphQLValueToString graphQLValue =
+    case graphQLValue of
+        GraphQLString string ->
+            string |> Json.Encode.string |> Json.Encode.encode 0
+
+        GraphQLEnum string ->
+            string
+
+        GraphQLInt int ->
+            String.fromInt int
+
+        GraphQLFloat float ->
+            String.fromFloat float
+
+        GraphQLObject object ->
+            "{"
+                ++ (object
+                        |> List.map (\( argsName, argsValue ) -> argsName ++ ": " ++ graphQLValueToString argsValue)
+                        |> String.join ", "
+                   )
+                ++ "}"
 
 
 graphQlRequestBody : String -> Http.Body
