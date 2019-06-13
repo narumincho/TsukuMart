@@ -59,7 +59,7 @@ export const getUserDataFromId = async (id: string): Promise<UserData> => {
 };
 
 /**
- * ユーザーの情報を上書きする
+ * ユーザーの情報を上書きする。すでにあるフィールドはそそのまま残る
  * @param id
  * @param userData
  */
@@ -67,7 +67,7 @@ export const updateUerData = async (
     id: string,
     userData: Partial<UserData>
 ): Promise<void> => {
-    await (await userCollectionRef.doc(id)).update(userData);
+    await (await userCollectionRef.doc(id)).set(userData, { merge: true });
 };
 
 /**
