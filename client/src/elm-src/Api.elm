@@ -206,7 +206,10 @@ getMyProfile accessToken msg =
                     , Field
                         { name = "university"
                         , args = []
-                        , return = [ Field { name = "schoolAndDepartment", args = [], return = [] } ]
+                        , return =
+                            [ Field { name = "schoolAndDepartment", args = [], return = [] }
+                            , Field { name = "graduate", args = [], return = [] }
+                            ]
                         }
                     ]
                 }
@@ -876,7 +879,7 @@ fieldToString (Field { name, args, return }) =
                 ""
 
             else
-                " {\n" ++ (return |> List.map fieldToString |> String.join "\n") ++ "}"
+                " {\n" ++ (return |> List.map fieldToString |> String.join "\n") ++ "\n}"
            )
 
 

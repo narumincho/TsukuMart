@@ -2,6 +2,7 @@ import * as g from "graphql";
 import * as type from "./type";
 import * as database from "./database";
 import * as databaseLow from "./databaseLow";
+import { URL } from "url";
 
 const hello = type.makeGraphQLFieldConfig({
     args: {},
@@ -20,6 +21,9 @@ const userAll = type.makeGraphQLFieldConfig({
             {
                 id: "id",
                 introduction: "紹介文",
+                imageUrl: new URL(
+                    "https://tsukumart-f0971.web.app/temp_temp_temp"
+                ),
                 displayName: "表示名",
                 university: {
                     graduate: "education",
@@ -42,15 +46,13 @@ const userPrivate = type.makeGraphQLFieldConfig({
     type: type.userPrivateOutputType,
     resolve: async ({ accessToken }) => {
         const accessTokenData = database.verifyAccessToken(accessToken);
-        const userData = await databaseLow.getUserDataFromId(accessTokenData.id);
+        const userData = await database.getUserData(accessTokenData.id);
         return {
             id: accessTokenData.id,
             displayName: userData.displayName,
+            imageUrl: userData.imageUrl,
             introduction: userData.introduction,
-            university: {
-                graduate: userData.graduate,
-                schoolAndDepartment: userData.schoolAndDepartment
-            },
+            university: type.universityToFlat(userData.university),
             selledProductAll: [],
             buyedProductAll: [],
             likedProductAll: []
@@ -71,6 +73,9 @@ const productAll = type.makeGraphQLFieldConfig({
                 seller: {
                     id: "id",
                     displayName: "出品者",
+                    imageUrl: new URL(
+                        "https://tsukumart-f0971.web.app/temp_temp_temp"
+                    ),
                     introduction: "紹介文",
                     university: {
                         graduate: null,

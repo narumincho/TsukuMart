@@ -322,7 +322,11 @@ const userGraphQLType = new g.GraphQLObjectType({
         },
         displayName: {
             type: g.GraphQLNonNull(g.GraphQLString),
-            description: "表示"
+            description: "表示名"
+        },
+        imageUrl: {
+            type: g.GraphQLNonNull(urlGraphQLType),
+            description: "プロフィール画像のURL"
         },
         introduction: {
             type: g.GraphQLNonNull(g.GraphQLString),
@@ -345,6 +349,7 @@ const userGraphQLType = new g.GraphQLObjectType({
 type UserInternal = {
     id: string;
     displayName: string;
+    imageUrl: URL;
     introduction: string;
     university: UniversityUnsafe;
     selledProductAll: Array<ProductInternal>;
@@ -362,7 +367,11 @@ const userPrivateGraphQLType = new g.GraphQLObjectType({
         },
         displayName: {
             type: g.GraphQLNonNull(g.GraphQLString),
-            description: "表示"
+            description: "表示名"
+        },
+        imageUrl: {
+            type: g.GraphQLNonNull(urlGraphQLType),
+            description: "プロフィール画像のURL"
         },
         introduction: {
             type: g.GraphQLNonNull(g.GraphQLString),
@@ -397,6 +406,7 @@ const userPrivateGraphQLType = new g.GraphQLObjectType({
 type UserPrivateInternal = {
     id: string;
     displayName: string;
+    imageUrl: URL;
     introduction: string;
     university: UniversityUnsafe;
     selledProductAll: Array<ProductInternal>;

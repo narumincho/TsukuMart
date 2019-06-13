@@ -4,6 +4,7 @@ import { URL } from "url";
 import * as databaseLow from "./databaseLow";
 import * as key from "./key";
 import * as type from "./type";
+import { userInfo } from "os";
 
 firebase.initializeApp({
     apiKey: key.apiKey,
@@ -292,6 +293,30 @@ const createRefreshId = (): string => {
         id += charTable[(Math.random() * charTable.length) | 0];
     }
     return id;
+};
+
+/**
+ * 指定したユーザーの情報を取得する
+ * @param id ユーザーID
+ */
+export const getUserData = async (
+    id: string
+): Promise<{
+    displayName: string;
+    imageUrl: URL;
+    introduction: string;
+    university: type.University;
+}> => {
+    const userData = await databaseLow.getUserDataFromId(id);
+    return {
+        displayName: userData.displayName,
+        imageUrl: new URL(userData.imageUrl),
+        introduction: userData.introduction,
+        university: type.universityUnsafeToUniversity({
+            graduate: userData.graduate,
+            schoolAndDepartment: userData.schoolAndDepartment
+        })
+    };
 };
 
 /**

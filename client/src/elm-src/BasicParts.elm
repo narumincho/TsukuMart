@@ -458,7 +458,7 @@ menuAccount logInState =
                 ]
                 [ Html.img
                     [ Html.Attributes.class "menu-account-a-icon"
-                    , Html.Attributes.src "/assets/account_image.png"
+                    , Html.Attributes.src (Data.User.withProfileGetImageUrl userWithProfile)
                     ]
                     []
                 , Html.span
