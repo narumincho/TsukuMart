@@ -906,10 +906,6 @@ header {
     background-color: #7f2591;
 }
 
-.goodList-loading {
-    z-index: 2;
-}
-
 .goodList-zero {
     display: flex;
     flex-direction: column;

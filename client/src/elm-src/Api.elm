@@ -170,14 +170,16 @@ tokenRefresh { refresh } msg =
                 }
             ]
         )
-        (Json.Decode.succeed
-            (\accessToken refreshToken ->
-                { accessToken = tokenFromString accessToken
-                , refreshToken = tokenFromString refreshToken
-                }
+        (Json.Decode.field "getAccessTokenAndUpdateRefreshToken"
+            (Json.Decode.succeed
+                (\refreshToken accessToken ->
+                    { accessToken = tokenFromString accessToken
+                    , refreshToken = tokenFromString refreshToken
+                    }
+                )
+                |> Json.Decode.Pipeline.required "refreshToken" Json.Decode.string
+                |> Json.Decode.Pipeline.required "accessToken" Json.Decode.string
             )
-            |> Json.Decode.Pipeline.required "accessToken" Json.Decode.string
-            |> Json.Decode.Pipeline.required "refreshToken" Json.Decode.string
         )
         msg
 
@@ -199,6 +201,7 @@ getMyProfile accessToken msg =
                 , return =
                     [ Field { name = "id", args = [], return = [] }
                     , Field { name = "displayName", args = [], return = [] }
+                    , Field { name = "imageUrl", args = [], return = [] }
                     , Field { name = "introduction", args = [], return = [] }
                     , Field
                         { name = "university"
@@ -209,37 +212,39 @@ getMyProfile accessToken msg =
                 }
             ]
         )
-        (Json.Decode.succeed
-            (\id displayName imageUrl introduction schoolAndDepartment graduate ->
-                User.withProfileFromApi
-                    { id = id
-                    , displayName = displayName
-                    , imageUrl = imageUrl
-                    , introduction = introduction
-                    , university =
-                        University.universityFromIdString
-                            { graduateMaybe = graduate, departmentMaybe = schoolAndDepartment }
-                    }
-            )
-            |> Json.Decode.Pipeline.required "id" Json.Decode.string
-            |> Json.Decode.Pipeline.required "displayName" Json.Decode.string
-            |> Json.Decode.Pipeline.required "imageUrl" Json.Decode.string
-            |> Json.Decode.Pipeline.required "introduction" Json.Decode.string
-            |> Json.Decode.Pipeline.requiredAt
-                [ "university", "schoolAndDepartment" ]
-                (Json.Decode.nullable Json.Decode.string)
-            |> Json.Decode.Pipeline.requiredAt
-                [ "university", "graduate" ]
-                (Json.Decode.nullable Json.Decode.string)
-            |> Json.Decode.andThen
-                (\userMaybe ->
-                    case userMaybe of
-                        Just user ->
-                            Json.Decode.succeed user
-
-                        Nothing ->
-                            Json.Decode.fail "invalid university"
+        (Json.Decode.field "userPrivate"
+            (Json.Decode.succeed
+                (\id displayName imageUrl introduction schoolAndDepartment graduate ->
+                    User.withProfileFromApi
+                        { id = id
+                        , displayName = displayName
+                        , imageUrl = imageUrl
+                        , introduction = introduction
+                        , university =
+                            University.universityFromIdString
+                                { graduateMaybe = graduate, departmentMaybe = schoolAndDepartment }
+                        }
                 )
+                |> Json.Decode.Pipeline.required "id" Json.Decode.string
+                |> Json.Decode.Pipeline.required "displayName" Json.Decode.string
+                |> Json.Decode.Pipeline.required "imageUrl" Json.Decode.string
+                |> Json.Decode.Pipeline.required "introduction" Json.Decode.string
+                |> Json.Decode.Pipeline.requiredAt
+                    [ "university", "schoolAndDepartment" ]
+                    (Json.Decode.nullable Json.Decode.string)
+                |> Json.Decode.Pipeline.requiredAt
+                    [ "university", "graduate" ]
+                    (Json.Decode.nullable Json.Decode.string)
+                |> Json.Decode.andThen
+                    (\userMaybe ->
+                        case userMaybe of
+                            Just user ->
+                                Json.Decode.succeed user
+
+                            Nothing ->
+                                Json.Decode.fail "invalid university"
+                    )
+            )
         )
         msg
 
@@ -928,12 +933,23 @@ graphQlResponseDecoder decoder response =
                     (Json.Decode.field "errors"
                         (Json.Decode.list
                             (Json.Decode.succeed
-                                (\message line column ->
-                                    "message" ++ message ++ " at " ++ line ++ ":" ++ column
+                                (\message lineAndColumnList ->
+                                    "message"
+                                        ++ message
+                                        ++ " at "
+                                        ++ (lineAndColumnList
+                                                |> List.map (\( line, column ) -> line ++ ":" ++ column)
+                                                |> String.join ","
+                                           )
                                 )
                                 |> Json.Decode.Pipeline.required "message" Json.Decode.string
-                                |> Json.Decode.Pipeline.requiredAt [ "locations", "line" ] Json.Decode.string
-                                |> Json.Decode.Pipeline.requiredAt [ "locations", "column" ] Json.Decode.string
+                                |> Json.Decode.Pipeline.required "locations"
+                                    (Json.Decode.list
+                                        (Json.Decode.succeed Tuple.pair
+                                            |> Json.Decode.Pipeline.required "line" Json.Decode.string
+                                            |> Json.Decode.Pipeline.required "column" Json.Decode.string
+                                        )
+                                    )
                             )
                         )
                     )

@@ -152,7 +152,7 @@ init : { refreshToken : Maybe String } -> Url.Url -> Browser.Navigation.Key -> (
 init { refreshToken } url key =
     let
         ( page, message, cmd ) =
-            urlParserInit Data.LogInState.None url
+            urlParserInit Data.LogInState.None key url
                 |> urlParserResultToModel
     in
     ( Model
@@ -184,39 +184,27 @@ init { refreshToken } url key =
     )
 
 
-urlParserInit : Data.LogInState.LogInState -> Url.Url -> Maybe ( Page, Cmd Msg )
-urlParserInit logInState url =
-    SiteMap.urlParserInit url
-        |> Maybe.map (urlParserInitResultToPageAndCmd logInState)
+urlParserInit : Data.LogInState.LogInState -> Browser.Navigation.Key -> Url.Url -> Maybe ( Page, Cmd Msg )
+urlParserInit logInState key url =
+    let
+        ( accessTokenAndRefreshToken, page ) =
+            SiteMap.urlParserInit url
+    in
+    case page of
+        Just p ->
+            urlParserInitResultToPageAndCmd logInState p
+                |> Tuple.mapSecond
+                    (\c -> Cmd.batch [ c, logInResponseCmd accessTokenAndRefreshToken key url ])
+                |> Just
+
+        Nothing ->
+            Nothing
 
 
 urlParserInitResultToPageAndCmd : Data.LogInState.LogInState -> SiteMap.UrlParserInitResult -> ( Page, Cmd Msg )
 urlParserInitResultToPageAndCmd logInState page =
     case page of
-        SiteMap.InitHome (Just { refreshToken, accessToken }) ->
-            case
-                Page.Home.initModel Nothing
-                    |> Tuple.mapBoth PageHome homePageEmitListToCmd
-            of
-                ( p, msg ) ->
-                    ( p
-                    , Cmd.batch
-                        [ msg
-                        , Task.perform
-                            (always
-                                (LogInResponse
-                                    (Ok
-                                        { accessToken = accessToken
-                                        , refreshToken = refreshToken
-                                        }
-                                    )
-                                )
-                            )
-                            (Task.succeed ())
-                        ]
-                    )
-
-        SiteMap.InitHome Nothing ->
+        SiteMap.InitHome ->
             Page.Home.initModel Nothing
                 |> Tuple.mapBoth PageHome homePageEmitListToCmd
 
@@ -278,13 +266,28 @@ urlParserInitResultToPageAndCmd logInState page =
         SiteMap.InitAboutPrivacyPolicy ->
             ( PageAbout Page.About.privacyPolicyModel, Cmd.none )
 
-        SiteMap.InitSendConfirmTokenPage token ->
-            case
-                Page.Home.initModel Nothing
-                    |> Tuple.mapBoth PageHome homePageEmitListToCmd
-            of
-                ( p, cmd ) ->
-                    ( p, Cmd.batch [ cmd, Api.tokenRefresh { refresh = token } LogInResponse ] )
+
+logInResponseCmd : Maybe { accessToken : Api.Token, refreshToken : Api.Token } -> Browser.Navigation.Key -> Url.Url -> Cmd Msg
+logInResponseCmd accessTokenAndRefreshToken key url =
+    case accessTokenAndRefreshToken of
+        Just { accessToken, refreshToken } ->
+            Cmd.batch
+                [ Task.perform
+                    (always
+                        (LogInResponse
+                            (Ok
+                                { accessToken = accessToken
+                                , refreshToken = refreshToken
+                                }
+                            )
+                        )
+                    )
+                    (Task.succeed ())
+                , Browser.Navigation.replaceUrl key (Url.toString { url | query = Nothing })
+                ]
+
+        Nothing ->
+            Cmd.none
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )

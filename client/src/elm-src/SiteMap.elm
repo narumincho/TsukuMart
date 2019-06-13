@@ -27,7 +27,7 @@ import Url.Builder
 
 
 type UrlParserInitResult
-    = InitHome (Maybe { refreshToken : Api.Token, accessToken : Api.Token })
+    = InitHome
     | InitSignUp { sendEmailToken : String, name : String, imageUrl : String }
     | InitLogIn
     | InitLikeAndHistory
@@ -39,10 +39,9 @@ type UrlParserInitResult
     | InitSiteMap
     | InitAbout
     | InitAboutPrivacyPolicy
-    | InitSendConfirmTokenPage Api.Token
 
 
-urlParserInit : Url.Url -> Maybe UrlParserInitResult
+urlParserInit : Url.Url -> ( Maybe { refreshToken : Api.Token, accessToken : Api.Token }, Maybe UrlParserInitResult )
 urlParserInit url =
     let
         { path, query } =
@@ -53,21 +52,31 @@ urlParserInit url =
         queryDict =
             query |> Dict.fromList
     in
-    [ homeParser |> parserMap InitHome
-    , signUpParser |> parserMap InitSignUp
-    , logInParser |> parserMap (always InitLogIn)
-    , likeHistoryParser |> parserMap (always InitLikeAndHistory)
-    , exhibitionGoodsParser |> parserMap (always InitExhibition)
-    , purchaseGoodsParser |> parserMap (always InitPurchaseGood)
-    , exhibitionParser |> parserMap (always InitExhibition)
-    , goodsParser |> parserMap InitGood
-    , userParser |> parserMap InitUser
-    , siteMapParser |> parserMap (always InitSiteMap)
-    , aboutParser |> parserMap (always InitAbout)
-    , aboutPrivacyPolicyParser |> parserMap (always InitAboutPrivacyPolicy)
-    ]
+    ( case ( queryDict |> Dict.get "refreshToken", queryDict |> Dict.get "accessToken" ) of
+        ( Just refreshToken, Just accessToken ) ->
+            Just
+                { refreshToken = Api.tokenFromString refreshToken
+                , accessToken = Api.tokenFromString accessToken
+                }
+
+        ( _, _ ) ->
+            Nothing
+    , [ homeParser |> parserMap (always InitHome)
+      , signUpParser |> parserMap InitSignUp
+      , logInParser |> parserMap (always InitLogIn)
+      , likeHistoryParser |> parserMap (always InitLikeAndHistory)
+      , exhibitionGoodsParser |> parserMap (always InitExhibition)
+      , purchaseGoodsParser |> parserMap (always InitPurchaseGood)
+      , exhibitionParser |> parserMap (always InitExhibition)
+      , goodsParser |> parserMap InitGood
+      , userParser |> parserMap InitUser
+      , siteMapParser |> parserMap (always InitSiteMap)
+      , aboutParser |> parserMap (always InitAbout)
+      , aboutPrivacyPolicyParser |> parserMap (always InitAboutPrivacyPolicy)
+      ]
         |> List.map (\f -> f path queryDict)
         |> oneOf
+    )
 
 
 parserMap : (a -> b) -> (List String -> Dict.Dict String String -> Maybe a) -> (List String -> Dict.Dict String String -> Maybe b)
@@ -131,22 +140,13 @@ urlParser url =
         |> oneOf
 
 
-homeParser : List String -> Dict.Dict String String -> Maybe (Maybe { refreshToken : Api.Token, accessToken : Api.Token })
+homeParser : List String -> Dict.Dict String String -> Maybe ()
 homeParser path query =
-    case ( path, query |> Dict.get "refreshToken", query |> Dict.get "accessToken" ) of
-        ( [], Just refreshToken, Just accessToken ) ->
-            Just
-                (Just
-                    { refreshToken = Api.tokenFromString refreshToken
-                    , accessToken = Api.tokenFromString accessToken
-                    }
-                )
+    if path == [] then
+        Just ()
 
-        ( [], _, _ ) ->
-            Just Nothing
-
-        _ ->
-            Nothing
+    else
+        Nothing
 
 
 homeUrl : String

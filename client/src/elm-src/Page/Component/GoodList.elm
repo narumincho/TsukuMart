@@ -90,7 +90,7 @@ view (Model { sending }) logInState isWideMode goodsList =
             Html.div
                 [ Html.Attributes.class "container" ]
                 [ Html.div
-                    [ Html.Attributes.class "goodList-loading" ]
+                    []
                     [ Html.text "読み込み中" ]
                 ]
 
