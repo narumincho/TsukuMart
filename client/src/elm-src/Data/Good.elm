@@ -130,7 +130,7 @@ makeNormalFromApi { id, name, likeCount, description, price, condition, status, 
         , image1Url = image1Url
         , image2Url = image2Url
         , image3Url = image3Url
-        , seller = User.userIdFromString seller
+        , seller = User.idFromString seller
         , sellerName = Nothing
         ,likeCount = max 0 likeCount
         , commentList = Nothing
@@ -165,7 +165,7 @@ makeDetailFromApi { id, name, description, price, condition, status, image0Url, 
         , image1Url = image1Url
         , image2Url = image2Url
         , image3Url = image3Url
-        , seller = User.userIdFromString seller
+        , seller = User.idFromString seller
         , sellerName = Just sellerName
         , likeCount = max 0 likeCount
         , commentList = Nothing

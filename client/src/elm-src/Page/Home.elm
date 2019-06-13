@@ -198,11 +198,11 @@ view logInState isWideScreenMode (Model rec) =
             )
             |> Html.map GoodListMsg
         ]
-            ++ (case logInState of
-                    LogInState.LogInStateOk _ ->
+            ++ (case LogInState.getAccessToken logInState of
+                    Just _ ->
                         [ exhibitButton ]
 
-                    LogInState.LogInStateNone ->
+                    Nothing ->
                         []
                )
     }

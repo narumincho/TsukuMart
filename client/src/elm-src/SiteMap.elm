@@ -338,7 +338,7 @@ userParser : List String -> Dict.Dict String String -> Maybe Data.User.UserId
 userParser path query =
     case path of
         [ "user", userId ] ->
-            Just (Data.User.userIdFromString userId)
+            Just (Data.User.idFromString userId)
 
         _ ->
             Nothing
@@ -346,7 +346,7 @@ userParser path query =
 
 userUrl : Data.User.UserId -> String
 userUrl userId =
-    Url.Builder.absolute [ userPath, Data.User.userIdToString userId ] []
+    Url.Builder.absolute [ userPath, Data.User.idToString userId ] []
 
 
 userPath : String

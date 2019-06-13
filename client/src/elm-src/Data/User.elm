@@ -1,32 +1,43 @@
 module Data.User exposing
-    ( Profile
-    , User
-    , UserId
-    , getProfile
-    , getUserId
-    , makeFromApi
-    , makeFromUserIdAndProfile
-    , makeProfile
-    , profileGetIntroduction
-    , profileGetDisplayName
-    , profileGetUniversity
-    , setProfile
-    , userIdFromString
-    , userIdToString
+    ( UserId
+    , WithName
+    , WithProfile
+    , idFromString
+    , idToString
+    , withNameFromApi
+    , withNameGetDisplayName
+    , withNameGetId
+    , withNameGetImageUrl
+    , withProfileFromApi
+    , withProfileGetDisplayName
+    , withProfileGetId
+    , withProfileGetImageUrl
+    , withProfileGetIntroduction
+    , withProfileGetUniversity
     )
 
 import Data.University as University
 
 
-type User
-    = User UserId Profile
-
-
-type Profile
-    = Profile
-        { introduction : String
-        , university : University.University
+{-| IDと名前との情報をまであるユーザー
+-}
+type WithName
+    = WithName
+        { id : UserId
         , displayName : String
+        , imageUrl : String
+        }
+
+
+{-| プロフィールの情報まであるユーザー
+-}
+type WithProfile
+    = WithProfile
+        { id : UserId
+        , displayName : String
+        , imageUrl : String
+        , introduction : String
+        , university : University.University
         }
 
 
@@ -36,80 +47,75 @@ type UserId
     = UserId String
 
 
-userIdToString : UserId -> String
-userIdToString (UserId id) =
+idToString : UserId -> String
+idToString (UserId id) =
     id
 
 
-userIdFromString : String -> UserId
-userIdFromString =
+idFromString : String -> UserId
+idFromString =
     UserId
 
 
-makeFromApi :
-    { id : UserId
-    , introduction : String
-    , university : Maybe University.University
-    , displayName : String
-    }
-    -> Maybe User
-makeFromApi { id, introduction, university, displayName } =
-    case university of
-        Just u ->
-            Just
-                (User
-                    id
-                    (Profile
-                        { introduction = introduction
-                        , university = u
-                        , displayName = displayName
-                        }
-                    )
-                )
-
-        Nothing ->
-            Nothing
+withNameFromApi : { id : String, displayName : String, imageUrl : String } -> WithName
+withNameFromApi { id, displayName, imageUrl } =
+    WithName
+        { id = idFromString id
+        , displayName = displayName
+        , imageUrl = imageUrl
+        }
 
 
-makeProfile : { displayName : String, introduction : String, university : University.University } -> Profile
-makeProfile =
-    Profile
+withProfileFromApi : { id : String, displayName : String, imageUrl : String, introduction : String, university : Maybe University.University } -> Maybe WithProfile
+withProfileFromApi { id, displayName, imageUrl, introduction, university } =
+    university
+        |> Maybe.map
+            (\u ->
+                WithProfile
+                    { id = idFromString id
+                    , displayName = displayName
+                    , imageUrl = imageUrl
+                    , introduction = introduction
+                    , university = u
+                    }
+            )
 
 
-makeFromUserIdAndProfile : UserId -> Profile -> User
-makeFromUserIdAndProfile =
-    User
-
-
-getUserId : User -> UserId
-getUserId (User id _) =
+withNameGetId : WithName -> UserId
+withNameGetId (WithName { id }) =
     id
 
 
-profileGetIntroduction : Profile -> String
-profileGetIntroduction (Profile { introduction }) =
-    introduction
-
-
-profileGetUniversity : Profile -> University.University
-profileGetUniversity (Profile { university }) =
-    university
-
-
-profileGetDisplayName : Profile -> String
-profileGetDisplayName (Profile { displayName }) =
+withNameGetDisplayName : WithName -> String
+withNameGetDisplayName (WithName { displayName }) =
     displayName
 
 
-{-| プロフィールを取得する
--}
-getProfile : User -> Profile
-getProfile (User _ profile) =
-    profile
+withNameGetImageUrl : WithName -> String
+withNameGetImageUrl (WithName { imageUrl }) =
+    imageUrl
 
 
-{-| プロフィールを変更する
--}
-setProfile : Profile -> User -> User
-setProfile profile (User userId _) =
-    User userId profile
+withProfileGetId : WithProfile -> UserId
+withProfileGetId (WithProfile { id }) =
+    id
+
+
+withProfileGetDisplayName : WithProfile -> String
+withProfileGetDisplayName (WithProfile { displayName }) =
+    displayName
+
+
+withProfileGetImageUrl : WithProfile -> String
+withProfileGetImageUrl (WithProfile { imageUrl }) =
+    imageUrl
+
+
+withProfileGetIntroduction : WithProfile -> String
+withProfileGetIntroduction (WithProfile { introduction }) =
+    introduction
+
+
+withProfileGetUniversity : WithProfile -> University.University
+withProfileGetUniversity (WithProfile { university }) =
+    university

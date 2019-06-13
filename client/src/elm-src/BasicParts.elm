@@ -429,23 +429,7 @@ menuMain logInState =
 menuAccount : Data.LogInState.LogInState -> Html.Html msg
 menuAccount logInState =
     case logInState of
-        Data.LogInState.LogInStateOk { user } ->
-            Html.a
-                [ Html.Attributes.class "menu-account"
-                , Html.Attributes.class "menu-account-a"
-                , Html.Attributes.href (SiteMap.userUrl (Data.User.getUserId user))
-                ]
-                [ Html.img
-                    [ Html.Attributes.class "menu-account-a-icon"
-                    , Html.Attributes.src "/assets/account_image.png"
-                    ]
-                    []
-                , Html.span
-                    [ Html.Attributes.class "menu-account-a-name" ]
-                    [ Html.text (Data.User.profileGetDisplayName (Data.User.getProfile user)) ]
-                ]
-
-        Data.LogInState.LogInStateNone ->
+        Data.LogInState.None ->
             Html.div
                 [ Html.Attributes.class "menu-account" ]
                 [ Html.div [ Html.Attributes.class "menu-noLogin" ] [ Html.text "ログインしていません" ]
@@ -456,4 +440,28 @@ menuAccount logInState =
                         ]
                         [ Html.text "ログイン/新規登録" ]
                     ]
+                ]
+
+        Data.LogInState.LoadingProfile _ ->
+            Html.div
+                [ Html.Attributes.class "menu-account" ]
+                [ Html.text "読み込み中" ]
+
+        Data.LogInState.Ok { userWithProfile } ->
+            Html.a
+                [ Html.Attributes.class "menu-account"
+                , Html.Attributes.class "menu-account-a"
+                , Html.Attributes.href
+                    (SiteMap.userUrl
+                        (Data.User.withProfileGetId userWithProfile)
+                    )
+                ]
+                [ Html.img
+                    [ Html.Attributes.class "menu-account-a-icon"
+                    , Html.Attributes.src "/assets/account_image.png"
+                    ]
+                    []
+                , Html.span
+                    [ Html.Attributes.class "menu-account-a-name" ]
+                    [ Html.text (Data.User.withProfileGetDisplayName userWithProfile) ]
                 ]

@@ -114,13 +114,13 @@ initModel goodIdMaybe logInState =
         , logInOrSignUpModel = LogInOrSignUp.initModel
         , goodListModel = newGoodListModel
         }
-    , (case logInState of
-        LogInState.LogInStateOk { access } ->
-            [ EmitGetLikeGoodList access
-            , EmitGetHistoryGoodList access
+    , (case LogInState.getAccessToken logInState of
+        Just accessToken ->
+            [ EmitGetLikeGoodList accessToken
+            , EmitGetHistoryGoodList accessToken
             ]
 
-        LogInState.LogInStateNone ->
+        Nothing ->
             []
       )
         ++ (emitList |> List.map EmitGoodList)
@@ -133,17 +133,17 @@ update logInState msg (Model rec) =
         SelectTab tabSelect ->
             ( Model
                 { rec | normalModel = normalModelSetSelectTab tabSelect rec.normalModel }
-            , case logInState of
-                LogInState.LogInStateOk { access } ->
+            , case LogInState.getAccessToken logInState of
+                Just accessToken ->
                     [ case tabSelect of
                         TabLike ->
-                            EmitGetLikeGoodList access
+                            EmitGetLikeGoodList accessToken
 
                         TabHistory ->
-                            EmitGetHistoryGoodList access
+                            EmitGetHistoryGoodList accessToken
                     ]
 
-                LogInState.LogInStateNone ->
+                Nothing ->
                     []
             )
 
@@ -233,7 +233,19 @@ view logInState isWideScreenMode (Model rec) =
             }
     , html =
         case logInState of
-            LogInState.LogInStateOk _ ->
+            LogInState.None ->
+                [ Html.div
+                    [ Html.Attributes.class "container" ]
+                    [ Html.div
+                        []
+                        [ Html.text "ログインか新規登録をして、いいねと閲覧履歴を使えるようにしよう!" ]
+                    , LogInOrSignUp.view
+                        rec.logInOrSignUpModel
+                        |> Html.map LogInOrSignUpMsg
+                    ]
+                ]
+
+            _ ->
                 [ GoodList.view
                     rec.goodListModel
                     logInState
@@ -250,17 +262,5 @@ view logInState isWideScreenMode (Model rec) =
                                 |> Maybe.map (Result.withDefault [])
                     )
                     |> Html.map GoodListMsg
-                ]
-
-            LogInState.LogInStateNone ->
-                [ Html.div
-                    [ Html.Attributes.class "container" ]
-                    [ Html.div
-                        []
-                        [ Html.text "ログインか新規登録をして、いいねと閲覧履歴を使えるようにしよう!" ]
-                    , LogInOrSignUp.view
-                        rec.logInOrSignUpModel
-                        |> Html.map LogInOrSignUpMsg
-                    ]
                 ]
     }

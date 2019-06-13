@@ -57,7 +57,7 @@ type Model
 type Emit
     = EmitGetGoods { goodId : Good.GoodId }
     | EmitGetGoodComment { goodId : Good.GoodId }
-    | EmitPostGoodComment Data.User.User Api.Token { goodId : Good.GoodId } String
+    | EmitPostGoodComment Api.Token { goodId : Good.GoodId } String
     | EmitLikeGood Data.User.UserId Api.Token Good.GoodId
     | EmitUnLikeGood Data.User.UserId Api.Token Good.GoodId
     | EmitTradeStart Api.Token Good.GoodId
@@ -81,7 +81,7 @@ type Msg
     | TradeStartResponse (Result () ())
     | ToConfirmPage
     | InputComment String
-    | SendComment Data.User.User Api.Token
+    | SendComment Api.Token
     | ReceiveTimeStringToMillisecond { goodId : Int, second : List Int }
     | DeleteGood Api.Token Good.GoodId
     | EditGood
@@ -274,11 +274,11 @@ update msg model =
                     , []
                     )
 
-        SendComment user token ->
+        SendComment token ->
             case model of
                 Normal { comment, good } ->
                     ( model
-                    , [ EmitPostGoodComment user token { goodId = Good.getId good } comment ]
+                    , [ EmitPostGoodComment token { goodId = Good.getId good } comment ]
                     )
 
                 _ ->
@@ -398,7 +398,7 @@ view logInState isWideScreenMode nowMaybe model =
                         [ Html.text "最新の情報を取得中…"
                         , goodsViewImage (Good.getFirstImageUrl good) (Good.getOthersImageUrlList good)
                         , goodsViewName (Good.getName good)
-                        , goodsViewLike LogInState.LogInStateNone False good
+                        , goodsViewLike LogInState.None False good
                         , sellerNameView (Good.getSellerId good) (Good.getSellerName good)
                         , descriptionView (Good.getDescription good)
                         , goodsViewCondition (Good.getCondition good)
@@ -424,16 +424,19 @@ view logInState isWideScreenMode nowMaybe model =
                          , commentListView nowMaybe (Good.getSellerId good) logInState (Good.getCommentList good)
                          ]
                             ++ (case logInState of
-                                    LogInState.LogInStateOk { access, user } ->
-                                        if Data.User.getUserId user == Good.getSellerId good then
+                                    LogInState.Ok { accessToken, userWithProfile } ->
+                                        if
+                                            Data.User.withProfileGetId userWithProfile
+                                                == Good.getSellerId good
+                                        then
                                             [ editButton
-                                            , deleteView (Good.getId good) access
+                                            , deleteView (Good.getId good) accessToken
                                             ]
 
                                         else
                                             []
 
-                                    LogInState.LogInStateNone ->
+                                    _ ->
                                         []
                                )
                         )
@@ -450,20 +453,20 @@ view logInState isWideScreenMode nowMaybe model =
                     [ Html.Attributes.class "container" ]
                     [ Html.div
                         [ Html.Attributes.class "good" ]
-                        (case logInState of
-                            LogInState.LogInStateOk { access } ->
+                        (case LogInState.getAccessToken logInState of
+                            Just accessToken ->
                                 [ Html.text "編集画面"
                                 ]
                                     ++ (GoodEditor.view editorModel
                                             |> List.map (Html.map GoodEditorMsg)
                                        )
                                     ++ [ editOkCancelButton
-                                            access
+                                            accessToken
                                             (Good.getId beforeGood)
                                             (GoodEditor.toRequestData editorModel)
                                        ]
 
-                            LogInState.LogInStateNone ->
+                            Nothing ->
                                 [ Html.text "ログインしていないときに商品の編集はできません" ]
                         )
                     ]
@@ -536,14 +539,15 @@ likeButton logInState sending good =
 
     else
         case logInState of
-            LogInState.LogInStateOk { user, access } ->
+            LogInState.Ok { userWithProfile, accessToken } ->
                 let
                     userId =
-                        Data.User.getUserId user
+                        Data.User.withProfileGetId userWithProfile
                 in
                 if False then
+                    -- TODO いいねで自分がいいねした商品から判断する
                     Html.button
-                        [ Html.Events.onClick (UnLikeGood userId access (Good.getId good))
+                        [ Html.Events.onClick (UnLikeGood userId accessToken (Good.getId good))
                         , Html.Attributes.class "good-liked"
                         , Html.Attributes.class "good-like"
                         ]
@@ -551,12 +555,12 @@ likeButton logInState sending good =
 
                 else
                     Html.button
-                        [ Html.Events.onClick (LikeGood userId access (Good.getId good))
+                        [ Html.Events.onClick (LikeGood userId accessToken (Good.getId good))
                         , Html.Attributes.class "good-like"
                         ]
                         (itemLikeBody (Good.getLikedCount good))
 
-            LogInState.LogInStateNone ->
+            _ ->
                 Html.div
                     [ Html.Attributes.class "good-like-label" ]
                     (itemLikeBody (Good.getLikedCount good))
@@ -644,14 +648,20 @@ commentListView nowMaybe sellerId logInState commentListMaybe =
         (case commentListMaybe of
             Just commentList ->
                 case logInState of
-                    LogInState.LogInStateOk { access, user } ->
-                        [ commentInputArea access user ]
+                    LogInState.Ok { accessToken, userWithProfile } ->
+                        [ commentInputArea accessToken ]
                             ++ (commentList
                                     |> List.reverse
-                                    |> List.map (commentView nowMaybe sellerId (Just (Data.User.getUserId user)))
+                                    |> List.map
+                                        (commentView nowMaybe
+                                            sellerId
+                                            (Just
+                                                (Data.User.withProfileGetId userWithProfile)
+                                            )
+                                        )
                                )
 
-                    LogInState.LogInStateNone ->
+                    _ ->
                         commentList
                             |> List.reverse
                             |> List.map (commentView nowMaybe sellerId Nothing)
@@ -758,8 +768,8 @@ commentTriangleRight isMine =
         ]
 
 
-commentInputArea : Api.Token -> Data.User.User -> Html.Html Msg
-commentInputArea token user =
+commentInputArea : Api.Token -> Html.Html Msg
+commentInputArea token =
     Html.div
         []
         [ Html.textarea
@@ -768,7 +778,7 @@ commentInputArea token user =
             ]
             []
         , Html.button
-            [ Html.Events.onClick (SendComment user token)
+            [ Html.Events.onClick (SendComment token)
             , Html.Attributes.class "good-comment-sendButton"
             ]
             [ Html.text "コメントを送信" ]
@@ -796,11 +806,11 @@ tradeStartButton logInState goodId =
         []
         [ Html.button
             ([ Html.Attributes.class "mainButton" ]
-                ++ (case logInState of
-                        LogInState.LogInStateOk { access } ->
-                            [ Html.Events.onClick (TradeStart access goodId) ]
+                ++ (case LogInState.getAccessToken logInState of
+                        Just accessToken ->
+                            [ Html.Events.onClick (TradeStart accessToken goodId) ]
 
-                        LogInState.LogInStateNone ->
+                        Nothing ->
                             [ Html.Attributes.class "mainButton-disabled" ]
                    )
             )

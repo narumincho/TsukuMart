@@ -19,7 +19,7 @@ requestAnimationFrame(() => {
     /* Elmを起動!! */
     const app = window.Elm.Main.init({
         flags: {
-            refreshToken: null
+            refreshToken: localStorage.getItem("refreshToken")
         }
     });
     const windowResizeListener = () => {

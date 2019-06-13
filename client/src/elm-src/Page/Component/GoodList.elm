@@ -176,16 +176,16 @@ itemLike logInState sending good =
 
     else
         case logInState of
-            Data.LogInState.LogInStateOk { user, access } ->
+            Data.LogInState.Ok { userWithProfile, accessToken } ->
                 let
                     userId =
-                        Data.User.getUserId user
+                        Data.User.withProfileGetId userWithProfile
                 in
                 if False then
                     Html.button
                         [ Html.Events.custom "click"
                             (Json.Decode.succeed
-                                { message = UnLikeGood userId access (Good.getId good)
+                                { message = UnLikeGood userId accessToken (Good.getId good)
                                 , stopPropagation = True
                                 , preventDefault = True
                                 }
@@ -199,7 +199,7 @@ itemLike logInState sending good =
                     Html.button
                         [ Html.Events.custom "click"
                             (Json.Decode.succeed
-                                { message = LikeGood userId access (Good.getId good)
+                                { message = LikeGood userId accessToken (Good.getId good)
                                 , stopPropagation = True
                                 , preventDefault = True
                                 }
@@ -208,7 +208,7 @@ itemLike logInState sending good =
                         ]
                         (itemLikeBody (Good.getLikedCount good))
 
-            Data.LogInState.LogInStateNone ->
+            _ ->
                 Html.div
                     [ Html.Attributes.class "goodList-like-label" ]
                     (itemLikeBody (Good.getLikedCount good))

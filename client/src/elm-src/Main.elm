@@ -116,11 +116,11 @@ type Msg
     | SignUpConfirmResponse (Result String ())
     | ReceiveImageDataUrl String
     | ReceiveImageFileAndBlobUrl Json.Decode.Value
-    | GetUserDataResponse { access : Api.Token, refresh : Api.Token } (Result String Data.User.User)
+    | GetMyProfileResponse (Result String Data.User.WithProfile)
     | SellGoodResponse (Result () ())
     | LikeGoodResponse Data.User.UserId Data.Good.GoodId (Result () ())
     | UnlikeGoodResponse Data.User.UserId Data.Good.GoodId (Result () ())
-    | ChangeProfileResponse (Result () Data.User.Profile)
+    | ChangeProfileResponse (Result () Data.User.WithProfile)
     | BasicPartMenuMsg BasicParts.Msg
     | HomePageMsg Page.Home.Msg
     | LikeAndHistoryPageMsg Page.LikeAndHistory.Msg
@@ -152,14 +152,14 @@ init : { refreshToken : Maybe String } -> Url.Url -> Browser.Navigation.Key -> (
 init { refreshToken } url key =
     let
         ( page, message, cmd ) =
-            urlParserInit Data.LogInState.LogInStateNone url
+            urlParserInit Data.LogInState.None url
                 |> urlParserResultToModel
     in
     ( Model
         { page = page
         , menuState = BasicParts.initMenuModel
         , message = message
-        , logInState = Data.LogInState.LogInStateNone
+        , logInState = Data.LogInState.None
         , notificationVisible = False
         , key = key
         , now = Nothing
@@ -264,7 +264,7 @@ urlParserInitResultToPageAndCmd logInState page =
                     goodsPageEmitListToCmd
 
         SiteMap.InitUser userId ->
-            Page.User.initModel logInState userId Nothing
+            Page.User.initModelFromId logInState userId
                 |> Tuple.mapBoth
                     PageProfile
                     profilePageEmitListToCmd
@@ -336,7 +336,7 @@ update msg (Model rec) =
         LogOut ->
             ( Model
                 { rec
-                    | logInState = Data.LogInState.LogInStateNone
+                    | logInState = Data.LogInState.None
                     , message = Just "ログアウトしました"
                 }
             , Cmd.none
@@ -344,12 +344,18 @@ update msg (Model rec) =
 
         LogInResponse result ->
             case result of
-                Ok { accessToken, refreshToken } ->
+                Ok accessTokenAndRefreshToken ->
                     ( Model
                         { rec
                             | message = Just "ログインしました"
+                            , logInState =
+                                Data.LogInState.LoadingProfile accessTokenAndRefreshToken
                         }
-                    , saveRefreshTokenToLocalStorage (Api.tokenToString refreshToken)
+                    , Cmd.batch
+                        [ Api.getMyProfile accessTokenAndRefreshToken.accessToken GetMyProfileResponse
+                        , saveRefreshTokenToLocalStorage
+                            (Api.tokenToString accessTokenAndRefreshToken.refreshToken)
+                        ]
                     )
 
                 Err string ->
@@ -465,13 +471,14 @@ update msg (Model rec) =
                     , Cmd.none
                     )
 
-        GetUserDataResponse { access, refresh } response ->
+        GetMyProfileResponse response ->
             ( case response of
-                Ok user ->
+                Ok userWithProfile ->
                     Model
                         { rec
                             | logInState =
-                                Data.LogInState.LogInStateOk { access = access, refresh = refresh, user = user }
+                                rec.logInState
+                                    |> Data.LogInState.addUserWithProfile userWithProfile
                         }
 
                 Err string ->
@@ -593,13 +600,8 @@ update msg (Model rec) =
                             ( Model
                                 { rec
                                     | logInState =
-                                        case rec.logInState of
-                                            Data.LogInState.LogInStateOk r ->
-                                                Data.LogInState.LogInStateOk
-                                                    { r | user = r.user |> Data.User.setProfile newProfile }
-
-                                            Data.LogInState.LogInStateNone ->
-                                                Data.LogInState.LogInStateNone
+                                        rec.logInState
+                                            |> Data.LogInState.addUserWithProfile newProfile
                                     , page = PageProfile newModel
                                 }
                             , profilePageEmitListToCmd emitList
@@ -875,8 +877,8 @@ profilePageEmitListToCmd =
     List.map
         (\emit ->
             case emit of
-                Page.User.EmitGetMyProfile { access, refresh } ->
-                    Api.getMyProfile access (GetUserDataResponse { access = access, refresh = refresh })
+                Page.User.EmitGetMyProfile { accessToken } ->
+                    Api.getMyProfile accessToken GetMyProfileResponse
 
                 Page.User.EmitChangeProfile token profile ->
                     Api.updateProfile token profile ChangeProfileResponse
@@ -915,8 +917,8 @@ goodsPageEmitListToCmd =
                 Page.Good.EmitGetGoodComment { goodId } ->
                     Api.getGoodsComment goodId (\result -> GoodsPageMsg (Page.Good.GetGoodsCommentResponse result))
 
-                Page.Good.EmitPostGoodComment user token { goodId } comment ->
-                    Api.postGoodsComment user token goodId comment (\result -> GoodsPageMsg (Page.Good.PostGoodsCommentResponse result))
+                Page.Good.EmitPostGoodComment token { goodId } comment ->
+                    Api.postGoodsComment token goodId comment (\result -> GoodsPageMsg (Page.Good.PostGoodsCommentResponse result))
 
                 Page.Good.EmitLikeGood userId token id ->
                     Api.likeGoods token id (LikeGoodResponse userId id)
@@ -1113,7 +1115,7 @@ urlParserResultToPageAndCmd (Model rec) result =
                 |> Tuple.mapBoth PageGoods goodsPageEmitListToCmd
 
         SiteMap.User userId ->
-            Page.User.initModel rec.logInState userId Nothing
+            Page.User.initModelFromId rec.logInState userId
                 |> Tuple.mapBoth
                     PageProfile
                     profilePageEmitListToCmd

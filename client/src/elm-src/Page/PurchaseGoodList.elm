@@ -48,11 +48,11 @@ initModel goodIdMaybe logInState =
         , normalModel = Loading
         , goodListModel = goodListModel
         }
-    , (case logInState of
-        LogInState.LogInStateOk { access } ->
-            [ EmitGetPurchaseGoodList access ]
+    , (case LogInState.getAccessToken logInState of
+        Just accessToken ->
+            [ EmitGetPurchaseGoodList accessToken ]
 
-        LogInState.LogInStateNone ->
+        Nothing ->
             []
       )
         ++ (emitList |> List.map EmitGoodList)
@@ -146,34 +146,35 @@ view :
 view logInState isWideScreenMode (Model rec) =
     { title = Just "購入した商品"
     , tab = Tab.single "購入した商品"
-    , html = case logInState of
-        LogInState.LogInStateOk _ ->
-            [ GoodList.view
-                rec.goodListModel
-                logInState
-                isWideScreenMode
-                (case rec.normalModel of
-                    Loading ->
-                        Nothing
-
-                    Normal { purchaseGoodList } ->
-                        Just purchaseGoodList
-
-                    Error ->
-                        Just []
-                )
-                |> Html.map GoodListMsg
-            ]
-
-        LogInState.LogInStateNone ->
-            [ Html.div
-                [ Html.Attributes.class "container" ]
+    , html =
+        case logInState of
+            LogInState.None ->
                 [ Html.div
-                    [ Html.Attributes.class "logInRecommendText" ]
-                    [ Html.text "ログインか新規登録をして、購入した商品一覧機能を使えるようにしよう!" ]
-                , LogInOrSignUp.view
-                    rec.logInOrSignUpModel
-                    |> Html.map LogInOrSignUpMsg
+                    [ Html.Attributes.class "container" ]
+                    [ Html.div
+                        [ Html.Attributes.class "logInRecommendText" ]
+                        [ Html.text "ログインか新規登録をして、購入した商品一覧機能を使えるようにしよう!" ]
+                    , LogInOrSignUp.view
+                        rec.logInOrSignUpModel
+                        |> Html.map LogInOrSignUpMsg
+                    ]
                 ]
-            ]
+
+            _ ->
+                [ GoodList.view
+                    rec.goodListModel
+                    logInState
+                    isWideScreenMode
+                    (case rec.normalModel of
+                        Loading ->
+                            Nothing
+
+                        Normal { purchaseGoodList } ->
+                            Just purchaseGoodList
+
+                        Error ->
+                            Just []
+                    )
+                    |> Html.map GoodListMsg
+                ]
     }

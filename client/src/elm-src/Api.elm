@@ -1,5 +1,6 @@
 module Api exposing
-    ( SellGoodsRequest(..)
+    ( ProfileUpdateData
+    , SellGoodsRequest(..)
     , SignUpRequest
     , Token
     , deleteGoods
@@ -188,7 +189,7 @@ tokenRefresh { refresh } msg =
 -}
 
 
-getMyProfile : Token -> (Result String User.User -> msg) -> Cmd msg
+getMyProfile : Token -> (Result String User.WithProfile -> msg) -> Cmd msg
 getMyProfile accessToken msg =
     graphQlApiRequest
         (Query
@@ -209,10 +210,11 @@ getMyProfile accessToken msg =
             ]
         )
         (Json.Decode.succeed
-            (\id displayName introduction schoolAndDepartment graduate ->
-                User.makeFromApi
-                    { id = User.userIdFromString id
+            (\id displayName imageUrl introduction schoolAndDepartment graduate ->
+                User.withProfileFromApi
+                    { id = id
                     , displayName = displayName
+                    , imageUrl = imageUrl
                     , introduction = introduction
                     , university =
                         University.universityFromIdString
@@ -221,6 +223,7 @@ getMyProfile accessToken msg =
             )
             |> Json.Decode.Pipeline.required "id" Json.Decode.string
             |> Json.Decode.Pipeline.required "displayName" Json.Decode.string
+            |> Json.Decode.Pipeline.required "imageUrl" Json.Decode.string
             |> Json.Decode.Pipeline.required "introduction" Json.Decode.string
             |> Json.Decode.Pipeline.requiredAt
                 [ "university", "schoolAndDepartment" ]
@@ -336,36 +339,17 @@ updateGood token goodId createGoodsRequest msg =
 -}
 
 
-updateProfile : Token -> User.Profile -> (Result () User.Profile -> msg) -> Cmd msg
+type alias ProfileUpdateData =
+    { displayName : String
+    , introduction : String
+    , image : String
+    , university : University.University
+    }
+
+
+updateProfile : Token -> ProfileUpdateData -> (Result () User.WithProfile -> msg) -> Cmd msg
 updateProfile token profile msg =
     Cmd.none
-
-
-updateProfileRequestToJsonBody : User.Profile -> Json.Decode.Value
-updateProfileRequestToJsonBody profile =
-    let
-        { graduate, department } =
-            universityToSimpleRecord (User.profileGetUniversity profile)
-    in
-    Json.Encode.object
-        ([ ( "nick", Json.Encode.string (User.profileGetDisplayName profile) )
-         , ( "introduction", Json.Encode.string (User.profileGetIntroduction profile) )
-         ]
-            ++ (case graduate of
-                    Just g ->
-                        [ ( "graduate", Json.Encode.string (University.graduateToIdString g) ) ]
-
-                    Nothing ->
-                        []
-               )
-            ++ (case department of
-                    Just d ->
-                        [ ( "department", Json.Encode.string (University.departmentToIdString d) ) ]
-
-                    Nothing ->
-                        []
-               )
-        )
 
 
 
@@ -434,7 +418,7 @@ getPurchaseGoodList token msg =
 -}
 
 
-getUserProfile : User.UserId -> (Result () User.Profile -> msg) -> Cmd msg
+getUserProfile : User.UserId -> (Result () User.WithProfile -> msg) -> Cmd msg
 getUserProfile userId msg =
     Cmd.none
 
@@ -699,7 +683,7 @@ commentDecoder =
             { text = text
             , createdAt = Good.CreatedTimeString createdAt
             , userName = userName
-            , userId = User.userIdFromString userId
+            , userId = User.idFromString userId
             }
         )
         (Json.Decode.field "text" Json.Decode.string)
@@ -715,26 +699,9 @@ commentDecoder =
 -}
 
 
-postGoodsComment : User.User -> Token -> Good.GoodId -> String -> (Result () Good.Comment -> msg) -> Cmd msg
-postGoodsComment user token goodId comment msg =
+postGoodsComment : Token -> Good.GoodId -> String -> (Result () Good.Comment -> msg) -> Cmd msg
+postGoodsComment accessToken goodId comment msg =
     Cmd.none
-
-
-postGoodsCommentResponseToResult : User.User -> Http.Response String -> Result () Good.Comment
-postGoodsCommentResponseToResult user response =
-    case response of
-        Http.GoodStatus_ _ body ->
-            Json.Decode.decodeString
-                (commentNormalDecoder
-                    (user |> User.getProfile |> User.profileGetDisplayName)
-                    (User.getUserId user)
-                    |> Json.Decode.map Ok
-                )
-                body
-                |> Result.withDefault (Err ())
-
-        _ ->
-            Err ()
 
 
 commentNormalDecoder : String -> User.UserId -> Json.Decode.Decoder Good.Comment

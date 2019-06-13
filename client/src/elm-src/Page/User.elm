@@ -2,10 +2,10 @@ module Page.User exposing
     ( Emit(..)
     , Model
     , Msg(..)
-    , initModel
+    , initModelWithName
     , update
     , view
-    )
+    , initModelFromId)
 
 import Api
 import Data.LogInState as LogInState
@@ -22,11 +22,8 @@ import Tab
 
 type Model
     = LoadingWithUserId User.UserId
-    | LoadingWithUserIdAndName
-        { id : User.UserId
-        , name : String
-        }
-    | Normal User.User
+    | LoadingWithUserIdAndName User.WithName
+    | Normal User.WithProfile
     | Edit EditModel
 
 
@@ -38,9 +35,9 @@ type alias EditModel =
 
 
 type Emit
-    = EmitGetMyProfile { access : Api.Token, refresh : Api.Token }
+    = EmitGetMyProfile { accessToken : Api.Token }
     | EmitGetUserProfile User.UserId
-    | EmitChangeProfile Api.Token User.Profile
+    | EmitChangeProfile Api.Token Api.ProfileUpdateData
     | EmitReplaceElementText { id : String, text : String }
     | EmitUniversity CompUniversity.Emit
     | EmitLogOut
@@ -53,40 +50,53 @@ type Msg
     | MsgInputIntroduction String
     | MsgInputUniversity CompUniversity.Model
     | MsgBackToViewMode
-    | MsgChangeProfile Api.Token User.Profile
-    | MsgChangeProfileResponse (Result () User.Profile)
+    | MsgChangeProfile Api.Token Api.ProfileUpdateData
+    | MsgChangeProfileResponse (Result () User.WithProfile)
     | MsgLogOut
-    | MsgUserProfileResponse (Result () User.Profile)
+    | MsgUserProfileResponse (Result () User.WithProfile)
 
 
-initModel : LogInState.LogInState -> User.UserId -> Maybe String -> ( Model, List Emit )
-initModel logInState userId userNameMaybe =
+initModelWithName : LogInState.LogInState -> User.WithName -> ( Model, List Emit )
+initModelWithName logInState userWithName =
+    let
+        targetUserId =
+            User.withNameGetId userWithName
+    in
     case logInState of
-        LogInState.LogInStateOk { access, refresh, user } ->
-            if User.getUserId user == userId then
-                ( Normal user
-                , [ EmitGetMyProfile { access = access, refresh = refresh } ]
+        LogInState.Ok { accessToken, userWithProfile } ->
+            if User.withProfileGetId userWithProfile == targetUserId then
+                ( Normal userWithProfile
+                , [ EmitGetMyProfile { accessToken = accessToken } ]
                 )
 
             else
-                initModelNoMyProfile userId userNameMaybe
+                ( LoadingWithUserIdAndName userWithName
+                , [ EmitGetUserProfile targetUserId ]
+                )
 
-        LogInState.LogInStateNone ->
-            initModelNoMyProfile userId userNameMaybe
-
-
-initModelNoMyProfile : User.UserId -> Maybe String -> ( Model, List Emit )
-initModelNoMyProfile userId userNameMaybe =
-    case userNameMaybe of
-        Just userName ->
-            ( LoadingWithUserIdAndName
-                { id = userId
-                , name = userName
-                }
-            , [ EmitGetUserProfile userId ]
+        _ ->
+            ( LoadingWithUserIdAndName userWithName
+            , [ EmitGetUserProfile targetUserId ]
             )
 
-        Nothing ->
+
+{-| 外部ページから飛んで来たときはユーザーIDだけを頼りにしてユーザーページを作らなければならない
+-}
+initModelFromId : LogInState.LogInState -> User.UserId -> ( Model, List Emit )
+initModelFromId logInState userId =
+    case logInState of
+        LogInState.Ok { accessToken, userWithProfile } ->
+            if User.withProfileGetId userWithProfile == userId then
+                ( Normal userWithProfile
+                , [ EmitGetMyProfile { accessToken = accessToken } ]
+                )
+
+            else
+                ( LoadingWithUserId userId
+                , [ EmitGetUserProfile userId ]
+                )
+
+        _ ->
             ( LoadingWithUserId userId
             , [ EmitGetUserProfile userId ]
             )
@@ -101,10 +111,10 @@ update logInState msg model =
     case msg of
         MsgToEditMode ->
             case logInState of
-                LogInState.LogInStateOk { user } ->
-                    toEditMode user
+                LogInState.Ok { userWithProfile } ->
+                    toEditMode userWithProfile
 
-                LogInState.LogInStateNone ->
+                _ ->
                     ( model
                     , []
                     )
@@ -141,10 +151,10 @@ update logInState msg model =
 
         MsgBackToViewMode ->
             ( case logInState of
-                LogInState.LogInStateOk { user } ->
-                    Normal user
+                LogInState.Ok { userWithProfile } ->
+                    Normal userWithProfile
 
-                LogInState.LogInStateNone ->
+                _ ->
                     model
             , []
             )
@@ -155,13 +165,13 @@ update logInState msg model =
             )
 
         MsgChangeProfileResponse result ->
-            case ( logInState, result ) of
-                ( LogInState.LogInStateOk { user }, Ok profile ) ->
-                    ( Normal (User.makeFromUserIdAndProfile (User.getUserId user) profile)
+            case result of
+                Ok profile ->
+                    ( Normal profile
                     , [ EmitAddLogMessage "ユーザー情報を更新しました" ]
                     )
 
-                ( _, _ ) ->
+                _ ->
                     ( model
                     , [ EmitAddLogMessage "ユーザー情報を更新に失敗しました" ]
                     )
@@ -173,13 +183,13 @@ update logInState msg model =
 
         MsgUserProfileResponse result ->
             case ( model, result ) of
-                ( LoadingWithUserId userId, Ok profile ) ->
-                    ( Normal (User.makeFromUserIdAndProfile userId profile)
+                ( LoadingWithUserId _, Ok profile ) ->
+                    ( Normal profile
                     , []
                     )
 
-                ( LoadingWithUserIdAndName { id }, Ok profile ) ->
-                    ( Normal (User.makeFromUserIdAndProfile id profile)
+                ( LoadingWithUserIdAndName _, Ok profile ) ->
+                    ( Normal profile
                     , []
                     )
 
@@ -194,20 +204,17 @@ update logInState msg model =
                     )
 
 
-toEditMode : User.User -> ( Model, List Emit )
-toEditMode user =
+toEditMode : User.WithProfile -> ( Model, List Emit )
+toEditMode userWithProfile =
     let
-        profile =
-            User.getProfile user
-
         displayName =
-            User.profileGetDisplayName profile
+            User.withProfileGetDisplayName userWithProfile
 
         introduction =
-            User.profileGetIntroduction profile
+            User.withProfileGetIntroduction userWithProfile
 
         universitySelect =
-            CompUniversity.selectFromUniversity (User.profileGetUniversity profile)
+            CompUniversity.selectFromUniversity (User.withProfileGetUniversity userWithProfile)
     in
     ( Edit
         { displayName = displayName
@@ -236,26 +243,26 @@ view logInState model =
         [ Html.div
             [ Html.Attributes.class "container" ]
             (case ( logInState, model ) of
-                ( LogInState.LogInStateOk { user }, Normal normalUser ) ->
-                    if User.getUserId user == User.getUserId normalUser then
-                        normalMyProfileView user
+                ( LogInState.Ok { userWithProfile }, Normal normalUser ) ->
+                    if User.withProfileGetId userWithProfile == User.withProfileGetId normalUser then
+                        normalMyProfileView normalUser
 
                     else
                         normalView normalUser
 
-                ( LogInState.LogInStateNone, Normal user ) ->
+                ( _, Normal user ) ->
                     normalView user
 
                 ( _, LoadingWithUserId userId ) ->
                     loadingWithUserIdView userId
 
-                ( _, LoadingWithUserIdAndName { name } ) ->
-                    loadingWithUserIdAndNameView name
+                ( _, LoadingWithUserIdAndName withName ) ->
+                    loadingWithUserIdAndNameView (User.withNameGetDisplayName withName)
 
-                ( LogInState.LogInStateOk { access, user }, Edit editModel ) ->
-                    editView access editModel (User.getProfile user)
+                ( LogInState.Ok { accessToken }, Edit editModel ) ->
+                    editView accessToken editModel
 
-                ( LogInState.LogInStateNone, Edit _ ) ->
+                ( _, Edit _ ) ->
                     [ Html.text "自分以外のプロフィールが編集できない" ]
             )
         ]
@@ -264,7 +271,7 @@ view logInState model =
 
 loadingWithUserIdView : User.UserId -> List (Html.Html msg)
 loadingWithUserIdView userId =
-    [ Html.text ("ユーザーID" ++ User.userIdToString userId ++ "のプロフィールを読み込み中")
+    [ Html.text ("ユーザーID" ++ User.idToString userId ++ "のプロフィールを読み込み中")
     ]
 
 
@@ -274,7 +281,7 @@ loadingWithUserIdAndNameView userName =
     ]
 
 
-normalView : User.User -> List (Html.Html Msg)
+normalView : User.WithProfile -> List (Html.Html Msg)
 normalView user =
     [ Html.div
         [ Html.Attributes.class "profile" ]
@@ -282,7 +289,7 @@ normalView user =
     ]
 
 
-normalMyProfileView : User.User -> List (Html.Html Msg)
+normalMyProfileView : User.WithProfile -> List (Html.Html Msg)
 normalMyProfileView user =
     [ Html.div
         [ Html.Attributes.class "profile" ]
@@ -294,17 +301,13 @@ normalMyProfileView user =
 
 {-| ユーザーの情報表示
 -}
-userView : User.User -> List (Html.Html msg)
-userView user =
-    let
-        profile =
-            User.getProfile user
-    in
-    [ nickNameView (User.profileGetDisplayName profile)
-    , introductionView (User.profileGetIntroduction profile)
+userView : User.WithProfile -> List (Html.Html msg)
+userView userWithProfile =
+    [ nickNameView (User.withProfileGetDisplayName userWithProfile)
+    , introductionView (User.withProfileGetIntroduction userWithProfile)
     ]
-        ++ universityView (User.profileGetUniversity profile)
-        ++ [ Html.text ("ユーザーID " ++ (user |> User.getUserId |> User.userIdToString)) ]
+        ++ universityView (User.withProfileGetUniversity userWithProfile)
+        ++ [ Html.text ("ユーザーID " ++ (userWithProfile |> User.withProfileGetId |> User.idToString)) ]
 
 
 nickNameView : String -> Html.Html msg
@@ -397,12 +400,12 @@ logOutButton =
 
 {-| 編集モードでの表示
 -}
-editView : Api.Token -> EditModel -> User.Profile -> List (Html.Html Msg)
-editView access editModel profile =
+editView : Api.Token -> EditModel -> List (Html.Html Msg)
+editView access editModel =
     [ Html.Keyed.node "div"
         [ Html.Attributes.class "form" ]
-        ([ ( "nickNameEditor", nickNameEditor (User.profileGetDisplayName profile) )
-         , ( "introductionEditor", introductionEditor (User.profileGetIntroduction profile) )
+        ([ ( "nickNameEditor", nickNameEditor editModel.displayName )
+         , ( "introductionEditor", introductionEditor editModel.introduction )
          ]
             ++ (CompUniversity.view editModel.universitySelect |> List.map (Tuple.mapSecond (Html.map MsgInputUniversity)))
             ++ [ ( "button", editButton access editModel )
@@ -480,7 +483,7 @@ editButton token editModel =
             [ Html.text "キャンセル" ]
         , Html.button
             ([ Html.Attributes.class "profile-editOkButton" ]
-                ++ (case editModelToProfile editModel of
+                ++ (case editModelToProfileUpdateData editModel of
                         Just profile ->
                             [ Html.Events.onClick (MsgChangeProfile token profile)
                             , Html.Attributes.disabled False
@@ -494,18 +497,17 @@ editButton token editModel =
         ]
 
 
-editModelToProfile : EditModel -> Maybe User.Profile
-editModelToProfile { displayName, introduction, universitySelect } =
+editModelToProfileUpdateData : EditModel -> Maybe Api.ProfileUpdateData
+editModelToProfileUpdateData { displayName, introduction, universitySelect } =
     if 1 <= String.length displayName && String.length displayName <= 50 then
         case CompUniversity.getUniversity universitySelect of
             Just university ->
                 Just
-                    (User.makeProfile
-                        { displayName = displayName
-                        , introduction = introduction
-                        , university = university
-                        }
-                    )
+                    { displayName = displayName
+                    , introduction = introduction
+                    , image = ""
+                    , university = university
+                    }
 
             Nothing ->
                 Nothing

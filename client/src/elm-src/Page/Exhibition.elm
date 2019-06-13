@@ -73,9 +73,13 @@ initModel =
 toConfirmPageMsgFromModel : Data.LogInState.LogInState -> Model -> Maybe Msg
 toConfirmPageMsgFromModel logInState (Model rec) =
     case ( rec.page, logInState ) of
-        ( EditPage editModel, Data.LogInState.LogInStateOk { access } ) ->
+        ( EditPage editModel, Data.LogInState.LoadingProfile { accessToken } ) ->
             GoodEditor.toRequestData editModel
-                |> Maybe.map (\request -> ToConfirmPage ( access, request ))
+                |> Maybe.map (\request -> ToConfirmPage ( accessToken, request ))
+
+        ( EditPage editModel, Data.LogInState.Ok { accessToken } ) ->
+            GoodEditor.toRequestData editModel
+                |> Maybe.map (\request -> ToConfirmPage ( accessToken, request ))
 
         ( _, _ ) ->
             Nothing
@@ -91,15 +95,15 @@ toConfirmPageMsgFromModel logInState (Model rec) =
 update : Data.LogInState.LogInState -> Msg -> Model -> ( Model, List Emit )
 update logInState msg (Model rec) =
     case logInState of
-        Data.LogInState.LogInStateOk _ ->
+        Data.LogInState.None ->
+            updateWhenNoLogIn msg (Model rec)
+
+        _ ->
             updateWhenLogIn msg rec.page
                 |> Tuple.mapFirst
                     (\p ->
                         Model { rec | page = p }
                     )
-
-        Data.LogInState.LogInStateNone ->
-            updateWhenNoLogIn msg (Model rec)
 
 
 updateWhenLogIn : Msg -> Page -> ( Page, List Emit )
@@ -177,17 +181,17 @@ view : Data.LogInState.LogInState -> Model -> { title : Maybe String, tab : Tab.
 view logInState (Model { page, logInOrSignUpModel }) =
     let
         ( tabText, body ) =
-            case logInState of
-                Data.LogInState.LogInStateNone ->
-                    logInStateNoneView logInOrSignUpModel
-
-                Data.LogInState.LogInStateOk { access } ->
+            case Data.LogInState.getAccessToken logInState of
+                Just accessToken ->
                     case page of
                         EditPage editModel ->
                             editView editModel
 
                         ConfirmPage { request, sending } ->
-                            confirmView access request sending
+                            confirmView accessToken request sending
+
+                Nothing ->
+                    logInStateNoneView logInOrSignUpModel
     in
     { title = Just "出品"
     , tab = Tab.single tabText

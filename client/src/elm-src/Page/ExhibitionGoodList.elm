@@ -48,11 +48,11 @@ initModel goodIdMaybe logInState =
         , normalModel = Loading
         , goodListModel = goodListModel
         }
-    , (case logInState of
-        LogInState.LogInStateOk { access } ->
-            [ EmitGetExhibitionGood access ]
+    , (case LogInState.getAccessToken logInState of
+        Just accessToken ->
+            [ EmitGetExhibitionGood accessToken ]
 
-        LogInState.LogInStateNone ->
+        Nothing ->
             []
       )
         ++ (emitList |> List.map EmitGoodList)
@@ -148,7 +148,19 @@ view logInState isWideScreenMode (Model rec) =
     , tab = Tab.single "出品した商品"
     , html =
         case logInState of
-            LogInState.LogInStateOk _ ->
+            LogInState.None ->
+                [ Html.div
+                    [ Html.Attributes.class "container" ]
+                    [ Html.div
+                        [ Html.Attributes.class "logInRecommendText" ]
+                        [ Html.text "ログインか新規登録をして、出品した商品一覧機能を使えるようにしよう!" ]
+                    , LogInOrSignUp.view
+                        rec.logInOrSignUpModel
+                        |> Html.map LogInOrSignUpMsg
+                    ]
+                ]
+
+            _ ->
                 [ GoodList.view
                     rec.goodListModel
                     logInState
@@ -164,17 +176,5 @@ view logInState isWideScreenMode (Model rec) =
                             Just []
                     )
                     |> Html.map GoodListMsg
-                ]
-
-            LogInState.LogInStateNone ->
-                [ Html.div
-                    [ Html.Attributes.class "container" ]
-                    [ Html.div
-                        [ Html.Attributes.class "logInRecommendText" ]
-                        [ Html.text "ログインか新規登録をして、出品した商品一覧機能を使えるようにしよう!" ]
-                    , LogInOrSignUp.view
-                        rec.logInOrSignUpModel
-                        |> Html.map LogInOrSignUpMsg
-                    ]
                 ]
     }
