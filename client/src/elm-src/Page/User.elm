@@ -31,7 +31,7 @@ type Model
 
 
 type alias EditModel =
-    { nickName : String
+    { displayName : String
     , introduction : String
     , universitySelect : CompUniversity.Model
     }
@@ -49,7 +49,7 @@ type Emit
 
 type Msg
     = MsgToEditMode
-    | MsgInputNickName String
+    | MsgInputDisplayName String
     | MsgInputIntroduction String
     | MsgInputUniversity CompUniversity.Model
     | MsgBackToViewMode
@@ -109,10 +109,10 @@ update logInState msg model =
                     , []
                     )
 
-        MsgInputNickName nickName ->
+        MsgInputDisplayName nickName ->
             ( case model of
                 Edit r ->
-                    Edit { r | nickName = String.trim nickName }
+                    Edit { r | displayName = String.trim nickName }
 
                 _ ->
                     model
@@ -200,8 +200,8 @@ toEditMode user =
         profile =
             User.getProfile user
 
-        nickName =
-            User.profileGetNickName profile
+        displayName =
+            User.profileGetDisplayName profile
 
         introduction =
             User.profileGetIntroduction profile
@@ -210,11 +210,11 @@ toEditMode user =
             CompUniversity.selectFromUniversity (User.profileGetUniversity profile)
     in
     ( Edit
-        { nickName = nickName
+        { displayName = displayName
         , introduction = introduction
         , universitySelect = universitySelect
         }
-    , [ EmitReplaceElementText { id = nickNameEditorId, text = nickName }
+    , [ EmitReplaceElementText { id = nickNameEditorId, text = displayName }
       , EmitReplaceElementText { id = introductionEditorId, text = introduction }
       ]
         ++ (CompUniversity.emit universitySelect |> List.map EmitUniversity)
@@ -300,7 +300,7 @@ userView user =
         profile =
             User.getProfile user
     in
-    [ nickNameView (User.profileGetNickName profile)
+    [ nickNameView (User.profileGetDisplayName profile)
     , introductionView (User.profileGetIntroduction profile)
     ]
         ++ universityView (User.profileGetUniversity profile)
@@ -401,7 +401,7 @@ editView : Api.Token -> EditModel -> User.Profile -> List (Html.Html Msg)
 editView access editModel profile =
     [ Html.Keyed.node "div"
         [ Html.Attributes.class "form" ]
-        ([ ( "nickNameEditor", nickNameEditor (User.profileGetNickName profile) )
+        ([ ( "nickNameEditor", nickNameEditor (User.profileGetDisplayName profile) )
          , ( "introductionEditor", introductionEditor (User.profileGetIntroduction profile) )
          ]
             ++ (CompUniversity.view editModel.universitySelect |> List.map (Tuple.mapSecond (Html.map MsgInputUniversity)))
@@ -424,7 +424,7 @@ nickNameEditor nickName =
             [ Html.Attributes.attribute "autocomplete" "nickname"
             , Html.Attributes.id nickNameEditorId
             , Html.Attributes.class "form-input"
-            , Html.Events.onInput MsgInputNickName
+            , Html.Events.onInput MsgInputDisplayName
             ]
             []
          ]
@@ -495,13 +495,13 @@ editButton token editModel =
 
 
 editModelToProfile : EditModel -> Maybe User.Profile
-editModelToProfile { nickName, introduction, universitySelect } =
-    if 1 <= String.length nickName && String.length nickName <= 50 then
+editModelToProfile { displayName, introduction, universitySelect } =
+    if 1 <= String.length displayName && String.length displayName <= 50 then
         case CompUniversity.getUniversity universitySelect of
             Just university ->
                 Just
                     (User.makeProfile
-                        { nickName = nickName
+                        { displayName = displayName
                         , introduction = introduction
                         , university = university
                         }

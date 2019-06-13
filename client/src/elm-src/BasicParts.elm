@@ -442,7 +442,7 @@ menuAccount logInState =
                     []
                 , Html.span
                     [ Html.Attributes.class "menu-account-a-name" ]
-                    [ Html.text (Data.User.profileGetNickName (Data.User.getProfile user)) ]
+                    [ Html.text (Data.User.profileGetDisplayName (Data.User.getProfile user)) ]
                 ]
 
         Data.LogInState.LogInStateNone ->

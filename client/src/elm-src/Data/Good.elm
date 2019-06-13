@@ -18,7 +18,6 @@ module Data.Good exposing
     , getDescription
     , getFirstImageUrl
     , getId
-    , getLikedByUserList
     , getLikedCount
     , getName
     , getOthersImageUrlList
@@ -28,7 +27,6 @@ module Data.Good exposing
     , goodIdFromInt
     , goodIdToInt
     , goodIdToString
-    , isLikedBy
     , like
     , listMapIf
     , makeDetailFromApi
@@ -66,9 +64,9 @@ type Good
         , image1Url : Maybe String
         , image2Url : Maybe String
         , image3Url : Maybe String
-        , likedByUserSet : Set.Set Int
         , seller : User.UserId
         , sellerName : Maybe String
+        , likeCount: Int
         , commentList : Maybe (List Comment)
         }
 
@@ -105,8 +103,22 @@ type CreatedTime
     | CreatedTimePosix Time.Posix
 
 
-makeNormalFromApi : { id : Int, name : String, description : String, price : Int, condition : Condition, status : Status, image0Url : String, image1Url : Maybe String, image2Url : Maybe String, image3Url : Maybe String, likedByUserList : List User.UserId, seller : Int } -> Good
-makeNormalFromApi { id, name, description, price, condition, status, image0Url, image1Url, image2Url, image3Url, likedByUserList, seller } =
+makeNormalFromApi :
+    { id : Int
+    , name : String
+    , description : String
+    , price : Int
+    , condition : Condition
+    , status : Status
+    , image0Url : String
+    , image1Url : Maybe String
+    , image2Url : Maybe String
+    , image3Url : Maybe String
+    , seller : String
+    , likeCount : Int
+    }
+    -> Good
+makeNormalFromApi { id, name, likeCount, description, price, condition, status, image0Url, image1Url, image2Url, image3Url, seller } =
     Good
         { id = GoodId id
         , name = name
@@ -118,15 +130,30 @@ makeNormalFromApi { id, name, description, price, condition, status, image0Url, 
         , image1Url = image1Url
         , image2Url = image2Url
         , image3Url = image3Url
-        , likedByUserSet = likedByUserList |> List.map User.userIdToInt |> Set.fromList
-        , seller = User.userIdFromInt seller
+        , seller = User.userIdFromString seller
         , sellerName = Nothing
+        ,likeCount = max 0 likeCount
         , commentList = Nothing
         }
 
 
-makeDetailFromApi : { id : Int, name : String, description : String, price : Int, condition : Condition, status : Status, image0Url : String, image1Url : Maybe String, image2Url : Maybe String, image3Url : Maybe String, likedByUserList : List User.UserId, seller : Int, sellerName : String } -> Good
-makeDetailFromApi { id, name, description, price, condition, status, image0Url, image1Url, image2Url, image3Url, likedByUserList, seller, sellerName } =
+makeDetailFromApi :
+    { id : Int
+    , name : String
+    , description : String
+    , price : Int
+    , condition : Condition
+    , status : Status
+    , image0Url : String
+    , image1Url : Maybe String
+    , image2Url : Maybe String
+    , image3Url : Maybe String
+    , seller : String
+    , sellerName : String
+    , likeCount : Int
+    }
+    -> Good
+makeDetailFromApi { id, name, description, price, condition, status, image0Url, image1Url, image2Url, image3Url, seller, sellerName, likeCount } =
     Good
         { id = GoodId id
         , name = name
@@ -138,9 +165,9 @@ makeDetailFromApi { id, name, description, price, condition, status, image0Url, 
         , image1Url = image1Url
         , image2Url = image2Url
         , image3Url = image3Url
-        , likedByUserSet = likedByUserList |> List.map User.userIdToInt |> Set.fromList
-        , seller = User.userIdFromInt seller
+        , seller = User.userIdFromString seller
         , sellerName = Just sellerName
+        , likeCount = max 0 likeCount
         , commentList = Nothing
         }
 
@@ -350,22 +377,22 @@ getName (Good { name }) =
 {-| いいねをされた数
 -}
 getLikedCount : Good -> Int
-getLikedCount (Good { likedByUserSet }) =
-    Set.size likedByUserSet
+getLikedCount (Good { likeCount }) =
+    likeCount
 
 
 {-| いいねをする
 -}
 like : User.UserId -> Good -> Good
 like userId (Good rec) =
-    Good { rec | likedByUserSet = rec.likedByUserSet |> Set.insert (User.userIdToInt userId) }
+    Good { rec | likeCount = rec.likeCount + 1  }
 
 
 {-| いいねを外す
 -}
 unlike : User.UserId -> Good -> Good
 unlike userId (Good rec) =
-    Good { rec | likedByUserSet = rec.likedByUserSet |> Set.remove (User.userIdToInt userId) }
+    Good { rec | likeCount = max 0 (rec.likeCount - 1)  }
 
 
 {-| 商品の説明
@@ -559,35 +586,6 @@ monthToString month =
 
         Time.Dec ->
             "12"
-
-
-
-{-
-   Just (now, zone) ->
-    時間差表示と絶対時間
-
-
-   Nothing ->
-    UTCの絶対時間のみ
-
--}
-
-
-{-| いいねをしたユーザーIDを取得する
--}
-getLikedByUserList : Good -> List User.UserId
-getLikedByUserList (Good { likedByUserSet }) =
-    likedByUserSet
-        |> Set.toList
-        |> List.map User.userIdFromInt
-
-
-{-| 指定したユーザーがいいねをしているか取得する
--}
-isLikedBy : User.UserId -> Good -> Bool
-isLikedBy userId (Good { likedByUserSet }) =
-    likedByUserSet
-        |> Set.member (User.userIdToInt userId)
 
 
 {-| 価格(整数)を3桁ごとに,がついたものにする

@@ -181,7 +181,7 @@ itemLike logInState sending good =
                     userId =
                         Data.User.getUserId user
                 in
-                if good |> Good.isLikedBy userId then
+                if False then
                     Html.button
                         [ Html.Events.custom "click"
                             (Json.Decode.succeed

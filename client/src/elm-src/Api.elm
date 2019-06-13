@@ -1,7 +1,6 @@
 module Api exposing
     ( SellGoodsRequest(..)
     , SignUpRequest
-    , SignUpResponseError(..)
     , Token
     , deleteGoods
     , getExhibitionGoodList
@@ -44,9 +43,9 @@ import Url
 
 
 
-{- =================================================
-                 新規登録 /auth/signup/
-   =================================================
+{- ========================================================================
+                  ユーザー情報を登録して認証メールを送信
+   ========================================================================
 -}
 
 
@@ -59,27 +58,6 @@ type alias SignUpRequest =
     , university : University.University
     , displayName : String
     }
-
-
-type SignUpResponseError
-    = SignUpErrorAlreadySignUp
-    | SignUpErrorBadUrl
-    | SignUpErrorTimeout
-    | SignUpErrorNetworkError
-    | SignUpInvalidData
-    | SignUpError
-
-
-tokenToHeader : Token -> Http.Header
-tokenToHeader (Token token) =
-    Http.header "Authorization" ("Bearer " ++ token)
-
-
-
-{- ========================================================================
-                  ユーザー情報を登録して認証メールを送信
-   ========================================================================
--}
 
 
 sendConfirmEmail : SignUpRequest -> (Result String () -> msg) -> Cmd msg
@@ -192,25 +170,75 @@ tokenRefresh { refresh } msg =
             ]
         )
         (Json.Decode.succeed
-            { accessToken = tokenFromString ""
-            , refreshToken = tokenFromString ""
-            }
+            (\accessToken refreshToken ->
+                { accessToken = tokenFromString accessToken
+                , refreshToken = tokenFromString refreshToken
+                }
+            )
+            |> Json.Decode.Pipeline.required "accessToken" Json.Decode.string
+            |> Json.Decode.Pipeline.required "refreshToken" Json.Decode.string
         )
         msg
 
 
-refreshTokenResponseDecoder : Token -> Json.Decode.Decoder (Result () ())
-refreshTokenResponseDecoder refresh =
-    Json.Decode.field "access" Json.Decode.string
-        |> Json.Decode.map
-            (\access ->
-                Ok ()
-             --                    (LogInResponseOk
-             --                        { access = tokenFromString access
-             --                        , refresh = refresh
-             --                        }
-             --                    )
+
+{- ============================================================
+               自分のプロフィールを取得する
+   ============================================================
+-}
+
+
+getMyProfile : Token -> (Result String User.User -> msg) -> Cmd msg
+getMyProfile accessToken msg =
+    graphQlApiRequest
+        (Query
+            [ Field
+                { name = "userPrivate"
+                , args = [ ( "accessToken", GraphQLString (tokenToString accessToken) ) ]
+                , return =
+                    [ Field { name = "id", args = [], return = [] }
+                    , Field { name = "displayName", args = [], return = [] }
+                    , Field { name = "introduction", args = [], return = [] }
+                    , Field
+                        { name = "university"
+                        , args = []
+                        , return = [ Field { name = "schoolAndDepartment", args = [], return = [] } ]
+                        }
+                    ]
+                }
+            ]
+        )
+        (Json.Decode.succeed
+            (\id displayName introduction schoolAndDepartment graduate ->
+                User.makeFromApi
+                    { id = User.userIdFromString id
+                    , displayName = displayName
+                    , introduction = introduction
+                    , university =
+                        University.universityFromIdString
+                            { graduateMaybe = graduate, departmentMaybe = schoolAndDepartment }
+                    }
             )
+            |> Json.Decode.Pipeline.required "id" Json.Decode.string
+            |> Json.Decode.Pipeline.required "displayName" Json.Decode.string
+            |> Json.Decode.Pipeline.required "introduction" Json.Decode.string
+            |> Json.Decode.Pipeline.requiredAt
+                [ "university", "schoolAndDepartment" ]
+                (Json.Decode.nullable Json.Decode.string)
+            |> Json.Decode.Pipeline.requiredAt
+                [ "university", "graduate" ]
+                (Json.Decode.nullable Json.Decode.string)
+            |> Json.Decode.andThen
+                (\userMaybe ->
+                    case userMaybe of
+                        Just user ->
+                            Json.Decode.succeed user
+
+                        Nothing ->
+                            Json.Decode.fail "invalid university"
+                )
+        )
+        msg
 
 
 
@@ -303,18 +331,6 @@ updateGood token goodId createGoodsRequest msg =
 
 
 {- ============================================================
-       自分のプロフィールを取得する /{version}/currentuser/profile/
-   ============================================================
--}
-
-
-getMyProfile : Token -> (Result () User.User -> msg) -> Cmd msg
-getMyProfile token msg =
-    Cmd.none
-
-
-
-{- ============================================================
        自分のプロフィールを更新する /{version}/currentuser/profile/
    ============================================================
 -}
@@ -332,7 +348,7 @@ updateProfileRequestToJsonBody profile =
             universityToSimpleRecord (User.profileGetUniversity profile)
     in
     Json.Encode.object
-        ([ ( "nick", Json.Encode.string (User.profileGetNickName profile) )
+        ([ ( "nick", Json.Encode.string (User.profileGetDisplayName profile) )
          , ( "introduction", Json.Encode.string (User.profileGetIntroduction profile) )
          ]
             ++ (case graduate of
@@ -423,51 +439,6 @@ getUserProfile userId msg =
     Cmd.none
 
 
-getUserResponseToResult : Http.Response String -> Result () User.User
-getUserResponseToResult response =
-    case response of
-        Http.BadStatus_ _ body ->
-            Json.Decode.decodeString getUserResponseBodyDecoder body
-                |> Result.withDefault (Err ())
-
-        Http.GoodStatus_ _ body ->
-            Json.Decode.decodeString getUserResponseBodyDecoder body
-                |> Result.withDefault (Err ())
-
-        _ ->
-            Err ()
-
-
-getUserResponseBodyDecoder : Json.Decode.Decoder (Result () User.User)
-getUserResponseBodyDecoder =
-    Json.Decode.oneOf
-        [ Json.Decode.map5
-            getUserResponseValueListToResult
-            (Json.Decode.field "user" Json.Decode.int)
-            (Json.Decode.field "nick" Json.Decode.string)
-            (Json.Decode.field "introduction" Json.Decode.string)
-            (Json.Decode.maybe (Json.Decode.field "department" Json.Decode.string))
-            (Json.Decode.maybe (Json.Decode.field "graduate" Json.Decode.string))
-        ]
-
-
-getUserResponseValueListToResult : Int -> String -> String -> Maybe String -> Maybe String -> Result () User.User
-getUserResponseValueListToResult id nickName introduction departmentMaybe graduateMaybe =
-    case University.universityFromIdString { departmentMaybe = departmentMaybe, graduateMaybe = graduateMaybe } of
-        Just university ->
-            Ok
-                (User.makeFromApi
-                    { id = User.userIdFromInt id
-                    , nickName = nickName
-                    , introduction = introduction
-                    , university = university
-                    }
-                )
-
-        Nothing ->
-            Err ()
-
-
 
 {- ==============================================================
        新着の商品を取得    TODO /{version}/goods/で取得したものを逆順
@@ -516,7 +487,7 @@ getGoodListResponseBodyJsonDecoder =
 goodsNormalResponseDecoder : Json.Decode.Decoder Good.Good
 goodsNormalResponseDecoder =
     Json.Decode.succeed
-        (\id name description price condition status image0Url image1Url image2Url image3Url likedByUserList seller ->
+        (\id name description price condition status image0Url image1Url image2Url image3Url likeCount seller ->
             Good.makeNormalFromApi
                 { id = id
                 , name = name
@@ -528,7 +499,7 @@ goodsNormalResponseDecoder =
                 , image1Url = image1Url
                 , image2Url = image2Url
                 , image3Url = image3Url
-                , likedByUserList = likedByUserList |> List.map User.userIdFromInt
+                , likeCount = likeCount
                 , seller = seller
                 }
         )
@@ -542,8 +513,8 @@ goodsNormalResponseDecoder =
         |> Json.Decode.Pipeline.required "image2" (Json.Decode.nullable Json.Decode.string)
         |> Json.Decode.Pipeline.required "image3" (Json.Decode.nullable Json.Decode.string)
         |> Json.Decode.Pipeline.required "image4" (Json.Decode.nullable Json.Decode.string)
-        |> Json.Decode.Pipeline.required "liked_by_prof" (Json.Decode.list Json.Decode.int)
-        |> Json.Decode.Pipeline.required "seller" Json.Decode.int
+        |> Json.Decode.Pipeline.required "likeCount" Json.Decode.int
+        |> Json.Decode.Pipeline.required "seller" Json.Decode.string
 
 
 
@@ -584,7 +555,7 @@ getGoodsResponseToResult response =
 goodsDetailResponseDecoder : Json.Decode.Decoder Good.Good
 goodsDetailResponseDecoder =
     Json.Decode.succeed
-        (\id name description price condition status image0Url image1Url image2Url image3Url likedByUserList seller sellerName ->
+        (\id name description price condition status image0Url image1Url image2Url image3Url likeCount seller sellerName ->
             Good.makeDetailFromApi
                 { id = id
                 , name = name
@@ -596,7 +567,7 @@ goodsDetailResponseDecoder =
                 , image1Url = image1Url
                 , image2Url = image2Url
                 , image3Url = image3Url
-                , likedByUserList = likedByUserList |> List.map User.userIdFromInt
+                , likeCount = likeCount
                 , seller = seller
                 , sellerName = sellerName
                 }
@@ -611,8 +582,8 @@ goodsDetailResponseDecoder =
         |> Json.Decode.Pipeline.required "image2" (Json.Decode.nullable Json.Decode.string)
         |> Json.Decode.Pipeline.required "image3" (Json.Decode.nullable Json.Decode.string)
         |> Json.Decode.Pipeline.required "image4" (Json.Decode.nullable Json.Decode.string)
-        |> Json.Decode.Pipeline.required "liked_by_prof" (Json.Decode.list Json.Decode.int)
-        |> Json.Decode.Pipeline.required "seller" (Json.Decode.field "user" Json.Decode.int)
+        |> Json.Decode.Pipeline.required "likeCount" Json.Decode.int
+        |> Json.Decode.Pipeline.required "seller" (Json.Decode.field "user" Json.Decode.string)
         |> Json.Decode.Pipeline.required "seller" (Json.Decode.field "nick" Json.Decode.string)
 
 
@@ -728,13 +699,13 @@ commentDecoder =
             { text = text
             , createdAt = Good.CreatedTimeString createdAt
             , userName = userName
-            , userId = User.userIdFromInt userId
+            , userId = User.userIdFromString userId
             }
         )
         (Json.Decode.field "text" Json.Decode.string)
         (Json.Decode.field "created_at" Json.Decode.string)
         (Json.Decode.field "prof" (Json.Decode.field "nick" Json.Decode.string))
-        (Json.Decode.field "prof" (Json.Decode.field "user" Json.Decode.int))
+        (Json.Decode.field "prof" (Json.Decode.field "user" Json.Decode.string))
 
 
 
@@ -755,7 +726,7 @@ postGoodsCommentResponseToResult user response =
         Http.GoodStatus_ _ body ->
             Json.Decode.decodeString
                 (commentNormalDecoder
-                    (user |> User.getProfile |> User.profileGetNickName)
+                    (user |> User.getProfile |> User.profileGetDisplayName)
                     (User.getUserId user)
                     |> Json.Decode.map Ok
                 )

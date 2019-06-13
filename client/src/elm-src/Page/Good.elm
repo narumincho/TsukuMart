@@ -541,7 +541,7 @@ likeButton logInState sending good =
                     userId =
                         Data.User.getUserId user
                 in
-                if good |> Good.isLikedBy userId then
+                if False then
                     Html.button
                         [ Html.Events.onClick (UnLikeGood userId access (Good.getId good))
                         , Html.Attributes.class "good-liked"

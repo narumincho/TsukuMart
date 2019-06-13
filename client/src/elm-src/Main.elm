@@ -116,7 +116,7 @@ type Msg
     | SignUpConfirmResponse (Result String ())
     | ReceiveImageDataUrl String
     | ReceiveImageFileAndBlobUrl Json.Decode.Value
-    | GetUserDataResponse { access : Api.Token, refresh : Api.Token } (Result () Data.User.User)
+    | GetUserDataResponse { access : Api.Token, refresh : Api.Token } (Result String Data.User.User)
     | SellGoodResponse (Result () ())
     | LikeGoodResponse Data.User.UserId Data.Good.GoodId (Result () ())
     | UnlikeGoodResponse Data.User.UserId Data.Good.GoodId (Result () ())
@@ -474,8 +474,8 @@ update msg (Model rec) =
                                 Data.LogInState.LogInStateOk { access = access, refresh = refresh, user = user }
                         }
 
-                Err () ->
-                    Model { rec | message = Just "プロフィール情報の取得に失敗しました" }
+                Err string ->
+                    Model { rec | message = Just ("プロフィール情報の取得に失敗しました" ++ string) }
             , Cmd.none
             )
 

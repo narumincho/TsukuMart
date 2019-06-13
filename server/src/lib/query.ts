@@ -1,5 +1,7 @@
 import * as g from "graphql";
 import * as type from "./type";
+import * as database from "./database";
+import * as databaseLow from "./databaseLow";
 
 const hello = type.makeGraphQLFieldConfig({
     args: {},
@@ -39,18 +41,20 @@ const userPrivate = type.makeGraphQLFieldConfig({
     },
     type: type.userPrivateOutputType,
     resolve: async ({ accessToken }) => {
+        const accessTokenData = database.verifyAccessToken(accessToken);
+        const userData = await databaseLow.getUserDataFromId(accessTokenData.id);
         return {
-            id: "id",
-            displayName: "表示名",
-            introduction: "紹介文",
+            id: accessTokenData.id,
+            displayName: userData.displayName,
+            introduction: userData.introduction,
             university: {
-                graduate: null,
-                schoolAndDepartment: "mast"
+                graduate: userData.graduate,
+                schoolAndDepartment: userData.schoolAndDepartment
             },
             selledProductAll: [],
             buyedProductAll: [],
             likedProductAll: []
-        }
+        };
     },
     description: "個人的な情報を含んだユーザーの情報を取得する"
 });

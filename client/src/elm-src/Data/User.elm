@@ -5,15 +5,15 @@ module Data.User exposing
     , getProfile
     , getUserId
     , makeFromApi
+    , makeFromUserIdAndProfile
     , makeProfile
     , profileGetIntroduction
-    , profileGetNickName
+    , profileGetDisplayName
     , profileGetUniversity
     , setProfile
-    , userIdFromInt
-    , userIdToInt
+    , userIdFromString
     , userIdToString
-    , makeFromUserIdAndProfile)
+    )
 
 import Data.University as University
 
@@ -26,44 +26,52 @@ type Profile
     = Profile
         { introduction : String
         , university : University.University
-        , nickName : String
+        , displayName : String
         }
 
 
 {-| ユーザーを識別するためのID
 -}
 type UserId
-    = UserId Int
-
-
-userIdToInt : UserId -> Int
-userIdToInt (UserId id) =
-    id
+    = UserId String
 
 
 userIdToString : UserId -> String
 userIdToString (UserId id) =
-    String.fromInt id
+    id
 
 
-userIdFromInt : Int -> UserId
-userIdFromInt =
+userIdFromString : String -> UserId
+userIdFromString =
     UserId
 
 
-makeFromApi : { id : UserId, introduction : String, university : University.University, nickName : String } -> User
-makeFromApi { id, introduction, university, nickName } =
-    User
-        id
-        (Profile
-            { introduction = introduction
-            , university = university
-            , nickName = nickName
-            }
-        )
+makeFromApi :
+    { id : UserId
+    , introduction : String
+    , university : Maybe University.University
+    , displayName : String
+    }
+    -> Maybe User
+makeFromApi { id, introduction, university, displayName } =
+    case university of
+        Just u ->
+            Just
+                (User
+                    id
+                    (Profile
+                        { introduction = introduction
+                        , university = u
+                        , displayName = displayName
+                        }
+                    )
+                )
+
+        Nothing ->
+            Nothing
 
 
-makeProfile : { nickName : String, introduction : String, university : University.University } -> Profile
+makeProfile : { displayName : String, introduction : String, university : University.University } -> Profile
 makeProfile =
     Profile
 
@@ -71,6 +79,7 @@ makeProfile =
 makeFromUserIdAndProfile : UserId -> Profile -> User
 makeFromUserIdAndProfile =
     User
+
 
 getUserId : User -> UserId
 getUserId (User id _) =
@@ -87,9 +96,9 @@ profileGetUniversity (Profile { university }) =
     university
 
 
-profileGetNickName : Profile -> String
-profileGetNickName (Profile { nickName }) =
-    nickName
+profileGetDisplayName : Profile -> String
+profileGetDisplayName (Profile { displayName }) =
+    displayName
 
 
 {-| プロフィールを取得する

@@ -235,6 +235,25 @@ export const getAccessTokenAndUpdateRefreshToken = async (
 };
 
 /**
+ * アクセストークンの正当性チェックとidの取得
+ * @param accessToken
+ */
+export const verifyAccessToken = (
+    accessToken: string
+): { id: string; isLogInByRefreshToken: boolean } => {
+    const decoded = jwt.verify(accessToken, key.accessTokenSecretKey, {
+        algorithms: ["HS256"]
+    }) as { sub: unknown; ref: unknown };
+    if (typeof decoded.sub !== "string" || typeof decoded.ref !== "boolean") {
+        throw new Error("invalid access token");
+    }
+    return {
+        id: decoded.sub,
+        isLogInByRefreshToken: decoded.ref
+    };
+};
+
+/**
  * アクセストークンを作成する
  * @param userId
  * @param byRefreshToken
