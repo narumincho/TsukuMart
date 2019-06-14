@@ -5,6 +5,7 @@ import * as logInWithTwitter from "./twitterLogIn";
 import * as type from "./type";
 import * as jwt from "jsonwebtoken";
 import * as UtilUrl from "./util/url";
+import { URL } from "url";
 
 /**
  * 新規登録かログインするためのURLを得る。
@@ -95,11 +96,21 @@ const sendConformEmail = type.makeGraphQLFieldConfig({
         const userBeforeInputData = await database.getUserInUserBeforeInputData(
             logInAccountServiceId
         );
-        const university = type.universityUnsafeToUniversity(universityUnsafe);
+        let imageUrl: URL;
+        if (args.image !== null && args.image !== undefined) {
+            imageUrl = await database.saveUserImage(
+                args.image.data,
+                args.image.mimeType
+            );
+        } else {
+            imageUrl = userBeforeInputData.imageUrl;
+        }
+
+        const university = type.universityFromInternal(universityUnsafe);
         await database.addUserBeforeEmailVerificationAndSendEmail(
             logInAccountServiceId,
             args.name,
-            userBeforeInputData.imageUrl,
+            imageUrl,
             args.email,
             university
         );
@@ -158,12 +169,58 @@ const getAccessTokenAndUpdateRefreshToken = type.makeGraphQLFieldConfig({
     description: "アクセストークンの取得とリフレッシュトークンの更新"
 });
 
+const updateProfile = type.makeGraphQLFieldConfig({
+    type: type.userPrivateOutputType,
+    args: {
+        accessToken: {
+            type: type.stringInputType,
+            description: type.accessTokenDescription
+        },
+        displayName: {
+            type: type.stringInputType,
+            description: "表示名"
+        },
+        image: {
+            type: type.nullableInputType(type.dataUrlInputType),
+            description: "画像(DataURL) 変更しないならnul"
+        },
+        introduction: {
+            type: type.stringInputType,
+            description: "紹介文"
+        },
+        university: {
+            type: type.universityInputType,
+            description: type.inputTypeDescription(type.universityInputType)
+        }
+    },
+    resolve: async ({
+        accessToken,
+        displayName,
+        image,
+        introduction,
+        university
+    }) => {
+        const { id } = database.verifyAccessToken(accessToken);
+        return type.userPrivateToInternal(
+            await database.setProfile(
+                id,
+                displayName,
+                image,
+                introduction,
+                type.universityFromInternal(university)
+            )
+        );
+    },
+    description: "プロフィールの更新"
+});
+
 export const mutation = new g.GraphQLObjectType({
     name: "Mutation",
     description: "データを作成、更新ができる",
     fields: {
         getLogInUrl,
         sendConformEmail,
-        getAccessTokenAndUpdateRefreshToken
+        getAccessTokenAndUpdateRefreshToken,
+        updateProfile
     }
 });

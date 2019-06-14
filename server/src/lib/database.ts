@@ -5,6 +5,7 @@ import * as databaseLow from "./databaseLow";
 import * as key from "./key";
 import * as type from "./type";
 import { userInfo } from "os";
+import Maybe from "graphql/tsutils/Maybe";
 
 firebase.initializeApp({
     apiKey: key.apiKey,
@@ -124,7 +125,7 @@ export const addUserBeforeEmailVerificationAndSendEmail = async (
     const authUser = await databaseLow.createFirebaseAuthUserByRandomPassword(
         email
     );
-    const flatUniversity = type.universityToFlat(university);
+    const flatUniversity = type.universityToInternal(university);
     await databaseLow.addUserBeforeEmailVerification(logInAccountServiceId, {
         firebaseAuthUserId: authUser.id,
         name: name,
@@ -141,6 +142,10 @@ export const addUserBeforeEmailVerificationAndSendEmail = async (
     await userCredential.user.sendEmailVerification();
 };
 
+/**
+ * ソーシャルログインのアカウントIDからアクセストークンをリフレッシュトークンを得る
+ * @param logInAccountServiceId
+ */
 export const getAccessTokenAndRefreshToken = async (
     logInAccountServiceId: type.LogInServiceAndId
 ): Promise<{ refreshToken: string; accessToken: string }> => {
@@ -225,7 +230,7 @@ export const getAccessTokenAndUpdateRefreshToken = async (
     console.log("JWTに入っていたリフレッシュトークンID", jti);
     if (userData.lastRefreshId === jti) {
         const refreshId: string = createRefreshId();
-        await databaseLow.updateUerData(sub, { lastRefreshId: refreshId });
+        await databaseLow.updateUserData(sub, { lastRefreshId: refreshId });
         return {
             refreshToken: createRefreshToken(sub, refreshId),
             accessToken: createAccessToken(sub, true)
@@ -238,6 +243,7 @@ export const getAccessTokenAndUpdateRefreshToken = async (
 /**
  * アクセストークンの正当性チェックとidの取得
  * @param accessToken
+ * @throws {Error} invalid access token
  */
 export const verifyAccessToken = (
     accessToken: string
@@ -312,7 +318,7 @@ export const getUserData = async (
         displayName: userData.displayName,
         imageUrl: new URL(userData.imageUrl),
         introduction: userData.introduction,
-        university: type.universityUnsafeToUniversity({
+        university: type.universityFromInternal({
             graduate: userData.graduate,
             schoolAndDepartment: userData.schoolAndDepartment
         })
@@ -332,9 +338,48 @@ export const getAllUser = async (): Promise<
     (await databaseLow.getAllUserData()).map(docData => ({
         displayName: docData.displayName,
         imageUrl: new URL(docData.imageUrl),
-        university: type.universityUnsafeToUniversity({
+        university: type.universityFromInternal({
             graduate: docData.graduate,
             schoolAndDepartment: docData.schoolAndDepartment
         }),
         introduction: docData.introduction
     }));
+
+export const setProfile = async (
+    id: string,
+    displayName: string,
+    image: Maybe<type.DataURLInternal>,
+    introduction: string,
+    university: type.University
+): Promise<type.UserPrivate> => {
+    let imageUrl: URL;
+    const universityInternal = type.universityToInternal(university);
+    if (image === null || image === undefined) {
+        databaseLow.updateUserData(id, {
+            displayName,
+            introduction,
+            graduate: universityInternal.graduate,
+            schoolAndDepartment: universityInternal.schoolAndDepartment
+        });
+        imageUrl = new URL((await databaseLow.getUserDataFromId(id)).imageUrl);
+    } else {
+        imageUrl = await saveUserImage(image.data, image.mimeType);
+        databaseLow.updateUserData(id, {
+            displayName,
+            imageUrl: imageUrl.toString(),
+            introduction,
+            graduate: universityInternal.graduate,
+            schoolAndDepartment: universityInternal.schoolAndDepartment
+        });
+    }
+    return {
+        id: id,
+        displayName: displayName,
+        imageUrl: imageUrl,
+        introduction: introduction,
+        university: university,
+        buyedProductAll: [],
+        likedProductAll: [],
+        selledProductAll: []
+    };
+};

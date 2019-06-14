@@ -1,7 +1,6 @@
 import * as g from "graphql";
 import * as type from "./type";
 import * as database from "./database";
-import * as databaseLow from "./databaseLow";
 import { URL } from "url";
 
 const hello = type.makeGraphQLFieldConfig({
@@ -40,7 +39,7 @@ const userPrivate = type.makeGraphQLFieldConfig({
     args: {
         accessToken: {
             type: type.stringInputType,
-            description: "アクセストークン。署名付きユーザーID"
+            description: type.accessTokenDescription
         }
     },
     type: type.userPrivateOutputType,
@@ -52,7 +51,7 @@ const userPrivate = type.makeGraphQLFieldConfig({
             displayName: userData.displayName,
             imageUrl: userData.imageUrl,
             introduction: userData.introduction,
-            university: type.universityToFlat(userData.university),
+            university: type.universityToInternal(userData.university),
             selledProductAll: [],
             buyedProductAll: [],
             likedProductAll: []

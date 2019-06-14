@@ -183,7 +183,7 @@ const graduateGraphQLType = new g.GraphQLEnumType({
     description: "研究科ID"
 });
 
-export type UniversityUnsafe = {
+export type UniversityInternal = {
     schoolAndDepartment: Maybe<SchoolAndDepartment>;
     graduate: Maybe<Graduate>;
 };
@@ -206,10 +206,10 @@ const enum UniversityC {
 /**
  *
  * @param universityUnsafe
- * @throws "University need (graduate) or (schoolAndDepartment) or (graduate and schoolAndDepartment)"
+ * @throws {Error} "University need (graduate) or (schoolAndDepartment) or (graduate and schoolAndDepartment)"
  */
-export const universityUnsafeToUniversity = (
-    universityUnsafe: UniversityUnsafe
+export const universityFromInternal = (
+    universityUnsafe: UniversityInternal
 ): University => {
     if (
         typeof universityUnsafe.graduate === "string" &&
@@ -238,7 +238,7 @@ export const universityUnsafeToUniversity = (
     );
 };
 
-export const universityToFlat = (
+export const universityToInternal = (
     university: University
 ): {
     schoolAndDepartment: SchoolAndDepartment | null;
@@ -351,9 +351,27 @@ type UserInternal = {
     displayName: string;
     imageUrl: URL;
     introduction: string;
-    university: UniversityUnsafe;
+    university: UniversityInternal;
     selledProductAll: Array<ProductInternal>;
 };
+
+type User = {
+    id: string;
+    displayName: string;
+    imageUrl: URL;
+    introduction: string;
+    university: University;
+    selledProductAll: Array<Product>;
+};
+
+export const userToInternal = (user: User): UserInternal => ({
+    id: user.id,
+    displayName: user.displayName,
+    imageUrl: user.imageUrl,
+    introduction: user.introduction,
+    university: universityToInternal(user.university),
+    selledProductAll: user.selledProductAll.map(productToInternal)
+});
 /** ==============================
  *         User Private
  * ===============================
@@ -403,16 +421,41 @@ const userPrivateGraphQLType = new g.GraphQLObjectType({
     description: "個人的な情報を含んだユーザーの情報"
 });
 
-type UserPrivateInternal = {
+export type UserPrivateInternal = {
     id: string;
     displayName: string;
     imageUrl: URL;
     introduction: string;
-    university: UniversityUnsafe;
+    university: UniversityInternal;
     selledProductAll: Array<ProductInternal>;
     buyedProductAll: Array<ProductInternal>;
     likedProductAll: Array<ProductInternal>;
 };
+
+export type UserPrivate = {
+    id: string;
+    displayName: string;
+    imageUrl: URL;
+    introduction: string;
+    university: University;
+    selledProductAll: Array<Product>;
+    buyedProductAll: Array<Product>;
+    likedProductAll: Array<Product>;
+};
+
+export const userPrivateToInternal = (
+    userPrivate: UserPrivate
+): UserPrivateInternal => ({
+    id: userPrivate.id,
+    displayName: userPrivate.displayName,
+    imageUrl: userPrivate.imageUrl,
+    introduction: userPrivate.introduction,
+    university: universityToInternal(userPrivate.university),
+    selledProductAll: userPrivate.selledProductAll.map(productToInternal),
+    buyedProductAll: userPrivate.buyedProductAll.map(productToInternal),
+    likedProductAll: userPrivate.likedProductAll.map(productToInternal)
+});
+
 /** ==============================
  *           Product
  * ===============================
@@ -446,6 +489,19 @@ type ProductInternal = {
     seller: UserInternal;
 };
 
+type Product = {
+    id: string;
+    name: string;
+    price: number;
+    seller: User;
+};
+
+export const productToInternal = (product: Product): ProductInternal => ({
+    id: product.id,
+    name: product.name,
+    price: product.price,
+    seller: userToInternal(product.seller)
+});
 /* ===============================
  *      LogInService And Id
  * ===============================
@@ -551,7 +607,7 @@ type InputTypeInternalToGraphQLType<
     : O extends InputTypeInternal.DataUrl
     ? DataURLInternal
     : O extends InputTypeInternal.University
-    ? UniversityUnsafe
+    ? UniversityInternal
     : never;
 
 const inputTypeToGraphQLType = (
@@ -742,9 +798,10 @@ export const outputTypeDescription = (
     }
 };
 
-/*============================================
-==============================================
-*/
+/**
+ * アクセストークンの説明
+ */
+export const accessTokenDescription = "アクセストークン。署名付きユーザーID";
 
 /**
  * 型安全にGraphQLFieldConfigをつくる

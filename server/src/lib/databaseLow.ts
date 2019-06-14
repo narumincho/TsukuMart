@@ -59,11 +59,11 @@ export const getUserDataFromId = async (id: string): Promise<UserData> => {
 };
 
 /**
- * ユーザーの情報を上書きする。すでにあるフィールドはそそのまま残る
+ * ユーザーの情報を上書きする。すでにあるフィールドはそのまま残る
  * @param id
  * @param userData
  */
-export const updateUerData = async (
+export const updateUserData = async (
     id: string,
     userData: Partial<UserData>
 ): Promise<void> => {
@@ -113,7 +113,8 @@ const querySnapshotPromise = (
             }
         });
     });
-/* ==========================================
+
+    /* ==========================================
             User Before Input Data
    ==========================================
 */
