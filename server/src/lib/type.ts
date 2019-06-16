@@ -393,8 +393,6 @@ export type ProductInternal = {
     seller: UserInternal;
 };
 
-export type ProductInternalNeedReturn = "id";
-
 export type Product = {
     id: string;
     name: string;

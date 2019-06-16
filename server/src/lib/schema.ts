@@ -30,7 +30,7 @@ type GraphQLFieldConfigWithArgs<
     description: string;
 };
 
-const makeField = <
+const makeObjectField = <
     Type extends { [k in string]: unknown } & { id: string },
     Key extends keyof Type,
     T extends { [k in string]: { type: g.GraphQLInputType } } // for allがあればなぁ
@@ -59,6 +59,25 @@ type Return<Type extends { [k in string]: unknown } & { id: string }> = {
     id: string;
 } & { [a in keyof Type]?: Type[a] };
 
+const makeQueryOrMutationField = <
+    Args extends { [k in string]: unknown },
+    Type
+>(args: {
+    type: g.GraphQLOutputType;
+    args: {
+        [a in keyof Args]: {
+            type: g.GraphQLInputType;
+            description: Maybe<string>;
+        }
+    };
+    resolve: (
+        source: void,
+        args: Args,
+        context: void,
+        info: g.GraphQLResolveInfo
+    ) => Promise<Type>;
+    description: string;
+}): g.GraphQLFieldConfig<void, void, any> => args;
 /*  =============================================================
                             Product
     =============================================================
@@ -75,7 +94,7 @@ const productGraphQLType: g.GraphQLObjectType<
             id: {
                 type: g.GraphQLNonNull(g.GraphQLString)
             },
-            name: makeField({
+            name: makeObjectField({
                 type: g.GraphQLNonNull(g.GraphQLString),
                 args: {},
                 resolve: (source, args, context, info) => {
@@ -83,7 +102,7 @@ const productGraphQLType: g.GraphQLObjectType<
                 },
                 description: "商品名"
             }),
-            price: makeField({
+            price: makeObjectField({
                 type: g.GraphQLNonNull(g.GraphQLInt),
                 args: {},
                 resolve: (source, args, context, info) => {
@@ -91,7 +110,7 @@ const productGraphQLType: g.GraphQLObjectType<
                 },
                 description: "値段"
             }),
-            seller: makeField({
+            seller: makeObjectField({
                 type: g.GraphQLNonNull(userGraphQLType),
                 args: {},
                 resolve: (source, args, context, info): Return<type.User> => {
@@ -193,19 +212,19 @@ export const userPrivateGraphQLType = new g.GraphQLObjectType({
     =============================================================
 */
 
-const hello: g.GraphQLFieldConfig<void, void, {}> = {
+const hello = makeQueryOrMutationField<{}, string>({
     args: {},
     type: g.GraphQLNonNull(g.GraphQLString),
-    resolve: async (): Promise<string> => {
+    resolve: async () => {
         return "Hello World!";
     },
     description: "世界に挨拶する"
-};
+});
 
-const userAll: g.GraphQLFieldConfig<void, void, {}> = {
+const userAll = makeQueryOrMutationField<{}, Array<Return<type.UserInternal>>>({
     type: g.GraphQLNonNull(g.GraphQLList(g.GraphQLNonNull(userGraphQLType))),
     args: {},
-    resolve: async (): Promise<Array<Return<type.UserInternal>>> => {
+    resolve: async () => {
         return (await database.getAllUser()).map(
             ({ id, displayName, imageUrl, introduction }) => ({
                 id,
@@ -216,9 +235,12 @@ const userAll: g.GraphQLFieldConfig<void, void, {}> = {
         );
     },
     description: "すべてのユーザーの情報を取得する"
-};
+});
 
-const userPrivate: g.GraphQLFieldConfig<void, void, { accessToken: string }> = {
+const userPrivate = makeQueryOrMutationField<
+    { accessToken: string },
+    Return<type.UserPrivateInternal>
+>({
     args: {
         accessToken: {
             type: g.GraphQLNonNull(g.GraphQLString),
@@ -244,9 +266,12 @@ const userPrivate: g.GraphQLFieldConfig<void, void, { accessToken: string }> = {
         };
     },
     description: "個人的な情報を含んだユーザーの情報を取得する"
-};
+});
 
-const productAll: g.GraphQLFieldConfig<void, void, {}> = {
+const productAll = makeQueryOrMutationField<
+    {},
+    Array<Return<type.ProductInternal>>
+>({
     args: {},
     type: g.GraphQLNonNull(g.GraphQLList(g.GraphQLNonNull(productGraphQLType))),
     resolve: async () => {
@@ -272,7 +297,7 @@ const productAll: g.GraphQLFieldConfig<void, void, {}> = {
         ];
     },
     description: "すべての商品(売れたものも含まれる)を取得する"
-};
+});
 
 /*  =============================================================
                             Mutation
@@ -282,11 +307,10 @@ const productAll: g.GraphQLFieldConfig<void, void, {}> = {
 /**
  * 新規登録かログインするためのURLを得る。
  */
-const getLogInUrl: g.GraphQLFieldConfig<
-    void,
-    void,
-    { service: type.AccountService }
-> = {
+const getLogInUrl = makeQueryOrMutationField<
+    { service: type.AccountService },
+    URL
+>({
     type: g.GraphQLNonNull(type.urlGraphQLType),
     args: {
         service: {
@@ -355,22 +379,21 @@ const getLogInUrl: g.GraphQLFieldConfig<
     },
     description:
         "新規登録かログインするためのURLを得る。受け取ったURLをlocation.hrefに代入するとかして、各サービスの認証画面へ"
-};
+});
 
 /**
  * ユーザー情報を登録して認証メールを送信する
  */
-const sendConformEmail: g.GraphQLFieldConfig<
-    void,
-    void,
+const sendConformEmail = makeQueryOrMutationField<
     {
         sendEmailToken: string;
         name: string;
         image: Maybe<type.DataURLInternal>;
         university: type.UniversityInternal;
         email: string;
-    }
-> = {
+    },
+    type.Unit
+>({
     type: type.unitGraphQLType,
     args: {
         sendEmailToken: {
@@ -426,7 +449,7 @@ const sendConformEmail: g.GraphQLFieldConfig<
         return "ok";
     },
     description: "ユーザー情報を登録して認証メールを送信する"
-};
+});
 
 const verifySendEmailToken = (
     sendEmailToken: string
@@ -442,11 +465,10 @@ const verifySendEmailToken = (
 /**
  * アクセストークンの取得とリフレッシュトークンの更新
  */
-const getAccessTokenAndUpdateRefreshToken: g.GraphQLFieldConfig<
-    void,
-    void,
-    { refreshToken: string }
-> = {
+const getAccessTokenAndUpdateRefreshToken = makeQueryOrMutationField<
+    { refreshToken: string },
+    type.RefreshTokenAndAccessToken
+>({
     type: type.refreshTokenAndAccessTokenGraphQLType,
     args: {
         refreshToken: {
@@ -457,19 +479,18 @@ const getAccessTokenAndUpdateRefreshToken: g.GraphQLFieldConfig<
     resolve: async (source, args): Promise<type.RefreshTokenAndAccessToken> =>
         await database.getAccessTokenAndUpdateRefreshToken(args.refreshToken),
     description: "アクセストークンの取得とリフレッシュトークンの更新"
-};
+});
 
-const updateProfile: g.GraphQLFieldConfig<
-    void,
-    void,
+const updateProfile = makeQueryOrMutationField<
     {
         accessToken: string;
         displayName: string;
         image: Maybe<type.DataURLInternal>;
         introduction: string;
         university: type.UniversityInternal;
-    }
-> = {
+    },
+    type.UserPrivateInternal
+>({
     type: userPrivateGraphQLType,
     args: {
         accessToken: {
@@ -509,13 +530,12 @@ const updateProfile: g.GraphQLFieldConfig<
         );
     },
     description: "プロフィールの更新"
-};
+});
 
-const sellProduct: g.GraphQLFieldConfig<
-    void,
-    void,
-    { name: string; price: number }
-> = {
+const sellProduct = makeQueryOrMutationField<
+    { name: string; price: number },
+    type.ProductInternal
+>({
     args: {
         name: {
             type: g.GraphQLString,
@@ -546,7 +566,7 @@ const sellProduct: g.GraphQLFieldConfig<
         };
     },
     description: "商品の出品"
-};
+});
 
 /*  =============================================================
                             Schema
@@ -559,33 +579,21 @@ export const schema = new g.GraphQLSchema({
         description:
             "データを取得できる。データを取得したときに影響は他に及ばさない",
         fields: {
-            hello: hello as g.GraphQLFieldConfig<void, void, any>,
-            userAll: userAll as g.GraphQLFieldConfig<void, void, any>,
-            userPrivate: userPrivate as g.GraphQLFieldConfig<void, void, any>,
-            productAll: productAll as g.GraphQLFieldConfig<void, void, any>
+            hello,
+            userAll,
+            userPrivate,
+            productAll
         }
     }),
     mutation: new g.GraphQLObjectType({
         name: "Mutation",
         description: "データを作成、更新ができる",
         fields: {
-            getLogInUrl: getLogInUrl as g.GraphQLFieldConfig<void, void, any>,
-            sendConformEmail: sendConformEmail as g.GraphQLFieldConfig<
-                void,
-                void,
-                any
-            >,
-            getAccessTokenAndUpdateRefreshToken: getAccessTokenAndUpdateRefreshToken as g.GraphQLFieldConfig<
-                void,
-                void,
-                any
-            >,
-            updateProfile: updateProfile as g.GraphQLFieldConfig<
-                void,
-                void,
-                any
-            >,
-            sellProduct: sellProduct as g.GraphQLFieldConfig<void, void, any>
+            getLogInUrl,
+            sendConformEmail,
+            getAccessTokenAndUpdateRefreshToken,
+            updateProfile,
+            sellProduct
         }
     })
 });
