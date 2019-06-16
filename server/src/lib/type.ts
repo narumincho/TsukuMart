@@ -23,7 +23,7 @@ const urlTypeScalarTypeConfig: g.GraphQLScalarTypeConfig<URL, string> = {
     }
 };
 
-const urlGraphQLType = new g.GraphQLScalarType(urlTypeScalarTypeConfig);
+export const urlGraphQLType = new g.GraphQLScalarType(urlTypeScalarTypeConfig);
 
 /** ===================================
  *           Data URL
@@ -42,7 +42,10 @@ const dataUrlParser = (value: string): DataURLInternal => {
     };
 };
 
-const dataUrlTypeConfig: g.GraphQLScalarTypeConfig<DataURLInternal, string> = {
+export const dataUrlTypeConfig: g.GraphQLScalarTypeConfig<
+    DataURLInternal,
+    string
+> = {
     name: "DataURL",
     description: "DataURL base64エンコードのみサポート",
     serialize: (value: DataURLInternal): string =>
@@ -60,7 +63,7 @@ const dataUrlTypeConfig: g.GraphQLScalarTypeConfig<DataURLInternal, string> = {
     }
 };
 
-const dataUrlGraphQLType = new g.GraphQLScalarType(dataUrlTypeConfig);
+export const dataUrlGraphQLType = new g.GraphQLScalarType(dataUrlTypeConfig);
 
 /** ===================================
  *           AccountService
@@ -86,7 +89,7 @@ const accountServiceValues = {
 
 export type AccountService = keyof (typeof accountServiceValues);
 
-const accountServiceGraphQLType = new g.GraphQLEnumType({
+export const accountServiceGraphQLType = new g.GraphQLEnumType({
     name: "AccountService",
     values: accountServiceValues,
     description: "ソーシャルログインを提供するサービス"
@@ -116,7 +119,7 @@ const unitValues = {
 };
 export type Unit = keyof (typeof unitValues);
 
-const unitGraphQLType = new g.GraphQLEnumType({
+export const unitGraphQLType = new g.GraphQLEnumType({
     name: "Unit",
     values: unitValues,
     description: "Mutationで無事処理が成功したことを表現する型"
@@ -274,13 +277,13 @@ const universityField = {
     }
 };
 
-const universityGraphQLInputType = new g.GraphQLInputObjectType({
+export const universityGraphQLInputType = new g.GraphQLInputObjectType({
     name: "UniversityInput",
     fields: universityField,
     description: "大学での所属"
 });
 
-const universityGraphQLObjectType = new g.GraphQLObjectType({
+export const universityGraphQLObjectType = new g.GraphQLObjectType({
     name: "University",
     fields: universityField,
     description: "大学での所属"
@@ -290,7 +293,7 @@ const universityGraphQLObjectType = new g.GraphQLObjectType({
  *    Refresh Token And Access Token
  * ====================================
  */
-const refreshTokenAndAccessTokenGraphQLType = new g.GraphQLObjectType({
+export const refreshTokenAndAccessTokenGraphQLType = new g.GraphQLObjectType({
     name: "refreshTokenAndAccessToken",
     fields: {
         refreshToken: {
@@ -313,40 +316,8 @@ export type RefreshTokenAndAccessToken = {
  *            User
  * ===============================
  */
-const userGraphQLType = new g.GraphQLObjectType({
-    name: "User",
-    fields: () => ({
-        id: {
-            type: g.GraphQLNonNull(g.GraphQLString),
-            description: "ユーザーを識別するためのID"
-        },
-        displayName: {
-            type: g.GraphQLNonNull(g.GraphQLString),
-            description: "表示名"
-        },
-        imageUrl: {
-            type: g.GraphQLNonNull(urlGraphQLType),
-            description: "プロフィール画像のURL"
-        },
-        introduction: {
-            type: g.GraphQLNonNull(g.GraphQLString),
-            description: "紹介文"
-        },
-        university: {
-            type: g.GraphQLNonNull(universityGraphQLObjectType),
-            description: "所属"
-        },
-        selledProductAll: {
-            type: g.GraphQLNonNull(
-                g.GraphQLList(g.GraphQLNonNull(productGraphQLType))
-            ),
-            description: "出品した商品すべて"
-        }
-    }),
-    description: "ユーザー"
-});
 
-type UserInternal = {
+export type UserInternal = {
     id: string;
     displayName: string;
     imageUrl: URL;
@@ -376,51 +347,6 @@ export const userToInternal = (user: User): UserInternal => ({
  *         User Private
  * ===============================
  */
-const userPrivateGraphQLType = new g.GraphQLObjectType({
-    name: "UserPrivate",
-    fields: () => ({
-        id: {
-            type: g.GraphQLNonNull(g.GraphQLString),
-            description: "ユーザーを識別するためのID"
-        },
-        displayName: {
-            type: g.GraphQLNonNull(g.GraphQLString),
-            description: "表示名"
-        },
-        imageUrl: {
-            type: g.GraphQLNonNull(urlGraphQLType),
-            description: "プロフィール画像のURL"
-        },
-        introduction: {
-            type: g.GraphQLNonNull(g.GraphQLString),
-            description: "紹介文"
-        },
-        university: {
-            type: g.GraphQLNonNull(universityGraphQLObjectType),
-            description: "所属"
-        },
-        selledProductAll: {
-            type: g.GraphQLNonNull(
-                g.GraphQLList(g.GraphQLNonNull(productGraphQLType))
-            ),
-            description: "出品した商品すべて"
-        },
-        buyedProductAll: {
-            type: g.GraphQLNonNull(
-                g.GraphQLList(g.GraphQLNonNull(productGraphQLType))
-            ),
-            description: "購入した商品すべて"
-        },
-        likedProductAll: {
-            type: g.GraphQLNonNull(
-                g.GraphQLList(g.GraphQLNonNull(productGraphQLType))
-            ),
-            description: "いいねした商品すべて"
-        }
-    }),
-    description: "個人的な情報を含んだユーザーの情報"
-});
-
 export type UserPrivateInternal = {
     id: string;
     displayName: string;
@@ -460,36 +386,16 @@ export const userPrivateToInternal = (
  *           Product
  * ===============================
  */
-const productGraphQLType: g.GraphQLObjectType<
-    void,
-    void,
-    {}
-> = new g.GraphQLObjectType({
-    name: "Item",
-    fields: () => ({
-        id: {
-            type: g.GraphQLNonNull(g.GraphQLString)
-        },
-        name: {
-            type: g.GraphQLNonNull(g.GraphQLString)
-        },
-        price: {
-            type: g.GraphQLNonNull(g.GraphQLInt)
-        },
-        seller: {
-            type: g.GraphQLNonNull(userGraphQLType)
-        }
-    })
-});
-
-type ProductInternal = {
+export type ProductInternal = {
     id: string;
     name: string;
     price: number;
     seller: UserInternal;
 };
 
-type Product = {
+export type ProductInternalNeedReturn = "id";
+
+export type Product = {
     id: string;
     name: string;
     price: number;
@@ -535,314 +441,7 @@ export const logInServiceAndIdFromString = (
     };
 };
 
-/** ==============================
- *          Input Type
- * ===============================
- */
-type InputType<Internal extends InputTypeInternal, Nullable extends boolean> = {
-    type: Internal;
-    nullable: Nullable;
-};
-
-const enum InputTypeInternal {
-    String,
-    AccountService,
-    DataUrl,
-    University
-}
-
-export const nullableInputType = <O extends InputTypeInternal>(
-    nonNullInputType: InputType<O, false>
-): InputType<O, true> => ({
-    type: nonNullInputType.type,
-    nullable: true
-});
-
-/**
- * 文字列の入力。nullにはならない
- */
-export const stringInputType = {
-    type: InputTypeInternal.String,
-    nullable: false
-} as const;
-
-/**
- * ソーシャルログインで使うアカウントを提供するサービス。nullにはならない
- */
-export const accountServiceInputType = {
-    type: InputTypeInternal.AccountService,
-    nullable: false
-} as const;
-
-/**
- * DataURL。nullにはならない
- */
-export const dataUrlInputType = {
-    type: InputTypeInternal.DataUrl,
-    nullable: false
-} as const;
-
-/**
- * 大学での所属。nullにはならない
- */
-export const universityInputType = {
-    type: InputTypeInternal.University,
-    nullable: false
-} as const;
-
-type InputTypeToGraphQLType<
-    O extends InputType<InputTypeInternal, boolean>
-> = O extends InputType<infer Internal, true>
-    ? Maybe<InputTypeInternalToGraphQLType<Internal>>
-    : O extends InputType<infer Internal, false>
-    ? InputTypeInternalToGraphQLType<Internal>
-    : never;
-
-type InputTypeInternalToGraphQLType<
-    O extends InputTypeInternal
-> = O extends InputTypeInternal.String
-    ? string
-    : O extends InputTypeInternal.AccountService
-    ? AccountService
-    : O extends InputTypeInternal.DataUrl
-    ? DataURLInternal
-    : O extends InputTypeInternal.University
-    ? UniversityInternal
-    : never;
-
-const inputTypeToGraphQLType = (
-    inputType: InputType<InputTypeInternal, boolean>
-): g.GraphQLInputType => {
-    if (inputType.nullable) {
-        return inputTypeInternalToGraphQLType(inputType.type);
-    } else {
-        return g.GraphQLNonNull(inputTypeInternalToGraphQLType(inputType.type));
-    }
-};
-
-const inputTypeInternalToGraphQLType = (
-    inputType: InputTypeInternal
-): g.GraphQLNullableType & g.GraphQLInputType => {
-    switch (inputType) {
-        case InputTypeInternal.String:
-            return g.GraphQLString;
-        case InputTypeInternal.AccountService:
-            return accountServiceGraphQLType;
-        case InputTypeInternal.DataUrl:
-            return dataUrlGraphQLType;
-        case InputTypeInternal.University:
-            return universityGraphQLInputType;
-    }
-};
-
-export const inputTypeDescription = (
-    inputType: InputType<InputTypeInternal, boolean>
-): Maybe<string> => {
-    switch (inputType.type) {
-        case InputTypeInternal.String:
-            return g.GraphQLString.description;
-        case InputTypeInternal.AccountService:
-            return accountServiceGraphQLType.description;
-        case InputTypeInternal.DataUrl:
-            return dataUrlGraphQLType.description;
-        case InputTypeInternal.University:
-            return universityGraphQLInputType.description;
-    }
-};
-/** ==============================
- *          Output Type
- * ===============================
- */
-export type OutputType<O extends OutputTypeInternal, IsList extends boolean> = {
-    internal: O;
-    isList: IsList;
-};
-
-const enum OutputTypeInternal {
-    String,
-    Unit,
-    Url,
-    RefreshTokenAndAccessToken,
-    User,
-    UserPrivate,
-    Product
-}
-
-export const stringOutputType: OutputType<OutputTypeInternal.String, false> = {
-    internal: OutputTypeInternal.String,
-    isList: false
-};
-
-export const unitOutputType: OutputType<OutputTypeInternal.Unit, false> = {
-    internal: OutputTypeInternal.Unit,
-    isList: false
-};
-
-export const urlOutputType: OutputType<OutputTypeInternal.Url, false> = {
-    internal: OutputTypeInternal.Url,
-    isList: false
-};
-
-export const refreshTokenAndAccessTokenOutputType: OutputType<
-    OutputTypeInternal.RefreshTokenAndAccessToken,
-    false
-> = {
-    internal: OutputTypeInternal.RefreshTokenAndAccessToken,
-    isList: false
-};
-
-export const userOutputType: OutputType<OutputTypeInternal.User, false> = {
-    internal: OutputTypeInternal.User,
-    isList: false
-};
-
-export const userPrivateOutputType: OutputType<
-    OutputTypeInternal.UserPrivate,
-    false
-> = {
-    internal: OutputTypeInternal.UserPrivate,
-    isList: false
-};
-
-export const productOutputType: OutputType<
-    OutputTypeInternal.Product,
-    false
-> = {
-    internal: OutputTypeInternal.Product,
-    isList: false
-};
-
-export const listOutputType = <Internal extends OutputTypeInternal>(
-    outputType: OutputType<Internal, false>
-): OutputType<Internal, true> => ({
-    internal: outputType.internal,
-    isList: true
-});
-
-type OutputTypeToGraphQLType<
-    O extends OutputType<OutputTypeInternal, boolean>
-> = O extends OutputType<infer Internal, true>
-    ? Array<OutputTypeInternalToGraphQLType<Internal>>
-    : O extends OutputType<infer Internal, false>
-    ? OutputTypeInternalToGraphQLType<Internal>
-    : never;
-
-type OutputTypeInternalToGraphQLType<
-    Internal extends OutputTypeInternal
-> = Internal extends OutputTypeInternal.String
-    ? string
-    : Internal extends OutputTypeInternal.Unit
-    ? Unit
-    : Internal extends OutputTypeInternal.Url
-    ? URL
-    : Internal extends OutputTypeInternal.RefreshTokenAndAccessToken
-    ? RefreshTokenAndAccessToken
-    : Internal extends OutputTypeInternal.User
-    ? UserInternal
-    : Internal extends OutputTypeInternal.UserPrivate
-    ? UserPrivateInternal
-    : Internal extends OutputTypeInternal.Product
-    ? ProductInternal
-    : never;
-
-const outputTypeToGraphQLType = (
-    outType: OutputType<OutputTypeInternal, boolean>
-): g.GraphQLOutputType => {
-    if (outType.isList) {
-        return g.GraphQLNonNull(
-            g.GraphQLList(outputTypeInternalToGraphQLType(outType.internal))
-        );
-    }
-    return outputTypeInternalToGraphQLType(outType.internal);
-};
-
-const outputTypeInternalToGraphQLType = (
-    internal: OutputTypeInternal
-): g.GraphQLOutputType => {
-    switch (internal) {
-        case OutputTypeInternal.String:
-            return g.GraphQLNonNull(g.GraphQLString);
-        case OutputTypeInternal.Unit:
-            return g.GraphQLNonNull(unitGraphQLType);
-        case OutputTypeInternal.Url:
-            return g.GraphQLNonNull(urlGraphQLType);
-        case OutputTypeInternal.RefreshTokenAndAccessToken:
-            return g.GraphQLNonNull(refreshTokenAndAccessTokenGraphQLType);
-        case OutputTypeInternal.User:
-            return g.GraphQLNonNull(userGraphQLType);
-        case OutputTypeInternal.UserPrivate:
-            return g.GraphQLNonNull(userPrivateGraphQLType);
-        case OutputTypeInternal.Product:
-            return g.GraphQLNonNull(productGraphQLType);
-    }
-};
-
-export const outputTypeDescription = (
-    outputType: OutputType<OutputTypeInternal, boolean>
-): Maybe<string> => {
-    switch (outputType.internal) {
-        case OutputTypeInternal.String:
-            return g.GraphQLString.description;
-        case OutputTypeInternal.Unit:
-            return unitGraphQLType.description;
-        case OutputTypeInternal.Url:
-            return urlGraphQLType.description;
-        case OutputTypeInternal.RefreshTokenAndAccessToken:
-            return refreshTokenAndAccessTokenGraphQLType.description;
-        case OutputTypeInternal.User:
-            return userGraphQLType.description;
-        case OutputTypeInternal.UserPrivate:
-            return userPrivateGraphQLType.description;
-        case OutputTypeInternal.Product:
-            return productGraphQLType.description;
-    }
-};
-
 /**
  * アクセストークンの説明
  */
 export const accessTokenDescription = "アクセストークン。署名付きユーザーID";
-
-/**
- * 型安全にGraphQLFieldConfigをつくる
- */
-export const makeGraphQLFieldConfig = <
-    O extends OutputType<OutputTypeInternal, boolean>,
-    Args extends {
-        [key in string]: {
-            type: InputType<InputTypeInternal, boolean>;
-            description: Maybe<string>;
-        }
-    }
->(arg: {
-    args: Args;
-    type: O;
-    resolve: (
-        args: { [K in keyof Args]: InputTypeToGraphQLType<Args[K]["type"]> }
-    ) => Promise<OutputTypeToGraphQLType<O>>;
-    description: string;
-}): g.GraphQLFieldConfig<void, void, any> => {
-    return {
-        type: outputTypeToGraphQLType(arg.type),
-        args: noExtendTypeObjectKeys(arg.args).reduce(
-            (result, key) => {
-                result[key] = {
-                    type: inputTypeToGraphQLType(arg.args[key].type),
-                    description: arg.args[key].description
-                };
-                return result;
-            },
-            {} as { [k in keyof Args]: g.GraphQLArgumentConfig }
-        ),
-        resolve: (
-            source: void,
-            args,
-            context: void,
-            info: g.GraphQLResolveInfo
-        ) => arg.resolve(args),
-        description: arg.description
-    };
-};
-
-const noExtendTypeObjectKeys = <O>(object: O): Array<keyof O> =>
-    Object.keys(object) as Array<keyof O>;

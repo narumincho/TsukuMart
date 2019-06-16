@@ -31,6 +31,9 @@ const twitterLogInTokenSecretDocumentRef: FirebaseFirestore.DocumentReference = 
 const lineLogInStateCollection: FirebaseFirestore.CollectionReference = dataBase.collection(
     "lineState"
 );
+const productCollectionRef: FirebaseFirestore.CollectionReference = dataBase.collection(
+    "product"
+);
 
 /* ==========================================
                     ユーザー
@@ -49,11 +52,12 @@ type UserData = {
 /**
  * ユーザーを取得する
  * @param id
+ * @throws {Error} userId ${id} dose not exists
  */
 export const getUserDataFromId = async (id: string): Promise<UserData> => {
     const userData = (await (await userCollectionRef.doc(id)).get()).data();
     if (userData === undefined) {
-        throw new Error("userId=" + id + "dose not exsits");
+        throw new Error(`userId ${id} dose not exists`);
     }
     return userData as UserData;
 };
@@ -81,10 +85,11 @@ export const addUserData = async (data: UserData): Promise<string> => {
 /**
  * すべてのユーザーのデータを取得する
  */
-export const getAllUserData = async (): Promise<Array<UserData>> => {
+export const getAllUserData = async (): Promise<
+    Array<{ id: string; data: UserData }>
+> => {
     const allUserQuerySnapshot = await userCollectionRef.get();
-    const allUserDocData = await querySnapshotPromise(allUserQuerySnapshot);
-    return allUserDocData as Array<UserData>;
+    return (await querySnapshotPromise(allUserQuerySnapshot)) as Array<{ id: string; data: UserData }>;
 };
 
 /**
@@ -100,21 +105,28 @@ export const getUserListFrom = async <Filed extends keyof UserData>(
 ): Promise<firestore.QueryDocumentSnapshot[]> =>
     (await userCollectionRef.where(filedName, operator, value).get()).docs;
 
+/**
+ * クエリの解析結果をPromiseに変換する
+ * @param querySnapshot
+ */
 const querySnapshotPromise = (
     querySnapshot: FirebaseFirestore.QuerySnapshot
-): Promise<Array<FirebaseFirestore.DocumentData>> =>
+): Promise<Array<{ id: string; data: FirebaseFirestore.DocumentData }>> =>
     new Promise((resolve, reject) => {
         const size = querySnapshot.size;
-        const resultList: Array<FirebaseFirestore.DocumentData> = [];
+        const resultList: Array<{
+            id: string;
+            data: FirebaseFirestore.DocumentData;
+        }> = [];
         querySnapshot.forEach(result => {
-            resultList.push(result.data());
+            resultList.push({ id: result.id, data: result.data() });
             if (resultList.length === size - 1) {
                 resolve(resultList);
             }
         });
     });
 
-    /* ==========================================
+/* ==========================================
             User Before Input Data
    ==========================================
 */
@@ -193,6 +205,29 @@ export const deleteUserBeforeEmailVerification = async (
     await userBeforeEmailVerificationCollection
         .doc(type.logInServiceAndIdToString(logInAccountServiceId))
         .delete();
+};
+/* ==========================================
+                    Product
+   ==========================================
+*/
+type Product = {
+    name: string;
+    price: number;
+    sellerId: string;
+    sellerName: string;
+    sellerImageUrl: string;
+};
+/**
+ * 商品の情報を取得する
+ * @param id
+ * @throws {Error} productId ${id} dose not exists
+ */
+export const getProduct = async (id: string): Promise<Product> => {
+    const data = (await productCollectionRef.doc(id).get()).data();
+    if (data === undefined) {
+        throw new Error(`productId ${id} dose not exists`);
+    }
+    return data as Product;
 };
 /* ==========================================
                 Time Stamp

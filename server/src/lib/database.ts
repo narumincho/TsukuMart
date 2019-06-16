@@ -211,7 +211,7 @@ export const getAccessTokenAndRefreshToken = async (
 
 export const getAccessTokenAndUpdateRefreshToken = async (
     refreshToken: string
-): Promise<{ refreshToken: string; accessToken: string }> => {
+): Promise<type.RefreshTokenAndAccessToken> => {
     const decoded = jwt.verify(refreshToken, key.refreshTokenSecretKey, {
         algorithms: ["HS256"]
     }) as { sub: unknown; jti: unknown };
@@ -330,19 +330,22 @@ export const getUserData = async (
  */
 export const getAllUser = async (): Promise<
     Array<{
+        id: string;
         displayName: string;
         imageUrl: URL;
         university: type.University;
+        introduction: string;
     }>
 > =>
-    (await databaseLow.getAllUserData()).map(docData => ({
-        displayName: docData.displayName,
-        imageUrl: new URL(docData.imageUrl),
+    (await databaseLow.getAllUserData()).map(({ id, data }) => ({
+        id: id,
+        displayName: data.displayName,
+        imageUrl: new URL(data.imageUrl),
         university: type.universityFromInternal({
-            graduate: docData.graduate,
-            schoolAndDepartment: docData.schoolAndDepartment
+            graduate: data.graduate,
+            schoolAndDepartment: data.schoolAndDepartment
         }),
-        introduction: docData.introduction
+        introduction: data.introduction
     }));
 
 export const setProfile = async (

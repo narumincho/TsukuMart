@@ -6,23 +6,22 @@ import * as key from "./key";
 import * as database from "./database";
 import * as twitterLogIn from "./twitterLogIn";
 import * as jwt from "jsonwebtoken";
+import Maybe from "graphql/tsutils/Maybe";
 
 const makeObjectFieldMap = <
-    Type extends { [k in string]: unknown },
-    NeedReturn extends keyof Type
+    Type extends { [k in string]: unknown } & { id: string }
 >(
     args: {
-        [Key in keyof Type]: Key extends NeedReturn
+        [Key in keyof Type]: Key extends "id"
             ? {
                   type: g.GraphQLOutputType;
               }
-            : GraphQLFieldConfigWithArgs<Type, NeedReturn, Key>
+            : GraphQLFieldConfigWithArgs<Type, Key>
     }
 ): g.GraphQLFieldConfigMap<Type, void, any> => args;
 
 type GraphQLFieldConfigWithArgs<
     Type extends { [k in string]: unknown },
-    NeedReturn extends keyof Type,
     Key extends keyof Type
 > = {
     type: g.GraphQLOutputType;
@@ -32,8 +31,7 @@ type GraphQLFieldConfigWithArgs<
 };
 
 const makeField = <
-    Type extends { [k in string]: unknown },
-    NeedReturn extends keyof Type,
+    Type extends { [k in string]: unknown } & { id: string },
     Key extends keyof Type,
     T extends { [k in string]: { type: g.GraphQLInputType } } // for allがあればなぁ
 >(args: {
@@ -41,83 +39,198 @@ const makeField = <
     args: T;
     resolve: (
         source: {
-            [a in keyof Type]: a extends NeedReturn
-                ? Type[a]
-                : Type[a] | undefined
+            [a in keyof Type]: a extends "id" ? Type[a] : Type[a] | undefined
         },
         args: T,
         context: void,
         info: g.GraphQLResolveInfo
-    ) => Type[Key];
+    ) => Type[Key] extends { id: string }
+        ? Partial<Type[Key]> & { id: string }
+        : Type[Key];
     description: string;
-}): GraphQLFieldConfigWithArgs<Type, NeedReturn, Key> => ({
+}): GraphQLFieldConfigWithArgs<Type, Key> => ({
     type: args.type,
     args: args.args,
     resolve: args.resolve as any,
     description: args.description
 });
 
-type InnerObject = {
-    readonly id: string;
-    name: string;
-    imageUrl: string;
-    number: number;
-};
+type Return<Type extends { [k in string]: unknown } & { id: string }> = {
+    id: string;
+} & { [a in keyof Type]?: Type[a] };
 
-type InnerObjectNeedReturn = "id";
+/*  =============================================================
+                            Product
+    =============================================================
+*/
 
-type Return<
-    Type extends { [k in string]: unknown },
-    NeedReturn extends keyof Type
-> = { [a in NeedReturn]: Type[a] } & { [a in keyof Type]?: Type[a] };
+const productGraphQLType: g.GraphQLObjectType<
+    type.Product,
+    void,
+    {}
+> = new g.GraphQLObjectType({
+    name: "Item",
+    fields: () =>
+        makeObjectFieldMap<type.Product>({
+            id: {
+                type: g.GraphQLNonNull(g.GraphQLString)
+            },
+            name: makeField({
+                type: g.GraphQLNonNull(g.GraphQLString),
+                args: {},
+                resolve: (source, args, context, info) => {
+                    return "商品名";
+                },
+                description: "商品名"
+            }),
+            price: makeField({
+                type: g.GraphQLNonNull(g.GraphQLInt),
+                args: {},
+                resolve: (source, args, context, info) => {
+                    return 12;
+                },
+                description: "値段"
+            }),
+            seller: makeField({
+                type: g.GraphQLNonNull(userGraphQLType),
+                args: {},
+                resolve: (source, args, context, info): Return<type.User> => {
+                    return {
+                        id: "10"
+                    };
+                },
+                description: "出品者"
+            })
+        })
+});
+/*  =============================================================
+                            User
+    =============================================================
+*/
+const userGraphQLType = new g.GraphQLObjectType({
+    name: "User",
+    fields: () => ({
+        id: {
+            type: g.GraphQLNonNull(g.GraphQLString),
+            description: "ユーザーを識別するためのID"
+        },
+        displayName: {
+            type: g.GraphQLNonNull(g.GraphQLString),
+            description: "表示名"
+        },
+        imageUrl: {
+            type: g.GraphQLNonNull(type.urlGraphQLType),
+            description: "プロフィール画像のURL"
+        },
+        introduction: {
+            type: g.GraphQLNonNull(g.GraphQLString),
+            description: "紹介文"
+        },
+        university: {
+            type: g.GraphQLNonNull(type.universityGraphQLObjectType),
+            description: "所属"
+        },
+        selledProductAll: {
+            type: g.GraphQLNonNull(
+                g.GraphQLList(g.GraphQLNonNull(productGraphQLType))
+            ),
+            description: "出品した商品すべて"
+        }
+    }),
+    description: "ユーザー"
+});
+/** ==============================
+ *         User Private
+ * ===============================
+ */
+export const userPrivateGraphQLType = new g.GraphQLObjectType({
+    name: "UserPrivate",
+    fields: () => ({
+        id: {
+            type: g.GraphQLNonNull(g.GraphQLString),
+            description: "ユーザーを識別するためのID"
+        },
+        displayName: {
+            type: g.GraphQLNonNull(g.GraphQLString),
+            description: "表示名"
+        },
+        imageUrl: {
+            type: g.GraphQLNonNull(type.urlGraphQLType),
+            description: "プロフィール画像のURL"
+        },
+        introduction: {
+            type: g.GraphQLNonNull(g.GraphQLString),
+            description: "紹介文"
+        },
+        university: {
+            type: g.GraphQLNonNull(type.universityGraphQLObjectType),
+            description: "所属"
+        },
+        selledProductAll: {
+            type: g.GraphQLNonNull(
+                g.GraphQLList(g.GraphQLNonNull(productGraphQLType))
+            ),
+            description: "出品した商品すべて"
+        },
+        buyedProductAll: {
+            type: g.GraphQLNonNull(
+                g.GraphQLList(g.GraphQLNonNull(productGraphQLType))
+            ),
+            description: "購入した商品すべて"
+        },
+        likedProductAll: {
+            type: g.GraphQLNonNull(
+                g.GraphQLList(g.GraphQLNonNull(productGraphQLType))
+            ),
+            description: "いいねした商品すべて"
+        }
+    }),
+    description: "個人的な情報を含んだユーザーの情報"
+});
 
 /*  =============================================================
                             Query
     =============================================================
 */
 
-const hello = makeField({
+const hello: g.GraphQLFieldConfig<void, void, {}> = {
     args: {},
     type: g.GraphQLNonNull(g.GraphQLString),
     resolve: async (): Promise<string> => {
         return "Hello World!";
     },
     description: "世界に挨拶する"
-});
+};
 
-const userAll = type.makeGraphQLFieldConfig({
+const userAll: g.GraphQLFieldConfig<void, void, {}> = {
+    type: g.GraphQLNonNull(g.GraphQLList(g.GraphQLNonNull(userGraphQLType))),
     args: {},
-    type: type.listOutputType(type.userOutputType),
-    resolve: async () => {
-        return [
-            {
-                id: "id",
-                introduction: "紹介文",
-                imageUrl: new URL(
-                    "https://tsukumart-f0971.web.app/temp_temp_temp"
-                ),
-                displayName: "表示名",
-                university: {
-                    graduate: "education",
-                    schoolAndDepartment: "mast"
-                },
-                selledProductAll: []
-            }
-        ];
+    resolve: async (): Promise<Array<Return<type.UserInternal>>> => {
+        return (await database.getAllUser()).map(
+            ({ id, displayName, imageUrl, introduction }) => ({
+                id,
+                displayName,
+                imageUrl,
+                introduction
+            })
+        );
     },
     description: "すべてのユーザーの情報を取得する"
-});
+};
 
-const userPrivate = type.makeGraphQLFieldConfig({
+const userPrivate: g.GraphQLFieldConfig<void, void, { accessToken: string }> = {
     args: {
         accessToken: {
-            type: type.stringInputType,
+            type: g.GraphQLNonNull(g.GraphQLString),
             description: type.accessTokenDescription
         }
     },
-    type: type.userPrivateOutputType,
-    resolve: async ({ accessToken }) => {
-        const accessTokenData = database.verifyAccessToken(accessToken);
+    type: userPrivateGraphQLType,
+    resolve: async (
+        source,
+        args
+    ): Promise<Return<type.UserPrivateInternal>> => {
+        const accessTokenData = database.verifyAccessToken(args.accessToken);
         const userData = await database.getUserData(accessTokenData.id);
         return {
             id: accessTokenData.id,
@@ -131,11 +244,11 @@ const userPrivate = type.makeGraphQLFieldConfig({
         };
     },
     description: "個人的な情報を含んだユーザーの情報を取得する"
-});
+};
 
-const productAll = type.makeGraphQLFieldConfig({
+const productAll: g.GraphQLFieldConfig<void, void, {}> = {
     args: {},
-    type: type.listOutputType(type.productOutputType),
+    type: g.GraphQLNonNull(g.GraphQLList(g.GraphQLNonNull(productGraphQLType))),
     resolve: async () => {
         return [
             {
@@ -159,7 +272,7 @@ const productAll = type.makeGraphQLFieldConfig({
         ];
     },
     description: "すべての商品(売れたものも含まれる)を取得する"
-});
+};
 
 /*  =============================================================
                             Mutation
@@ -169,9 +282,19 @@ const productAll = type.makeGraphQLFieldConfig({
 /**
  * 新規登録かログインするためのURLを得る。
  */
-const getLogInUrl = type.makeGraphQLFieldConfig({
-    type: type.urlOutputType,
-    resolve: async args => {
+const getLogInUrl: g.GraphQLFieldConfig<
+    void,
+    void,
+    { service: type.AccountService }
+> = {
+    type: g.GraphQLNonNull(type.urlGraphQLType),
+    args: {
+        service: {
+            type: type.accountServiceGraphQLType,
+            description: type.accountServiceGraphQLType.description
+        }
+    },
+    resolve: async (source, args) => {
         const accountService = args.service;
         switch (accountService) {
             case "google": {
@@ -230,22 +353,49 @@ const getLogInUrl = type.makeGraphQLFieldConfig({
             }
         }
     },
-    args: {
-        service: {
-            type: type.accountServiceInputType,
-            description: type.inputTypeDescription(type.accountServiceInputType)
-        }
-    },
     description:
         "新規登録かログインするためのURLを得る。受け取ったURLをlocation.hrefに代入するとかして、各サービスの認証画面へ"
-});
+};
 
 /**
  * ユーザー情報を登録して認証メールを送信する
  */
-const sendConformEmail = type.makeGraphQLFieldConfig({
-    type: type.unitOutputType,
-    resolve: async args => {
+const sendConformEmail: g.GraphQLFieldConfig<
+    void,
+    void,
+    {
+        sendEmailToken: string;
+        name: string;
+        image: Maybe<type.DataURLInternal>;
+        university: type.UniversityInternal;
+        email: string;
+    }
+> = {
+    type: type.unitGraphQLType,
+    args: {
+        sendEmailToken: {
+            type: g.GraphQLNonNull(g.GraphQLString),
+            description: "認証メールを送るのに必要なトークン"
+        },
+        name: {
+            type: g.GraphQLNonNull(g.GraphQLString),
+            description: "表示名"
+        },
+        image: {
+            type: type.dataUrlGraphQLType,
+            description:
+                "画像(DataURL) ソーシャルログインで使ったサービスのままならnull"
+        },
+        university: {
+            type: type.universityGraphQLInputType,
+            description: type.universityGraphQLInputType.description
+        },
+        email: {
+            type: g.GraphQLNonNull(g.GraphQLString),
+            description: "メールアドレス"
+        }
+    },
+    resolve: async (source, args): Promise<type.Unit> => {
         const universityUnsafe = args.university;
         const logInAccountServiceId = verifySendEmailToken(args.sendEmailToken);
         // if (!args.email.match(/s(\d{7})@[a-zA-Z0-9]+\.tsukuba\.ac\.jp/)) {
@@ -275,31 +425,8 @@ const sendConformEmail = type.makeGraphQLFieldConfig({
         );
         return "ok";
     },
-    args: {
-        sendEmailToken: {
-            type: type.stringInputType,
-            description: "認証メールを送るのに必要なトークン"
-        },
-        name: {
-            type: type.stringInputType,
-            description: "表示名"
-        },
-        image: {
-            type: type.nullableInputType(type.dataUrlInputType),
-            description:
-                "画像(DataURL) ソーシャルログインで使ったサービスのままならnull"
-        },
-        university: {
-            type: type.universityInputType,
-            description: type.inputTypeDescription(type.universityInputType)
-        },
-        email: {
-            type: type.stringInputType,
-            description: "メールアドレス"
-        }
-    },
     description: "ユーザー情報を登録して認証メールを送信する"
-});
+};
 
 const verifySendEmailToken = (
     sendEmailToken: string
@@ -315,50 +442,61 @@ const verifySendEmailToken = (
 /**
  * アクセストークンの取得とリフレッシュトークンの更新
  */
-const getAccessTokenAndUpdateRefreshToken = type.makeGraphQLFieldConfig({
-    type: type.refreshTokenAndAccessTokenOutputType,
+const getAccessTokenAndUpdateRefreshToken: g.GraphQLFieldConfig<
+    void,
+    void,
+    { refreshToken: string }
+> = {
+    type: type.refreshTokenAndAccessTokenGraphQLType,
     args: {
         refreshToken: {
-            type: type.stringInputType,
+            type: g.GraphQLNonNull(g.GraphQLString),
             description: "リフレッシュトークン"
         }
     },
-    resolve: async args =>
+    resolve: async (source, args): Promise<type.RefreshTokenAndAccessToken> =>
         await database.getAccessTokenAndUpdateRefreshToken(args.refreshToken),
     description: "アクセストークンの取得とリフレッシュトークンの更新"
-});
+};
 
-const updateProfile = type.makeGraphQLFieldConfig({
-    type: type.userPrivateOutputType,
+const updateProfile: g.GraphQLFieldConfig<
+    void,
+    void,
+    {
+        accessToken: string;
+        displayName: string;
+        image: Maybe<type.DataURLInternal>;
+        introduction: string;
+        university: type.UniversityInternal;
+    }
+> = {
+    type: userPrivateGraphQLType,
     args: {
         accessToken: {
-            type: type.stringInputType,
+            type: g.GraphQLNonNull(g.GraphQLString),
             description: type.accessTokenDescription
         },
         displayName: {
-            type: type.stringInputType,
+            type: g.GraphQLNonNull(g.GraphQLString),
             description: "表示名"
         },
         image: {
-            type: type.nullableInputType(type.dataUrlInputType),
+            type: type.dataUrlGraphQLType,
             description: "画像(DataURL) 変更しないならnull"
         },
         introduction: {
-            type: type.stringInputType,
+            type: g.GraphQLNonNull(g.GraphQLString),
             description: "紹介文"
         },
         university: {
-            type: type.universityInputType,
-            description: type.inputTypeDescription(type.universityInputType)
+            type: type.universityGraphQLInputType,
+            description: type.universityGraphQLInputType.description
         }
     },
-    resolve: async ({
-        accessToken,
-        displayName,
-        image,
-        introduction,
-        university
-    }) => {
+    resolve: async (
+        source,
+        { accessToken, displayName, image, introduction, university }
+    ) => {
         const { id } = database.verifyAccessToken(accessToken);
         return type.userPrivateToInternal(
             await database.setProfile(
@@ -371,17 +509,25 @@ const updateProfile = type.makeGraphQLFieldConfig({
         );
     },
     description: "プロフィールの更新"
-});
+};
 
-const sellProduct = type.makeGraphQLFieldConfig({
+const sellProduct: g.GraphQLFieldConfig<
+    void,
+    void,
+    { name: string; price: number }
+> = {
     args: {
         name: {
-            type: type.stringInputType,
+            type: g.GraphQLString,
             description: "商品名"
+        },
+        price: {
+            type: g.GraphQLInt,
+            description: "値段"
         }
     },
-    type: type.productOutputType,
-    resolve: async args => {
+    type: productGraphQLType,
+    resolve: async (source, args) => {
         return {
             id: "",
             name: "",
@@ -400,71 +546,46 @@ const sellProduct = type.makeGraphQLFieldConfig({
         };
     },
     description: "商品の出品"
-});
+};
 
-const innerObject: g.GraphQLObjectType<
-    InnerObject,
-    void,
-    any
-> = new g.GraphQLObjectType({
-    name: "InnerObject",
-    fields: makeObjectFieldMap<InnerObject, InnerObjectNeedReturn>({
-        id: {
-            type: g.GraphQLString
-        },
-        imageUrl: makeField({
-            type: g.GraphQLString,
-            args: {
-                name: {
-                    type: g.GraphQLString
-                }
-            },
-            resolve: (source, args, context, info) => {
-                source.name = "";
-                return "htttp://image.com";
-            },
-            description: "画像のURL"
-        }),
-        name: makeField({
-            type: g.GraphQLString,
-            args: {},
-            resolve: source => {
-                return "namae";
-            },
-            description: "名前"
-        }),
-        number: makeField({
-            type: g.GraphQLFloat,
-            args: {},
-            resolve: source => {
-                return 65;
-            },
-            description: "数"
-        })
-    })
-});
+/*  =============================================================
+                            Schema
+    =============================================================
+*/
 
 export const schema = new g.GraphQLSchema({
     query: new g.GraphQLObjectType({
         name: "Query",
         description:
             "データを取得できる。データを取得したときに影響は他に及ばさない",
-        fields: makeObjectFieldMap({
-            hello,
-            userAll,
-            userPrivate,
-            productAll
-        })
+        fields: {
+            hello: hello as g.GraphQLFieldConfig<void, void, any>,
+            userAll: userAll as g.GraphQLFieldConfig<void, void, any>,
+            userPrivate: userPrivate as g.GraphQLFieldConfig<void, void, any>,
+            productAll: productAll as g.GraphQLFieldConfig<void, void, any>
+        }
     }),
     mutation: new g.GraphQLObjectType({
         name: "Mutation",
         description: "データを作成、更新ができる",
         fields: {
-            getLogInUrl,
-            sendConformEmail,
-            getAccessTokenAndUpdateRefreshToken,
-            updateProfile,
-            sellProduct
+            getLogInUrl: getLogInUrl as g.GraphQLFieldConfig<void, void, any>,
+            sendConformEmail: sendConformEmail as g.GraphQLFieldConfig<
+                void,
+                void,
+                any
+            >,
+            getAccessTokenAndUpdateRefreshToken: getAccessTokenAndUpdateRefreshToken as g.GraphQLFieldConfig<
+                void,
+                void,
+                any
+            >,
+            updateProfile: updateProfile as g.GraphQLFieldConfig<
+                void,
+                void,
+                any
+            >,
+            sellProduct: sellProduct as g.GraphQLFieldConfig<void, void, any>
         }
     })
 });
