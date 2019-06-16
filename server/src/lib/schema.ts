@@ -6,15 +6,80 @@ import * as key from "./key";
 import * as database from "./database";
 import * as twitterLogIn from "./twitterLogIn";
 import * as jwt from "jsonwebtoken";
+
+const makeObjectFieldMap = <
+    Type extends { [k in string]: unknown },
+    NeedReturn extends keyof Type
+>(
+    args: {
+        [Key in keyof Type]: Key extends NeedReturn
+            ? {
+                  type: g.GraphQLOutputType;
+              }
+            : GraphQLFieldConfigWithArgs<Type, NeedReturn, Key>
+    }
+): g.GraphQLFieldConfigMap<Type, void, any> => args;
+
+type GraphQLFieldConfigWithArgs<
+    Type extends { [k in string]: unknown },
+    NeedReturn extends keyof Type,
+    Key extends keyof Type
+> = {
+    type: g.GraphQLOutputType;
+    args: any;
+    resolve: g.GraphQLFieldResolver<Type, void, any>;
+    description: string;
+};
+
+const makeField = <
+    Type extends { [k in string]: unknown },
+    NeedReturn extends keyof Type,
+    Key extends keyof Type,
+    T extends { [k in string]: { type: g.GraphQLInputType } } // for allがあればなぁ
+>(args: {
+    type: g.GraphQLOutputType;
+    args: T;
+    resolve: (
+        source: {
+            [a in keyof Type]: a extends NeedReturn
+                ? Type[a]
+                : Type[a] | undefined
+        },
+        args: T,
+        context: void,
+        info: g.GraphQLResolveInfo
+    ) => Type[Key];
+    description: string;
+}): GraphQLFieldConfigWithArgs<Type, NeedReturn, Key> => ({
+    type: args.type,
+    args: args.args,
+    resolve: args.resolve as any,
+    description: args.description
+});
+
+type InnerObject = {
+    readonly id: string;
+    name: string;
+    imageUrl: string;
+    number: number;
+};
+
+type InnerObjectNeedReturn = "id";
+
+type Return<
+    Type extends { [k in string]: unknown },
+    NeedReturn extends keyof Type
+> = { [a in NeedReturn]: Type[a] } & { [a in keyof Type]?: Type[a] };
+
 /*  =============================================================
                             Query
     =============================================================
 */
 
-const hello = type.makeGraphQLFieldConfig({
+const hello = makeField({
     args: {},
-    type: type.stringOutputType,
-    resolve: async () => {
+    type: g.GraphQLNonNull(g.GraphQLString),
+    resolve: async (): Promise<string> => {
         return "Hello World!";
     },
     description: "世界に挨拶する"
@@ -100,12 +165,12 @@ export const query = new g.GraphQLObjectType({
     name: "Query",
     description:
         "データを取得できる。データを取得したときに影響は他に及ばさない",
-    fields: {
+    fields: makeObjectFieldMap({
         hello,
         userAll,
         userPrivate,
         productAll
-    }
+    })
 });
 
 /*  =============================================================
@@ -361,67 +426,6 @@ export const mutation = new g.GraphQLObjectType({
     }
 });
 
-const makeObjectFieldMap = <
-    Type extends { [k in string]: unknown },
-    NeedReturn extends keyof Type
->(
-    args: {
-        [Key in keyof Type]: Key extends NeedReturn
-            ? {
-                  type: g.GraphQLOutputType;
-              }
-            : GraphQLFieldConfigWithArgs<Type, NeedReturn, Key>
-    }
-): g.GraphQLFieldConfigMap<Type, void, any> => args;
-
-type GraphQLFieldConfigWithArgs<
-    Type extends { [k in string]: unknown },
-    NeedReturn extends keyof Type,
-    Key extends keyof Type
-> = {
-    type: g.GraphQLOutputType;
-    args: any;
-    resolve: g.GraphQLFieldResolver<Type, void, any>;
-};
-
-const makeField = <
-    Type extends { [k in string]: unknown },
-    NeedReturn extends keyof Type,
-    Key extends keyof Type,
-    T extends { [k in string]: { type: g.GraphQLInputType } } // for allがあればなぁ
->(args: {
-    type: g.GraphQLOutputType;
-    args: T;
-    resolve: (
-        source: {
-            [a in keyof Type]: a extends NeedReturn
-                ? Type[a]
-                : Type[a] | undefined
-        },
-        args: T,
-        context: void,
-        info: g.GraphQLResolveInfo
-    ) => Type[Key];
-}): GraphQLFieldConfigWithArgs<Type, NeedReturn, Key> => ({
-    type: args.type,
-    args: args.args,
-    resolve: args.resolve as any
-});
-
-type InnerObject = {
-    readonly id: string;
-    name: string;
-    imageUrl: string;
-    number: number;
-};
-
-type InnerObjectNeedReturn = "id";
-
-type Return<
-    Type extends { [k in string]: unknown },
-    NeedReturn extends keyof Type
-> = { [a in NeedReturn]: Type[a] } & { [a in keyof Type]?: Type[a] };
-
 const innerObject: g.GraphQLObjectType<
     InnerObject,
     void,
@@ -441,22 +445,25 @@ const innerObject: g.GraphQLObjectType<
             },
             resolve: (source, args, context, info) => {
                 source.name = "";
-                return "";
-            }
+                return "htttp://image.com";
+            },
+            description: "画像のURL"
         }),
         name: makeField({
             type: g.GraphQLString,
             args: {},
             resolve: source => {
-                return "";
-            }
+                return "namae";
+            },
+            description: "名前"
         }),
         number: makeField({
             type: g.GraphQLFloat,
             args: {},
             resolve: source => {
                 return 65;
-            }
+            },
+            description: "数"
         })
     })
 });
@@ -472,8 +479,10 @@ export const schema = new g.GraphQLSchema({
                     return {
                         id: "53"
                     };
-                }
+                },
+                description: "サンプルオブジェクト"
             })
-        }
+        },
+        description: ""
     })
 });
