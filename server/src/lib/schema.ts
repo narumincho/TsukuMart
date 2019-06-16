@@ -161,18 +161,6 @@ const productAll = type.makeGraphQLFieldConfig({
     description: "すべての商品(売れたものも含まれる)を取得する"
 });
 
-export const query = new g.GraphQLObjectType({
-    name: "Query",
-    description:
-        "データを取得できる。データを取得したときに影響は他に及ばさない",
-    fields: makeObjectFieldMap({
-        hello,
-        userAll,
-        userPrivate,
-        productAll
-    })
-});
-
 /*  =============================================================
                             Mutation
     =============================================================
@@ -414,18 +402,6 @@ const sellProduct = type.makeGraphQLFieldConfig({
     description: "商品の出品"
 });
 
-export const mutation = new g.GraphQLObjectType({
-    name: "Mutation",
-    description: "データを作成、更新ができる",
-    fields: {
-        getLogInUrl,
-        sendConformEmail,
-        getAccessTokenAndUpdateRefreshToken,
-        updateProfile,
-        sellProduct
-    }
-});
-
 const innerObject: g.GraphQLObjectType<
     InnerObject,
     void,
@@ -471,18 +447,24 @@ const innerObject: g.GraphQLObjectType<
 export const schema = new g.GraphQLSchema({
     query: new g.GraphQLObjectType({
         name: "Query",
+        description:
+            "データを取得できる。データを取得したときに影響は他に及ばさない",
+        fields: makeObjectFieldMap({
+            hello,
+            userAll,
+            userPrivate,
+            productAll
+        })
+    }),
+    mutation: new g.GraphQLObjectType({
+        name: "Mutation",
+        description: "データを作成、更新ができる",
         fields: {
-            innerObject: makeField({
-                type: innerObject,
-                args: {},
-                resolve: (): Return<InnerObject, InnerObjectNeedReturn> => {
-                    return {
-                        id: "53"
-                    };
-                },
-                description: "サンプルオブジェクト"
-            })
-        },
-        description: ""
+            getLogInUrl,
+            sendConformEmail,
+            getAccessTokenAndUpdateRefreshToken,
+            updateProfile,
+            sellProduct
+        }
     })
 });
