@@ -81,7 +81,7 @@ export const addUserInUserBeforeInputData = async (
 ): Promise<void> => {
     await databaseLow.addUserBeforeInputData(logInServiceAndId, {
         name,
-        imageUrl
+        imageUrl: imageUrl.toString()
     });
 };
 
@@ -94,7 +94,15 @@ export const getUserInUserBeforeInputData = async (
 ): Promise<{
     name: string;
     imageUrl: URL;
-}> => await databaseLow.getUserBeforeInputData(logInAccountServiceId);
+}> => {
+    const data = await databaseLow.getAndDeleteUserBeforeInputData(
+        logInAccountServiceId
+    );
+    return {
+        name: data.name,
+        imageUrl: new URL(data.imageUrl)
+    };
+};
 /**
  * ユーザーのプロフィール画像をCloud Storageに保存する。ごくまれにファイル名がかぶるかも。
  * @param arrayBuffer バイナリ
@@ -128,7 +136,7 @@ export const addUserBeforeEmailVerificationAndSendEmail = async (
     await databaseLow.addUserBeforeEmailVerification(logInAccountServiceId, {
         firebaseAuthUserId: authUser.id,
         name: name,
-        imageUrl: imageUrl,
+        imageUrl: imageUrl.toString(),
         schoolAndDepartment: flatUniversity.schoolAndDepartment,
         graduate: flatUniversity.graduate
     });

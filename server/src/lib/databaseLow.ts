@@ -114,7 +114,7 @@ export const getUserListFromCondition = async <Field extends keyof UserData>(
 */
 type UserBeforeInputDataData = {
     name: string;
-    imageUrl: URL;
+    imageUrl: string;
 };
 
 export const addUserBeforeInputData = async (
@@ -123,13 +123,10 @@ export const addUserBeforeInputData = async (
 ): Promise<void> => {
     await userBeforeInputDataCollection
         .doc(type.logInServiceAndIdToString(logInServiceAndId))
-        .set({
-            name: data.name,
-            imageUrl: data.imageUrl.toString()
-        });
+        .set(data);
 };
 
-export const getUserBeforeInputData = async (
+export const getAndDeleteUserBeforeInputData = async (
     logInAccountServiceId: type.LogInServiceAndId
 ): Promise<UserBeforeInputDataData> => {
     const docRef = await userBeforeInputDataCollection.doc(
@@ -142,10 +139,7 @@ export const getUserBeforeInputData = async (
         throw new Error("存在しない情報入力前のユーザーを指定された");
     }
     docRef.delete();
-    return {
-        name: userBeforeInputData.name,
-        imageUrl: new URL(userBeforeInputData.imageUrl)
-    };
+    return userBeforeInputData as UserBeforeInputDataData;
 };
 /* ==========================================
          User Before Email Verification
@@ -154,7 +148,7 @@ export const getUserBeforeInputData = async (
 type UserBeforeEmailVerificationData = {
     firebaseAuthUserId: string;
     name: string;
-    imageUrl: URL;
+    imageUrl: string;
     schoolAndDepartment: type.SchoolAndDepartment | null;
     graduate: type.Graduate | null;
 };
@@ -165,13 +159,7 @@ export const addUserBeforeEmailVerification = async (
 ): Promise<void> => {
     await userBeforeEmailVerificationCollection
         .doc(type.logInServiceAndIdToString(logInAccountServiceId))
-        .set({
-            firebaseAuthUserId: data.firebaseAuthUserId,
-            name: data.name,
-            imageUrl: data.imageUrl.toString(),
-            schoolAndDepartment: data.schoolAndDepartment,
-            graduate: data.graduate
-        });
+        .set(data);
 };
 
 export const getUserBeforeEmailVerification = async (
