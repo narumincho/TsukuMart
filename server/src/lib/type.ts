@@ -23,6 +23,14 @@ const urlTypeScalarTypeConfig: g.GraphQLScalarTypeConfig<URL, string> = {
     }
 };
 
+const urlGraphQLType = new g.GraphQLScalarType(urlTypeScalarTypeConfig);
+
+/** ===================================
+ *           Data URL
+ * ====================================
+ */
+export type DataURLInternal = { mimeType: string; data: Buffer };
+
 const dataUrlParser = (value: string): DataURLInternal => {
     const imageDataUrlMimeType = value.match(/^data:(.+);base64,(.+)$/);
     if (imageDataUrlMimeType === null) {
@@ -33,14 +41,6 @@ const dataUrlParser = (value: string): DataURLInternal => {
         data: Buffer.from(imageDataUrlMimeType[2], "base64")
     };
 };
-
-const urlGraphQLType = new g.GraphQLScalarType(urlTypeScalarTypeConfig);
-
-/** ===================================
- *           Data URL
- * ====================================
- */
-export type DataURLInternal = { mimeType: string; data: Buffer };
 
 const dataUrlTypeConfig: g.GraphQLScalarTypeConfig<DataURLInternal, string> = {
     name: "DataURL",
@@ -355,7 +355,7 @@ type UserInternal = {
     selledProductAll: Array<ProductInternal>;
 };
 
-type User = {
+export type User = {
     id: string;
     displayName: string;
     imageUrl: URL;

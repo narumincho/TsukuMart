@@ -182,7 +182,7 @@ const updateProfile = type.makeGraphQLFieldConfig({
         },
         image: {
             type: type.nullableInputType(type.dataUrlInputType),
-            description: "画像(DataURL) 変更しないならnul"
+            description: "画像(DataURL) 変更しないならnull"
         },
         introduction: {
             type: type.stringInputType,
@@ -214,6 +214,36 @@ const updateProfile = type.makeGraphQLFieldConfig({
     description: "プロフィールの更新"
 });
 
+const sellProduct = type.makeGraphQLFieldConfig({
+    args: {
+        name: {
+            type: type.stringInputType,
+            description: "商品名"
+        }
+    },
+    type: type.productOutputType,
+    resolve: async args => {
+
+        return {
+            id: "",
+            name: "",
+            price: 10,
+            seller: {
+                id: "",
+                displayName: "",
+                imageUrl: new URL(""),
+                introduction: "",
+                university: {
+                    graduate: "chs",
+                    schoolAndDepartment: "aandd"
+                },
+                selledProductAll: []
+            }
+        };
+    },
+    description: "商品の出品"
+});
+
 export const mutation = new g.GraphQLObjectType({
     name: "Mutation",
     description: "データを作成、更新ができる",
@@ -221,6 +251,7 @@ export const mutation = new g.GraphQLObjectType({
         getLogInUrl,
         sendConformEmail,
         getAccessTokenAndUpdateRefreshToken,
-        updateProfile
+        updateProfile,
+        sellProduct
     }
 });

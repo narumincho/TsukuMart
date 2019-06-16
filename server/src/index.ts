@@ -5,18 +5,15 @@ import * as databaseLow from "./lib/databaseLow";
 import * as query from "./lib/query";
 import * as mutation from "./lib/mutation";
 import * as signUpCallback from "./lib/signUpCallback";
+import * as libSchema from "./lib/schema";
 
 console.log("run index.js 2019-05-27");
-
-const schema = new graphql.GraphQLSchema({
-    query: query.query,
-    mutation: mutation.mutation
-});
 
 export const indexHtml = functions
     .region("us-central1")
     .https.onRequest((request, response) => {
         response.setHeader("Content-Type", "text/html");
+        response.setHeader("Content-Security-Policy-Report-Only", "script-src 'self'")
         response.send(`<!doctype html>
 <html lang="ja">
 
@@ -68,7 +65,7 @@ export const api = functions
             response.status(200).send("");
             return;
         }
-        await graphqlExpress({ schema: schema, graphiql: true })(
+        await graphqlExpress({ schema: libSchema.schema, graphiql: true })(
             request,
             response
         );
