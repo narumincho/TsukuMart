@@ -2,8 +2,6 @@ import * as functions from "firebase-functions";
 import * as graphqlExpress from "express-graphql";
 import * as graphql from "graphql";
 import * as databaseLow from "./lib/databaseLow";
-import * as query from "./lib/query";
-import * as mutation from "./lib/mutation";
 import * as signUpCallback from "./lib/signUpCallback";
 import * as libSchema from "./lib/schema";
 
@@ -13,7 +11,6 @@ export const indexHtml = functions
     .region("us-central1")
     .https.onRequest((request, response) => {
         response.setHeader("Content-Type", "text/html");
-        response.setHeader("Content-Security-Policy-Report-Only", "script-src 'self'")
         response.send(`<!doctype html>
 <html lang="ja">
 
