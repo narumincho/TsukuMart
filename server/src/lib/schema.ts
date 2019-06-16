@@ -15,6 +15,7 @@ const makeObjectFieldMap = <
         [Key in keyof Type]: Key extends "id"
             ? {
                   type: g.GraphQLOutputType;
+                  description: string;
               }
             : GraphQLFieldConfigWithArgs<Type, Key>
     }
@@ -44,9 +45,11 @@ const makeObjectField = <
         args: T,
         context: void,
         info: g.GraphQLResolveInfo
-    ) => Type[Key] extends { id: string }
-        ? Partial<Type[Key]> & { id: string }
-        : Type[Key];
+    ) => Promise<
+        Type[Key] extends { id: string }
+            ? Partial<Type[Key]> & { id: string }
+            : Type[Key]
+    >;
     description: string;
 }): GraphQLFieldConfigWithArgs<Type, Key> => ({
     type: args.type,
@@ -82,38 +85,60 @@ const makeQueryOrMutationField = <
                             Product
     =============================================================
 */
+const setProductData = async (
+    source: {
+        [k in keyof type.ProductInternal]: type.ProductInternal[k] | undefined
+    } & { id: string }
+): ReturnType<typeof database.getProduct> => {
+    const data = await database.getProduct(source.id);
+    source.name = data.name;
+    source.price = data.price;
+    return data;
+};
 
 const productGraphQLType: g.GraphQLObjectType<
-    type.Product,
+    type.ProductInternal,
     void,
     {}
 > = new g.GraphQLObjectType({
     name: "Item",
     fields: () =>
-        makeObjectFieldMap<type.Product>({
+        makeObjectFieldMap<type.ProductInternal>({
             id: {
-                type: g.GraphQLNonNull(g.GraphQLString)
+                type: g.GraphQLNonNull(g.GraphQLString),
+                description: "商品を識別するためのID"
             },
             name: makeObjectField({
                 type: g.GraphQLNonNull(g.GraphQLString),
                 args: {},
-                resolve: (source, args, context, info) => {
-                    return "商品名";
+                resolve: async (source, args, context, info) => {
+                    if (source.name === undefined) {
+                        return (await setProductData(source)).name;
+                    }
+                    return source.name;
                 },
                 description: "商品名"
             }),
             price: makeObjectField({
                 type: g.GraphQLNonNull(g.GraphQLInt),
                 args: {},
-                resolve: (source, args, context, info) => {
-                    return 12;
+                resolve: async (source, args, context, info) => {
+                    if (source.price === undefined) {
+                        return (await setProductData(source)).price;
+                    }
+                    return source.price;
                 },
                 description: "値段"
             }),
             seller: makeObjectField({
                 type: g.GraphQLNonNull(userGraphQLType),
                 args: {},
-                resolve: (source, args, context, info): Return<type.User> => {
+                resolve: async (
+                    source,
+                    args,
+                    context,
+                    info
+                ): Promise<Return<type.UserInternal>> => {
                     return {
                         id: "10"
                     };
@@ -126,84 +151,175 @@ const productGraphQLType: g.GraphQLObjectType<
                             User
     =============================================================
 */
+const setUserData = async (
+    source: {
+        [k in keyof type.UserInternal]: type.UserInternal[k] | undefined
+    } & { id: string }
+): ReturnType<typeof database.getUserData> => {
+    const userData = await database.getUserData(source.id);
+    source.displayName = userData.displayName;
+    source.imageUrl = userData.imageUrl;
+    source.introduction = userData.introduction;
+    source.university = type.universityToInternal(userData.university);
+    return userData;
+};
+
 const userGraphQLType = new g.GraphQLObjectType({
     name: "User",
-    fields: () => ({
-        id: {
-            type: g.GraphQLNonNull(g.GraphQLString),
-            description: "ユーザーを識別するためのID"
-        },
-        displayName: {
-            type: g.GraphQLNonNull(g.GraphQLString),
-            description: "表示名"
-        },
-        imageUrl: {
-            type: g.GraphQLNonNull(type.urlGraphQLType),
-            description: "プロフィール画像のURL"
-        },
-        introduction: {
-            type: g.GraphQLNonNull(g.GraphQLString),
-            description: "紹介文"
-        },
-        university: {
-            type: g.GraphQLNonNull(type.universityGraphQLObjectType),
-            description: "所属"
-        },
-        selledProductAll: {
-            type: g.GraphQLNonNull(
-                g.GraphQLList(g.GraphQLNonNull(productGraphQLType))
-            ),
-            description: "出品した商品すべて"
-        }
-    }),
+    fields: () =>
+        makeObjectFieldMap<type.UserInternal>({
+            id: {
+                type: g.GraphQLNonNull(g.GraphQLString),
+                description: "ユーザーを識別するためのID"
+            },
+            displayName: makeObjectField({
+                type: g.GraphQLNonNull(g.GraphQLString),
+                args: {},
+                resolve: async (source, args, context, info) => {
+                    if (source.displayName === undefined) {
+                        return (await setUserData(source)).displayName;
+                    }
+                    return source.displayName;
+                },
+                description: "表示名"
+            }),
+            imageUrl: makeObjectField({
+                type: g.GraphQLNonNull(type.urlGraphQLType),
+                args: {},
+                resolve: async (source, args, context, info) => {
+                    if (source.imageUrl === undefined) {
+                        return (await setUserData(source)).imageUrl;
+                    }
+                    return source.imageUrl;
+                },
+                description: "プロフィール画像のURL"
+            }),
+            introduction: makeObjectField({
+                type: g.GraphQLNonNull(g.GraphQLString),
+                args: {},
+                description: "紹介文",
+                resolve: async (source, args, context, info) => {
+                    if (source.introduction === undefined) {
+                        return (await setUserData(source)).introduction;
+                    }
+                    return source.introduction;
+                }
+            }),
+            university: makeObjectField({
+                type: g.GraphQLNonNull(type.universityGraphQLObjectType),
+                args: {},
+                description: "所属",
+                resolve: async (source, args, context, info) => {
+                    if (source.university === undefined) {
+                        return type.universityToInternal(
+                            (await setUserData(source)).university
+                        );
+                    }
+                    return source.university;
+                }
+            }),
+            selledProductAll: makeObjectField({
+                type: g.GraphQLNonNull(
+                    g.GraphQLList(g.GraphQLNonNull(productGraphQLType))
+                ),
+                args: {},
+                resolve: async (source, args, context, info) => {
+                    return [];
+                },
+                description: "出品した商品すべて"
+            })
+        }),
     description: "ユーザー"
 });
 /** ==============================
  *         User Private
  * ===============================
  */
-export const userPrivateGraphQLType = new g.GraphQLObjectType({
+const userPrivateGraphQLType = new g.GraphQLObjectType({
     name: "UserPrivate",
-    fields: () => ({
-        id: {
-            type: g.GraphQLNonNull(g.GraphQLString),
-            description: "ユーザーを識別するためのID"
-        },
-        displayName: {
-            type: g.GraphQLNonNull(g.GraphQLString),
-            description: "表示名"
-        },
-        imageUrl: {
-            type: g.GraphQLNonNull(type.urlGraphQLType),
-            description: "プロフィール画像のURL"
-        },
-        introduction: {
-            type: g.GraphQLNonNull(g.GraphQLString),
-            description: "紹介文"
-        },
-        university: {
-            type: g.GraphQLNonNull(type.universityGraphQLObjectType),
-            description: "所属"
-        },
-        selledProductAll: {
-            type: g.GraphQLNonNull(
-                g.GraphQLList(g.GraphQLNonNull(productGraphQLType))
-            ),
-            description: "出品した商品すべて"
-        },
-        buyedProductAll: {
-            type: g.GraphQLNonNull(
-                g.GraphQLList(g.GraphQLNonNull(productGraphQLType))
-            ),
-            description: "購入した商品すべて"
-        },
-        likedProductAll: {
-            type: g.GraphQLNonNull(
-                g.GraphQLList(g.GraphQLNonNull(productGraphQLType))
-            ),
-            description: "いいねした商品すべて"
-        }
-    }),
+    fields: () =>
+        makeObjectFieldMap<type.UserPrivateInternal>({
+            id: {
+                type: g.GraphQLNonNull(g.GraphQLString),
+                description: "ユーザーを識別するためのID"
+            },
+            displayName: makeObjectField({
+                type: g.GraphQLNonNull(g.GraphQLString),
+                args: {},
+                resolve: async (source, args, context, info) => {
+                    if (source.displayName === undefined) {
+                        return (await setUserData(source)).displayName;
+                    }
+                    return source.displayName;
+                },
+                description: "表示名"
+            }),
+            imageUrl: makeObjectField({
+                type: g.GraphQLNonNull(type.urlGraphQLType),
+                args: {},
+                resolve: async (source, args, context, info) => {
+                    if (source.imageUrl === undefined) {
+                        return (await setUserData(source)).imageUrl;
+                    }
+                    return source.imageUrl;
+                },
+                description: "プロフィール画像のURL"
+            }),
+            introduction: makeObjectField({
+                type: g.GraphQLNonNull(g.GraphQLString),
+                args: {},
+                resolve: async (source, args, context, info) => {
+                    if (source.introduction === undefined) {
+                        return (await setUserData(source)).introduction;
+                    }
+                    return source.introduction;
+                },
+                description: "紹介文"
+            }),
+            university: makeObjectField({
+                type: g.GraphQLNonNull(type.universityGraphQLObjectType),
+                args: {},
+                resolve: async (source, args, context, info) => {
+                    if (source.university === undefined) {
+                        return type.universityToInternal(
+                            (await setUserData(source)).university
+                        );
+                    }
+                    return source.university;
+                },
+                description: "所属"
+            }),
+            selledProductAll: makeObjectField({
+                type: g.GraphQLNonNull(
+                    g.GraphQLList(g.GraphQLNonNull(productGraphQLType))
+                ),
+                args: {},
+                resolve: async (source, args, context, info) => {
+                    return [];
+                },
+                description: "出品した商品すべて"
+            }),
+            buyedProductAll: makeObjectField({
+                type: g.GraphQLNonNull(
+                    g.GraphQLList(g.GraphQLNonNull(productGraphQLType))
+                ),
+                args: {},
+                resolve: async (source, args, context, info) => {
+                    return [];
+                },
+                description: "購入した商品すべて"
+            }),
+            likedProductAll: makeObjectField({
+                type: g.GraphQLNonNull(
+                    g.GraphQLList(g.GraphQLNonNull(productGraphQLType))
+                ),
+                args: {},
+                resolve: async (source, args, context, info) => {
+                    return [];
+                },
+                description: "いいねした商品すべて"
+            })
+        }),
     description: "個人的な情報を含んだユーザーの情報"
 });
 
@@ -388,7 +504,7 @@ const sendConformEmail = makeQueryOrMutationField<
     {
         sendEmailToken: string;
         name: string;
-        image: Maybe<type.DataURLInternal>;
+        image: Maybe<type.DataURL>;
         university: type.UniversityInternal;
         email: string;
     },
@@ -485,7 +601,7 @@ const updateProfile = makeQueryOrMutationField<
     {
         accessToken: string;
         displayName: string;
-        image: Maybe<type.DataURLInternal>;
+        image: Maybe<type.DataURL>;
         introduction: string;
         university: type.UniversityInternal;
     },

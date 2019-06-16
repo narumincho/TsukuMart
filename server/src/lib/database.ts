@@ -4,7 +4,6 @@ import { URL } from "url";
 import * as databaseLow from "./databaseLow";
 import * as key from "./key";
 import * as type from "./type";
-import { userInfo } from "os";
 import Maybe from "graphql/tsutils/Maybe";
 
 firebase.initializeApp({
@@ -149,7 +148,7 @@ export const addUserBeforeEmailVerificationAndSendEmail = async (
 export const getAccessTokenAndRefreshToken = async (
     logInAccountServiceId: type.LogInServiceAndId
 ): Promise<{ refreshToken: string; accessToken: string }> => {
-    const docList = await databaseLow.getUserListFrom(
+    const docList = await databaseLow.getUserListFromCondition(
         "logInAccountServiceId",
         "==",
         type.logInServiceAndIdToString(logInAccountServiceId)
@@ -222,7 +221,7 @@ export const getAccessTokenAndUpdateRefreshToken = async (
         throw new Error("invalid refresh token");
     }
 
-    const userData = await databaseLow.getUserDataFromId(sub);
+    const userData = await databaseLow.getUserData(sub);
     console.log(
         "データベースで保存されていたリフレッシュトークンID",
         userData.lastRefreshId
@@ -301,19 +300,21 @@ const createRefreshId = (): string => {
     return id;
 };
 
+/* ==========================================
+                    User
+   ==========================================
+*/
+
 /**
  * 指定したユーザーの情報を取得する
  * @param id ユーザーID
  */
 export const getUserData = async (
     id: string
-): Promise<{
-    displayName: string;
-    imageUrl: URL;
-    introduction: string;
-    university: type.University;
-}> => {
-    const userData = await databaseLow.getUserDataFromId(id);
+): Promise<
+    Pick<type.User, "displayName" | "imageUrl" | "introduction" | "university">
+> => {
+    const userData = await databaseLow.getUserData(id);
     return {
         displayName: userData.displayName,
         imageUrl: new URL(userData.imageUrl),
@@ -329,13 +330,12 @@ export const getUserData = async (
  * すべてのユーザーの情報を取得する
  */
 export const getAllUser = async (): Promise<
-    Array<{
-        id: string;
-        displayName: string;
-        imageUrl: URL;
-        university: type.University;
-        introduction: string;
-    }>
+    Array<
+        Pick<
+            type.User,
+            "id" | "displayName" | "imageUrl" | "university" | "introduction"
+        >
+    >
 > =>
     (await databaseLow.getAllUserData()).map(({ id, data }) => ({
         id: id,
@@ -351,7 +351,7 @@ export const getAllUser = async (): Promise<
 export const setProfile = async (
     id: string,
     displayName: string,
-    image: Maybe<type.DataURLInternal>,
+    image: Maybe<type.DataURL>,
     introduction: string,
     university: type.University
 ): Promise<type.UserPrivate> => {
@@ -364,7 +364,7 @@ export const setProfile = async (
             graduate: universityInternal.graduate,
             schoolAndDepartment: universityInternal.schoolAndDepartment
         });
-        imageUrl = new URL((await databaseLow.getUserDataFromId(id)).imageUrl);
+        imageUrl = new URL((await databaseLow.getUserData(id)).imageUrl);
     } else {
         imageUrl = await saveUserImage(image.data, image.mimeType);
         databaseLow.updateUserData(id, {
@@ -384,5 +384,28 @@ export const setProfile = async (
         buyedProductAll: [],
         likedProductAll: [],
         selledProductAll: []
+    };
+};
+
+/* ==========================================
+                    Product
+   ==========================================
+*/
+export const getProduct = async (
+    id: string
+): Promise<
+    Pick<type.Product, "name" | "price"> & {
+        seller: Pick<type.User, "id" | "displayName" | "imageUrl">;
+    }
+> => {
+    const data = await databaseLow.getProduct(id);
+    return {
+        name: data.name,
+        price: data.price,
+        seller: {
+            id: data.sellerId,
+            displayName: data.sellerName,
+            imageUrl: new URL(data.sellerImageUrl)
+        }
     };
 };

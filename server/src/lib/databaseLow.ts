@@ -36,7 +36,7 @@ const productCollectionRef: FirebaseFirestore.CollectionReference = dataBase.col
 );
 
 /* ==========================================
-                    ユーザー
+                    User
    ==========================================
 */
 type UserData = {
@@ -50,11 +50,11 @@ type UserData = {
     createdAt: FirebaseFirestore.FieldValue;
 };
 /**
- * ユーザーを取得する
+ * ユーザーのデータを取得する
  * @param id
  * @throws {Error} userId ${id} dose not exists
  */
-export const getUserDataFromId = async (id: string): Promise<UserData> => {
+export const getUserData = async (id: string): Promise<UserData> => {
     const userData = (await (await userCollectionRef.doc(id)).get()).data();
     if (userData === undefined) {
         throw new Error(`userId ${id} dose not exists`);
@@ -63,7 +63,7 @@ export const getUserDataFromId = async (id: string): Promise<UserData> => {
 };
 
 /**
- * ユーザーの情報を上書きする。すでにあるフィールドはそのまま残る
+ * ユーザーのデータを上書きする。すでにあるフィールドはそのまま残る
  * @param id
  * @param userData
  */
@@ -75,7 +75,7 @@ export const updateUserData = async (
 };
 
 /**
- * ユーザーを追加する
+ * ユーザーのデータを追加する
  * @param userData
  */
 export const addUserData = async (data: UserData): Promise<string> => {
@@ -89,42 +89,24 @@ export const getAllUserData = async (): Promise<
     Array<{ id: string; data: UserData }>
 > => {
     const allUserQuerySnapshot = await userCollectionRef.get();
-    return (await querySnapshotPromise(allUserQuerySnapshot)) as Array<{ id: string; data: UserData }>;
+    return (await querySnapshotPromise(allUserQuerySnapshot)) as Array<{
+        id: string;
+        data: UserData;
+    }>;
 };
 
 /**
  * ユーザーの条件を指定して検索する
- * @param filedName
+ * @param fieldName field
  * @param operator
  * @param value
  */
-export const getUserListFrom = async <Filed extends keyof UserData>(
-    filedName: Filed,
+export const getUserListFromCondition = async <Field extends keyof UserData>(
+    fieldName: Field,
     operator: firestore.WhereFilterOp,
-    value: UserData[Filed]
+    value: UserData[Field]
 ): Promise<firestore.QueryDocumentSnapshot[]> =>
-    (await userCollectionRef.where(filedName, operator, value).get()).docs;
-
-/**
- * クエリの解析結果をPromiseに変換する
- * @param querySnapshot
- */
-const querySnapshotPromise = (
-    querySnapshot: FirebaseFirestore.QuerySnapshot
-): Promise<Array<{ id: string; data: FirebaseFirestore.DocumentData }>> =>
-    new Promise((resolve, reject) => {
-        const size = querySnapshot.size;
-        const resultList: Array<{
-            id: string;
-            data: FirebaseFirestore.DocumentData;
-        }> = [];
-        querySnapshot.forEach(result => {
-            resultList.push({ id: result.id, data: result.data() });
-            if (resultList.length === size) {
-                resolve(resultList);
-            }
-        });
-    });
+    (await userCollectionRef.where(fieldName, operator, value).get()).docs;
 
 /* ==========================================
             User Before Input Data
@@ -210,7 +192,7 @@ export const deleteUserBeforeEmailVerification = async (
                     Product
    ==========================================
 */
-type Product = {
+type ProductData = {
     name: string;
     price: number;
     sellerId: string;
@@ -218,17 +200,88 @@ type Product = {
     sellerImageUrl: string;
 };
 /**
- * 商品の情報を取得する
+ * 商品のデータを取得する
  * @param id
  * @throws {Error} productId ${id} dose not exists
  */
-export const getProduct = async (id: string): Promise<Product> => {
+export const getProduct = async (id: string): Promise<ProductData> => {
     const data = (await productCollectionRef.doc(id).get()).data();
     if (data === undefined) {
         throw new Error(`productId ${id} dose not exists`);
     }
-    return data as Product;
+    return data as ProductData;
 };
+
+/**
+ * 商品のデータを上書きする
+ * @param id
+ * @param data
+ */
+export const updateProductData = async (
+    id: string,
+    data: Partial<ProductData>
+): Promise<void> => {
+    await productCollectionRef.doc(id).set(data, {
+        merge: true
+    });
+};
+
+/**
+ * 商品のデータを追加する
+ * @param userData
+ */
+export const addProductData = async (data: ProductData): Promise<string> => {
+    return (await productCollectionRef.add(data)).id;
+};
+
+/**
+ * すべての商品のデータを取得する
+ */
+export const getAllProductData = async (): Promise<
+    Array<{ id: string; data: ProductData }>
+> => {
+    const allUserQuerySnapshot = await productCollectionRef.get();
+    return (await querySnapshotPromise(allUserQuerySnapshot)) as Array<{
+        id: string;
+        data: ProductData;
+    }>;
+};
+
+/**
+ * 商品の条件を指定して検索する
+ * @param fieldName
+ * @param operator
+ * @param value
+ */
+export const getProductListFromCondition = async <
+    Field extends keyof ProductData
+>(
+    fieldName: Field,
+    operator: firestore.WhereFilterOp,
+    value: ProductData[Field]
+): Promise<firestore.QueryDocumentSnapshot[]> =>
+    (await productCollectionRef.where(fieldName, operator, value).get()).docs;
+
+/**
+ * クエリの解析結果をPromiseに変換する
+ * @param querySnapshot
+ */
+const querySnapshotPromise = (
+    querySnapshot: FirebaseFirestore.QuerySnapshot
+): Promise<Array<{ id: string; data: FirebaseFirestore.DocumentData }>> =>
+    new Promise((resolve, reject) => {
+        const size = querySnapshot.size;
+        const resultList: Array<{
+            id: string;
+            data: FirebaseFirestore.DocumentData;
+        }> = [];
+        querySnapshot.forEach(result => {
+            resultList.push({ id: result.id, data: result.data() });
+            if (resultList.length === size) {
+                resolve(resultList);
+            }
+        });
+    });
 /* ==========================================
                 Time Stamp
    ==========================================

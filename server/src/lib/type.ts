@@ -29,9 +29,9 @@ export const urlGraphQLType = new g.GraphQLScalarType(urlTypeScalarTypeConfig);
  *           Data URL
  * ====================================
  */
-export type DataURLInternal = { mimeType: string; data: Buffer };
+export type DataURL = { mimeType: string; data: Buffer };
 
-const dataUrlParser = (value: string): DataURLInternal => {
+const dataUrlParser = (value: string): DataURL => {
     const imageDataUrlMimeType = value.match(/^data:(.+);base64,(.+)$/);
     if (imageDataUrlMimeType === null) {
         throw new Error("invalid DataURL");
@@ -43,12 +43,12 @@ const dataUrlParser = (value: string): DataURLInternal => {
 };
 
 export const dataUrlTypeConfig: g.GraphQLScalarTypeConfig<
-    DataURLInternal,
+    DataURL,
     string
 > = {
     name: "DataURL",
     description: "DataURL base64エンコードのみサポート",
-    serialize: (value: DataURLInternal): string =>
+    serialize: (value: DataURL): string =>
         "data:" + value.mimeType + ";base64," + value.data.toString(),
     parseValue: dataUrlParser,
     parseLiteral: ast => {
