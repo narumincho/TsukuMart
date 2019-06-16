@@ -184,7 +184,7 @@ type ProductData = {
     name: string;
     price: number;
     sellerId: string;
-    sellerName: string;
+    sellerDisplayName: string;
     sellerImageUrl: string;
 };
 /**

@@ -5,6 +5,7 @@ import * as databaseLow from "./databaseLow";
 import * as key from "./key";
 import * as type from "./type";
 import Maybe from "graphql/tsutils/Maybe";
+import { user } from "firebase-functions/lib/providers/auth";
 
 firebase.initializeApp({
     apiKey: key.apiKey,
@@ -356,6 +357,10 @@ export const getAllUser = async (): Promise<
         introduction: data.introduction
     }));
 
+/**
+ * プロフィールを設定する
+ * @param id ユーザーID
+ */
 export const setProfile = async (
     id: string,
     displayName: string,
@@ -399,6 +404,10 @@ export const setProfile = async (
                     Product
    ==========================================
 */
+/**
+ * 商品のデータを取得する
+ * @param id
+ */
 export const getProduct = async (
     id: string
 ): Promise<
@@ -412,8 +421,30 @@ export const getProduct = async (
         price: data.price,
         seller: {
             id: data.sellerId,
-            displayName: data.sellerName,
+            displayName: data.sellerDisplayName,
             imageUrl: new URL(data.sellerImageUrl)
         }
+    };
+};
+
+/**
+ * 商品を出品する
+ */
+export const sellProduct = async (
+    userId: string,
+    data: Pick<type.Product, "name" | "price">
+): Promise<Pick<type.Product, "id" | "name" | "price">> => {
+    const userData = await databaseLow.getUserData(userId);
+    const productId = await databaseLow.addProductData({
+        name: data.name,
+        price: data.price,
+        sellerId: userId,
+        sellerDisplayName: userData.displayName,
+        sellerImageUrl: userData.imageUrl
+    });
+    return {
+        id: productId,
+        name: data.name,
+        price: data.price
     };
 };

@@ -649,37 +649,27 @@ const updateProfile = makeQueryOrMutationField<
 });
 
 const sellProduct = makeQueryOrMutationField<
-    { name: string; price: number },
-    type.ProductInternal
+    { accessToken: string; name: string; price: number },
+    Return<type.ProductInternal>
 >({
     args: {
+        accessToken: {
+            type: g.GraphQLNonNull(g.GraphQLString),
+            description: type.accessTokenDescription
+        },
         name: {
-            type: g.GraphQLString,
+            type: g.GraphQLNonNull(g.GraphQLString),
             description: "商品名"
         },
         price: {
-            type: g.GraphQLInt,
+            type: g.GraphQLNonNull(g.GraphQLInt),
             description: "値段"
         }
     },
     type: productGraphQLType,
     resolve: async (source, args) => {
-        return {
-            id: "",
-            name: "",
-            price: 10,
-            seller: {
-                id: "",
-                displayName: "",
-                imageUrl: new URL(""),
-                introduction: "",
-                university: {
-                    graduate: "chs",
-                    schoolAndDepartment: "aandd"
-                },
-                selledProductAll: []
-            }
-        };
+        const { id } = database.verifyAccessToken(args.accessToken);
+        return await database.sellProduct(id, { name: args.name, price: args.price });
     },
     description: "商品の出品"
 });
