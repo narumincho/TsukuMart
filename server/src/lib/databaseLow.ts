@@ -120,7 +120,7 @@ const querySnapshotPromise = (
         }> = [];
         querySnapshot.forEach(result => {
             resultList.push({ id: result.id, data: result.data() });
-            if (resultList.length === size - 1) {
+            if (resultList.length === size) {
                 resolve(resultList);
             }
         });
