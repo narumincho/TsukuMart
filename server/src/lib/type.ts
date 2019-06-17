@@ -393,7 +393,9 @@ export type ProductInternal = {
     name: string;
     price: number;
     condition: Condition;
+    category: Category;
     likedCount: number;
+    viewedCount: number;
     seller: UserInternal;
 };
 
@@ -402,7 +404,9 @@ export type Product = {
     name: string;
     price: number;
     condition: Condition;
+    category: Category;
     likedCount: number;
+    viewedCount: number;
     seller: User;
 };
 
@@ -411,7 +415,9 @@ export const productToInternal = (product: Product): ProductInternal => ({
     name: product.name,
     price: product.price,
     condition: product.condition,
+    category: product.category,
     likedCount: product.likedCount,
+    viewedCount: product.viewedCount,
     seller: userToInternal(product.seller)
 });
 /** ==============================
@@ -447,6 +453,157 @@ export const conditionGraphQLType = new g.GraphQLEnumType({
     name: "condition",
     values: conditionValues,
     description: conditionDescription
+});
+/* ===============================
+ *          Category
+ * ===============================
+ */
+const categoryValues = {
+    furnitureTable: {
+        description: "家具 / 机"
+    },
+    furnitureChair: {
+        description: "家具 家具  / イス"
+    },
+    furnitureChest: {
+        description: "家具 / タンス・棚"
+    },
+    furnitureBed: {
+        description: "家具 / 寝具"
+    },
+    furnitureKitchen: {
+        description: "家具 / 食器・調理器具"
+    },
+    furnitureCurtain: {
+        description: "家具 / カーテン"
+    },
+    furnitureMat: {
+        description: "家具 / マット・カーペット"
+    },
+    furnitureOther: {
+        description: "家具 / その他"
+    },
+    applianceRefrigerator: {
+        description: "電化製品・電子機器 / 冷蔵庫"
+    },
+    applianceMicrowave: {
+        description: "電化製品・電子機器 / 電子レンジ"
+    },
+    applianceWashing: {
+        description: "電化製品・電子機器 / 洗濯機"
+    },
+    applianceVacuum: {
+        description: "電化製品・電子機器 / 掃除機"
+    },
+    applianceTemperature: {
+        description: "電化製品・電子機器 / 冷暖房・扇風機"
+    },
+    applianceHumidity: {
+        description: "電化製品・電子機器 / 加湿器・除湿機"
+    },
+    applianceLight: {
+        description: "電化製品・電子機器 / 照明・ライト"
+    },
+    applianceTv: {
+        description: "電化製品・電子機器 / TV・ディスプレイ・プロジェクター"
+    },
+    applianceSpeaker: {
+        description: "電化製品・電子機器 / スピーカー"
+    },
+    applianceSmartphone: {
+        description: "電化製品・電子機器 / スマホ・タブレット"
+    },
+    appliancePc: {
+        description: "電化製品・電子機器 / パソコン"
+    },
+    applianceCommunication: {
+        description: "電化製品・電子機器 / Wi-Fi ルーター・通信機器"
+    },
+    applianceOther: {
+        description: "電化製品・電子機器 / その他"
+    },
+    fashionMens: {
+        description: "ファッション / メンズ"
+    },
+    fashionLadies: {
+        description: "ファッション / レディース"
+    },
+    fashionOther: {
+        description: "ファッション / その他"
+    },
+    bookTextbook: {
+        description: "教科書・本 / 教科書"
+    },
+    bookBook: {
+        description: "教科書・本 / 本"
+    },
+    bookComic: {
+        description: "教科書・本 / 漫画"
+    },
+    bookOther: {
+        description: "教科書・本 / その他"
+    },
+    vehicleBicycle: {
+        description: "自転車・車両 / 自転車"
+    },
+    vehicleBike: {
+        description: "自転車・車両 / バイク"
+    },
+    vehicleCar: {
+        description: "自転車・車両 / 自動車 "
+    },
+    vehicleOther: {
+        description: "自転車・車両 / その他"
+    },
+    foodFood: {
+        description: "食料品 / 食料 "
+    },
+    foodBeverage: {
+        description: "食料品 / 飲料 "
+    },
+    foodOther: {
+        description: "食料品 / その他"
+    },
+    hobbyDisc: {
+        description: "ホビー・雑貨 / CD・DVD"
+    },
+    hobbyInstrument: {
+        description: "ホビー・雑貨 / 楽器"
+    },
+    hobbyCamera: {
+        description: "ホビー・雑貨 / カメラ"
+    },
+    hobbyGame: {
+        description: "ホビー・雑貨 / ゲーム"
+    },
+    hobbySport: {
+        description: "ホビー・雑貨 / スポーツ"
+    },
+    hobbyArt: {
+        description: "ホビー・雑貨 / 美術・芸術品"
+    },
+    hobbyAccessory: {
+        description: "ホビー・雑貨 / 雑貨・小物"
+    },
+    hobbyDaily: {
+        description: "ホビー・雑貨 / 日用品"
+    },
+    hobbyHandmade: {
+        description: "ホビー・雑貨 / ハンドメイド"
+    },
+    hobbyOther: {
+        description: "ホビー・雑貨 / その他"
+    }
+};
+
+export type Category = keyof typeof categoryValues;
+
+export const categoryDescription = "商品を分類するカテゴリー";
+
+export const categoryGraphQLType = new g.GraphQLEnumType({
+    name: "category",
+    values: categoryValues,
+    description: categoryDescription
 });
 
 /* ===============================

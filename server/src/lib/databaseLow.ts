@@ -224,7 +224,9 @@ type ProductData = {
     name: string;
     price: number;
     condition: type.Condition;
-    likedCount: number,
+    category: type.Category;
+    likedCount: number;
+    viewedCount: number;
     sellerId: string;
     sellerDisplayName: string;
     sellerImageUrl: string;

@@ -7,6 +7,7 @@ import * as database from "./database";
 import * as twitterLogIn from "./twitterLogIn";
 import * as jwt from "jsonwebtoken";
 import Maybe from "graphql/tsutils/Maybe";
+import { typeIncompatibleAnonSpreadMessage } from "graphql/validation/rules/PossibleFragmentSpreads";
 
 const makeObjectFieldMap = <
     Type extends { [k in string]: unknown } & { id: string }
@@ -92,6 +93,10 @@ const setProductData = async (
     const data = await database.getProduct(source.id);
     source.name = data.name;
     source.price = data.price;
+    source.condition = data.condition;
+    source.category = data.category;
+    source.likedCount = data.likedCount;
+    source.viewedCount = data.viewedCount;
     return data;
 };
 
@@ -140,6 +145,17 @@ const productGraphQLType: g.GraphQLObjectType<
                 },
                 description: type.conditionDescription
             }),
+            category: makeObjectField({
+                type: g.GraphQLNonNull(type.categoryGraphQLType),
+                args: {},
+                resolve: async (source, args, context, info) => {
+                    if (source.category === undefined) {
+                        return (await setProductData(source)).category;
+                    }
+                    return source.category;
+                },
+                description: type.categoryDescription
+            }),
             likedCount: makeObjectField({
                 type: g.GraphQLNonNull(g.GraphQLInt),
                 args: {},
@@ -149,7 +165,18 @@ const productGraphQLType: g.GraphQLObjectType<
                     }
                     return source.likedCount;
                 },
-                description: ""
+                description: "いいねされた数"
+            }),
+            viewedCount: makeObjectField({
+                type: g.GraphQLNonNull(g.GraphQLInt),
+                args: {},
+                resolve: async (source, args, context, info) => {
+                    if (source.viewedCount === undefined) {
+                        return (await setProductData(source)).viewedCount;
+                    }
+                    return source.viewedCount;
+                },
+                description: "閲覧履歴に登録された数"
             }),
             seller: makeObjectField({
                 type: g.GraphQLNonNull(userGraphQLType),
@@ -693,6 +720,7 @@ const sellProduct = makeQueryOrMutationField<
         name: string;
         price: number;
         condition: type.Condition;
+        category: type.Category;
     },
     Return<type.ProductInternal>
 >({
@@ -710,8 +738,12 @@ const sellProduct = makeQueryOrMutationField<
             description: "値段"
         },
         condition: {
-            type: type.conditionGraphQLType,
+            type: g.GraphQLNonNull(type.conditionGraphQLType),
             description: type.conditionDescription
+        },
+        category: {
+            type: g.GraphQLNonNull(type.categoryGraphQLType),
+            description: type.categoryDescription
         }
     },
     type: productGraphQLType,
@@ -720,7 +752,8 @@ const sellProduct = makeQueryOrMutationField<
         return await database.sellProduct(id, {
             name: args.name,
             price: args.price,
-            condition: args.condition
+            condition: args.condition,
+            category: args.category
         });
     },
     description: "商品の出品する"
