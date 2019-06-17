@@ -129,6 +129,28 @@ const productGraphQLType: g.GraphQLObjectType<
                 },
                 description: "値段"
             }),
+            condition: makeObjectField({
+                type: type.conditionGraphQLType,
+                args: {},
+                resolve: async (source, args, context, info) => {
+                    if (source.condition === undefined) {
+                        return (await setProductData(source)).condition;
+                    }
+                    return source.condition;
+                },
+                description: type.conditionDescription
+            }),
+            likedCount: makeObjectField({
+                type: g.GraphQLNonNull(g.GraphQLInt),
+                args: {},
+                resolve: async (source, args, context, info) => {
+                    if (source.likedCount === undefined) {
+                        return (await setProductData(source)).likedCount;
+                    }
+                    return source.likedCount;
+                },
+                description: ""
+            }),
             seller: makeObjectField({
                 type: g.GraphQLNonNull(userGraphQLType),
                 args: {},
@@ -666,7 +688,12 @@ const updateProfile = makeQueryOrMutationField<
 });
 
 const sellProduct = makeQueryOrMutationField<
-    { accessToken: string; name: string; price: number },
+    {
+        accessToken: string;
+        name: string;
+        price: number;
+        condition: type.Condition;
+    },
     Return<type.ProductInternal>
 >({
     args: {
@@ -681,6 +708,10 @@ const sellProduct = makeQueryOrMutationField<
         price: {
             type: g.GraphQLNonNull(g.GraphQLInt),
             description: "値段"
+        },
+        condition: {
+            type: type.conditionGraphQLType,
+            description: type.conditionDescription
         }
     },
     type: productGraphQLType,
@@ -688,7 +719,8 @@ const sellProduct = makeQueryOrMutationField<
         const { id } = database.verifyAccessToken(args.accessToken);
         return await database.sellProduct(id, {
             name: args.name,
-            price: args.price
+            price: args.price,
+            condition: args.condition
         });
     },
     description: "商品の出品する"

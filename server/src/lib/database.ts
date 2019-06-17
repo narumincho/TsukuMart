@@ -411,7 +411,7 @@ export const setProfile = async (
 export const getProduct = async (
     id: string
 ): Promise<
-    Pick<type.Product, "name" | "price"> & {
+    Pick<type.Product, "name" | "price" | "condition" | "likedCount"> & {
         seller: Pick<type.User, "id" | "displayName" | "imageUrl">;
     }
 > => {
@@ -419,6 +419,8 @@ export const getProduct = async (
     return {
         name: data.name,
         price: data.price,
+        condition: data.condition,
+        likedCount: data.likedCount,
         seller: {
             id: data.sellerId,
             displayName: data.sellerDisplayName,
@@ -432,12 +434,14 @@ export const getProduct = async (
  */
 export const sellProduct = async (
     userId: string,
-    data: Pick<type.Product, "name" | "price">
+    data: Pick<type.Product, "name" | "price" | "condition">
 ): Promise<Pick<type.Product, "id" | "name" | "price">> => {
     const userData = await databaseLow.getUserData(userId);
     const productId = await databaseLow.addProductData({
         name: data.name,
         price: data.price,
+        condition: data.condition,
+        likedCount: 0,
         sellerId: userId,
         sellerDisplayName: userData.displayName,
         sellerImageUrl: userData.imageUrl

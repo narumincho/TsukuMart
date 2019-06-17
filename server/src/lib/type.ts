@@ -392,6 +392,8 @@ export type ProductInternal = {
     id: string;
     name: string;
     price: number;
+    condition: Condition;
+    likedCount: number;
     seller: UserInternal;
 };
 
@@ -399,6 +401,8 @@ export type Product = {
     id: string;
     name: string;
     price: number;
+    condition: Condition;
+    likedCount: number;
     seller: User;
 };
 
@@ -406,8 +410,45 @@ export const productToInternal = (product: Product): ProductInternal => ({
     id: product.id,
     name: product.name,
     price: product.price,
+    condition: product.condition,
+    likedCount: product.likedCount,
     seller: userToInternal(product.seller)
 });
+/** ==============================
+ *           Condition
+ * ===============================
+ */
+const conditionValues = {
+    new: {
+        description: "新品・未使用"
+    },
+    likeNew: {
+        description: "ほぼ未使用"
+    },
+    veryGood: {
+        description: "目立った傷や汚れなし"
+    },
+    good: {
+        description: "多少の傷や汚れあり"
+    },
+    acceptable: {
+        description: "目立つ傷や汚れあり"
+    },
+    junk: {
+        description: "状態が悪い・ジャンク"
+    }
+};
+
+export type Condition = keyof typeof conditionValues;
+
+export const conditionDescription = "商品の品質状態";
+
+export const conditionGraphQLType = new g.GraphQLEnumType({
+    name: "condition",
+    values: conditionValues,
+    description: conditionDescription
+});
+
 /* ===============================
  *      LogInService And Id
  * ===============================

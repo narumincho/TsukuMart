@@ -223,6 +223,8 @@ export const deleteUserBeforeEmailVerification = async (
 type ProductData = {
     name: string;
     price: number;
+    condition: type.Condition;
+    likedCount: number,
     sellerId: string;
     sellerDisplayName: string;
     sellerImageUrl: string;
