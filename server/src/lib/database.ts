@@ -478,6 +478,9 @@ export const markProductInHistory = async (
     await databaseLow.addHistoryViewProductData(userId, productId, {
         createdAt: databaseLow.getNowTimeStamp()
     });
+    await databaseLow.updateProductData(productId, {
+        viewedCount: (await databaseLow.getProduct(productId)).viewedCount + 1
+    });
 };
 
 export const getHistoryViewProduct = async (
