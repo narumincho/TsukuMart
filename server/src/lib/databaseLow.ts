@@ -80,16 +80,16 @@ type HistoryViewProductData = {
 
 /**
  * ユーザーの商品の閲覧記録に商品を登録する。すでにあるフィールドは削除する
- * @param id
+ * @param userId
  * @param productId
  */
 export const addHistoryViewProductData = async (
-    id: string,
+    userId: string,
     productId: string,
     data: HistoryViewProductData
 ): Promise<void> => {
     await userCollectionRef
-        .doc(id)
+        .doc(userId)
         .collection("historyViewProduct")
         .doc(productId)
         .set(data);
@@ -97,19 +97,39 @@ export const addHistoryViewProductData = async (
 
 /**
  * ユーザー商品を閲覧記録を取得する
- * @param id
+ * @param userId
  */
 export const getHistoryViewProductData = async (
-    id: string
+    userId: string
 ): Promise<Array<{ id: string; data: HistoryViewProductData }>> =>
     (await querySnapshotToIdAndDataArray(
         await userCollectionRef
-            .doc(id)
+            .doc(userId)
             .collection("historyViewProduct")
             .orderBy("createdAt")
             .get()
     )) as Array<{ id: string; data: HistoryViewProductData }>;
 
+type DraftProductData = {
+    name: string;
+    price: number | null;
+    condition: type.Condition | null;
+    category: type.Category | null;
+};
+
+/**
+ * 商品の下書きのデータをユーザーに追加する
+ * @param userId
+ * @param data
+ */
+export const addDraftProductData = async (
+    userId: string,
+    data: DraftProductData
+): Promise<string> =>
+    (await userCollectionRef
+        .doc(userId)
+        .collection("historyViewProduct")
+        .add(data)).id;
 /**
  * ユーザーのデータを追加する
  * @param userData
@@ -295,6 +315,10 @@ export const getProductListFromCondition = async <
     value: ProductData[Field]
 ): Promise<firestore.QueryDocumentSnapshot[]> =>
     (await productCollectionRef.where(fieldName, operator, value).get()).docs;
+
+/* ==========================================
+   ==========================================
+*/
 
 /**
  * クエリの解析結果を配列に変換する

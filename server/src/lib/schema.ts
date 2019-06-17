@@ -105,7 +105,7 @@ const productGraphQLType: g.GraphQLObjectType<
     void,
     {}
 > = new g.GraphQLObjectType({
-    name: "Item",
+    name: "Product",
     fields: () =>
         makeObjectFieldMap<type.ProductInternal>({
             id: {

@@ -420,6 +420,52 @@ export const productToInternal = (product: Product): ProductInternal => ({
     viewedCount: product.viewedCount,
     seller: userToInternal(product.seller)
 });
+
+/** ==============================
+ *        Draft Product
+ * ===============================
+ */
+export type DraftProduct = {
+    id: string;
+    name: string;
+    price: number | null;
+    condition: Condition | null;
+    category: Category | null;
+};
+
+/**
+ * 商品の下書き。すべてフィールドをresolveで返さなければならない
+ */
+const draftProductGraphQLType = new g.GraphQLObjectType<DraftProduct, void, {}>(
+    {
+        name: "DraftProduct",
+        fields: () => ({
+            id: {
+                type: g.GraphQLNonNull(g.GraphQLString),
+                description:
+                    "下書きの商品を識別するためのID。ユーザー内で閉じたID。"
+            },
+            name: {
+                type: g.GraphQLNonNull(g.GraphQLString),
+                description: "商品名"
+            },
+            price: {
+                type: g.GraphQLInt,
+                description: "値段 まだ決めていない場合はnull"
+            },
+            condition: {
+                type: conditionGraphQLType,
+                description: "商品の品質状態 まだ決めていない場合はnull"
+            },
+            category: {
+                type: categoryGraphQLType,
+                description:
+                    "商品を分類するカテゴリー まだ決めていない場合はnull"
+            }
+        })
+    }
+);
+
 /** ==============================
  *           Condition
  * ===============================
