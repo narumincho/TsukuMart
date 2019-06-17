@@ -42,10 +42,7 @@ const dataUrlParser = (value: string): DataURL => {
     };
 };
 
-export const dataUrlTypeConfig: g.GraphQLScalarTypeConfig<
-    DataURL,
-    string
-> = {
+export const dataUrlTypeConfig: g.GraphQLScalarTypeConfig<DataURL, string> = {
     name: "DataURL",
     description: "DataURL base64エンコードのみサポート",
     serialize: (value: DataURL): string =>
@@ -356,6 +353,7 @@ export type UserPrivateInternal = {
     selledProductAll: Array<ProductInternal>;
     buyedProductAll: Array<ProductInternal>;
     likedProductAll: Array<ProductInternal>;
+    historyViewProductAll: Array<ProductInternal>;
 };
 
 export type UserPrivate = {
@@ -367,6 +365,7 @@ export type UserPrivate = {
     selledProductAll: Array<Product>;
     buyedProductAll: Array<Product>;
     likedProductAll: Array<Product>;
+    historyViewProductAll: Array<Product>;
 };
 
 export const userPrivateToInternal = (
@@ -379,7 +378,10 @@ export const userPrivateToInternal = (
     university: universityToInternal(userPrivate.university),
     selledProductAll: userPrivate.selledProductAll.map(productToInternal),
     buyedProductAll: userPrivate.buyedProductAll.map(productToInternal),
-    likedProductAll: userPrivate.likedProductAll.map(productToInternal)
+    likedProductAll: userPrivate.likedProductAll.map(productToInternal),
+    historyViewProductAll: userPrivate.historyViewProductAll.map(
+        productToInternal
+    )
 });
 
 /** ==============================

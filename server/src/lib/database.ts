@@ -5,7 +5,6 @@ import * as databaseLow from "./databaseLow";
 import * as key from "./key";
 import * as type from "./type";
 import Maybe from "graphql/tsutils/Maybe";
-import { user } from "firebase-functions/lib/providers/auth";
 
 firebase.initializeApp({
     apiKey: key.apiKey,
@@ -396,7 +395,8 @@ export const setProfile = async (
         university: university,
         buyedProductAll: [],
         likedProductAll: [],
-        selledProductAll: []
+        selledProductAll: [],
+        historyViewProductAll: []
     };
 };
 
@@ -447,4 +447,20 @@ export const sellProduct = async (
         name: data.name,
         price: data.price
     };
+};
+
+export const markProductInHistory = async (
+    userId: string,
+    productId: string
+): Promise<void> => {
+    await databaseLow.addHistoryViewProductData(userId, productId, {
+        createdAt: databaseLow.getNowTimeStamp()
+    });
+};
+
+export const getHistoryViewProduct = async (
+    userId: string
+): Promise<Array<{ id: string }>> => {
+    const data = await databaseLow.getHistoryViewProductData(userId);
+    return data.map(value => ({ id: value.id }));
 };

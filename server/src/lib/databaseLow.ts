@@ -71,8 +71,44 @@ export const updateUserData = async (
     id: string,
     userData: Partial<UserData>
 ): Promise<void> => {
-    await (await userCollectionRef.doc(id)).set(userData, { merge: true });
+    await userCollectionRef.doc(id).set(userData, { merge: true });
 };
+
+type HistoryViewProductData = {
+    createdAt: FirebaseFirestore.FieldValue;
+};
+
+/**
+ * ユーザーの商品の閲覧記録に商品を登録する。すでにあるフィールドは削除する
+ * @param id
+ * @param productId
+ */
+export const addHistoryViewProductData = async (
+    id: string,
+    productId: string,
+    data: HistoryViewProductData
+): Promise<void> => {
+    await userCollectionRef
+        .doc(id)
+        .collection("historyViewProduct")
+        .doc(productId)
+        .set(data);
+};
+
+/**
+ * ユーザー商品を閲覧記録を取得する
+ * @param id
+ */
+export const getHistoryViewProductData = async (
+    id: string
+): Promise<Array<{ id: string; data: HistoryViewProductData }>> =>
+    (await querySnapshotToIdAndDataArray(
+        await userCollectionRef
+            .doc(id)
+            .collection("historyViewProduct")
+            .orderBy("createdAt")
+            .get()
+    )) as Array<{ id: string; data: HistoryViewProductData }>;
 
 /**
  * ユーザーのデータを追加する
@@ -88,8 +124,9 @@ export const addUserData = async (data: UserData): Promise<string> => {
 export const getAllUserData = async (): Promise<
     Array<{ id: string; data: UserData }>
 > => {
-    const allUserQuerySnapshot = await userCollectionRef.get();
-    return (await querySnapshotPromise(allUserQuerySnapshot)) as Array<{
+    return (await querySnapshotToIdAndDataArray(
+        await userCollectionRef.get()
+    )) as Array<{
         id: string;
         data: UserData;
     }>;
@@ -108,6 +145,9 @@ export const getUserListFromCondition = async <Field extends keyof UserData>(
 ): Promise<firestore.QueryDocumentSnapshot[]> =>
     (await userCollectionRef.where(fieldName, operator, value).get()).docs;
 
+export const deleteUser = async () => {
+    //サブコレクションを手動で削除しなければならない
+};
 /* ==========================================
             User Before Input Data
    ==========================================
@@ -229,7 +269,9 @@ export const getAllProductData = async (): Promise<
     Array<{ id: string; data: ProductData }>
 > => {
     const allUserQuerySnapshot = await productCollectionRef.get();
-    return (await querySnapshotPromise(allUserQuerySnapshot)) as Array<{
+    return (await querySnapshotToIdAndDataArray(
+        allUserQuerySnapshot
+    )) as Array<{
         id: string;
         data: ProductData;
     }>;
@@ -251,25 +293,13 @@ export const getProductListFromCondition = async <
     (await productCollectionRef.where(fieldName, operator, value).get()).docs;
 
 /**
- * クエリの解析結果をPromiseに変換する
+ * クエリの解析結果を配列に変換する
  * @param querySnapshot
  */
-const querySnapshotPromise = (
+const querySnapshotToIdAndDataArray = (
     querySnapshot: FirebaseFirestore.QuerySnapshot
-): Promise<Array<{ id: string; data: FirebaseFirestore.DocumentData }>> =>
-    new Promise((resolve, reject) => {
-        const size = querySnapshot.size;
-        const resultList: Array<{
-            id: string;
-            data: FirebaseFirestore.DocumentData;
-        }> = [];
-        querySnapshot.forEach(result => {
-            resultList.push({ id: result.id, data: result.data() });
-            if (resultList.length === size) {
-                resolve(resultList);
-            }
-        });
-    });
+): Array<{ id: string; data: FirebaseFirestore.DocumentData }> =>
+    querySnapshot.docs.map(result => ({ id: result.id, data: result.data() }));
 /* ==========================================
                 Time Stamp
    ==========================================

@@ -34,22 +34,16 @@ type GraphQLFieldConfigWithArgs<
 const makeObjectField = <
     Type extends { [k in string]: unknown } & { id: string },
     Key extends keyof Type,
-    T extends { [k in string]: { type: g.GraphQLInputType } } // for allがあればなぁ
+    T extends { [k in string]: unknown } // for allがあればなぁ
 >(args: {
     type: g.GraphQLOutputType;
-    args: T;
+    args: { [k in keyof T]: { type: g.GraphQLInputType } };
     resolve: (
-        source: {
-            [a in keyof Type]: a extends "id" ? Type[a] : Type[a] | undefined
-        },
+        source: Return<Type>,
         args: T,
         context: void,
         info: g.GraphQLResolveInfo
-    ) => Promise<
-        Type[Key] extends { id: string }
-            ? Partial<Type[Key]> & { id: string }
-            : Type[Key]
-    >;
+    ) => Promise<Return<Type[Key]>>;
     description: string;
 }): GraphQLFieldConfigWithArgs<Type, Key> => ({
     type: args.type,
@@ -58,9 +52,16 @@ const makeObjectField = <
     description: args.description
 });
 
-type Return<Type extends { [k in string]: unknown } & { id: string }> = {
-    id: string;
-} & { [a in keyof Type]?: Type[a] };
+/** resolveで返すべき部分型を生成する */
+type Return<Type> = Type extends Array<infer E>
+    ? Array<ReturnLoop<E>>
+    : ReturnLoop<Type>;
+
+/** resolveで返すべき部分型を生成する型関数のループ */
+type ReturnLoop<Type> = {
+    0: Type;
+    1: { id: string } & { [k in keyof Type]?: Return<Type[k]> };
+}[Type extends { id: string } ? 1 : 0];
 
 const makeQueryOrMutationField = <
     Args extends { [k in string]: unknown },
@@ -86,9 +87,7 @@ const makeQueryOrMutationField = <
     =============================================================
 */
 const setProductData = async (
-    source: {
-        [k in keyof type.ProductInternal]: type.ProductInternal[k] | undefined
-    } & { id: string }
+    source: Return<type.ProductInternal>
 ): ReturnType<typeof database.getProduct> => {
     const data = await database.getProduct(source.id);
     source.name = data.name;
@@ -152,9 +151,7 @@ const productGraphQLType: g.GraphQLObjectType<
     =============================================================
 */
 const setUserData = async (
-    source: {
-        [k in keyof type.UserInternal]: type.UserInternal[k] | undefined
-    } & { id: string }
+    source: Return<type.UserInternal>
 ): ReturnType<typeof database.getUserData> => {
     const userData = await database.getUserData(source.id);
     source.displayName = userData.displayName;
@@ -318,11 +315,31 @@ const userPrivateGraphQLType = new g.GraphQLObjectType({
                     return [];
                 },
                 description: "いいねした商品すべて"
+            }),
+            historyViewProductAll: makeObjectField<
+                type.UserPrivateInternal,
+                "historyViewProductAll",
+                {}
+            >({
+                type: g.GraphQLNonNull(
+                    g.GraphQLList(g.GraphQLNonNull(productGraphQLType))
+                ),
+                args: {},
+                resolve: async (source, args, context, info) => {
+                    if (source.historyViewProductAll === undefined) {
+                        const data = await database.getHistoryViewProduct(
+                            source.id
+                        );
+                        source.historyViewProductAll = data;
+                        return data;
+                    }
+                    return source.historyViewProductAll;
+                },
+                description: "閲覧した商品"
             })
         }),
     description: "個人的な情報を含んだユーザーの情報"
 });
-
 /*  =============================================================
                             Query
     =============================================================
@@ -669,11 +686,36 @@ const sellProduct = makeQueryOrMutationField<
     type: productGraphQLType,
     resolve: async (source, args) => {
         const { id } = database.verifyAccessToken(args.accessToken);
-        return await database.sellProduct(id, { name: args.name, price: args.price });
+        return await database.sellProduct(id, {
+            name: args.name,
+            price: args.price
+        });
     },
-    description: "商品の出品"
+    description: "商品の出品する"
 });
 
+const markProductInHistory = makeQueryOrMutationField<
+    { accessToken: string; productId: string },
+    type.Unit
+>({
+    args: {
+        accessToken: {
+            type: g.GraphQLNonNull(g.GraphQLString),
+            description: type.accessTokenDescription
+        },
+        productId: {
+            type: g.GraphQLNonNull(g.GraphQLString),
+            description: "見たと記録する商品ID"
+        }
+    },
+    type: g.GraphQLNonNull(type.unitGraphQLType),
+    resolve: async (source, args) => {
+        const { id } = database.verifyAccessToken(args.accessToken);
+        await database.markProductInHistory(id, args.productId);
+        return "ok";
+    },
+    description: "商品を閲覧したと記録する"
+});
 /*  =============================================================
                             Schema
     =============================================================
@@ -699,7 +741,8 @@ export const schema = new g.GraphQLSchema({
             sendConformEmail,
             getAccessTokenAndUpdateRefreshToken,
             updateProfile,
-            sellProduct
+            sellProduct,
+            markProductInHistory
         }
     })
 });
