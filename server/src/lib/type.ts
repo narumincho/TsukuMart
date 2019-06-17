@@ -392,6 +392,7 @@ export type ProductInternal = {
     id: string;
     name: string;
     price: number;
+    description: string;
     condition: Condition;
     category: Category;
     likedCount: number;
@@ -403,6 +404,7 @@ export type Product = {
     id: string;
     name: string;
     price: number;
+    description: string;
     condition: Condition;
     category: Category;
     likedCount: number;
@@ -414,6 +416,7 @@ export const productToInternal = (product: Product): ProductInternal => ({
     id: product.id,
     name: product.name,
     price: product.price,
+    description: product.description,
     condition: product.condition,
     category: product.category,
     likedCount: product.likedCount,
@@ -428,6 +431,7 @@ export const productToInternal = (product: Product): ProductInternal => ({
 export type DraftProduct = {
     id: string;
     name: string;
+    description: string;
     price: number | null;
     condition: Condition | null;
     category: Category | null;

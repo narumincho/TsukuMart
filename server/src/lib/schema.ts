@@ -93,6 +93,7 @@ const setProductData = async (
     const data = await database.getProduct(source.id);
     source.name = data.name;
     source.price = data.price;
+    source.description = data.description;
     source.condition = data.condition;
     source.category = data.category;
     source.likedCount = data.likedCount;
@@ -133,6 +134,17 @@ const productGraphQLType: g.GraphQLObjectType<
                     return source.price;
                 },
                 description: "値段"
+            }),
+            description: makeObjectField({
+                type: g.GraphQLNonNull(g.GraphQLString),
+                args: {},
+                resolve: async (source, args, context, info) => {
+                    if (source.description === undefined) {
+                        return (await setProductData(source)).description;
+                    }
+                    return source.description;
+                },
+                description: "説明文"
             }),
             condition: makeObjectField({
                 type: type.conditionGraphQLType,
@@ -719,6 +731,7 @@ const sellProduct = makeQueryOrMutationField<
         accessToken: string;
         name: string;
         price: number;
+        description: string;
         condition: type.Condition;
         category: type.Category;
     },
@@ -737,6 +750,10 @@ const sellProduct = makeQueryOrMutationField<
             type: g.GraphQLNonNull(g.GraphQLInt),
             description: "値段"
         },
+        description: {
+            type: g.GraphQLNonNull(g.GraphQLString),
+            description: "説明文"
+        },
         condition: {
             type: g.GraphQLNonNull(type.conditionGraphQLType),
             description: type.conditionDescription
@@ -752,6 +769,7 @@ const sellProduct = makeQueryOrMutationField<
         return await database.sellProduct(id, {
             name: args.name,
             price: args.price,
+            description: args.description,
             condition: args.condition,
             category: args.category
         });

@@ -243,6 +243,7 @@ export const deleteUserBeforeEmailVerification = async (
 type ProductData = {
     name: string;
     price: number;
+    description: string;
     condition: type.Condition;
     category: type.Category;
     likedCount: number;
