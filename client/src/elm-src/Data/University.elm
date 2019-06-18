@@ -123,7 +123,8 @@ schoolAll =
 
 schoolToIndex : School -> Int
 schoolToIndex school =
-    Utility.getFirstIndex school schoolAll
+    schoolAll
+        |> Utility.getFirstIndex school
         |> Maybe.withDefault 0
 
 
@@ -410,7 +411,10 @@ departmentAll =
 
 departmentToIndexInSchool : SchoolAndDepartment -> Int
 departmentToIndexInSchool department =
-    Utility.getFirstIndex department (schoolToDepartmentList (schoolFromDepartment department))
+    department
+        |> schoolFromDepartment
+        |> schoolToDepartmentList
+        |> Utility.getFirstIndex department
         |> Maybe.withDefault 0
 
 

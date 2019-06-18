@@ -1,4 +1,14 @@
-module Data.Category exposing (Category, SubCategory, subCategoryFromIdString, subCategoryToString)
+module Data.Category exposing
+    ( Category
+    , SubCategory
+    , categoryAll
+    , subCategoryAll
+    , subCategoryFromIdString
+    , subCategoryToIndexInCategory
+    , subCategoryToJapaneseString
+    )
+
+import Utility
 
 
 type Category
@@ -9,6 +19,254 @@ type Category
     | Vehicle
     | Food
     | Hobby
+
+
+{-| すべての大まかなカテゴリー
+-}
+categoryAll : List Category
+categoryAll =
+    [ Furniture
+    , Appliance
+    , Fashion
+    , Book
+    , Vehicle
+    , Food
+    , Hobby
+    ]
+
+
+categoryToJapaneseString : Category -> String
+categoryToJapaneseString category =
+    case category of
+        Furniture ->
+            "家具"
+
+        Appliance ->
+            "電化製品・電子機器"
+
+        Fashion ->
+            "ファッション"
+
+        Book ->
+            "教科書・本"
+
+        Vehicle ->
+            "自転車・車両"
+
+        Food ->
+            "食料品"
+
+        Hobby ->
+            "ホビー・雑貨"
+
+
+categoryToSubCategoryList : Category -> List SubCategory
+categoryToSubCategoryList category =
+    case category of
+        Furniture ->
+            [ FurnitureTable
+            , FurnitureChair
+            , FurnitureChest
+            , FurnitureBed
+            , FurnitureKitchen
+            , FurnitureCurtain
+            , FurnitureMat
+            , FurnitureOther
+            ]
+
+        Appliance ->
+            [ ApplianceRefrigerator
+            , ApplianceMicrowave
+            , ApplianceWashing
+            , ApplianceVacuum
+            , ApplianceTemperature
+            , ApplianceHumidity
+            , ApplianceLight
+            , ApplianceTv
+            , ApplianceSpeaker
+            , ApplianceSmartphone
+            , AppliancePc
+            , ApplianceCommunication
+            , ApplianceOther
+            ]
+
+        Fashion ->
+            [ FashionMens
+            , FashionLadies
+            , FashionOther
+            ]
+
+        Book ->
+            [ BookTextbook
+            , BookBook
+            , BookComic
+            , BookOther
+            ]
+
+        Vehicle ->
+            [ VehicleBicycle
+            , VehicleBike
+            , VehicleCar
+            , VehicleOther
+            ]
+
+        Food ->
+            [ FoodFood
+            , FoodBeverage
+            , FoodOther
+            ]
+
+        Hobby ->
+            [ HobbyDisc
+            , HobbyInstrument
+            , HobbyCamera
+            , HobbyGame
+            , HobbySport
+            , HobbyArt
+            , HobbyAccessory
+            , HobbyDaily
+            , HobbyHandmade
+            , HobbyOther
+            ]
+
+
+categoryFromSubCategory : SubCategory -> Category
+categoryFromSubCategory subCategory =
+    case subCategory of
+        FurnitureTable ->
+            Furniture
+
+        FurnitureChair ->
+            Furniture
+
+        FurnitureChest ->
+            Furniture
+
+        FurnitureBed ->
+            Furniture
+
+        FurnitureKitchen ->
+            Furniture
+
+        FurnitureCurtain ->
+            Furniture
+
+        FurnitureMat ->
+            Furniture
+
+        FurnitureOther ->
+            Furniture
+
+        ApplianceRefrigerator ->
+            Appliance
+
+        ApplianceMicrowave ->
+            Appliance
+
+        ApplianceWashing ->
+            Appliance
+
+        ApplianceVacuum ->
+            Appliance
+
+        ApplianceTemperature ->
+            Appliance
+
+        ApplianceHumidity ->
+            Appliance
+
+        ApplianceLight ->
+            Appliance
+
+        ApplianceTv ->
+            Appliance
+
+        ApplianceSpeaker ->
+            Appliance
+
+        ApplianceSmartphone ->
+            Appliance
+
+        AppliancePc ->
+            Appliance
+
+        ApplianceCommunication ->
+            Appliance
+
+        ApplianceOther ->
+            Appliance
+
+        FashionMens ->
+            Fashion
+
+        FashionLadies ->
+            Fashion
+
+        FashionOther ->
+            Fashion
+
+        BookTextbook ->
+            Book
+
+        BookBook ->
+            Book
+
+        BookComic ->
+            Book
+
+        BookOther ->
+            Book
+
+        VehicleBicycle ->
+            Vehicle
+
+        VehicleBike ->
+            Vehicle
+
+        VehicleCar ->
+            Vehicle
+
+        VehicleOther ->
+            Vehicle
+
+        FoodFood ->
+            Food
+
+        FoodBeverage ->
+            Food
+
+        FoodOther ->
+            Food
+
+        HobbyDisc ->
+            Hobby
+
+        HobbyInstrument ->
+            Hobby
+
+        HobbyCamera ->
+            Hobby
+
+        HobbyGame ->
+            Hobby
+
+        HobbySport ->
+            Hobby
+
+        HobbyArt ->
+            Hobby
+
+        HobbyAccessory ->
+            Hobby
+
+        HobbyDaily ->
+            Hobby
+
+        HobbyHandmade ->
+            Hobby
+
+        HobbyOther ->
+            Hobby
 
 
 type SubCategory
@@ -59,8 +317,69 @@ type SubCategory
     | HobbyOther
 
 
-subCategoryToString : SubCategory -> String
-subCategoryToString subCategory =
+{-| すべてのカテゴリー
+-}
+subCategoryAll : List SubCategory
+subCategoryAll =
+    [ FurnitureTable
+    , FurnitureChair
+    , FurnitureChest
+    , FurnitureBed
+    , FurnitureKitchen
+    , FurnitureCurtain
+    , FurnitureMat
+    , FurnitureOther
+    , ApplianceRefrigerator
+    , ApplianceMicrowave
+    , ApplianceWashing
+    , ApplianceVacuum
+    , ApplianceTemperature
+    , ApplianceHumidity
+    , ApplianceLight
+    , ApplianceTv
+    , ApplianceSpeaker
+    , ApplianceSmartphone
+    , AppliancePc
+    , ApplianceCommunication
+    , ApplianceOther
+    , FashionMens
+    , FashionLadies
+    , FashionOther
+    , BookTextbook
+    , BookBook
+    , BookComic
+    , BookOther
+    , VehicleBicycle
+    , VehicleBike
+    , VehicleCar
+    , VehicleOther
+    , FoodFood
+    , FoodBeverage
+    , FoodOther
+    , HobbyDisc
+    , HobbyInstrument
+    , HobbyCamera
+    , HobbyGame
+    , HobbySport
+    , HobbyArt
+    , HobbyAccessory
+    , HobbyDaily
+    , HobbyHandmade
+    , HobbyOther
+    ]
+
+
+subCategoryToIndexInCategory : SubCategory -> Int
+subCategoryToIndexInCategory subCategory =
+    subCategory
+        |> categoryFromSubCategory
+        |> categoryToSubCategoryList
+        |> Utility.getFirstIndex subCategory
+        |> Maybe.withDefault 0
+
+
+subCategoryToJapaneseString : SubCategory -> String
+subCategoryToJapaneseString subCategory =
     case subCategory of
         FurnitureTable ->
             "家具 / 机"
