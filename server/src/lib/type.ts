@@ -2,7 +2,7 @@ import * as g from "graphql";
 import { URL } from "url";
 import Maybe from "graphql/tsutils/Maybe";
 
-/** ===================================
+/*  ===================================
  *              URL
  * ====================================
  */
@@ -42,7 +42,7 @@ const dataUrlParser = (value: string): DataURL => {
     };
 };
 
-export const dataUrlTypeConfig: g.GraphQLScalarTypeConfig<DataURL, string> = {
+const dataUrlTypeConfig: g.GraphQLScalarTypeConfig<DataURL, string> = {
     name: "DataURL",
     description:
         "DataURL (https://developer.mozilla.org/ja/docs/Web/HTTP/Basics_of_HTTP/Data_URIs) base64エンコードのみサポート",
@@ -62,7 +62,29 @@ export const dataUrlTypeConfig: g.GraphQLScalarTypeConfig<DataURL, string> = {
 };
 
 export const dataUrlGraphQLType = new g.GraphQLScalarType(dataUrlTypeConfig);
+/** ===================================
+ *            DateTime
+ * ====================================
+ */
+const dateTimeTypeConfig: g.GraphQLScalarTypeConfig<Date, number> = {
+    name: "DateTime",
+    description:
+        "日付と時刻。1970年1月1日 00:00:00 UTCから指定した日時までの経過時間をミリ秒で表した数値 2038年問題を回避するために64bitFloatの型を使う",
+    serialize: (value: Date): number => value.getTime(),
+    parseValue: (value: number): Date => new Date(value),
+    parseLiteral: ast => {
+        if (ast.kind !== "FloatValue") {
+            return null;
+        }
+        try {
+            return new Date(Number.parseInt(ast.value));
+        } catch {
+            return null;
+        }
+    }
+};
 
+export const dateTimeGraphQLType = new g.GraphQLScalarType(dateTimeTypeConfig);
 /** ===================================
  *           AccountService
  * ====================================
