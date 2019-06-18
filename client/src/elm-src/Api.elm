@@ -69,7 +69,7 @@ sendConfirmEmail { sendEmailToken, displayName, university, emailAddress } callB
                 { name = "sendConformEmail"
                 , args =
                     [ ( "sendEmailToken", GraphQLString sendEmailToken )
-                    , ( "name", GraphQLString displayName )
+                    , ( "displayName", GraphQLString displayName )
                     , ( "university", universityToGraphQLValue university )
                     , ( "email", GraphQLString (EmailAddress.toString emailAddress) )
                     ]

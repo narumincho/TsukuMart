@@ -7,7 +7,6 @@ import * as database from "./database";
 import * as twitterLogIn from "./twitterLogIn";
 import * as jwt from "jsonwebtoken";
 import Maybe from "graphql/tsutils/Maybe";
-import { typeIncompatibleAnonSpreadMessage } from "graphql/validation/rules/PossibleFragmentSpreads";
 
 const makeObjectFieldMap = <Type extends { [k in string]: unknown }>(
     args: Type extends { id: string }
@@ -493,7 +492,7 @@ const userPrivate = makeQueryOrMutationField<
             description: type.accessTokenDescription
         }
     },
-    type: userPrivateGraphQLType,
+    type: g.GraphQLNonNull(userPrivateGraphQLType),
     resolve: async (
         source,
         args
@@ -560,7 +559,7 @@ const getLogInUrl = makeQueryOrMutationField<
     type: g.GraphQLNonNull(type.urlGraphQLType),
     args: {
         service: {
-            type: type.accountServiceGraphQLType,
+            type: g.GraphQLNonNull(type.accountServiceGraphQLType),
             description: type.accountServiceGraphQLType.description
         }
     },
@@ -633,20 +632,18 @@ const getLogInUrl = makeQueryOrMutationField<
 const sendConformEmail = makeQueryOrMutationField<
     {
         sendEmailToken: string;
-        name: string;
         image: Maybe<type.DataURL>;
-        university: type.UniversityInternal;
         email: string;
-    },
+    } & Pick<type.UserPrivateInternal, "displayName" | "university">,
     type.Unit
 >({
-    type: type.unitGraphQLType,
+    type: g.GraphQLNonNull(type.unitGraphQLType),
     args: {
         sendEmailToken: {
             type: g.GraphQLNonNull(g.GraphQLString),
             description: "認証メールを送るのに必要なトークン"
         },
-        name: {
+        displayName: {
             type: g.GraphQLNonNull(g.GraphQLString),
             description: "表示名"
         },
@@ -656,7 +653,7 @@ const sendConformEmail = makeQueryOrMutationField<
                 "画像(DataURL) ソーシャルログインで使ったサービスのままならnull"
         },
         university: {
-            type: type.universityGraphQLInputType,
+            type: g.GraphQLNonNull(type.universityGraphQLInputType),
             description: type.universityGraphQLInputType.description
         },
         email: {
@@ -687,7 +684,7 @@ const sendConformEmail = makeQueryOrMutationField<
         const university = type.universityFromInternal(universityUnsafe);
         await database.addUserBeforeEmailVerificationAndSendEmail(
             logInAccountServiceId,
-            args.name,
+            args.displayName,
             imageUrl,
             args.email,
             university
@@ -715,7 +712,7 @@ const getAccessTokenAndUpdateRefreshToken = makeQueryOrMutationField<
     { refreshToken: string },
     type.RefreshTokenAndAccessToken
 >({
-    type: type.refreshTokenAndAccessTokenGraphQLType,
+    type: g.GraphQLNonNull(type.refreshTokenAndAccessTokenGraphQLType),
     args: {
         refreshToken: {
             type: g.GraphQLNonNull(g.GraphQLString),
@@ -730,11 +727,11 @@ const getAccessTokenAndUpdateRefreshToken = makeQueryOrMutationField<
 const updateProfile = makeQueryOrMutationField<
     {
         accessToken: string;
-        displayName: string;
         image: Maybe<type.DataURL>;
-        introduction: string;
-        university: type.UniversityInternal;
-    },
+    } & Pick<
+        type.UserPrivateInternal,
+        "displayName" | "introduction" | "university"
+    >,
     type.UserPrivateInternal
 >({
     type: userPrivateGraphQLType,
@@ -756,7 +753,7 @@ const updateProfile = makeQueryOrMutationField<
             description: "紹介文"
         },
         university: {
-            type: type.universityGraphQLInputType,
+            type: g.GraphQLNonNull(type.universityGraphQLInputType),
             description: type.universityGraphQLInputType.description
         }
     },
@@ -781,12 +778,10 @@ const updateProfile = makeQueryOrMutationField<
 const sellProduct = makeQueryOrMutationField<
     {
         accessToken: string;
-        name: string;
-        price: number;
-        description: string;
-        condition: type.Condition;
-        category: type.Category;
-    },
+    } & Pick<
+        type.ProductInternal,
+        "name" | "price" | "description" | "condition" | "category"
+    >,
     Return<type.ProductInternal>
 >({
     args: {
@@ -815,7 +810,7 @@ const sellProduct = makeQueryOrMutationField<
             description: type.categoryDescription
         }
     },
-    type: productGraphQLType,
+    type: g.GraphQLNonNull(productGraphQLType),
     resolve: async (source, args) => {
         const { id } = database.verifyAccessToken(args.accessToken);
         return await database.sellProduct(id, {
