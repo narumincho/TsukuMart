@@ -344,6 +344,7 @@ export type UserInternal = {
     introduction: string;
     university: UniversityInternal;
     selledProductAll: Array<ProductInternal>;
+    createdAt: Date;
 };
 
 export type User = {
@@ -352,6 +353,7 @@ export type User = {
     imageUrl: URL;
     introduction: string;
     university: University;
+    createdAt: Date;
     selledProductAll: Array<Product>;
 };
 
@@ -361,6 +363,7 @@ export const userToInternal = (user: User): UserInternal => ({
     imageUrl: user.imageUrl,
     introduction: user.introduction,
     university: universityToInternal(user.university),
+    createdAt: user.createdAt,
     selledProductAll: user.selledProductAll.map(productToInternal)
 });
 /** ==============================
@@ -373,6 +376,7 @@ export type UserPrivateInternal = {
     imageUrl: URL;
     introduction: string;
     university: UniversityInternal;
+    createdAt: Date;
     selledProductAll: Array<ProductInternal>;
     buyedProductAll: Array<ProductInternal>;
     likedProductAll: Array<ProductInternal>;
@@ -385,27 +389,12 @@ export type UserPrivate = {
     imageUrl: URL;
     introduction: string;
     university: University;
+    createdAt: Date;
     selledProductAll: Array<Product>;
     buyedProductAll: Array<Product>;
     likedProductAll: Array<Product>;
     historyViewProductAll: Array<Product>;
 };
-
-export const userPrivateToInternal = (
-    userPrivate: UserPrivate
-): UserPrivateInternal => ({
-    id: userPrivate.id,
-    displayName: userPrivate.displayName,
-    imageUrl: userPrivate.imageUrl,
-    introduction: userPrivate.introduction,
-    university: universityToInternal(userPrivate.university),
-    selledProductAll: userPrivate.selledProductAll.map(productToInternal),
-    buyedProductAll: userPrivate.buyedProductAll.map(productToInternal),
-    likedProductAll: userPrivate.likedProductAll.map(productToInternal),
-    historyViewProductAll: userPrivate.historyViewProductAll.map(
-        productToInternal
-    )
-});
 
 /** ==============================
  *           Product
@@ -490,7 +479,7 @@ export type Condition = keyof typeof conditionValues;
 export const conditionDescription = "商品の品質状態";
 
 export const conditionGraphQLType = new g.GraphQLEnumType({
-    name: "condition",
+    name: "Condition",
     values: conditionValues,
     description: conditionDescription
 });

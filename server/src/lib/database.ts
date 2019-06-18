@@ -320,7 +320,10 @@ const createRefreshId = (): string => {
 export const getUserData = async (
     id: string
 ): Promise<
-    Pick<type.User, "displayName" | "imageUrl" | "introduction" | "university">
+    Pick<
+        type.User,
+        "displayName" | "imageUrl" | "introduction" | "university" | "createdAt"
+    >
 > => {
     const userData = await databaseLow.getUserData(id);
     return {
@@ -330,7 +333,8 @@ export const getUserData = async (
         university: type.universityFromInternal({
             graduate: userData.graduate,
             schoolAndDepartment: userData.schoolAndDepartment
-        })
+        }),
+        createdAt: new Date(userData.createdAt.toMillis())
     };
 };
 
@@ -404,41 +408,42 @@ export const addDraftProductData = async (
  */
 export const setProfile = async (
     id: string,
-    displayName: string,
-    image: Maybe<type.DataURL>,
-    introduction: string,
-    university: type.University
-): Promise<type.UserPrivate> => {
+    data: { image: Maybe<type.DataURL> } & Pick<
+        type.UserPrivate,
+        "displayName" | "introduction" | "university"
+    >
+): Promise<
+    Pick<
+        type.UserPrivate,
+        "id" | "displayName" | "imageUrl" | "introduction" | "university"
+    >
+> => {
     let imageUrl: URL;
-    const universityInternal = type.universityToInternal(university);
-    if (image === null || image === undefined) {
+    const universityInternal = type.universityToInternal(data.university);
+    if (data.image === null || data.image === undefined) {
         databaseLow.updateUserData(id, {
-            displayName,
-            introduction,
+            displayName: data.displayName,
+            introduction: data.introduction,
             graduate: universityInternal.graduate,
             schoolAndDepartment: universityInternal.schoolAndDepartment
         });
         imageUrl = new URL((await databaseLow.getUserData(id)).imageUrl);
     } else {
-        imageUrl = await saveUserImage(image.data, image.mimeType);
+        imageUrl = await saveUserImage(data.image.data, data.image.mimeType);
         databaseLow.updateUserData(id, {
-            displayName,
+            displayName: data.displayName,
             imageUrl: imageUrl.toString(),
-            introduction,
+            introduction: data.introduction,
             graduate: universityInternal.graduate,
             schoolAndDepartment: universityInternal.schoolAndDepartment
         });
     }
     return {
         id: id,
-        displayName: displayName,
+        displayName: data.displayName,
         imageUrl: imageUrl,
-        introduction: introduction,
-        university: university,
-        buyedProductAll: [],
-        likedProductAll: [],
-        selledProductAll: [],
-        historyViewProductAll: []
+        introduction: data.introduction,
+        university: data.university
     };
 };
 

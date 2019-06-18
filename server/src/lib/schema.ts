@@ -84,7 +84,7 @@ const makeQueryOrMutationField = <
         args: Args,
         context: void,
         info: g.GraphQLResolveInfo
-    ) => Promise<Type>;
+    ) => Promise<Return<Type>>;
     description: string;
 }): g.GraphQLFieldConfig<void, void, any> => args;
 /*  =============================================================
@@ -197,12 +197,7 @@ const productGraphQLType: g.GraphQLObjectType<
             seller: makeObjectField({
                 type: g.GraphQLNonNull(userGraphQLType),
                 args: {},
-                resolve: async (
-                    source,
-                    args,
-                    context,
-                    info
-                ): Promise<Return<type.UserInternal>> => {
+                resolve: async (source, args, context, info) => {
                     return {
                         id: "10"
                     };
@@ -269,6 +264,7 @@ const setUserData = async (
     source.imageUrl = userData.imageUrl;
     source.introduction = userData.introduction;
     source.university = type.universityToInternal(userData.university);
+    source.createdAt = userData.createdAt;
     return userData;
 };
 
@@ -325,6 +321,17 @@ const userGraphQLType = new g.GraphQLObjectType({
                     }
                     return source.university;
                 }
+            }),
+            createdAt: makeObjectField({
+                type: g.GraphQLNonNull(type.dateTimeGraphQLType),
+                args: {},
+                resolve: async (source, args, context, info) => {
+                    if (source.createdAt === undefined) {
+                        return (await setUserData(source)).createdAt;
+                    }
+                    return source.createdAt;
+                },
+                description: "ユーザーが作成された日時"
             }),
             selledProductAll: makeObjectField({
                 type: g.GraphQLNonNull(
@@ -398,6 +405,17 @@ const userPrivateGraphQLType = new g.GraphQLObjectType({
                 },
                 description: "所属"
             }),
+            createdAt: makeObjectField({
+                type: g.GraphQLNonNull(type.dateTimeGraphQLType),
+                args: {},
+                resolve: async (source, args, context, info) => {
+                    if (source.createdAt === undefined) {
+                        return (await setUserData(source)).createdAt;
+                    }
+                    return source.createdAt;
+                },
+                description: "ユーザーが作成された日時"
+            }),
             selledProductAll: makeObjectField({
                 type: g.GraphQLNonNull(
                     g.GraphQLList(g.GraphQLNonNull(productGraphQLType))
@@ -466,7 +484,7 @@ const hello = makeQueryOrMutationField<{}, string>({
     description: "世界に挨拶する"
 });
 
-const userAll = makeQueryOrMutationField<{}, Array<Return<type.UserInternal>>>({
+const userAll = makeQueryOrMutationField<{}, Array<type.UserInternal>>({
     type: g.GraphQLNonNull(g.GraphQLList(g.GraphQLNonNull(userGraphQLType))),
     args: {},
     resolve: async () => {
@@ -484,7 +502,7 @@ const userAll = makeQueryOrMutationField<{}, Array<Return<type.UserInternal>>>({
 
 const userPrivate = makeQueryOrMutationField<
     { accessToken: string },
-    Return<type.UserPrivateInternal>
+    type.UserPrivateInternal
 >({
     args: {
         accessToken: {
@@ -493,10 +511,7 @@ const userPrivate = makeQueryOrMutationField<
         }
     },
     type: g.GraphQLNonNull(userPrivateGraphQLType),
-    resolve: async (
-        source,
-        args
-    ): Promise<Return<type.UserPrivateInternal>> => {
+    resolve: async (source, args) => {
         const accessTokenData = database.verifyAccessToken(args.accessToken);
         const userData = await database.getUserData(accessTokenData.id);
         return {
@@ -513,10 +528,7 @@ const userPrivate = makeQueryOrMutationField<
     description: "個人的な情報を含んだユーザーの情報を取得する"
 });
 
-const productAll = makeQueryOrMutationField<
-    {},
-    Array<Return<type.ProductInternal>>
->({
+const productAll = makeQueryOrMutationField<{}, Array<type.ProductInternal>>({
     args: {},
     type: g.GraphQLNonNull(g.GraphQLList(g.GraphQLNonNull(productGraphQLType))),
     resolve: async () => {
@@ -762,15 +774,15 @@ const updateProfile = makeQueryOrMutationField<
         { accessToken, displayName, image, introduction, university }
     ) => {
         const { id } = database.verifyAccessToken(accessToken);
-        return type.userPrivateToInternal(
-            await database.setProfile(
-                id,
-                displayName,
-                image,
-                introduction,
-                type.universityFromInternal(university)
-            )
-        );
+        const profileData = await database.setProfile(id, {
+            displayName: displayName,
+            image,
+            introduction,
+            university: type.universityFromInternal(university)
+        });
+        return {
+            id: profileData.id
+        };
     },
     description: "プロフィールの更新"
 });
@@ -782,7 +794,7 @@ const sellProduct = makeQueryOrMutationField<
         type.ProductInternal,
         "name" | "price" | "description" | "condition" | "category"
     >,
-    Return<type.ProductInternal>
+    type.ProductInternal
 >({
     args: {
         accessToken: {

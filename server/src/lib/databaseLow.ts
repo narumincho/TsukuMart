@@ -47,7 +47,7 @@ type UserData = {
     graduate: type.Graduate | null;
     introduction: string;
     lastRefreshId: string;
-    createdAt: FirebaseFirestore.FieldValue;
+    createdAt: firestore.Timestamp;
 };
 /**
  * ユーザーのデータを取得する
@@ -75,7 +75,7 @@ export const updateUserData = async (
 };
 
 type HistoryViewProductData = {
-    createdAt: FirebaseFirestore.FieldValue;
+    createdAt: firestore.Timestamp;
 };
 
 /**
@@ -116,8 +116,8 @@ type DraftProductData = {
     price: number | null;
     condition: type.Condition | null;
     category: type.Category | null;
-    createdAt: FirebaseFirestore.FieldValue;
-    updateAt: FirebaseFirestore.FieldValue;
+    createdAt: firestore.Timestamp;
+    updateAt: firestore.Timestamp;
 };
 
 /**
@@ -352,10 +352,10 @@ const querySnapshotToIdAndDataArray = (
                 Time Stamp
    ==========================================
 */
-export const getNowTimeStamp = (): firestore.FieldValue =>
-    admin.firestore.FieldValue.serverTimestamp();
+export const getNowTimeStamp = (): firestore.Timestamp =>
+    admin.firestore.Timestamp.now();
 
-/* ==========================================
+    /* ==========================================
             Firebase Authentication 
    ==========================================
 */
