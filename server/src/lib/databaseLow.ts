@@ -96,7 +96,7 @@ export const addHistoryViewProductData = async (
 };
 
 /**
- * ユーザー商品を閲覧記録を取得する
+ * ユーザー商品を閲覧記録を最後に閲覧した順に取得する
  * @param userId
  */
 export const getHistoryViewProductData = async (
@@ -112,9 +112,12 @@ export const getHistoryViewProductData = async (
 
 type DraftProductData = {
     name: string;
+    description: string;
     price: number | null;
     condition: type.Condition | null;
     category: type.Category | null;
+    createdAt: FirebaseFirestore.FieldValue;
+    updateAt: FirebaseFirestore.FieldValue;
 };
 
 /**
@@ -128,8 +131,24 @@ export const addDraftProductData = async (
 ): Promise<string> =>
     (await userCollectionRef
         .doc(userId)
-        .collection("historyViewProduct")
+        .collection("draftProduct")
         .add(data)).id;
+
+/**
+ * 商品の下書きのデータをユーザーから最後に更新した順に取得する
+ * @param userId
+ */
+export const getAllDraftProductData = async (
+    userId: string
+): Promise<Array<{ id: string; data: DraftProductData }>> =>
+    (await querySnapshotToIdAndDataArray(
+        await userCollectionRef
+            .doc(userId)
+            .collection("draftProduct")
+            .orderBy("updateAt")
+            .get()
+    )) as Array<{ id: string; data: DraftProductData }>;
+
 /**
  * ユーザーのデータを追加する
  * @param userData
@@ -166,7 +185,7 @@ export const getUserListFromCondition = async <Field extends keyof UserData>(
     (await userCollectionRef.where(fieldName, operator, value).get()).docs;
 
 export const deleteUser = async () => {
-    //サブコレクションを手動で削除しなければならない
+    //サブコレクションを手動で削除しなければならない。履歴、下書きなど
 };
 /* ==========================================
             User Before Input Data

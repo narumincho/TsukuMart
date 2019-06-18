@@ -9,17 +9,22 @@ import * as jwt from "jsonwebtoken";
 import Maybe from "graphql/tsutils/Maybe";
 import { typeIncompatibleAnonSpreadMessage } from "graphql/validation/rules/PossibleFragmentSpreads";
 
-const makeObjectFieldMap = <
-    Type extends { [k in string]: unknown } & { id: string }
->(
-    args: {
-        [Key in keyof Type]: Key extends "id"
-            ? {
+const makeObjectFieldMap = <Type extends { [k in string]: unknown }>(
+    args: Type extends { id: string }
+        ? ({
+              [Key in keyof Type]: Key extends "id"
+                  ? {
+                        type: g.GraphQLOutputType;
+                        description: string;
+                    }
+                  : GraphQLFieldConfigWithArgs<Type, Key>
+          })
+        : {
+              [Key in keyof Type]: {
                   type: g.GraphQLOutputType;
                   description: string;
               }
-            : GraphQLFieldConfigWithArgs<Type, Key>
-    }
+          }
 ): g.GraphQLFieldConfigMap<Type, void, any> => args;
 
 type GraphQLFieldConfigWithArgs<
@@ -207,6 +212,52 @@ const productGraphQLType: g.GraphQLObjectType<
             })
         })
 });
+
+/*  =============================================================
+                        Draft Product
+    =============================================================
+*/
+/**
+ * 商品の下書き。すべてフィールドをresolveで返さなければならない
+ */
+export const draftProductGraphQLType = new g.GraphQLObjectType<
+    type.DraftProduct,
+    void,
+    {}
+>({
+    name: "DraftProduct",
+    fields: () =>
+        makeObjectFieldMap<type.DraftProduct>({
+            draftId: {
+                type: g.GraphQLNonNull(g.GraphQLString),
+                description:
+                    "下書きの商品を識別するためのID。ユーザー内で閉じたID。"
+            },
+            name: {
+                type: g.GraphQLNonNull(g.GraphQLString),
+                description: "商品名"
+            },
+            price: {
+                type: g.GraphQLInt,
+                description: "値段 まだ決めていない場合はnull"
+            },
+            description: {
+                type: g.GraphQLNonNull(g.GraphQLString),
+                description: "商品の説明文"
+            },
+            condition: {
+                type: type.conditionGraphQLType,
+                description: "商品の品質状態 まだ決めていない場合はnull"
+            },
+            category: {
+                type: type.categoryGraphQLType,
+                description:
+                    "商品を分類するカテゴリー まだ決めていない場合はnull"
+            }
+        }),
+    description: "商品の下書き"
+});
+
 /*  =============================================================
                             User
     =============================================================
@@ -289,10 +340,11 @@ const userGraphQLType = new g.GraphQLObjectType({
         }),
     description: "ユーザー"
 });
-/** ==============================
- *         User Private
- * ===============================
- */
+
+/*  =============================================================
+                            User Private
+    =============================================================
+*/
 const userPrivateGraphQLType = new g.GraphQLObjectType({
     name: "UserPrivate",
     fields: () =>
@@ -799,6 +851,54 @@ const markProductInHistory = makeQueryOrMutationField<
     },
     description: "商品を閲覧したと記録する"
 });
+
+const addDraftProduct = makeQueryOrMutationField<
+    { accessToken: string } & Pick<
+        type.DraftProduct,
+        "name" | "price" | "description" | "condition" | "category"
+    >,
+    type.DraftProduct
+>({
+    args: {
+        accessToken: {
+            type: g.GraphQLNonNull(g.GraphQLString),
+            description: type.accessTokenDescription
+        },
+        name: {
+            type: g.GraphQLNonNull(g.GraphQLString),
+            description: "商品名"
+        },
+        price: {
+            type: g.GraphQLInt,
+            description: "価格 まだ決めていない場合はnull"
+        },
+        description: {
+            type: g.GraphQLNonNull(g.GraphQLString),
+            description: "説明文"
+        },
+        condition: {
+            type: type.conditionGraphQLType,
+            description:
+                type.conditionDescription + "まだ決めていない場合はnull"
+        },
+        category: {
+            type: type.categoryGraphQLType,
+            description: type.categoryDescription + "まだ決めていない場合はnull"
+        }
+    },
+    type: g.GraphQLNonNull(draftProductGraphQLType),
+    resolve: async (source, args, context, info) => {
+        const { id } = database.verifyAccessToken(args.accessToken);
+        return await database.addDraftProductData(id, {
+            name: args.name,
+            price: args.price,
+            description: args.description,
+            condition: args.condition,
+            category: args.category
+        });
+    },
+    description: "商品の下書きを登録する"
+});
 /*  =============================================================
                             Schema
     =============================================================
@@ -825,7 +925,8 @@ export const schema = new g.GraphQLSchema({
             getAccessTokenAndUpdateRefreshToken,
             updateProfile,
             sellProduct,
-            markProductInHistory
+            markProductInHistory,
+            addDraftProduct
         }
     })
 });

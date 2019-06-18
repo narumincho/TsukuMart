@@ -8,7 +8,7 @@ import Maybe from "graphql/tsutils/Maybe";
  */
 const urlTypeScalarTypeConfig: g.GraphQLScalarTypeConfig<URL, string> = {
     name: "URL",
-    description: "URL",
+    description: `URL 文字列で指定する 例"https://narumincho.com/definy/spec.html"`,
     serialize: (url: URL): string => url.toString(),
     parseValue: (value: string): URL => new URL(value),
     parseLiteral: (ast): URL | null => {
@@ -44,7 +44,8 @@ const dataUrlParser = (value: string): DataURL => {
 
 export const dataUrlTypeConfig: g.GraphQLScalarTypeConfig<DataURL, string> = {
     name: "DataURL",
-    description: "DataURL base64エンコードのみサポート",
+    description:
+        "DataURL (https://developer.mozilla.org/ja/docs/Web/HTTP/Basics_of_HTTP/Data_URIs) base64エンコードのみサポート",
     serialize: (value: DataURL): string =>
         "data:" + value.mimeType + ";base64," + value.data.toString(),
     parseValue: dataUrlParser,
@@ -429,46 +430,13 @@ export const productToInternal = (product: Product): ProductInternal => ({
  * ===============================
  */
 export type DraftProduct = {
-    id: string;
+    draftId: string;
     name: string;
     description: string;
     price: number | null;
     condition: Condition | null;
     category: Category | null;
 };
-
-/**
- * 商品の下書き。すべてフィールドをresolveで返さなければならない
- */
-const draftProductGraphQLType = new g.GraphQLObjectType<DraftProduct, void, {}>(
-    {
-        name: "DraftProduct",
-        fields: () => ({
-            id: {
-                type: g.GraphQLNonNull(g.GraphQLString),
-                description:
-                    "下書きの商品を識別するためのID。ユーザー内で閉じたID。"
-            },
-            name: {
-                type: g.GraphQLNonNull(g.GraphQLString),
-                description: "商品名"
-            },
-            price: {
-                type: g.GraphQLInt,
-                description: "値段 まだ決めていない場合はnull"
-            },
-            condition: {
-                type: conditionGraphQLType,
-                description: "商品の品質状態 まだ決めていない場合はnull"
-            },
-            category: {
-                type: categoryGraphQLType,
-                description:
-                    "商品を分類するカテゴリー まだ決めていない場合はnull"
-            }
-        })
-    }
-);
 
 /** ==============================
  *           Condition

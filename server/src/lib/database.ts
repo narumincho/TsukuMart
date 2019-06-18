@@ -356,6 +356,48 @@ export const getAllUser = async (): Promise<
         introduction: data.introduction
     }));
 
+export const markProductInHistory = async (
+    userId: string,
+    productId: string
+): Promise<void> => {
+    await databaseLow.addHistoryViewProductData(userId, productId, {
+        createdAt: databaseLow.getNowTimeStamp()
+    });
+    await databaseLow.updateProductData(productId, {
+        viewedCount: (await databaseLow.getProduct(productId)).viewedCount + 1
+    });
+};
+
+export const getHistoryViewProduct = async (
+    userId: string
+): Promise<Array<{ id: string }>> => {
+    const data = await databaseLow.getHistoryViewProductData(userId);
+    return data.map(value => ({ id: value.id }));
+};
+
+export const addDraftProductData = async (
+    userId: string,
+    data: Pick<
+        type.DraftProduct,
+        "name" | "price" | "description" | "condition" | "category"
+    >
+): Promise<type.DraftProduct> => ({
+    draftId: await databaseLow.addDraftProductData(userId, {
+        name: data.name,
+        description: data.description,
+        price: data.price,
+        condition: data.condition,
+        category: data.category,
+        createdAt: databaseLow.getNowTimeStamp(),
+        updateAt: databaseLow.getNowTimeStamp()
+    }),
+    name: data.name,
+    price: data.price,
+    description: data.description,
+    condition: data.condition,
+    category: data.category
+});
+
 /**
  * プロフィールを設定する
  * @param id ユーザーID
@@ -469,23 +511,4 @@ export const sellProduct = async (
         name: data.name,
         price: data.price
     };
-};
-
-export const markProductInHistory = async (
-    userId: string,
-    productId: string
-): Promise<void> => {
-    await databaseLow.addHistoryViewProductData(userId, productId, {
-        createdAt: databaseLow.getNowTimeStamp()
-    });
-    await databaseLow.updateProductData(productId, {
-        viewedCount: (await databaseLow.getProduct(productId)).viewedCount + 1
-    });
-};
-
-export const getHistoryViewProduct = async (
-    userId: string
-): Promise<Array<{ id: string }>> => {
-    const data = await databaseLow.getHistoryViewProductData(userId);
-    return data.map(value => ({ id: value.id }));
 };
