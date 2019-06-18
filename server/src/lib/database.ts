@@ -1,15 +1,9 @@
-import * as firebase from "firebase";
 import * as jwt from "jsonwebtoken";
 import { URL } from "url";
 import * as databaseLow from "./databaseLow";
 import * as key from "./key";
 import * as type from "./type";
 import Maybe from "graphql/tsutils/Maybe";
-
-firebase.initializeApp({
-    apiKey: key.apiKey,
-    projectId: "tsukumart-f0971"
-});
 
 /**
  * 指定したStateがつくマート自身が発行したものかどうか調べ、あったらそのStateを削除する
@@ -140,13 +134,7 @@ export const addUserBeforeEmailVerificationAndSendEmail = async (
         schoolAndDepartment: flatUniversity.schoolAndDepartment,
         graduate: flatUniversity.graduate
     });
-    const userCredential = await firebase
-        .auth()
-        .signInWithEmailAndPassword(email, authUser.password);
-    if (userCredential.user === null) {
-        throw new Error("userCredential.user is null");
-    }
-    await userCredential.user.sendEmailVerification();
+    await databaseLow.sendEmailVerification(email, authUser.password);
 };
 
 /**

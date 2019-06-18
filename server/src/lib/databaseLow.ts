@@ -1,8 +1,14 @@
 import * as type from "./type";
+import * as firebase from "firebase";
 import * as firestore from "@google-cloud/firestore";
 import * as admin from "firebase-admin";
 import * as stream from "stream";
 import { URL } from "url";
+
+firebase.initializeApp({
+    apiKey: "AIzaSyDmKHgxpyKvnq-zxdj0tYSG6QIMotHKRBU",
+    projectId: "tsukumart-f0971"
+});
 
 const initializedAdmin = admin.initializeApp();
 const dataBase = initializedAdmin.firestore();
@@ -355,8 +361,8 @@ const querySnapshotToIdAndDataArray = (
 export const getNowTimeStamp = (): firestore.Timestamp =>
     admin.firestore.Timestamp.now();
 
-    /* ==========================================
-            Firebase Authentication 
+/* ==========================================
+        Firebase Authentication 
    ==========================================
 */
 /**
@@ -380,6 +386,22 @@ export const getFirebaseAuthUserEmailVerified = async (
     id: string
 ): Promise<boolean> =>
     (await initializedAdmin.auth().getUser(id)).emailVerified;
+/* ==========================================
+            Firebase Client Auth 
+   ==========================================
+*/
+export const sendEmailVerification = async (
+    email: string,
+    password: string
+) => {
+    const userCredential = await firebase
+        .auth()
+        .signInWithEmailAndPassword(email, password);
+    if (userCredential.user === null) {
+        throw new Error("userCredential.user is null");
+    }
+    await userCredential.user.sendEmailVerification();
+};
 /* ==========================================
             Firebase Cloud Storage
    ==========================================
