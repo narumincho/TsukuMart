@@ -10,7 +10,7 @@ module Page.Good exposing
     , view
     )
 
-{-| 商品の表示
+{-| 商品の詳細表示
 -}
 
 import Api
@@ -66,7 +66,6 @@ type Emit
     | EmitDeleteGood Api.Token Good.GoodId
     | EmitGoodEditor GoodEditor.Emit
     | EmitUpdateGoodData Api.Token Good.GoodId Api.SellGoodsRequest
-    | EmitGetGoodImageAsFileAndBlobUrl (List String)
 
 
 type Msg
@@ -82,13 +81,11 @@ type Msg
     | ToConfirmPage
     | InputComment String
     | SendComment Api.Token
-    | ReceiveTimeStringToMillisecond { goodId : Int, second : List Int }
     | DeleteGood Api.Token Good.GoodId
     | EditGood
     | MsgBackToViewMode
     | GoodEditorMsg GoodEditor.Msg
     | UpdateGoodData Api.Token Good.GoodId GoodEditor.RequestData
-    | ReceiveGoodImageAsFileAndBlobUrl (List GoodEditor.Image)
     | GoodUpdateResponse (Result () ())
 
 
@@ -286,16 +283,6 @@ update msg model =
                     , []
                     )
 
-        ReceiveTimeStringToMillisecond { goodId, second } ->
-            ( case model of
-                Normal r ->
-                    Normal { r | good = r.good |> Good.replaceCommentTimeStringToTimePosix (second |> List.map Time.millisToPosix) }
-
-                _ ->
-                    model
-            , []
-            )
-
         DeleteGood token goodId ->
             ( model
             , [ EmitDeleteGood token goodId ]
@@ -305,32 +292,7 @@ update msg model =
             case model of
                 Normal { good } ->
                     ( model
-                    , [ EmitGetGoodImageAsFileAndBlobUrl
-                            (Good.getFirstImageUrl good :: Good.getOthersImageUrlList good)
-                      ]
-                    )
-
-                _ ->
-                    ( model, [] )
-
-        ReceiveGoodImageAsFileAndBlobUrl goodImageList ->
-            case model of
-                Normal { good } ->
-                    let
-                        ( goodEditorModel, goodEditorEmit ) =
-                            GoodEditor.initModel
-                                { name = Good.getName good
-                                , description = Good.getDescription good
-                                , price = Just (Good.getPrice good)
-                                , condition = Just (Good.getCondition good)
-                                , image = GoodEditor.imageListFromList goodImageList
-                                }
-                    in
-                    ( Edit
-                        { beforeGood = good
-                        , editorModel = goodEditorModel
-                        }
-                    , goodEditorEmit |> List.map EmitGoodEditor
+                    , []
                     )
 
                 _ ->

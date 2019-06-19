@@ -1,11 +1,9 @@
 module Page.Component.GoodEditor exposing
     ( Emit(..)
-    , Image
     , ImageList(..)
     , Model
     , Msg(..)
     , RequestData
-    , imageListFromList
     , imageListToBlobUrlList
     , initModel
     , requestDataToApiRequest
@@ -18,7 +16,6 @@ module Page.Component.GoodEditor exposing
 import Api
 import Array
 import Data.Good as Good
-import File
 import Html
 import Html.Attributes
 import Html.Events
@@ -39,14 +36,10 @@ type Model
 
 
 type ImageList
-    = Image1 Image
-    | Image2 Image Image
-    | Image3 Image Image Image
-    | Image4 Image Image Image Image
-
-
-type alias Image =
-    { file : File.File, blobUrl : String }
+    = Image1 String
+    | Image2 String String
+    | Image3 String String String
+    | Image4 String String String String
 
 
 type Emit
@@ -63,7 +56,7 @@ type Msg
     | InputCondition (Maybe Good.Condition)
     | DeleteImage Int
     | CatchImageList String -- JSにファイルとBlobURLの取得を要請する
-    | InputImageList (List Image)
+    | InputImageList (List String)
 
 
 type alias RequestData =
@@ -90,25 +83,6 @@ initModel { name, description, price, condition, image } =
     ( model
     , resendEmit model
     )
-
-
-imageListFromList : List Image -> Maybe ImageList
-imageListFromList imageList =
-    case imageList of
-        x0 :: [] ->
-            Just (Image1 x0)
-
-        x0 :: x1 :: [] ->
-            Just (Image2 x0 x1)
-
-        x0 :: x1 :: x2 :: [] ->
-            Just (Image3 x0 x1 x2)
-
-        x0 :: x1 :: x2 :: x3 :: [] ->
-            Just (Image4 x0 x1 x2 x3)
-
-        _ ->
-            Nothing
 
 
 resendEmit : Model -> List Emit
@@ -169,14 +143,14 @@ update msg (Model rec) =
             , [ EmitCatchImageList idString ]
             )
 
-        InputImageList fileList ->
+        InputImageList dataUrlList ->
             ( Model
-                { rec | image = imageAdd fileList rec.image }
+                { rec | image = imageAdd dataUrlList rec.image }
             , []
             )
 
 
-imageAdd : List Image -> Maybe ImageList -> Maybe ImageList
+imageAdd : List String -> Maybe ImageList -> Maybe ImageList
 imageAdd fileList imageSelected =
     case fileList of
         [] ->
@@ -315,36 +289,13 @@ toRequestData (Model { name, description, price, condition, image }) =
 
 requestDataToApiRequest : RequestData -> Api.SellGoodsRequest
 requestDataToApiRequest { name, description, price, condition, image } =
-    let
-        { image0, image1, image2, image3 } =
-            itemToRequest image
-    in
     Api.SellGoodsRequest
         { name = name
         , description = description
         , price = price
         , condition = condition
-        , image0 = image0
-        , image1 = image1
-        , image2 = image2
-        , image3 = image3
+        , imageList = []
         }
-
-
-itemToRequest : ImageList -> { image0 : File.File, image1 : Maybe File.File, image2 : Maybe File.File, image3 : Maybe File.File }
-itemToRequest image =
-    case image of
-        Image1 i0 ->
-            { image0 = i0.file, image1 = Nothing, image2 = Nothing, image3 = Nothing }
-
-        Image2 i0 i1 ->
-            { image0 = i0.file, image1 = Just i1.file, image2 = Nothing, image3 = Nothing }
-
-        Image3 i0 i1 i2 ->
-            { image0 = i0.file, image1 = Just i1.file, image2 = Just i2.file, image3 = Nothing }
-
-        Image4 i0 i1 i2 i3 ->
-            { image0 = i0.file, image1 = Just i1.file, image2 = Just i2.file, image3 = Just i3.file }
 
 
 {-| 指定された名前が正常か調べる。Nothingなら異常なし、Just Stringはエラーメッセージ
@@ -502,7 +453,7 @@ photoDeleteButton =
 
 imageListToBlobUrlList : Maybe ImageList -> List String
 imageListToBlobUrlList imageList =
-    (case imageList of
+    case imageList of
         Nothing ->
             []
 
@@ -517,8 +468,6 @@ imageListToBlobUrlList imageList =
 
         Just (Image4 i0 i1 i2 i3) ->
             [ i0, i1, i2, i3 ]
-    )
-        |> List.map .blobUrl
 
 
 

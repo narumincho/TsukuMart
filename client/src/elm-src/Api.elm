@@ -34,7 +34,6 @@ import Data.Good as Good
 import Data.SocialLoginService
 import Data.University as University
 import Data.User as User
-import File
 import Http
 import Json.Decode
 import Json.Decode.Pipeline
@@ -265,10 +264,7 @@ type SellGoodsRequest
         , description : String
         , price : Int
         , condition : Good.Condition
-        , image0 : File.File
-        , image1 : Maybe File.File
-        , image2 : Maybe File.File
-        , image3 : Maybe File.File
+        , imageList : List String
         }
 
 
@@ -277,62 +273,22 @@ sellGoods token createGoodsRequest msg =
     Cmd.none
 
 
-createGoodsRequestJsonBody : SellGoodsRequest -> List Http.Part
-createGoodsRequestJsonBody (SellGoodsRequest { name, description, price, condition, image0, image1, image2, image3 }) =
-    [ Http.stringPart "name" name
-    , Http.stringPart "description" description
-    , Http.stringPart "price" (String.fromInt price)
-    , Http.stringPart "condition" (Good.conditionToIdString condition)
-    , Http.stringPart "status" "selling"
-    , Http.filePart "image1" image0
-    ]
-        ++ (case image1 of
-                Just i ->
-                    [ Http.filePart "image2" i ]
-
-                Nothing ->
-                    []
-           )
-        ++ (case image2 of
-                Just i ->
-                    [ Http.filePart "image3" i ]
-
-                Nothing ->
-                    []
-           )
-        ++ (case image3 of
-                Just i ->
-                    [ Http.filePart "image4" i ]
-
-                Nothing ->
-                    []
-           )
-
-
-createGoodsResponseToResult : Http.Response String -> Result () ()
-createGoodsResponseToResult response =
-    case response of
-        Http.BadUrl_ _ ->
-            Err ()
-
-        Http.Timeout_ ->
-            Err ()
-
-        Http.NetworkError_ ->
-            Err ()
-
-        Http.BadStatus_ _ _ ->
-            Err ()
-
-        Http.GoodStatus_ _ _ ->
-            Ok ()
-
-
 
 {- ==============================================================================
       商品の情報を編集する   /{version}/currentuser/goods/{id}/
    ==============================================================================
 -}
+
+
+type EditGoodsRequest
+    = EditGoodsRequest
+        { name : String
+        , description : String
+        , price : Int
+        , condition : Good.Condition
+        , addImageList : List String
+        , deleteImageIndex : List Int
+        }
 
 
 updateGood : Token -> Good.GoodId -> SellGoodsRequest -> (Result () () -> msg) -> Cmd msg

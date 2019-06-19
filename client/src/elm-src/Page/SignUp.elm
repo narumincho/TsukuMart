@@ -47,7 +47,7 @@ type Emit
 type Msg
     = InputStudentIdOrEmailAddress String
     | CatchStudentImage String
-    | ReceiveImageDataUrl String
+    | ReceiveImageDataUrl (List String)
     | InputSAddress AnalysisStudentIdOrSAddressResult
     | InputUniversity CompUniversity.Model
     | InputNickName String
@@ -92,9 +92,9 @@ update msg model =
             )
 
         ReceiveImageDataUrl dataUrl ->
-            ( case model of
-                Normal rec ->
-                    Normal { rec | imageUrl = dataUrl }
+            ( case ( model, dataUrl ) of
+                ( Normal rec, imageDataUrl :: _ ) ->
+                    Normal { rec | imageUrl = imageDataUrl }
 
                 _ ->
                     model

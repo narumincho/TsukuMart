@@ -7,11 +7,9 @@ import Browser.Navigation
 import Data.Good
 import Data.LogInState
 import Data.User
-import File
 import Html
 import Html.Attributes
 import Html.Keyed
-import Json.Decode
 import Page.About
 import Page.Component.GoodEditor
 import Page.Component.GoodList
@@ -34,16 +32,13 @@ import Time
 import Url
 
 
-port receiveImageFileAndBlobUrl : (Json.Decode.Value -> msg) -> Sub msg
+port receiveImageFileListAsDataUrlList : (List String -> msg) -> Sub msg
 
 
-port receiveGoodImageFileAsFileAndBlobUrl : (Json.Decode.Value -> msg) -> Sub msg
+port requestReceiveImageList : String -> Cmd msg
 
 
-port exhibitionImageChange : String -> Cmd msg
-
-
-port getGoodImageFileAsFileAndBlobUrl : List String -> Cmd msg
+port addEventListenerDrop : String -> Cmd msg
 
 
 port toWideScreenMode : (() -> msg) -> Sub msg
@@ -52,31 +47,19 @@ port toWideScreenMode : (() -> msg) -> Sub msg
 port toNarrowScreenMode : (() -> msg) -> Sub msg
 
 
-port receiveImageDataUrlList : (String -> msg) -> Sub msg
-
-
-port requestReceiveImageList : String -> Cmd msg
-
-
-port elementScrollIntoView : String -> Cmd msg
-
-
-port inputOrTextAreaReplaceText : { id : String, text : String } -> Cmd msg
-
-
-port changeSelectedIndex : { id : String, index : Int } -> Cmd msg
-
-
-port addEventListenerDrop : String -> Cmd msg
-
-
 port saveRefreshTokenToLocalStorage : String -> Cmd msg
 
 
 port deleteRefreshTokenAndAllFromLocalStorage : () -> Cmd msg
 
 
-port receiveTimeStringToMillisecond : ({ goodId : Int, second : List Int } -> msg) -> Sub msg
+port elementScrollIntoView : String -> Cmd msg
+
+
+port replaceText : { id : String, text : String } -> Cmd msg
+
+
+port changeSelectedIndex : { id : String, index : Int } -> Cmd msg
 
 
 type Model
@@ -114,8 +97,7 @@ type Msg
     | LogInResponse (Result String { accessToken : Api.Token, refreshToken : Api.Token })
     | LogOut
     | SignUpConfirmResponse (Result String ())
-    | ReceiveImageDataUrl String
-    | ReceiveImageFileAndBlobUrl Json.Decode.Value
+    | ReceiveImageListAsDataUrlList (List String)
     | GetMyProfileResponse (Result String Data.User.WithProfile)
     | SellGoodResponse (Result () ())
     | LikeGoodResponse Data.User.UserId Data.Good.GoodId (Result () ())
@@ -132,7 +114,6 @@ type Msg
     | ProfilePageMsg Page.User.Msg
     | GoodsPageMsg Page.Good.Msg
     | GetNowTime (Result () ( Time.Posix, Time.Zone ))
-    | ReceiveGoodImageFileAsFileAndBlobUrl Json.Decode.Value
     | LogInOrSignUpUrlResponse (Result String Url.Url)
 
 
@@ -390,66 +371,45 @@ update msg (Model rec) =
                     , Cmd.none
                     )
 
-        ReceiveImageDataUrl urlString ->
+        ReceiveImageListAsDataUrlList dataUrlList ->
             case rec.page of
                 PageSignUp signUpModel ->
                     let
                         ( newModel, emitList ) =
                             Page.SignUp.update
-                                (Page.SignUp.ReceiveImageDataUrl urlString)
+                                (Page.SignUp.ReceiveImageDataUrl dataUrlList)
                                 signUpModel
                     in
                     ( Model { rec | page = PageSignUp newModel }
                     , signUpPageEmitListToCmd emitList
                     )
 
-                _ ->
-                    ( Model rec
-                    , Cmd.none
+                PageExhibition exhibitionPageModel ->
+                    let
+                        ( newModel, emitList ) =
+                            Page.Exhibition.update
+                                rec.logInState
+                                (Page.Exhibition.GoodEditorMsg
+                                    (Page.Component.GoodEditor.InputImageList dataUrlList)
+                                )
+                                exhibitionPageModel
+                    in
+                    ( Model { rec | page = PageExhibition newModel }
+                    , exhibitionPageEmitListToCmd emitList
                     )
 
-        ReceiveImageFileAndBlobUrl value ->
-            case rec.page of
-                PageExhibition exhibitionPageModel ->
-                    case Json.Decode.decodeValue receiveImageFileAndBlobUrlDecoder value of
-                        Ok data ->
-                            let
-                                ( newModel, emitList ) =
-                                    Page.Exhibition.update
-                                        rec.logInState
-                                        (Page.Exhibition.GoodEditorMsg
-                                            (Page.Component.GoodEditor.InputImageList data)
-                                        )
-                                        exhibitionPageModel
-                            in
-                            ( Model { rec | page = PageExhibition newModel }
-                            , exhibitionPageEmitListToCmd emitList
-                            )
-
-                        Err _ ->
-                            ( Model rec
-                            , Cmd.none
-                            )
-
                 PageGoods goodPageModel ->
-                    case Json.Decode.decodeValue receiveImageFileAndBlobUrlDecoder value of
-                        Ok data ->
-                            let
-                                ( newModel, emitList ) =
-                                    Page.Good.update
-                                        (Page.Good.GoodEditorMsg
-                                            (Page.Component.GoodEditor.InputImageList data)
-                                        )
-                                        goodPageModel
-                            in
-                            ( Model { rec | page = PageGoods newModel }
-                            , goodsPageEmitListToCmd emitList
-                            )
-
-                        Err _ ->
-                            ( Model rec
-                            , Cmd.none
-                            )
+                    let
+                        ( newModel, emitList ) =
+                            Page.Good.update
+                                (Page.Good.GoodEditorMsg
+                                    (Page.Component.GoodEditor.InputImageList dataUrlList)
+                                )
+                                goodPageModel
+                    in
+                    ( Model { rec | page = PageGoods newModel }
+                    , goodsPageEmitListToCmd emitList
+                    )
 
                 _ ->
                     ( Model rec
@@ -703,31 +663,6 @@ update msg (Model rec) =
                     , Cmd.none
                     )
 
-        ReceiveGoodImageFileAsFileAndBlobUrl value ->
-            case rec.page of
-                PageGoods goodPageModel ->
-                    case Json.Decode.decodeValue receiveImageFileAndBlobUrlDecoder value of
-                        Ok data ->
-                            let
-                                ( newModel, emitList ) =
-                                    Page.Good.update
-                                        (Page.Good.ReceiveGoodImageAsFileAndBlobUrl data)
-                                        goodPageModel
-                            in
-                            ( Model { rec | page = PageGoods newModel }
-                            , goodsPageEmitListToCmd emitList
-                            )
-
-                        Err err ->
-                            ( Model rec
-                            , Cmd.none
-                            )
-
-                _ ->
-                    ( Model rec
-                    , Cmd.none
-                    )
-
         LogInOrSignUpUrlResponse result ->
             case result of
                 Ok url ->
@@ -861,7 +796,7 @@ signUpPageEmitListToCmd =
         (\emit ->
             case emit of
                 Page.SignUp.EmitReplaceText { id, text } ->
-                    inputOrTextAreaReplaceText { id = id, text = text }
+                    replaceText { id = id, text = text }
 
                 Page.SignUp.EmitAccountImage idString ->
                     requestReceiveImageList idString
@@ -887,7 +822,7 @@ profilePageEmitListToCmd =
                     Api.updateProfile token profile ChangeProfileResponse
 
                 Page.User.EmitReplaceElementText { id, text } ->
-                    inputOrTextAreaReplaceText
+                    replaceText
                         { id = id, text = text }
 
                 Page.User.EmitUniversity e ->
@@ -951,9 +886,6 @@ goodsPageEmitListToCmd =
 
                 Page.Good.EmitUpdateGoodData token goodId requestData ->
                     Api.updateGood token goodId requestData (\m -> GoodsPageMsg (Page.Good.GoodUpdateResponse m))
-
-                Page.Good.EmitGetGoodImageAsFileAndBlobUrl urlList ->
-                    getGoodImageFileAsFileAndBlobUrl urlList
         )
         >> Cmd.batch
 
@@ -996,27 +928,13 @@ goodEditorEmitToCmd emit =
             addEventListenerDrop idString
 
         Page.Component.GoodEditor.EmitReplaceText { id, text } ->
-            inputOrTextAreaReplaceText { id = id, text = text }
+            replaceText { id = id, text = text }
 
         Page.Component.GoodEditor.EmitChangeSelectedIndex { id, index } ->
             changeSelectedIndex { id = id, index = index }
 
         Page.Component.GoodEditor.EmitCatchImageList idString ->
-            exhibitionImageChange idString
-
-
-receiveImageFileAndBlobUrlDecoder : Json.Decode.Decoder (List { file : File.File, blobUrl : String })
-receiveImageFileAndBlobUrlDecoder =
-    Json.Decode.list
-        (Json.Decode.map2
-            (\file blob ->
-                { file = file
-                , blobUrl = blob
-                }
-            )
-            (Json.Decode.field "file" File.decoder)
-            (Json.Decode.field "blobUrl" Json.Decode.string)
-        )
+            requestReceiveImageList idString
 
 
 urlParserResultToModel : Maybe ( Page, Cmd Msg ) -> ( Page, Maybe String, Cmd Msg )
@@ -1431,10 +1349,7 @@ messageView message =
 subscription : Model -> Sub Msg
 subscription (Model { menuState }) =
     Sub.batch
-        [ receiveImageDataUrlList ReceiveImageDataUrl
-        , receiveImageFileAndBlobUrl ReceiveImageFileAndBlobUrl
-        , receiveGoodImageFileAsFileAndBlobUrl ReceiveGoodImageFileAsFileAndBlobUrl
-        , receiveTimeStringToMillisecond (\msg -> GoodsPageMsg (Page.Good.ReceiveTimeStringToMillisecond msg))
+        [ receiveImageFileListAsDataUrlList ReceiveImageListAsDataUrlList
         , case menuState of
             Just _ ->
                 toWideScreenMode (always ToWideScreenMode)

@@ -11,7 +11,6 @@ module Page.Exhibition exposing
 import Api
 import Data.Good as Good
 import Data.LogInState
-import File
 import Html
 import Html.Attributes
 import Html.Events
