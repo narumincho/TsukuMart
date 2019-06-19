@@ -194,7 +194,7 @@ studentHasSAddressFormList analysisStudentIdOrEmailAddressResult =
                 [ Html.Attributes.class "form-label"
                 , Html.Attributes.for "signUpStudentIdOrTsukubaEmail"
                 ]
-                [ Html.text "学籍番号か ～@～.tsukuba.ac.jpのメールアドレス" ]
+                [ Html.text "学籍番号" ]
             , Html.input
                 [ Html.Attributes.class "form-input"
                 , Html.Attributes.id "signUpStudentIdOrTsukubaEmail"
@@ -290,7 +290,13 @@ imageForm imageUrl =
     [ ( "imageForm"
       , Html.div
             []
-            [ Html.img [ Html.Attributes.src imageUrl ] [] ]
+            [ Html.img
+                [ Html.Attributes.style "width" "50%"
+                , Html.Attributes.style "border-radius" "50%"
+                , Html.Attributes.src imageUrl
+                ]
+                []
+            ]
       )
     ]
 
@@ -338,22 +344,34 @@ signUpSubmitButton : Maybe Api.SignUpRequest -> Html.Html Msg
 signUpSubmitButton signUpRequestMaybe =
     Html.div
         []
-        [ Html.button
-            ([ Html.Attributes.classList [ ( "mainButton", True ), ( "mainButton-disabled", signUpRequestMaybe == Nothing ) ]
-             , Html.Attributes.disabled (signUpRequestMaybe == Nothing)
-             ]
-                ++ (case signUpRequestMaybe of
-                        Just signUpRequest ->
-                            [ Html.Events.stopPropagationOn "click"
-                                (Json.Decode.succeed ( SignUp signUpRequest, True ))
-                            ]
+        ((case signUpRequestMaybe of
+            Just signUpRequest ->
+                [ Html.text
+                    (Data.EmailAddress.toString signUpRequest.emailAddress
+                        ++ "に認証メールを送信します"
+                    )
+                ]
 
-                        Nothing ->
-                            []
-                   )
-            )
-            [ Html.text "新規登録" ]
-        ]
+            Nothing ->
+                []
+         )
+            ++ [ Html.button
+                    ([ Html.Attributes.classList [ ( "mainButton", True ), ( "mainButton-disabled", signUpRequestMaybe == Nothing ) ]
+                     , Html.Attributes.disabled (signUpRequestMaybe == Nothing)
+                     ]
+                        ++ (case signUpRequestMaybe of
+                                Just signUpRequest ->
+                                    [ Html.Events.stopPropagationOn "click"
+                                        (Json.Decode.succeed ( SignUp signUpRequest, True ))
+                                    ]
+
+                                Nothing ->
+                                    []
+                           )
+                    )
+                    [ Html.text "新規登録" ]
+               ]
+        )
 
 
 {-| 画面の情報から新規登録できる情報を入力しているかと、新規登録に必要なデータを取りだす
