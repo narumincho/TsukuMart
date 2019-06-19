@@ -1,12 +1,12 @@
 module Page.SoldProducts exposing (Emit(..), Model, Msg(..), initModel, update, view)
 
 import Api
-import Data.Product
 import Data.LogInState as LogInState
+import Data.Product
 import Html
 import Html.Attributes
-import Page.Component.ProductList as ProductList
 import Page.Component.LogIn as LogInOrSignUp
+import Page.Component.ProductList as ProductList
 import Tab
 
 
@@ -89,10 +89,10 @@ update msg (Model rec) =
                     rec.productListModel |> ProductList.update productListMsg
             in
             ( case productListMsg of
-                ProductList.LikeResponse userId id (Ok ()) ->
+                ProductList.LikeResponse id (Ok ()) ->
                     let
-                        likeProductList =
-                            Data.Product.listMapIf (\g -> Data.Product.getId g == id) (Data.Product.like userId)
+                        likeFunc =
+                            Data.Product.listMapIf (\g -> Data.Product.getId g == id) Data.Product.like
                     in
                     Model
                         { rec
@@ -103,17 +103,17 @@ update msg (Model rec) =
 
                                     Normal { soldProductList } ->
                                         Normal
-                                            { soldProductList = likeProductList soldProductList }
+                                            { soldProductList = likeFunc soldProductList }
 
                                     Error ->
                                         Error
                             , productListModel = newModel
                         }
 
-                ProductList.UnlikeResponse userId id (Ok ()) ->
+                ProductList.UnlikeResponse id (Ok ()) ->
                     let
-                        unlikeProductList =
-                            Data.Product.listMapIf (\g -> Data.Product.getId g == id) (Data.Product.unlike userId)
+                        unlikeFunc =
+                            Data.Product.listMapIf (\g -> Data.Product.getId g == id) Data.Product.unlike
                     in
                     Model
                         { rec
@@ -124,7 +124,7 @@ update msg (Model rec) =
 
                                     Normal { soldProductList } ->
                                         Normal
-                                            { soldProductList = unlikeProductList soldProductList }
+                                            { soldProductList = unlikeFunc soldProductList }
 
                                     Error ->
                                         Error

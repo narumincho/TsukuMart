@@ -1,12 +1,12 @@
 module Page.LikeAndHistory exposing (Emit(..), Model(..), Msg(..), initModel, update, view)
 
 import Api
-import Data.Product as Product
 import Data.LogInState as LogInState
+import Data.Product as Product
 import Html
 import Html.Attributes
-import Page.Component.ProductList as ProductList
 import Page.Component.LogIn as LogInOrSignUp
+import Page.Component.ProductList as ProductList
 import Tab
 import Utility
 
@@ -82,17 +82,17 @@ type TabSelect
 
 type Msg
     = SelectTab TabSelect
-    | LikeGoodListResponse (Result () (List Product.Product))
+    | LikedProdutsResponse (Result () (List Product.Product))
     | HistoryGoodListResponse (Result () (List Product.Product))
     | MsgByLogIn LogInOrSignUp.Msg
     | MsgByProductList ProductList.Msg
 
 
 type Emit
-    = EmitGetLikeGoodList Api.Token
-    | EmitGetHistoryGoodList Api.Token
+    = EmitGetLikedProduts Api.Token
+    | EmitGetHistoryProduts Api.Token
     | EmitLogInOrSignUp LogInOrSignUp.Emit
-    | EmitGoodList ProductList.Emit
+    | EmitByProductList ProductList.Emit
 
 
 {-| 初期状態 いいねが選ばれている
@@ -115,14 +115,14 @@ initModel goodIdMaybe logInState =
         }
     , (case LogInState.getAccessToken logInState of
         Just accessToken ->
-            [ EmitGetLikeGoodList accessToken
-            , EmitGetHistoryGoodList accessToken
+            [ EmitGetLikedProduts accessToken
+            , EmitGetHistoryProduts accessToken
             ]
 
         Nothing ->
             []
       )
-        ++ (emitList |> List.map EmitGoodList)
+        ++ (emitList |> List.map EmitByProductList)
     )
 
 
@@ -136,17 +136,17 @@ update logInState msg (Model rec) =
                 Just accessToken ->
                     [ case tabSelect of
                         TabLike ->
-                            EmitGetLikeGoodList accessToken
+                            EmitGetLikedProduts accessToken
 
                         TabHistory ->
-                            EmitGetHistoryGoodList accessToken
+                            EmitGetHistoryProduts accessToken
                     ]
 
                 Nothing ->
                     []
             )
 
-        LikeGoodListResponse response ->
+        LikedProdutsResponse response ->
             ( Model
                 { rec | normalModel = rec.normalModel |> normalModelSetLikeGoodResponse response }
             , []
@@ -177,10 +177,10 @@ update logInState msg (Model rec) =
                     rec.productListModel |> ProductList.update goodListMsg
             in
             ( case goodListMsg of
-                ProductList.LikeResponse userId id (Ok ()) ->
+                ProductList.LikeResponse id (Ok ()) ->
                     let
                         likeGoodListResult =
-                            Result.map (Product.listMapIf (\g -> Product.getId g == id) (Product.like userId))
+                            Result.map (Product.listMapIf (\g -> Product.getId g == id) Product.like)
                     in
                     Model
                         { rec
@@ -191,10 +191,10 @@ update logInState msg (Model rec) =
                             , productListModel = newModel
                         }
 
-                ProductList.UnlikeResponse userId id (Ok ()) ->
+                ProductList.UnlikeResponse id (Ok ()) ->
                     let
                         unlikeGoodListResult =
-                            Result.map (Product.listMapIf (\g -> Product.getId g == id) (Product.unlike userId))
+                            Result.map (Product.listMapIf (\g -> Product.getId g == id) Product.unlike)
                     in
                     Model
                         { rec
@@ -207,7 +207,7 @@ update logInState msg (Model rec) =
 
                 _ ->
                     Model { rec | productListModel = newModel }
-            , emitList |> List.map EmitGoodList
+            , emitList |> List.map EmitByProductList
             )
 
 

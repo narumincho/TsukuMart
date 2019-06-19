@@ -1,71 +1,71 @@
 module Page.BoughtProducts exposing (Emit(..), Model, Msg(..), initModel, update, view)
 
 import Api
-import Data.Product
 import Data.LogInState as LogInState
+import Data.Product
 import Html
 import Html.Attributes
+import Page.Component.LogIn as LogIn
 import Page.Component.ProductList as ProductList
-import Page.Component.LogIn as LogInOrSignUp
 import Tab
 
 
 type Model
     = Model
         { normalModel : NormalModel
-        , logInOrSignUpModel : LogInOrSignUp.Model
-        , goodListModel : ProductList.Model
+        , logInModel : LogIn.Model
+        , productListModel : ProductList.Model
         }
 
 
 type NormalModel
     = Loading
-    | Normal { purchaseGoodList : List Data.Product.Product }
+    | Normal (List Data.Product.Product)
     | Error
 
 
 type Emit
-    = EmitGetPurchaseGoodList Api.Token
-    | EmitLogInOrSignUp LogInOrSignUp.Emit
-    | EmitGoodList ProductList.Emit
+    = EmitGetPurchaseProducts Api.Token
+    | EmitLogInOrSignUp LogIn.Emit
+    | EmitByProductList ProductList.Emit
 
 
 type Msg
-    = GetPurchaseGoodResponse (Result () (List Data.Product.Product))
-    | LogInOrSignUpMsg LogInOrSignUp.Msg
-    | GoodListMsg ProductList.Msg
+    = GetPurchaseProductsResponse (Result () (List Data.Product.Product))
+    | LogInOrSignUpMsg LogIn.Msg
+    | MsgByProductList ProductList.Msg
 
 
 initModel : Maybe Data.Product.Id -> LogInState.LogInState -> ( Model, List Emit )
-initModel goodIdMaybe logInState =
+initModel productIdMaybe logInState =
     let
-        ( goodListModel, emitList ) =
-            ProductList.initModel goodIdMaybe
+        ( productListModel, emitList ) =
+            ProductList.initModel productIdMaybe
     in
     ( Model
-        { logInOrSignUpModel = LogInOrSignUp.initModel
+        { logInModel = LogIn.initModel
         , normalModel = Loading
-        , goodListModel = goodListModel
+        , productListModel = productListModel
         }
     , (case LogInState.getAccessToken logInState of
         Just accessToken ->
-            [ EmitGetPurchaseGoodList accessToken ]
+            [ EmitGetPurchaseProducts accessToken ]
 
         Nothing ->
             []
       )
-        ++ (emitList |> List.map EmitGoodList)
+        ++ (emitList |> List.map EmitByProductList)
     )
 
 
 update : Msg -> Model -> ( Model, List Emit )
 update msg (Model rec) =
     case msg of
-        GetPurchaseGoodResponse result ->
+        GetPurchaseProductsResponse result ->
             case result of
-                Ok goodList ->
+                Ok products ->
                     ( Model
-                        { rec | normalModel = Normal { purchaseGoodList = goodList } }
+                        { rec | normalModel = Normal products }
                     , []
                     )
 
@@ -77,64 +77,68 @@ update msg (Model rec) =
         LogInOrSignUpMsg logInOrSignUpMsg ->
             let
                 ( newModel, emitList ) =
-                    LogInOrSignUp.update logInOrSignUpMsg rec.logInOrSignUpModel
+                    LogIn.update logInOrSignUpMsg rec.logInModel
             in
-            ( Model { rec | logInOrSignUpModel = newModel }
+            ( Model { rec | logInModel = newModel }
             , emitList |> List.map EmitLogInOrSignUp
             )
 
-        GoodListMsg goodListMsg ->
+        MsgByProductList productListMsg ->
             let
                 ( newModel, emitList ) =
-                    rec.goodListModel |> ProductList.update goodListMsg
+                    rec.productListModel |> ProductList.update productListMsg
             in
-            ( case goodListMsg of
-                ProductList.LikeResponse userId id (Ok ()) ->
-                    let
-                        likeGoodList =
-                            Data.Product.listMapIf (\g -> Data.Product.getId g == id) (Data.Product.like userId)
-                    in
+            ( case productListMsg of
+                ProductList.LikeResponse id (Ok ()) ->
                     Model
                         { rec
-                            | normalModel =
-                                case rec.normalModel of
-                                    Loading ->
-                                        Loading
-
-                                    Normal { purchaseGoodList } ->
-                                        Normal
-                                            { purchaseGoodList = likeGoodList purchaseGoodList }
-
-                                    Error ->
-                                        Error
-                            , goodListModel = newModel
+                            | normalModel = likeProduct id rec.normalModel
+                            , productListModel = newModel
                         }
 
-                ProductList.UnlikeResponse userId id (Ok ()) ->
-                    let
-                        unlikeGoodList =
-                            Data.Product.listMapIf (\g -> Data.Product.getId g == id) (Data.Product.unlike userId)
-                    in
+                ProductList.UnlikeResponse id (Ok ()) ->
                     Model
                         { rec
-                            | normalModel =
-                                case rec.normalModel of
-                                    Loading ->
-                                        Loading
-
-                                    Normal { purchaseGoodList } ->
-                                        Normal
-                                            { purchaseGoodList = unlikeGoodList purchaseGoodList }
-
-                                    Error ->
-                                        Error
-                            , goodListModel = newModel
+                            | normalModel = unlikeProduct id rec.normalModel
+                            , productListModel = newModel
                         }
 
                 _ ->
-                    Model { rec | goodListModel = newModel }
-            , emitList |> List.map EmitGoodList
+                    Model { rec | productListModel = newModel }
+            , emitList |> List.map EmitByProductList
             )
+
+
+likeProduct : Data.Product.Id -> NormalModel -> NormalModel
+likeProduct id normalModel =
+    case normalModel of
+        Loading ->
+            Loading
+
+        Normal products ->
+            Normal
+                (products
+                    |> Data.Product.listMapIf (\g -> Data.Product.getId g == id) Data.Product.like
+                )
+
+        Error ->
+            Error
+
+
+unlikeProduct : Data.Product.Id -> NormalModel -> NormalModel
+unlikeProduct id normalModel =
+    case normalModel of
+        Loading ->
+            Loading
+
+        Normal products ->
+            Normal
+                (products
+                    |> Data.Product.listMapIf (\g -> Data.Product.getId g == id) Data.Product.unlike
+                )
+
+        Error ->
+            Error
 
 
 view :
@@ -153,27 +157,27 @@ view logInState isWideScreenMode (Model rec) =
                     [ Html.div
                         [ Html.Attributes.class "logInRecommendText" ]
                         [ Html.text "ログインか新規登録をして、購入した商品一覧機能を使えるようにしよう!" ]
-                    , LogInOrSignUp.view
-                        rec.logInOrSignUpModel
+                    , LogIn.view
+                        rec.logInModel
                         |> Html.map LogInOrSignUpMsg
                     ]
                 ]
 
             _ ->
                 [ ProductList.view
-                    rec.goodListModel
+                    rec.productListModel
                     logInState
                     isWideScreenMode
                     (case rec.normalModel of
                         Loading ->
                             Nothing
 
-                        Normal { purchaseGoodList } ->
-                            Just purchaseGoodList
+                        Normal products ->
+                            Just products
 
                         Error ->
                             Just []
                     )
-                    |> Html.map GoodListMsg
+                    |> Html.map MsgByProductList
                 ]
     }

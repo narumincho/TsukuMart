@@ -1,11 +1,10 @@
-module Page.Home exposing (Emit(..), Model, Msg(..), getGoodAllGoodList, initModel, update, view)
+module Page.Home exposing (Emit(..), Model, Msg(..), getAllProducts, initModel, update, view)
 
-import Data.Product as Good
 import Data.LogInState as LogInState
-import Data.User
+import Data.Product as Product
 import Html
 import Html.Attributes
-import Page.Component.ProductList as GoodList
+import Page.Component.ProductList as ProductList
 import SiteMap
 import Tab
 
@@ -13,10 +12,10 @@ import Tab
 type Model
     = Model
         { tabSelect : TabSelect
-        , recent : Maybe (List Good.Product)
-        , recommend : Maybe (List Good.Product)
-        , free : Maybe (List Good.Product)
-        , goodListModel : GoodList.Model
+        , recent : Maybe (List Product.Product)
+        , recommend : Maybe (List Product.Product)
+        , free : Maybe (List Product.Product)
+        , productListModel : ProductList.Model
         }
 
 
@@ -27,43 +26,43 @@ type TabSelect
 
 
 type Emit
-    = EmitGetRecentGoodList
-    | EmitGetRecommendGoodList
-    | EmitGetFreeGoodList
-    | EmitGoodList GoodList.Emit
+    = EmitGetRecentProducts
+    | EmitGetRecommendProducts
+    | EmitGetFreeProducts
+    | EmitProducts ProductList.Emit
 
 
 type Msg
     = SelectTab TabSelect
-    | GetRecentGoodListResponse (Result () (List Good.Product))
-    | GetRecommendGoodListResponse (Result () (List Good.Product))
-    | GetFreeGoodListResponse (Result () (List Good.Product))
-    | GoodListMsg GoodList.Msg
+    | GetRecentProductsResponse (Result () (List Product.Product))
+    | GetRecommendProductsResponse (Result () (List Product.Product))
+    | GetFreeProductsResponse (Result () (List Product.Product))
+    | MsgByProductList ProductList.Msg
 
 
-{-| 最初の状態。真ん中のタブ「おすすめ」が選択されている。Maybe Good.GoodIdで指定した商品のところまでスクロールする
+{-| 最初の状態。真ん中のタブ「おすすめ」が選択されている。Maybe Product.Idで指定した商品のところまでスクロールする
 -}
-initModel : Maybe Good.Id -> ( Model, List Emit )
-initModel goodIdMaybe =
+initModel : Maybe Product.Id -> ( Model, List Emit )
+initModel productIdMaybe =
     let
-        ( goodListModel, emitList ) =
-            GoodList.initModel goodIdMaybe
+        ( productListModel, emitList ) =
+            ProductList.initModel productIdMaybe
     in
     ( Model
         { tabSelect = TabRecommend
         , recent = Nothing
         , recommend = Nothing
         , free = Nothing
-        , goodListModel = goodListModel
+        , productListModel = productListModel
         }
-    , [ EmitGetRecommendGoodList ] ++ (emitList |> List.map EmitGoodList)
+    , [ EmitGetRecommendProducts ] ++ (emitList |> List.map EmitProducts)
     )
 
 
 {-| この画面から取得できる商品のデータを集める
 -}
-getGoodAllGoodList : Model -> List Good.Product
-getGoodAllGoodList (Model rec) =
+getAllProducts : Model -> List Product.Product
+getAllProducts (Model rec) =
     (case rec.tabSelect of
         TabRecent ->
             rec.recent
@@ -84,16 +83,16 @@ update msg (Model rec) =
             ( Model { rec | tabSelect = tabSelect }
             , case tabSelect of
                 TabRecent ->
-                    [ EmitGetRecentGoodList ]
+                    [ EmitGetRecentProducts ]
 
                 TabRecommend ->
-                    [ EmitGetRecommendGoodList ]
+                    [ EmitGetRecommendProducts ]
 
                 TabFree ->
-                    [ EmitGetFreeGoodList ]
+                    [ EmitGetFreeProducts ]
             )
 
-        GetRecentGoodListResponse result ->
+        GetRecentProductsResponse result ->
             ( case result of
                 Ok goodList ->
                     Model { rec | recent = Just goodList }
@@ -103,7 +102,7 @@ update msg (Model rec) =
             , []
             )
 
-        GetRecommendGoodListResponse result ->
+        GetRecommendProductsResponse result ->
             ( case result of
                 Ok goodList ->
                     Model { rec | recommend = Just goodList }
@@ -113,7 +112,7 @@ update msg (Model rec) =
             , []
             )
 
-        GetFreeGoodListResponse result ->
+        GetFreeProductsResponse result ->
             ( case result of
                 Ok goodList ->
                     Model { rec | free = Just goodList }
@@ -123,41 +122,41 @@ update msg (Model rec) =
             , []
             )
 
-        GoodListMsg goodListMsg ->
+        MsgByProductList productListMsg ->
             let
                 ( newModel, emitList ) =
-                    rec.goodListModel |> GoodList.update goodListMsg
+                    rec.productListModel |> ProductList.update productListMsg
             in
-            ( case goodListMsg of
-                GoodList.LikeResponse userId id (Ok ()) ->
+            ( case productListMsg of
+                ProductList.LikeResponse id (Ok ()) ->
                     let
-                        likeGoodListMaybe =
-                            Maybe.map (Good.listMapIf (\g -> Good.getId g == id) (Good.like userId))
+                        likeFunc =
+                            Maybe.map (Product.listMapIf (\g -> Product.getId g == id) Product.like)
                     in
                     Model
                         { rec
-                            | recent = likeGoodListMaybe rec.recent
-                            , recommend = likeGoodListMaybe rec.recommend
-                            , free = likeGoodListMaybe rec.free
-                            , goodListModel = newModel
+                            | recent = likeFunc rec.recent
+                            , recommend = likeFunc rec.recommend
+                            , free = likeFunc rec.free
+                            , productListModel = newModel
                         }
 
-                GoodList.UnlikeResponse userId id (Ok ()) ->
+                ProductList.UnlikeResponse id (Ok ()) ->
                     let
-                        unlikeGoodListMaybe =
-                            Maybe.map (Good.listMapIf (\g -> Good.getId g == id) (Good.unlike userId))
+                        unlikeFunc =
+                            Maybe.map (Product.listMapIf (\g -> Product.getId g == id) Product.unlike)
                     in
                     Model
                         { rec
-                            | recent = unlikeGoodListMaybe rec.recent
-                            , recommend = unlikeGoodListMaybe rec.recommend
-                            , free = unlikeGoodListMaybe rec.free
-                            , goodListModel = newModel
+                            | recent = unlikeFunc rec.recent
+                            , recommend = unlikeFunc rec.recommend
+                            , free = unlikeFunc rec.free
+                            , productListModel = newModel
                         }
 
                 _ ->
-                    Model { rec | goodListModel = newModel }
-            , emitList |> List.map EmitGoodList
+                    Model { rec | productListModel = newModel }
+            , emitList |> List.map EmitProducts
             )
 
 
@@ -183,7 +182,7 @@ view logInState isWideScreenMode (Model rec) =
                         2
             }
     , html =
-        [ GoodList.view rec.goodListModel
+        [ ProductList.view rec.productListModel
             logInState
             isWideScreenMode
             (case rec.tabSelect of
@@ -196,7 +195,7 @@ view logInState isWideScreenMode (Model rec) =
                 TabFree ->
                     rec.free
             )
-            |> Html.map GoodListMsg
+            |> Html.map MsgByProductList
         ]
             ++ (case LogInState.getAccessToken logInState of
                     Just _ ->

@@ -2,8 +2,8 @@ module Data.Product exposing
     ( Comment
     , Condition
     , CreatedTime(..)
-    , Product
     , Id
+    , Product
     , Status
     , addComment
     , conditionAll
@@ -64,7 +64,7 @@ type Product
         , image3Url : Maybe String
         , seller : User.UserId
         , sellerName : Maybe String
-        , likeCount: Int
+        , likeCount : Int
         , commentList : Maybe (List Comment)
         }
 
@@ -125,7 +125,7 @@ makeNormalFromApi { id, name, likeCount, description, price, condition, status, 
         , image3Url = image3Url
         , seller = User.idFromString seller
         , sellerName = Nothing
-        ,likeCount = max 0 likeCount
+        , likeCount = max 0 likeCount
         , commentList = Nothing
         }
 
@@ -376,16 +376,16 @@ getLikedCount (Product { likeCount }) =
 
 {-| いいねをする
 -}
-like : User.UserId -> Product -> Product
-like userId (Product rec) =
-    Product { rec | likeCount = rec.likeCount + 1  }
+like : Product -> Product
+like (Product rec) =
+    Product { rec | likeCount = rec.likeCount + 1 }
 
 
 {-| いいねを外す
 -}
-unlike : User.UserId -> Product -> Product
-unlike userId (Product rec) =
-    Product { rec | likeCount = max 0 (rec.likeCount - 1)  }
+unlike : Product -> Product
+unlike (Product rec) =
+    Product { rec | likeCount = max 0 (rec.likeCount - 1) }
 
 
 {-| 商品の説明

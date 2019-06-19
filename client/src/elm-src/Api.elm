@@ -10,7 +10,7 @@ module Api exposing
     , getFreeProductList
     , getProduct
     , getProductComments
-    , getLikeGoodList
+    , getLikedProducts
     , getMyProfile
     , getBoughtProductList
     , getRecentProductList
@@ -260,7 +260,7 @@ getMyProfile accessToken msg =
 
 
 type SellProductRequest
-    = SellGoodsRequest
+    = SellProductRequest
         { name : String
         , description : String
         , price : Int
@@ -270,7 +270,7 @@ type SellProductRequest
 
 
 sellProduct : Token -> SellProductRequest -> (Result () () -> msg) -> Cmd msg
-sellProduct token sellGoodsRequest msg =
+sellProduct token sellProductRequest msg =
     Cmd.none
 
 
@@ -293,7 +293,7 @@ type EditProductRequest
 
 
 editProduct : Token -> Product.Id -> EditProductRequest -> (Result () () -> msg) -> Cmd msg
-editProduct token goodId editGoodsRequest msg =
+editProduct token productId editProductRequest msg =
     Cmd.none
 
 
@@ -324,8 +324,8 @@ updateProfile token profile msg =
 -}
 
 
-getLikeGoodList : Token -> (Result () (List Product.Product) -> msg) -> Cmd msg
-getLikeGoodList token msg =
+getLikedProducts : Token -> (Result () (List Product.Product) -> msg) -> Cmd msg
+getLikedProducts token msg =
     Cmd.none
 
 
@@ -336,8 +336,8 @@ getLikeGoodList token msg =
 -}
 
 
-getHistoryGoodList : Token -> (Result () (List Product.Product) -> msg) -> Cmd msg
-getHistoryGoodList token msg =
+getHistoryViewProducts : Token -> (Result () (List Product.Product) -> msg) -> Cmd msg
+getHistoryViewProducts token msg =
     Task.succeed ()
         |> Task.perform (always (msg (Ok [])))
 
@@ -411,28 +411,6 @@ getRecommendProductList : (Result () (List Product.Product) -> msg) -> Cmd msg
 getRecommendProductList msg =
     Cmd.none
 
-
-getGoodListResponseToResult : Http.Response String -> Result () (List Product.Product)
-getGoodListResponseToResult response =
-    case response of
-        Http.BadStatus_ _ body ->
-            Json.Decode.decodeString getGoodListResponseBodyJsonDecoder body
-                |> Result.withDefault (Err ())
-
-        Http.GoodStatus_ _ body ->
-            Json.Decode.decodeString getGoodListResponseBodyJsonDecoder body
-                |> Result.withDefault (Err ())
-
-        _ ->
-            Err ()
-
-
-getGoodListResponseBodyJsonDecoder : Json.Decode.Decoder (Result () (List Product.Product))
-getGoodListResponseBodyJsonDecoder =
-    Json.Decode.list productNormalResponseDecoder
-        |> Json.Decode.map Ok
-
-
 productNormalResponseDecoder : Json.Decode.Decoder Product.Product
 productNormalResponseDecoder =
     Json.Decode.succeed
@@ -488,17 +466,6 @@ getFreeProductList msg =
 getProduct : Product.Id -> (Result () Product.Product -> msg) -> Cmd msg
 getProduct id msg =
     Cmd.none
-
-
-getGoodsResponseToResult : Http.Response String -> Result () Product.Product
-getGoodsResponseToResult response =
-    case response of
-        Http.GoodStatus_ _ body ->
-            Json.Decode.decodeString (productDetailResponseDecoder |> Json.Decode.map Ok) body
-                |> Result.withDefault (Err ())
-
-        _ ->
-            Err ()
 
 
 productDetailResponseDecoder : Json.Decode.Decoder Product.Product
@@ -584,7 +551,7 @@ statusDecoder =
 
 
 deleteProduct : Token -> Product.Id -> Cmd msg
-deleteProduct token goodId =
+deleteProduct token productId =
     Cmd.none
 
 
@@ -596,7 +563,7 @@ deleteProduct token goodId =
 
 
 likeProduct : Token -> Product.Id -> (Result () () -> msg) -> Cmd msg
-likeProduct token goodsId msg =
+likeProduct token productId msg =
     Cmd.none
 
 
@@ -608,7 +575,7 @@ likeProduct token goodsId msg =
 
 
 unlikeProduct : Token -> Product.Id -> (Result () () -> msg) -> Cmd msg
-unlikeProduct token goodsId msg =
+unlikeProduct token productId msg =
     Cmd.none
 
 
@@ -620,7 +587,7 @@ unlikeProduct token goodsId msg =
 
 
 getProductComments : Product.Id -> (Result () (List Product.Comment) -> msg) -> Cmd msg
-getProductComments goodId msg =
+getProductComments productId msg =
     Cmd.none
 
 
@@ -691,7 +658,7 @@ commentNormalDecoder userName userId =
 
 
 tradeStart : Token -> Product.Id -> (Result () () -> msg) -> Cmd msg
-tradeStart token goodId msg =
+tradeStart token productId msg =
     Cmd.none
 
 
@@ -713,7 +680,7 @@ tradeStartResponseToResult response =
 
 
 getTradeComment : Token -> Product.Id -> (Result () (List Product.Comment) -> msg) -> Cmd msg
-getTradeComment token goodId msg =
+getTradeComment token productId msg =
     Cmd.none
 
 

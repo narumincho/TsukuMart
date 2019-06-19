@@ -58,8 +58,8 @@ type Emit
     = EmitGetProduct { productId : Product.Id }
     | EmitGetCommentList { productId : Product.Id }
     | EmitPostComment Api.Token { productId : Product.Id } String
-    | EmitLike Data.User.UserId Api.Token Product.Id
-    | EmitUnLike Data.User.UserId Api.Token Product.Id
+    | EmitLike Api.Token Product.Id
+    | EmitUnLike Api.Token Product.Id
     | EmitTradeStart Api.Token Product.Id
     | EmitAddLogMessage String
     | EmitUpdateNowTime
@@ -72,10 +72,10 @@ type Msg
     = GetProductResponse (Result () Product.Product)
     | GetCommentListResponse (Result () (List Product.Comment))
     | PostCommentResponse (Result () Product.Comment)
-    | Like Data.User.UserId Api.Token Product.Id
-    | UnLike Data.User.UserId Api.Token Product.Id
-    | LikeResponse Data.User.UserId (Result () ())
-    | UnlikeResponse Data.User.UserId (Result () ())
+    | Like Api.Token Product.Id
+    | UnLike Api.Token Product.Id
+    | LikeResponse (Result () ())
+    | UnlikeResponse (Result () ())
     | TradeStart Api.Token Product.Id
     | TradeStartResponse (Result () ())
     | ToConfirmPage
@@ -182,32 +182,32 @@ update msg model =
                 ( _, _ ) ->
                     ( model, [] )
 
-        Like userId token id ->
+        Like token id ->
             ( case model of
                 Normal rec ->
                     Normal { rec | sending = True }
 
                 _ ->
                     model
-            , [ EmitLike userId token id ]
+            , [ EmitLike token id ]
             )
 
-        UnLike userId token id ->
+        UnLike token id ->
             ( case model of
                 Normal rec ->
                     Normal { rec | sending = True }
 
                 _ ->
                     model
-            , [ EmitUnLike userId token id ]
+            , [ EmitUnLike token id ]
             )
 
-        LikeResponse userId result ->
+        LikeResponse result ->
             ( case ( result, model ) of
                 ( Ok (), Normal rec ) ->
                     Normal
                         { rec
-                            | product = rec.product |> Product.like userId
+                            | product = rec.product |> Product.like
                             , sending = False
                         }
 
@@ -216,12 +216,12 @@ update msg model =
             , []
             )
 
-        UnlikeResponse userId result ->
+        UnlikeResponse result ->
             ( case ( result, model ) of
                 ( Ok (), Normal rec ) ->
                     Normal
                         { rec
-                            | product = rec.product |> Product.unlike userId
+                            | product = rec.product |> Product.unlike
                             , sending = False
                         }
 
@@ -508,7 +508,7 @@ likeButton logInState sending product =
                 if False then
                     -- TODO いいねで自分がいいねした商品から判断する
                     Html.button
-                        [ Html.Events.onClick (UnLike userId accessToken (Product.getId product))
+                        [ Html.Events.onClick (UnLike accessToken (Product.getId product))
                         , Html.Attributes.class "product-liked"
                         , Html.Attributes.class "product-like"
                         ]
@@ -516,7 +516,7 @@ likeButton logInState sending product =
 
                 else
                     Html.button
-                        [ Html.Events.onClick (Like userId accessToken (Product.getId product))
+                        [ Html.Events.onClick (Like accessToken (Product.getId product))
                         , Html.Attributes.class "product-like"
                         ]
                         (itemLikeBody (Product.getLikedCount product))

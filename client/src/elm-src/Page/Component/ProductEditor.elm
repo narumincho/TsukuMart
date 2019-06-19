@@ -289,7 +289,7 @@ toRequestData (Model { name, description, price, condition, image }) =
 
 requestDataToApiRequest : RequestData -> Api.SellProductRequest
 requestDataToApiRequest { name, description, price, condition, image } =
-    Api.SellGoodsRequest
+    Api.SellProductRequest
         { name = name
         , description = description
         , price = price

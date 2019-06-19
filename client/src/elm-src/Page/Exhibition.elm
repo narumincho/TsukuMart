@@ -15,14 +15,14 @@ import Html
 import Html.Attributes
 import Html.Events
 import Page.Component.ProductEditor as ProductEditor
-import Page.Component.LogIn as LogInOrSignUp
+import Page.Component.LogIn as LogIn
 import SiteMap
 import Tab
 
 
 type Model
     = Model
-        { logInOrSignUpModel : LogInOrSignUp.Model
+        { logInOrSignUpModel : LogIn.Model
         , page : Page
         }
 
@@ -36,16 +36,16 @@ type Page
 
 
 type Emit
-    = EmitLogInOrSignUp LogInOrSignUp.Emit
-    | EmitSellGoods ( Api.Token, Api.SellProductRequest )
-    | EmitGoodEditor ProductEditor.Emit
+    = EmitLogInOrSignUp LogIn.Emit
+    | EmitSellProducts ( Api.Token, Api.SellProductRequest )
+    | EmitByProductsEditor ProductEditor.Emit
 
 
 type Msg
     = ToConfirmPage ( Api.Token, ProductEditor.RequestData )
     | ToEditPage
-    | LogInOrSignUpMsg LogInOrSignUp.Msg
-    | SellGoods ( Api.Token, Api.SellProductRequest )
+    | LogInOrSignUpMsg LogIn.Msg
+    | SellProduct ( Api.Token, Api.SellProductRequest )
     | MsgByProductEditor ProductEditor.Msg
 
 
@@ -62,10 +62,10 @@ initModel =
                 }
     in
     ( Model
-        { logInOrSignUpModel = LogInOrSignUp.initModel
+        { logInOrSignUpModel = LogIn.initModel
         , page = EditPage editorModel
         }
-    , editorEmit |> List.map EmitGoodEditor
+    , editorEmit |> List.map EmitByProductsEditor
     )
 
 
@@ -119,7 +119,7 @@ updateWhenLogIn msg page =
                     ProductEditor.update m productEditorModel
                         |> Tuple.mapBoth
                             EditPage
-                            (List.map EmitGoodEditor)
+                            (List.map EmitByProductsEditor)
 
                 _ ->
                     ( EditPage productEditorModel
@@ -128,9 +128,9 @@ updateWhenLogIn msg page =
 
         ConfirmPage rec ->
             case msg of
-                SellGoods data ->
+                SellProduct data ->
                     ( ConfirmPage { rec | sending = True }
-                    , [ EmitSellGoods data ]
+                    , [ EmitSellProducts data ]
                     )
 
                 ToEditPage ->
@@ -143,7 +143,7 @@ updateWhenLogIn msg page =
                         }
                         |> Tuple.mapBoth
                             EditPage
-                            (List.map EmitGoodEditor)
+                            (List.map EmitByProductsEditor)
 
                 _ ->
                     ( ConfirmPage rec
@@ -160,7 +160,7 @@ updateWhenNoLogIn msg (Model rec) =
                     []
             in
             rec.logInOrSignUpModel
-                |> LogInOrSignUp.update m
+                |> LogIn.update m
                 |> Tuple.mapBoth
                     (\logInModel -> Model { rec | logInOrSignUpModel = logInModel })
                     (\e -> (e |> List.map EmitLogInOrSignUp) ++ exEmit)
@@ -205,13 +205,13 @@ view logInState (Model { page, logInOrSignUpModel }) =
     }
 
 
-logInStateNoneView : LogInOrSignUp.Model -> ( String, List (Html.Html Msg) )
+logInStateNoneView : LogIn.Model -> ( String, List (Html.Html Msg) )
 logInStateNoneView model =
     ( "出品画面"
     , [ Html.div
             [ Html.Attributes.class "logInRecommendText" ]
             [ Html.text "ログインしていません" ]
-      , LogInOrSignUp.view model
+      , LogIn.view model
             |> Html.map LogInOrSignUpMsg
       ]
     )
@@ -225,12 +225,12 @@ logInStateNoneView model =
 
 
 editView : ProductEditor.Model -> ( String, List (Html.Html Msg) )
-editView goodEditorModel =
+editView productEditorModel =
     ( "商品の情報を入力"
-    , (ProductEditor.view goodEditorModel
+    , (ProductEditor.view productEditorModel
         |> List.map (Html.map MsgByProductEditor)
       )
-        ++ [ toConformPageButton (ProductEditor.toRequestData goodEditorModel /= Nothing) ]
+        ++ [ toConformPageButton (ProductEditor.toRequestData productEditorModel /= Nothing) ]
     )
 
 
@@ -296,7 +296,7 @@ confirmView accessToken requestData sending =
                 ]
 
              else
-                [ Html.Events.onClick (SellGoods ( accessToken, ProductEditor.requestDataToApiRequest requestData ))
+                [ Html.Events.onClick (SellProduct ( accessToken, ProductEditor.requestDataToApiRequest requestData ))
                 , Html.Attributes.class "mainButton"
                 , Html.Attributes.disabled False
                 ]

@@ -100,8 +100,8 @@ type Msg
     | ReceiveImageListAsDataUrlList (List String)
     | GetMyProfileResponse (Result String Data.User.WithProfile)
     | SellProductResponse (Result () ())
-    | LikeProductResponse Data.User.UserId Data.Product.Id (Result () ())
-    | UnlikeProductResponse Data.User.UserId Data.Product.Id (Result () ())
+    | LikeProductResponse Data.Product.Id (Result () ())
+    | UnlikeProductResponse Data.Product.Id (Result () ())
     | ChangeProfileResponse (Result () Data.User.WithProfile)
     | BasicPartMenuMsg BasicParts.Msg
     | HomePageMsg Page.Home.Msg
@@ -532,19 +532,19 @@ update msg (Model rec) =
                     , Cmd.none
                     )
 
-        LikeProductResponse userId id response ->
+        LikeProductResponse id response ->
             let
                 ( page, cmd ) =
-                    likeProduct userId id response rec.logInState rec.page
+                    likeProduct id response rec.logInState rec.page
             in
             ( Model { rec | page = page }
             , cmd
             )
 
-        UnlikeProductResponse userId id response ->
+        UnlikeProductResponse id response ->
             let
                 ( page, cmd ) =
-                    unlikeProduct userId id response rec.logInState rec.page
+                    unlikeProduct id response rec.logInState rec.page
             in
             ( Model { rec | page = page }
             , cmd
@@ -581,13 +581,13 @@ update msg (Model rec) =
                     , Cmd.none
                     )
 
-        HomePageMsg homePageMsg ->
+        HomePageMsg pageMsg ->
             case rec.page of
                 PageHome homePageModel ->
                     let
                         ( newModel, emitList ) =
                             homePageModel
-                                |> Page.Home.update homePageMsg
+                                |> Page.Home.update pageMsg
                     in
                     ( Model { rec | page = PageHome newModel }
                     , homePageEmitListToCmd emitList
@@ -598,13 +598,13 @@ update msg (Model rec) =
                     , Cmd.none
                     )
 
-        LikeAndHistoryPageMsg likeAndHistoryMsg ->
+        LikeAndHistoryPageMsg pageMsg ->
             case rec.page of
                 PageLikeAndHistory likeAndHistoryModel ->
                     let
                         ( newModel, emitList ) =
                             likeAndHistoryModel
-                                |> Page.LikeAndHistory.update rec.logInState likeAndHistoryMsg
+                                |> Page.LikeAndHistory.update rec.logInState pageMsg
                     in
                     ( Model { rec | page = PageLikeAndHistory newModel }
                     , likeAndHistoryEmitListToCmd emitList
@@ -615,13 +615,13 @@ update msg (Model rec) =
                     , Cmd.none
                     )
 
-        BoughtProductsPageMsg purchaseGoodListMsg ->
+        BoughtProductsPageMsg pageMsg ->
             case rec.page of
-                PageBoughtProducts purchaseGoodListModel ->
+                PageBoughtProducts pageModel ->
                     let
                         ( newModel, emitMaybe ) =
-                            purchaseGoodListModel
-                                |> Page.BoughtProducts.update purchaseGoodListMsg
+                            pageModel
+                                |> Page.BoughtProducts.update pageMsg
                     in
                     ( Model { rec | page = PageBoughtProducts newModel }
                     , boughtProductsPageEmitListToCmd emitMaybe
@@ -632,13 +632,13 @@ update msg (Model rec) =
                     , Cmd.none
                     )
 
-        SoldProductsPageMsg exhibitionGoodListMsg ->
+        SoldProductsPageMsg pageMsg ->
             case rec.page of
-                PageSoldProducts exhibitionGoodListModel ->
+                PageSoldProducts pageModel ->
                     let
                         ( newModel, emitMaybe ) =
-                            exhibitionGoodListModel
-                                |> Page.SoldProducts.update exhibitionGoodListMsg
+                            pageModel
+                                |> Page.SoldProducts.update pageMsg
                     in
                     ( Model { rec | page = PageSoldProducts newModel }
                     , soldProductsPageEmitListToCmd emitMaybe
@@ -686,16 +686,16 @@ homePageEmitListToCmd =
     List.map
         (\emit ->
             case emit of
-                Page.Home.EmitGetRecentGoodList ->
-                    Api.getRecentProductList (\result -> HomePageMsg (Page.Home.GetRecentGoodListResponse result))
+                Page.Home.EmitGetRecentProducts ->
+                    Api.getRecentProductList (\result -> HomePageMsg (Page.Home.GetRecentProductsResponse result))
 
-                Page.Home.EmitGetRecommendGoodList ->
-                    Api.getRecommendProductList (\result -> HomePageMsg (Page.Home.GetRecommendGoodListResponse result))
+                Page.Home.EmitGetRecommendProducts ->
+                    Api.getRecommendProductList (\result -> HomePageMsg (Page.Home.GetRecommendProductsResponse result))
 
-                Page.Home.EmitGetFreeGoodList ->
-                    Api.getFreeProductList (\result -> HomePageMsg (Page.Home.GetFreeGoodListResponse result))
+                Page.Home.EmitGetFreeProducts ->
+                    Api.getFreeProductList (\result -> HomePageMsg (Page.Home.GetFreeProductsResponse result))
 
-                Page.Home.EmitGoodList e ->
+                Page.Home.EmitProducts e ->
                     productListEmitToCmd e
         )
         >> Cmd.batch
@@ -706,17 +706,16 @@ likeAndHistoryEmitListToCmd =
     List.map
         (\emit ->
             case emit of
-                Page.LikeAndHistory.EmitGetLikeGoodList token ->
-                    Api.getLikeGoodList token (\result -> LikeAndHistoryPageMsg (Page.LikeAndHistory.LikeGoodListResponse result))
+                Page.LikeAndHistory.EmitGetLikedProduts token ->
+                    Api.getLikedProducts token (\result -> LikeAndHistoryPageMsg (Page.LikeAndHistory.LikedProdutsResponse result))
 
-                Page.LikeAndHistory.EmitGetHistoryGoodList token ->
+                Page.LikeAndHistory.EmitGetHistoryProduts token ->
                     Cmd.none
 
-                -- TODO
                 Page.LikeAndHistory.EmitLogInOrSignUp e ->
                     logInOrSignUpEmitToCmd e
 
-                Page.LikeAndHistory.EmitGoodList e ->
+                Page.LikeAndHistory.EmitByProductList e ->
                     productListEmitToCmd e
         )
         >> Cmd.batch
@@ -747,13 +746,13 @@ boughtProductsPageEmitListToCmd =
     List.map
         (\emit ->
             case emit of
-                Page.BoughtProducts.EmitGetPurchaseGoodList token ->
-                    Api.getBoughtProductList token (\result -> BoughtProductsPageMsg (Page.BoughtProducts.GetPurchaseGoodResponse result))
+                Page.BoughtProducts.EmitGetPurchaseProducts token ->
+                    Api.getBoughtProductList token (\result -> BoughtProductsPageMsg (Page.BoughtProducts.GetPurchaseProductsResponse result))
 
                 Page.BoughtProducts.EmitLogInOrSignUp e ->
                     logInOrSignUpEmitToCmd e
 
-                Page.BoughtProducts.EmitGoodList e ->
+                Page.BoughtProducts.EmitByProductList e ->
                     productListEmitToCmd e
         )
         >> Cmd.batch
@@ -781,10 +780,10 @@ exhibitionPageEmitListToCmd =
                 Page.Exhibition.EmitLogInOrSignUp e ->
                     logInOrSignUpEmitToCmd e
 
-                Page.Exhibition.EmitSellGoods ( token, request ) ->
+                Page.Exhibition.EmitSellProducts ( token, request ) ->
                     Api.sellProduct token request SellProductResponse
 
-                Page.Exhibition.EmitGoodEditor e ->
+                Page.Exhibition.EmitByProductsEditor e ->
                     productEditorEmitToCmd e
         )
         >> Cmd.batch
@@ -858,11 +857,11 @@ productPageEmitListToCmd =
                 Page.Product.EmitPostComment token { productId } comment ->
                     Api.postProductComment token productId comment (\result -> ProductPageMsg (Page.Product.PostCommentResponse result))
 
-                Page.Product.EmitLike userId token id ->
-                    Api.likeProduct token id (LikeProductResponse userId id)
+                Page.Product.EmitLike token id ->
+                    Api.likeProduct token id (LikeProductResponse id)
 
-                Page.Product.EmitUnLike userId token id ->
-                    Api.unlikeProduct token id (UnlikeProductResponse userId id)
+                Page.Product.EmitUnLike token id ->
+                    Api.unlikeProduct token id (UnlikeProductResponse id)
 
                 Page.Product.EmitTradeStart token id ->
                     Api.tradeStart token id (\result -> ProductPageMsg (Page.Product.TradeStartResponse result))
@@ -904,11 +903,11 @@ logInOrSignUpEmitToCmd emit =
 productListEmitToCmd : Page.Component.ProductList.Emit -> Cmd Msg
 productListEmitToCmd emit =
     case emit of
-        Page.Component.ProductList.EmitLike userId token id ->
-            Api.likeProduct token id (LikeProductResponse userId id)
+        Page.Component.ProductList.EmitLike token id ->
+            Api.likeProduct token id (LikeProductResponse id)
 
-        Page.Component.ProductList.EmitUnlike userId token id ->
-            Api.unlikeProduct token id (UnlikeProductResponse userId id)
+        Page.Component.ProductList.EmitUnlike token id ->
+            Api.unlikeProduct token id (UnlikeProductResponse id)
 
         Page.Component.ProductList.EmitScrollIntoView idString ->
             elementScrollIntoView idString
@@ -1023,7 +1022,7 @@ urlParserResultToPageAndCmd (Model rec) result =
         SiteMap.Product productId ->
             (case rec.page of
                 PageHome pageModel ->
-                    case Data.Product.searchFromId productId (Page.Home.getGoodAllGoodList pageModel) of
+                    case Data.Product.searchFromId productId (Page.Home.getAllProducts pageModel) of
                         Just product ->
                             Page.Product.initModelFromProduct product
 
@@ -1054,7 +1053,7 @@ urlParserResultToPageAndCmd (Model rec) result =
 
 
 {-| 指定したページにあるメインの商品ID
-GoodListの表示になったときにその商品のところへスクロールできるように
+Products Listの表示になったときにその商品のところへスクロールできるように
 -}
 getProductId : Page -> Maybe Data.Product.Id
 getProductId page =
@@ -1068,26 +1067,26 @@ getProductId page =
 
 {-| 各ページにいいねを押した結果を反映するように通知する
 -}
-likeProduct : Data.User.UserId -> Data.Product.Id -> Result () () -> Data.LogInState.LogInState -> Page -> ( Page, Cmd Msg )
-likeProduct userId productId result logInState page =
+likeProduct : Data.Product.Id -> Result () () -> Data.LogInState.LogInState -> Page -> ( Page, Cmd Msg )
+likeProduct productId result logInState page =
     let
         productListMsg =
-            Page.Component.ProductList.LikeResponse userId productId result
+            Page.Component.ProductList.LikeResponse productId result
     in
     case page of
-        PageHome homeModel ->
+        PageHome pageMsg ->
             let
                 ( newModel, emitList ) =
-                    homeModel |> Page.Home.update (Page.Home.GoodListMsg productListMsg)
+                    pageMsg |> Page.Home.update (Page.Home.MsgByProductList productListMsg)
             in
             ( PageHome newModel
             , homePageEmitListToCmd emitList
             )
 
-        PageLikeAndHistory likeAndHistoryModel ->
+        PageLikeAndHistory pageMsg ->
             let
                 ( newModel, emitList ) =
-                    likeAndHistoryModel
+                    pageMsg
                         |> Page.LikeAndHistory.update logInState
                             (Page.LikeAndHistory.MsgByProductList productListMsg)
             in
@@ -1095,30 +1094,30 @@ likeProduct userId productId result logInState page =
             , likeAndHistoryEmitListToCmd emitList
             )
 
-        PageSoldProducts exhibitionGoodListModel ->
+        PageSoldProducts pageMsg ->
             let
                 ( newModel, emitList ) =
-                    exhibitionGoodListModel
+                    pageMsg
                         |> Page.SoldProducts.update (Page.SoldProducts.MsgByProductList productListMsg)
             in
             ( PageSoldProducts newModel
             , soldProductsPageEmitListToCmd emitList
             )
 
-        PageBoughtProducts purchaseGoodListModel ->
+        PageBoughtProducts pageMsg ->
             let
                 ( newModel, emitList ) =
-                    purchaseGoodListModel
-                        |> Page.BoughtProducts.update (Page.BoughtProducts.GoodListMsg productListMsg)
+                    pageMsg
+                        |> Page.BoughtProducts.update (Page.BoughtProducts.MsgByProductList productListMsg)
             in
             ( PageBoughtProducts newModel
             , boughtProductsPageEmitListToCmd emitList
             )
 
-        PageProduct productPageModel ->
+        PageProduct pageMsg ->
             let
                 ( newModel, emitList ) =
-                    productPageModel |> Page.Product.update (Page.Product.LikeResponse userId result)
+                    pageMsg |> Page.Product.update (Page.Product.LikeResponse result)
             in
             ( PageProduct newModel
             , productPageEmitListToCmd emitList
@@ -1132,26 +1131,26 @@ likeProduct userId productId result logInState page =
 
 {-| 各ページにいいねを外した結果を反映するように通知する
 -}
-unlikeProduct : Data.User.UserId -> Data.Product.Id -> Result () () -> Data.LogInState.LogInState -> Page -> ( Page, Cmd Msg )
-unlikeProduct userId productId result logInState page =
+unlikeProduct : Data.Product.Id -> Result () () -> Data.LogInState.LogInState -> Page -> ( Page, Cmd Msg )
+unlikeProduct productId result logInState page =
     let
         productListMsg =
-            Page.Component.ProductList.UnlikeResponse userId productId result
+            Page.Component.ProductList.UnlikeResponse productId result
     in
     case page of
-        PageHome homeModel ->
+        PageHome pageMsg ->
             let
                 ( newModel, emitList ) =
-                    homeModel |> Page.Home.update (Page.Home.GoodListMsg productListMsg)
+                    pageMsg |> Page.Home.update (Page.Home.MsgByProductList productListMsg)
             in
             ( PageHome newModel
             , homePageEmitListToCmd emitList
             )
 
-        PageLikeAndHistory likeAndHistoryModel ->
+        PageLikeAndHistory pageMsg ->
             let
                 ( newModel, emitList ) =
-                    likeAndHistoryModel
+                    pageMsg
                         |> Page.LikeAndHistory.update logInState
                             (Page.LikeAndHistory.MsgByProductList productListMsg)
             in
@@ -1159,30 +1158,30 @@ unlikeProduct userId productId result logInState page =
             , likeAndHistoryEmitListToCmd emitList
             )
 
-        PageSoldProducts exhibitionGoodListModel ->
+        PageSoldProducts pageMsg ->
             let
                 ( newModel, emitList ) =
-                    exhibitionGoodListModel
+                    pageMsg
                         |> Page.SoldProducts.update (Page.SoldProducts.MsgByProductList productListMsg)
             in
             ( PageSoldProducts newModel
             , soldProductsPageEmitListToCmd emitList
             )
 
-        PageBoughtProducts purchaseGoodListModel ->
+        PageBoughtProducts pageMsg ->
             let
                 ( newModel, emitList ) =
-                    purchaseGoodListModel
-                        |> Page.BoughtProducts.update (Page.BoughtProducts.GoodListMsg productListMsg)
+                    pageMsg
+                        |> Page.BoughtProducts.update (Page.BoughtProducts.MsgByProductList productListMsg)
             in
             ( PageBoughtProducts newModel
             , boughtProductsPageEmitListToCmd emitList
             )
 
-        PageProduct productPageModel ->
+        PageProduct pageMsg ->
             let
                 ( newModel, emitList ) =
-                    productPageModel |> Page.Product.update (Page.Product.UnlikeResponse userId result)
+                    pageMsg |> Page.Product.update (Page.Product.UnlikeResponse result)
             in
             ( PageProduct newModel
             , productPageEmitListToCmd emitList
