@@ -1,12 +1,12 @@
-module Page.ExhibitionGoodList exposing (Emit(..), Model, Msg(..), initModel, update, view)
+module Page.BoughtProducts exposing (Emit(..), Model, Msg(..), initModel, update, view)
 
 import Api
-import Data.Good
+import Data.Product
 import Data.LogInState as LogInState
 import Data.User
 import Html
 import Html.Attributes
-import Page.Component.GoodList as GoodList
+import Page.Component.ProductList as GoodList
 import Page.Component.LogInOrSignUp as LogInOrSignUp
 import Tab
 
@@ -21,23 +21,23 @@ type Model
 
 type NormalModel
     = Loading
-    | Normal { exhibitionGoodList : List Data.Good.Good }
+    | Normal { purchaseGoodList : List Data.Product.Product }
     | Error
 
 
 type Emit
-    = EmitGetExhibitionGood Api.Token
+    = EmitGetPurchaseGoodList Api.Token
     | EmitLogInOrSignUp LogInOrSignUp.Emit
     | EmitGoodList GoodList.Emit
 
 
 type Msg
-    = GetExhibitionGoodResponse (Result () (List Data.Good.Good))
+    = GetPurchaseGoodResponse (Result () (List Data.Product.Product))
     | LogInOrSignUpMsg LogInOrSignUp.Msg
     | GoodListMsg GoodList.Msg
 
 
-initModel : Maybe Data.Good.GoodId -> LogInState.LogInState -> ( Model, List Emit )
+initModel : Maybe Data.Product.Id -> LogInState.LogInState -> ( Model, List Emit )
 initModel goodIdMaybe logInState =
     let
         ( goodListModel, emitList ) =
@@ -50,7 +50,7 @@ initModel goodIdMaybe logInState =
         }
     , (case LogInState.getAccessToken logInState of
         Just accessToken ->
-            [ EmitGetExhibitionGood accessToken ]
+            [ EmitGetPurchaseGoodList accessToken ]
 
         Nothing ->
             []
@@ -62,11 +62,11 @@ initModel goodIdMaybe logInState =
 update : Msg -> Model -> ( Model, List Emit )
 update msg (Model rec) =
     case msg of
-        GetExhibitionGoodResponse result ->
+        GetPurchaseGoodResponse result ->
             case result of
                 Ok goodList ->
                     ( Model
-                        { rec | normalModel = Normal { exhibitionGoodList = goodList } }
+                        { rec | normalModel = Normal { purchaseGoodList = goodList } }
                     , []
                     )
 
@@ -90,10 +90,10 @@ update msg (Model rec) =
                     rec.goodListModel |> GoodList.update goodListMsg
             in
             ( case goodListMsg of
-                GoodList.LikeGoodResponse userId id (Ok ()) ->
+                GoodList.LikeResponse userId id (Ok ()) ->
                     let
                         likeGoodList =
-                            Data.Good.listMapIf (\g -> Data.Good.getId g == id) (Data.Good.like userId)
+                            Data.Product.listMapIf (\g -> Data.Product.getId g == id) (Data.Product.like userId)
                     in
                     Model
                         { rec
@@ -102,19 +102,19 @@ update msg (Model rec) =
                                     Loading ->
                                         Loading
 
-                                    Normal { exhibitionGoodList } ->
+                                    Normal { purchaseGoodList } ->
                                         Normal
-                                            { exhibitionGoodList = likeGoodList exhibitionGoodList }
+                                            { purchaseGoodList = likeGoodList purchaseGoodList }
 
                                     Error ->
                                         Error
                             , goodListModel = newModel
                         }
 
-                GoodList.UnlikeGoodResponse userId id (Ok ()) ->
+                GoodList.UnlikeResponse userId id (Ok ()) ->
                     let
                         unlikeGoodList =
-                            Data.Good.listMapIf (\g -> Data.Good.getId g == id) (Data.Good.unlike userId)
+                            Data.Product.listMapIf (\g -> Data.Product.getId g == id) (Data.Product.unlike userId)
                     in
                     Model
                         { rec
@@ -123,9 +123,9 @@ update msg (Model rec) =
                                     Loading ->
                                         Loading
 
-                                    Normal { exhibitionGoodList } ->
+                                    Normal { purchaseGoodList } ->
                                         Normal
-                                            { exhibitionGoodList = unlikeGoodList exhibitionGoodList }
+                                            { purchaseGoodList = unlikeGoodList purchaseGoodList }
 
                                     Error ->
                                         Error
@@ -144,8 +144,8 @@ view :
     -> Model
     -> { title : Maybe String, tab : Tab.Tab Msg, html : List (Html.Html Msg) }
 view logInState isWideScreenMode (Model rec) =
-    { title = Just "出品した商品"
-    , tab = Tab.single "出品した商品"
+    { title = Just "購入した商品"
+    , tab = Tab.single "購入した商品"
     , html =
         case logInState of
             LogInState.None ->
@@ -153,7 +153,7 @@ view logInState isWideScreenMode (Model rec) =
                     [ Html.Attributes.class "container" ]
                     [ Html.div
                         [ Html.Attributes.class "logInRecommendText" ]
-                        [ Html.text "ログインか新規登録をして、出品した商品一覧機能を使えるようにしよう!" ]
+                        [ Html.text "ログインか新規登録をして、購入した商品一覧機能を使えるようにしよう!" ]
                     , LogInOrSignUp.view
                         rec.logInOrSignUpModel
                         |> Html.map LogInOrSignUpMsg
@@ -169,8 +169,8 @@ view logInState isWideScreenMode (Model rec) =
                         Loading ->
                             Nothing
 
-                        Normal { exhibitionGoodList } ->
-                            Just exhibitionGoodList
+                        Normal { purchaseGoodList } ->
+                            Just purchaseGoodList
 
                         Error ->
                             Just []

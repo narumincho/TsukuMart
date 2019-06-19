@@ -333,7 +333,7 @@ const userGraphQLType = new g.GraphQLObjectType({
                 },
                 description: "ユーザーが作成された日時"
             }),
-            selledProductAll: makeObjectField({
+            soldProductAll: makeObjectField({
                 type: g.GraphQLNonNull(
                     g.GraphQLList(g.GraphQLNonNull(productGraphQLType))
                 ),
@@ -416,7 +416,7 @@ const userPrivateGraphQLType = new g.GraphQLObjectType({
                 },
                 description: "ユーザーが作成された日時"
             }),
-            selledProductAll: makeObjectField({
+            soldProductAll: makeObjectField({
                 type: g.GraphQLNonNull(
                     g.GraphQLList(g.GraphQLNonNull(productGraphQLType))
                 ),
@@ -426,7 +426,7 @@ const userPrivateGraphQLType = new g.GraphQLObjectType({
                 },
                 description: "出品した商品すべて"
             }),
-            buyedProductAll: makeObjectField({
+            boughtProductAll: makeObjectField({
                 type: g.GraphQLNonNull(
                     g.GraphQLList(g.GraphQLNonNull(productGraphQLType))
                 ),
@@ -520,8 +520,8 @@ const userPrivate = makeQueryOrMutationField<
             imageUrl: userData.imageUrl,
             introduction: userData.introduction,
             university: type.universityToInternal(userData.university),
-            selledProductAll: [],
-            buyedProductAll: [],
+            soldProductAll: [],
+            boughtProductAll: [],
             likedProductAll: []
         };
     },
@@ -548,7 +548,7 @@ const productAll = makeQueryOrMutationField<{}, Array<type.ProductInternal>>({
                         graduate: null,
                         schoolAndDepartment: "cis"
                     },
-                    selledProductAll: []
+                    soldProductAll: []
                 }
             }
         ];

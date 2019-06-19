@@ -1,9 +1,9 @@
-module Data.Good exposing
+module Data.Product exposing
     ( Comment
     , Condition
     , CreatedTime(..)
-    , Good
-    , GoodId
+    , Product
+    , Id
     , Status
     , addComment
     , conditionAll
@@ -24,9 +24,8 @@ module Data.Good exposing
     , getPrice
     , getSellerId
     , getSellerName
-    , goodIdFromInt
-    , goodIdToInt
-    , goodIdToString
+    , idFromInt
+    , idToString
     , like
     , listMapIf
     , makeDetailFromApi
@@ -46,15 +45,14 @@ module Data.Good exposing
 -}
 
 import Data.User as User
-import Set
 import Time
 import Time.Extra
 import Utility
 
 
-type Good
-    = Good
-        { id : GoodId
+type Product
+    = Product
+        { id : Id
         , name : String -- 長さは1～255文字
         , description : String
         , price : Int
@@ -71,23 +69,18 @@ type Good
         }
 
 
-type GoodId
-    = GoodId Int
+type Id
+    = Id Int
 
 
-goodIdToString : GoodId -> String
-goodIdToString (GoodId id) =
+idToString : Id -> String
+idToString (Id id) =
     String.fromInt id
 
 
-goodIdToInt : GoodId -> Int
-goodIdToInt (GoodId id) =
-    id
-
-
-goodIdFromInt : Int -> GoodId
-goodIdFromInt id =
-    GoodId id
+idFromInt : Int -> Id
+idFromInt id =
+    Id id
 
 
 type alias Comment =
@@ -117,10 +110,10 @@ makeNormalFromApi :
     , seller : String
     , likeCount : Int
     }
-    -> Good
+    -> Product
 makeNormalFromApi { id, name, likeCount, description, price, condition, status, image0Url, image1Url, image2Url, image3Url, seller } =
-    Good
-        { id = GoodId id
+    Product
+        { id = Id id
         , name = name
         , description = description
         , price = price
@@ -152,10 +145,10 @@ makeDetailFromApi :
     , sellerName : String
     , likeCount : Int
     }
-    -> Good
+    -> Product
 makeDetailFromApi { id, name, description, price, condition, status, image0Url, image1Url, image2Url, image3Url, seller, sellerName, likeCount } =
-    Good
-        { id = GoodId id
+    Product
+        { id = Id id
         , name = name
         , description = description
         , price = price
@@ -172,16 +165,16 @@ makeDetailFromApi { id, name, description, price, condition, status, image0Url, 
         }
 
 
-setCommentList : List Comment -> Good -> Good
-setCommentList commentList (Good rec) =
-    Good { rec | commentList = Just commentList }
+setCommentList : List Comment -> Product -> Product
+setCommentList commentList (Product rec) =
+    Product { rec | commentList = Just commentList }
 
 
-addComment : Comment -> Good -> Good
-addComment comment (Good rec) =
+addComment : Comment -> Product -> Product
+addComment comment (Product rec) =
     case rec.commentList of
         Just commentList ->
-            Good
+            Product
                 { rec
                     | commentList =
                         Just
@@ -189,20 +182,20 @@ addComment comment (Good rec) =
                 }
 
         _ ->
-            Good rec
+            Product rec
 
 
-replaceCommentTimeStringToTimePosix : List Time.Posix -> Good -> Good
-replaceCommentTimeStringToTimePosix timeList (Good rec) =
+replaceCommentTimeStringToTimePosix : List Time.Posix -> Product -> Product
+replaceCommentTimeStringToTimePosix timeList (Product rec) =
     case rec.commentList of
         Just commentList ->
-            Good
+            Product
                 { rec
                     | commentList = Just (commentTimeStringToTimePosix commentList timeList)
                 }
 
         _ ->
-            Good rec
+            Product rec
 
 
 commentTimeStringToTimePosix : List Comment -> List Time.Posix -> List Comment
@@ -362,71 +355,71 @@ statusFromIdStringLoop idString statusList =
 
 {-| 商品のID
 -}
-getId : Good -> GoodId
-getId (Good { id }) =
+getId : Product -> Id
+getId (Product { id }) =
     id
 
 
 {-| 商品の名前
 -}
-getName : Good -> String
-getName (Good { name }) =
+getName : Product -> String
+getName (Product { name }) =
     name
 
 
 {-| いいねをされた数
 -}
-getLikedCount : Good -> Int
-getLikedCount (Good { likeCount }) =
+getLikedCount : Product -> Int
+getLikedCount (Product { likeCount }) =
     likeCount
 
 
 {-| いいねをする
 -}
-like : User.UserId -> Good -> Good
-like userId (Good rec) =
-    Good { rec | likeCount = rec.likeCount + 1  }
+like : User.UserId -> Product -> Product
+like userId (Product rec) =
+    Product { rec | likeCount = rec.likeCount + 1  }
 
 
 {-| いいねを外す
 -}
-unlike : User.UserId -> Good -> Good
-unlike userId (Good rec) =
-    Good { rec | likeCount = max 0 (rec.likeCount - 1)  }
+unlike : User.UserId -> Product -> Product
+unlike userId (Product rec) =
+    Product { rec | likeCount = max 0 (rec.likeCount - 1)  }
 
 
 {-| 商品の説明
 -}
-getDescription : Good -> String
-getDescription (Good { description }) =
+getDescription : Product -> String
+getDescription (Product { description }) =
     description
 
 
 {-| 商品の価格
 -}
-getPrice : Good -> Int
-getPrice (Good { price }) =
+getPrice : Product -> Int
+getPrice (Product { price }) =
     price
 
 
 {-| 商品の状態
 -}
-getCondition : Good -> Condition
-getCondition (Good { condition }) =
+getCondition : Product -> Condition
+getCondition (Product { condition }) =
     condition
 
 
 {-| 商品の最初の画像のURL
 -}
-getFirstImageUrl : Good -> String
-getFirstImageUrl (Good { image0Url }) =
+getFirstImageUrl : Product -> String
+getFirstImageUrl (Product { image0Url }) =
     image0Url
 
 
 {-| 商品の最初以外の画像のURL
 -}
-getOthersImageUrlList : Good -> List String
-getOthersImageUrlList (Good { image1Url, image2Url, image3Url }) =
+getOthersImageUrlList : Product -> List String
+getOthersImageUrlList (Product { image1Url, image2Url, image3Url }) =
     [ image1Url, image2Url, image3Url ] |> List.map maybeToList |> List.concat
 
 
@@ -442,22 +435,22 @@ maybeToList aMaybe =
 
 {-| 出品者のUser IDを取得する
 -}
-getSellerId : Good -> User.UserId
-getSellerId (Good { seller }) =
+getSellerId : Product -> User.UserId
+getSellerId (Product { seller }) =
     seller
 
 
 {-| 出品者の名前を取得する
 -}
-getSellerName : Good -> Maybe String
-getSellerName (Good { sellerName }) =
+getSellerName : Product -> Maybe String
+getSellerName (Product { sellerName }) =
     sellerName
 
 
 {-| 商品のコメントを取得する
 -}
-getCommentList : Good -> Maybe (List Comment)
-getCommentList (Good { commentList }) =
+getCommentList : Product -> Maybe (List Comment)
+getCommentList (Product { commentList }) =
     commentList
 
 
@@ -612,7 +605,7 @@ priceToStringWithoutYen price =
         |> String.join ","
 
 
-searchGoodsFromId : GoodId -> List Good -> Maybe Good
+searchGoodsFromId : Id -> List Product -> Maybe Product
 searchGoodsFromId id goodsList =
     case goodsList of
         x :: xs ->
@@ -626,7 +619,7 @@ searchGoodsFromId id goodsList =
             Nothing
 
 
-listMapIf : (Good -> Bool) -> (Good -> Good) -> List Good -> List Good
+listMapIf : (Product -> Bool) -> (Product -> Product) -> List Product -> List Product
 listMapIf condition f list =
     case list of
         x :: xs ->

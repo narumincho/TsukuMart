@@ -410,12 +410,12 @@ menuMain logInState =
         [ Html.text "いいね・閲覧した商品" ]
     , Html.a
         [ Html.Attributes.class "menu-item"
-        , Html.Attributes.href SiteMap.exhibitionGoodsUrl
+        , Html.Attributes.href SiteMap.soldProductsUrl
         ]
         [ Html.text "出品した商品" ]
     , Html.a
         [ Html.Attributes.class "menu-item"
-        , Html.Attributes.href SiteMap.purchaseGoodsUrl
+        , Html.Attributes.href SiteMap.boughtProductsUrl
         ]
         [ Html.text "購入した商品" ]
     , Html.a

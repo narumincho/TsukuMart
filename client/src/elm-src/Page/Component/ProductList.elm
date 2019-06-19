@@ -1,10 +1,10 @@
-module Page.Component.GoodList exposing (Emit(..), Model, Msg(..), initModel, update, view)
+module Page.Component.ProductList exposing (Emit(..), Model, Msg(..), initModel, update, view)
 
 {-| 商品の一覧表示
 -}
 
 import Api
-import Data.Good as Good
+import Data.Product as Product
 import Data.LogInState
 import Data.User
 import Html
@@ -19,19 +19,19 @@ type Model
 
 
 type Msg
-    = LikeGood Data.User.UserId Api.Token Good.GoodId
-    | UnLikeGood Data.User.UserId Api.Token Good.GoodId
-    | LikeGoodResponse Data.User.UserId Good.GoodId (Result () ())
-    | UnlikeGoodResponse Data.User.UserId Good.GoodId (Result () ())
+    = Like Data.User.UserId Api.Token Product.Id
+    | UnLike Data.User.UserId Api.Token Product.Id
+    | LikeResponse Data.User.UserId Product.Id (Result () ())
+    | UnlikeResponse Data.User.UserId Product.Id (Result () ())
 
 
 type Emit
-    = EmitLikeGood Data.User.UserId Api.Token Good.GoodId
-    | EmitUnlikeGood Data.User.UserId Api.Token Good.GoodId
+    = EmitLike Data.User.UserId Api.Token Product.Id
+    | EmitUnlike Data.User.UserId Api.Token Product.Id
     | EmitScrollIntoView String
 
 
-initModel : Maybe Good.GoodId -> ( Model, List Emit )
+initModel : Maybe Product.Id -> ( Model, List Emit )
 initModel goodIdMaybe =
     ( Model { sending = False }
     , case goodIdMaybe of
@@ -46,22 +46,22 @@ initModel goodIdMaybe =
 update : Msg -> Model -> ( Model, List Emit )
 update msg _ =
     case msg of
-        LikeGood userId token goodId ->
+        Like userId token goodId ->
             ( Model { sending = True }
-            , [ EmitLikeGood userId token goodId ]
+            , [ EmitLike userId token goodId ]
             )
 
-        UnLikeGood userId token goodId ->
+        UnLike userId token goodId ->
             ( Model { sending = True }
-            , [ EmitUnlikeGood userId token goodId ]
+            , [ EmitUnlike userId token goodId ]
             )
 
-        LikeGoodResponse _ _ _ ->
+        LikeResponse _ _ _ ->
             ( Model { sending = False }
             , []
             )
 
-        UnlikeGoodResponse _ _ _ ->
+        UnlikeResponse _ _ _ ->
             ( Model { sending = False }
             , []
             )
@@ -77,7 +77,7 @@ update msg _ =
 {-| 商品の一覧表示
 goodList:Maybe (List Good.Good)は、Nothingで読み込み中、Justで商品の指定をする
 -}
-view : Model -> Data.LogInState.LogInState -> Bool -> Maybe (List Good.Good) -> Html.Html Msg
+view : Model -> Data.LogInState.LogInState -> Bool -> Maybe (List Product.Product) -> Html.Html Msg
 view (Model { sending }) logInState isWideMode goodsList =
     case goodsList of
         Just [] ->
@@ -112,7 +112,7 @@ zeroGoodsView =
         ]
 
 
-goodListView : Bool -> Data.LogInState.LogInState -> Bool -> Good.Good -> List Good.Good -> Html.Html Msg
+goodListView : Bool -> Data.LogInState.LogInState -> Bool -> Product.Product -> List Product.Product -> Html.Html Msg
 goodListView sending logInState isWideMode good goodList =
     Html.div
         [ Html.Attributes.style "display" "grid"
@@ -129,28 +129,28 @@ goodListView sending logInState isWideMode good goodList =
         )
 
 
-goodListItem : Data.LogInState.LogInState -> Bool -> Good.Good -> Html.Html Msg
+goodListItem : Data.LogInState.LogInState -> Bool -> Product.Product -> Html.Html Msg
 goodListItem logInState sending good =
     Html.a
         [ Html.Attributes.class "goodList-item"
-        , Html.Attributes.href (SiteMap.goodsUrl (Good.getId good))
-        , Html.Attributes.id (goodIdString (Good.getId good))
+        , Html.Attributes.href (SiteMap.productUrl (Product.getId good))
+        , Html.Attributes.id (goodIdString (Product.getId good))
         ]
-        [ itemImage (Good.getName good) (Good.getFirstImageUrl good)
+        [ itemImage (Product.getName good) (Product.getFirstImageUrl good)
         , Html.div
             [ Html.Attributes.class "goodList-name" ]
-            [ Html.text (Good.getName good) ]
+            [ Html.text (Product.getName good) ]
         , Html.div
             [ Html.Attributes.class "goodList-priceAndLike" ]
             [ itemLike logInState sending good
-            , itemPrice (Good.getPrice good)
+            , itemPrice (Product.getPrice good)
             ]
         ]
 
 
-goodIdString : Good.GoodId -> String
+goodIdString : Product.Id -> String
 goodIdString goodId =
-    "good-" ++ Good.goodIdToString goodId
+    "good-" ++ Product.idToString goodId
 
 
 itemPrice : Int -> Html.Html msg
@@ -159,12 +159,12 @@ itemPrice price =
         []
         [ Html.span
             [ Html.Attributes.class "goodList-price" ]
-            [ Html.text (Good.priceToStringWithoutYen price) ]
+            [ Html.text (Product.priceToStringWithoutYen price) ]
         , Html.text "円"
         ]
 
 
-itemLike : Data.LogInState.LogInState -> Bool -> Good.Good -> Html.Html Msg
+itemLike : Data.LogInState.LogInState -> Bool -> Product.Product -> Html.Html Msg
 itemLike logInState sending good =
     if sending then
         Html.button
@@ -172,7 +172,7 @@ itemLike logInState sending good =
             , Html.Attributes.class "goodList-like-sending"
             , Html.Attributes.disabled True
             ]
-            (itemLikeBody (Good.getLikedCount good))
+            (itemLikeBody (Product.getLikedCount good))
 
     else
         case logInState of
@@ -185,7 +185,7 @@ itemLike logInState sending good =
                     Html.button
                         [ Html.Events.custom "click"
                             (Json.Decode.succeed
-                                { message = UnLikeGood userId accessToken (Good.getId good)
+                                { message = UnLike userId accessToken (Product.getId good)
                                 , stopPropagation = True
                                 , preventDefault = True
                                 }
@@ -193,25 +193,25 @@ itemLike logInState sending good =
                         , Html.Attributes.class "goodList-liked"
                         , Html.Attributes.class "goodList-like"
                         ]
-                        (itemLikeBody (Good.getLikedCount good))
+                        (itemLikeBody (Product.getLikedCount good))
 
                 else
                     Html.button
                         [ Html.Events.custom "click"
                             (Json.Decode.succeed
-                                { message = LikeGood userId accessToken (Good.getId good)
+                                { message = Like userId accessToken (Product.getId good)
                                 , stopPropagation = True
                                 , preventDefault = True
                                 }
                             )
                         , Html.Attributes.class "goodList-like"
                         ]
-                        (itemLikeBody (Good.getLikedCount good))
+                        (itemLikeBody (Product.getLikedCount good))
 
             _ ->
                 Html.div
                     [ Html.Attributes.class "goodList-like-label" ]
-                    (itemLikeBody (Good.getLikedCount good))
+                    (itemLikeBody (Product.getLikedCount good))
 
 
 itemLikeBody : Int -> List (Html.Html msg)

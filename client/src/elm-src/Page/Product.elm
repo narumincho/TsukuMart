@@ -1,11 +1,11 @@
-module Page.Good exposing
+module Page.Product exposing
     ( Emit(..)
     , Model
     , Msg(..)
-    , getGoodId
+    , getProductId
     , imageView
     , initModel
-    , initModelFromGoods
+    , initModelFromProduct
     , update
     , view
     )
@@ -14,14 +14,14 @@ module Page.Good exposing
 -}
 
 import Api
-import Data.Good as Good
 import Data.LogInState as LogInState
+import Data.Product as Product
 import Data.User
 import Html
 import Html.Attributes
 import Html.Events
 import Icon
-import Page.Component.GoodEditor as GoodEditor
+import Page.Component.ProductEditor as ProductEditor
 import SiteMap
 import Svg
 import Svg.Attributes
@@ -35,114 +35,114 @@ import Time
 
 type Model
     = Loading
-        { goodId : Good.GoodId
+        { productId : Product.Id
         }
     | WaitNewData
-        { good : Good.Good
+        { product : Product.Product
         }
     | Normal
-        { good : Good.Good
+        { product : Product.Product
         , sending : Bool -- いいねを送信中か送信中じゃないか
         , comment : String
         }
     | Edit
-        { beforeGood : Good.Good
-        , editorModel : GoodEditor.Model
+        { beforeProduct : Product.Product
+        , editorModel : ProductEditor.Model
         }
     | Confirm
-        { good : Good.Good
+        { product : Product.Product
         }
 
 
 type Emit
-    = EmitGetGoods { goodId : Good.GoodId }
-    | EmitGetGoodComment { goodId : Good.GoodId }
-    | EmitPostGoodComment Api.Token { goodId : Good.GoodId } String
-    | EmitLikeGood Data.User.UserId Api.Token Good.GoodId
-    | EmitUnLikeGood Data.User.UserId Api.Token Good.GoodId
-    | EmitTradeStart Api.Token Good.GoodId
+    = EmitGetProduct { productId : Product.Id }
+    | EmitGetCommentList { productId : Product.Id }
+    | EmitPostComment Api.Token { productId : Product.Id } String
+    | EmitLike Data.User.UserId Api.Token Product.Id
+    | EmitUnLike Data.User.UserId Api.Token Product.Id
+    | EmitTradeStart Api.Token Product.Id
     | EmitAddLogMessage String
     | EmitUpdateNowTime
-    | EmitDeleteGood Api.Token Good.GoodId
-    | EmitGoodEditor GoodEditor.Emit
-    | EmitUpdateGoodData Api.Token Good.GoodId Api.SellGoodsRequest
+    | EmitDelete Api.Token Product.Id
+    | EmitByProductEditor ProductEditor.Emit
+    | EmitUpdateProductData Api.Token Product.Id Api.EditProductRequest
 
 
 type Msg
-    = GetGoodsResponse (Result () Good.Good)
-    | GetGoodsCommentResponse (Result () (List Good.Comment))
-    | PostGoodsCommentResponse (Result () Good.Comment)
-    | LikeGood Data.User.UserId Api.Token Good.GoodId
-    | UnLikeGood Data.User.UserId Api.Token Good.GoodId
-    | LikeGoodResponse Data.User.UserId (Result () ())
-    | UnlikeGoodResponse Data.User.UserId (Result () ())
-    | TradeStart Api.Token Good.GoodId
+    = GetProductResponse (Result () Product.Product)
+    | GetCommentListResponse (Result () (List Product.Comment))
+    | PostCommentResponse (Result () Product.Comment)
+    | Like Data.User.UserId Api.Token Product.Id
+    | UnLike Data.User.UserId Api.Token Product.Id
+    | LikeResponse Data.User.UserId (Result () ())
+    | UnlikeResponse Data.User.UserId (Result () ())
+    | TradeStart Api.Token Product.Id
     | TradeStartResponse (Result () ())
     | ToConfirmPage
     | InputComment String
     | SendComment Api.Token
-    | DeleteGood Api.Token Good.GoodId
-    | EditGood
+    | Delete Api.Token Product.Id
+    | EditProduct
     | MsgBackToViewMode
-    | GoodEditorMsg GoodEditor.Msg
-    | UpdateGoodData Api.Token Good.GoodId GoodEditor.RequestData
-    | GoodUpdateResponse (Result () ())
+    | MsgByProductEditor ProductEditor.Msg
+    | UpdateProductData Api.Token Product.Id ProductEditor.RequestData
+    | UpdateProductDataResponse (Result () ())
 
 
 {-| 指定したIDの商品詳細ページ
 -}
-initModel : Good.GoodId -> ( Model, List Emit )
+initModel : Product.Id -> ( Model, List Emit )
 initModel id =
-    ( Loading { goodId = id }
-    , [ EmitGetGoods { goodId = id } ]
+    ( Loading { productId = id }
+    , [ EmitGetProduct { productId = id } ]
     )
 
 
 {-| 商品の内容があらかじめ、わかっているときのもの。でも、一応また聞きに行く
 -}
-initModelFromGoods : Good.Good -> ( Model, List Emit )
-initModelFromGoods good =
-    ( Normal { good = good, sending = False, comment = "" }
-    , [ EmitGetGoods { goodId = Good.getId good } ]
+initModelFromProduct : Product.Product -> ( Model, List Emit )
+initModelFromProduct product =
+    ( Normal { product = product, sending = False, comment = "" }
+    , [ EmitGetProduct { productId = Product.getId product } ]
     )
 
 
 {-| 表示している商品のIDを取得する
 -}
-getGoodId : Model -> Good.GoodId
-getGoodId model =
+getProductId : Model -> Product.Id
+getProductId model =
     case model of
-        Loading { goodId } ->
-            goodId
+        Loading { productId } ->
+            productId
 
-        WaitNewData { good } ->
-            Good.getId good
+        WaitNewData { product } ->
+            Product.getId product
 
-        Normal { good } ->
-            Good.getId good
+        Normal { product } ->
+            Product.getId product
 
-        Edit { beforeGood } ->
-            Good.getId beforeGood
+        Edit { beforeProduct } ->
+            Product.getId beforeProduct
 
-        Confirm { good } ->
-            Good.getId good
+        Confirm { product } ->
+            Product.getId product
 
 
 update : Msg -> Model -> ( Model, List Emit )
 update msg model =
     case msg of
-        GetGoodsResponse goodsResult ->
-            case ( model, goodsResult ) of
-                ( Normal rec, Ok good ) ->
-                    ( Normal { rec | good = good }
-                    , [ EmitGetGoodComment { goodId = Good.getId good }
+        GetProductResponse productsResult ->
+            case ( model, productsResult ) of
+                ( Normal rec, Ok product ) ->
+                    ( Normal { rec | product = product }
+                    , [ EmitGetCommentList { productId = Product.getId product }
                       , EmitUpdateNowTime
                       ]
                     )
 
-                ( _, Ok good ) ->
-                    ( Normal { good = good, sending = False, comment = "" }
-                    , [ EmitGetGoodComment { goodId = Good.getId good }
+                ( _, Ok product ) ->
+                    ( Normal { product = product, sending = False, comment = "" }
+                    , [ EmitGetCommentList { productId = Product.getId product }
                       , EmitUpdateNowTime
                       ]
                     )
@@ -152,10 +152,10 @@ update msg model =
                     , [ EmitAddLogMessage "商品情報の取得に失敗しました" ]
                     )
 
-        GetGoodsCommentResponse commentListResult ->
+        GetCommentListResponse commentListResult ->
             case ( model, commentListResult ) of
                 ( Normal rec, Ok commentList ) ->
-                    ( Normal { rec | good = rec.good |> Good.setCommentList commentList }
+                    ( Normal { rec | product = rec.product |> Product.setCommentList commentList }
                     , []
                     )
 
@@ -169,14 +169,14 @@ update msg model =
                     , [ EmitAddLogMessage "画面がNormalでないときにコメントを受け取ってしまった" ]
                     )
 
-        PostGoodsCommentResponse result ->
+        PostCommentResponse result ->
             case ( model, result ) of
                 ( Normal rec, Ok comment ) ->
                     let
                         newGood =
-                            rec.good |> Good.addComment comment
+                            rec.product |> Product.addComment comment
                     in
-                    ( Normal { rec | good = newGood }
+                    ( Normal { rec | product = newGood }
                     , []
                     )
 
@@ -186,32 +186,32 @@ update msg model =
                 ( _, _ ) ->
                     ( model, [] )
 
-        LikeGood userId token id ->
+        Like userId token id ->
             ( case model of
                 Normal rec ->
                     Normal { rec | sending = True }
 
                 _ ->
                     model
-            , [ EmitLikeGood userId token id ]
+            , [ EmitLike userId token id ]
             )
 
-        UnLikeGood userId token id ->
+        UnLike userId token id ->
             ( case model of
                 Normal rec ->
                     Normal { rec | sending = True }
 
                 _ ->
                     model
-            , [ EmitUnLikeGood userId token id ]
+            , [ EmitUnLike userId token id ]
             )
 
-        LikeGoodResponse userId result ->
+        LikeResponse userId result ->
             ( case ( result, model ) of
                 ( Ok (), Normal rec ) ->
                     Normal
                         { rec
-                            | good = rec.good |> Good.like userId
+                            | product = rec.product |> Product.like userId
                             , sending = False
                         }
 
@@ -220,12 +220,12 @@ update msg model =
             , []
             )
 
-        UnlikeGoodResponse userId result ->
+        UnlikeResponse userId result ->
             ( case ( result, model ) of
                 ( Ok (), Normal rec ) ->
                     Normal
                         { rec
-                            | good = rec.good |> Good.unlike userId
+                            | product = rec.product |> Product.unlike userId
                             , sending = False
                         }
 
@@ -234,9 +234,9 @@ update msg model =
             , []
             )
 
-        TradeStart token goodId ->
+        TradeStart token productId ->
             ( model
-            , [ EmitTradeStart token goodId ]
+            , [ EmitTradeStart token productId ]
             )
 
         TradeStartResponse result ->
@@ -251,8 +251,8 @@ update msg model =
 
         ToConfirmPage ->
             ( case model of
-                Normal { good } ->
-                    Confirm { good = good }
+                Normal { product } ->
+                    Confirm { product = product }
 
                 _ ->
                     model
@@ -273,9 +273,9 @@ update msg model =
 
         SendComment token ->
             case model of
-                Normal { comment, good } ->
+                Normal { comment, product } ->
                     ( model
-                    , [ EmitPostGoodComment token { goodId = Good.getId good } comment ]
+                    , [ EmitPostComment token { productId = Product.getId product } comment ]
                     )
 
                 _ ->
@@ -283,14 +283,14 @@ update msg model =
                     , []
                     )
 
-        DeleteGood token goodId ->
+        Delete token productId ->
             ( model
-            , [ EmitDeleteGood token goodId ]
+            , [ EmitDelete token productId ]
             )
 
-        EditGood ->
+        EditProduct ->
             case model of
-                Normal { good } ->
+                Normal { product } ->
                     ( model
                     , []
                     )
@@ -300,31 +300,34 @@ update msg model =
 
         MsgBackToViewMode ->
             case model of
-                Edit { beforeGood } ->
-                    ( WaitNewData { good = beforeGood }
-                    , [ EmitGetGoods { goodId = Good.getId beforeGood } ]
+                Edit { beforeProduct } ->
+                    ( WaitNewData { product = beforeProduct }
+                    , [ EmitGetProduct { productId = Product.getId beforeProduct } ]
                     )
 
                 _ ->
                     ( model, [] )
 
-        GoodEditorMsg goodEditorMsg ->
+        MsgByProductEditor productEditorMsg ->
             case model of
                 Edit r ->
-                    GoodEditor.update goodEditorMsg r.editorModel
+                    ProductEditor.update productEditorMsg r.editorModel
                         |> Tuple.mapBoth
                             (\editorModel -> Edit { r | editorModel = editorModel })
-                            (List.map EmitGoodEditor)
+                            (List.map EmitByProductEditor)
 
                 _ ->
                     ( model, [] )
 
-        UpdateGoodData token goodId requestData ->
+        UpdateProductData token productId requestData ->
             ( model
-            , [ EmitUpdateGoodData token goodId (GoodEditor.requestDataToApiRequest requestData) ]
+            , [ EmitUpdateProductData token
+                    productId
+                    (ProductEditor.requestDataToEditApiRequest requestData)
+              ]
             )
 
-        GoodUpdateResponse result ->
+        UpdateProductDataResponse result ->
             case result of
                 Ok () ->
                     update MsgBackToViewMode model
@@ -349,50 +352,50 @@ view logInState isWideScreenMode nowMaybe model =
             , html = [ Html.text "読み込み中" ]
             }
 
-        WaitNewData { good } ->
-            { title = Just (Good.getName good)
+        WaitNewData { product } ->
+            { title = Just (Product.getName product)
             , tab = Tab.none
             , html =
                 [ Html.div
                     [ Html.Attributes.class "container" ]
                     [ Html.div
-                        [ Html.Attributes.class "good" ]
+                        [ Html.Attributes.class "product" ]
                         [ Html.text "最新の情報を取得中…"
-                        , goodsViewImage (Good.getFirstImageUrl good) (Good.getOthersImageUrlList good)
-                        , goodsViewName (Good.getName good)
-                        , goodsViewLike LogInState.None False good
-                        , sellerNameView (Good.getSellerId good) (Good.getSellerName good)
-                        , descriptionView (Good.getDescription good)
-                        , goodsViewCondition (Good.getCondition good)
+                        , productsViewImage (Product.getFirstImageUrl product) (Product.getOthersImageUrlList product)
+                        , productsViewName (Product.getName product)
+                        , productsViewLike LogInState.None False product
+                        , sellerNameView (Product.getSellerId product) (Product.getSellerName product)
+                        , descriptionView (Product.getDescription product)
+                        , productsViewCondition (Product.getCondition product)
                         ]
                     ]
                 ]
             }
 
-        Normal { good, sending } ->
-            { title = Just (Good.getName good)
+        Normal { product, sending } ->
+            { title = Just (Product.getName product)
             , tab = Tab.none
             , html =
                 [ Html.div
                     [ Html.Attributes.class "container" ]
                     [ Html.div
-                        [ Html.Attributes.class "good" ]
-                        ([ goodsViewImage (Good.getFirstImageUrl good) (Good.getOthersImageUrlList good)
-                         , goodsViewName (Good.getName good)
-                         , goodsViewLike logInState sending good
-                         , sellerNameView (Good.getSellerId good) (Good.getSellerName good)
-                         , descriptionView (Good.getDescription good)
-                         , goodsViewCondition (Good.getCondition good)
-                         , commentListView nowMaybe (Good.getSellerId good) logInState (Good.getCommentList good)
+                        [ Html.Attributes.class "product" ]
+                        ([ productsViewImage (Product.getFirstImageUrl product) (Product.getOthersImageUrlList product)
+                         , productsViewName (Product.getName product)
+                         , productsViewLike logInState sending product
+                         , sellerNameView (Product.getSellerId product) (Product.getSellerName product)
+                         , descriptionView (Product.getDescription product)
+                         , productsViewCondition (Product.getCondition product)
+                         , commentListView nowMaybe (Product.getSellerId product) logInState (Product.getCommentList product)
                          ]
                             ++ (case logInState of
                                     LogInState.Ok { accessToken, userWithProfile } ->
                                         if
                                             Data.User.withProfileGetId userWithProfile
-                                                == Good.getSellerId good
+                                                == Product.getSellerId product
                                         then
                                             [ editButton
-                                            , deleteView (Good.getId good) accessToken
+                                            , deleteView (Product.getId product) accessToken
                                             ]
 
                                         else
@@ -402,30 +405,30 @@ view logInState isWideScreenMode nowMaybe model =
                                         []
                                )
                         )
-                    , goodsViewPriceAndBuyButton isWideScreenMode (Good.getPrice good)
+                    , productsViewPriceAndBuyButton isWideScreenMode (Product.getPrice product)
                     ]
                 ]
             }
 
-        Edit { editorModel, beforeGood } ->
-            { title = Just (Good.getName beforeGood)
+        Edit { editorModel, beforeProduct } ->
+            { title = Just (Product.getName beforeProduct)
             , tab = Tab.none
             , html =
                 [ Html.div
                     [ Html.Attributes.class "container" ]
                     [ Html.div
-                        [ Html.Attributes.class "good" ]
+                        [ Html.Attributes.class "product" ]
                         (case LogInState.getAccessToken logInState of
                             Just accessToken ->
                                 [ Html.text "編集画面"
                                 ]
-                                    ++ (GoodEditor.view editorModel
-                                            |> List.map (Html.map GoodEditorMsg)
+                                    ++ (ProductEditor.view editorModel
+                                            |> List.map (Html.map MsgByProductEditor)
                                        )
                                     ++ [ editOkCancelButton
                                             accessToken
-                                            (Good.getId beforeGood)
-                                            (GoodEditor.toRequestData editorModel)
+                                            (Product.getId beforeProduct)
+                                            (ProductEditor.toRequestData editorModel)
                                        ]
 
                             Nothing ->
@@ -435,32 +438,32 @@ view logInState isWideScreenMode nowMaybe model =
                 ]
             }
 
-        Confirm { good } ->
-            { title = Just (Good.getName good)
+        Confirm { product } ->
+            { title = Just (Product.getName product)
             , tab = Tab.none
             , html =
                 [ Html.div
                     [ Html.Attributes.class "container" ]
                     [ Html.div
-                        [ Html.Attributes.class "good" ]
+                        [ Html.Attributes.class "product" ]
                         [ Html.text "購入確認画面。この商品の取引を開始しますか?"
-                        , goodsViewImage (Good.getFirstImageUrl good) (Good.getOthersImageUrlList good)
-                        , goodsViewName (Good.getName good)
-                        , descriptionView (Good.getDescription good)
-                        , goodsViewCondition (Good.getCondition good)
-                        , tradeStartButton logInState (Good.getId good)
+                        , productsViewImage (Product.getFirstImageUrl product) (Product.getOthersImageUrlList product)
+                        , productsViewName (Product.getName product)
+                        , descriptionView (Product.getDescription product)
+                        , productsViewCondition (Product.getCondition product)
+                        , tradeStartButton logInState (Product.getId product)
                         ]
                     ]
                 ]
             }
 
 
-goodsViewImage : String -> List String -> Html.Html msg
-goodsViewImage url urlList =
+productsViewImage : String -> List String -> Html.Html msg
+productsViewImage url urlList =
     Html.div
-        [ Html.Attributes.class "good-imageListContainer" ]
+        [ Html.Attributes.class "product-imageListContainer" ]
         [ Html.div
-            [ Html.Attributes.class "good-imageList"
+            [ Html.Attributes.class "product-imageList"
             ]
             (url :: urlList |> List.map imageView)
         ]
@@ -469,35 +472,35 @@ goodsViewImage url urlList =
 imageView : String -> Html.Html msg
 imageView url =
     Html.img
-        [ Html.Attributes.class "good-image"
+        [ Html.Attributes.class "product-image"
         , Html.Attributes.src url
         ]
         []
 
 
-goodsViewName : String -> Html.Html msg
-goodsViewName name =
+productsViewName : String -> Html.Html msg
+productsViewName name =
     Html.div
-        [ Html.Attributes.class "good-name" ]
+        [ Html.Attributes.class "product-name" ]
         [ Html.text name ]
 
 
-goodsViewLike : LogInState.LogInState -> Bool -> Good.Good -> Html.Html Msg
-goodsViewLike logInState sending good =
+productsViewLike : LogInState.LogInState -> Bool -> Product.Product -> Html.Html Msg
+productsViewLike logInState sending product =
     Html.div
-        [ Html.Attributes.class "good-like-container" ]
-        [ likeButton logInState sending good
+        [ Html.Attributes.class "product-like-container" ]
+        [ likeButton logInState sending product
         ]
 
 
-likeButton : LogInState.LogInState -> Bool -> Good.Good -> Html.Html Msg
-likeButton logInState sending good =
+likeButton : LogInState.LogInState -> Bool -> Product.Product -> Html.Html Msg
+likeButton logInState sending product =
     if sending then
         Html.button
-            [ Html.Attributes.class "good-like-sending"
-            , Html.Attributes.class "good-like"
+            [ Html.Attributes.class "product-like-sending"
+            , Html.Attributes.class "product-like"
             ]
-            (itemLikeBody (Good.getLikedCount good))
+            (itemLikeBody (Product.getLikedCount product))
 
     else
         case logInState of
@@ -509,30 +512,30 @@ likeButton logInState sending good =
                 if False then
                     -- TODO いいねで自分がいいねした商品から判断する
                     Html.button
-                        [ Html.Events.onClick (UnLikeGood userId accessToken (Good.getId good))
-                        , Html.Attributes.class "good-liked"
-                        , Html.Attributes.class "good-like"
+                        [ Html.Events.onClick (UnLike userId accessToken (Product.getId product))
+                        , Html.Attributes.class "product-liked"
+                        , Html.Attributes.class "product-like"
                         ]
-                        (itemLikeBody (Good.getLikedCount good))
+                        (itemLikeBody (Product.getLikedCount product))
 
                 else
                     Html.button
-                        [ Html.Events.onClick (LikeGood userId accessToken (Good.getId good))
-                        , Html.Attributes.class "good-like"
+                        [ Html.Events.onClick (Like userId accessToken (Product.getId product))
+                        , Html.Attributes.class "product-like"
                         ]
-                        (itemLikeBody (Good.getLikedCount good))
+                        (itemLikeBody (Product.getLikedCount product))
 
             _ ->
                 Html.div
-                    [ Html.Attributes.class "good-like-label" ]
-                    (itemLikeBody (Good.getLikedCount good))
+                    [ Html.Attributes.class "product-like-label" ]
+                    (itemLikeBody (Product.getLikedCount product))
 
 
 itemLikeBody : Int -> List (Html.Html msg)
 itemLikeBody count =
     [ Html.text "いいね"
     , Html.span
-        [ Html.Attributes.class "good-like-number" ]
+        [ Html.Attributes.class "product-like-number" ]
         [ Html.text (String.fromInt count) ]
     ]
 
@@ -541,7 +544,7 @@ sellerNameView : Data.User.UserId -> Maybe String -> Html.Html msg
 sellerNameView userId nameMaybe =
     Html.div
         []
-        [ Html.div [ Html.Attributes.class "good-label" ] [ Html.text "出品者" ]
+        [ Html.div [ Html.Attributes.class "product-label" ] [ Html.text "出品者" ]
         , Html.a
             [ Html.Attributes.href (SiteMap.userUrl userId) ]
             [ case nameMaybe of
@@ -557,21 +560,21 @@ sellerNameView userId nameMaybe =
 descriptionView : String -> Html.Html msg
 descriptionView description =
     Html.div
-        [ Html.Attributes.class "good-description" ]
-        [ Html.div [ Html.Attributes.class "good-label" ] [ Html.text "商品の説明" ]
+        [ Html.Attributes.class "product-description" ]
+        [ Html.div [ Html.Attributes.class "product-label" ] [ Html.text "商品の説明" ]
         , Html.div [] [ Html.text description ]
         ]
 
 
-goodsViewCondition : Good.Condition -> Html.Html msg
-goodsViewCondition condition =
+productsViewCondition : Product.Condition -> Html.Html msg
+productsViewCondition condition =
     Html.div []
         [ Html.div
-            [ Html.Attributes.class "good-label" ]
+            [ Html.Attributes.class "product-label" ]
             [ Html.text "商品の状態" ]
         , Html.div
-            [ Html.Attributes.class "good-condition" ]
-            [ Html.text (Good.conditionToJapaneseString condition)
+            [ Html.Attributes.class "product-condition" ]
+            [ Html.text (Product.conditionToJapaneseString condition)
             ]
         ]
 
@@ -580,18 +583,18 @@ editButton : Html.Html Msg
 editButton =
     Html.button
         [ Html.Attributes.class "subButton"
-        , Html.Events.onClick EditGood
+        , Html.Events.onClick EditProduct
         ]
         [ Icon.editIcon
         , Html.text "編集する"
         ]
 
 
-deleteView : Good.GoodId -> Api.Token -> Html.Html Msg
-deleteView goodId token =
+deleteView : Product.Id -> Api.Token -> Html.Html Msg
+deleteView productId token =
     Html.button
-        [ Html.Attributes.class "good-deleteButton"
-        , Html.Events.onClick (DeleteGood token goodId)
+        [ Html.Attributes.class "product-deleteButton"
+        , Html.Events.onClick (Delete token productId)
         ]
         [ Icon.deleteIcon
         , Html.text "削除する"
@@ -603,10 +606,10 @@ deleteView goodId token =
     コメントの表示
 
 -}
-commentListView : Maybe ( Time.Posix, Time.Zone ) -> Data.User.UserId -> LogInState.LogInState -> Maybe (List Good.Comment) -> Html.Html Msg
+commentListView : Maybe ( Time.Posix, Time.Zone ) -> Data.User.UserId -> LogInState.LogInState -> Maybe (List Product.Comment) -> Html.Html Msg
 commentListView nowMaybe sellerId logInState commentListMaybe =
     Html.div
-        [ Html.Attributes.class "good-commentList" ]
+        [ Html.Attributes.class "product-commentList" ]
         (case commentListMaybe of
             Just commentList ->
                 case logInState of
@@ -633,7 +636,7 @@ commentListView nowMaybe sellerId logInState commentListMaybe =
         )
 
 
-commentView : Maybe ( Time.Posix, Time.Zone ) -> Data.User.UserId -> Maybe Data.User.UserId -> Good.Comment -> Html.Html msg
+commentView : Maybe ( Time.Posix, Time.Zone ) -> Data.User.UserId -> Maybe Data.User.UserId -> Product.Comment -> Html.Html msg
 commentView nowMaybe sellerId myIdMaybe { text, createdAt, userName, userId } =
     let
         isSellerComment =
@@ -643,14 +646,14 @@ commentView nowMaybe sellerId myIdMaybe { text, createdAt, userName, userId } =
             myIdMaybe == Just userId
     in
     Html.div
-        [ Html.Attributes.class "good-comment" ]
+        [ Html.Attributes.class "product-comment" ]
         [ Html.a
             [ Html.Attributes.class
                 (if isSellerComment then
-                    "good-comment-sellerName"
+                    "product-comment-sellerName"
 
                  else
-                    "good-comment-name"
+                    "product-comment-name"
                 )
             , Html.Attributes.href (SiteMap.userUrl userId)
             ]
@@ -658,10 +661,10 @@ commentView nowMaybe sellerId myIdMaybe { text, createdAt, userName, userId } =
         , Html.div
             [ Html.Attributes.class
                 (if isSellerComment then
-                    "good-comment-sellerBox"
+                    "product-comment-sellerBox"
 
                  else
-                    "good-comment-box"
+                    "product-comment-box"
                 )
             ]
             ((if isSellerComment then
@@ -672,9 +675,9 @@ commentView nowMaybe sellerId myIdMaybe { text, createdAt, userName, userId } =
              )
                 ++ [ Html.div
                         [ Html.Attributes.classList
-                            [ ( "good-comment-text", True )
-                            , ( "good-comment-text-mine", isMyComment )
-                            , ( "good-comment-text-seller", isSellerComment )
+                            [ ( "product-comment-text", True )
+                            , ( "product-comment-text-mine", isMyComment )
+                            , ( "product-comment-text-seller", isSellerComment )
                             ]
                         ]
                         [ Html.text text ]
@@ -687,8 +690,8 @@ commentView nowMaybe sellerId myIdMaybe { text, createdAt, userName, userId } =
                    )
             )
         , Html.div
-            [ Html.Attributes.class "good-comment-time" ]
-            [ Html.text (Good.createdAtToString nowMaybe createdAt) ]
+            [ Html.Attributes.class "product-comment-time" ]
+            [ Html.text (Product.createdAtToString nowMaybe createdAt) ]
         ]
 
 
@@ -696,10 +699,10 @@ commentTriangleLeft : Bool -> Html.Html msg
 commentTriangleLeft isMine =
     Svg.svg
         ([ Svg.Attributes.viewBox "0 0 10 10"
-         , Svg.Attributes.class "good-comment-text-triangle"
+         , Svg.Attributes.class "product-comment-text-triangle"
          ]
             ++ (if isMine then
-                    [ Svg.Attributes.class "good-comment-text-triangle-mine" ]
+                    [ Svg.Attributes.class "product-comment-text-triangle-mine" ]
 
                 else
                     []
@@ -715,10 +718,10 @@ commentTriangleRight : Bool -> Html.Html msg
 commentTriangleRight isMine =
     Svg.svg
         ([ Svg.Attributes.viewBox "0 0 10 10"
-         , Svg.Attributes.class "good-comment-text-triangle"
+         , Svg.Attributes.class "product-comment-text-triangle"
          ]
             ++ (if isMine then
-                    [ Svg.Attributes.class "good-comment-text-triangle-mine" ]
+                    [ Svg.Attributes.class "product-comment-text-triangle-mine" ]
 
                 else
                     []
@@ -741,36 +744,36 @@ commentInputArea token =
             []
         , Html.button
             [ Html.Events.onClick (SendComment token)
-            , Html.Attributes.class "good-comment-sendButton"
+            , Html.Attributes.class "product-comment-sendButton"
             ]
             [ Html.text "コメントを送信" ]
         ]
 
 
-goodsViewPriceAndBuyButton : Bool -> Int -> Html.Html Msg
-goodsViewPriceAndBuyButton isWideScreenMode price =
+productsViewPriceAndBuyButton : Bool -> Int -> Html.Html Msg
+productsViewPriceAndBuyButton isWideScreenMode price =
     Html.div
         [ Html.Attributes.classList
-            [ ( "good-priceAndBuyButton", True )
-            , ( "good-priceAndBuyButton-wide", isWideScreenMode )
+            [ ( "product-priceAndBuyButton", True )
+            , ( "product-priceAndBuyButton-wide", isWideScreenMode )
             ]
         ]
-        [ Html.div [ Html.Attributes.class "good-price" ] [ Html.text (Good.priceToString price) ]
+        [ Html.div [ Html.Attributes.class "product-price" ] [ Html.text (Product.priceToString price) ]
         , Html.button
             [ Html.Events.onClick ToConfirmPage ]
             [ Html.text "購入手続きへ" ]
         ]
 
 
-tradeStartButton : LogInState.LogInState -> Good.GoodId -> Html.Html Msg
-tradeStartButton logInState goodId =
+tradeStartButton : LogInState.LogInState -> Product.Id -> Html.Html Msg
+tradeStartButton logInState productId =
     Html.div
         []
         [ Html.button
             ([ Html.Attributes.class "mainButton" ]
                 ++ (case LogInState.getAccessToken logInState of
                         Just accessToken ->
-                            [ Html.Events.onClick (TradeStart accessToken goodId) ]
+                            [ Html.Events.onClick (TradeStart accessToken productId) ]
 
                         Nothing ->
                             [ Html.Attributes.class "mainButton-disabled" ]
@@ -780,8 +783,8 @@ tradeStartButton logInState goodId =
         ]
 
 
-editOkCancelButton : Api.Token -> Good.GoodId -> Maybe GoodEditor.RequestData -> Html.Html Msg
-editOkCancelButton token goodId requestDataMaybe =
+editOkCancelButton : Api.Token -> Product.Id -> Maybe ProductEditor.RequestData -> Html.Html Msg
+editOkCancelButton token productId requestDataMaybe =
     Html.div
         [ Html.Attributes.class "profile-editButtonArea" ]
         [ Html.button
@@ -793,7 +796,7 @@ editOkCancelButton token goodId requestDataMaybe =
             ([ Html.Attributes.class "profile-editOkButton" ]
                 ++ (case requestDataMaybe of
                         Just requestDate ->
-                            [ Html.Events.onClick (UpdateGoodData token goodId requestDate)
+                            [ Html.Events.onClick (UpdateProductData token productId requestDate)
                             , Html.Attributes.disabled False
                             ]
 

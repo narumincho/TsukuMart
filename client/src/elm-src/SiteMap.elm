@@ -4,13 +4,13 @@ module SiteMap exposing
     , aboutPrivacyPolicyUrl
     , aboutUrl
     , exhibitionConfirmUrl
-    , exhibitionGoodsUrl
+    , soldProductsUrl
     , exhibitionUrl
-    , goodsUrl
+    , productUrl
     , homeUrl
     , likeHistoryUrl
     , logInUrl
-    , purchaseGoodsUrl
+    , boughtProductsUrl
     , siteMapXml
     , urlParser
     , urlParserInit
@@ -18,7 +18,7 @@ module SiteMap exposing
     )
 
 import Api
-import Data.Good
+import Data.Product
 import Data.User
 import Dict
 import Erl
@@ -31,10 +31,10 @@ type UrlParserInitResult
     | InitSignUp { sendEmailToken : String, name : String, imageUrl : String }
     | InitLogIn
     | InitLikeAndHistory
-    | IntiExhibitionGood
-    | InitPurchaseGood
+    | IntiSoldProducts
+    | InitBoughtProducts
     | InitExhibition
-    | InitGood Data.Good.GoodId
+    | InitProduct Data.Product.Id
     | InitUser Data.User.UserId
     | InitSiteMap
     | InitAbout
@@ -65,10 +65,10 @@ urlParserInit url =
       , signUpParser |> parserMap InitSignUp
       , logInParser |> parserMap (always InitLogIn)
       , likeHistoryParser |> parserMap (always InitLikeAndHistory)
-      , exhibitionGoodsParser |> parserMap (always InitExhibition)
-      , purchaseGoodsParser |> parserMap (always InitPurchaseGood)
+      , soldProductsParser |> parserMap (always InitExhibition)
+      , boughtProductsParser |> parserMap (always InitBoughtProducts)
       , exhibitionParser |> parserMap (always InitExhibition)
-      , goodsParser |> parserMap InitGood
+      , productParser |> parserMap InitProduct
       , userParser |> parserMap InitUser
       , siteMapParser |> parserMap (always InitSiteMap)
       , aboutParser |> parserMap (always InitAbout)
@@ -101,11 +101,11 @@ type UrlParserResult
     = Home
     | LogIn
     | LikeAndHistory
-    | ExhibitionGood
-    | PurchaseGood
+    | SoldProducts
+    | BoughtProducts
     | Exhibition
     | ExhibitionConfirm
-    | Good Data.Good.GoodId
+    | Product Data.Product.Id
     | User Data.User.UserId
     | SiteMap
     | About
@@ -126,11 +126,11 @@ urlParser url =
     [ homeParser |> parserMap (always Home)
     , logInParser |> parserMap (always LogIn)
     , likeHistoryParser |> parserMap (always LikeAndHistory)
-    , exhibitionGoodsParser |> parserMap (always ExhibitionGood)
-    , purchaseGoodsParser |> parserMap (always PurchaseGood)
+    , soldProductsParser |> parserMap (always SoldProducts)
+    , boughtProductsParser |> parserMap (always BoughtProducts)
     , exhibitionParser |> parserMap (always Exhibition)
     , exhibitionConfirmParser |> parserMap (always ExhibitionConfirm)
-    , goodsParser |> parserMap Good
+    , productParser |> parserMap Product
     , userParser |> parserMap User
     , siteMapParser |> parserMap (always SiteMap)
     , aboutParser |> parserMap (always About)
@@ -219,49 +219,49 @@ likeHistoryPath =
 
 
 
-{- exhibition-goods -}
+{- Sold Products -}
 
 
-exhibitionGoodsParser : List String -> Dict.Dict String String -> Maybe ()
-exhibitionGoodsParser path query =
-    if path == [ exhibitionGoodsPath ] then
+soldProductsParser : List String -> Dict.Dict String String -> Maybe ()
+soldProductsParser path query =
+    if path == [ soldProductsPath ] then
         Just ()
 
     else
         Nothing
 
 
-exhibitionGoodsUrl : String
-exhibitionGoodsUrl =
-    Url.Builder.absolute [ exhibitionGoodsPath ] []
+soldProductsUrl : String
+soldProductsUrl =
+    Url.Builder.absolute [ soldProductsPath ] []
 
 
-exhibitionGoodsPath : String
-exhibitionGoodsPath =
-    "exhibition-goods"
+soldProductsPath : String
+soldProductsPath =
+    "sold-products"
 
 
 
-{- purchase-goods -}
+{- Bought Products -}
 
 
-purchaseGoodsParser : List String -> Dict.Dict String String -> Maybe ()
-purchaseGoodsParser path query =
-    if path == [ purchaseGoodsPath ] then
+boughtProductsParser : List String -> Dict.Dict String String -> Maybe ()
+boughtProductsParser path query =
+    if path == [ boughtProductsPath ] then
         Just ()
 
     else
         Nothing
 
 
-purchaseGoodsUrl : String
-purchaseGoodsUrl =
-    Url.Builder.absolute [ purchaseGoodsPath ] []
+boughtProductsUrl : String
+boughtProductsUrl =
+    Url.Builder.absolute [ boughtProductsPath ] []
 
 
-purchaseGoodsPath : String
-purchaseGoodsPath =
-    "purchase-goods"
+boughtProductsPath : String
+boughtProductsPath =
+    "bought-products"
 
 
 
@@ -307,27 +307,22 @@ exhibitionConfirmPath =
 
 
 
-{- goods -}
+{- Product -}
 
 
-goodsParser : List String -> Dict.Dict String String -> Maybe Data.Good.GoodId
-goodsParser path query =
+productParser : List String -> Dict.Dict String String -> Maybe Data.Product.Id
+productParser path query =
     case path of
-        [ "goods", goodIdString ] ->
-            goodIdString |> String.toInt |> Maybe.map Data.Good.goodIdFromInt
+        [ "product", productIdString ] ->
+            productIdString |> String.toInt |> Maybe.map Data.Product.idFromInt
 
         _ ->
             Nothing
 
 
-goodsUrl : Data.Good.GoodId -> String
-goodsUrl goodsId =
-    Url.Builder.absolute [ goodsPath, Data.Good.goodIdToString goodsId ] []
-
-
-goodsPath : String
-goodsPath =
-    "goods"
+productUrl : Data.Product.Id -> String
+productUrl productId =
+    Url.Builder.absolute [ "product", Data.Product.idToString productId ] []
 
 
 
@@ -397,7 +392,7 @@ aboutPrivacyPolicyPath =
 
 
 
-{- sitemap -}
+{- siteMap -}
 
 
 siteMapParser : List String -> Dict.Dict String String -> Maybe ()

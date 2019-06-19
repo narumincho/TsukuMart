@@ -472,10 +472,10 @@ header {
 }
 
 /*===============================================
-                Good 商品詳細画面
+                product 商品詳細画面
 ===============================================*/
 
-.good {
+.product {
     display: grid;
     max-width: 40rem;
     gap: 1rem;
@@ -484,40 +484,40 @@ header {
     width: 100%;
 }
 
-.good-imageListContainer {
+.product-imageListContainer {
     background-color: gray;
     overflow-x: auto;
 }
 
-.good-imageList {
+.product-imageList {
     display: grid;
     grid-auto-flow: column;
     grid-gap: 1rem;
 }
 
-.good-image {
+.product-image {
     width: 20rem;
     height: 20rem;
     object-fit: contain;
 }
 
-.good-name {
+.product-name {
     font-size: 1.5rem;
 }
 
-.good-like-container {
+.product-like-container {
     display: flex;
     flex-direction: row;
 }
 
-.good-like-label {
+.product-like-label {
     border-radius: 0.4rem;
     user-select: none;
     padding: 0.5rem;
     border: solid 1px #aaa;
 }
 
-.good-like {
+.product-like {
     background-color: #aaa;
     border-radius: 0.4rem;
     user-select: none;
@@ -526,37 +526,37 @@ header {
     border: none;
 }
 
-.good-like-number {
+.product-like-number {
     font-size: 1.3rem;
 }
 
-.good-like:hover {
+.product-like:hover {
     background-color: #888;
 }
 
-.good-liked {
+.product-liked {
     background-color: var(--primaryColor);
     color: white;
 }
 
-.good-liked:hover {
+.product-liked:hover {
     background-color: var(--primaryColorLight);
 }
 
-.good-like-sending {
+.product-like-sending {
     background-color: #7f2591;
 }
 
-.good-label {
+.product-label {
     background-color: #ddd;
     padding: 0.2rem 0.5rem;
 }
 
-.good-condition {
+.product-condition {
     font-size: 1.5rem;
 }
 
-.good-priceAndBuyButton {
+.product-priceAndBuyButton {
     position: fixed;
     display: flex;
     width: 100%;
@@ -568,82 +568,82 @@ header {
     color: white;
 }
 
-.good-priceAndBuyButton-wide {
+.product-priceAndBuyButton-wide {
     width: calc(100% - 20rem);
 }
 
-.good-price {
+.product-price {
     font-size: 1.5rem;
 }
 
-.good-commentList {
+.product-commentList {
     display: grid;
     gap: 1rem;
 }
 
-.good-comment {
+.product-comment {
     display: grid;
     grid-template-columns: 1fr;
 }
 
-.good-comment-name {
+.product-comment-name {
     display: flex;
     justify-content: flex-end;
 }
 
-.good-comment-sellerName {
+.product-comment-sellerName {
     display: flex;
     justify-content: flex-start;
 }
 
-.good-comment-box {
+.product-comment-box {
     display: flex;
     justify-content: flex-end;
 }
 
-.good-comment-sellerBox {
+.product-comment-sellerBox {
     display: flex;
     justify-content: flex-start;
 }
 
-.good-comment-text {
+.product-comment-text {
     background-color: #ddd;
     padding: 0.5rem;
     border-radius: 0.5rem 0 0.5rem 0.5rem;
 }
 
-.good-comment-text-mine {
+.product-comment-text-mine {
     background-color: #c8a2db;
 }
 
-.good-comment-text-seller {
+.product-comment-text-seller {
     border-radius: 0 0.5rem 0.5rem 0.5rem;
 }
 
-.good-comment-text-triangle {
+.product-comment-text-triangle {
     fill: #ddd;
     width: 1rem;
     height: 1rem;
 }
 
-.good-comment-text-triangle-mine {
+.product-comment-text-triangle-mine {
     fill: #c8a2db;
 }
 
-.good-comment-time {
+.product-comment-time {
     display: flex;
     font-size: 0.8rem;
     color: #666;
     justify-content: flex-end;
 }
 
-.good-comment-sendButton {
+.product-comment-sendButton {
     padding: 1rem 2rem;
     width: 100%;
     border-radius: 0.5rem;
 }
 
-.good-deleteButton {
+.product-deleteButton {
     background-color: #bd2e2e;
     color: #111;
     fill: #111;
@@ -661,7 +661,7 @@ header {
     border: none;
 }
 
-.good-deleteButton:hover {
+.product-deleteButton:hover {
     background-color: #dd5454;
 }
 
@@ -830,10 +830,10 @@ header {
 }
 
 /*===============================================
-          Good List 商品一覧 コンポーネント
+          product List 商品一覧 コンポーネント
 ===============================================*/
 
-.goodList-item {
+.productList-item {
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
@@ -843,40 +843,40 @@ header {
     color: black;
 }
 
-.goodList-item:hover {
+.productList-item:hover {
     background-color: #ccc;
 }
 
-.goodList-name {
+.productList-name {
     font-size: 1.5rem;
     overflow-wrap: break-word;
 }
 
-.goodList-priceAndLike {
+.productList-priceAndLike {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
 }
 
-.goodList-price {
+.productList-price {
     font-size: 1.5rem;
     color: #da7000;
 }
 
-.goodList-image {
+.productList-image {
     width: 100%;
     height: 12rem;
     object-fit: contain;
 }
 
-.goodList-like-label {
+.productList-like-label {
     border-radius: 0.4rem;
     user-select: none;
     padding: 0.5rem;
     border: solid 1px #aaa;
 }
 
-.goodList-like {
+.productList-like {
     background-color: #aaa;
     border-radius: 0.4rem;
     user-select: none;
@@ -885,35 +885,35 @@ header {
     border: none;
 }
 
-.goodList-like-number {
+.productList-like-number {
     font-size: 1.3rem;
 }
 
-.goodList-like:hover {
+.productList-like:hover {
     background-color: #888;
 }
 
-.goodList-liked {
+.productList-liked {
     background-color: var(--primaryColor);
     color: white;
 }
 
-.goodList-liked:hover {
+.productList-liked:hover {
     background-color: var(--primaryColorLight);
 }
 
-.goodList-like-sending {
+.productList-like-sending {
     background-color: #7f2591;
 }
 
-.goodList-zero {
+.productList-zero {
     display: flex;
     flex-direction: column;
     align-items: center;
     padding: 2rem;
 }
 
-.goodList-zeroImage {
+.productList-zeroImage {
     filter: grayscale(100%);
     width: 8rem;
 }

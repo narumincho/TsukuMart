@@ -1,11 +1,11 @@
 module Page.Home exposing (Emit(..), Model, Msg(..), getGoodAllGoodList, initModel, update, view)
 
-import Data.Good as Good
+import Data.Product as Good
 import Data.LogInState as LogInState
 import Data.User
 import Html
 import Html.Attributes
-import Page.Component.GoodList as GoodList
+import Page.Component.ProductList as GoodList
 import SiteMap
 import Tab
 
@@ -13,9 +13,9 @@ import Tab
 type Model
     = Model
         { tabSelect : TabSelect
-        , recent : Maybe (List Good.Good)
-        , recommend : Maybe (List Good.Good)
-        , free : Maybe (List Good.Good)
+        , recent : Maybe (List Good.Product)
+        , recommend : Maybe (List Good.Product)
+        , free : Maybe (List Good.Product)
         , goodListModel : GoodList.Model
         }
 
@@ -35,15 +35,15 @@ type Emit
 
 type Msg
     = SelectTab TabSelect
-    | GetRecentGoodListResponse (Result () (List Good.Good))
-    | GetRecommendGoodListResponse (Result () (List Good.Good))
-    | GetFreeGoodListResponse (Result () (List Good.Good))
+    | GetRecentGoodListResponse (Result () (List Good.Product))
+    | GetRecommendGoodListResponse (Result () (List Good.Product))
+    | GetFreeGoodListResponse (Result () (List Good.Product))
     | GoodListMsg GoodList.Msg
 
 
 {-| 最初の状態。真ん中のタブ「おすすめ」が選択されている。Maybe Good.GoodIdで指定した商品のところまでスクロールする
 -}
-initModel : Maybe Good.GoodId -> ( Model, List Emit )
+initModel : Maybe Good.Id -> ( Model, List Emit )
 initModel goodIdMaybe =
     let
         ( goodListModel, emitList ) =
@@ -62,7 +62,7 @@ initModel goodIdMaybe =
 
 {-| この画面から取得できる商品のデータを集める
 -}
-getGoodAllGoodList : Model -> List Good.Good
+getGoodAllGoodList : Model -> List Good.Product
 getGoodAllGoodList (Model rec) =
     (case rec.tabSelect of
         TabRecent ->
@@ -129,7 +129,7 @@ update msg (Model rec) =
                     rec.goodListModel |> GoodList.update goodListMsg
             in
             ( case goodListMsg of
-                GoodList.LikeGoodResponse userId id (Ok ()) ->
+                GoodList.LikeResponse userId id (Ok ()) ->
                     let
                         likeGoodListMaybe =
                             Maybe.map (Good.listMapIf (\g -> Good.getId g == id) (Good.like userId))
@@ -142,7 +142,7 @@ update msg (Model rec) =
                             , goodListModel = newModel
                         }
 
-                GoodList.UnlikeGoodResponse userId id (Ok ()) ->
+                GoodList.UnlikeResponse userId id (Ok ()) ->
                     let
                         unlikeGoodListMaybe =
                             Maybe.map (Good.listMapIf (\g -> Good.getId g == id) (Good.unlike userId))

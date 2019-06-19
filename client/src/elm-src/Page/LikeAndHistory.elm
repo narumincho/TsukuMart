@@ -1,12 +1,12 @@
 module Page.LikeAndHistory exposing (Emit(..), Model(..), Msg(..), initModel, update, view)
 
 import Api
-import Data.Good as Good
+import Data.Product as Good
 import Data.LogInState as LogInState
 import Data.User
 import Html
 import Html.Attributes
-import Page.Component.GoodList as GoodList
+import Page.Component.ProductList as GoodList
 import Page.Component.LogInOrSignUp as LogInOrSignUp
 import Tab
 import Utility
@@ -23,8 +23,8 @@ type Model
 type NormalModel
     = NormalModel
         { tabSelect : TabSelect
-        , like : Maybe (Result () (List Good.Good))
-        , history : Maybe (Result () (List Good.Good))
+        , like : Maybe (Result () (List Good.Product))
+        , history : Maybe (Result () (List Good.Product))
         }
 
 
@@ -44,34 +44,34 @@ normalModelMapSelectTab =
     Utility.toMapper normalModelGetSelectTab normalModelSetSelectTab
 
 
-normalModelGetLikeGoodResponse : NormalModel -> Maybe (Result () (List Good.Good))
+normalModelGetLikeGoodResponse : NormalModel -> Maybe (Result () (List Good.Product))
 normalModelGetLikeGoodResponse (NormalModel { like }) =
     like
 
 
-normalModelSetLikeGoodResponse : Result () (List Good.Good) -> NormalModel -> NormalModel
+normalModelSetLikeGoodResponse : Result () (List Good.Product) -> NormalModel -> NormalModel
 normalModelSetLikeGoodResponse goodList (NormalModel rec) =
     NormalModel
         { rec | like = Just goodList }
 
 
-normalModelMapLikeGoodResponse : (Result () (List Good.Good) -> Result () (List Good.Good)) -> NormalModel -> NormalModel
+normalModelMapLikeGoodResponse : (Result () (List Good.Product) -> Result () (List Good.Product)) -> NormalModel -> NormalModel
 normalModelMapLikeGoodResponse =
     Utility.toMapperGetterMaybe normalModelGetLikeGoodResponse normalModelSetLikeGoodResponse
 
 
-normalModelGetHistoryGoodResponse : NormalModel -> Maybe (Result () (List Good.Good))
+normalModelGetHistoryGoodResponse : NormalModel -> Maybe (Result () (List Good.Product))
 normalModelGetHistoryGoodResponse (NormalModel { history }) =
     history
 
 
-normalModelSetHistoryGoodResponse : Result () (List Good.Good) -> NormalModel -> NormalModel
+normalModelSetHistoryGoodResponse : Result () (List Good.Product) -> NormalModel -> NormalModel
 normalModelSetHistoryGoodResponse historyGoodList (NormalModel rec) =
     NormalModel
         { rec | history = Just historyGoodList }
 
 
-normalModelMapHistoryGoodResponse : (Result () (List Good.Good) -> Result () (List Good.Good)) -> NormalModel -> NormalModel
+normalModelMapHistoryGoodResponse : (Result () (List Good.Product) -> Result () (List Good.Product)) -> NormalModel -> NormalModel
 normalModelMapHistoryGoodResponse =
     Utility.toMapperGetterMaybe normalModelGetHistoryGoodResponse normalModelSetHistoryGoodResponse
 
@@ -83,8 +83,8 @@ type TabSelect
 
 type Msg
     = SelectTab TabSelect
-    | LikeGoodListResponse (Result () (List Good.Good))
-    | HistoryGoodListResponse (Result () (List Good.Good))
+    | LikeGoodListResponse (Result () (List Good.Product))
+    | HistoryGoodListResponse (Result () (List Good.Product))
     | LogInOrSignUpMsg LogInOrSignUp.Msg
     | GoodListMsg GoodList.Msg
 
@@ -98,7 +98,7 @@ type Emit
 
 {-| 初期状態 いいねが選ばれている
 -}
-initModel : Maybe Good.GoodId -> LogInState.LogInState -> ( Model, List Emit )
+initModel : Maybe Good.Id -> LogInState.LogInState -> ( Model, List Emit )
 initModel goodIdMaybe logInState =
     let
         ( newGoodListModel, emitList ) =
@@ -178,7 +178,7 @@ update logInState msg (Model rec) =
                     rec.goodListModel |> GoodList.update goodListMsg
             in
             ( case goodListMsg of
-                GoodList.LikeGoodResponse userId id (Ok ()) ->
+                GoodList.LikeResponse userId id (Ok ()) ->
                     let
                         likeGoodListResult =
                             Result.map (Good.listMapIf (\g -> Good.getId g == id) (Good.like userId))
@@ -192,7 +192,7 @@ update logInState msg (Model rec) =
                             , goodListModel = newModel
                         }
 
-                GoodList.UnlikeGoodResponse userId id (Ok ()) ->
+                GoodList.UnlikeResponse userId id (Ok ()) ->
                     let
                         unlikeGoodListResult =
                             Result.map (Good.listMapIf (\g -> Good.getId g == id) (Good.unlike userId))

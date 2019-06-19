@@ -9,12 +9,12 @@ module Page.Exhibition exposing
     )
 
 import Api
-import Data.Good as Good
+import Data.Product as Good
 import Data.LogInState
 import Html
 import Html.Attributes
 import Html.Events
-import Page.Component.GoodEditor as GoodEditor
+import Page.Component.ProductEditor as GoodEditor
 import Page.Component.LogInOrSignUp as LogInOrSignUp
 import SiteMap
 import Tab
@@ -37,7 +37,7 @@ type Page
 
 type Emit
     = EmitLogInOrSignUp LogInOrSignUp.Emit
-    | EmitSellGoods ( Api.Token, Api.SellGoodsRequest )
+    | EmitSellGoods ( Api.Token, Api.SellProductRequest )
     | EmitGoodEditor GoodEditor.Emit
 
 
@@ -45,7 +45,7 @@ type Msg
     = ToConfirmPage ( Api.Token, GoodEditor.RequestData )
     | ToEditPage
     | LogInOrSignUpMsg LogInOrSignUp.Msg
-    | SellGoods ( Api.Token, Api.SellGoodsRequest )
+    | SellGoods ( Api.Token, Api.SellProductRequest )
     | GoodEditorMsg GoodEditor.Msg
 
 

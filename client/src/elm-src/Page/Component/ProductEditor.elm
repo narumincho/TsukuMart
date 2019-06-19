@@ -1,4 +1,4 @@
-module Page.Component.GoodEditor exposing
+module Page.Component.ProductEditor exposing
     ( Emit(..)
     , ImageList(..)
     , Model
@@ -11,11 +11,11 @@ module Page.Component.GoodEditor exposing
     , toRequestData
     , update
     , view
-    )
+    , requestDataToEditApiRequest)
 
 import Api
 import Array
-import Data.Good as Good
+import Data.Product as Good
 import Html
 import Html.Attributes
 import Html.Events
@@ -287,7 +287,7 @@ toRequestData (Model { name, description, price, condition, image }) =
             Nothing
 
 
-requestDataToApiRequest : RequestData -> Api.SellGoodsRequest
+requestDataToApiRequest : RequestData -> Api.SellProductRequest
 requestDataToApiRequest { name, description, price, condition, image } =
     Api.SellGoodsRequest
         { name = name
@@ -295,6 +295,18 @@ requestDataToApiRequest { name, description, price, condition, image } =
         , price = price
         , condition = condition
         , imageList = []
+        }
+
+
+requestDataToEditApiRequest : RequestData -> Api.EditProductRequest
+requestDataToEditApiRequest { name, description, price, condition, image } =
+    Api.EditProductRequest
+        { name = name
+        , description = description
+        , price = price
+        , condition = condition
+        , addImageList = []
+        , deleteImageIndex = []
         }
 
 

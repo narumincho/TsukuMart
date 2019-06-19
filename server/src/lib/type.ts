@@ -343,7 +343,7 @@ export type UserInternal = {
     imageUrl: URL;
     introduction: string;
     university: UniversityInternal;
-    selledProductAll: Array<ProductInternal>;
+    soldProductAll: Array<ProductInternal>;
     createdAt: Date;
 };
 
@@ -354,7 +354,7 @@ export type User = {
     introduction: string;
     university: University;
     createdAt: Date;
-    selledProductAll: Array<Product>;
+    soldProductAll: Array<Product>;
 };
 
 export const userToInternal = (user: User): UserInternal => ({
@@ -364,7 +364,7 @@ export const userToInternal = (user: User): UserInternal => ({
     introduction: user.introduction,
     university: universityToInternal(user.university),
     createdAt: user.createdAt,
-    selledProductAll: user.selledProductAll.map(productToInternal)
+    soldProductAll: user.soldProductAll.map(productToInternal)
 });
 /** ==============================
  *         User Private
@@ -377,8 +377,8 @@ export type UserPrivateInternal = {
     introduction: string;
     university: UniversityInternal;
     createdAt: Date;
-    selledProductAll: Array<ProductInternal>;
-    buyedProductAll: Array<ProductInternal>;
+    soldProductAll: Array<ProductInternal>;
+    boughtProductAll: Array<ProductInternal>;
     likedProductAll: Array<ProductInternal>;
     historyViewProductAll: Array<ProductInternal>;
 };
@@ -390,8 +390,8 @@ export type UserPrivate = {
     introduction: string;
     university: University;
     createdAt: Date;
-    selledProductAll: Array<Product>;
-    buyedProductAll: Array<Product>;
+    soldProductAll: Array<Product>;
+    boughtProductAll: Array<Product>;
     likedProductAll: Array<Product>;
     historyViewProductAll: Array<Product>;
 };

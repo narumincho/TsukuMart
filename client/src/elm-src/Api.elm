@@ -1,9 +1,11 @@
 module Api exposing
-    ( ProfileUpdateData
-    , SellGoodsRequest(..)
+    ( EditProductRequest(..)
+    , ProfileUpdateData
+    , SellProductRequest(..)
     , SignUpRequest
     , Token
     , deleteGoods
+    , editGood
     , getExhibitionGoodList
     , getFreeGoods
     , getGood
@@ -25,12 +27,11 @@ module Api exposing
     , tokenToString
     , tradeStart
     , unlikeGoods
-    , updateGood
     , updateProfile
     )
 
 import Data.EmailAddress as EmailAddress
-import Data.Good as Good
+import Data.Product as Good
 import Data.SocialLoginService
 import Data.University as University
 import Data.User as User
@@ -258,7 +259,7 @@ getMyProfile accessToken msg =
 -}
 
 
-type SellGoodsRequest
+type SellProductRequest
     = SellGoodsRequest
         { name : String
         , description : String
@@ -268,8 +269,8 @@ type SellGoodsRequest
         }
 
 
-sellGoods : Token -> SellGoodsRequest -> (Result () () -> msg) -> Cmd msg
-sellGoods token createGoodsRequest msg =
+sellGoods : Token -> SellProductRequest -> (Result () () -> msg) -> Cmd msg
+sellGoods token sellGoodsRequest msg =
     Cmd.none
 
 
@@ -280,8 +281,8 @@ sellGoods token createGoodsRequest msg =
 -}
 
 
-type EditGoodsRequest
-    = EditGoodsRequest
+type EditProductRequest
+    = EditProductRequest
         { name : String
         , description : String
         , price : Int
@@ -291,8 +292,8 @@ type EditGoodsRequest
         }
 
 
-updateGood : Token -> Good.GoodId -> SellGoodsRequest -> (Result () () -> msg) -> Cmd msg
-updateGood token goodId createGoodsRequest msg =
+editGood : Token -> Good.Id -> EditProductRequest -> (Result () () -> msg) -> Cmd msg
+editGood token goodId editGoodsRequest msg =
     Cmd.none
 
 
@@ -323,7 +324,7 @@ updateProfile token profile msg =
 -}
 
 
-getLikeGoodList : Token -> (Result () (List Good.Good) -> msg) -> Cmd msg
+getLikeGoodList : Token -> (Result () (List Good.Product) -> msg) -> Cmd msg
 getLikeGoodList token msg =
     Cmd.none
 
@@ -335,7 +336,7 @@ getLikeGoodList token msg =
 -}
 
 
-getHistoryGoodList : Token -> (Result () (List Good.Good) -> msg) -> Cmd msg
+getHistoryGoodList : Token -> (Result () (List Good.Product) -> msg) -> Cmd msg
 getHistoryGoodList token msg =
     Task.succeed ()
         |> Task.perform (always (msg (Ok [])))
@@ -357,7 +358,7 @@ getHistoryGoodList token msg =
 -}
 
 
-getExhibitionGoodList : Token -> (Result () (List Good.Good) -> msg) -> Cmd msg
+getExhibitionGoodList : Token -> (Result () (List Good.Product) -> msg) -> Cmd msg
 getExhibitionGoodList token msg =
     Cmd.none
 
@@ -369,7 +370,7 @@ getExhibitionGoodList token msg =
 -}
 
 
-getPurchaseGoodList : Token -> (Result () (List Good.Good) -> msg) -> Cmd msg
+getPurchaseGoodList : Token -> (Result () (List Good.Product) -> msg) -> Cmd msg
 getPurchaseGoodList token msg =
     Task.succeed ()
         |> Task.perform (always (msg (Ok [])))
@@ -394,7 +395,7 @@ getUserProfile userId msg =
 -}
 
 
-getRecentGoods : (Result () (List Good.Good) -> msg) -> Cmd msg
+getRecentGoods : (Result () (List Good.Product) -> msg) -> Cmd msg
 getRecentGoods msg =
     Cmd.none
 
@@ -406,12 +407,12 @@ getRecentGoods msg =
 -}
 
 
-getRecommendGoods : (Result () (List Good.Good) -> msg) -> Cmd msg
+getRecommendGoods : (Result () (List Good.Product) -> msg) -> Cmd msg
 getRecommendGoods msg =
     Cmd.none
 
 
-getGoodListResponseToResult : Http.Response String -> Result () (List Good.Good)
+getGoodListResponseToResult : Http.Response String -> Result () (List Good.Product)
 getGoodListResponseToResult response =
     case response of
         Http.BadStatus_ _ body ->
@@ -426,13 +427,13 @@ getGoodListResponseToResult response =
             Err ()
 
 
-getGoodListResponseBodyJsonDecoder : Json.Decode.Decoder (Result () (List Good.Good))
+getGoodListResponseBodyJsonDecoder : Json.Decode.Decoder (Result () (List Good.Product))
 getGoodListResponseBodyJsonDecoder =
     Json.Decode.list goodsNormalResponseDecoder
         |> Json.Decode.map Ok
 
 
-goodsNormalResponseDecoder : Json.Decode.Decoder Good.Good
+goodsNormalResponseDecoder : Json.Decode.Decoder Good.Product
 goodsNormalResponseDecoder =
     Json.Decode.succeed
         (\id name description price condition status image0Url image1Url image2Url image3Url likeCount seller ->
@@ -472,7 +473,7 @@ goodsNormalResponseDecoder =
 -}
 
 
-getFreeGoods : (Result () (List Good.Good) -> msg) -> Cmd msg
+getFreeGoods : (Result () (List Good.Product) -> msg) -> Cmd msg
 getFreeGoods msg =
     Cmd.none
 
@@ -484,12 +485,12 @@ getFreeGoods msg =
 -}
 
 
-getGood : Good.GoodId -> (Result () Good.Good -> msg) -> Cmd msg
+getGood : Good.Id -> (Result () Good.Product -> msg) -> Cmd msg
 getGood id msg =
     Cmd.none
 
 
-getGoodsResponseToResult : Http.Response String -> Result () Good.Good
+getGoodsResponseToResult : Http.Response String -> Result () Good.Product
 getGoodsResponseToResult response =
     case response of
         Http.GoodStatus_ _ body ->
@@ -500,7 +501,7 @@ getGoodsResponseToResult response =
             Err ()
 
 
-goodsDetailResponseDecoder : Json.Decode.Decoder Good.Good
+goodsDetailResponseDecoder : Json.Decode.Decoder Good.Product
 goodsDetailResponseDecoder =
     Json.Decode.succeed
         (\id name description price condition status image0Url image1Url image2Url image3Url likeCount seller sellerName ->
@@ -582,7 +583,7 @@ statusDecoder =
 -}
 
 
-deleteGoods : Token -> Good.GoodId -> Cmd msg
+deleteGoods : Token -> Good.Id -> Cmd msg
 deleteGoods token goodId =
     Cmd.none
 
@@ -594,7 +595,7 @@ deleteGoods token goodId =
 -}
 
 
-likeGoods : Token -> Good.GoodId -> (Result () () -> msg) -> Cmd msg
+likeGoods : Token -> Good.Id -> (Result () () -> msg) -> Cmd msg
 likeGoods token goodsId msg =
     Cmd.none
 
@@ -606,7 +607,7 @@ likeGoods token goodsId msg =
 -}
 
 
-unlikeGoods : Token -> Good.GoodId -> (Result () () -> msg) -> Cmd msg
+unlikeGoods : Token -> Good.Id -> (Result () () -> msg) -> Cmd msg
 unlikeGoods token goodsId msg =
     Cmd.none
 
@@ -618,7 +619,7 @@ unlikeGoods token goodsId msg =
 -}
 
 
-getGoodsComment : Good.GoodId -> (Result () (List Good.Comment) -> msg) -> Cmd msg
+getGoodsComment : Good.Id -> (Result () (List Good.Comment) -> msg) -> Cmd msg
 getGoodsComment goodId msg =
     Cmd.none
 
@@ -663,7 +664,7 @@ commentDecoder =
 -}
 
 
-postGoodsComment : Token -> Good.GoodId -> String -> (Result () Good.Comment -> msg) -> Cmd msg
+postGoodsComment : Token -> Good.Id -> String -> (Result () Good.Comment -> msg) -> Cmd msg
 postGoodsComment accessToken goodId comment msg =
     Cmd.none
 
@@ -689,7 +690,7 @@ commentNormalDecoder userName userId =
 -}
 
 
-tradeStart : Token -> Good.GoodId -> (Result () () -> msg) -> Cmd msg
+tradeStart : Token -> Good.Id -> (Result () () -> msg) -> Cmd msg
 tradeStart token goodId msg =
     Cmd.none
 
@@ -712,7 +713,7 @@ tradeStartResponseToResult response =
 -}
 
 
-getTradeComment : Token -> Good.GoodId -> (Result () (List Good.Comment) -> msg) -> Cmd msg
+getTradeComment : Token -> Good.Id -> (Result () (List Good.Comment) -> msg) -> Cmd msg
 getTradeComment token goodId msg =
     Cmd.none
 
