@@ -4,34 +4,34 @@ module Api exposing
     , SellProductRequest(..)
     , SignUpRequest
     , Token
-    , deleteGoods
-    , editGood
-    , getExhibitionGoodList
-    , getFreeGoods
-    , getGood
-    , getGoodsComment
+    , deleteProduct
+    , editProduct
+    , getSoldProductList
+    , getFreeProductList
+    , getProduct
+    , getProductComments
     , getLikeGoodList
     , getMyProfile
-    , getPurchaseGoodList
-    , getRecentGoods
-    , getRecommendGoods
+    , getBoughtProductList
+    , getRecentProductList
+    , getRecommendProductList
     , getTradeComment
     , getUserProfile
-    , likeGoods
+    , likeProduct
     , logInOrSignUpUrlRequest
-    , postGoodsComment
-    , sellGoods
+    , postProductComment
+    , sellProduct
     , sendConfirmEmail
     , tokenFromString
     , tokenRefresh
     , tokenToString
     , tradeStart
-    , unlikeGoods
+    , unlikeProduct
     , updateProfile
     )
 
 import Data.EmailAddress as EmailAddress
-import Data.Product as Good
+import Data.Product as Product
 import Data.SocialLoginService
 import Data.University as University
 import Data.User as User
@@ -254,7 +254,7 @@ getMyProfile accessToken msg =
 
 
 {- ==================================================================
-        出品     POST /{version}/currentuser/goods/
+                                出品
    ==================================================================
 -}
 
@@ -264,19 +264,19 @@ type SellProductRequest
         { name : String
         , description : String
         , price : Int
-        , condition : Good.Condition
+        , condition : Product.Condition
         , imageList : List String
         }
 
 
-sellGoods : Token -> SellProductRequest -> (Result () () -> msg) -> Cmd msg
-sellGoods token sellGoodsRequest msg =
+sellProduct : Token -> SellProductRequest -> (Result () () -> msg) -> Cmd msg
+sellProduct token sellGoodsRequest msg =
     Cmd.none
 
 
 
 {- ==============================================================================
-      商品の情報を編集する   /{version}/currentuser/goods/{id}/
+                          商品の情報を編集する
    ==============================================================================
 -}
 
@@ -286,20 +286,20 @@ type EditProductRequest
         { name : String
         , description : String
         , price : Int
-        , condition : Good.Condition
+        , condition : Product.Condition
         , addImageList : List String
         , deleteImageIndex : List Int
         }
 
 
-editGood : Token -> Good.Id -> EditProductRequest -> (Result () () -> msg) -> Cmd msg
-editGood token goodId editGoodsRequest msg =
+editProduct : Token -> Product.Id -> EditProductRequest -> (Result () () -> msg) -> Cmd msg
+editProduct token goodId editGoodsRequest msg =
     Cmd.none
 
 
 
 {- ============================================================
-       自分のプロフィールを更新する /{version}/currentuser/profile/
+                   自分のプロフィールを更新する
    ============================================================
 -}
 
@@ -324,7 +324,7 @@ updateProfile token profile msg =
 -}
 
 
-getLikeGoodList : Token -> (Result () (List Good.Product) -> msg) -> Cmd msg
+getLikeGoodList : Token -> (Result () (List Product.Product) -> msg) -> Cmd msg
 getLikeGoodList token msg =
     Cmd.none
 
@@ -336,7 +336,7 @@ getLikeGoodList token msg =
 -}
 
 
-getHistoryGoodList : Token -> (Result () (List Good.Product) -> msg) -> Cmd msg
+getHistoryGoodList : Token -> (Result () (List Product.Product) -> msg) -> Cmd msg
 getHistoryGoodList token msg =
     Task.succeed ()
         |> Task.perform (always (msg (Ok [])))
@@ -353,32 +353,32 @@ getHistoryGoodList token msg =
 --        , tracker = Nothing
 --        }
 {- ============================================================
-       自分が出品した商品を取得する /{version}/currentuser/goods/
+               自分が出品した商品を取得する
    ============================================================
 -}
 
 
-getExhibitionGoodList : Token -> (Result () (List Good.Product) -> msg) -> Cmd msg
-getExhibitionGoodList token msg =
+getSoldProductList : Token -> (Result () (List Product.Product) -> msg) -> Cmd msg
+getSoldProductList token msg =
     Cmd.none
 
 
 
 {- ============================================================
-       自分が購入した商品を取得する TODO APIが対応していない とりあえず常に Ok []
+               自分が購入した商品を取得する
    ============================================================
 -}
 
 
-getPurchaseGoodList : Token -> (Result () (List Good.Product) -> msg) -> Cmd msg
-getPurchaseGoodList token msg =
+getBoughtProductList : Token -> (Result () (List Product.Product) -> msg) -> Cmd msg
+getBoughtProductList token msg =
     Task.succeed ()
         |> Task.perform (always (msg (Ok [])))
 
 
 
 {- ============================================================
-        ユーザーのプロフィールを取得する /{version}/profile/{user}/
+                ユーザーのプロフィールを取得する
    ============================================================
 -}
 
@@ -390,29 +390,29 @@ getUserProfile userId msg =
 
 
 {- ==============================================================
-       新着の商品を取得    TODO /{version}/goods/で取得したものを逆順
+                           新着の商品を取得
    ==============================================================
 -}
 
 
-getRecentGoods : (Result () (List Good.Product) -> msg) -> Cmd msg
-getRecentGoods msg =
+getRecentProductList : (Result () (List Product.Product) -> msg) -> Cmd msg
+getRecentProductList msg =
     Cmd.none
 
 
 
 {- ==============================================================
-      おすすめの商品を取得    /{version}/goods/
+                      おすすめの商品を取得
    ==============================================================
 -}
 
 
-getRecommendGoods : (Result () (List Good.Product) -> msg) -> Cmd msg
-getRecommendGoods msg =
+getRecommendProductList : (Result () (List Product.Product) -> msg) -> Cmd msg
+getRecommendProductList msg =
     Cmd.none
 
 
-getGoodListResponseToResult : Http.Response String -> Result () (List Good.Product)
+getGoodListResponseToResult : Http.Response String -> Result () (List Product.Product)
 getGoodListResponseToResult response =
     case response of
         Http.BadStatus_ _ body ->
@@ -427,17 +427,17 @@ getGoodListResponseToResult response =
             Err ()
 
 
-getGoodListResponseBodyJsonDecoder : Json.Decode.Decoder (Result () (List Good.Product))
+getGoodListResponseBodyJsonDecoder : Json.Decode.Decoder (Result () (List Product.Product))
 getGoodListResponseBodyJsonDecoder =
-    Json.Decode.list goodsNormalResponseDecoder
+    Json.Decode.list productNormalResponseDecoder
         |> Json.Decode.map Ok
 
 
-goodsNormalResponseDecoder : Json.Decode.Decoder Good.Product
-goodsNormalResponseDecoder =
+productNormalResponseDecoder : Json.Decode.Decoder Product.Product
+productNormalResponseDecoder =
     Json.Decode.succeed
         (\id name description price condition status image0Url image1Url image2Url image3Url likeCount seller ->
-            Good.makeNormalFromApi
+            Product.makeNormalFromApi
                 { id = id
                 , name = name
                 , description = description
@@ -473,39 +473,39 @@ goodsNormalResponseDecoder =
 -}
 
 
-getFreeGoods : (Result () (List Good.Product) -> msg) -> Cmd msg
-getFreeGoods msg =
+getFreeProductList : (Result () (List Product.Product) -> msg) -> Cmd msg
+getFreeProductList msg =
     Cmd.none
 
 
 
 {- ==============================================================================
-      商品の情報を取得    /{version}/goods/{id}/
+                              商品の情報を取得
    ==============================================================================
 -}
 
 
-getGood : Good.Id -> (Result () Good.Product -> msg) -> Cmd msg
-getGood id msg =
+getProduct : Product.Id -> (Result () Product.Product -> msg) -> Cmd msg
+getProduct id msg =
     Cmd.none
 
 
-getGoodsResponseToResult : Http.Response String -> Result () Good.Product
+getGoodsResponseToResult : Http.Response String -> Result () Product.Product
 getGoodsResponseToResult response =
     case response of
         Http.GoodStatus_ _ body ->
-            Json.Decode.decodeString (goodsDetailResponseDecoder |> Json.Decode.map Ok) body
+            Json.Decode.decodeString (productDetailResponseDecoder |> Json.Decode.map Ok) body
                 |> Result.withDefault (Err ())
 
         _ ->
             Err ()
 
 
-goodsDetailResponseDecoder : Json.Decode.Decoder Good.Product
-goodsDetailResponseDecoder =
+productDetailResponseDecoder : Json.Decode.Decoder Product.Product
+productDetailResponseDecoder =
     Json.Decode.succeed
         (\id name description price condition status image0Url image1Url image2Url image3Url likeCount seller sellerName ->
-            Good.makeDetailFromApi
+            Product.makeDetailFromApi
                 { id = id
                 , name = name
                 , description = description
@@ -536,12 +536,12 @@ goodsDetailResponseDecoder =
         |> Json.Decode.Pipeline.required "seller" (Json.Decode.field "nick" Json.Decode.string)
 
 
-conditionDecoder : Json.Decode.Decoder Good.Condition
+conditionDecoder : Json.Decode.Decoder Product.Condition
 conditionDecoder =
     Json.Decode.string
         |> Json.Decode.andThen
             (\idString ->
-                case Good.conditionFromString idString of
+                case Product.conditionFromString idString of
                     Just condition ->
                         Json.Decode.succeed condition
 
@@ -550,18 +550,18 @@ conditionDecoder =
                             ("I can't understand conditionId=\""
                                 ++ idString
                                 ++ "\" except \""
-                                ++ String.join "\" or \"" (Good.conditionAll |> List.map Good.conditionToIdString)
+                                ++ String.join "\" or \"" (Product.conditionAll |> List.map Product.conditionToIdString)
                                 ++ "\""
                             )
             )
 
 
-statusDecoder : Json.Decode.Decoder Good.Status
+statusDecoder : Json.Decode.Decoder Product.Status
 statusDecoder =
     Json.Decode.string
         |> Json.Decode.andThen
             (\idString ->
-                case Good.statusFromIdString idString of
+                case Product.statusFromIdString idString of
                     Just status ->
                         Json.Decode.succeed status
 
@@ -570,7 +570,7 @@ statusDecoder =
                             ("I can't understand statusId=\""
                                 ++ idString
                                 ++ "\" except \""
-                                ++ String.join "\" or \"" (Good.statusAll |> List.map Good.statusToIdString)
+                                ++ String.join "\" or \"" (Product.statusAll |> List.map Product.statusToIdString)
                                 ++ "\""
                             )
             )
@@ -578,53 +578,53 @@ statusDecoder =
 
 
 {- ==============================================================================
-      商品を削除する   /{version}/goods/{id}/ TODO 商品を削除する
+                              商品を削除する
    ==============================================================================
 -}
 
 
-deleteGoods : Token -> Good.Id -> Cmd msg
-deleteGoods token goodId =
+deleteProduct : Token -> Product.Id -> Cmd msg
+deleteProduct token goodId =
     Cmd.none
 
 
 
 {- ==============================================================================
-      商品にいいねをする    /{version}/goods/{goods_id}/toggle-like/
+                              商品にいいねをする
    ==============================================================================
 -}
 
 
-likeGoods : Token -> Good.Id -> (Result () () -> msg) -> Cmd msg
-likeGoods token goodsId msg =
+likeProduct : Token -> Product.Id -> (Result () () -> msg) -> Cmd msg
+likeProduct token goodsId msg =
     Cmd.none
 
 
 
 {- ==============================================================================
-      商品のいいねをはずす    /{version}/goods/{goods_id}/toggle-like/
+                              商品のいいねをはずす
    ==============================================================================
 -}
 
 
-unlikeGoods : Token -> Good.Id -> (Result () () -> msg) -> Cmd msg
-unlikeGoods token goodsId msg =
+unlikeProduct : Token -> Product.Id -> (Result () () -> msg) -> Cmd msg
+unlikeProduct token goodsId msg =
     Cmd.none
 
 
 
 {- ==============================================================================
-      商品のコメントを取得する    /{version}/goods/{goods_id}/comment/
+                          商品のコメントを取得する
    ==============================================================================
 -}
 
 
-getGoodsComment : Good.Id -> (Result () (List Good.Comment) -> msg) -> Cmd msg
-getGoodsComment goodId msg =
+getProductComments : Product.Id -> (Result () (List Product.Comment) -> msg) -> Cmd msg
+getProductComments goodId msg =
     Cmd.none
 
 
-commentResponseToResult : Http.Response String -> Result () (List Good.Comment)
+commentResponseToResult : Http.Response String -> Result () (List Product.Comment)
 commentResponseToResult response =
     case response of
         Http.GoodStatus_ _ body ->
@@ -635,18 +635,18 @@ commentResponseToResult response =
             Err ()
 
 
-commentListDecoder : Json.Decode.Decoder (Result () (List Good.Comment))
+commentListDecoder : Json.Decode.Decoder (Result () (List Product.Comment))
 commentListDecoder =
     Json.Decode.list commentDecoder
         |> Json.Decode.map Ok
 
 
-commentDecoder : Json.Decode.Decoder Good.Comment
+commentDecoder : Json.Decode.Decoder Product.Comment
 commentDecoder =
     Json.Decode.map4
         (\text createdAt userName userId ->
             { text = text
-            , createdAt = Good.CreatedTimeString createdAt
+            , createdAt = Product.CreatedTimeString createdAt
             , userName = userName
             , userId = User.idFromString userId
             }
@@ -659,22 +659,22 @@ commentDecoder =
 
 
 {- ==============================================================================
-      商品にコメントをする    /{version}/goods/{goods_id}/comment/
+                              商品にコメントをする
    ==============================================================================
 -}
 
 
-postGoodsComment : Token -> Good.Id -> String -> (Result () Good.Comment -> msg) -> Cmd msg
-postGoodsComment accessToken goodId comment msg =
+postProductComment : Token -> Product.Id -> String -> (Result () Product.Comment -> msg) -> Cmd msg
+postProductComment accessToken productId comment msg =
     Cmd.none
 
 
-commentNormalDecoder : String -> User.UserId -> Json.Decode.Decoder Good.Comment
+commentNormalDecoder : String -> User.UserId -> Json.Decode.Decoder Product.Comment
 commentNormalDecoder userName userId =
     Json.Decode.map2
         (\text createdAt ->
             { text = text
-            , createdAt = Good.CreatedTimeString createdAt
+            , createdAt = Product.CreatedTimeString createdAt
             , userName = userName
             , userId = userId
             }
@@ -685,12 +685,12 @@ commentNormalDecoder userName userId =
 
 
 {- ==============================================================================
-      商品の取引を開始する    /{version}/goods/{goods_id}/trade-start/
+                              商品の取引を開始する
    ==============================================================================
 -}
 
 
-tradeStart : Token -> Good.Id -> (Result () () -> msg) -> Cmd msg
+tradeStart : Token -> Product.Id -> (Result () () -> msg) -> Cmd msg
 tradeStart token goodId msg =
     Cmd.none
 
@@ -707,13 +707,12 @@ tradeStartResponseToResult response =
 
 
 {- ==============================================================================
-      商品の取引のコメントを取得する    /{version}/trade/{trade_id}/comment/
-      trade_idってないよなgood_idでいいのかな
+                      商品の取引のコメントを取得する
    ==============================================================================
 -}
 
 
-getTradeComment : Token -> Good.Id -> (Result () (List Good.Comment) -> msg) -> Cmd msg
+getTradeComment : Token -> Product.Id -> (Result () (List Product.Comment) -> msg) -> Cmd msg
 getTradeComment token goodId msg =
     Cmd.none
 

@@ -9,13 +9,13 @@ module Page.Exhibition exposing
     )
 
 import Api
-import Data.Product as Good
+import Data.Product as Product
 import Data.LogInState
 import Html
 import Html.Attributes
 import Html.Events
-import Page.Component.ProductEditor as GoodEditor
-import Page.Component.LogInOrSignUp as LogInOrSignUp
+import Page.Component.ProductEditor as ProductEditor
+import Page.Component.LogIn as LogInOrSignUp
 import SiteMap
 import Tab
 
@@ -28,9 +28,9 @@ type Model
 
 
 type Page
-    = EditPage GoodEditor.Model
+    = EditPage ProductEditor.Model
     | ConfirmPage
-        { request : GoodEditor.RequestData
+        { request : ProductEditor.RequestData
         , sending : Bool
         }
 
@@ -38,22 +38,22 @@ type Page
 type Emit
     = EmitLogInOrSignUp LogInOrSignUp.Emit
     | EmitSellGoods ( Api.Token, Api.SellProductRequest )
-    | EmitGoodEditor GoodEditor.Emit
+    | EmitGoodEditor ProductEditor.Emit
 
 
 type Msg
-    = ToConfirmPage ( Api.Token, GoodEditor.RequestData )
+    = ToConfirmPage ( Api.Token, ProductEditor.RequestData )
     | ToEditPage
     | LogInOrSignUpMsg LogInOrSignUp.Msg
     | SellGoods ( Api.Token, Api.SellProductRequest )
-    | GoodEditorMsg GoodEditor.Msg
+    | MsgByProductEditor ProductEditor.Msg
 
 
 initModel : ( Model, List Emit )
 initModel =
     let
         ( editorModel, editorEmit ) =
-            GoodEditor.initModel
+            ProductEditor.initModel
                 { name = ""
                 , description = ""
                 , price = Nothing
@@ -73,11 +73,11 @@ toConfirmPageMsgFromModel : Data.LogInState.LogInState -> Model -> Maybe Msg
 toConfirmPageMsgFromModel logInState (Model rec) =
     case ( rec.page, logInState ) of
         ( EditPage editModel, Data.LogInState.LoadingProfile { accessToken } ) ->
-            GoodEditor.toRequestData editModel
+            ProductEditor.toRequestData editModel
                 |> Maybe.map (\request -> ToConfirmPage ( accessToken, request ))
 
         ( EditPage editModel, Data.LogInState.Ok { accessToken } ) ->
-            GoodEditor.toRequestData editModel
+            ProductEditor.toRequestData editModel
                 |> Maybe.map (\request -> ToConfirmPage ( accessToken, request ))
 
         ( _, _ ) ->
@@ -108,21 +108,21 @@ update logInState msg (Model rec) =
 updateWhenLogIn : Msg -> Page -> ( Page, List Emit )
 updateWhenLogIn msg page =
     case page of
-        EditPage goodEditorModel ->
+        EditPage productEditorModel ->
             case msg of
                 ToConfirmPage ( _, request ) ->
                     ( ConfirmPage { request = request, sending = False }
                     , []
                     )
 
-                GoodEditorMsg m ->
-                    GoodEditor.update m goodEditorModel
+                MsgByProductEditor m ->
+                    ProductEditor.update m productEditorModel
                         |> Tuple.mapBoth
                             EditPage
                             (List.map EmitGoodEditor)
 
                 _ ->
-                    ( EditPage goodEditorModel
+                    ( EditPage productEditorModel
                     , []
                     )
 
@@ -134,7 +134,7 @@ updateWhenLogIn msg page =
                     )
 
                 ToEditPage ->
-                    GoodEditor.initModel
+                    ProductEditor.initModel
                         { name = rec.request.name
                         , description = rec.request.description
                         , price = Just rec.request.price
@@ -224,13 +224,13 @@ logInStateNoneView model =
 -}
 
 
-editView : GoodEditor.Model -> ( String, List (Html.Html Msg) )
+editView : ProductEditor.Model -> ( String, List (Html.Html Msg) )
 editView goodEditorModel =
     ( "商品の情報を入力"
-    , (GoodEditor.view goodEditorModel
-        |> List.map (Html.map GoodEditorMsg)
+    , (ProductEditor.view goodEditorModel
+        |> List.map (Html.map MsgByProductEditor)
       )
-        ++ [ toConformPageButton (GoodEditor.toRequestData goodEditorModel /= Nothing) ]
+        ++ [ toConformPageButton (ProductEditor.toRequestData goodEditorModel /= Nothing) ]
     )
 
 
@@ -259,7 +259,7 @@ toConformPageButton available =
 -}
 
 
-confirmView : Api.Token -> GoodEditor.RequestData -> Bool -> ( String, List (Html.Html Msg) )
+confirmView : Api.Token -> ProductEditor.RequestData -> Bool -> ( String, List (Html.Html Msg) )
 confirmView accessToken requestData sending =
     ( "出品 確認"
     , [ confirmViewImage requestData.image
@@ -273,11 +273,11 @@ confirmView accessToken requestData sending =
             ]
       , Html.div [ Html.Attributes.class "exhibition-confirm-item" ]
             [ Html.span [] [ Html.text "値段" ]
-            , Html.span [ Html.Attributes.class "exhibition-confirm-item-value" ] [ Html.text (Good.priceToString requestData.price) ]
+            , Html.span [ Html.Attributes.class "exhibition-confirm-item-value" ] [ Html.text (Product.priceToString requestData.price) ]
             ]
       , Html.div [ Html.Attributes.class "exhibition-confirm-item" ]
             [ Html.span [] [ Html.text "状態" ]
-            , Html.span [ Html.Attributes.class "exhibition-confirm-item-value" ] [ Html.text (Good.conditionToJapaneseString requestData.condition) ]
+            , Html.span [ Html.Attributes.class "exhibition-confirm-item-value" ] [ Html.text (Product.conditionToJapaneseString requestData.condition) ]
             ]
       , Html.div [ Html.Attributes.class "exhibition-confirm-msg" ]
             [ Html.text
@@ -296,7 +296,7 @@ confirmView accessToken requestData sending =
                 ]
 
              else
-                [ Html.Events.onClick (SellGoods ( accessToken, GoodEditor.requestDataToApiRequest requestData ))
+                [ Html.Events.onClick (SellGoods ( accessToken, ProductEditor.requestDataToApiRequest requestData ))
                 , Html.Attributes.class "mainButton"
                 , Html.Attributes.disabled False
                 ]
@@ -306,13 +306,13 @@ confirmView accessToken requestData sending =
     )
 
 
-confirmViewImage : GoodEditor.ImageList -> Html.Html Msg
+confirmViewImage : ProductEditor.ImageList -> Html.Html Msg
 confirmViewImage imageList =
     Html.div
         [ Html.Attributes.class "exhibition-photo-cardList-container" ]
         [ Html.div
             [ Html.Attributes.class "exhibition-photo-cardList" ]
-            (GoodEditor.imageListToBlobUrlList (Just imageList)
+            (ProductEditor.imageListToBlobUrlList (Just imageList)
                 |> List.map
                     (\blobUrl ->
                         Html.div

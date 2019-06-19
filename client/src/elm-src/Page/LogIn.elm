@@ -9,7 +9,7 @@ module Page.LogIn exposing
 
 import Html
 import Html.Attributes
-import Page.Component.LogInOrSignUp as LogInOrSignUp
+import Page.Component.LogIn as LogInOrSignUp
 import Tab
 
 

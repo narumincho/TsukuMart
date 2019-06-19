@@ -15,7 +15,7 @@ module Page.Component.ProductEditor exposing
 
 import Api
 import Array
-import Data.Product as Good
+import Data.Product as Product
 import Html
 import Html.Attributes
 import Html.Events
@@ -30,7 +30,7 @@ type Model
         { name : String
         , description : String
         , price : Maybe Int
-        , condition : Maybe Good.Condition
+        , condition : Maybe Product.Condition
         , image : Maybe ImageList
         }
 
@@ -53,7 +53,7 @@ type Msg
     = InputName String
     | InputDescription String
     | InputPrice String
-    | InputCondition (Maybe Good.Condition)
+    | InputCondition (Maybe Product.Condition)
     | DeleteImage Int
     | CatchImageList String -- JSにファイルとBlobURLの取得を要請する
     | InputImageList (List String)
@@ -63,12 +63,12 @@ type alias RequestData =
     { name : String
     , description : String
     , price : Int
-    , condition : Good.Condition
+    , condition : Product.Condition
     , image : ImageList
     }
 
 
-initModel : { name : String, description : String, price : Maybe Int, condition : Maybe Good.Condition, image : Maybe ImageList } -> ( Model, List Emit )
+initModel : { name : String, description : String, price : Maybe Int, condition : Maybe Product.Condition, image : Maybe ImageList } -> ( Model, List Emit )
 initModel { name, description, price, condition, image } =
     let
         model =
@@ -91,7 +91,7 @@ resendEmit (Model rec) =
     , EmitReplaceText { id = nameEditorId, text = rec.name }
     , EmitReplaceText { id = descriptionEditorId, text = rec.description }
     , EmitReplaceText { id = priceEditorId, text = rec.price |> Maybe.map String.fromInt |> Maybe.withDefault "" }
-    , EmitChangeSelectedIndex { id = conditionEditorId, index = rec.condition |> Maybe.map (\c -> Good.conditionIndex c + 1) |> Maybe.withDefault 0 }
+    , EmitChangeSelectedIndex { id = conditionEditorId, index = rec.condition |> Maybe.map (\c -> Product.conditionIndex c + 1) |> Maybe.withDefault 0 }
     ]
 
 
@@ -590,7 +590,7 @@ priceView priceMaybe =
             [ Html.text
                 (case priceMaybe of
                     Just price ->
-                        Good.priceToString price
+                        Product.priceToString price
 
                     Nothing ->
                         "0 ～ 100万円の価格を入力してください"
@@ -611,7 +611,7 @@ priceEditorId =
 -}
 
 
-conditionView : Html.Html (Maybe Good.Condition)
+conditionView : Html.Html (Maybe Product.Condition)
 conditionView =
     Html.div
         []
@@ -626,10 +626,10 @@ conditionView =
             , Html.Events.on "change" selectConditionDecoder
             ]
             ([ Html.option [] [ Html.text "--選択してください--" ] ]
-                ++ (Good.conditionAll
+                ++ (Product.conditionAll
                         |> List.map
                             (\s ->
-                                Html.option [] [ Html.text (Good.conditionToJapaneseString s) ]
+                                Html.option [] [ Html.text (Product.conditionToJapaneseString s) ]
                             )
                    )
             )
@@ -641,9 +641,9 @@ conditionEditorId =
     "exhibition-selectCondition"
 
 
-selectConditionDecoder : Json.Decode.Decoder (Maybe Good.Condition)
+selectConditionDecoder : Json.Decode.Decoder (Maybe Product.Condition)
 selectConditionDecoder =
     Json.Decode.at
         [ "target", "selectedIndex" ]
         Json.Decode.int
-        |> Json.Decode.map (\index -> Good.conditionAll |> Array.fromList |> Array.get (index - 1))
+        |> Json.Decode.map (\index -> Product.conditionAll |> Array.fromList |> Array.get (index - 1))

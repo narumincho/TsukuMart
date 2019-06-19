@@ -6,7 +6,7 @@ import Data.LogInState as LogInState
 import Html
 import Html.Attributes
 import Page.Component.ProductList as ProductList
-import Page.Component.LogInOrSignUp as LogInOrSignUp
+import Page.Component.LogIn as LogInOrSignUp
 import Tab
 
 

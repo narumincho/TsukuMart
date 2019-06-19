@@ -12,7 +12,7 @@ import Html.Attributes
 import Html.Keyed
 import Page.About
 import Page.BoughtProducts
-import Page.Component.LogInOrSignUp
+import Page.Component.LogIn
 import Page.Component.ProductEditor
 import Page.Component.ProductList
 import Page.Component.University
@@ -79,10 +79,10 @@ type Page
     | PageSignUp Page.SignUp.Model
     | PageLogIn Page.LogIn.Model
     | PageLikeAndHistory Page.LikeAndHistory.Model
-    | PageExhibitionGoodList Page.SoldProducts.Model
-    | PagePurchaseGoodList Page.BoughtProducts.Model
+    | PageSoldProducts Page.SoldProducts.Model
+    | PageBoughtProducts Page.BoughtProducts.Model
     | PageExhibition Page.Exhibition.Model
-    | PageGoods Page.Product.Model
+    | PageProduct Page.Product.Model
     | PageProfile Page.User.Model
     | PageAbout Page.About.Model
     | PageSiteMapXml
@@ -99,20 +99,20 @@ type Msg
     | SignUpConfirmResponse (Result String ())
     | ReceiveImageListAsDataUrlList (List String)
     | GetMyProfileResponse (Result String Data.User.WithProfile)
-    | SellGoodResponse (Result () ())
-    | LikeGoodResponse Data.User.UserId Data.Product.Id (Result () ())
-    | UnlikeGoodResponse Data.User.UserId Data.Product.Id (Result () ())
+    | SellProductResponse (Result () ())
+    | LikeProductResponse Data.User.UserId Data.Product.Id (Result () ())
+    | UnlikeProductResponse Data.User.UserId Data.Product.Id (Result () ())
     | ChangeProfileResponse (Result () Data.User.WithProfile)
     | BasicPartMenuMsg BasicParts.Msg
     | HomePageMsg Page.Home.Msg
     | LikeAndHistoryPageMsg Page.LikeAndHistory.Msg
-    | PurchaseGoodListPageMsg Page.BoughtProducts.Msg
-    | ExhibitionGoodListPageMsg Page.SoldProducts.Msg
+    | BoughtProductsPageMsg Page.BoughtProducts.Msg
+    | SoldProductsPageMsg Page.SoldProducts.Msg
     | LogInPageMsg Page.LogIn.Msg
     | ExhibitionPageMsg Page.Exhibition.Msg
     | SignUpMsg Page.SignUp.Msg
     | ProfilePageMsg Page.User.Msg
-    | GoodsPageMsg Page.Product.Msg
+    | ProductPageMsg Page.Product.Msg
     | GetNowTime (Result () ( Time.Posix, Time.Zone ))
     | LogInOrSignUpUrlResponse (Result String Url.Url)
 
@@ -211,14 +211,14 @@ urlParserInitResultToPageAndCmd logInState page =
         SiteMap.IntiSoldProducts ->
             Page.SoldProducts.initModel Nothing logInState
                 |> Tuple.mapBoth
-                    PageExhibitionGoodList
-                    exhibitionGoodListPageEmitListToCmd
+                    PageSoldProducts
+                    soldProductsPageEmitListToCmd
 
         SiteMap.InitBoughtProducts ->
             Page.BoughtProducts.initModel Nothing logInState
                 |> Tuple.mapBoth
-                    PagePurchaseGoodList
-                    purchaseGoodListPageEmitListToCmd
+                    PageBoughtProducts
+                    boughtProductsPageEmitListToCmd
 
         SiteMap.InitExhibition ->
             Page.Exhibition.initModel
@@ -226,11 +226,11 @@ urlParserInitResultToPageAndCmd logInState page =
                     PageExhibition
                     exhibitionPageEmitListToCmd
 
-        SiteMap.InitProduct goodId ->
-            Page.Product.initModel goodId
+        SiteMap.InitProduct productId ->
+            Page.Product.initModel productId
                 |> Tuple.mapBoth
-                    PageGoods
-                    goodsPageEmitListToCmd
+                    PageProduct
+                    productPageEmitListToCmd
 
         SiteMap.InitUser userId ->
             Page.User.initModelFromId logInState userId
@@ -353,7 +353,7 @@ update msg (Model rec) =
                 Ok _ ->
                     let
                         ( newModel, emitList ) =
-                            Page.Home.initModel (getGoodId rec.page)
+                            Page.Home.initModel (getProductId rec.page)
                     in
                     ( Model
                         { rec
@@ -389,7 +389,7 @@ update msg (Model rec) =
                         ( newModel, emitList ) =
                             Page.Exhibition.update
                                 rec.logInState
-                                (Page.Exhibition.GoodEditorMsg
+                                (Page.Exhibition.MsgByProductEditor
                                     (Page.Component.ProductEditor.InputImageList dataUrlList)
                                 )
                                 exhibitionPageModel
@@ -398,17 +398,17 @@ update msg (Model rec) =
                     , exhibitionPageEmitListToCmd emitList
                     )
 
-                PageGoods goodPageModel ->
+                PageProduct productPageModel ->
                     let
                         ( newModel, emitList ) =
                             Page.Product.update
                                 (Page.Product.MsgByProductEditor
                                     (Page.Component.ProductEditor.InputImageList dataUrlList)
                                 )
-                                goodPageModel
+                                productPageModel
                     in
-                    ( Model { rec | page = PageGoods newModel }
-                    , goodsPageEmitListToCmd emitList
+                    ( Model { rec | page = PageProduct newModel }
+                    , productPageEmitListToCmd emitList
                     )
 
                 _ ->
@@ -449,7 +449,7 @@ update msg (Model rec) =
             , Cmd.none
             )
 
-        SellGoodResponse response ->
+        SellProductResponse response ->
             ( case response of
                 Ok () ->
                     Model
@@ -516,15 +516,15 @@ update msg (Model rec) =
                     , Cmd.none
                     )
 
-        GoodsPageMsg goodsPageMsg ->
+        ProductPageMsg productPageMsg ->
             case rec.page of
-                PageGoods goodsModel ->
+                PageProduct productPageModel ->
                     let
                         ( newModel, emitList ) =
-                            Page.Product.update goodsPageMsg goodsModel
+                            Page.Product.update productPageMsg productPageModel
                     in
-                    ( Model { rec | page = PageGoods newModel }
-                    , goodsPageEmitListToCmd emitList
+                    ( Model { rec | page = PageProduct newModel }
+                    , productPageEmitListToCmd emitList
                     )
 
                 _ ->
@@ -532,19 +532,19 @@ update msg (Model rec) =
                     , Cmd.none
                     )
 
-        LikeGoodResponse userId id response ->
+        LikeProductResponse userId id response ->
             let
                 ( page, cmd ) =
-                    likeGood userId id response rec.logInState rec.page
+                    likeProduct userId id response rec.logInState rec.page
             in
             ( Model { rec | page = page }
             , cmd
             )
 
-        UnlikeGoodResponse userId id response ->
+        UnlikeProductResponse userId id response ->
             let
                 ( page, cmd ) =
-                    unlikeGood userId id response rec.logInState rec.page
+                    unlikeProduct userId id response rec.logInState rec.page
             in
             ( Model { rec | page = page }
             , cmd
@@ -615,16 +615,16 @@ update msg (Model rec) =
                     , Cmd.none
                     )
 
-        PurchaseGoodListPageMsg purchaseGoodListMsg ->
+        BoughtProductsPageMsg purchaseGoodListMsg ->
             case rec.page of
-                PagePurchaseGoodList purchaseGoodListModel ->
+                PageBoughtProducts purchaseGoodListModel ->
                     let
                         ( newModel, emitMaybe ) =
                             purchaseGoodListModel
                                 |> Page.BoughtProducts.update purchaseGoodListMsg
                     in
-                    ( Model { rec | page = PagePurchaseGoodList newModel }
-                    , purchaseGoodListPageEmitListToCmd emitMaybe
+                    ( Model { rec | page = PageBoughtProducts newModel }
+                    , boughtProductsPageEmitListToCmd emitMaybe
                     )
 
                 _ ->
@@ -632,16 +632,16 @@ update msg (Model rec) =
                     , Cmd.none
                     )
 
-        ExhibitionGoodListPageMsg exhibitionGoodListMsg ->
+        SoldProductsPageMsg exhibitionGoodListMsg ->
             case rec.page of
-                PageExhibitionGoodList exhibitionGoodListModel ->
+                PageSoldProducts exhibitionGoodListModel ->
                     let
                         ( newModel, emitMaybe ) =
                             exhibitionGoodListModel
                                 |> Page.SoldProducts.update exhibitionGoodListMsg
                     in
-                    ( Model { rec | page = PageExhibitionGoodList newModel }
-                    , exhibitionGoodListPageEmitListToCmd emitMaybe
+                    ( Model { rec | page = PageSoldProducts newModel }
+                    , soldProductsPageEmitListToCmd emitMaybe
                     )
 
                 _ ->
@@ -687,16 +687,16 @@ homePageEmitListToCmd =
         (\emit ->
             case emit of
                 Page.Home.EmitGetRecentGoodList ->
-                    Api.getRecentGoods (\result -> HomePageMsg (Page.Home.GetRecentGoodListResponse result))
+                    Api.getRecentProductList (\result -> HomePageMsg (Page.Home.GetRecentGoodListResponse result))
 
                 Page.Home.EmitGetRecommendGoodList ->
-                    Api.getRecommendGoods (\result -> HomePageMsg (Page.Home.GetRecommendGoodListResponse result))
+                    Api.getRecommendProductList (\result -> HomePageMsg (Page.Home.GetRecommendGoodListResponse result))
 
                 Page.Home.EmitGetFreeGoodList ->
-                    Api.getFreeGoods (\result -> HomePageMsg (Page.Home.GetFreeGoodListResponse result))
+                    Api.getFreeProductList (\result -> HomePageMsg (Page.Home.GetFreeGoodListResponse result))
 
                 Page.Home.EmitGoodList e ->
-                    goodsListEmitToCmd e
+                    productListEmitToCmd e
         )
         >> Cmd.batch
 
@@ -717,44 +717,44 @@ likeAndHistoryEmitListToCmd =
                     logInOrSignUpEmitToCmd e
 
                 Page.LikeAndHistory.EmitGoodList e ->
-                    goodsListEmitToCmd e
+                    productListEmitToCmd e
         )
         >> Cmd.batch
 
 
-exhibitionGoodListPageEmitListToCmd : List Page.SoldProducts.Emit -> Cmd Msg
-exhibitionGoodListPageEmitListToCmd =
+soldProductsPageEmitListToCmd : List Page.SoldProducts.Emit -> Cmd Msg
+soldProductsPageEmitListToCmd =
     List.map
         (\emit ->
             case emit of
                 Page.SoldProducts.EmitGetSoldProducts token ->
-                    Api.getExhibitionGoodList token
+                    Api.getSoldProductList token
                         (\result ->
-                            ExhibitionGoodListPageMsg (Page.SoldProducts.GetSoldProductListResponse result)
+                            SoldProductsPageMsg (Page.SoldProducts.GetSoldProductListResponse result)
                         )
 
                 Page.SoldProducts.EmitLogInOrSignUp e ->
                     logInOrSignUpEmitToCmd e
 
                 Page.SoldProducts.EmitByProductList e ->
-                    goodsListEmitToCmd e
+                    productListEmitToCmd e
         )
         >> Cmd.batch
 
 
-purchaseGoodListPageEmitListToCmd : List Page.BoughtProducts.Emit -> Cmd Msg
-purchaseGoodListPageEmitListToCmd =
+boughtProductsPageEmitListToCmd : List Page.BoughtProducts.Emit -> Cmd Msg
+boughtProductsPageEmitListToCmd =
     List.map
         (\emit ->
             case emit of
                 Page.BoughtProducts.EmitGetPurchaseGoodList token ->
-                    Api.getPurchaseGoodList token (\result -> PurchaseGoodListPageMsg (Page.BoughtProducts.GetPurchaseGoodResponse result))
+                    Api.getBoughtProductList token (\result -> BoughtProductsPageMsg (Page.BoughtProducts.GetPurchaseGoodResponse result))
 
                 Page.BoughtProducts.EmitLogInOrSignUp e ->
                     logInOrSignUpEmitToCmd e
 
                 Page.BoughtProducts.EmitGoodList e ->
-                    goodsListEmitToCmd e
+                    productListEmitToCmd e
         )
         >> Cmd.batch
 
@@ -782,10 +782,10 @@ exhibitionPageEmitListToCmd =
                     logInOrSignUpEmitToCmd e
 
                 Page.Exhibition.EmitSellGoods ( token, request ) ->
-                    Api.sellGoods token request SellGoodResponse
+                    Api.sellProduct token request SellProductResponse
 
                 Page.Exhibition.EmitGoodEditor e ->
-                    goodEditorEmitToCmd e
+                    productEditorEmitToCmd e
         )
         >> Cmd.batch
 
@@ -844,28 +844,28 @@ profilePageEmitListToCmd =
         >> Cmd.batch
 
 
-goodsPageEmitListToCmd : List Page.Product.Emit -> Cmd Msg
-goodsPageEmitListToCmd =
+productPageEmitListToCmd : List Page.Product.Emit -> Cmd Msg
+productPageEmitListToCmd =
     List.map
         (\emit ->
             case emit of
                 Page.Product.EmitGetProduct { productId } ->
-                    Api.getGood productId (\result -> GoodsPageMsg (Page.Product.GetProductResponse result))
+                    Api.getProduct productId (\result -> ProductPageMsg (Page.Product.GetProductResponse result))
 
                 Page.Product.EmitGetCommentList { productId } ->
-                    Api.getGoodsComment productId (\result -> GoodsPageMsg (Page.Product.GetCommentListResponse result))
+                    Api.getProductComments productId (\result -> ProductPageMsg (Page.Product.GetCommentListResponse result))
 
                 Page.Product.EmitPostComment token { productId } comment ->
-                    Api.postGoodsComment token productId comment (\result -> GoodsPageMsg (Page.Product.PostCommentResponse result))
+                    Api.postProductComment token productId comment (\result -> ProductPageMsg (Page.Product.PostCommentResponse result))
 
                 Page.Product.EmitLike userId token id ->
-                    Api.likeGoods token id (LikeGoodResponse userId id)
+                    Api.likeProduct token id (LikeProductResponse userId id)
 
                 Page.Product.EmitUnLike userId token id ->
-                    Api.unlikeGoods token id (UnlikeGoodResponse userId id)
+                    Api.unlikeProduct token id (UnlikeProductResponse userId id)
 
                 Page.Product.EmitTradeStart token id ->
-                    Api.tradeStart token id (\result -> GoodsPageMsg (Page.Product.TradeStartResponse result))
+                    Api.tradeStart token id (\result -> ProductPageMsg (Page.Product.TradeStartResponse result))
 
                 Page.Product.EmitAddLogMessage log ->
                     Task.succeed ()
@@ -878,14 +878,14 @@ goodsPageEmitListToCmd =
                         Time.here
                         |> Task.attempt GetNowTime
 
-                Page.Product.EmitDelete token goodId ->
-                    Api.deleteGoods token goodId
+                Page.Product.EmitDelete token productId ->
+                    Api.deleteProduct token productId
 
                 Page.Product.EmitByProductEditor e ->
-                    goodEditorEmitToCmd e
+                    productEditorEmitToCmd e
 
-                Page.Product.EmitUpdateProductData token goodId requestData ->
-                    Api.editGood token goodId requestData (\m -> GoodsPageMsg (Page.Product.UpdateProductDataResponse m))
+                Page.Product.EmitUpdateProductData token productId requestData ->
+                    Api.editProduct token productId requestData (\m -> ProductPageMsg (Page.Product.UpdateProductDataResponse m))
         )
         >> Cmd.batch
 
@@ -894,21 +894,21 @@ goodsPageEmitListToCmd =
 {- ===================== Page Component Emit To Msg ======================== -}
 
 
-logInOrSignUpEmitToCmd : Page.Component.LogInOrSignUp.Emit -> Cmd Msg
+logInOrSignUpEmitToCmd : Page.Component.LogIn.Emit -> Cmd Msg
 logInOrSignUpEmitToCmd emit =
     case emit of
-        Page.Component.LogInOrSignUp.EmitLogInOrSignUp service ->
+        Page.Component.LogIn.EmitLogInOrSignUp service ->
             Api.logInOrSignUpUrlRequest service LogInOrSignUpUrlResponse
 
 
-goodsListEmitToCmd : Page.Component.ProductList.Emit -> Cmd Msg
-goodsListEmitToCmd emit =
+productListEmitToCmd : Page.Component.ProductList.Emit -> Cmd Msg
+productListEmitToCmd emit =
     case emit of
         Page.Component.ProductList.EmitLike userId token id ->
-            Api.likeGoods token id (LikeGoodResponse userId id)
+            Api.likeProduct token id (LikeProductResponse userId id)
 
         Page.Component.ProductList.EmitUnlike userId token id ->
-            Api.unlikeGoods token id (UnlikeGoodResponse userId id)
+            Api.unlikeProduct token id (UnlikeProductResponse userId id)
 
         Page.Component.ProductList.EmitScrollIntoView idString ->
             elementScrollIntoView idString
@@ -921,8 +921,8 @@ universityEmitToCmd emit =
             changeSelectedIndex { id = id, index = index }
 
 
-goodEditorEmitToCmd : Page.Component.ProductEditor.Emit -> Cmd Msg
-goodEditorEmitToCmd emit =
+productEditorEmitToCmd : Page.Component.ProductEditor.Emit -> Cmd Msg
+productEditorEmitToCmd emit =
     case emit of
         Page.Component.ProductEditor.EmitAddEventListenerDrop idString ->
             addEventListenerDrop idString
@@ -967,7 +967,7 @@ urlParserResultToPageAndCmd : Model -> SiteMap.UrlParserResult -> ( Page, Cmd Ms
 urlParserResultToPageAndCmd (Model rec) result =
     case result of
         SiteMap.Home ->
-            Page.Home.initModel (getGoodId rec.page)
+            Page.Home.initModel (getProductId rec.page)
                 |> Tuple.mapBoth PageHome homePageEmitListToCmd
 
         SiteMap.LogIn ->
@@ -976,22 +976,22 @@ urlParserResultToPageAndCmd (Model rec) result =
             )
 
         SiteMap.LikeAndHistory ->
-            Page.LikeAndHistory.initModel (getGoodId rec.page) rec.logInState
+            Page.LikeAndHistory.initModel (getProductId rec.page) rec.logInState
                 |> Tuple.mapBoth
                     PageLikeAndHistory
                     likeAndHistoryEmitListToCmd
 
         SiteMap.SoldProducts ->
-            Page.SoldProducts.initModel (getGoodId rec.page) rec.logInState
+            Page.SoldProducts.initModel (getProductId rec.page) rec.logInState
                 |> Tuple.mapBoth
-                    PageExhibitionGoodList
-                    exhibitionGoodListPageEmitListToCmd
+                    PageSoldProducts
+                    soldProductsPageEmitListToCmd
 
         SiteMap.BoughtProducts ->
-            Page.BoughtProducts.initModel (getGoodId rec.page) rec.logInState
+            Page.BoughtProducts.initModel (getProductId rec.page) rec.logInState
                 |> Tuple.mapBoth
-                    PagePurchaseGoodList
-                    purchaseGoodListPageEmitListToCmd
+                    PageBoughtProducts
+                    boughtProductsPageEmitListToCmd
 
         SiteMap.Exhibition ->
             case rec.page of
@@ -1020,20 +1020,20 @@ urlParserResultToPageAndCmd (Model rec) result =
                 _ ->
                     ( rec.page, Cmd.none )
 
-        SiteMap.Product goodId ->
+        SiteMap.Product productId ->
             (case rec.page of
                 PageHome pageModel ->
-                    case Data.Product.searchGoodsFromId goodId (Page.Home.getGoodAllGoodList pageModel) of
-                        Just goods ->
-                            Page.Product.initModelFromProduct goods
+                    case Data.Product.searchFromId productId (Page.Home.getGoodAllGoodList pageModel) of
+                        Just product ->
+                            Page.Product.initModelFromProduct product
 
                         Nothing ->
-                            Page.Product.initModel goodId
+                            Page.Product.initModel productId
 
                 _ ->
-                    Page.Product.initModel goodId
+                    Page.Product.initModel productId
             )
-                |> Tuple.mapBoth PageGoods goodsPageEmitListToCmd
+                |> Tuple.mapBoth PageProduct productPageEmitListToCmd
 
         SiteMap.User userId ->
             Page.User.initModelFromId rec.logInState userId
@@ -1056,11 +1056,11 @@ urlParserResultToPageAndCmd (Model rec) result =
 {-| 指定したページにあるメインの商品ID
 GoodListの表示になったときにその商品のところへスクロールできるように
 -}
-getGoodId : Page -> Maybe Data.Product.Id
-getGoodId page =
+getProductId : Page -> Maybe Data.Product.Id
+getProductId page =
     case page of
-        PageGoods goodModel ->
-            Just (Page.Product.getProductId goodModel)
+        PageProduct productModel ->
+            Just (Page.Product.getProductId productModel)
 
         _ ->
             Nothing
@@ -1068,17 +1068,17 @@ getGoodId page =
 
 {-| 各ページにいいねを押した結果を反映するように通知する
 -}
-likeGood : Data.User.UserId -> Data.Product.Id -> Result () () -> Data.LogInState.LogInState -> Page -> ( Page, Cmd Msg )
-likeGood userId goodId result logInState page =
+likeProduct : Data.User.UserId -> Data.Product.Id -> Result () () -> Data.LogInState.LogInState -> Page -> ( Page, Cmd Msg )
+likeProduct userId productId result logInState page =
     let
-        goodListMsg =
-            Page.Component.ProductList.LikeResponse userId goodId result
+        productListMsg =
+            Page.Component.ProductList.LikeResponse userId productId result
     in
     case page of
         PageHome homeModel ->
             let
                 ( newModel, emitList ) =
-                    homeModel |> Page.Home.update (Page.Home.GoodListMsg goodListMsg)
+                    homeModel |> Page.Home.update (Page.Home.GoodListMsg productListMsg)
             in
             ( PageHome newModel
             , homePageEmitListToCmd emitList
@@ -1089,39 +1089,39 @@ likeGood userId goodId result logInState page =
                 ( newModel, emitList ) =
                     likeAndHistoryModel
                         |> Page.LikeAndHistory.update logInState
-                            (Page.LikeAndHistory.GoodListMsg goodListMsg)
+                            (Page.LikeAndHistory.MsgByProductList productListMsg)
             in
             ( PageLikeAndHistory newModel
             , likeAndHistoryEmitListToCmd emitList
             )
 
-        PageExhibitionGoodList exhibitionGoodListModel ->
+        PageSoldProducts exhibitionGoodListModel ->
             let
                 ( newModel, emitList ) =
                     exhibitionGoodListModel
-                        |> Page.SoldProducts.update (Page.SoldProducts.MsgByProductList goodListMsg)
+                        |> Page.SoldProducts.update (Page.SoldProducts.MsgByProductList productListMsg)
             in
-            ( PageExhibitionGoodList newModel
-            , exhibitionGoodListPageEmitListToCmd emitList
+            ( PageSoldProducts newModel
+            , soldProductsPageEmitListToCmd emitList
             )
 
-        PagePurchaseGoodList purchaseGoodListModel ->
+        PageBoughtProducts purchaseGoodListModel ->
             let
                 ( newModel, emitList ) =
                     purchaseGoodListModel
-                        |> Page.BoughtProducts.update (Page.BoughtProducts.GoodListMsg goodListMsg)
+                        |> Page.BoughtProducts.update (Page.BoughtProducts.GoodListMsg productListMsg)
             in
-            ( PagePurchaseGoodList newModel
-            , purchaseGoodListPageEmitListToCmd emitList
+            ( PageBoughtProducts newModel
+            , boughtProductsPageEmitListToCmd emitList
             )
 
-        PageGoods goodModel ->
+        PageProduct productPageModel ->
             let
                 ( newModel, emitList ) =
-                    goodModel |> Page.Product.update (Page.Product.LikeResponse userId result)
+                    productPageModel |> Page.Product.update (Page.Product.LikeResponse userId result)
             in
-            ( PageGoods newModel
-            , goodsPageEmitListToCmd emitList
+            ( PageProduct newModel
+            , productPageEmitListToCmd emitList
             )
 
         _ ->
@@ -1132,17 +1132,17 @@ likeGood userId goodId result logInState page =
 
 {-| 各ページにいいねを外した結果を反映するように通知する
 -}
-unlikeGood : Data.User.UserId -> Data.Product.Id -> Result () () -> Data.LogInState.LogInState -> Page -> ( Page, Cmd Msg )
-unlikeGood userId goodId result logInState page =
+unlikeProduct : Data.User.UserId -> Data.Product.Id -> Result () () -> Data.LogInState.LogInState -> Page -> ( Page, Cmd Msg )
+unlikeProduct userId productId result logInState page =
     let
-        goodListMsg =
-            Page.Component.ProductList.UnlikeResponse userId goodId result
+        productListMsg =
+            Page.Component.ProductList.UnlikeResponse userId productId result
     in
     case page of
         PageHome homeModel ->
             let
                 ( newModel, emitList ) =
-                    homeModel |> Page.Home.update (Page.Home.GoodListMsg goodListMsg)
+                    homeModel |> Page.Home.update (Page.Home.GoodListMsg productListMsg)
             in
             ( PageHome newModel
             , homePageEmitListToCmd emitList
@@ -1153,39 +1153,39 @@ unlikeGood userId goodId result logInState page =
                 ( newModel, emitList ) =
                     likeAndHistoryModel
                         |> Page.LikeAndHistory.update logInState
-                            (Page.LikeAndHistory.GoodListMsg goodListMsg)
+                            (Page.LikeAndHistory.MsgByProductList productListMsg)
             in
             ( PageLikeAndHistory newModel
             , likeAndHistoryEmitListToCmd emitList
             )
 
-        PageExhibitionGoodList exhibitionGoodListModel ->
+        PageSoldProducts exhibitionGoodListModel ->
             let
                 ( newModel, emitList ) =
                     exhibitionGoodListModel
-                        |> Page.SoldProducts.update (Page.SoldProducts.MsgByProductList goodListMsg)
+                        |> Page.SoldProducts.update (Page.SoldProducts.MsgByProductList productListMsg)
             in
-            ( PageExhibitionGoodList newModel
-            , exhibitionGoodListPageEmitListToCmd emitList
+            ( PageSoldProducts newModel
+            , soldProductsPageEmitListToCmd emitList
             )
 
-        PagePurchaseGoodList purchaseGoodListModel ->
+        PageBoughtProducts purchaseGoodListModel ->
             let
                 ( newModel, emitList ) =
                     purchaseGoodListModel
-                        |> Page.BoughtProducts.update (Page.BoughtProducts.GoodListMsg goodListMsg)
+                        |> Page.BoughtProducts.update (Page.BoughtProducts.GoodListMsg productListMsg)
             in
-            ( PagePurchaseGoodList newModel
-            , purchaseGoodListPageEmitListToCmd emitList
+            ( PageBoughtProducts newModel
+            , boughtProductsPageEmitListToCmd emitList
             )
 
-        PageGoods goodModel ->
+        PageProduct productPageModel ->
             let
                 ( newModel, emitList ) =
-                    goodModel |> Page.Product.update (Page.Product.UnlikeResponse userId result)
+                    productPageModel |> Page.Product.update (Page.Product.UnlikeResponse userId result)
             in
-            ( PageGoods newModel
-            , goodsPageEmitListToCmd emitList
+            ( PageProduct newModel
+            , productPageEmitListToCmd emitList
             )
 
         _ ->
@@ -1268,56 +1268,56 @@ titleAndTabDataAndMainView :
         }
 titleAndTabDataAndMainView logInState isWideScreenMode nowMaybe page =
     case page of
-        PageHome homeModel ->
-            homeModel
+        PageHome pageModel ->
+            pageModel
                 |> Page.Home.view logInState isWideScreenMode
                 |> mapPageData HomePageMsg
 
-        PageExhibition exhibitionModel ->
-            exhibitionModel
+        PageExhibition pageModel ->
+            pageModel
                 |> Page.Exhibition.view logInState
                 |> mapPageData ExhibitionPageMsg
 
-        PageLikeAndHistory likeAndHistoryModel ->
-            likeAndHistoryModel
+        PageLikeAndHistory pageModel ->
+            pageModel
                 |> Page.LikeAndHistory.view logInState isWideScreenMode
                 |> mapPageData LikeAndHistoryPageMsg
 
-        PagePurchaseGoodList purchaseGoodListModel ->
-            purchaseGoodListModel
+        PageBoughtProducts pageModel ->
+            pageModel
                 |> Page.BoughtProducts.view logInState isWideScreenMode
-                |> mapPageData PurchaseGoodListPageMsg
+                |> mapPageData BoughtProductsPageMsg
 
-        PageExhibitionGoodList exhibitionGoodListModel ->
-            exhibitionGoodListModel
+        PageSoldProducts pageModel ->
+            pageModel
                 |> Page.SoldProducts.view logInState isWideScreenMode
-                |> mapPageData ExhibitionGoodListPageMsg
+                |> mapPageData SoldProductsPageMsg
 
-        PageSignUp signUpPageModel ->
-            signUpPageModel
+        PageSignUp pageModel ->
+            pageModel
                 |> Page.SignUp.view
                 |> mapPageData SignUpMsg
 
-        PageLogIn logInPageModel ->
-            logInPageModel
+        PageLogIn pageModel ->
+            pageModel
                 |> Page.LogIn.view
                 |> mapPageData LogInPageMsg
 
-        PageGoods goodModel ->
-            goodModel
+        PageProduct pageModel ->
+            pageModel
                 |> Page.Product.view logInState isWideScreenMode nowMaybe
-                |> mapPageData GoodsPageMsg
+                |> mapPageData ProductPageMsg
 
-        PageProfile profileModel ->
-            profileModel
+        PageProfile pageModel ->
+            pageModel
                 |> Page.User.view logInState
                 |> mapPageData ProfilePageMsg
 
         PageSiteMapXml ->
             Page.SiteMap.view
 
-        PageAbout aboutModel ->
-            aboutModel
+        PageAbout pageModel ->
+            pageModel
                 |> Page.About.view
 
 

@@ -33,7 +33,7 @@ module Data.Product exposing
     , priceToString
     , priceToStringWithoutYen
     , replaceCommentTimeStringToTimePosix
-    , searchGoodsFromId
+    , searchFromId
     , setCommentList
     , statusAll
     , statusFromIdString
@@ -605,15 +605,15 @@ priceToStringWithoutYen price =
         |> String.join ","
 
 
-searchGoodsFromId : Id -> List Product -> Maybe Product
-searchGoodsFromId id goodsList =
-    case goodsList of
+searchFromId : Id -> List Product -> Maybe Product
+searchFromId id list =
+    case list of
         x :: xs ->
             if getId x == id then
                 Just x
 
             else
-                searchGoodsFromId id xs
+                searchFromId id xs
 
         [] ->
             Nothing

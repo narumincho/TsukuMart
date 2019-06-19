@@ -3,11 +3,10 @@ module Page.BoughtProducts exposing (Emit(..), Model, Msg(..), initModel, update
 import Api
 import Data.Product
 import Data.LogInState as LogInState
-import Data.User
 import Html
 import Html.Attributes
-import Page.Component.ProductList as GoodList
-import Page.Component.LogInOrSignUp as LogInOrSignUp
+import Page.Component.ProductList as ProductList
+import Page.Component.LogIn as LogInOrSignUp
 import Tab
 
 
@@ -15,7 +14,7 @@ type Model
     = Model
         { normalModel : NormalModel
         , logInOrSignUpModel : LogInOrSignUp.Model
-        , goodListModel : GoodList.Model
+        , goodListModel : ProductList.Model
         }
 
 
@@ -28,20 +27,20 @@ type NormalModel
 type Emit
     = EmitGetPurchaseGoodList Api.Token
     | EmitLogInOrSignUp LogInOrSignUp.Emit
-    | EmitGoodList GoodList.Emit
+    | EmitGoodList ProductList.Emit
 
 
 type Msg
     = GetPurchaseGoodResponse (Result () (List Data.Product.Product))
     | LogInOrSignUpMsg LogInOrSignUp.Msg
-    | GoodListMsg GoodList.Msg
+    | GoodListMsg ProductList.Msg
 
 
 initModel : Maybe Data.Product.Id -> LogInState.LogInState -> ( Model, List Emit )
 initModel goodIdMaybe logInState =
     let
         ( goodListModel, emitList ) =
-            GoodList.initModel goodIdMaybe
+            ProductList.initModel goodIdMaybe
     in
     ( Model
         { logInOrSignUpModel = LogInOrSignUp.initModel
@@ -87,10 +86,10 @@ update msg (Model rec) =
         GoodListMsg goodListMsg ->
             let
                 ( newModel, emitList ) =
-                    rec.goodListModel |> GoodList.update goodListMsg
+                    rec.goodListModel |> ProductList.update goodListMsg
             in
             ( case goodListMsg of
-                GoodList.LikeResponse userId id (Ok ()) ->
+                ProductList.LikeResponse userId id (Ok ()) ->
                     let
                         likeGoodList =
                             Data.Product.listMapIf (\g -> Data.Product.getId g == id) (Data.Product.like userId)
@@ -111,7 +110,7 @@ update msg (Model rec) =
                             , goodListModel = newModel
                         }
 
-                GoodList.UnlikeResponse userId id (Ok ()) ->
+                ProductList.UnlikeResponse userId id (Ok ()) ->
                     let
                         unlikeGoodList =
                             Data.Product.listMapIf (\g -> Data.Product.getId g == id) (Data.Product.unlike userId)
@@ -161,7 +160,7 @@ view logInState isWideScreenMode (Model rec) =
                 ]
 
             _ ->
-                [ GoodList.view
+                [ ProductList.view
                     rec.goodListModel
                     logInState
                     isWideScreenMode

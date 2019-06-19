@@ -172,11 +172,7 @@ update msg model =
         PostCommentResponse result ->
             case ( model, result ) of
                 ( Normal rec, Ok comment ) ->
-                    let
-                        newGood =
-                            rec.product |> Product.addComment comment
-                    in
-                    ( Normal { rec | product = newGood }
+                    ( Normal { rec | product = rec.product |> Product.addComment comment }
                     , []
                     )
 

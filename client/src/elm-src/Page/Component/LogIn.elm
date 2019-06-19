@@ -1,4 +1,4 @@
-module Page.Component.LogInOrSignUp exposing
+module Page.Component.LogIn exposing
     ( Emit(..)
     , Model
     , Msg(..)
@@ -7,9 +7,7 @@ module Page.Component.LogInOrSignUp exposing
     , view
     )
 
-import Data.EmailAddress
 import Data.SocialLoginService
-import Data.StudentId
 import Html
 import Html.Attributes as A
 import Html.Events

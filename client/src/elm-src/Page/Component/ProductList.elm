@@ -46,14 +46,14 @@ initModel goodIdMaybe =
 update : Msg -> Model -> ( Model, List Emit )
 update msg _ =
     case msg of
-        Like userId token goodId ->
+        Like userId token productId ->
             ( Model { sending = True }
-            , [ EmitLike userId token goodId ]
+            , [ EmitLike userId token productId ]
             )
 
-        UnLike userId token goodId ->
+        UnLike userId token productId ->
             ( Model { sending = True }
-            , [ EmitUnlike userId token goodId ]
+            , [ EmitUnlike userId token productId ]
             )
 
         LikeResponse _ _ _ ->
@@ -78,8 +78,8 @@ update msg _ =
 goodList:Maybe (List Good.Good)は、Nothingで読み込み中、Justで商品の指定をする
 -}
 view : Model -> Data.LogInState.LogInState -> Bool -> Maybe (List Product.Product) -> Html.Html Msg
-view (Model { sending }) logInState isWideMode goodsList =
-    case goodsList of
+view (Model { sending }) logInState isWideMode productList =
+    case productList of
         Just [] ->
             zeroGoodsView
 
