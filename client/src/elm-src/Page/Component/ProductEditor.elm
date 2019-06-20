@@ -44,8 +44,7 @@ type ImageList
 
 
 type Emit
-    = EmitAddDropEventListener { id : String }
-    | EmitAddInputEventListener { id : String }
+    = EmitAddEventListenerForProductImages { labelId : String, inputId : String }
     | EmitReplaceText { id : String, text : String }
     | EmitChangeSelectedIndex { id : String, index : Int }
 
@@ -87,8 +86,7 @@ initModel { name, description, price, condition, image } =
 
 resendEmit : Model -> List Emit
 resendEmit (Model rec) =
-    [ EmitAddDropEventListener { id = photoAddLabelId }
-    , EmitAddInputEventListener { id = photoAddInputId }
+    [ EmitAddEventListenerForProductImages { labelId = photoAddLabelId, inputId = photoAddInputId }
     , EmitReplaceText { id = nameEditorId, text = rec.name }
     , EmitReplaceText { id = descriptionEditorId, text = rec.description }
     , EmitReplaceText { id = priceEditorId, text = rec.price |> Maybe.map String.fromInt |> Maybe.withDefault "" }
@@ -379,7 +377,7 @@ photoAdd =
         , Html.Attributes.id photoAddInputId
         , Html.Attributes.type_ "file"
         , Html.Attributes.multiple True
-        , Html.Attributes.accept "image/png,image/jpeg"
+        , Html.Attributes.accept "image/*"
         ]
         []
     ]

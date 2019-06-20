@@ -37,8 +37,7 @@ type Model
 {-| ここから発生するイベント
 -}
 type Emit
-    = EmitAddDropEventListener { id : String }
-    | EmitAddInputEventListener { id : String }
+    = EmitAddEventListenerForUserImage { labelId : String, inputId : String }
     | EmitSignUp Api.SignUpRequest
     | EmitByUniversityComp CompUniversity.Emit
     | EmitReplaceText { id : String, text : String }
@@ -46,7 +45,7 @@ type Emit
 
 type Msg
     = InputStudentIdOrEmailAddress String
-    | ReceiveImageDataUrl (List String)
+    | ReceiveUserImage String
     | InputSAddress AnalysisStudentIdOrSAddressResult
     | InputUniversity CompUniversity.Model
     | InputDisplayName String
@@ -64,8 +63,7 @@ initModel { name, imageUrl, sendEmailToken } =
         , imageUrl = imageUrl
         , sendEmailToken = sendEmailToken
         }
-    , [ EmitAddInputEventListener { id = imageInputId }
-      , EmitAddDropEventListener { id = imageLabelId }
+    , [ EmitAddEventListenerForUserImage { labelId = imageLabelId, inputId = imageInputId }
       , EmitReplaceText
             { id = displayNameFormId
             , text = name
@@ -87,9 +85,9 @@ update msg model =
             , []
             )
 
-        ReceiveImageDataUrl dataUrl ->
+        ReceiveUserImage dataUrl ->
             ( case ( model, dataUrl ) of
-                ( Normal rec, imageDataUrl :: _ ) ->
+                ( Normal rec, imageDataUrl ) ->
                     Normal { rec | imageUrl = imageDataUrl }
 
                 _ ->
@@ -169,7 +167,7 @@ view userSignUpPage =
 
 normalView : AnalysisStudentIdOrSAddressResult -> CompUniversity.Model -> String -> String -> String -> Html.Html Msg
 normalView studentIdOrTsukubaEmailAddress university nickName imageUrl sendEmailToken =
-    Html.Keyed.node "form"
+    Html.Keyed.node "div"
         [ Html.Attributes.class "form" ]
         (studentHasSAddressFormList studentIdOrTsukubaEmailAddress
             ++ imageForm imageUrl
@@ -186,48 +184,66 @@ studentHasSAddressFormList analysisStudentIdOrEmailAddressResult =
     [ ( "sAddressFrom"
       , Html.div
             []
-            [ Html.label
+            ([ Html.label
                 [ Html.Attributes.class "form-label"
                 , Html.Attributes.for "signUpStudentIdOrTsukubaEmail"
                 ]
                 [ Html.text "学籍番号" ]
-            , Html.input
+             , Html.input
                 [ Html.Attributes.class "form-input"
                 , Html.Attributes.id "signUpStudentIdOrTsukubaEmail"
                 , Html.Attributes.attribute "autocomplete" "username"
                 , Html.Events.onInput InputStudentIdOrEmailAddress
                 ]
                 []
-            , Html.div
-                [ Html.Attributes.class "form-description" ]
-                [ Html.text
-                    (case analysisStudentIdOrEmailAddressResult of
+             ]
+                ++ (case analysisStudentIdOrEmailAddressResult of
                         ANone ->
-                            "学籍番号は20から始まる9桁の数字、筑波大学のメールアドレスはs1234567@s.tsukuba.ac.jpのような形のメールアドレス"
+                            [ Html.div
+                                []
+                                [ Html.text "学籍番号は20から始まる9桁の数字、筑波大学のメールアドレスはs1234567@s.tsukuba.ac.jpのような形のメールアドレス" ]
+                            ]
 
                         AStudentId studentId ->
-                            "学籍番号 "
-                                ++ Data.StudentId.toStringWith20 studentId
-                                ++ " "
-                                ++ (studentId
+                            [ Html.div
+                                []
+                                [ Html.text ("学籍番号 " ++ Data.StudentId.toStringWith20 studentId) ]
+                            , Html.div
+                                []
+                                [ Html.text
+                                    ((studentId
                                         |> Data.SAddress.fromStudentId
                                         |> Data.EmailAddress.fromSAddress
                                         |> Data.EmailAddress.toString
-                                   )
-                                ++ "にメールを送信します"
+                                     )
+                                        ++ "にメールを送信します"
+                                    )
+                                ]
+                            ]
 
                         APartStudentId partStudentId ->
-                            "学籍番号 "
-                                ++ Data.StudentId.partStudentIdToStringWith20 partStudentId
+                            [ Html.div
+                                []
+                                [ Html.text
+                                    ("学籍番号 "
+                                        ++ Data.StudentId.partStudentIdToStringWith20 partStudentId
+                                    )
+                                ]
+                            ]
 
                         ASAddress sAddress ->
-                            "筑波大学のメールアドレス " ++ Data.SAddress.toEmailAddressString sAddress
+                            [ Html.div
+                                []
+                                [ Html.text ("筑波大学のメールアドレス " ++ Data.SAddress.toEmailAddressString sAddress) ]
+                            ]
 
                         AEmailButIsNotTsukuba _ ->
-                            "筑波大学のメールアドレスではありません"
-                    )
-                ]
-            ]
+                            [ Html.div
+                                []
+                                [ Html.text "筑波大学のメールアドレスではありません" ]
+                            ]
+                   )
+            )
       )
     ]
 
@@ -271,14 +287,6 @@ type AnalysisStudentIdOrSAddressResult
     | AEmailButIsNotTsukuba Data.EmailAddress.EmailAddress
 
 
-analysisEmailAddress : String -> Maybe Data.EmailAddress.EmailAddress
-analysisEmailAddress string =
-    string
-        |> String.trim
-        |> String.toList
-        |> Data.EmailAddress.fromCharList
-
-
 {-| アカウント画像フォーム
 -}
 imageForm : String -> List ( String, Html.Html Msg )
@@ -303,7 +311,7 @@ imageForm imageUrl =
                 , Html.Attributes.id imageInputId
                 , Html.Attributes.type_ "file"
                 , Html.Attributes.multiple True
-                , Html.Attributes.accept "image/png,image/jpeg"
+                , Html.Attributes.accept "image/*"
                 ]
                 []
             ]

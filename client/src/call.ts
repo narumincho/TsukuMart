@@ -8,14 +8,21 @@ interface Window {
 
 type ElmApp = {
     ports: {
-        receiveImageFileListAsDataUrlList: {
+        addEventListenerForUserImage: {
+            subscribe: (
+                arg: (arg: { labelId: string; inputId: string }) => void
+            ) => void;
+        };
+        receiveUserImage: {
+            send: (arg: string) => void;
+        };
+        addEventListenerForProductImages: {
+            subscribe: (
+                arg: (arg: { labelId: string; inputId: string }) => void
+            ) => void;
+        };
+        receiveProductImages: {
             send: (arg: Array<string>) => void;
-        };
-        addInputEventListener: {
-            subscribe: (arg: (id: string) => void) => void;
-        };
-        addDropEventListener: {
-            subscribe: (arg: (id: string) => void) => void;
         };
         toWideScreenMode: {
             send: (arg: null) => void;
@@ -46,30 +53,90 @@ type ElmApp = {
 };
 
 requestAnimationFrame(() => {
-    /** FileListをDataURLのArrayに変換する */
-    const fileListToDataUrlList = (
-        fileList: FileList
-    ): Promise<Array<string>> => {
-        const encodeList: Array<Promise<string>> = [];
-        for (let i = 0; i < fileList.length; i++) {
-            encodeList.push(fileToDataUrl(fileList.item(i) as File));
-        }
-        return Promise.all(encodeList);
-    };
-
-    /** ファイルをDataURLに変換する */
-    const fileToDataUrl = async (file: File): Promise<string> =>
+    const userImageFileResizeAndConvertToDataUrl = (
+        file: File
+    ): Promise<string> =>
         new Promise((resolve, reject) => {
-            const fileReader = new FileReader();
-            fileReader.addEventListener(
-                "load",
-                () => {
-                    resolve(fileReader.result as string);
-                },
-                { once: true }
-            );
-            fileReader.readAsDataURL(file);
+            const image = new Image();
+            image.addEventListener("load", e => {
+                const canvas = document.createElement("canvas");
+                const sourceSize = Math.min(image.width, image.height);
+                const outputSize = Math.min(sourceSize, 400);
+                canvas.width = outputSize;
+                canvas.height = outputSize;
+                const context = canvas.getContext(
+                    "2d"
+                ) as CanvasRenderingContext2D;
+                context.drawImage(
+                    image,
+                    (image.width - sourceSize) / 2,
+                    (image.height - sourceSize) / 2,
+                    sourceSize,
+                    sourceSize,
+                    0,
+                    0,
+                    outputSize,
+                    outputSize
+                );
+                resolve(canvas.toDataURL("image/png"));
+            });
+            image.src = window.URL.createObjectURL(file);
         });
+    const resize = (
+        width: number,
+        height: number
+    ): { width: number; height: number } => {
+        if (1024 < Math.max(width, height)) {
+            if (height < width) {
+                return {
+                    width: 1024,
+                    height: (1024 * height) / width
+                };
+            }
+            return {
+                width: (1024 * width) / height,
+                height: 1024
+            };
+        }
+        return {
+            width: width,
+            height: height
+        };
+    };
+    const prodcutImageFilesResizeAndConvertToDataUrl = async (
+        fileList: FileList
+    ): Promise<Array<string>> =>
+        await Promise.all(
+            new Array(Math.min(fileList.length, 4)).fill(0).map(
+                (_, index) =>
+                    new Promise((resolve, reject) => {
+                        const file = fileList.item(index) as File;
+                        const image = new Image();
+                        image.addEventListener("load", () => {
+                            const canvas = document.createElement("canvas");
+                            const size = resize(image.width, image.height);
+                            canvas.width = size.width;
+                            canvas.height = size.height;
+                            const context = canvas.getContext(
+                                "2d"
+                            ) as CanvasRenderingContext2D;
+                            context.drawImage(
+                                image,
+                                0,
+                                0,
+                                image.width,
+                                image.height,
+                                0,
+                                0,
+                                size.width,
+                                size.height
+                            );
+                            resolve(canvas.toDataURL("image/png"));
+                        });
+                        image.src = window.URL.createObjectURL(file);
+                    })
+            )
+        );
 
     /* Elmを起動!! */
     const app = window.Elm.Main.init({
@@ -131,46 +198,99 @@ requestAnimationFrame(() => {
             element.selectedIndex = index;
         });
     });
-    /* HTMLInput要素にファイル入力イベントを設定する */
-    app.ports.addInputEventListener.subscribe(id => {
+    /* アカウント画像の入力イベントを設定する */
+    app.ports.addEventListenerForUserImage.subscribe(({ inputId, labelId }) => {
         requestAnimationFrame(() => {
-            const element = document.getElementById(id) as HTMLInputElement;
-            if (element === null) {
-                console.warn(`id=${id}の要素が存在しません`);
+            const inputElement = document.getElementById(
+                inputId
+            ) as HTMLInputElement;
+            if (inputElement === null) {
+                console.warn(`id=${inputId}の要素が存在しません`);
                 return;
             }
-            element.addEventListener("input", async e => {
-                if (element.files === null) {
-                    console.warn(`id=${id}のfilesがnullです`);
+            inputElement.addEventListener("input", async e => {
+                if (inputElement.files === null) {
+                    console.warn(`id=${inputId}のfilesがnullです`);
                     return;
                 }
-                app.ports.receiveImageFileListAsDataUrlList.send(
-                    await fileListToDataUrlList(element.files)
+                app.ports.receiveUserImage.send(
+                    await userImageFileResizeAndConvertToDataUrl(
+                        inputElement.files[0]
+                    )
+                );
+            });
+
+            const labelElement = document.getElementById(labelId);
+            if (labelElement === null) {
+                console.warn(`id=${labelId}の要素が存在しません`);
+                return;
+            }
+            labelElement.addEventListener("dragover", e => {
+                e.preventDefault();
+            });
+            labelElement.addEventListener("drop", async e => {
+                e.preventDefault();
+                if (e.dataTransfer === null) {
+                    console.warn("drop event dataTransfer is null");
+                    return;
+                }
+                const file = e.dataTransfer.files.item(0);
+                if (file === null) {
+                    console.warn("drop file is empty");
+                    return;
+                }
+                app.ports.receiveUserImage.send(
+                    await userImageFileResizeAndConvertToDataUrl(file)
                 );
             });
         });
     });
 
-    /* HTML要素にドロップイベントを設定する */
-    app.ports.addDropEventListener.subscribe(id => {
-        requestAnimationFrame(() => {
-            const element = document.getElementById(id);
-            if (element === null) {
-                console.warn(`id=${id}の要素が存在しません`);
-                return;
-            }
-            element.addEventListener("dragover", e => {
-                e.preventDefault();
+    /* 商品画像の入力イベントを設定する */
+    app.ports.addEventListenerForProductImages.subscribe(
+        ({ inputId, labelId }) => {
+            requestAnimationFrame(() => {
+                const inputElement = document.getElementById(
+                    inputId
+                ) as HTMLInputElement;
+                if (inputElement === null) {
+                    console.warn(`id=${inputId}の要素が存在しません`);
+                    return;
+                }
+                inputElement.addEventListener("input", async e => {
+                    if (inputElement.files === null) {
+                        console.warn(`id=${inputId}のfilesがnullです`);
+                        return;
+                    }
+                    app.ports.receiveProductImages.send(
+                        await prodcutImageFilesResizeAndConvertToDataUrl(
+                            inputElement.files
+                        )
+                    );
+                });
+
+                const labelElement = document.getElementById(labelId);
+                if (labelElement === null) {
+                    console.warn(`id=${labelId}の要素が存在しません`);
+                    return;
+                }
+                labelElement.addEventListener("dragover", e => {
+                    e.preventDefault();
+                });
+                labelElement.addEventListener("drop", async e => {
+                    e.preventDefault();
+                    if (e.dataTransfer === null) {
+                        console.warn("ドロップしたものを読み込めませんでした");
+                        return;
+                    }
+                    app.ports.receiveProductImages.send(
+                        await prodcutImageFilesResizeAndConvertToDataUrl(
+                            e.dataTransfer.files
+                        )
+                    );
+                });
             });
-            element.addEventListener("drop", async e => {
-                e.preventDefault();
-                app.ports.receiveImageFileListAsDataUrlList.send(
-                    await fileListToDataUrlList(
-                        (e.dataTransfer as DataTransfer).files
-                    )
-                );
-            });
-        });
-    });
+        }
+    );
     navigator.serviceWorker.register("/serviceworker.js", { scope: "/" });
 });

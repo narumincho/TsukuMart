@@ -32,13 +32,16 @@ import Time
 import Url
 
 
-port receiveImageFileListAsDataUrlList : (List String -> msg) -> Sub msg
+port addEventListenerForUserImage : { labelId : String, inputId : String } -> Cmd msg
 
 
-port addInputEventListener : String -> Cmd msg
+port receiveUserImage : (String -> msg) -> Sub msg
 
 
-port addDropEventListener : String -> Cmd msg
+port addEventListenerForProductImages : { labelId : String, inputId : String } -> Cmd msg
+
+
+port receiveProductImages : (List String -> msg) -> Sub msg
 
 
 port toWideScreenMode : (() -> msg) -> Sub msg
@@ -97,7 +100,8 @@ type Msg
     | LogInResponse (Result String { accessToken : Api.Token, refreshToken : Api.Token })
     | LogOut
     | SignUpConfirmResponse (Result String ())
-    | ReceiveImageListAsDataUrlList (List String)
+    | ReceiveProductImages (List String)
+    | ReceiveUserImage String
     | GetMyProfileResponse (Result String Data.User.WithProfile)
     | SellProductResponse (Result () ())
     | LikeProductResponse Data.Product.Id (Result () ())
@@ -371,19 +375,8 @@ update msg (Model rec) =
                     , Cmd.none
                     )
 
-        ReceiveImageListAsDataUrlList dataUrlList ->
+        ReceiveProductImages dataUrlList ->
             case rec.page of
-                PageSignUp signUpModel ->
-                    let
-                        ( newModel, emitList ) =
-                            Page.SignUp.update
-                                (Page.SignUp.ReceiveImageDataUrl dataUrlList)
-                                signUpModel
-                    in
-                    ( Model { rec | page = PageSignUp newModel }
-                    , signUpPageEmitListToCmd emitList
-                    )
-
                 PageExhibition exhibitionPageModel ->
                     let
                         ( newModel, emitList ) =
@@ -409,6 +402,24 @@ update msg (Model rec) =
                     in
                     ( Model { rec | page = PageProduct newModel }
                     , productPageEmitListToCmd emitList
+                    )
+
+                _ ->
+                    ( Model rec
+                    , Cmd.none
+                    )
+
+        ReceiveUserImage image ->
+            case rec.page of
+                PageSignUp pageModel ->
+                    let
+                        ( newModel, emitList ) =
+                            Page.SignUp.update
+                                (Page.SignUp.ReceiveUserImage image)
+                                pageModel
+                    in
+                    ( Model { rec | page = PageSignUp newModel }
+                    , signUpPageEmitListToCmd emitList
                     )
 
                 _ ->
@@ -794,11 +805,8 @@ signUpPageEmitListToCmd =
     List.map
         (\emit ->
             case emit of
-                Page.SignUp.EmitAddDropEventListener { id } ->
-                    addDropEventListener id
-
-                Page.SignUp.EmitAddInputEventListener { id } ->
-                    addInputEventListener id
+                Page.SignUp.EmitAddEventListenerForUserImage idRecord ->
+                    addEventListenerForUserImage idRecord
 
                 Page.SignUp.EmitReplaceText { id, text } ->
                     replaceText { id = id, text = text }
@@ -926,11 +934,8 @@ universityEmitToCmd emit =
 productEditorEmitToCmd : Page.Component.ProductEditor.Emit -> Cmd Msg
 productEditorEmitToCmd emit =
     case emit of
-        Page.Component.ProductEditor.EmitAddInputEventListener { id } ->
-            addDropEventListener id
-
-        Page.Component.ProductEditor.EmitAddDropEventListener { id } ->
-            addDropEventListener id
+        Page.Component.ProductEditor.EmitAddEventListenerForProductImages record ->
+            addEventListenerForProductImages record
 
         Page.Component.ProductEditor.EmitReplaceText { id, text } ->
             replaceText { id = id, text = text }
@@ -1351,7 +1356,8 @@ messageView message =
 subscription : Model -> Sub Msg
 subscription (Model { menuState }) =
     Sub.batch
-        [ receiveImageFileListAsDataUrlList ReceiveImageListAsDataUrlList
+        [ receiveProductImages ReceiveProductImages
+        , receiveUserImage ReceiveUserImage
         , case menuState of
             Just _ ->
                 toWideScreenMode (always ToWideScreenMode)
