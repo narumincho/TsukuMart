@@ -35,10 +35,10 @@ import Url
 port receiveImageFileListAsDataUrlList : (List String -> msg) -> Sub msg
 
 
-port requestReceiveImageList : String -> Cmd msg
+port addInputEventListener : String -> Cmd msg
 
 
-port addEventListenerDrop : String -> Cmd msg
+port addDropEventListener : String -> Cmd msg
 
 
 port toWideScreenMode : (() -> msg) -> Sub msg
@@ -794,16 +794,19 @@ signUpPageEmitListToCmd =
     List.map
         (\emit ->
             case emit of
+                Page.SignUp.EmitAddDropEventListener { id } ->
+                    addDropEventListener id
+
+                Page.SignUp.EmitAddInputEventListener { id } ->
+                    addInputEventListener id
+
                 Page.SignUp.EmitReplaceText { id, text } ->
                     replaceText { id = id, text = text }
-
-                Page.SignUp.EmitAccountImage idString ->
-                    requestReceiveImageList idString
 
                 Page.SignUp.EmitSignUp signUpRequest ->
                     Api.sendConfirmEmail signUpRequest (\response -> SignUpConfirmResponse response)
 
-                Page.SignUp.EmitUniversity e ->
+                Page.SignUp.EmitByUniversityComp e ->
                     universityEmitToCmd e
         )
         >> Cmd.batch
@@ -923,17 +926,17 @@ universityEmitToCmd emit =
 productEditorEmitToCmd : Page.Component.ProductEditor.Emit -> Cmd Msg
 productEditorEmitToCmd emit =
     case emit of
-        Page.Component.ProductEditor.EmitAddEventListenerDrop idString ->
-            addEventListenerDrop idString
+        Page.Component.ProductEditor.EmitAddInputEventListener { id } ->
+            addDropEventListener id
+
+        Page.Component.ProductEditor.EmitAddDropEventListener { id } ->
+            addDropEventListener id
 
         Page.Component.ProductEditor.EmitReplaceText { id, text } ->
             replaceText { id = id, text = text }
 
         Page.Component.ProductEditor.EmitChangeSelectedIndex { id, index } ->
             changeSelectedIndex { id = id, index = index }
-
-        Page.Component.ProductEditor.EmitCatchImageList idString ->
-            requestReceiveImageList idString
 
 
 urlParserResultToModel : Maybe ( Page, Cmd Msg ) -> ( Page, Maybe String, Cmd Msg )

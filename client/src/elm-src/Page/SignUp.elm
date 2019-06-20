@@ -25,7 +25,6 @@ import Tab
 
 type Model
     = Normal
-        -- 新規登録入力フォーム
         { sAddressOrStudentId : AnalysisStudentIdOrSAddressResult
         , imageUrl : String
         , university : CompUniversity.Model
@@ -38,19 +37,19 @@ type Model
 {-| ここから発生するイベント
 -}
 type Emit
-    = EmitAccountImage String
+    = EmitAddDropEventListener { id : String }
+    | EmitAddInputEventListener { id : String }
     | EmitSignUp Api.SignUpRequest
-    | EmitUniversity CompUniversity.Emit
+    | EmitByUniversityComp CompUniversity.Emit
     | EmitReplaceText { id : String, text : String }
 
 
 type Msg
     = InputStudentIdOrEmailAddress String
-    | CatchStudentImage String
     | ReceiveImageDataUrl (List String)
     | InputSAddress AnalysisStudentIdOrSAddressResult
     | InputUniversity CompUniversity.Model
-    | InputNickName String
+    | InputDisplayName String
     | SignUp Api.SignUpRequest
 
 
@@ -65,7 +64,9 @@ initModel { name, imageUrl, sendEmailToken } =
         , imageUrl = imageUrl
         , sendEmailToken = sendEmailToken
         }
-    , [ EmitReplaceText
+    , [ EmitAddInputEventListener { id = imageInputId }
+      , EmitAddDropEventListener { id = imageLabelId }
+      , EmitReplaceText
             { id = displayNameFormId
             , text = name
             }
@@ -84,11 +85,6 @@ update msg model =
                 _ ->
                     model
             , []
-            )
-
-        CatchStudentImage idString ->
-            ( model
-            , [ EmitAccountImage idString ]
             )
 
         ReceiveImageDataUrl dataUrl ->
@@ -118,10 +114,10 @@ update msg model =
 
                 _ ->
                     model
-            , CompUniversity.emit universitySelect |> List.map EmitUniversity
+            , CompUniversity.emit universitySelect |> List.map EmitByUniversityComp
             )
 
-        InputNickName string ->
+        InputDisplayName string ->
             ( case model of
                 Normal rec ->
                     Normal
@@ -290,15 +286,39 @@ imageForm imageUrl =
     [ ( "imageForm"
       , Html.div
             []
-            [ Html.img
-                [ Html.Attributes.style "width" "50%"
-                , Html.Attributes.style "border-radius" "50%"
-                , Html.Attributes.src imageUrl
+            [ Html.label
+                [ Html.Attributes.class "exhibition-photo-add"
+                , Html.Attributes.id imageLabelId
+                , Html.Attributes.for imageInputId
+                ]
+                [ Html.img
+                    [ Html.Attributes.style "width" "50%"
+                    , Html.Attributes.style "border-radius" "50%"
+                    , Html.Attributes.src imageUrl
+                    ]
+                    []
+                ]
+            , Html.input
+                [ Html.Attributes.style "display" "none"
+                , Html.Attributes.id imageInputId
+                , Html.Attributes.type_ "file"
+                , Html.Attributes.multiple True
+                , Html.Attributes.accept "image/png,image/jpeg"
                 ]
                 []
             ]
       )
     ]
+
+
+imageInputId : String
+imageInputId =
+    "image-input"
+
+
+imageLabelId : String
+imageLabelId =
+    "image-label"
 
 
 {-| 表示名フォーム
@@ -317,7 +337,7 @@ displayNameForm nickName =
                 [ Html.Attributes.class "form-input"
                 , Html.Attributes.id displayNameFormId
                 , Html.Attributes.attribute "autocomplete" "nickname"
-                , Html.Events.onInput InputNickName
+                , Html.Events.onInput InputDisplayName
                 ]
                 []
              ]

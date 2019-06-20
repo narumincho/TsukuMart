@@ -11,10 +11,10 @@ type ElmApp = {
         receiveImageFileListAsDataUrlList: {
             send: (arg: Array<string>) => void;
         };
-        requestReceiveImageList: {
+        addInputEventListener: {
             subscribe: (arg: (id: string) => void) => void;
         };
-        addEventListenerDrop: {
+        addDropEventListener: {
             subscribe: (arg: (id: string) => void) => void;
         };
         toWideScreenMode: {
@@ -96,7 +96,7 @@ requestAnimationFrame(() => {
         localStorage.clear();
     });
 
-    /* 指定されたidの要素のテキストの内容を変える */
+    /* 指定されたidのHTML要素のテキストを変える */
     app.ports.replaceText.subscribe(({ id, text }) => {
         requestAnimationFrame(() => {
             const element = document.getElementById(id) as
@@ -131,26 +131,28 @@ requestAnimationFrame(() => {
             element.selectedIndex = index;
         });
     });
-    /* 指定されたidの<input type="file">からファイルの情報を受け取りData URLに変換してElmに送信 */
-    app.ports.requestReceiveImageList.subscribe(async id => {
-        const fileInputElement = document.getElementById(
-            id
-        ) as HTMLInputElement;
-        if (fileInputElement === null) {
-            console.warn(`id=${id}の要素が存在しません`);
-            return;
-        }
-        if (fileInputElement.files === null) {
-            console.warn(`id=${id}のfilesがnullです`);
-            return;
-        }
-        app.ports.receiveImageFileListAsDataUrlList.send(
-            await fileListToDataUrlList(fileInputElement.files)
-        );
+    /* HTMLInput要素にファイル入力イベントを設定する */
+    app.ports.addInputEventListener.subscribe(id => {
+        requestAnimationFrame(() => {
+            const element = document.getElementById(id) as HTMLInputElement;
+            if (element === null) {
+                console.warn(`id=${id}の要素が存在しません`);
+                return;
+            }
+            element.addEventListener("input", async e => {
+                if (element.files === null) {
+                    console.warn(`id=${id}のfilesがnullです`);
+                    return;
+                }
+                app.ports.receiveImageFileListAsDataUrlList.send(
+                    await fileListToDataUrlList(element.files)
+                );
+            });
+        });
     });
 
-    /* HTML要素にドロップのイベントを設定する */
-    app.ports.addEventListenerDrop.subscribe(id => {
+    /* HTML要素にドロップイベントを設定する */
+    app.ports.addDropEventListener.subscribe(id => {
         requestAnimationFrame(() => {
             const element = document.getElementById(id);
             if (element === null) {

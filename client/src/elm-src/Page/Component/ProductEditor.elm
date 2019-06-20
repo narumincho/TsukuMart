@@ -7,11 +7,12 @@ module Page.Component.ProductEditor exposing
     , imageListToBlobUrlList
     , initModel
     , requestDataToApiRequest
+    , requestDataToEditApiRequest
     , resendEmit
     , toRequestData
     , update
     , view
-    , requestDataToEditApiRequest)
+    )
 
 import Api
 import Array
@@ -43,10 +44,10 @@ type ImageList
 
 
 type Emit
-    = EmitAddEventListenerDrop String
+    = EmitAddDropEventListener { id : String }
+    | EmitAddInputEventListener { id : String }
     | EmitReplaceText { id : String, text : String }
     | EmitChangeSelectedIndex { id : String, index : Int }
-    | EmitCatchImageList String
 
 
 type Msg
@@ -55,7 +56,6 @@ type Msg
     | InputPrice String
     | InputCondition (Maybe Product.Condition)
     | DeleteImage Int
-    | CatchImageList String -- JSにファイルとBlobURLの取得を要請する
     | InputImageList (List String)
 
 
@@ -87,7 +87,8 @@ initModel { name, description, price, condition, image } =
 
 resendEmit : Model -> List Emit
 resendEmit (Model rec) =
-    [ EmitAddEventListenerDrop photoAddLabelId
+    [ EmitAddDropEventListener { id = photoAddLabelId }
+    , EmitAddInputEventListener { id = photoAddInputId }
     , EmitReplaceText { id = nameEditorId, text = rec.name }
     , EmitReplaceText { id = descriptionEditorId, text = rec.description }
     , EmitReplaceText { id = priceEditorId, text = rec.price |> Maybe.map String.fromInt |> Maybe.withDefault "" }
@@ -136,11 +137,6 @@ update msg (Model rec) =
                     | image = imageDeleteAt index rec.image
                 }
             , []
-            )
-
-        CatchImageList idString ->
-            ( Model rec
-            , [ EmitCatchImageList idString ]
             )
 
         InputImageList dataUrlList ->
@@ -379,12 +375,11 @@ photoAdd =
         ]
         [ photoAddIcon ]
     , Html.input
-        [ Html.Attributes.class "exhibition-photo-input"
+        [ Html.Attributes.style "display" "none"
         , Html.Attributes.id photoAddInputId
         , Html.Attributes.type_ "file"
         , Html.Attributes.multiple True
         , Html.Attributes.accept "image/png,image/jpeg"
-        , Html.Events.on "change" (Json.Decode.succeed (CatchImageList "exhibition-photo-input"))
         ]
         []
     ]

@@ -65,19 +65,23 @@ requestAnimationFrame(() => {
             element.selectedIndex = index;
         });
     });
-    app.ports.requestReceiveImageList.subscribe(async (id) => {
-        const fileInputElement = document.getElementById(id);
-        if (fileInputElement === null) {
-            console.warn(`id=${id}の要素が存在しません`);
-            return;
-        }
-        if (fileInputElement.files === null) {
-            console.warn(`id=${id}のfilesがnullです`);
-            return;
-        }
-        app.ports.receiveImageFileListAsDataUrlList.send(await fileListToDataUrlList(fileInputElement.files));
+    app.ports.addInputEventListener.subscribe(id => {
+        requestAnimationFrame(() => {
+            const element = document.getElementById(id);
+            if (element === null) {
+                console.warn(`id=${id}の要素が存在しません`);
+                return;
+            }
+            element.addEventListener("input", async (e) => {
+                if (element.files === null) {
+                    console.warn(`id=${id}のfilesがnullです`);
+                    return;
+                }
+                app.ports.receiveImageFileListAsDataUrlList.send(await fileListToDataUrlList(element.files));
+            });
+        });
     });
-    app.ports.addEventListenerDrop.subscribe(id => {
+    app.ports.addDropEventListener.subscribe(id => {
         requestAnimationFrame(() => {
             const element = document.getElementById(id);
             if (element === null) {

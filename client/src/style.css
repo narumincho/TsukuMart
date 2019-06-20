@@ -380,10 +380,6 @@ header {
     height: 7rem;
 }
 
-.exhibition-photo-input {
-    display: none;
-}
-
 .exhibition-photo-cardList-container {
     background-color: gray;
     overflow-x: auto;
