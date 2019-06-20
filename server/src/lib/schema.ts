@@ -706,7 +706,7 @@ const sendConformEmail = makeQueryOrMutationField<
                 args.image.data,
                 args.image.mimeType
             );
-            database.deleteUserImage(userBeforeInputData.imageUrl)
+            await database.deleteUserImage(userBeforeInputData.imageUrl)
         } else {
             imageUrl = userBeforeInputData.imageUrl;
         }

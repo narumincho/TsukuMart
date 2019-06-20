@@ -2,10 +2,11 @@ module Page.User exposing
     ( Emit(..)
     , Model
     , Msg(..)
+    , initModelFromId
     , initModelWithName
     , update
     , view
-    , initModelFromId)
+    )
 
 import Api
 import Data.LogInState as LogInState
@@ -263,7 +264,7 @@ view logInState model =
                     editView accessToken editModel
 
                 ( _, Edit _ ) ->
-                    [ Html.text "自分以外のプロフィールが編集できない" ]
+                    [ Html.text "自分以外のプロフィールは編集できない" ]
             )
         ]
     }
@@ -303,19 +304,34 @@ normalMyProfileView user =
 -}
 userView : User.WithProfile -> List (Html.Html msg)
 userView userWithProfile =
-    [ nickNameView (User.withProfileGetDisplayName userWithProfile)
+    [ imageView (User.withProfileGetImageUrl userWithProfile)
+    , nickNameView (User.withProfileGetDisplayName userWithProfile)
     , introductionView (User.withProfileGetIntroduction userWithProfile)
     ]
         ++ universityView (User.withProfileGetUniversity userWithProfile)
         ++ [ Html.text ("ユーザーID " ++ (userWithProfile |> User.withProfileGetId |> User.idToString)) ]
 
 
+imageView : String -> Html.Html msg
+imageView url =
+    Html.div
+        [ Html.Attributes.style "display" "flex"
+        , Html.Attributes.style "justify-content" "center"
+        ]
+        [ Html.img
+            [ Html.Attributes.style "border-radius" "50%"
+            , Html.Attributes.style "width" "100%"
+            , Html.Attributes.src url
+            ]
+            []
+        ]
+
+
 nickNameView : String -> Html.Html msg
 nickNameView nickName =
     Html.div
         []
-        [ Html.div [ Html.Attributes.class "profile-title" ] [ Html.text "表示名" ]
-        , Html.div [] [ Html.text nickName ]
+        [ Html.div [ Html.Attributes.style "font-size" "2rem" ] [ Html.text nickName ]
         ]
 
 
