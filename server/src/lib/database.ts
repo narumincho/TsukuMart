@@ -390,6 +390,42 @@ export const addDraftProductData = async (
     category: data.category
 });
 
+export const getDraftProducts = async (
+    userId: string
+): Promise<Array<type.DraftProduct>> => {
+    const draftProduct = await databaseLow.getAllDraftProductData(userId);
+    return draftProduct.map(({ id, data }) => ({
+        draftId: id,
+        name: data.name,
+        price: data.price,
+        description: data.description,
+        condition: data.condition,
+        category: data.category
+    }));
+};
+
+export const updateDraftProduct = async (
+    userId: string,
+    data: type.DraftProduct
+): Promise<type.DraftProduct> => {
+    await databaseLow.updateDraftProduct(userId, data.draftId, data);
+    return {
+        draftId: data.draftId,
+        name: data.name,
+        price: data.price,
+        description: data.description,
+        category: data.category,
+        condition: data.condition
+    };
+};
+
+export const deleteDraftProduct = async (
+    userId: string,
+    draftId: string
+): Promise<void> => {
+    await databaseLow.deleteDraftProduct(userId, draftId);
+};
+
 /**
  * プロフィールを設定する
  * @param id ユーザーID

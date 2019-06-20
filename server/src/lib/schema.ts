@@ -466,6 +466,23 @@ const userPrivateGraphQLType = new g.GraphQLObjectType({
                     return source.historyViewProductAll;
                 },
                 description: "閲覧した商品"
+            }),
+            draftProducts: makeObjectField({
+                type: g.GraphQLNonNull(
+                    g.GraphQLList(g.GraphQLNonNull(draftProductGraphQLType))
+                ),
+                args: {},
+                resolve: async (source, args, context, info) => {
+                    if (source.draftProducts === undefined) {
+                        const draftProducts = await database.getDraftProducts(
+                            source.id
+                        );
+                        source.draftProducts = draftProducts;
+                        return draftProducts;
+                    }
+                    return source.draftProducts;
+                },
+                description: "下書きの商品"
             })
         }),
     description: "個人的な情報を含んだユーザーの情報"
@@ -906,6 +923,86 @@ const addDraftProduct = makeQueryOrMutationField<
     },
     description: "商品の下書きを登録する"
 });
+
+const updateDraftProduct = makeQueryOrMutationField<
+    { accessToken: string } & Pick<
+        type.DraftProduct,
+        "draftId" | "name" | "price" | "description" | "condition" | "category"
+    >,
+    type.DraftProduct
+>({
+    args: {
+        accessToken: {
+            type: g.GraphQLNonNull(g.GraphQLString),
+            description: type.accessTokenDescription
+        },
+        draftId: {
+            type: g.GraphQLNonNull(g.GraphQLString),
+            description: "下書きの商品を識別するためのID"
+        },
+        name: {
+            type: g.GraphQLNonNull(g.GraphQLString),
+            description: "商品名"
+        },
+        price: {
+            type: g.GraphQLInt,
+            description: "価格 まだ決めていない場合はnull"
+        },
+        description: {
+            type: g.GraphQLNonNull(g.GraphQLString),
+            description: "説明文"
+        },
+        condition: {
+            type: type.conditionGraphQLType,
+            description:
+                type.conditionDescription + "まだ決めていない場合はnull"
+        },
+        category: {
+            type: type.categoryGraphQLType,
+            description: type.categoryDescription + "まだ決めていない場合はnull"
+        }
+    },
+    type: g.GraphQLNonNull(
+        g.GraphQLList(g.GraphQLNonNull(draftProductGraphQLType))
+    ),
+    resolve: async (source, args, context, info) => {
+        const { id } = database.verifyAccessToken(args.accessToken);
+        return await database.updateDraftProduct(id, {
+            draftId: args.draftId,
+            name: args.name,
+            price: args.price,
+            description: args.description,
+            category: args.category,
+            condition: args.condition
+        });
+    },
+    description: "商品の下書きを編集する"
+});
+
+const deleteDraftProduct = makeQueryOrMutationField<
+    { accessToken: string } & Pick<type.DraftProduct, "draftId">,
+    Array<type.DraftProduct>
+>({
+    args: {
+        accessToken: {
+            type: g.GraphQLNonNull(g.GraphQLString),
+            description: type.accessTokenDescription
+        },
+        draftId: {
+            type: g.GraphQLNonNull(g.GraphQLString),
+            description: "下書きの商品を識別するためのID"
+        }
+    },
+    type: g.GraphQLNonNull(
+        g.GraphQLList(g.GraphQLNonNull(draftProductGraphQLType))
+    ),
+    resolve: async (source, args, context, info) => {
+        const { id } = database.verifyAccessToken(args.accessToken);
+        await database.deleteDraftProduct(id, args.draftId);
+        return database.getDraftProducts(id);
+    },
+    description: ""
+});
 /*  =============================================================
                             Schema
     =============================================================
@@ -933,7 +1030,9 @@ export const schema = new g.GraphQLSchema({
             updateProfile,
             sellProduct,
             markProductInHistory,
-            addDraftProduct
+            addDraftProduct,
+            updateDraftProduct,
+            deleteDraftProduct
         }
     })
 });

@@ -155,6 +155,25 @@ export const getAllDraftProductData = async (
             .get()
     )) as Array<{ id: string; data: DraftProductData }>;
 
+export const updateDraftProduct = async (
+    userId: string,
+    draftId: string,
+    data: type.DraftProduct
+): Promise<void> => {
+    await userCollectionRef
+        .doc(userId)
+        .collection("draftProduct")
+        .doc(draftId)
+        .set(data);
+};
+
+export const deleteDraftProduct = async (userId: string, draftId: string): Promise<void> => {
+    await userCollectionRef
+        .doc(userId)
+        .collection("draftProduct")
+        .doc(draftId)
+        .delete()
+}
 /**
  * ユーザーのデータを追加する
  * @param userData

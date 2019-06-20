@@ -381,6 +381,7 @@ export type UserPrivateInternal = {
     boughtProductAll: Array<ProductInternal>;
     likedProductAll: Array<ProductInternal>;
     historyViewProductAll: Array<ProductInternal>;
+    draftProducts: Array<DraftProduct>
 };
 
 export type UserPrivate = {
@@ -394,6 +395,7 @@ export type UserPrivate = {
     boughtProductAll: Array<Product>;
     likedProductAll: Array<Product>;
     historyViewProductAll: Array<Product>;
+    draftProducts: Array<DraftProduct>
 };
 
 /** ==============================
