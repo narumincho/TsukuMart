@@ -105,15 +105,27 @@ export const getUserInUserBeforeInputData = async (
 export const saveUserImage = async (
     arrayBuffer: ArrayBuffer,
     mimeType: string
-): Promise<URL> =>
-    await databaseLow.saveStorageFile("user-image", arrayBuffer, mimeType);
+): Promise<URL> => {
+    if (400 * 400 * 3 < arrayBuffer.byteLength) {
+        throw new Error("too large image");
+    }
+    return await databaseLow.saveStorageFile("user", arrayBuffer, mimeType);
+};
 
 /**
  * ユーザーのプロフィール画像をCloud Storageから削除する
  * @param fileName ファイル名
  */
-export const deleteUserImage = async (fileName: string): Promise<void> => {
-    await databaseLow.deleteStorageFile("user-image", fileName);
+export const deleteUserImage = async (url: URL): Promise<void> => {
+    const result = url
+        .toString()
+        .match(
+            /^https:\/\/asia-northeast1-tsukumart-f0971.cloudfunctions.net\/image\/user\/(.+)$/
+        );
+    if (result === null) {
+        throw new Error("user image delete error");
+    }
+    await databaseLow.deleteStorageFile("user", result[1]);
 };
 
 export const addUserBeforeEmailVerificationAndSendEmail = async (

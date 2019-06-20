@@ -82,6 +82,7 @@ requestAnimationFrame(() => {
             });
             image.src = window.URL.createObjectURL(file);
         });
+
     const resize = (
         width: number,
         height: number
@@ -131,7 +132,7 @@ requestAnimationFrame(() => {
                                 size.width,
                                 size.height
                             );
-                            resolve(canvas.toDataURL("image/png"));
+                            resolve(canvas.toDataURL("image/jpeg"));
                         });
                         image.src = window.URL.createObjectURL(file);
                     })

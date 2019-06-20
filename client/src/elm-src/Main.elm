@@ -816,6 +816,10 @@ signUpPageEmitListToCmd =
 
                 Page.SignUp.EmitByUniversityComp e ->
                     universityEmitToCmd e
+
+                Page.SignUp.EmitAddLogMessage log ->
+                    Task.succeed ()
+                        |> Task.perform (always (AddLogMessage log))
         )
         >> Cmd.batch
 

@@ -679,7 +679,7 @@ const sendConformEmail = makeQueryOrMutationField<
         image: {
             type: type.dataUrlGraphQLType,
             description:
-                "画像(DataURL) ソーシャルログインで使ったサービスのままならnull"
+                "画像。サイズは400x400まで。ソーシャルログインで使ったサービスのままならnull"
         },
         university: {
             type: g.GraphQLNonNull(type.universityGraphQLInputType),
@@ -706,6 +706,7 @@ const sendConformEmail = makeQueryOrMutationField<
                 args.image.data,
                 args.image.mimeType
             );
+            database.deleteUserImage(userBeforeInputData.imageUrl)
         } else {
             imageUrl = userBeforeInputData.imageUrl;
         }

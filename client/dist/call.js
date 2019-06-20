@@ -42,7 +42,7 @@ requestAnimationFrame(() => {
             canvas.height = size.height;
             const context = canvas.getContext("2d");
             context.drawImage(image, 0, 0, image.width, image.height, 0, 0, size.width, size.height);
-            resolve(canvas.toDataURL("image/png"));
+            resolve(canvas.toDataURL("image/jpeg"));
         });
         image.src = window.URL.createObjectURL(file);
     })));

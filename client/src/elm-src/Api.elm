@@ -6,15 +6,15 @@ module Api exposing
     , Token
     , deleteProduct
     , editProduct
-    , getSoldProductList
+    , getBoughtProductList
     , getFreeProductList
-    , getProduct
-    , getProductComments
     , getLikedProducts
     , getMyProfile
-    , getBoughtProductList
+    , getProduct
+    , getProductComments
     , getRecentProductList
     , getRecommendProductList
+    , getSoldProductList
     , getTradeComment
     , getUserProfile
     , likeProduct
@@ -62,7 +62,7 @@ type alias SignUpRequest =
 
 
 sendConfirmEmail : SignUpRequest -> (Result String () -> msg) -> Cmd msg
-sendConfirmEmail { sendEmailToken, displayName, university, emailAddress } callBack =
+sendConfirmEmail { sendEmailToken, displayName, image, university, emailAddress } callBack =
     graphQlApiRequest
         (Mutation
             [ Field
@@ -70,6 +70,14 @@ sendConfirmEmail { sendEmailToken, displayName, university, emailAddress } callB
                 , args =
                     [ ( "sendEmailToken", GraphQLString sendEmailToken )
                     , ( "displayName", GraphQLString displayName )
+                    , ( "image"
+                      , case image of
+                            Just dataUrl ->
+                                GraphQLString dataUrl
+
+                            Nothing ->
+                                GraphQLNull
+                      )
                     , ( "university", universityToGraphQLValue university )
                     , ( "email", GraphQLString (EmailAddress.toString emailAddress) )
                     ]
@@ -106,7 +114,7 @@ sendConfirmEmailRequestBody =
         Json.Decode.string
         |> Json.Decode.andThen
             (\result ->
-                if result == "" then
+                if result == "ok" then
                     Json.Decode.succeed ()
 
                 else
@@ -410,6 +418,7 @@ getRecentProductList msg =
 getRecommendProductList : (Result () (List Product.Product) -> msg) -> Cmd msg
 getRecommendProductList msg =
     Cmd.none
+
 
 productNormalResponseDecoder : Json.Decode.Decoder Product.Product
 productNormalResponseDecoder =
@@ -763,6 +772,7 @@ type GraphQLValue
     | GraphQLInt Int
     | GraphQLFloat Float
     | GraphQLObject (List ( String, GraphQLValue ))
+    | GraphQLNull
 
 
 graphQlApiRequest : Query -> Json.Decode.Decoder a -> (Result String a -> msg) -> Cmd msg
@@ -828,6 +838,9 @@ graphQLValueToString graphQLValue =
                         |> String.join ", "
                    )
                 ++ "}"
+
+        GraphQLNull ->
+            "null"
 
 
 graphQlRequestBody : String -> Http.Body
