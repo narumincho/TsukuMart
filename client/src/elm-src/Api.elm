@@ -165,7 +165,7 @@ tokenToString (Token string) =
 
 
 tokenRefresh : { refresh : Token } -> (Result String { accessToken : Token, refreshToken : Token } -> msg) -> Cmd msg
-tokenRefresh { refresh } msg =
+tokenRefresh { refresh } callBack =
     graphQlApiRequest
         (Mutation
             [ Field
@@ -189,7 +189,7 @@ tokenRefresh { refresh } msg =
                 |> Json.Decode.Pipeline.required "accessToken" Json.Decode.string
             )
         )
-        msg
+        callBack
 
 
 
@@ -200,7 +200,7 @@ tokenRefresh { refresh } msg =
 
 
 getMyProfile : Token -> (Result String User.WithProfile -> msg) -> Cmd msg
-getMyProfile accessToken msg =
+getMyProfile accessToken callBack =
     graphQlApiRequest
         (Query
             [ Field
@@ -257,7 +257,7 @@ getMyProfile accessToken msg =
                     )
             )
         )
-        msg
+        callBack
 
 
 
@@ -391,9 +391,66 @@ getBoughtProductList token msg =
 -}
 
 
-getUserProfile : User.UserId -> (Result () User.WithProfile -> msg) -> Cmd msg
-getUserProfile userId msg =
-    Cmd.none
+getUserProfile : User.Id -> (Result String User.WithProfile -> msg) -> Cmd msg
+getUserProfile userId callBack =
+    graphQlApiRequest
+        (Query
+            [ Field
+                { name = "user"
+                , args = [("id", GraphQLString (User.idToString userId)) ]
+                , return =
+                    [ Field { name = "id", args = [], return = [] }
+                    , Field { name = "displayName", args = [], return = [] }
+                    , Field { name = "imageUrl", args = [], return = [] }
+                    , Field { name = "introduction", args = [], return = [] }
+                    , Field
+                        { name = "university"
+                        , args = []
+                        , return =
+                            [ Field { name = "schoolAndDepartment", args = [], return = [] }
+                            , Field { name = "graduate", args = [], return = [] }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        )
+        (Json.Decode.field "user"
+            (Json.Decode.succeed
+                (\id displayName imageUrl introduction schoolAndDepartment graduate ->
+                    User.withProfileFromApi
+                        { id = id
+                        , displayName = displayName
+                        , imageUrl = imageUrl
+                        , introduction = introduction
+                        , university =
+                            University.universityFromIdString
+                                { graduateMaybe = graduate, departmentMaybe = schoolAndDepartment }
+                        }
+                )
+                |> Json.Decode.Pipeline.required "id" Json.Decode.string
+                |> Json.Decode.Pipeline.required "displayName" Json.Decode.string
+                |> Json.Decode.Pipeline.required "imageUrl" Json.Decode.string
+                |> Json.Decode.Pipeline.required "introduction" Json.Decode.string
+                |> Json.Decode.Pipeline.requiredAt
+                    [ "university", "schoolAndDepartment" ]
+                    (Json.Decode.nullable Json.Decode.string)
+                |> Json.Decode.Pipeline.requiredAt
+                    [ "university", "graduate" ]
+                    (Json.Decode.nullable Json.Decode.string)
+                |> Json.Decode.andThen
+                    (\userMaybe ->
+                        case userMaybe of
+                            Just user ->
+                                Json.Decode.succeed user
+
+                            Nothing ->
+                                Json.Decode.fail "invalid university"
+                    )
+            )
+        )
+        callBack
+
 
 
 
@@ -645,7 +702,7 @@ postProductComment accessToken productId comment msg =
     Cmd.none
 
 
-commentNormalDecoder : String -> User.UserId -> Json.Decode.Decoder Product.Comment
+commentNormalDecoder : String -> User.Id -> Json.Decode.Decoder Product.Comment
 commentNormalDecoder userName userId =
     Json.Decode.map2
         (\text createdAt ->

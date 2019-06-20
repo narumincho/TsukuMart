@@ -35,7 +35,7 @@ type UrlParserInitResult
     | InitBoughtProducts
     | InitExhibition
     | InitProduct Data.Product.Id
-    | InitUser Data.User.UserId
+    | InitUser Data.User.Id
     | InitSiteMap
     | InitAbout
     | InitAboutPrivacyPolicy
@@ -106,7 +106,7 @@ type UrlParserResult
     | Exhibition
     | ExhibitionConfirm
     | Product Data.Product.Id
-    | User Data.User.UserId
+    | User Data.User.Id
     | SiteMap
     | About
     | AboutPrivacyPolicy
@@ -329,7 +329,7 @@ productUrl productId =
 {- user -}
 
 
-userParser : List String -> Dict.Dict String String -> Maybe Data.User.UserId
+userParser : List String -> Dict.Dict String String -> Maybe Data.User.Id
 userParser path query =
     case path of
         [ "user", userId ] ->
@@ -339,7 +339,7 @@ userParser path query =
             Nothing
 
 
-userUrl : Data.User.UserId -> String
+userUrl : Data.User.Id -> String
 userUrl userId =
     Url.Builder.absolute [ userPath, Data.User.idToString userId ] []
 

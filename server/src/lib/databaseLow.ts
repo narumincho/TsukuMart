@@ -56,6 +56,13 @@ type UserData = {
     createdAt: firestore.Timestamp;
 };
 /**
+ * ユーザーが存在するか調べる
+ * @param id
+ */
+export const existsUser = async (id: string): Promise<boolean> =>
+    (await userCollectionRef.doc(id).get()).exists;
+
+/**
  * ユーザーのデータを取得する
  * @param id
  * @throws {Error} userId ${id} dose not exists
@@ -167,13 +174,16 @@ export const updateDraftProduct = async (
         .set(data);
 };
 
-export const deleteDraftProduct = async (userId: string, draftId: string): Promise<void> => {
+export const deleteDraftProduct = async (
+    userId: string,
+    draftId: string
+): Promise<void> => {
     await userCollectionRef
         .doc(userId)
         .collection("draftProduct")
         .doc(draftId)
-        .delete()
-}
+        .delete();
+};
 /**
  * ユーザーのデータを追加する
  * @param userData
@@ -296,6 +306,14 @@ type ProductData = {
     sellerDisplayName: string;
     sellerImageUrl: string;
 };
+
+/**
+ * 指定したIDの商品があるかどうか調べる
+ * @param id
+ */
+export const existsProduct = async (id: string): Promise<boolean> =>
+    (await productCollectionRef.doc(id).get()).exists;
+
 /**
  * 商品のデータを取得する
  * @param id

@@ -496,9 +496,31 @@ const hello = makeQueryOrMutationField<{}, string>({
     args: {},
     type: g.GraphQLNonNull(g.GraphQLString),
     resolve: async () => {
-        return "Hello World!";
+        return "Hello World! I'm Tsuku Bird.";
     },
     description: "世界に挨拶する"
+});
+
+const user = makeQueryOrMutationField<
+    Pick<type.UserInternal, "id">,
+    type.UserInternal
+>({
+    type: g.GraphQLNonNull(userGraphQLType),
+    args: {
+        id: {
+            type: g.GraphQLNonNull(g.GraphQLString),
+            description: "ユーザーを識別するためのID"
+        }
+    },
+    resolve: async (source, args) => {
+        if (await database.existsUser(args.id)) {
+            return {
+                id: args.id
+            };
+        }
+        throw new Error(`user (id=${args.id}) dose not exists`);
+    },
+    description: "ユーザーの情報を取得する"
 });
 
 const userAll = makeQueryOrMutationField<{}, Array<type.UserInternal>>({
@@ -543,6 +565,28 @@ const userPrivate = makeQueryOrMutationField<
         };
     },
     description: "個人的な情報を含んだユーザーの情報を取得する"
+});
+
+const product = makeQueryOrMutationField<
+    Pick<type.ProductInternal, "id">,
+    type.ProductInternal
+>({
+    args: {
+        id: {
+            type: g.GraphQLNonNull(g.GraphQLString),
+            description: "商品を識別するためのID"
+        }
+    },
+    type: g.GraphQLNonNull(productGraphQLType),
+    resolve: async (source, args) => {
+        if (await database.existsProduct(args.id)) {
+            return {
+                id: args.id
+            };
+        }
+        throw new Error(`product (id=${args.id}) dose not exists`);
+    },
+    description: "商品の情報を取得する"
 });
 
 const productAll = makeQueryOrMutationField<{}, Array<type.ProductInternal>>({
@@ -706,7 +750,7 @@ const sendConformEmail = makeQueryOrMutationField<
                 args.image.data,
                 args.image.mimeType
             );
-            await database.deleteUserImage(userBeforeInputData.imageUrl)
+            await database.deleteUserImage(userBeforeInputData.imageUrl);
         } else {
             imageUrl = userBeforeInputData.imageUrl;
         }
@@ -1016,8 +1060,10 @@ export const schema = new g.GraphQLSchema({
             "データを取得できる。データを取得したときに影響は他に及ばさない",
         fields: {
             hello,
+            user,
             userAll,
             userPrivate,
+            product,
             productAll
         }
     }),

@@ -62,7 +62,7 @@ type Product
         , image1Url : Maybe String
         , image2Url : Maybe String
         , image3Url : Maybe String
-        , seller : User.UserId
+        , seller : User.Id
         , sellerName : Maybe String
         , likeCount : Int
         , commentList : Maybe (List Comment)
@@ -87,7 +87,7 @@ type alias Comment =
     { text : String
     , createdAt : CreatedTime
     , userName : String
-    , userId : User.UserId
+    , userId : User.Id
     }
 
 
@@ -435,7 +435,7 @@ maybeToList aMaybe =
 
 {-| 出品者のUser IDを取得する
 -}
-getSellerId : Product -> User.UserId
+getSellerId : Product -> User.Id
 getSellerId (Product { seller }) =
     seller
 

@@ -22,7 +22,7 @@ import Tab
 
 
 type Model
-    = LoadingWithUserId User.UserId
+    = LoadingWithUserId User.Id
     | LoadingWithUserIdAndName User.WithName
     | Normal User.WithProfile
     | Edit EditModel
@@ -37,7 +37,7 @@ type alias EditModel =
 
 type Emit
     = EmitGetMyProfile { accessToken : Api.Token }
-    | EmitGetUserProfile User.UserId
+    | EmitGetUserProfile User.Id
     | EmitChangeProfile Api.Token Api.ProfileUpdateData
     | EmitReplaceElementText { id : String, text : String }
     | EmitUniversity CompUniversity.Emit
@@ -54,7 +54,7 @@ type Msg
     | MsgChangeProfile Api.Token Api.ProfileUpdateData
     | MsgChangeProfileResponse (Result () User.WithProfile)
     | MsgLogOut
-    | MsgUserProfileResponse (Result () User.WithProfile)
+    | MsgUserProfileResponse (Result String User.WithProfile)
 
 
 initModelWithName : LogInState.LogInState -> User.WithName -> ( Model, List Emit )
@@ -83,7 +83,7 @@ initModelWithName logInState userWithName =
 
 {-| 外部ページから飛んで来たときはユーザーIDだけを頼りにしてユーザーページを作らなければならない
 -}
-initModelFromId : LogInState.LogInState -> User.UserId -> ( Model, List Emit )
+initModelFromId : LogInState.LogInState -> User.Id -> ( Model, List Emit )
 initModelFromId logInState userId =
     case logInState of
         LogInState.Ok { accessToken, userWithProfile } ->
@@ -199,9 +199,9 @@ update logInState msg model =
                     , []
                     )
 
-                ( _, Err () ) ->
+                ( _, Err string ) ->
                     ( model
-                    , [ EmitAddLogMessage "ユーザー情報の取得に失敗しました" ]
+                    , [ EmitAddLogMessage ("ユーザー情報の取得に失敗しました " ++ string) ]
                     )
 
 
@@ -270,7 +270,7 @@ view logInState model =
     }
 
 
-loadingWithUserIdView : User.UserId -> List (Html.Html msg)
+loadingWithUserIdView : User.Id -> List (Html.Html msg)
 loadingWithUserIdView userId =
     [ Html.text ("ユーザーID" ++ User.idToString userId ++ "のプロフィールを読み込み中")
     ]

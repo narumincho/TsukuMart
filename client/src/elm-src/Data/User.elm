@@ -1,5 +1,5 @@
 module Data.User exposing
-    ( UserId
+    ( Id
     , WithName
     , WithProfile
     , idFromString
@@ -23,7 +23,7 @@ import Data.University as University
 -}
 type WithName
     = WithName
-        { id : UserId
+        { id : Id
         , displayName : String
         , imageUrl : String
         }
@@ -33,7 +33,7 @@ type WithName
 -}
 type WithProfile
     = WithProfile
-        { id : UserId
+        { id : Id
         , displayName : String
         , imageUrl : String
         , introduction : String
@@ -43,18 +43,18 @@ type WithProfile
 
 {-| ユーザーを識別するためのID
 -}
-type UserId
-    = UserId String
+type Id
+    = Id String
 
 
-idToString : UserId -> String
-idToString (UserId id) =
+idToString : Id -> String
+idToString (Id id) =
     id
 
 
-idFromString : String -> UserId
+idFromString : String -> Id
 idFromString =
-    UserId
+    Id
 
 
 withNameFromApi : { id : String, displayName : String, imageUrl : String } -> WithName
@@ -81,7 +81,7 @@ withProfileFromApi { id, displayName, imageUrl, introduction, university } =
             )
 
 
-withNameGetId : WithName -> UserId
+withNameGetId : WithName -> Id
 withNameGetId (WithName { id }) =
     id
 
@@ -96,7 +96,7 @@ withNameGetImageUrl (WithName { imageUrl }) =
     imageUrl
 
 
-withProfileGetId : WithProfile -> UserId
+withProfileGetId : WithProfile -> Id
 withProfileGetId (WithProfile { id }) =
     id
 

@@ -849,7 +849,8 @@ profilePageEmitListToCmd =
                         ]
 
                 Page.User.EmitGetUserProfile userId ->
-                    Api.getUserProfile userId (\e -> ProfilePageMsg (Page.User.MsgUserProfileResponse e))
+                    Api.getUserProfile userId
+                        (\e -> ProfilePageMsg (Page.User.MsgUserProfileResponse e))
 
                 Page.User.EmitAddLogMessage log ->
                     Task.succeed ()
@@ -1220,12 +1221,7 @@ view (Model { page, menuState, message, logInState, now }) =
         ( title, mainView ) =
             mainViewAndMainTab logInState page isWideScreen now
     in
-    { title =
-        if title == "" then
-            "つくマート"
-
-        else
-            title ++ " | つくマート"
+    { title = title
     , body =
         [ BasicParts.header isWideScreen
             |> Html.map BasicPartMenuMsg

@@ -536,7 +536,7 @@ itemLikeBody count =
     ]
 
 
-sellerNameView : Data.User.UserId -> Maybe String -> Html.Html msg
+sellerNameView : Data.User.Id -> Maybe String -> Html.Html msg
 sellerNameView userId nameMaybe =
     Html.div
         []
@@ -602,7 +602,7 @@ deleteView productId token =
     コメントの表示
 
 -}
-commentListView : Maybe ( Time.Posix, Time.Zone ) -> Data.User.UserId -> LogInState.LogInState -> Maybe (List Product.Comment) -> Html.Html Msg
+commentListView : Maybe ( Time.Posix, Time.Zone ) -> Data.User.Id -> LogInState.LogInState -> Maybe (List Product.Comment) -> Html.Html Msg
 commentListView nowMaybe sellerId logInState commentListMaybe =
     Html.div
         [ Html.Attributes.class "product-commentList" ]
@@ -632,7 +632,7 @@ commentListView nowMaybe sellerId logInState commentListMaybe =
         )
 
 
-commentView : Maybe ( Time.Posix, Time.Zone ) -> Data.User.UserId -> Maybe Data.User.UserId -> Product.Comment -> Html.Html msg
+commentView : Maybe ( Time.Posix, Time.Zone ) -> Data.User.Id -> Maybe Data.User.Id -> Product.Comment -> Html.Html msg
 commentView nowMaybe sellerId myIdMaybe { text, createdAt, userName, userId } =
     let
         isSellerComment =
