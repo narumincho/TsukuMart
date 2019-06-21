@@ -188,7 +188,9 @@ export const deleteDraftProduct = async (
  * ユーザーのデータを追加する
  * @param userData
  */
-export const addUserData = async (data: UserData): Promise<string> => {
+export const addUserData = async (
+    data: UserData & { email: string }
+): Promise<string> => {
     return (await userCollectionRef.add(data)).id;
 };
 
@@ -265,6 +267,7 @@ type UserBeforeEmailVerificationData = {
     imageUrl: string;
     schoolAndDepartment: type.SchoolAndDepartment | null;
     graduate: type.Graduate | null;
+    email: string;
 };
 
 export const addUserBeforeEmailVerification = async (

@@ -513,12 +513,14 @@ const user = makeQueryOrMutationField<
         }
     },
     resolve: async (source, args) => {
-        if (await database.existsUser(args.id)) {
-            return {
-                id: args.id
-            };
-        }
-        throw new Error(`user (id=${args.id}) dose not exists`);
+        const userData = await database.getUserData(args.id);
+        return {
+            id: args.id,
+            displayName: userData.displayName,
+            imageUrl: userData.imageUrl,
+            introduction: userData.introduction,
+            university: type.universityToInternal(userData.university)
+        };
     },
     description: "ユーザーの情報を取得する"
 });

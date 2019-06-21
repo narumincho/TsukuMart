@@ -144,7 +144,8 @@ export const addUserBeforeEmailVerificationAndSendEmail = async (
         name: name,
         imageUrl: imageUrl.toString(),
         schoolAndDepartment: flatUniversity.schoolAndDepartment,
-        graduate: flatUniversity.graduate
+        graduate: flatUniversity.graduate,
+        email: email
     });
     await databaseLow.sendEmailVerification(email, authUser.password);
 };
@@ -197,7 +198,8 @@ export const getAccessTokenAndRefreshToken = async (
                 graduate: userBeforeEmailVerification.graduate as type.Graduate | null,
                 introduction: "",
                 lastRefreshId: refreshId,
-                createdAt: databaseLow.getNowTimeStamp()
+                createdAt: databaseLow.getNowTimeStamp(),
+                email: userBeforeEmailVerification.email
             });
             await databaseLow.deleteUserBeforeEmailVerification(
                 logInAccountServiceId
@@ -496,10 +498,10 @@ export const setProfile = async (
 */
 /**
  * 指定したIDの商品があるかどうか調べる
- * @param id 
+ * @param id
  */
-export const existsProduct = async (id: string): Promise<boolean> => 
-    databaseLow.existsProduct(id)
+export const existsProduct = async (id: string): Promise<boolean> =>
+    databaseLow.existsProduct(id);
 
 /**
  * 商品のデータを取得する
