@@ -171,7 +171,7 @@ export const updateDraftProduct = async (
         .doc(userId)
         .collection("draftProduct")
         .doc(draftId)
-        .set(data);
+        .set(data, { merge: true });
 };
 
 export const deleteDraftProduct = async (

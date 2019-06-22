@@ -1236,6 +1236,12 @@ view (Model { page, menuState, message, logInState, now }) =
                     Nothing ->
                         []
                )
+            ++ (if isWideScreen then
+                    []
+
+                else
+                    [ globalNavigation ]
+               )
     }
 
 
@@ -1351,6 +1357,13 @@ messageView message =
         [ Html.Attributes.class "message"
         ]
         [ Html.text message ]
+
+
+globalNavigation : Html.Html msg
+globalNavigation =
+    Html.div
+        []
+        []
 
 
 subscription : Model -> Sub Msg
