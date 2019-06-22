@@ -13,6 +13,13 @@ const cachesName = "image-chase";
             self.clients.claim();
         })());
     });
+    const cacheFn = async (request) => {
+        console.log(request.url, "リクエストを検知");
+        return await fetch(request);
+    };
+    self.addEventListener("fetch", e => {
+        e.respondWith(cacheFn(e.request));
+    });
     self.addEventListener("sync", e => {
         console.log("syncを受け取った", e);
     });
