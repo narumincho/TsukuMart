@@ -411,7 +411,7 @@ export const getNowTimeStamp = (): firestore.Timestamp =>
 export const createFirebaseAuthUserByRandomPassword = async (
     email: string
 ): Promise<{ id: string; password: string }> => {
-    const password: string = createRandomId();
+    const password: string = createRandomPassword();
     const userRecord = await initializedAdmin.auth().createUser({
         email: email,
         password: password
@@ -421,6 +421,16 @@ export const createFirebaseAuthUserByRandomPassword = async (
         password: password
     };
 };
+
+const createRandomPassword = ():string => {
+    let id = "";
+    const charTable: string =
+        "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    for (let i = 0; i < 32; i++) {
+        id += charTable[(Math.random() * charTable.length) | 0];
+    }
+    return id;
+}
 
 export const getFirebaseAuthUserEmailVerified = async (
     id: string
@@ -457,7 +467,7 @@ export const saveStorageFile = async (
     data: ArrayBuffer,
     mimeType: string
 ): Promise<URL> => {
-    const id = createRandomId();
+    const id = createRandomFileName();
     const file = storage.file(folderName + "/" + id);
     await file.save(data, { contentType: mimeType });
     return new URL(
@@ -466,12 +476,12 @@ export const saveStorageFile = async (
     );
 };
 /**
- * ランダムなIDを生成する
+ * ランダムなファイル名を生成する
  */
-const createRandomId = (): string => {
+const createRandomFileName = (): string => {
     let id = "";
     const charTable: string =
-        "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        "0123456789abcdefghijklmnopqrstuvwxyz";
     for (let i = 0; i < 20; i++) {
         id += charTable[(Math.random() * charTable.length) | 0];
     }

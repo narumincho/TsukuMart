@@ -14,11 +14,16 @@ export const fromStringWithQuery = (
     return url;
 };
 
-export const fromStringWithHash = (
+/**
+ * 
+ * @param domainAndPath https://を除いたドメインとパス narumincho.com/path など
+ * @param fragment URLSearchParamsとしてエンコードされる
+ */
+export const fromStringWithFragment = (
     domainAndPath: string,
-    hash: Map<string, string>
+    fragment: Map<string, string>
 ): URL => {
     const url = new URL("https://" + domainAndPath);
-    url.hash = new URLSearchParams(hash).toString();
+    url.hash = new URLSearchParams(fragment).toString();
     return url;
 };

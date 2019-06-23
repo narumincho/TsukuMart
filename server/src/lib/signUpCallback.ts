@@ -15,7 +15,7 @@ const domain = "tsukumart-f0971.web.app";
  * @param accessToken アクセストークン
  */
 const tokenUrl = (refreshToken: string, accessToken: string): URL =>
-    utilUrl.fromStringWithHash(
+    utilUrl.fromStringWithFragment(
         domain,
         new Map([["refreshToken", refreshToken], ["accessToken", accessToken]])
     );
@@ -27,7 +27,7 @@ const tokenUrl = (refreshToken: string, accessToken: string): URL =>
  * @param imageUrl
  */
 const signUpUrl = (sendEmailToken: string, name: string, imageUrl: URL): URL =>
-    utilUrl.fromStringWithHash(
+    utilUrl.fromStringWithFragment(
         domain + "/signup",
         new Map([
             ["sendEmailToken", sendEmailToken],

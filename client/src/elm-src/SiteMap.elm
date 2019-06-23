@@ -3,15 +3,15 @@ module SiteMap exposing
     , UrlParserResult(..)
     , aboutPrivacyPolicyUrl
     , aboutUrl
+    , boughtProductsUrl
     , exhibitionConfirmUrl
-    , soldProductsUrl
     , exhibitionUrl
-    , productUrl
     , homeUrl
     , likeHistoryUrl
     , logInUrl
-    , boughtProductsUrl
+    , productUrl
     , siteMapXml
+    , soldProductsUrl
     , urlParser
     , urlParserInit
     , userUrl
@@ -49,10 +49,14 @@ urlParserInit url =
                 |> Url.toString
                 |> Erl.parse
 
+        fragment =
+            (Erl.parse ("?" ++ hash)).query
+                |> Dict.fromList
+
         queryDict =
             query |> Dict.fromList
     in
-    ( case ( queryDict |> Dict.get "refreshToken", queryDict |> Dict.get "accessToken" ) of
+    ( case ( fragment |> Dict.get "refreshToken", fragment |> Dict.get "accessToken" ) of
         ( Just refreshToken, Just accessToken ) ->
             Just
                 { refreshToken = Api.tokenFromString refreshToken
@@ -62,7 +66,7 @@ urlParserInit url =
         ( _, _ ) ->
             Nothing
     , [ homeParser |> parserMap (always InitHome)
-      , signUpParser |> parserMap InitSignUp
+      , signUpParser fragment |> parserMap InitSignUp
       , logInParser |> parserMap (always InitLogIn)
       , likeHistoryParser |> parserMap (always InitLikeAndHistory)
       , soldProductsParser |> parserMap (always InitExhibition)
@@ -158,9 +162,9 @@ homeUrl =
 {- signup -}
 
 
-signUpParser : List String -> Dict.Dict String String -> Maybe { sendEmailToken : String, name : String, imageUrl : String }
-signUpParser path query =
-    case ( path, ( query |> Dict.get "sendEmailToken", query |> Dict.get "name", query |> Dict.get "imageUrl" ) ) of
+signUpParser : Dict.Dict String String -> List String -> Dict.Dict String String -> Maybe { sendEmailToken : String, name : String, imageUrl : String }
+signUpParser fragment path _ =
+    case ( path, ( fragment |> Dict.get "sendEmailToken", fragment |> Dict.get "name", fragment |> Dict.get "imageUrl" ) ) of
         ( [ "signup" ], ( Just sendEmailToken, Just name, Just imageUrl ) ) ->
             Just
                 { sendEmailToken = sendEmailToken
