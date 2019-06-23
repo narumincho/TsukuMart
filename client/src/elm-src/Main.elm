@@ -67,7 +67,7 @@ port changeSelectedIndex : { id : String, index : Int } -> Cmd msg
 type Model
     = Model
         { page : Page -- 開いているページ
-        , menuState : Maybe BasicParts.MenuModel -- メニューの開閉
+        , wideScreen : Bool
         , message : Maybe String -- ちょっとしたことがあったら表示するもの
         , logInState : Data.LogInState.LogInState
         , notificationVisible : Bool
@@ -106,7 +106,6 @@ type Msg
     | LikeProductResponse Data.Product.Id (Result () ())
     | UnlikeProductResponse Data.Product.Id (Result () ())
     | ChangeProfileResponse (Result () Data.User.WithProfile)
-    | BasicPartMenuMsg BasicParts.Msg
     | HomePageMsg Page.Home.Msg
     | LikeAndHistoryPageMsg Page.LikeAndHistory.Msg
     | BoughtProductsPageMsg Page.BoughtProducts.Msg
@@ -141,7 +140,7 @@ init { refreshToken } url key =
     in
     ( Model
         { page = page
-        , menuState = BasicParts.initMenuModel
+        , wideScreen = False
         , message = message
         , logInState = Data.LogInState.None
         , notificationVisible = False
@@ -279,13 +278,13 @@ update msg (Model rec) =
     case msg of
         ToWideScreenMode ->
             ( Model
-                { rec | menuState = Nothing }
+                { rec | wideScreen = True }
             , Cmd.none
             )
 
         ToNarrowScreenMode ->
             ( Model
-                { rec | menuState = BasicParts.narrowScreenModeInit }
+                { rec | wideScreen = False }
             , Cmd.none
             )
 
@@ -299,7 +298,6 @@ update msg (Model rec) =
                 { rec
                     | page = page
                     , message = message
-                    , menuState = rec.menuState |> BasicParts.menuUpdate BasicParts.closeMenu
                 }
             , cmd
             )
@@ -467,11 +465,6 @@ update msg (Model rec) =
 
                 Err _ ->
                     Model { rec | message = Just "出品できませんでした" }
-            , Cmd.none
-            )
-
-        BasicPartMenuMsg m ->
-            ( Model { rec | menuState = rec.menuState |> BasicParts.menuUpdate m }
             , Cmd.none
             )
 
@@ -1212,22 +1205,43 @@ unlikeProduct productId result logInState page =
 {-| 見た目を決める
 -}
 view : Model -> { title : String, body : List (Html.Html Msg) }
-view (Model { page, menuState, message, logInState, now }) =
+view (Model { page, wideScreen, message, logInState, now }) =
     let
-        isWideScreen =
-            menuState == Nothing
-
-        ( title, mainView ) =
-            mainViewAndMainTab logInState page isWideScreen now
+        { title, tab, html } =
+            titleAndTabDataAndMainView logInState wideScreen now page
     in
     { title = title
     , body =
-        [ BasicParts.header isWideScreen
-            |> Html.map BasicPartMenuMsg
-        , BasicParts.menuView logInState menuState
-            |> Html.map BasicPartMenuMsg
+        [ BasicParts.header wideScreen
         ]
-            ++ mainView
+            ++ (if wideScreen then
+                    [ BasicParts.menuView logInState ]
+
+                else
+                    []
+               )
+            ++ [ BasicParts.tabView wideScreen tab
+               , Html.div
+                    [ Html.Attributes.style "padding"
+                        ((if BasicParts.isTabNone tab then
+                            "4"
+
+                          else
+                            "7"
+                         )
+                            ++ "rem 0 0 "
+                            ++ (if wideScreen then
+                                    "20rem"
+
+                                else
+                                    "0"
+                               )
+                        )
+                    , Html.Attributes.style "word-wrap" "break-word"
+                    , Html.Attributes.style "overflow-x" "hidden"
+                    ]
+                    html
+               ]
             ++ (case message of
                     Just m ->
                         [ Html.Keyed.node "div" [] [ ( m, messageView m ) ] ]
@@ -1235,46 +1249,13 @@ view (Model { page, menuState, message, logInState, now }) =
                     Nothing ->
                         []
                )
-            ++ (if isWideScreen then
+            ++ (if wideScreen then
                     []
 
                 else
-                    [ globalNavigation ]
+                    [ BasicParts.globalNavigation ]
                )
     }
-
-
-mainViewAndMainTab : Data.LogInState.LogInState -> Page -> Bool -> Maybe ( Time.Posix, Time.Zone ) -> ( String, List (Html.Html Msg) )
-mainViewAndMainTab logInState page isWideScreenMode nowMaybe =
-    let
-        { title, tab, html } =
-            titleAndTabDataAndMainView logInState isWideScreenMode nowMaybe page
-    in
-    ( title
-    , [ BasicParts.tabView isWideScreenMode tab
-      , Html.div
-            [ Html.Attributes.style "padding"
-                ((if BasicParts.isTabNone tab then
-                    "4"
-
-                  else
-                    "7"
-                 )
-                    ++ "rem 0 0 "
-                    ++ (if isWideScreenMode then
-                            "20rem"
-
-                        else
-                            "0"
-                       )
-                )
-            , Html.Attributes.style "word-wrap" "break-word"
-            , Html.Attributes.style "overflow-x" "hidden"
-            , Html.Attributes.style "-webkit-tap-highlight-color" "transparent"
-            ]
-            html
-      ]
-    )
 
 
 titleAndTabDataAndMainView :
@@ -1366,22 +1347,14 @@ messageView message =
         [ Html.text message ]
 
 
-globalNavigation : Html.Html msg
-globalNavigation =
-    Html.div
-        []
-        []
-
-
 subscription : Model -> Sub Msg
-subscription (Model { menuState }) =
+subscription (Model { wideScreen }) =
     Sub.batch
         [ receiveProductImages ReceiveProductImages
         , receiveUserImage ReceiveUserImage
-        , case menuState of
-            Just _ ->
-                toWideScreenMode (always ToWideScreenMode)
+        , if wideScreen then
+            toNarrowScreenMode (always ToNarrowScreenMode)
 
-            Nothing ->
-                toNarrowScreenMode (always ToNarrowScreenMode)
+          else
+            toWideScreenMode (always ToWideScreenMode)
         ]

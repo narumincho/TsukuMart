@@ -1,80 +1,74 @@
 module BasicParts exposing
-    ( MenuModel
-    , Msg
-    , Tab
-    , closeMenu
+    ( Tab
+    , globalNavigation
     , header
-    , initMenuModel
-    , menuUpdate
+    , isTabNone
     , menuView
-    , narrowScreenModeInit
     , tabMap
     , tabMulti
     , tabNone
     , tabSingle
     , tabView
-    , isTabNone)
+    )
 
 import Data.LogInState
 import Data.User
 import Html
 import Html.Attributes
 import Html.Events
-import Html.Keyed
 import SiteMap
 import Svg
 import Svg.Attributes
-import Svg.Events
-
-
-type Msg
-    = OpenMenu
-    | CloseMenu
 
 
 
 {- ================= header ================ -}
 
 
-header : Bool -> Html.Html Msg
+header : Bool -> Html.Html msg
 header isWideScreenMode =
     Html.header
         []
-        ((if isWideScreenMode then
-            []
+        [ backArrow
+        , Html.a
+            [ Html.Attributes.style "flex-grow" "1"
+            , Html.Attributes.href SiteMap.homeUrl
+            ]
+            [ Html.h1
+                [ Html.Attributes.class "h1"
+                , Html.Attributes.style "padding"
+                    (if isWideScreenMode then
+                        "0.5rem 0.5rem 0.5rem 2rem"
 
-          else
-            [ menuButton ]
-         )
-            ++ [ Html.a
-                    [ Html.Attributes.class "h1Link"
-                    , Html.Attributes.href SiteMap.homeUrl
-                    ]
-                    [ Html.h1
-                        [ Html.Attributes.classList [ ( "h1", True ), ( "h1-wide", isWideScreenMode ) ] ]
-                        [ logo ]
-                    ]
-               , searchButton
-               , notificationsButton
-               ]
-        )
-
-
-menuButton : Html.Html Msg
-menuButton =
-    Svg.svg
-        [ headerButton
-        , Svg.Events.onClick OpenMenu
-        , Svg.Attributes.viewBox "0 0 24 24"
-        ]
-        [ Svg.title [] [ Svg.text "メニュー" ]
-        , Svg.path
-            [ Svg.Attributes.fill "white", Svg.Attributes.d "M4 18h16c.55 0 1-.45 1-1s-.45-1-1-1H4c-.55 0-1 .45-1 1s.45 1 1 1zm0-5h16c.55 0 1-.45 1-1s-.45-1-1-1H4c-.55 0-1 .45-1 1s.45 1 1 1zM3 7c0 .55.45 1 1 1h16c.55 0 1-.45 1-1s-.45-1-1-1H4c-.55 0-1 .45-1 1z" ]
-            []
+                     else
+                        "0.5rem"
+                    )
+                , Html.Attributes.style "margin" "0"
+                ]
+                [ logo ]
+            ]
         ]
 
 
-logo : Html.Html Msg
+backArrow : Html.Html msg
+backArrow =
+    Html.div
+        [ Html.Attributes.style "width" "32px"
+        , Html.Attributes.style "height" "32px"
+        , Html.Attributes.style "padding" "16px"
+        ]
+        [ Svg.svg
+            [ Svg.Attributes.viewBox "0 0 24 24" ]
+            [ Svg.path
+                [ Svg.Attributes.d "M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"
+                , Svg.Attributes.fill "white"
+                ]
+                []
+            ]
+        ]
+
+
+logo : Html.Html msg
 logo =
     Svg.svg
         [ Svg.Attributes.class "logo"
@@ -289,190 +283,158 @@ logoSubTextFontColor =
     Svg.Attributes.fill "#ffe2a6"
 
 
-searchButton : Html.Html Msg
-searchButton =
+homeIcon : Html.Html msg
+homeIcon =
     Svg.svg
         [ Svg.Attributes.viewBox "0 0 24 24"
-        , headerButton
+        , Svg.Attributes.width "32px"
+        , Svg.Attributes.style "padding:8px"
+        ]
+        [ Svg.path
+            [ Svg.Attributes.fill "black", Svg.Attributes.d "M10 19v-5h4v5c0 .55.45 1 1 1h3c.55 0 1-.45 1-1v-7h1.7c.46 0 .68-.57.33-.87L12.67 3.6c-.38-.34-.96-.34-1.34 0l-8.36 7.53c-.34.3-.13.87.33.87H5v7c0 .55.45 1 1 1h3c.55 0 1-.45 1-1z" ]
+            []
+        ]
+
+
+searchIcon : Html.Html msg
+searchIcon =
+    Svg.svg
+        [ Svg.Attributes.viewBox "0 0 24 24"
+        , Svg.Attributes.width "32px"
+        , Svg.Attributes.style "padding:8px"
         ]
         [ Svg.title [] [ Svg.text "検索" ]
-        , Svg.path [ Svg.Attributes.fill "white", Svg.Attributes.d "M15.5 14h-.79l-.28-.27c1.2-1.4 1.82-3.31 1.48-5.34-.47-2.78-2.79-5-5.59-5.34-4.23-.52-7.79 3.04-7.27 7.27.34 2.8 2.56 5.12 5.34 5.59 2.03.34 3.94-.28 5.34-1.48l.27.28v.79l4.25 4.25c.41.41 1.08.41 1.49 0 .41-.41.41-1.08 0-1.49L15.5 14zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" ] []
+        , Svg.path [ Svg.Attributes.fill "black", Svg.Attributes.d "M15.5 14h-.79l-.28-.27c1.2-1.4 1.82-3.31 1.48-5.34-.47-2.78-2.79-5-5.59-5.34-4.23-.52-7.79 3.04-7.27 7.27.34 2.8 2.56 5.12 5.34 5.59 2.03.34 3.94-.28 5.34-1.48l.27.28v.79l4.25 4.25c.41.41 1.08.41 1.49 0 .41-.41.41-1.08 0-1.49L15.5 14zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" ] []
         ]
 
 
-notificationsButton : Html.Html Msg
-notificationsButton =
+notificationsIcon : Html.Html msg
+notificationsIcon =
     Svg.svg
         [ Svg.Attributes.viewBox "0 0 24 24"
-        , headerButton
+        , Svg.Attributes.width "32px"
+        , Svg.Attributes.style "padding:8px"
         ]
         [ Svg.title [] [ Svg.text "通知" ]
-        , Svg.path [ Svg.Attributes.fill "white", Svg.Attributes.d "M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-1.29 1.29c-.63.63-.19 1.71.7 1.71h13.17c.89 0 1.34-1.08.71-1.71L18 16z" ] []
+        , Svg.path [ Svg.Attributes.fill "black", Svg.Attributes.d "M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-1.29 1.29c-.63.63-.19 1.71.7 1.71h13.17c.89 0 1.34-1.08.71-1.71L18 16z" ] []
         ]
 
 
-headerButton : Svg.Attribute Msg
-headerButton =
-    Svg.Attributes.class "headerButton"
+informationIcon : Html.Html msg
+informationIcon =
+    Svg.svg
+        [ Svg.Attributes.viewBox "0 0 24 24"
+        , Svg.Attributes.width "32px"
+        , Svg.Attributes.style "padding:8px"
+        ]
+        [ Svg.path
+            [ Svg.Attributes.fill "black"
+            , Svg.Attributes.d "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 15c-.55 0-1-.45-1-1v-4c0-.55.45-1 1-1s1 .45 1 1v4c0 .55-.45 1-1 1zm1-8h-2V7h2v2z"
+            ]
+            []
+        ]
 
 
 
 {- ================= menu ================ -}
 
 
-type MenuModel
-    = MenuNotOpenedYet
-    | MenuClose
-    | MenuOpen
+menuView : Data.LogInState.LogInState -> Html.Html msg
+menuView logInState =
+    Html.div
+        [ Html.Attributes.class "menu-wide" ]
+        ((case logInState of
+            Data.LogInState.None ->
+                [ Html.div
+                    [ Html.Attributes.class "menu-account" ]
+                    [ Html.div [ Html.Attributes.class "menu-noLogin" ] [ Html.text "ログインしていません" ]
+                    , Html.div [ Html.Attributes.class "menu-logInSignUpButtonContainer" ]
+                        [ Html.a
+                            [ Html.Attributes.class "menu-logInButton"
+                            , Html.Attributes.href SiteMap.logInUrl
+                            ]
+                            [ Html.text "ログイン/新規登録" ]
+                        ]
+                    ]
+                ]
 
+            _ ->
+                []
+         )
+            ++ [ Html.a
+                    [ Html.Attributes.class "menu-item"
+                    , Html.Attributes.href SiteMap.homeUrl
+                    ]
+                    [ homeIcon, Html.text "ホーム" ]
+               , Html.a
+                    [ Html.Attributes.class "menu-item" ]
+                    [ searchIcon, Html.text "検索" ]
+               , Html.a
+                    [ Html.Attributes.class "menu-item"
+                    ]
+                    [ notificationsIcon, Html.text "通知" ]
+               , case logInState of
+                    Data.LogInState.None ->
+                        Html.a
+                            [ Html.Attributes.class "menu-item" ]
+                            [ Html.text "ユーザー" ]
 
-closeMenu : Msg
-closeMenu =
-    CloseMenu
+                    Data.LogInState.LoadingProfile _ ->
+                        Html.a
+                            [ Html.Attributes.class "menu-item" ]
+                            [ Html.text "プロフィール情報を読み込み中" ]
 
-
-narrowScreenModeInit : Maybe MenuModel
-narrowScreenModeInit =
-    Just MenuNotOpenedYet
-
-
-initMenuModel : Maybe MenuModel
-initMenuModel =
-    Just MenuNotOpenedYet
-
-
-menuUpdate : Msg -> Maybe MenuModel -> Maybe MenuModel
-menuUpdate msg menuModel =
-    case msg of
-        OpenMenu ->
-            Just MenuOpen
-
-        CloseMenu ->
-            case menuModel of
-                Just MenuOpen ->
-                    Just MenuClose
-
-                _ ->
-                    menuModel
-
-
-menuView : Data.LogInState.LogInState -> Maybe MenuModel -> Html.Html Msg
-menuView logInState menuStateMaybe =
-    case menuStateMaybe of
-        Just menuState ->
-            Html.Keyed.node "div"
-                [ Html.Attributes.class "menu" ]
-                (case menuState of
-                    MenuNotOpenedYet ->
-                        []
-
-                    MenuOpen ->
-                        [ ( "os"
-                          , Html.div
-                                [ Html.Attributes.class "menu-shadow menu-shadow-appear"
-                                , Html.Events.onClick CloseMenu
+                    Data.LogInState.Ok { userWithProfile } ->
+                        Html.a
+                            [ Html.Attributes.href
+                                (SiteMap.userUrl
+                                    (Data.User.withProfileGetId userWithProfile)
+                                )
+                            , Html.Attributes.class "menu-item"
+                            ]
+                            [ Html.img
+                                [ Html.Attributes.style "width" "6rem"
+                                , Html.Attributes.style "height" "6rem"
+                                , Html.Attributes.style "border-radius" "50%"
+                                , Html.Attributes.src (Data.User.withProfileGetImageUrl userWithProfile)
                                 ]
                                 []
-                          )
-                        , ( "om"
-                          , Html.div
-                                [ Html.Attributes.class "menu-list menu-list-open" ]
-                                (menuMain logInState)
-                          )
-                        ]
-
-                    MenuClose ->
-                        [ ( "cs"
-                          , Html.div
-                                [ Html.Attributes.class "menu-shadow menu-shadow-disappear" ]
-                                []
-                          )
-                        , ( "cm"
-                          , Html.div
-                                [ Html.Attributes.class "menu-list menu-list-close" ]
-                                (menuMain logInState)
-                          )
-                        ]
-                )
-
-        Nothing ->
-            Html.div
-                [ Html.Attributes.class "menu-wide" ]
-                (menuMain logInState)
-
-
-menuMain : Data.LogInState.LogInState -> List (Html.Html msg)
-menuMain logInState =
-    [ menuAccount logInState
-    , Html.a
-        [ Html.Attributes.class "menu-item"
-        , Html.Attributes.href SiteMap.homeUrl
-        ]
-        [ Html.text "ホーム" ]
-    , Html.a
-        [ Html.Attributes.class "menu-item"
-        , Html.Attributes.href SiteMap.likeHistoryUrl
-        ]
-        [ Html.text "いいね・閲覧した商品" ]
-    , Html.a
-        [ Html.Attributes.class "menu-item"
-        , Html.Attributes.href SiteMap.soldProductsUrl
-        ]
-        [ Html.text "出品した商品" ]
-    , Html.a
-        [ Html.Attributes.class "menu-item"
-        , Html.Attributes.href SiteMap.boughtProductsUrl
-        ]
-        [ Html.text "購入した商品" ]
-    , Html.a
-        [ Html.Attributes.class "menu-item"
-        , Html.Attributes.href SiteMap.aboutUrl
-        ]
-        [ Html.text "つくマートについて" ]
-    ]
-
-
-menuAccount : Data.LogInState.LogInState -> Html.Html msg
-menuAccount logInState =
-    case logInState of
-        Data.LogInState.None ->
-            Html.div
-                [ Html.Attributes.class "menu-account" ]
-                [ Html.div [ Html.Attributes.class "menu-noLogin" ] [ Html.text "ログインしていません" ]
-                , Html.div [ Html.Attributes.class "menu-logInSignUpButtonContainer" ]
-                    [ Html.a
-                        [ Html.Attributes.class "menu-logInButton"
-                        , Html.Attributes.href SiteMap.logInUrl
-                        ]
-                        [ Html.text "ログイン/新規登録" ]
+                            , Html.div
+                                [ Html.Attributes.class "menu-account-a-name" ]
+                                [ Html.text (Data.User.withProfileGetDisplayName userWithProfile) ]
+                            ]
+               , Html.a
+                    [ Html.Attributes.class "menu-item"
+                    , Html.Attributes.href SiteMap.likeHistoryUrl
                     ]
-                ]
-
-        Data.LogInState.LoadingProfile _ ->
-            Html.div
-                [ Html.Attributes.class "menu-account" ]
-                [ Html.text "読み込み中" ]
-
-        Data.LogInState.Ok { userWithProfile } ->
-            Html.a
-                [ Html.Attributes.class "menu-account"
-                , Html.Attributes.class "menu-account-a"
-                , Html.Attributes.href
-                    (SiteMap.userUrl
-                        (Data.User.withProfileGetId userWithProfile)
-                    )
-                ]
-                [ Html.img
-                    [ Html.Attributes.style "width" "6rem"
-                    , Html.Attributes.style "height" "6rem"
-                    , Html.Attributes.style "border-radius" "50%"
-                    , Html.Attributes.src (Data.User.withProfileGetImageUrl userWithProfile)
+                    [ Html.text "いいねした商品" ]
+               , Html.a
+                    [ Html.Attributes.class "menu-item"
+                    , Html.Attributes.href SiteMap.likeHistoryUrl
                     ]
-                    []
-                , Html.span
-                    [ Html.Attributes.class "menu-account-a-name" ]
-                    [ Html.text (Data.User.withProfileGetDisplayName userWithProfile) ]
-                ]
+                    [ Html.text "閲覧した商品" ]
+               , Html.a
+                    [ Html.Attributes.class "menu-item"
+                    , Html.Attributes.href SiteMap.soldProductsUrl
+                    ]
+                    [ Html.text "出品した商品" ]
+               , Html.a
+                    [ Html.Attributes.class "menu-item"
+                    , Html.Attributes.href SiteMap.boughtProductsUrl
+                    ]
+                    [ Html.text "購入した商品" ]
+               , Html.a
+                    [ Html.Attributes.class "menu-item"
+                    , Html.Attributes.href SiteMap.likeHistoryUrl
+                    ]
+                    [ Html.text "コメントをした商品" ]
+               , Html.a
+                    [ Html.Attributes.class "menu-item"
+                    , Html.Attributes.href SiteMap.aboutUrl
+                    ]
+                    [ informationIcon, Html.text "つくマートについて" ]
+               ]
+        )
 
 
 type Tab msg
@@ -590,6 +552,7 @@ itemView isSelected label clickEventMaybe =
             case clickEventMaybe of
                 Just clickEvent ->
                     [ Html.Attributes.class "mainTab-item"
+                    , Html.Attributes.style "-webkit-tap-highlight-color" "transparent"
                     , Html.Events.onClick clickEvent
                     ]
 
@@ -615,3 +578,35 @@ selectLineView index count =
             ]
             []
         ]
+
+
+
+{- ================= menu ================ -}
+
+
+globalNavigation : Html.Html msg
+globalNavigation =
+    Html.div
+        [ Html.Attributes.style "display" "grid"
+        , Html.Attributes.style "grid-template-columns" "1fr 1fr 1fr 1fr"
+        , Html.Attributes.style "height" "64px"
+        , Html.Attributes.style "position" "fixed"
+        , Html.Attributes.style "bottom" "0"
+        , Html.Attributes.style "width" "100%"
+        , Html.Attributes.style "background-color" "#733fa7"
+        ]
+        [ globalNavigationItem "ホーム"
+        , globalNavigationItem "検索"
+        , globalNavigationItem "通知"
+        , globalNavigationItem "ユーザー"
+        ]
+
+
+globalNavigationItem : String -> Html.Html msg
+globalNavigationItem text =
+    Html.div
+        [ Html.Attributes.style "display" "flex"
+        , Html.Attributes.style "justify-content" "center"
+        , Html.Attributes.style "align-items" "center"
+        ]
+        [ Html.text text ]

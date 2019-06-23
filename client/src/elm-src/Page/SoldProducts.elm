@@ -151,7 +151,7 @@ view logInState isWideScreenMode (Model rec) =
                 [ Html.div
                     [ Html.Attributes.class "container" ]
                     [ Html.div
-                        [ Html.Attributes.class "logInRecommendText" ]
+                        []
                         [ Html.text "ログインか新規登録をして、出品した商品一覧機能を使えるようにしよう!" ]
                     , LogInOrSignUp.view
                         rec.logInOrSignUpModel

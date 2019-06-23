@@ -7,10 +7,10 @@ module Page.LogIn exposing
     , view
     )
 
+import BasicParts
 import Html
 import Html.Attributes
 import Page.Component.LogIn as LogInOrSignUp
-import BasicParts
 
 
 type Model
