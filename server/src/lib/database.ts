@@ -135,9 +135,11 @@ export const addUserBeforeEmailVerificationAndSendEmail = async (
     email: string,
     university: type.University
 ): Promise<void> => {
+    console.log("auth userを作成中")
     const authUser = await databaseLow.createFirebaseAuthUserByRandomPassword(
         email
     );
+    console.log("auth userを作成成功")
     const flatUniversity = type.universityToInternal(university);
     await databaseLow.addUserBeforeEmailVerification(logInAccountServiceId, {
         firebaseAuthUserId: authUser.id,
@@ -147,6 +149,7 @@ export const addUserBeforeEmailVerificationAndSendEmail = async (
         graduate: flatUniversity.graduate,
         email: email
     });
+    console.log("データベースにBeforeEmailVerificationのユーザーを作成")
     await databaseLow.sendEmailVerification(email, authUser.password);
 };
 

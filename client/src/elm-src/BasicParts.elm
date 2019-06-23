@@ -462,7 +462,7 @@ menuLogInStateOk userWithProfile =
             ]
             []
         , Html.div
-            [ Html.Attributes.class "menu-account-a-name" ]
+            [  ]
             [ Html.text (Data.User.withProfileGetDisplayName userWithProfile) ]
         ]
     , Html.a

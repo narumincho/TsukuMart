@@ -768,6 +768,7 @@ const sendConformEmail = makeQueryOrMutationField<
             args.email,
             university
         );
+        console.log("okを返す");
         return "ok";
     },
     description: "ユーザー情報を登録して認証メールを送信する"
@@ -1053,6 +1054,7 @@ const deleteDraftProduct = makeQueryOrMutationField<
     },
     description: ""
 });
+
 /*  =============================================================
                             Schema
     =============================================================

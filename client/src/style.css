@@ -118,13 +118,6 @@ header {
     background-color: rgba(0, 0, 0, 0.4);
 }
 
-.menu-account-a-name {
-    font-size: 1rem;
-    color: #ddd;
-    padding: 0 0 0 1rem;
-    user-select: none;
-}
-
 .menu-noLogin {
     text-align: center;
     font-size: 1rem;

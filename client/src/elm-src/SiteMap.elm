@@ -44,7 +44,7 @@ type UrlParserInitResult
 urlParserInit : Url.Url -> ( Maybe { refreshToken : Api.Token, accessToken : Api.Token }, Maybe UrlParserInitResult )
 urlParserInit url =
     let
-        { path, query, hash } =
+        { path, hash } =
             url
                 |> Url.toString
                 |> Erl.parse
@@ -52,9 +52,6 @@ urlParserInit url =
         fragment =
             (Erl.parse ("?" ++ hash)).query
                 |> Dict.fromList
-
-        queryDict =
-            query |> Dict.fromList
     in
     ( case ( fragment |> Dict.get "refreshToken", fragment |> Dict.get "accessToken" ) of
         ( Just refreshToken, Just accessToken ) ->
@@ -78,14 +75,14 @@ urlParserInit url =
       , aboutParser |> parserMap (always InitAbout)
       , aboutPrivacyPolicyParser |> parserMap (always InitAboutPrivacyPolicy)
       ]
-        |> List.map (\f -> f path queryDict)
+        |> List.map (\f -> f path)
         |> oneOf
     )
 
 
-parserMap : (a -> b) -> (List String -> Dict.Dict String String -> Maybe a) -> (List String -> Dict.Dict String String -> Maybe b)
-parserMap f parser path query =
-    parser path query |> Maybe.map f
+parserMap : (a -> b) -> (List String -> Maybe a) -> (List String -> Maybe b)
+parserMap f parser path =
+    parser path |> Maybe.map f
 
 
 oneOf : List (Maybe a) -> Maybe a
@@ -119,13 +116,10 @@ type UrlParserResult
 urlParser : Url.Url -> Maybe UrlParserResult
 urlParser url =
     let
-        { path, query } =
+        { path } =
             url
                 |> Url.toString
                 |> Erl.parse
-
-        queryDict =
-            query |> Dict.fromList
     in
     [ homeParser |> parserMap (always Home)
     , logInParser |> parserMap (always LogIn)
@@ -140,12 +134,12 @@ urlParser url =
     , aboutParser |> parserMap (always About)
     , aboutPrivacyPolicyParser |> parserMap (always AboutPrivacyPolicy)
     ]
-        |> List.map (\f -> f path queryDict)
+        |> List.map (\f -> f path)
         |> oneOf
 
 
-homeParser : List String -> Dict.Dict String String -> Maybe ()
-homeParser path _ =
+homeParser : List String -> Maybe ()
+homeParser path =
     if path == [] then
         Just ()
 
@@ -162,8 +156,11 @@ homeUrl =
 {- signup -}
 
 
-signUpParser : Dict.Dict String String -> List String -> Dict.Dict String String -> Maybe { sendEmailToken : String, name : String, imageUrl : String }
-signUpParser fragment path _ =
+signUpParser :
+    Dict.Dict String String
+    -> List String
+    -> Maybe { sendEmailToken : String, name : String, imageUrl : String }
+signUpParser fragment path =
     case ( path, ( fragment |> Dict.get "sendEmailToken", fragment |> Dict.get "name", fragment |> Dict.get "imageUrl" ) ) of
         ( [ "signup" ], ( Just sendEmailToken, Just name, Just imageUrl ) ) ->
             Just
@@ -180,8 +177,8 @@ signUpParser fragment path _ =
 {- login -}
 
 
-logInParser : List String -> Dict.Dict String String -> Maybe ()
-logInParser path _ =
+logInParser : List String -> Maybe ()
+logInParser path =
     if path == [ logInPath ] then
         Just ()
 
@@ -203,8 +200,8 @@ logInPath =
 {- like-history -}
 
 
-likeHistoryParser : List String -> Dict.Dict String String -> Maybe ()
-likeHistoryParser path _ =
+likeHistoryParser : List String -> Maybe ()
+likeHistoryParser path =
     if path == [ likeHistoryPath ] then
         Just ()
 
@@ -226,8 +223,8 @@ likeHistoryPath =
 {- Sold Products -}
 
 
-soldProductsParser : List String -> Dict.Dict String String -> Maybe ()
-soldProductsParser path _ =
+soldProductsParser : List String -> Maybe ()
+soldProductsParser path =
     if path == [ soldProductsPath ] then
         Just ()
 
@@ -249,8 +246,8 @@ soldProductsPath =
 {- Bought Products -}
 
 
-boughtProductsParser : List String -> Dict.Dict String String -> Maybe ()
-boughtProductsParser path _ =
+boughtProductsParser : List String -> Maybe ()
+boughtProductsParser path =
     if path == [ boughtProductsPath ] then
         Just ()
 
@@ -272,8 +269,8 @@ boughtProductsPath =
 {- exhibition -}
 
 
-exhibitionParser : List String -> Dict.Dict String String -> Maybe ()
-exhibitionParser path _ =
+exhibitionParser : List String -> Maybe ()
+exhibitionParser path =
     if path == [ exhibitionPath ] then
         Just ()
 
@@ -291,8 +288,8 @@ exhibitionPath =
     "exhibition"
 
 
-exhibitionConfirmParser : List String -> Dict.Dict String String -> Maybe ()
-exhibitionConfirmParser path _ =
+exhibitionConfirmParser : List String -> Maybe ()
+exhibitionConfirmParser path =
     if path == [ exhibitionPath, exhibitionConfirmPath ] then
         Just ()
 
@@ -314,8 +311,8 @@ exhibitionConfirmPath =
 {- Product -}
 
 
-productParser : List String -> Dict.Dict String String -> Maybe Data.Product.Id
-productParser path _ =
+productParser : List String -> Maybe Data.Product.Id
+productParser path =
     case path of
         [ "product", productIdString ] ->
             productIdString |> String.toInt |> Maybe.map Data.Product.idFromInt
@@ -333,8 +330,8 @@ productUrl productId =
 {- user -}
 
 
-userParser : List String -> Dict.Dict String String -> Maybe Data.User.Id
-userParser path _ =
+userParser : List String -> Maybe Data.User.Id
+userParser path =
     case path of
         [ "user", userId ] ->
             Just (Data.User.idFromString userId)
@@ -357,8 +354,8 @@ userPath =
 {- about -}
 
 
-aboutParser : List String -> Dict.Dict String String -> Maybe ()
-aboutParser path _ =
+aboutParser : List String -> Maybe ()
+aboutParser path =
     if path == [ aboutPath ] then
         Just ()
 
@@ -376,8 +373,8 @@ aboutPath =
     "about"
 
 
-aboutPrivacyPolicyParser : List String -> Dict.Dict String String -> Maybe ()
-aboutPrivacyPolicyParser path _ =
+aboutPrivacyPolicyParser : List String -> Maybe ()
+aboutPrivacyPolicyParser path =
     if path == [ aboutPath, aboutPrivacyPolicyPath ] then
         Just ()
 
@@ -399,8 +396,8 @@ aboutPrivacyPolicyPath =
 {- siteMap -}
 
 
-siteMapParser : List String -> Dict.Dict String String -> Maybe ()
-siteMapParser path _ =
+siteMapParser : List String -> Maybe ()
+siteMapParser path =
     if path == [ siteMapPath ] then
         Just ()
 

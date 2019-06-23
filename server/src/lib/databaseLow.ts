@@ -422,7 +422,7 @@ export const createFirebaseAuthUserByRandomPassword = async (
     };
 };
 
-const createRandomPassword = ():string => {
+const createRandomPassword = (): string => {
     let id = "";
     const charTable: string =
         "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -430,7 +430,7 @@ const createRandomPassword = ():string => {
         id += charTable[(Math.random() * charTable.length) | 0];
     }
     return id;
-}
+};
 
 export const getFirebaseAuthUserEmailVerified = async (
     id: string
@@ -444,13 +444,27 @@ export const sendEmailVerification = async (
     email: string,
     password: string
 ) => {
-    const userCredential = await firebase
-        .auth()
-        .signInWithEmailAndPassword(email, password);
-    if (userCredential.user === null) {
-        throw new Error("userCredential.user is null");
+    console.log(
+        `email=${email} password=${password}でクライアントアプリでログイン`
+    );
+    try {
+        const a = firebase.auth();
+        console.log("get firebase client auth is ok");
+        const userCredential = await a.signInWithEmailAndPassword(
+            email,
+            password
+        );
+        console.log("get user credential is ok");
+
+        if (userCredential.user === null) {
+            throw new Error("userCredential.user is null");
+        }
+        console.log("認証メールを送信する");
+        await userCredential.user.sendEmailVerification();
+    } catch (e) {
+        console.log(e.stack);
+        throw e;
     }
-    await userCredential.user.sendEmailVerification();
 };
 /* ==========================================
             Firebase Cloud Storage
@@ -480,8 +494,7 @@ export const saveStorageFile = async (
  */
 const createRandomFileName = (): string => {
     let id = "";
-    const charTable: string =
-        "0123456789abcdefghijklmnopqrstuvwxyz";
+    const charTable: string = "0123456789abcdefghijklmnopqrstuvwxyz";
     for (let i = 0; i < 20; i++) {
         id += charTable[(Math.random() * charTable.length) | 0];
     }
