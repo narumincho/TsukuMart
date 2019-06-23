@@ -6,7 +6,7 @@ import Html
 import Html.Attributes
 import Page.Component.ProductList as ProductList
 import SiteMap
-import Tab
+import BasicParts
 
 
 type Model
@@ -164,11 +164,11 @@ view :
     LogInState.LogInState
     -> Bool
     -> Model
-    -> { title : Maybe String, tab : Tab.Tab Msg, html : List (Html.Html Msg) }
+    -> { title : Maybe String, tab : BasicParts.Tab Msg, html : List (Html.Html Msg) }
 view logInState isWideScreenMode (Model rec) =
     { title = Nothing
     , tab =
-        Tab.multi
+        BasicParts.tabMulti
             { textAndMsgList = [ ( "新着", SelectTab TabRecent ), ( "おすすめ", SelectTab TabRecommend ), ( "0円", SelectTab TabFree ) ]
             , selectIndex =
                 case rec.tabSelect of

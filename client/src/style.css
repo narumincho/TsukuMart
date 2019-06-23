@@ -933,32 +933,6 @@ header {
            Main View 画面に主に表示する場所
 ===============================================*/
 
-.mainView {
-    display: block;
-    width: 100%;
-    padding: 7rem 0 0 0;
-    word-wrap: break-word;
-    overflow: hidden;
-}
-
-.mainView-noMainTab {
-    display: block;
-    width: 100%;
-    padding: 4rem 0 0 0;
-    word-wrap: break-word;
-    overflow: hidden;
-}
-
-.mainView-wide {
-    padding: 7rem 0 0 20rem;
-    box-sizing: border-box;
-}
-
-.mainView-wide-noMainTab {
-    padding: 4rem 0 0 20rem;
-    box-sizing: border-box;
-}
-
 .container {
     display: flex;
     align-items: center;

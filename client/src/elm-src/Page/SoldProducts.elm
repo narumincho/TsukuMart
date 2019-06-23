@@ -7,7 +7,7 @@ import Html
 import Html.Attributes
 import Page.Component.LogIn as LogInOrSignUp
 import Page.Component.ProductList as ProductList
-import Tab
+import BasicParts
 
 
 type Model
@@ -141,10 +141,10 @@ view :
     LogInState.LogInState
     -> Bool
     -> Model
-    -> { title : Maybe String, tab : Tab.Tab Msg, html : List (Html.Html Msg) }
+    -> { title : Maybe String, tab : BasicParts.Tab Msg, html : List (Html.Html Msg) }
 view logInState isWideScreenMode (Model rec) =
     { title = Just "出品した商品"
-    , tab = Tab.single "出品した商品"
+    , tab = BasicParts.tabSingle "出品した商品"
     , html =
         case logInState of
             LogInState.None ->

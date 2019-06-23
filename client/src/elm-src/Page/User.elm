@@ -18,7 +18,7 @@ import Html.Events
 import Html.Keyed
 import Icon
 import Page.Component.University as CompUniversity
-import Tab
+import BasicParts
 
 
 type Model
@@ -236,10 +236,10 @@ toEditMode userWithProfile =
 view :
     LogInState.LogInState
     -> Model
-    -> { title : Maybe String, tab : Tab.Tab Msg, html : List (Html.Html Msg) }
+    -> { title : Maybe String, tab : BasicParts.Tab Msg, html : List (Html.Html Msg) }
 view logInState model =
     { title = Just "プロフィール"
-    , tab = Tab.single "プロフィール"
+    , tab = BasicParts.tabSingle "プロフィール"
     , html =
         [ Html.div
             [ Html.Attributes.class "container" ]

@@ -9,15 +9,15 @@ module Page.Exhibition exposing
     )
 
 import Api
-import Data.Product as Product
+import BasicParts
 import Data.LogInState
+import Data.Product as Product
 import Html
 import Html.Attributes
 import Html.Events
-import Page.Component.ProductEditor as ProductEditor
 import Page.Component.LogIn as LogIn
+import Page.Component.ProductEditor as ProductEditor
 import SiteMap
-import Tab
 
 
 type Model
@@ -176,7 +176,10 @@ updateWhenNoLogIn msg (Model rec) =
 -}
 
 
-view : Data.LogInState.LogInState -> Model -> { title : Maybe String, tab : Tab.Tab Msg, html : List (Html.Html Msg) }
+view :
+    Data.LogInState.LogInState
+    -> Model
+    -> { title : Maybe String, tab : BasicParts.Tab Msg, html : List (Html.Html Msg) }
 view logInState (Model { page, logInOrSignUpModel }) =
     let
         ( tabText, body ) =
@@ -193,7 +196,7 @@ view logInState (Model { page, logInOrSignUpModel }) =
                     logInStateNoneView logInOrSignUpModel
     in
     { title = Just "出品"
-    , tab = Tab.single tabText
+    , tab = BasicParts.tabSingle tabText
     , html =
         [ Html.div
             [ Html.Attributes.class "container" ]

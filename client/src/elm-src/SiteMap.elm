@@ -141,7 +141,7 @@ urlParser url =
 
 
 homeParser : List String -> Dict.Dict String String -> Maybe ()
-homeParser path query =
+homeParser path _ =
     if path == [] then
         Just ()
 
@@ -177,7 +177,7 @@ signUpParser path query =
 
 
 logInParser : List String -> Dict.Dict String String -> Maybe ()
-logInParser path query =
+logInParser path _ =
     if path == [ logInPath ] then
         Just ()
 
@@ -200,7 +200,7 @@ logInPath =
 
 
 likeHistoryParser : List String -> Dict.Dict String String -> Maybe ()
-likeHistoryParser path query =
+likeHistoryParser path _ =
     if path == [ likeHistoryPath ] then
         Just ()
 
@@ -223,7 +223,7 @@ likeHistoryPath =
 
 
 soldProductsParser : List String -> Dict.Dict String String -> Maybe ()
-soldProductsParser path query =
+soldProductsParser path _ =
     if path == [ soldProductsPath ] then
         Just ()
 
@@ -246,7 +246,7 @@ soldProductsPath =
 
 
 boughtProductsParser : List String -> Dict.Dict String String -> Maybe ()
-boughtProductsParser path query =
+boughtProductsParser path _ =
     if path == [ boughtProductsPath ] then
         Just ()
 
@@ -269,7 +269,7 @@ boughtProductsPath =
 
 
 exhibitionParser : List String -> Dict.Dict String String -> Maybe ()
-exhibitionParser path query =
+exhibitionParser path _ =
     if path == [ exhibitionPath ] then
         Just ()
 
@@ -288,7 +288,7 @@ exhibitionPath =
 
 
 exhibitionConfirmParser : List String -> Dict.Dict String String -> Maybe ()
-exhibitionConfirmParser path query =
+exhibitionConfirmParser path _ =
     if path == [ exhibitionPath, exhibitionConfirmPath ] then
         Just ()
 
@@ -311,7 +311,7 @@ exhibitionConfirmPath =
 
 
 productParser : List String -> Dict.Dict String String -> Maybe Data.Product.Id
-productParser path query =
+productParser path _ =
     case path of
         [ "product", productIdString ] ->
             productIdString |> String.toInt |> Maybe.map Data.Product.idFromInt
@@ -330,7 +330,7 @@ productUrl productId =
 
 
 userParser : List String -> Dict.Dict String String -> Maybe Data.User.Id
-userParser path query =
+userParser path _ =
     case path of
         [ "user", userId ] ->
             Just (Data.User.idFromString userId)
@@ -354,7 +354,7 @@ userPath =
 
 
 aboutParser : List String -> Dict.Dict String String -> Maybe ()
-aboutParser path query =
+aboutParser path _ =
     if path == [ aboutPath ] then
         Just ()
 
@@ -373,7 +373,7 @@ aboutPath =
 
 
 aboutPrivacyPolicyParser : List String -> Dict.Dict String String -> Maybe ()
-aboutPrivacyPolicyParser path query =
+aboutPrivacyPolicyParser path _ =
     if path == [ aboutPath, aboutPrivacyPolicyPath ] then
         Just ()
 
@@ -396,7 +396,7 @@ aboutPrivacyPolicyPath =
 
 
 siteMapParser : List String -> Dict.Dict String String -> Maybe ()
-siteMapParser path query =
+siteMapParser path _ =
     if path == [ siteMapPath ] then
         Just ()
 

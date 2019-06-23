@@ -3,7 +3,7 @@ module Page.About exposing (Model, aboutModel, privacyPolicyModel, view)
 import Html
 import Html.Attributes
 import SiteMap
-import Tab
+import BasicParts
 
 
 type Model
@@ -21,12 +21,12 @@ privacyPolicyModel =
     PrivacyPolicy
 
 
-view : Model -> { title : String, tab : Tab.Tab msg, html : List (Html.Html msg) }
+view : Model -> { title : String, tab : BasicParts.Tab msg, html : List (Html.Html msg) }
 view model =
     case model of
         About ->
             { title = "つくマートについて"
-            , tab = Tab.none
+            , tab = BasicParts.tabNone
             , html =
                 [ Html.div
                     [ Html.Attributes.class "container" ]
@@ -44,7 +44,7 @@ view model =
 
         PrivacyPolicy ->
             { title = "プライバシーポリシー"
-            , tab = Tab.none
+            , tab = BasicParts.tabNone
             , html =
                 [ Html.div
                     [ Html.Attributes.class "container" ]

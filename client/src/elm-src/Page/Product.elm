@@ -25,7 +25,7 @@ import Page.Component.ProductEditor as ProductEditor
 import SiteMap
 import Svg
 import Svg.Attributes
-import Tab
+import BasicParts
 import Time
 
 
@@ -339,18 +339,18 @@ view :
     -> Bool
     -> Maybe ( Time.Posix, Time.Zone )
     -> Model
-    -> { title : Maybe String, tab : Tab.Tab Msg, html : List (Html.Html Msg) }
+    -> { title : Maybe String, tab : BasicParts.Tab Msg, html : List (Html.Html Msg) }
 view logInState isWideScreenMode nowMaybe model =
     case model of
         Loading _ ->
             { title = Just "商品詳細ページ 読み込み中"
-            , tab = Tab.none
+            , tab = BasicParts.tabNone
             , html = [ Html.text "読み込み中" ]
             }
 
         WaitNewData { product } ->
             { title = Just (Product.getName product)
-            , tab = Tab.none
+            , tab = BasicParts.tabNone
             , html =
                 [ Html.div
                     [ Html.Attributes.class "container" ]
@@ -370,7 +370,7 @@ view logInState isWideScreenMode nowMaybe model =
 
         Normal { product, sending } ->
             { title = Just (Product.getName product)
-            , tab = Tab.none
+            , tab = BasicParts.tabNone
             , html =
                 [ Html.div
                     [ Html.Attributes.class "container" ]
@@ -408,7 +408,7 @@ view logInState isWideScreenMode nowMaybe model =
 
         Edit { editorModel, beforeProduct } ->
             { title = Just (Product.getName beforeProduct)
-            , tab = Tab.none
+            , tab = BasicParts.tabNone
             , html =
                 [ Html.div
                     [ Html.Attributes.class "container" ]
@@ -436,7 +436,7 @@ view logInState isWideScreenMode nowMaybe model =
 
         Confirm { product } ->
             { title = Just (Product.getName product)
-            , tab = Tab.none
+            , tab = BasicParts.tabNone
             , html =
                 [ Html.div
                     [ Html.Attributes.class "container" ]

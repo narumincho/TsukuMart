@@ -20,7 +20,7 @@ import Html.Events
 import Html.Keyed
 import Json.Decode
 import Page.Component.University as CompUniversity
-import Tab
+import BasicParts
 
 
 type Model
@@ -170,7 +170,7 @@ update msg model =
 
 {-| 新規登録画面の表示
 -}
-view : Model -> { title : Maybe String, tab : Tab.Tab Msg, html : List (Html.Html Msg) }
+view : Model -> { title : Maybe String, tab : BasicParts.Tab Msg, html : List (Html.Html Msg) }
 view userSignUpPage =
     let
         ( tabText, mainView ) =
@@ -185,7 +185,7 @@ view userSignUpPage =
                     ( "認証メールの送信をしました", sentSingUpDataView emailAddress )
     in
     { title = Just "新規登録"
-    , tab = Tab.single tabText
+    , tab = BasicParts.tabSingle tabText
     , html =
         [ Html.div
             [ Html.Attributes.class "container" ]

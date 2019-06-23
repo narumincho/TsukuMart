@@ -26,7 +26,6 @@ import Page.SiteMap
 import Page.SoldProducts
 import Page.User
 import SiteMap
-import Tab
 import Task
 import Time
 import Url
@@ -1252,18 +1251,27 @@ mainViewAndMainTab logInState page isWideScreenMode nowMaybe =
             titleAndTabDataAndMainView logInState isWideScreenMode nowMaybe page
     in
     ( title
-    , [ Tab.view isWideScreenMode tab
+    , [ BasicParts.tabView isWideScreenMode tab
       , Html.div
-            (if Tab.isNone tab then
-                [ Html.Attributes.classList
-                    [ ( "mainView-noMainTab", True ), ( "mainView-wide-noMainTab", isWideScreenMode ) ]
-                ]
+            [ Html.Attributes.style "padding"
+                ((if BasicParts.isTabNone tab then
+                    "4"
 
-             else
-                [ Html.Attributes.classList
-                    [ ( "mainView", True ), ( "mainView-wide", isWideScreenMode ) ]
-                ]
-            )
+                  else
+                    "7"
+                 )
+                    ++ "rem 0 0 "
+                    ++ (if isWideScreenMode then
+                            "20rem"
+
+                        else
+                            "0"
+                       )
+                )
+            , Html.Attributes.style "word-wrap" "break-word"
+            , Html.Attributes.style "overflow-x" "hidden"
+            , Html.Attributes.style "-webkit-tap-highlight-color" "transparent"
+            ]
             html
       ]
     )
@@ -1276,7 +1284,7 @@ titleAndTabDataAndMainView :
     -> Page
     ->
         { title : String
-        , tab : Tab.Tab Msg
+        , tab : BasicParts.Tab Msg
         , html : List (Html.Html Msg)
         }
 titleAndTabDataAndMainView logInState isWideScreenMode nowMaybe page =
@@ -1336,8 +1344,8 @@ titleAndTabDataAndMainView logInState isWideScreenMode nowMaybe page =
 
 mapPageData :
     (eachPageMsg -> Msg)
-    -> { title : Maybe String, tab : Tab.Tab eachPageMsg, html : List (Html.Html eachPageMsg) }
-    -> { title : String, tab : Tab.Tab Msg, html : List (Html.Html Msg) }
+    -> { title : Maybe String, tab : BasicParts.Tab eachPageMsg, html : List (Html.Html eachPageMsg) }
+    -> { title : String, tab : BasicParts.Tab Msg, html : List (Html.Html Msg) }
 mapPageData f { title, tab, html } =
     { title =
         case title of
@@ -1346,7 +1354,7 @@ mapPageData f { title, tab, html } =
 
             Nothing ->
                 "つくマート"
-    , tab = tab |> Tab.map f
+    , tab = tab |> BasicParts.tabMap f
     , html = html |> List.map (Html.map f)
     }
 
@@ -1354,8 +1362,7 @@ mapPageData f { title, tab, html } =
 messageView : String -> Html.Html msg
 messageView message =
     Html.div
-        [ Html.Attributes.class "message"
-        ]
+        [ Html.Attributes.class "message" ]
         [ Html.text message ]
 
 

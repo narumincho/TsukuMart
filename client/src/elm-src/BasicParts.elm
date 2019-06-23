@@ -1,13 +1,19 @@
 module BasicParts exposing
     ( MenuModel
     , Msg
+    , Tab
     , closeMenu
     , header
     , initMenuModel
     , menuUpdate
     , menuView
     , narrowScreenModeInit
-    )
+    , tabMap
+    , tabMulti
+    , tabNone
+    , tabSingle
+    , tabView
+    , isTabNone)
 
 import Data.LogInState
 import Data.User
@@ -467,3 +473,145 @@ menuAccount logInState =
                     [ Html.Attributes.class "menu-account-a-name" ]
                     [ Html.text (Data.User.withProfileGetDisplayName userWithProfile) ]
                 ]
+
+
+type Tab msg
+    = Multi (List ( String, msg )) Int
+    | Single String
+    | None
+
+
+tabMulti : { textAndMsgList : List ( String, msg ), selectIndex : Int } -> Tab msg
+tabMulti { textAndMsgList, selectIndex } =
+    Multi textAndMsgList selectIndex
+
+
+tabSingle : String -> Tab msg
+tabSingle =
+    Single
+
+
+tabNone : Tab msg
+tabNone =
+    None
+
+
+tabMap : (a -> b) -> Tab a -> Tab b
+tabMap f tab =
+    case tab of
+        Multi list selectIndex ->
+            Multi
+                (list
+                    |> List.map (Tuple.mapSecond f)
+                )
+                selectIndex
+
+        Single string ->
+            Single string
+
+        None ->
+            None
+
+
+{-| タブの項目数
+-}
+toCount : Tab a -> Int
+toCount tab =
+    case tab of
+        Multi list _ ->
+            List.length list
+
+        Single _ ->
+            1
+
+        None ->
+            0
+
+
+isTabNone : Tab a -> Bool
+isTabNone tab =
+    tab == None
+
+
+{-| タブの見た目
+-}
+tabView : Bool -> Tab msg -> Html.Html msg
+tabView isWideScreenMode tabData =
+    Html.div
+        (Html.Attributes.classList
+            [ ( "mainTab", True ), ( "mainTab-wide", isWideScreenMode ) ]
+            :: (case tabData of
+                    None ->
+                        [ Html.Attributes.style "height" "0" ]
+
+                    _ ->
+                        [ Html.Attributes.style "grid-template-columns"
+                            (List.repeat (toCount tabData) "1fr" |> String.join " ")
+                        , Html.Attributes.style "height" "3rem"
+                        ]
+               )
+        )
+        (case tabData of
+            Multi tabList selectIndex ->
+                (tabList
+                    |> List.indexedMap
+                        (\index ( label, msg ) ->
+                            itemView
+                                (index == selectIndex)
+                                label
+                                (Just msg)
+                        )
+                )
+                    ++ [ selectLineView
+                            selectIndex
+                            (List.length tabList)
+                       ]
+
+            Single label ->
+                [ itemView
+                    True
+                    label
+                    Nothing
+                , selectLineView 0 1
+                ]
+
+            None ->
+                []
+        )
+
+
+itemView : Bool -> String -> Maybe msg -> Html.Html msg
+itemView isSelected label clickEventMaybe =
+    Html.div
+        (if isSelected then
+            [ Html.Attributes.class "mainTab-item-select" ]
+
+         else
+            case clickEventMaybe of
+                Just clickEvent ->
+                    [ Html.Attributes.class "mainTab-item"
+                    , Html.Events.onClick clickEvent
+                    ]
+
+                Nothing ->
+                    [ Html.Attributes.class "mainTab-item" ]
+        )
+        [ Html.text label ]
+
+
+{-| タブの下線
+
+  - index : 何番目のタブを選択しているか
+  - count : 全部で何個のタブがあるか
+
+-}
+selectLineView : Int -> Int -> Html.Html msg
+selectLineView index count =
+    Html.div [ Html.Attributes.class "mainTab-selectLineArea" ]
+        [ Html.div
+            [ Html.Attributes.class "mainTab-selectLine"
+            , Html.Attributes.style "left" ("calc( 100% /" ++ String.fromInt count ++ " * " ++ String.fromInt index ++ ")")
+            , Html.Attributes.style "width" ("calc( 100% / " ++ String.fromInt count ++ ")")
+            ]
+            []
+        ]

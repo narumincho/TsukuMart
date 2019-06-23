@@ -2,7 +2,7 @@ module Page.Search exposing (view)
 
 import Html
 import Html.Attributes
-import Tab
+import BasicParts
 
 
 type Model
@@ -10,10 +10,10 @@ type Model
     | ResultMode String
 
 
-view : Model -> ( String, Tab.Tab msg, List (Html.Html msg) )
+view : Model -> ( String, BasicParts.Tab msg, List (Html.Html msg) )
 view model =
     ( "検索"
-    , Tab.none
+    , BasicParts.tabNone
     , [ Html.div
             [ Html.Attributes.class "container" ]
             [ Html.text "検索" ]

@@ -10,7 +10,7 @@ module Page.LogIn exposing
 import Html
 import Html.Attributes
 import Page.Component.LogIn as LogInOrSignUp
-import Tab
+import BasicParts
 
 
 type Model
@@ -46,10 +46,10 @@ update msg (Model logInOrSignUpModel) =
 
 {-| ログイン画面
 -}
-view : Model -> { title : Maybe String, tab : Tab.Tab Msg, html : List (Html.Html Msg) }
+view : Model -> { title : Maybe String, tab : BasicParts.Tab Msg, html : List (Html.Html Msg) }
 view (Model logInOrSignUpModel) =
     { title = Just "ログイン"
-    , tab = Tab.single "ログイン"
+    , tab = BasicParts.tabSingle "ログイン"
     , html =
         [ Html.div
             [ Html.Attributes.class "container" ]

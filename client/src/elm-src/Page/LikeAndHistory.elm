@@ -7,7 +7,7 @@ import Html
 import Html.Attributes
 import Page.Component.LogIn as LogInOrSignUp
 import Page.Component.ProductList as ProductList
-import Tab
+import BasicParts
 import Utility
 
 
@@ -215,11 +215,11 @@ view :
     LogInState.LogInState
     -> Bool
     -> Model
-    -> { title : Maybe String, tab : Tab.Tab Msg, html : List (Html.Html Msg) }
+    -> { title : Maybe String, tab : BasicParts.Tab Msg, html : List (Html.Html Msg) }
 view logInState isWideScreenMode (Model rec) =
     { title = Just "いいね・閲覧した商品"
     , tab =
-        Tab.multi
+        BasicParts.tabMulti
             { textAndMsgList =
                 [ ( "いいね", SelectTab TabLike ), ( "閲覧履歴", SelectTab TabHistory ) ]
             , selectIndex =
