@@ -8,14 +8,15 @@ import * as logInWithTwitter from "./twitterLogIn";
 import * as type from "./type";
 import * as utilUrl from "./util/url";
 
+const domain = "tsukumart-f0971.web.app";
 /**
  * アクセストークンとリフレッシュトークンが含まれたURLを作成
  * @param refreshToken リフレッシュトークン
  * @param accessToken アクセストークン
  */
 const tokenUrl = (refreshToken: string, accessToken: string): URL =>
-    utilUrl.fromString(
-        "tsukumart-f0971.web.app",
+    utilUrl.fromStringWithHash(
+        domain,
         new Map([["refreshToken", refreshToken], ["accessToken", accessToken]])
     );
 
@@ -25,20 +26,15 @@ const tokenUrl = (refreshToken: string, accessToken: string): URL =>
  * @param name
  * @param imageUrl
  */
-const signUpUrl = (
-    sendEmailToken: string,
-    name: string,
-    imageUrl: URL
-): URL => {
-    return utilUrl.fromString(
-        "tsukumart-f0971.web.app/signup",
+const signUpUrl = (sendEmailToken: string, name: string, imageUrl: URL): URL =>
+    utilUrl.fromStringWithHash(
+        domain + "/signup",
         new Map([
             ["sendEmailToken", sendEmailToken],
             ["name", name],
             ["imageUrl", imageUrl.toString()]
         ])
     );
-};
 
 /* =====================================================================
  *                              Google
@@ -55,7 +51,7 @@ export const googleLogInReceiver = async (
         console.log(
             "Googleからcodeかstateが送られて来なかった。ユーザーがキャンセルした?"
         );
-        response.redirect("https://tsukumart-f0971.web.app/");
+        response.redirect(utilUrl.fromString(domain).toString());
         return;
     }
     if (!(await database.checkExistsLogInState(state, "google"))) {
@@ -70,7 +66,7 @@ export const googleLogInReceiver = async (
     const googleData = googleTokenResponseToData(
         await axios.post(
             utilUrl
-                .fromString(
+                .fromStringWithQuery(
                     "www.googleapis.com/oauth2/v4/token",
                     new Map([
                         ["grant_type", "authorization_code"],
@@ -194,7 +190,7 @@ export const gitHubLogInReceiver = async (
         console.log(
             "GitHubからcodeかstateが送られて来なかった。ユーザーがキャンセルした?"
         );
-        response.redirect("https://tsukumart-f0971.web.app/");
+        response.redirect(utilUrl.fromString(domain).toString());
         return;
     }
     if (!database.checkExistsLogInState(state, "gitHub")) {
@@ -293,7 +289,7 @@ export const twitterLogInReceiver = async (
         console.error(
             "Twitterからoauth_tokenかoauth_verifierが送られて来なかった。ユーザーがキャンセルした?"
         );
-        response.redirect("https://tsukumart-f0971.web.app/");
+        response.redirect(utilUrl.fromString(domain).toString());
         return;
     }
     const twitterData = await logInWithTwitter.authn(
@@ -374,7 +370,7 @@ export const lineLogInReceiver = async (
         console.log(
             "LINEからcodeかstateが送られて来なかった。ユーザーがキャンセルした?"
         );
-        response.redirect("https://tsukumart-f0971.web.app/");
+        response.redirect(utilUrl.fromString(domain).toString());
         return;
     }
     if (!(await database.checkExistsLogInState(state, "line"))) {

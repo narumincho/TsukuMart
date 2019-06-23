@@ -3,7 +3,7 @@ module BasicParts exposing
     , globalNavigation
     , header
     , isTabNone
-    , menuView
+    , menu
     , tabMap
     , tabMulti
     , tabNone
@@ -339,102 +339,163 @@ informationIcon =
 {- ================= menu ================ -}
 
 
-menuView : Data.LogInState.LogInState -> Html.Html msg
-menuView logInState =
+menu : Data.LogInState.LogInState -> Html.Html msg
+menu logInState =
     Html.div
-        [ Html.Attributes.class "menu-wide" ]
-        ((case logInState of
+        [ Html.Attributes.class "menu" ]
+        (case logInState of
             Data.LogInState.None ->
-                [ Html.div
-                    [ Html.Attributes.class "menu-account" ]
-                    [ Html.div [ Html.Attributes.class "menu-noLogin" ] [ Html.text "ログインしていません" ]
-                    , Html.div [ Html.Attributes.class "menu-logInSignUpButtonContainer" ]
-                        [ Html.a
-                            [ Html.Attributes.class "menu-logInButton"
-                            , Html.Attributes.href SiteMap.logInUrl
-                            ]
-                            [ Html.text "ログイン/新規登録" ]
-                        ]
-                    ]
-                ]
+                menuLogInStateNone
 
-            _ ->
-                []
-         )
-            ++ [ Html.a
-                    [ Html.Attributes.class "menu-item"
-                    , Html.Attributes.href SiteMap.homeUrl
-                    ]
-                    [ homeIcon, Html.text "ホーム" ]
-               , Html.a
-                    [ Html.Attributes.class "menu-item" ]
-                    [ searchIcon, Html.text "検索" ]
-               , Html.a
-                    [ Html.Attributes.class "menu-item"
-                    ]
-                    [ notificationsIcon, Html.text "通知" ]
-               , case logInState of
-                    Data.LogInState.None ->
-                        Html.a
-                            [ Html.Attributes.class "menu-item" ]
-                            [ Html.text "ユーザー" ]
+            Data.LogInState.LoadingProfile _ ->
+                menuLogInStateLoadingProfile
 
-                    Data.LogInState.LoadingProfile _ ->
-                        Html.a
-                            [ Html.Attributes.class "menu-item" ]
-                            [ Html.text "プロフィール情報を読み込み中" ]
-
-                    Data.LogInState.Ok { userWithProfile } ->
-                        Html.a
-                            [ Html.Attributes.href
-                                (SiteMap.userUrl
-                                    (Data.User.withProfileGetId userWithProfile)
-                                )
-                            , Html.Attributes.class "menu-item"
-                            ]
-                            [ Html.img
-                                [ Html.Attributes.style "width" "6rem"
-                                , Html.Attributes.style "height" "6rem"
-                                , Html.Attributes.style "border-radius" "50%"
-                                , Html.Attributes.src (Data.User.withProfileGetImageUrl userWithProfile)
-                                ]
-                                []
-                            , Html.div
-                                [ Html.Attributes.class "menu-account-a-name" ]
-                                [ Html.text (Data.User.withProfileGetDisplayName userWithProfile) ]
-                            ]
-               , Html.a
-                    [ Html.Attributes.class "menu-item"
-                    , Html.Attributes.href SiteMap.likeHistoryUrl
-                    ]
-                    [ Html.text "いいねした商品" ]
-               , Html.a
-                    [ Html.Attributes.class "menu-item"
-                    , Html.Attributes.href SiteMap.likeHistoryUrl
-                    ]
-                    [ Html.text "閲覧した商品" ]
-               , Html.a
-                    [ Html.Attributes.class "menu-item"
-                    , Html.Attributes.href SiteMap.soldProductsUrl
-                    ]
-                    [ Html.text "出品した商品" ]
-               , Html.a
-                    [ Html.Attributes.class "menu-item"
-                    , Html.Attributes.href SiteMap.boughtProductsUrl
-                    ]
-                    [ Html.text "購入した商品" ]
-               , Html.a
-                    [ Html.Attributes.class "menu-item"
-                    , Html.Attributes.href SiteMap.likeHistoryUrl
-                    ]
-                    [ Html.text "コメントをした商品" ]
-               , Html.a
-                    [ Html.Attributes.class "menu-item"
-                    , Html.Attributes.href SiteMap.aboutUrl
-                    ]
-                    [ informationIcon, Html.text "つくマートについて" ]
-               ]
+            Data.LogInState.Ok { userWithProfile } ->
+                menuLogInStateOk userWithProfile
         )
+
+
+menuLogInStateNone : List (Html.Html msg)
+menuLogInStateNone =
+    [ Html.div
+        [ Html.Attributes.class "menu-account" ]
+        [ Html.div [ Html.Attributes.class "menu-logInSignUpButtonContainer" ]
+            [ Html.a
+                [ Html.Attributes.class "menu-logInButton"
+                , Html.Attributes.href SiteMap.logInUrl
+                ]
+                [ Html.text "ログイン / 新規登録" ]
+            ]
+        ]
+    , Html.a
+        [ Html.Attributes.class "menu-item"
+        , Html.Attributes.href SiteMap.homeUrl
+        ]
+        [ homeIcon, Html.text "ホーム" ]
+    , Html.a
+        [ Html.Attributes.class "menu-item" ]
+        [ searchIcon, Html.text "検索" ]
+    , Html.a
+        [ Html.Attributes.class "menu-item"
+        , Html.Attributes.href SiteMap.aboutUrl
+        ]
+        [ informationIcon, Html.text "つくマートについて" ]
+    ]
+
+
+menuLogInStateLoadingProfile : List (Html.Html msg)
+menuLogInStateLoadingProfile =
+    [ Html.a
+        [ Html.Attributes.class "menu-item"
+        , Html.Attributes.href SiteMap.homeUrl
+        ]
+        [ homeIcon, Html.text "ホーム" ]
+    , Html.a
+        [ Html.Attributes.class "menu-item" ]
+        [ searchIcon, Html.text "検索" ]
+    , Html.a
+        [ Html.Attributes.class "menu-item"
+        ]
+        [ notificationsIcon, Html.text "通知" ]
+    , Html.a
+        [ Html.Attributes.class "menu-item" ]
+        [ Html.text "プロフィール情報を読み込み中" ]
+    , Html.a
+        [ Html.Attributes.class "menu-item"
+        , Html.Attributes.href SiteMap.likeHistoryUrl
+        ]
+        [ Html.text "いいねした商品" ]
+    , Html.a
+        [ Html.Attributes.class "menu-item"
+        , Html.Attributes.href SiteMap.likeHistoryUrl
+        ]
+        [ Html.text "閲覧した商品" ]
+    , Html.a
+        [ Html.Attributes.class "menu-item"
+        , Html.Attributes.href SiteMap.soldProductsUrl
+        ]
+        [ Html.text "出品した商品" ]
+    , Html.a
+        [ Html.Attributes.class "menu-item"
+        , Html.Attributes.href SiteMap.boughtProductsUrl
+        ]
+        [ Html.text "購入した商品" ]
+    , Html.a
+        [ Html.Attributes.class "menu-item"
+        , Html.Attributes.href SiteMap.likeHistoryUrl
+        ]
+        [ Html.text "コメントをした商品" ]
+    , Html.a
+        [ Html.Attributes.class "menu-item"
+        , Html.Attributes.href SiteMap.aboutUrl
+        ]
+        [ informationIcon, Html.text "つくマートについて" ]
+    ]
+
+
+menuLogInStateOk : Data.User.WithProfile -> List (Html.Html msg)
+menuLogInStateOk userWithProfile =
+    [ Html.a
+        [ Html.Attributes.class "menu-item"
+        , Html.Attributes.href SiteMap.homeUrl
+        ]
+        [ homeIcon, Html.text "ホーム" ]
+    , Html.a
+        [ Html.Attributes.class "menu-item" ]
+        [ searchIcon, Html.text "検索" ]
+    , Html.a
+        [ Html.Attributes.class "menu-item"
+        ]
+        [ notificationsIcon, Html.text "通知" ]
+    , Html.a
+        [ Html.Attributes.href
+            (SiteMap.userUrl
+                (Data.User.withProfileGetId userWithProfile)
+            )
+        , Html.Attributes.class "menu-item"
+        ]
+        [ Html.img
+            [ Html.Attributes.style "width" "6rem"
+            , Html.Attributes.style "height" "6rem"
+            , Html.Attributes.style "border-radius" "50%"
+            , Html.Attributes.src (Data.User.withProfileGetImageUrl userWithProfile)
+            ]
+            []
+        , Html.div
+            [ Html.Attributes.class "menu-account-a-name" ]
+            [ Html.text (Data.User.withProfileGetDisplayName userWithProfile) ]
+        ]
+    , Html.a
+        [ Html.Attributes.class "menu-item"
+        , Html.Attributes.href SiteMap.likeHistoryUrl
+        ]
+        [ Html.text "いいねした商品" ]
+    , Html.a
+        [ Html.Attributes.class "menu-item"
+        , Html.Attributes.href SiteMap.likeHistoryUrl
+        ]
+        [ Html.text "閲覧した商品" ]
+    , Html.a
+        [ Html.Attributes.class "menu-item"
+        , Html.Attributes.href SiteMap.soldProductsUrl
+        ]
+        [ Html.text "出品した商品" ]
+    , Html.a
+        [ Html.Attributes.class "menu-item"
+        , Html.Attributes.href SiteMap.boughtProductsUrl
+        ]
+        [ Html.text "購入した商品" ]
+    , Html.a
+        [ Html.Attributes.class "menu-item"
+        , Html.Attributes.href SiteMap.likeHistoryUrl
+        ]
+        [ Html.text "コメントをした商品" ]
+    , Html.a
+        [ Html.Attributes.class "menu-item"
+        , Html.Attributes.href SiteMap.aboutUrl
+        ]
+        [ informationIcon, Html.text "つくマートについて" ]
+    ]
 
 
 type Tab msg

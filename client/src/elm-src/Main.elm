@@ -1215,7 +1215,7 @@ view (Model { page, wideScreen, message, logInState, now }) =
         [ BasicParts.header wideScreen
         ]
             ++ (if wideScreen then
-                    [ BasicParts.menuView logInState ]
+                    [ BasicParts.menu logInState ]
 
                 else
                     []
@@ -1239,6 +1239,7 @@ view (Model { page, wideScreen, message, logInState, now }) =
                         )
                     , Html.Attributes.style "word-wrap" "break-word"
                     , Html.Attributes.style "overflow-x" "hidden"
+                    , Html.Attributes.style "width" "100%"
                     ]
                     html
                ]
@@ -1331,7 +1332,7 @@ mapPageData f { title, tab, html } =
     { title =
         case title of
             Just titleText ->
-                titleText ++ "| つくマート"
+                titleText ++ " | つくマート"
 
             Nothing ->
                 "つくマート"

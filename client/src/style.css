@@ -88,102 +88,16 @@ header {
 }
 
 /*=====================================
-        Menu 左サイドに表示するメニュー
+  Menu PC画面用に左サイドに表示するメニュー
 =====================================*/
 
-.menu-list {
-    position: fixed;
-    width: 80%;
-    height: 100%;
-    top: 0;
-    background-color: #ddd;
-    z-index: 2;
-    animation-duration: 300ms;
-    animation-timing-function: ease;
-    animation-delay: 0ms;
-    animation-iteration-count: 1;
-    animation-direction: normal;
-    animation-fill-mode: forwards;
-    display: flex;
-    flex-direction: column;
-}
-
-.menu-wide {
+.menu {
     width: 20rem;
     height: calc(100% - 4rem);
     background-color: #ddd;
     position: fixed;
     top: 4rem;
     left: 0;
-}
-
-.menu-list-open {
-    animation-name: menu-open;
-}
-
-.menu-list-close {
-    animation-name: menu-close;
-    pointer-events: none;
-}
-
-@keyframes menu-open {
-    0% {
-        left: -80%;
-    }
-    100% {
-        left: 0;
-    }
-}
-
-@keyframes menu-close {
-    0% {
-        left: 0;
-    }
-    100% {
-        left: -80%;
-    }
-}
-
-.menu-shadow {
-    position: fixed;
-    width: 100%;
-    height: 100%;
-    top: 0;
-    left: 0;
-    z-index: 2;
-    animation-duration: 300ms;
-    animation-timing-function: ease;
-    animation-delay: 0ms;
-    animation-iteration-count: 1;
-    animation-direction: normal;
-    animation-fill-mode: forwards;
-}
-
-.menu-shadow-appear {
-    animation-name: shadow-appear;
-}
-
-.menu-shadow-disappear {
-    animation-name: shadow-disappear;
-    pointer-events: none;
-}
-
-@keyframes shadow-appear {
-    0% {
-        background-color: rgba(0, 0, 0, 0);
-    }
-    100% {
-        background-color: rgba(0, 0, 0, 0.7);
-    }
-}
-
-@keyframes shadow-disappear {
-    0% {
-        background-color: rgba(0, 0, 0, 0.7);
-    }
-    100% {
-        background-color: rgba(0, 0, 0, 0);
-    }
 }
 
 .menu-account {

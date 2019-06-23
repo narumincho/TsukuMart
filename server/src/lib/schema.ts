@@ -642,7 +642,7 @@ const getLogInUrl = makeQueryOrMutationField<
         const accountService = args.service;
         switch (accountService) {
             case "google": {
-                return UtilUrl.fromString(
+                return UtilUrl.fromStringWithQuery(
                     "accounts.google.com/o/oauth2/v2/auth",
                     new Map([
                         ["response_type", "code"],
@@ -657,7 +657,7 @@ const getLogInUrl = makeQueryOrMutationField<
                 );
             }
             case "gitHub": {
-                return UtilUrl.fromString(
+                return UtilUrl.fromStringWithQuery(
                     "github.com/login/oauth/authorize",
                     new Map([
                         ["response_type", "code"],
@@ -681,7 +681,7 @@ const getLogInUrl = makeQueryOrMutationField<
                 return url;
             }
             case "line": {
-                return UtilUrl.fromString(
+                return UtilUrl.fromStringWithQuery(
                     "access.line.me/oauth2/v2.1/authorize",
                     new Map([
                         ["response_type", "code"],
@@ -737,6 +737,7 @@ const sendConformEmail = makeQueryOrMutationField<
         }
     },
     resolve: async (source, args): Promise<type.Unit> => {
+        console.log("schemaのsendConformEmailのリゾルバが呼ばれた");
         const universityUnsafe = args.university;
         const logInAccountServiceId = verifySendEmailToken(args.sendEmailToken);
         // if (!args.email.match(/s(\d{7})@[a-zA-Z0-9]+\.tsukuba\.ac\.jp/)) {
@@ -746,6 +747,7 @@ const sendConformEmail = makeQueryOrMutationField<
         const userBeforeInputData = await database.getUserInUserBeforeInputData(
             logInAccountServiceId
         );
+        console.log("前に入力したデータを受け取った");
         let imageUrl: URL;
         if (args.image !== null && args.image !== undefined) {
             imageUrl = await database.saveUserImage(
@@ -757,6 +759,7 @@ const sendConformEmail = makeQueryOrMutationField<
             imageUrl = userBeforeInputData.imageUrl;
         }
 
+        console.log(`画像のURLを取得 ${imageUrl}`);
         const university = type.universityFromInternal(universityUnsafe);
         await database.addUserBeforeEmailVerificationAndSendEmail(
             logInAccountServiceId,

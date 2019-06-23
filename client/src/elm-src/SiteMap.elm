@@ -44,7 +44,7 @@ type UrlParserInitResult
 urlParserInit : Url.Url -> ( Maybe { refreshToken : Api.Token, accessToken : Api.Token }, Maybe UrlParserInitResult )
 urlParserInit url =
     let
-        { path, query } =
+        { path, query, hash } =
             url
                 |> Url.toString
                 |> Erl.parse
