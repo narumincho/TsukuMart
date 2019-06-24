@@ -68,25 +68,21 @@ export const api = functions
         );
     });
 
-/** Googleでログインをしたあとのリダイレクト先 */
-export const googleLogInReceiver = functions
+/** ソーシャルログインをしたあとのリダイレクト先 */
+export const logInReceiver = functions
     .region("asia-northeast1")
-    .https.onRequest(signUpCallback.googleLogInReceiver);
-
-/** GitHubでログインをしたあとのリダイレクト先 */
-export const gitHubLogInReceiver = functions
-    .region("asia-northeast1")
-    .https.onRequest(signUpCallback.gitHubLogInReceiver);
-
-/** Twitterでログインしたあとのリダイレクト先 */
-export const twitterLogInReceiver = functions
-    .region("asia-northeast1")
-    .https.onRequest(signUpCallback.twitterLogInReceiver);
-
-/** LINEでログインしたあとのリダイレクト先 */
-export const lineLogInReceiver = functions
-    .region("asia-northeast1")
-    .https.onRequest(signUpCallback.lineLogInReceiver);
+    .https.onRequest(async (request, response) => {
+        switch (request.path) {
+            case "/google":
+                await signUpCallback.googleLogInReceiver(request, response);
+            case "/gitHub":
+                await signUpCallback.gitHubLogInReceiver(request, response);
+            case "/twitter":
+                await signUpCallback.twitterLogInReceiver(request, response);
+            case "/line":
+                await signUpCallback.lineLogInReceiver(request, response);
+        }
+    });
 
 /* =====================================================================
  *                       ユーザーの画像などを返す

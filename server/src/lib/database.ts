@@ -319,13 +319,6 @@ const createRefreshId = (): string => {
 */
 
 /**
- * 指定したIDのユーザーがいるかどうか調べる
- * @param id
- */
-export const existsUser = (id: string): Promise<boolean> =>
-    databaseLow.existsUser(id);
-
-/**
  * 指定したユーザーの情報を取得する
  * @param id ユーザーID
  */

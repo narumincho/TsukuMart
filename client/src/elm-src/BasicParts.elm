@@ -63,6 +63,7 @@ backArrow =
         [ Html.Attributes.style "width" "32px"
         , Html.Attributes.style "height" "32px"
         , Html.Attributes.style "padding" "16px"
+        , Html.Attributes.style "cursor" "pointer"
         , Html.Events.onClick Back
         ]
         [ Svg.svg

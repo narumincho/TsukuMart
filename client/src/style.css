@@ -799,7 +799,7 @@ header {
 
 .exhibitionButton {
     position: fixed;
-    bottom: 3rem;
+    bottom: 5rem;
     right: 1rem;
     border-radius: 50%;
     background-color: orange;
