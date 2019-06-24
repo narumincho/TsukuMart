@@ -21,6 +21,7 @@ import Page.Home
 import Page.LikeAndHistory
 import Page.LogIn
 import Page.Product
+import Page.Search
 import Page.SignUp
 import Page.SiteMap
 import Page.SoldProducts
@@ -85,7 +86,8 @@ type Page
     | PageBoughtProducts Page.BoughtProducts.Model
     | PageExhibition Page.Exhibition.Model
     | PageProduct Page.Product.Model
-    | PageProfile Page.User.Model
+    | PageUser Page.User.Model
+    | PageSearch Page.Search.Model
     | PageAbout Page.About.Model
     | PageSiteMapXml
 
@@ -106,6 +108,7 @@ type Msg
     | LikeProductResponse Data.Product.Id (Result () ())
     | UnlikeProductResponse Data.Product.Id (Result () ())
     | ChangeProfileResponse (Result () Data.User.WithProfile)
+    | HistoryBack
     | HomePageMsg Page.Home.Msg
     | LikeAndHistoryPageMsg Page.LikeAndHistory.Msg
     | BoughtProductsPageMsg Page.BoughtProducts.Msg
@@ -113,7 +116,8 @@ type Msg
     | LogInPageMsg Page.LogIn.Msg
     | ExhibitionPageMsg Page.Exhibition.Msg
     | SignUpMsg Page.SignUp.Msg
-    | ProfilePageMsg Page.User.Msg
+    | SearchPageMsg Page.Search.Msg
+    | UserPageMsg Page.User.Msg
     | ProductPageMsg Page.Product.Msg
     | GetNowTime (Result () ( Time.Posix, Time.Zone ))
     | LogInOrSignUpUrlResponse (Result String Url.Url)
@@ -237,8 +241,14 @@ urlParserInitResultToPageAndCmd logInState page =
         SiteMap.InitUser userId ->
             Page.User.initModelFromId logInState userId
                 |> Tuple.mapBoth
-                    PageProfile
-                    profilePageEmitListToCmd
+                    PageUser
+                    userPageEmitListToCmd
+
+        SiteMap.InitSearch condition ->
+            Page.Search.initModel condition
+                |> Tuple.mapBoth
+                    PageSearch
+                    searchPageEmitListToCmd
 
         SiteMap.InitSiteMap ->
             ( PageSiteMapXml, Cmd.none )
@@ -500,18 +510,34 @@ update msg (Model rec) =
                     , Cmd.none
                     )
 
-        ProfilePageMsg profileMsg ->
+        SearchPageMsg pageMsg ->
             case rec.page of
-                PageProfile profileModel ->
+                PageSearch pageModel ->
+                    let
+                        ( newModel, emitList ) =
+                            Page.Search.update pageMsg pageModel
+                    in
+                    ( Model { rec | page = PageSearch newModel }
+                    , searchPageEmitListToCmd emitList
+                    )
+
+                _ ->
+                    ( Model rec
+                    , Cmd.none
+                    )
+
+        UserPageMsg profileMsg ->
+            case rec.page of
+                PageUser profileModel ->
                     let
                         ( newModel, emitList ) =
                             Page.User.update rec.logInState profileMsg profileModel
                     in
                     ( Model
                         { rec
-                            | page = PageProfile newModel
+                            | page = PageUser newModel
                         }
-                    , profilePageEmitListToCmd emitList
+                    , userPageEmitListToCmd emitList
                     )
 
                 _ ->
@@ -557,7 +583,7 @@ update msg (Model rec) =
             case response of
                 Ok newProfile ->
                     case rec.page of
-                        PageProfile profileModel ->
+                        PageUser profileModel ->
                             let
                                 ( newModel, emitList ) =
                                     profileModel
@@ -568,9 +594,9 @@ update msg (Model rec) =
                                     | logInState =
                                         rec.logInState
                                             |> Data.LogInState.addUserWithProfile newProfile
-                                    , page = PageProfile newModel
+                                    , page = PageUser newModel
                                 }
-                            , profilePageEmitListToCmd emitList
+                            , userPageEmitListToCmd emitList
                             )
 
                         _ ->
@@ -583,6 +609,11 @@ update msg (Model rec) =
                         { rec | message = Just "プロフィール更新に失敗しました" }
                     , Cmd.none
                     )
+
+        HistoryBack ->
+            ( Model rec
+            , Browser.Navigation.back rec.key 1
+            )
 
         HomePageMsg pageMsg ->
             case rec.page of
@@ -800,8 +831,8 @@ signUpPageEmitListToCmd =
                 Page.SignUp.EmitAddEventListenerForUserImage idRecord ->
                     addEventListenerForUserImage idRecord
 
-                Page.SignUp.EmitReplaceText { id, text } ->
-                    replaceText { id = id, text = text }
+                Page.SignUp.EmitReplaceElementText idAndText ->
+                    replaceText idAndText
 
                 Page.SignUp.EmitSignUp signUpRequest ->
                     Api.sendConfirmEmail signUpRequest (\response -> SignUpConfirmResponse response)
@@ -816,8 +847,19 @@ signUpPageEmitListToCmd =
         >> Cmd.batch
 
 
-profilePageEmitListToCmd : List Page.User.Emit -> Cmd Msg
-profilePageEmitListToCmd =
+searchPageEmitListToCmd : List Page.Search.Emit -> Cmd Msg
+searchPageEmitListToCmd =
+    List.map
+        (\emit ->
+            case emit of
+                Page.Search.EmitReplaceElementText idAndText ->
+                    replaceText idAndText
+        )
+        >> Cmd.batch
+
+
+userPageEmitListToCmd : List Page.User.Emit -> Cmd Msg
+userPageEmitListToCmd =
     List.map
         (\emit ->
             case emit of
@@ -827,9 +869,8 @@ profilePageEmitListToCmd =
                 Page.User.EmitChangeProfile token profile ->
                     Api.updateProfile token profile ChangeProfileResponse
 
-                Page.User.EmitReplaceElementText { id, text } ->
-                    replaceText
-                        { id = id, text = text }
+                Page.User.EmitReplaceElementText idAndText ->
+                    replaceText idAndText
 
                 Page.User.EmitUniversity e ->
                     universityEmitToCmd e
@@ -842,7 +883,7 @@ profilePageEmitListToCmd =
 
                 Page.User.EmitGetUserProfile userId ->
                     Api.getUserProfile userId
-                        (\e -> ProfilePageMsg (Page.User.MsgUserProfileResponse e))
+                        (\e -> UserPageMsg (Page.User.MsgUserProfileResponse e))
 
                 Page.User.EmitAddLogMessage log ->
                     Task.succeed ()
@@ -1042,8 +1083,14 @@ urlParserResultToPageAndCmd (Model rec) result =
         SiteMap.User userId ->
             Page.User.initModelFromId rec.logInState userId
                 |> Tuple.mapBoth
-                    PageProfile
-                    profilePageEmitListToCmd
+                    PageUser
+                    userPageEmitListToCmd
+
+        SiteMap.Search condition ->
+            Page.Search.initModel condition
+                |> Tuple.mapBoth
+                    PageSearch
+                    searchPageEmitListToCmd
 
         SiteMap.About ->
             ( PageAbout Page.About.aboutModel, Cmd.none )
@@ -1213,6 +1260,7 @@ view (Model { page, wideScreen, message, logInState, now }) =
     { title = title
     , body =
         [ BasicParts.header wideScreen
+            |> Html.map (always HistoryBack)
         ]
             ++ (if wideScreen then
                     [ BasicParts.menu logInState ]
@@ -1311,17 +1359,22 @@ titleAndTabDataAndMainView logInState isWideScreenMode nowMaybe page =
                 |> Page.Product.view logInState isWideScreenMode nowMaybe
                 |> mapPageData ProductPageMsg
 
-        PageProfile pageModel ->
+        PageUser pageModel ->
             pageModel
                 |> Page.User.view logInState
-                |> mapPageData ProfilePageMsg
+                |> mapPageData UserPageMsg
 
-        PageSiteMapXml ->
-            Page.SiteMap.view
+        PageSearch pageModel ->
+            pageModel
+                |> Page.Search.view
+                |> mapPageData SearchPageMsg
 
         PageAbout pageModel ->
             pageModel
                 |> Page.About.view
+
+        PageSiteMapXml ->
+            Page.SiteMap.view
 
 
 mapPageData :

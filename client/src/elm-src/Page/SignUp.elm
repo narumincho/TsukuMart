@@ -46,7 +46,7 @@ type Emit
     = EmitAddEventListenerForUserImage { labelId : String, inputId : String }
     | EmitSignUp Api.SignUpRequest
     | EmitByUniversityComp CompUniversity.Emit
-    | EmitReplaceText { id : String, text : String }
+    | EmitReplaceElementText { id : String, text : String }
     | EmitAddLogMessage String
 
 
@@ -72,7 +72,7 @@ initModel { name, imageUrl, sendEmailToken } =
         , sendEmailToken = sendEmailToken
         }
     , [ EmitAddEventListenerForUserImage { labelId = imageLabelId, inputId = imageInputId }
-      , EmitReplaceText
+      , EmitReplaceElementText
             { id = displayNameFormId
             , text = name
             }

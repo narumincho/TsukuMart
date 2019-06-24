@@ -10,6 +10,7 @@ module SiteMap exposing
     , likeHistoryUrl
     , logInUrl
     , productUrl
+    , searchUrl
     , siteMapXml
     , soldProductsUrl
     , urlParser
@@ -19,6 +20,7 @@ module SiteMap exposing
 
 import Api
 import Data.Product
+import Data.SearchCondition
 import Data.User
 import Dict
 import Erl
@@ -36,6 +38,7 @@ type UrlParserInitResult
     | InitExhibition
     | InitProduct Data.Product.Id
     | InitUser Data.User.Id
+    | InitSearch Data.SearchCondition.Condition
     | InitSiteMap
     | InitAbout
     | InitAboutPrivacyPolicy
@@ -49,11 +52,11 @@ urlParserInit url =
                 |> Url.toString
                 |> Erl.parse
 
-        fragment =
+        fragmentDict =
             (Erl.parse ("?" ++ hash)).query
                 |> Dict.fromList
     in
-    ( case ( fragment |> Dict.get "refreshToken", fragment |> Dict.get "accessToken" ) of
+    ( case ( fragmentDict |> Dict.get "refreshToken", fragmentDict |> Dict.get "accessToken" ) of
         ( Just refreshToken, Just accessToken ) ->
             Just
                 { refreshToken = Api.tokenFromString refreshToken
@@ -63,7 +66,7 @@ urlParserInit url =
         ( _, _ ) ->
             Nothing
     , [ homeParser |> parserMap (always InitHome)
-      , signUpParser fragment |> parserMap InitSignUp
+      , signUpParser fragmentDict |> parserMap InitSignUp
       , logInParser |> parserMap (always InitLogIn)
       , likeHistoryParser |> parserMap (always InitLikeAndHistory)
       , soldProductsParser |> parserMap (always InitExhibition)
@@ -71,6 +74,7 @@ urlParserInit url =
       , exhibitionParser |> parserMap (always InitExhibition)
       , productParser |> parserMap InitProduct
       , userParser |> parserMap InitUser
+      , searchParser fragmentDict |> parserMap InitSearch
       , siteMapParser |> parserMap (always InitSiteMap)
       , aboutParser |> parserMap (always InitAbout)
       , aboutPrivacyPolicyParser |> parserMap (always InitAboutPrivacyPolicy)
@@ -108,6 +112,7 @@ type UrlParserResult
     | ExhibitionConfirm
     | Product Data.Product.Id
     | User Data.User.Id
+    | Search Data.SearchCondition.Condition
     | SiteMap
     | About
     | AboutPrivacyPolicy
@@ -116,10 +121,14 @@ type UrlParserResult
 urlParser : Url.Url -> Maybe UrlParserResult
 urlParser url =
     let
-        { path } =
+        { path, hash } =
             url
                 |> Url.toString
                 |> Erl.parse
+
+        fragmentDict =
+            (Erl.parse ("?" ++ hash)).query
+                |> Dict.fromList
     in
     [ homeParser |> parserMap (always Home)
     , logInParser |> parserMap (always LogIn)
@@ -130,6 +139,7 @@ urlParser url =
     , exhibitionConfirmParser |> parserMap (always ExhibitionConfirm)
     , productParser |> parserMap Product
     , userParser |> parserMap User
+    , searchParser fragmentDict |> parserMap Search
     , siteMapParser |> parserMap (always SiteMap)
     , aboutParser |> parserMap (always About)
     , aboutPrivacyPolicyParser |> parserMap (always AboutPrivacyPolicy)
@@ -153,7 +163,7 @@ homeUrl =
 
 
 
-{- signup -}
+{- Sign Up -}
 
 
 signUpParser :
@@ -348,6 +358,41 @@ userUrl userId =
 userPath : String
 userPath =
     "user"
+
+
+
+{- search -}
+
+
+searchParser : Dict.Dict String String -> List String -> Maybe Data.SearchCondition.Condition
+searchParser fragment path =
+    if path == [ searchPath ] then
+        Just
+            (case fragment |> Dict.get "text" of
+                Just text ->
+                    Data.SearchCondition.ByText text
+
+                Nothing ->
+                    Data.SearchCondition.None
+            )
+
+    else
+        Nothing
+
+
+searchUrl : Data.SearchCondition.Condition -> String
+searchUrl condition =
+    case condition of
+        Data.SearchCondition.None ->
+            "searchPath"
+
+        Data.SearchCondition.ByText text ->
+            "searchPath#text=" ++ Url.percentEncode text
+
+
+searchPath : String
+searchPath =
+    "search"
 
 
 

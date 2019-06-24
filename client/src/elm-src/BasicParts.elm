@@ -1,5 +1,6 @@
 module BasicParts exposing
-    ( Tab
+    ( Msg(..)
+    , Tab
     , bottomNavigation
     , header
     , isTabNone
@@ -12,6 +13,7 @@ module BasicParts exposing
     )
 
 import Data.LogInState
+import Data.SearchCondition
 import Data.User
 import Html
 import Html.Attributes
@@ -22,11 +24,15 @@ import Svg
 import Svg.Attributes
 
 
+type Msg
+    = Back
+
+
 
 {- ================= header ================ -}
 
 
-header : Bool -> Html.Html msg
+header : Bool -> Html.Html Msg
 header isWideScreenMode =
     Html.header
         []
@@ -51,12 +57,13 @@ header isWideScreenMode =
         ]
 
 
-backArrow : Html.Html msg
+backArrow : Html.Html Msg
 backArrow =
     Html.div
         [ Html.Attributes.style "width" "32px"
         , Html.Attributes.style "height" "32px"
         , Html.Attributes.style "padding" "16px"
+        , Html.Events.onClick Back
         ]
         [ Svg.svg
             [ Svg.Attributes.viewBox "0 0 24 24" ]
@@ -324,7 +331,9 @@ menuLogInStateNone =
         , Html.text "ホーム"
         ]
     , Html.a
-        [ Html.Attributes.class "menu-item" ]
+        [ Html.Attributes.class "menu-item"
+        , Html.Attributes.href (SiteMap.searchUrl Data.SearchCondition.None)
+        ]
         [ Icon.search menuIconStyle
         , Html.text "検索"
         ]
@@ -348,7 +357,9 @@ menuLogInStateLoadingProfile =
         , Html.text "ホーム"
         ]
     , Html.a
-        [ Html.Attributes.class "menu-item" ]
+        [ Html.Attributes.class "menu-item"
+        , Html.Attributes.href (SiteMap.searchUrl Data.SearchCondition.None)
+        ]
         [ Icon.search menuIconStyle
         , Html.text "検索"
         ]
@@ -362,26 +373,37 @@ menuLogInStateLoadingProfile =
     , Html.a
         [ Html.Attributes.class "menu-item"
         , Html.Attributes.href SiteMap.likeHistoryUrl
+        , Html.Attributes.style "padding" "8px 0px 8px 52px"
         ]
         [ Html.text "いいねした商品" ]
     , Html.a
         [ Html.Attributes.class "menu-item"
         , Html.Attributes.href SiteMap.likeHistoryUrl
+        , Html.Attributes.style "padding" "8px 0px 8px 52px"
         ]
         [ Html.text "閲覧した商品" ]
     , Html.a
         [ Html.Attributes.class "menu-item"
         , Html.Attributes.href SiteMap.soldProductsUrl
+        , Html.Attributes.style "padding" "8px 0px 8px 52px"
         ]
         [ Html.text "出品した商品" ]
     , Html.a
         [ Html.Attributes.class "menu-item"
         , Html.Attributes.href SiteMap.boughtProductsUrl
+        , Html.Attributes.style "padding" "8px 0px 8px 52px"
         ]
         [ Html.text "購入した商品" ]
     , Html.a
         [ Html.Attributes.class "menu-item"
+        , Html.Attributes.href SiteMap.homeUrl
+        , Html.Attributes.style "padding" "8px 0px 8px 52px"
+        ]
+        [ Html.text "取引中の商品" ]
+    , Html.a
+        [ Html.Attributes.class "menu-item"
         , Html.Attributes.href SiteMap.likeHistoryUrl
+        , Html.Attributes.style "padding" "8px 0px 8px 52px"
         ]
         [ Html.text "コメントをした商品" ]
     , Html.a
@@ -402,7 +424,9 @@ menuLogInStateOk userWithProfile =
         , Html.text "ホーム"
         ]
     , Html.a
-        [ Html.Attributes.class "menu-item" ]
+        [ Html.Attributes.class "menu-item"
+        , Html.Attributes.href (SiteMap.searchUrl Data.SearchCondition.None)
+        ]
         [ Icon.search menuIconStyle, Html.text "検索" ]
     , Html.a
         [ Html.Attributes.class "menu-item"
@@ -416,10 +440,11 @@ menuLogInStateOk userWithProfile =
         , Html.Attributes.class "menu-item"
         ]
         [ Html.img
-            [ Html.Attributes.style "width" "6rem"
-            , Html.Attributes.style "height" "6rem"
+            [ Html.Attributes.style "width" "40px"
+            , Html.Attributes.style "height" "40px"
             , Html.Attributes.style "border-radius" "50%"
             , Html.Attributes.style "flex-shrink" "0"
+            , Html.Attributes.style "padding" "4px"
             , Html.Attributes.src (Data.User.withProfileGetImageUrl userWithProfile)
             ]
             []
@@ -430,26 +455,37 @@ menuLogInStateOk userWithProfile =
     , Html.a
         [ Html.Attributes.class "menu-item"
         , Html.Attributes.href SiteMap.likeHistoryUrl
+        , Html.Attributes.style "padding" "8px 0px 8px 52px"
         ]
         [ Html.text "いいねした商品" ]
     , Html.a
         [ Html.Attributes.class "menu-item"
         , Html.Attributes.href SiteMap.likeHistoryUrl
+        , Html.Attributes.style "padding" "8px 0px 8px 52px"
         ]
         [ Html.text "閲覧した商品" ]
     , Html.a
         [ Html.Attributes.class "menu-item"
         , Html.Attributes.href SiteMap.soldProductsUrl
+        , Html.Attributes.style "padding" "8px 0px 8px 52px"
         ]
         [ Html.text "出品した商品" ]
     , Html.a
         [ Html.Attributes.class "menu-item"
         , Html.Attributes.href SiteMap.boughtProductsUrl
+        , Html.Attributes.style "padding" "8px 0px 8px 52px"
         ]
         [ Html.text "購入した商品" ]
     , Html.a
         [ Html.Attributes.class "menu-item"
+        , Html.Attributes.href SiteMap.homeUrl
+        , Html.Attributes.style "padding" "8px 0px 8px 52px"
+        ]
+        [ Html.text "取引中の商品" ]
+    , Html.a
+        [ Html.Attributes.class "menu-item"
         , Html.Attributes.href SiteMap.likeHistoryUrl
+        , Html.Attributes.style "padding" "8px 0px 8px 52px"
         ]
         [ Html.text "コメントをした商品" ]
     , Html.a
