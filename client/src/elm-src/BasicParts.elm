@@ -625,9 +625,9 @@ bottomNavigation logInState =
                 , Html.Attributes.style "width" "100%"
                 , Html.Attributes.style "background-color" "#733fa7"
                 ]
-                [ bottomNavigationItem Icon.home "ホーム"
-                , bottomNavigationItem Icon.search "検索"
-                , bottomNavigationItem Icon.search "ログイン"
+                [ bottomNavigationItem (Just SiteMap.homeUrl) Icon.home "ホーム"
+                , bottomNavigationItem Nothing Icon.search "検索"
+                , bottomNavigationItem Nothing Icon.search "ログイン"
                 ]
 
         Data.LogInState.LoadingProfile record ->
@@ -640,13 +640,13 @@ bottomNavigation logInState =
                 , Html.Attributes.style "width" "100%"
                 , Html.Attributes.style "background-color" "#733fa7"
                 ]
-                [ bottomNavigationItem Icon.home "ホーム"
-                , bottomNavigationItem Icon.search "検索"
-                , bottomNavigationItem Icon.notifications "通知"
-                , bottomNavigationItem Icon.home "ユーザー"
+                [ bottomNavigationItem (Just SiteMap.homeUrl) Icon.home "ホーム"
+                , bottomNavigationItem Nothing Icon.search "検索"
+                , bottomNavigationItem Nothing Icon.notifications "通知"
+                , bottomNavigationItem (Just SiteMap.logInUrl) Icon.home "ユーザー"
                 ]
 
-        Data.LogInState.Ok record ->
+        Data.LogInState.Ok { userWithProfile } ->
             Html.div
                 [ Html.Attributes.style "display" "grid"
                 , Html.Attributes.style "grid-template-columns" "1fr 1fr 1fr 1fr"
@@ -656,22 +656,49 @@ bottomNavigation logInState =
                 , Html.Attributes.style "width" "100%"
                 , Html.Attributes.style "background-color" "#733fa7"
                 ]
-                [ bottomNavigationItem Icon.home "ホーム"
-                , bottomNavigationItem Icon.search "検索"
-                , bottomNavigationItem Icon.notifications "通知"
-                , bottomNavigationItem Icon.home "ユーザー"
+                [ bottomNavigationItem (Just SiteMap.homeUrl) Icon.home "ホーム"
+                , bottomNavigationItem Nothing Icon.search "検索"
+                , bottomNavigationItem Nothing Icon.notifications "通知"
+                , bottomNavigationItem
+                    (Just (SiteMap.userUrl (Data.User.withProfileGetId userWithProfile)))
+                    (always
+                        (Html.img
+                            [ Html.Attributes.src (Data.User.withProfileGetImageUrl userWithProfile)
+                            , Html.Attributes.style "width" "32px"
+                            , Html.Attributes.style "border-radius" "50%"
+                            ]
+                            []
+                        )
+                    )
+                    "ユーザー"
                 ]
 
 
-bottomNavigationItem : (String -> Html.Html msg) -> String -> Html.Html msg
-bottomNavigationItem icon text =
-    Html.div
-        [ Html.Attributes.style "display" "flex"
-        , Html.Attributes.style "justify-content" "center"
-        , Html.Attributes.style "align-items" "center"
-        , Html.Attributes.style "flex-direction" "column"
-        , Html.Attributes.style "color" "white"
-        ]
-        [ icon "width:32px;fill:white"
-        , Html.text text
-        ]
+bottomNavigationItem : Maybe String -> (String -> Html.Html msg) -> String -> Html.Html msg
+bottomNavigationItem linkMaybe icon text =
+    case linkMaybe of
+        Just link ->
+            Html.a
+                [ Html.Attributes.style "display" "flex"
+                , Html.Attributes.style "justify-content" "center"
+                , Html.Attributes.style "align-items" "center"
+                , Html.Attributes.style "flex-direction" "column"
+                , Html.Attributes.style "color" "white"
+                , Html.Attributes.style "text-decoration" "none"
+                , Html.Attributes.href link
+                ]
+                [ icon "width:32px;fill:white"
+                , Html.text text
+                ]
+
+        Nothing ->
+            Html.div
+                [ Html.Attributes.style "display" "flex"
+                , Html.Attributes.style "justify-content" "center"
+                , Html.Attributes.style "align-items" "center"
+                , Html.Attributes.style "flex-direction" "column"
+                , Html.Attributes.style "color" "white"
+                ]
+                [ icon "width:32px;fill:white"
+                , Html.text text
+                ]

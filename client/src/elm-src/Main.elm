@@ -1224,17 +1224,17 @@ view (Model { page, wideScreen, message, logInState, now }) =
                , Html.div
                     [ Html.Attributes.style "padding"
                         ((if BasicParts.isTabNone tab then
-                            "4"
+                            "64"
 
                           else
-                            "7"
+                            "112"
                          )
-                            ++ "rem 0 0 "
+                            ++ "px 0 "
                             ++ (if wideScreen then
-                                    "20rem"
+                                    "0 320px"
 
                                 else
-                                    "0"
+                                    "64px 0"
                                )
                         )
                     , Html.Attributes.style "word-wrap" "break-word"
