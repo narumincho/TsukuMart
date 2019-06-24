@@ -56,13 +56,6 @@ type UserData = {
     createdAt: firestore.Timestamp;
 };
 /**
- * ユーザーが存在するか調べる
- * @param id
- */
-export const existsUser = async (id: string): Promise<boolean> =>
-    (await userCollectionRef.doc(id).get()).exists;
-
-/**
  * ユーザーのデータを取得する
  * @param id
  * @throws {Error} userId ${id} dose not exists

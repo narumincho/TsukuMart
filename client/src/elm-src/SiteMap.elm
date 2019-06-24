@@ -384,10 +384,10 @@ searchUrl : Data.SearchCondition.Condition -> String
 searchUrl condition =
     case condition of
         Data.SearchCondition.None ->
-            "searchPath"
+            searchPath
 
         Data.SearchCondition.ByText text ->
-            "searchPath#text=" ++ Url.percentEncode text
+            searchPath ++ "#text=" ++ Url.percentEncode text
 
 
 searchPath : String

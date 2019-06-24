@@ -370,42 +370,12 @@ menuLogInStateLoadingProfile =
     , Html.a
         [ Html.Attributes.class "menu-item" ]
         [ Html.text "プロフィール情報を読み込み中" ]
-    , Html.a
-        [ Html.Attributes.class "menu-item"
-        , Html.Attributes.href SiteMap.likeHistoryUrl
-        , Html.Attributes.style "padding" "8px 0px 8px 52px"
-        ]
-        [ Html.text "いいねした商品" ]
-    , Html.a
-        [ Html.Attributes.class "menu-item"
-        , Html.Attributes.href SiteMap.likeHistoryUrl
-        , Html.Attributes.style "padding" "8px 0px 8px 52px"
-        ]
-        [ Html.text "閲覧した商品" ]
-    , Html.a
-        [ Html.Attributes.class "menu-item"
-        , Html.Attributes.href SiteMap.soldProductsUrl
-        , Html.Attributes.style "padding" "8px 0px 8px 52px"
-        ]
-        [ Html.text "出品した商品" ]
-    , Html.a
-        [ Html.Attributes.class "menu-item"
-        , Html.Attributes.href SiteMap.boughtProductsUrl
-        , Html.Attributes.style "padding" "8px 0px 8px 52px"
-        ]
-        [ Html.text "購入した商品" ]
-    , Html.a
-        [ Html.Attributes.class "menu-item"
-        , Html.Attributes.href SiteMap.homeUrl
-        , Html.Attributes.style "padding" "8px 0px 8px 52px"
-        ]
-        [ Html.text "取引中の商品" ]
-    , Html.a
-        [ Html.Attributes.class "menu-item"
-        , Html.Attributes.href SiteMap.likeHistoryUrl
-        , Html.Attributes.style "padding" "8px 0px 8px 52px"
-        ]
-        [ Html.text "コメントをした商品" ]
+    , subMenuItem SiteMap.likeHistoryUrl "いいねした商品"
+    , subMenuItem SiteMap.likeHistoryUrl "閲覧した商品"
+    , subMenuItem SiteMap.soldProductsUrl "出品した商品"
+    , subMenuItem SiteMap.boughtProductsUrl "購入した商品"
+    , subMenuItem "" "取引中の商品"
+    , subMenuItem "" "コメントをした商品"
     , Html.a
         [ Html.Attributes.class "menu-item"
         , Html.Attributes.href SiteMap.aboutUrl
@@ -452,42 +422,12 @@ menuLogInStateOk userWithProfile =
             []
             [ Html.text (Data.User.withProfileGetDisplayName userWithProfile) ]
         ]
-    , Html.a
-        [ Html.Attributes.class "menu-item"
-        , Html.Attributes.href SiteMap.likeHistoryUrl
-        , Html.Attributes.style "padding" "8px 0px 8px 52px"
-        ]
-        [ Html.text "いいねした商品" ]
-    , Html.a
-        [ Html.Attributes.class "menu-item"
-        , Html.Attributes.href SiteMap.likeHistoryUrl
-        , Html.Attributes.style "padding" "8px 0px 8px 52px"
-        ]
-        [ Html.text "閲覧した商品" ]
-    , Html.a
-        [ Html.Attributes.class "menu-item"
-        , Html.Attributes.href SiteMap.soldProductsUrl
-        , Html.Attributes.style "padding" "8px 0px 8px 52px"
-        ]
-        [ Html.text "出品した商品" ]
-    , Html.a
-        [ Html.Attributes.class "menu-item"
-        , Html.Attributes.href SiteMap.boughtProductsUrl
-        , Html.Attributes.style "padding" "8px 0px 8px 52px"
-        ]
-        [ Html.text "購入した商品" ]
-    , Html.a
-        [ Html.Attributes.class "menu-item"
-        , Html.Attributes.href SiteMap.homeUrl
-        , Html.Attributes.style "padding" "8px 0px 8px 52px"
-        ]
-        [ Html.text "取引中の商品" ]
-    , Html.a
-        [ Html.Attributes.class "menu-item"
-        , Html.Attributes.href SiteMap.likeHistoryUrl
-        , Html.Attributes.style "padding" "8px 0px 8px 52px"
-        ]
-        [ Html.text "コメントをした商品" ]
+    , subMenuItem SiteMap.likeHistoryUrl "いいねした商品"
+    , subMenuItem SiteMap.likeHistoryUrl "閲覧した商品"
+    , subMenuItem SiteMap.soldProductsUrl "出品した商品"
+    , subMenuItem SiteMap.boughtProductsUrl "購入した商品"
+    , subMenuItem "" "取引中の商品"
+    , subMenuItem "" "コメントをした商品"
     , Html.a
         [ Html.Attributes.class "menu-item"
         , Html.Attributes.href SiteMap.aboutUrl
@@ -499,6 +439,17 @@ menuLogInStateOk userWithProfile =
 menuIconStyle : String
 menuIconStyle =
     "width:32px;padding:8px;fill:black"
+
+
+subMenuItem : String -> String -> Html.Html msg
+subMenuItem link text =
+    Html.a
+        [ Html.Attributes.class "menu-item"
+        , Html.Attributes.href link
+        , Html.Attributes.style "padding" "4px 0px 4px 52px"
+        , Html.Attributes.style "font-size" "1.3rem"
+        ]
+        [ Html.text text ]
 
 
 type Tab msg
@@ -661,12 +612,17 @@ bottomNavigation logInState =
                 , Html.Attributes.style "width" "100%"
                 , Html.Attributes.style "background-color" "#733fa7"
                 ]
-                [ bottomNavigationItem (Just SiteMap.homeUrl) Icon.home "ホーム"
-                , bottomNavigationItem Nothing Icon.search "検索"
-                , bottomNavigationItem Nothing Icon.search "ログイン"
+                [ bottomNavigationItem (Just SiteMap.homeUrl) (Just Icon.home) "ホーム"
+                , bottomNavigationItem
+                    (Just
+                        (SiteMap.searchUrl Data.SearchCondition.None)
+                    )
+                    (Just Icon.search)
+                    "検索"
+                , bottomNavigationItem (Just SiteMap.logInUrl) Nothing "ログイン"
                 ]
 
-        Data.LogInState.LoadingProfile record ->
+        Data.LogInState.LoadingProfile _ ->
             Html.div
                 [ Html.Attributes.style "display" "grid"
                 , Html.Attributes.style "grid-template-columns" "1fr 1fr 1fr 1fr"
@@ -676,10 +632,15 @@ bottomNavigation logInState =
                 , Html.Attributes.style "width" "100%"
                 , Html.Attributes.style "background-color" "#733fa7"
                 ]
-                [ bottomNavigationItem (Just SiteMap.homeUrl) Icon.home "ホーム"
-                , bottomNavigationItem Nothing Icon.search "検索"
-                , bottomNavigationItem Nothing Icon.notifications "通知"
-                , bottomNavigationItem (Just SiteMap.logInUrl) Icon.home "ユーザー"
+                [ bottomNavigationItem (Just SiteMap.homeUrl) (Just Icon.home) "ホーム"
+                , bottomNavigationItem
+                    (Just
+                        (SiteMap.searchUrl Data.SearchCondition.None)
+                    )
+                    (Just Icon.search)
+                    "検索"
+                , bottomNavigationItem Nothing (Just Icon.notifications) "通知"
+                , bottomNavigationItem (Just SiteMap.logInUrl) Nothing "ユーザー"
                 ]
 
         Data.LogInState.Ok { userWithProfile } ->
@@ -692,27 +653,34 @@ bottomNavigation logInState =
                 , Html.Attributes.style "width" "100%"
                 , Html.Attributes.style "background-color" "#733fa7"
                 ]
-                [ bottomNavigationItem (Just SiteMap.homeUrl) Icon.home "ホーム"
-                , bottomNavigationItem Nothing Icon.search "検索"
-                , bottomNavigationItem Nothing Icon.notifications "通知"
+                [ bottomNavigationItem (Just SiteMap.homeUrl) (Just Icon.home) "ホーム"
+                , bottomNavigationItem
+                    (Just
+                        (SiteMap.searchUrl Data.SearchCondition.None)
+                    )
+                    (Just Icon.search)
+                    "検索"
+                , bottomNavigationItem Nothing (Just Icon.notifications) "通知"
                 , bottomNavigationItem
                     (Just (SiteMap.userUrl (Data.User.withProfileGetId userWithProfile)))
-                    (always
-                        (Html.img
-                            [ Html.Attributes.src (Data.User.withProfileGetImageUrl userWithProfile)
-                            , Html.Attributes.style "width" "32px"
-                            , Html.Attributes.style "border-radius" "50%"
-                            ]
-                            []
+                    (Just
+                        (always
+                            (Html.img
+                                [ Html.Attributes.src (Data.User.withProfileGetImageUrl userWithProfile)
+                                , Html.Attributes.style "width" "32px"
+                                , Html.Attributes.style "border-radius" "50%"
+                                ]
+                                []
+                            )
                         )
                     )
                     "ユーザー"
                 ]
 
 
-bottomNavigationItem : Maybe String -> (String -> Html.Html msg) -> String -> Html.Html msg
-bottomNavigationItem linkMaybe icon text =
-    case linkMaybe of
+bottomNavigationItem : Maybe String -> Maybe (String -> Html.Html msg) -> String -> Html.Html msg
+bottomNavigationItem linkMaybe iconMaybe text =
+    (case linkMaybe of
         Just link ->
             Html.a
                 [ Html.Attributes.style "display" "flex"
@@ -723,9 +691,6 @@ bottomNavigationItem linkMaybe icon text =
                 , Html.Attributes.style "text-decoration" "none"
                 , Html.Attributes.href link
                 ]
-                [ icon "width:32px;fill:white"
-                , Html.text text
-                ]
 
         Nothing ->
             Html.div
@@ -735,6 +700,13 @@ bottomNavigationItem linkMaybe icon text =
                 , Html.Attributes.style "flex-direction" "column"
                 , Html.Attributes.style "color" "white"
                 ]
+    )
+        (case iconMaybe of
+            Just icon ->
                 [ icon "width:32px;fill:white"
                 , Html.text text
                 ]
+
+            Nothing ->
+                [ Html.text text ]
+        )
