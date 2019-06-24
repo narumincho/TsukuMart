@@ -581,7 +581,7 @@ editButton =
         [ Html.Attributes.class "subButton"
         , Html.Events.onClick EditProduct
         ]
-        [ Icon.editIcon
+        [ Icon.edit
         , Html.text "編集する"
         ]
 
@@ -592,7 +592,7 @@ deleteView productId token =
         [ Html.Attributes.class "product-deleteButton"
         , Html.Events.onClick (Delete token productId)
         ]
-        [ Icon.deleteIcon
+        [ Icon.delete
         , Html.text "削除する"
         ]
 

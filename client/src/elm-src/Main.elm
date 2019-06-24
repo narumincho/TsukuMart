@@ -1254,7 +1254,7 @@ view (Model { page, wideScreen, message, logInState, now }) =
                     []
 
                 else
-                    [ BasicParts.globalNavigation ]
+                    [ BasicParts.bottomNavigation logInState ]
                )
     }
 

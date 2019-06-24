@@ -400,7 +400,7 @@ toEditButton =
         [ Html.Attributes.class "mainButton"
         , Html.Events.onClick MsgToEditMode
         ]
-        [ Icon.editIcon
+        [ Icon.edit
         , Html.text "編集する"
         ]
 

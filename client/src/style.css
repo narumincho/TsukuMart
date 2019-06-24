@@ -263,11 +263,6 @@ header {
     cursor: pointer;
 }
 
-.exhibition-photo-addIcon {
-    width: 7rem;
-    height: 7rem;
-}
-
 .exhibition-photo-cardList-container {
     background-color: gray;
     overflow-x: auto;

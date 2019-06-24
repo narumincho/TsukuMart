@@ -396,7 +396,8 @@ photoAddInputId =
 photoAddIcon : Html.Html msg
 photoAddIcon =
     Svg.svg
-        [ Svg.Attributes.class "exhibition-photo-addIcon"
+        [ Svg.Attributes.style "width:7rem"
+        , Svg.Attributes.style "height:7rem"
         , Svg.Attributes.viewBox "0 0 24 24"
         ]
         [ Svg.path
