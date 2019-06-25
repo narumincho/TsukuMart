@@ -28,12 +28,13 @@ const makeObjectFieldMap = <Type extends { [k in string]: unknown }>(
 
 type GraphQLFieldConfigWithArgs<
     Type extends { [k in string]: unknown },
-    Key extends keyof Type
+    Key extends keyof Type // この型変数は型推論に使われる
 > = {
     type: g.GraphQLOutputType;
     args: any;
     resolve: g.GraphQLFieldResolver<Type, void, any>;
     description: string;
+    __byMakeObjectFieldFunctionBrand: never;
 };
 
 const makeObjectField = <
@@ -50,12 +51,13 @@ const makeObjectField = <
         info: g.GraphQLResolveInfo
     ) => Promise<Return<Type[Key]>>;
     description: string;
-}): GraphQLFieldConfigWithArgs<Type, Key> => ({
-    type: args.type,
-    args: args.args,
-    resolve: args.resolve as any,
-    description: args.description
-});
+}): GraphQLFieldConfigWithArgs<Type, Key> =>
+    ({
+        type: args.type,
+        args: args.args,
+        resolve: args.resolve as any,
+        description: args.description
+    } as GraphQLFieldConfigWithArgs<Type, Key>);
 
 /** resolveで返すべき部分型を生成する */
 type Return<Type> = Type extends Array<infer E>
@@ -102,6 +104,8 @@ const setProductData = async (
     source.category = data.category;
     source.likedCount = data.likedCount;
     source.viewedCount = data.viewedCount;
+    source.createdAt = data.createdAt;
+    source.seller = data.seller;
     return data;
 };
 
@@ -198,11 +202,23 @@ const productGraphQLType: g.GraphQLObjectType<
                 type: g.GraphQLNonNull(userGraphQLType),
                 args: {},
                 resolve: async (source, args, context, info) => {
-                    return {
-                        id: "10"
-                    };
+                    if (source.seller === undefined) {
+                        return (await setProductData(source)).seller;
+                    }
+                    return source.seller;
                 },
                 description: "出品者"
+            }),
+            createdAt: makeObjectField({
+                type: g.GraphQLNonNull(type.dateTimeGraphQLType),
+                args: {},
+                resolve: async (source, args, context, info) => {
+                    if (source.createdAt === undefined) {
+                        return (await setProductData(source)).createdAt;
+                    }
+                    return source.createdAt;
+                },
+                description: "出品された日時"
             })
         })
 });
@@ -247,6 +263,14 @@ export const draftProductGraphQLType = new g.GraphQLObjectType<
                 type: type.categoryGraphQLType,
                 description:
                     "商品を分類するカテゴリー まだ決めていない場合はnull"
+            },
+            createdAt: {
+                type: type.dateTimeGraphQLType,
+                description: "作成日時"
+            },
+            updateAt: {
+                type: type.dateTimeGraphQLType,
+                description: "更新日時"
             }
         }),
     description: "商品の下書き"
@@ -351,6 +375,18 @@ const userGraphQLType = new g.GraphQLObjectType({
                             User Private
     =============================================================
 */
+const setUserPrivateData = async (
+    source: Return<type.UserPrivateInternal>
+): ReturnType<typeof database.getUserData> => {
+    const userData = await database.getUserData(source.id);
+    source.displayName = userData.displayName;
+    source.imageUrl = userData.imageUrl;
+    source.introduction = userData.introduction;
+    source.university = type.universityToInternal(userData.university);
+    source.createdAt = userData.createdAt;
+    return userData;
+};
+
 const userPrivateGraphQLType = new g.GraphQLObjectType({
     name: "UserPrivate",
     fields: () =>
@@ -483,10 +519,136 @@ const userPrivateGraphQLType = new g.GraphQLObjectType({
                     return source.draftProducts;
                 },
                 description: "下書きの商品"
+            }),
+            tradeAll: makeObjectField({
+                type: g.GraphQLNonNull(
+                    g.GraphQLList(g.GraphQLNonNull(tradeGraphQLType))
+                ),
+                args: {},
+                resolve: async (source, args, context, info) => {
+                    if (source.tradeAll === undefined) {
+                        return []; // TODO
+                    }
+                    return source.tradeAll;
+                },
+                description: "取引データ"
             })
         }),
     description: "個人的な情報を含んだユーザーの情報"
 });
+
+/*  =============================================================
+                            Trade
+    =============================================================
+*/
+const setTradeData = async (
+    source: Return<type.Trade>
+): ReturnType<typeof database.getTrade> => {
+    const data = await database.getTrade(source.id);
+    source.product = data.product;
+    source.buyer = data.buyer;
+    source.comment = data.comment;
+    source.createdAt = data.createdAt;
+    source.updateAt = data.updateAt;
+    return data;
+};
+
+const tradeGraphQLType = new g.GraphQLObjectType({
+    name: "Trade",
+    fields: () =>
+        makeObjectFieldMap<type.Trade>({
+            id: {
+                type: g.GraphQLNonNull(g.GraphQLString),
+                description: "取引データを識別するためのID"
+            },
+            product: makeObjectField({
+                type: g.GraphQLNonNull(productGraphQLType),
+                args: {},
+                description: "取引中の商品",
+                resolve: async (source, args, context, info) => {
+                    if (source.product === undefined) {
+                        return (await setTradeData(source)).product;
+                    }
+                    return source.product;
+                }
+            }),
+            buyer: makeObjectField({
+                type: g.GraphQLNonNull(userGraphQLType),
+                args: {},
+                description: "商品を買いたい人",
+                resolve: async (source, args, context, info) => {
+                    if (source.buyer === undefined) {
+                        return (await setTradeData(source)).buyer;
+                    }
+                    return source.buyer;
+                }
+            }),
+            comment: makeObjectField({
+                type: g.GraphQLNonNull(
+                    g.GraphQLList(g.GraphQLNonNull(tradeCommentGraphQLType))
+                ),
+                args: {},
+                description: "コメント",
+                resolve: async (source, args, context, info) => {
+                    if (source.comment === undefined) {
+                        return (await setTradeData(source)).comment;
+                    }
+                    return source.comment;
+                }
+            }),
+            createdAt: makeObjectField({
+                type: g.GraphQLNonNull(type.dateTimeGraphQLType),
+                args: {},
+                description: "取引開始日時",
+                resolve: async (source, args, context, info) => {
+                    if (source.createdAt === undefined) {
+                        return (await setTradeData(source)).createdAt;
+                    }
+                    return source.createdAt;
+                }
+            }),
+            updateAt: makeObjectField({
+                type: g.GraphQLNonNull(type.dateTimeGraphQLType),
+                args: {},
+                description: "更新日時",
+                resolve: async (source, args, context, info) => {
+                    if (source.updateAt === undefined) {
+                        return (await setTradeData(source)).updateAt;
+                    }
+                    return source.updateAt;
+                }
+            })
+        }),
+    description: "取引データ"
+});
+/*  =============================================================
+                         Trade Comment
+    =============================================================
+*/
+const tradeCommentGraphQLType = new g.GraphQLObjectType({
+    name: "TradeComment",
+    fields: () =>
+        makeObjectFieldMap<type.TradeComment>({
+            commentId: {
+                type: g.GraphQLNonNull(g.GraphQLString),
+                description:
+                    "取引のコメントを識別するためのID。取引内で閉じたID。"
+            },
+            body: {
+                type: g.GraphQLNonNull(g.GraphQLString),
+                description: "本文"
+            },
+            speaker: {
+                type: g.GraphQLNonNull(type.sellerOrBuyerGraphQLType),
+                description: "発言者"
+            },
+            createdAt: {
+                type: g.GraphQLNonNull(type.dateTimeGraphQLType),
+                description: "コメントが作成された日時"
+            }
+        })
+});
+
 /*  =============================================================
                             Query
     =============================================================

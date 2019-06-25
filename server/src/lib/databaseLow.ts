@@ -14,32 +14,21 @@ const initializedAdmin = admin.initializeApp();
 const dataBase = initializedAdmin.firestore();
 const storage = initializedAdmin.storage().bucket();
 
-const userCollectionRef: FirebaseFirestore.CollectionReference = dataBase.collection(
-    "user"
-);
-
-const userBeforeInputDataCollection: FirebaseFirestore.CollectionReference = dataBase.collection(
+const userCollectionRef = dataBase.collection("user");
+const userBeforeInputDataCollection = dataBase.collection(
     "userBeforeInputData"
 );
-const userBeforeEmailVerificationCollection: FirebaseFirestore.CollectionReference = dataBase.collection(
+const userBeforeEmailVerificationCollection = dataBase.collection(
     "userBeforeEmailVerification"
 );
-
-const googleLogInStateCollection: FirebaseFirestore.CollectionReference = dataBase.collection(
-    "googleState"
-);
-const gitHubLogInStateCollection: FirebaseFirestore.CollectionReference = dataBase.collection(
-    "gitHubState"
-);
+const googleLogInStateCollection = dataBase.collection("googleState");
+const gitHubLogInStateCollection = dataBase.collection("gitHubState");
 const twitterLogInTokenSecretDocumentRef: FirebaseFirestore.DocumentReference = dataBase
     .collection("twitterState")
     .doc("last");
-const lineLogInStateCollection: FirebaseFirestore.CollectionReference = dataBase.collection(
-    "lineState"
-);
-const productCollectionRef: FirebaseFirestore.CollectionReference = dataBase.collection(
-    "product"
-);
+const lineLogInStateCollection = dataBase.collection("lineState");
+const productCollectionRef = dataBase.collection("product");
+const tradeCollectionRef = dataBase.collection("trade");
 
 /* ==========================================
                     User
@@ -54,6 +43,9 @@ type UserData = {
     introduction: string;
     lastRefreshId: string;
     createdAt: firestore.Timestamp;
+    trade: Array<string>;
+    likedProducts: Array<string>;
+    soldProducts: Array<string>;
 };
 /**
  * ユーザーのデータを取得する
@@ -155,10 +147,27 @@ export const getAllDraftProductData = async (
             .get()
     )) as Array<{ id: string; data: DraftProductData }>;
 
+export const getDraftProductData = async (
+    userId: string,
+    draftId: string
+): Promise<DraftProductData> => {
+    const data = (await await userCollectionRef
+        .doc(userId)
+        .collection("draftProduct")
+        .doc(draftId)
+        .get()).data();
+    if (data === undefined) {
+        throw new Error(
+            `trade id=${draftId} at userId=${userId} dose not exists`
+        );
+    }
+    return data as DraftProductData;
+};
+
 export const updateDraftProduct = async (
     userId: string,
     draftId: string,
-    data: type.DraftProduct
+    data: Partial<DraftProductData>
 ): Promise<void> => {
     await userCollectionRef
         .doc(userId)
@@ -201,13 +210,34 @@ export const getAllUserData = async (): Promise<
     }>;
 };
 
+export const getUserByLogInServiceAndId = async (
+    logInServiceAndId: type.LogInServiceAndId
+): Promise<{ ref: firestore.DocumentReference; id: string } | null> => {
+    const queryDocumentSnapshot = await getUserListFromCondition(
+        "logInAccountServiceId",
+        "==",
+        type.logInServiceAndIdToString(logInServiceAndId)
+    );
+    if (0 < queryDocumentSnapshot.length) {
+        const snapshot = queryDocumentSnapshot[0];
+        return { ref: snapshot.ref, id: snapshot.id };
+    }
+    return null;
+};
+
+export const updateRefreshId = async (
+    refreshId: string,
+    userDocumentRef: firestore.DocumentReference
+): Promise<void> => {
+    await userDocumentRef.set({ lastRefreshId: refreshId }, { merge: true });
+};
 /**
  * ユーザーの条件を指定して検索する
  * @param fieldName field
  * @param operator
  * @param value
  */
-export const getUserListFromCondition = async <Field extends keyof UserData>(
+const getUserListFromCondition = async <Field extends keyof UserData>(
     fieldName: Field,
     operator: firestore.WhereFilterOp,
     value: UserData[Field]
@@ -301,6 +331,7 @@ type ProductData = {
     sellerId: string;
     sellerDisplayName: string;
     sellerImageUrl: string;
+    createdAt: firestore.Timestamp;
 };
 
 /**
@@ -350,16 +381,13 @@ export const addProductData = async (data: ProductData): Promise<string> => {
  */
 export const getAllProductData = async (): Promise<
     Array<{ id: string; data: ProductData }>
-> => {
-    const allUserQuerySnapshot = await productCollectionRef.get();
-    return (await querySnapshotToIdAndDataArray(
-        allUserQuerySnapshot
+> =>
+    (await querySnapshotToIdAndDataArray(
+        await productCollectionRef.get()
     )) as Array<{
         id: string;
         data: ProductData;
     }>;
-};
-
 /**
  * 商品の条件を指定して検索する
  * @param fieldName
@@ -374,7 +402,31 @@ export const getProductListFromCondition = async <
     value: ProductData[Field]
 ): Promise<firestore.QueryDocumentSnapshot[]> =>
     (await productCollectionRef.where(fieldName, operator, value).get()).docs;
+/* ==========================================
+                    Trade
+   ==========================================
+*/
+export type Trade = {
+    productId: string;
+    buyerUserId: string;
+    createdAt: firestore.Timestamp;
+    updateAt: firestore.Timestamp;
+};
 
+export const getAllTradeData = async (
+    userId: string
+): Promise<Array<{ id: string; data: Trade }>> =>
+    (await querySnapshotToIdAndDataArray(
+        await tradeCollectionRef.get()
+    )) as Array<{ id: string; data: Trade }>;
+
+export const getTradeData = async (id: string): Promise<Trade> => {
+    const data = (await tradeCollectionRef.doc(id).get()).data();
+    if (data === undefined) {
+        throw new Error(`trade id=${id} dose not exists`);
+    }
+    return data as Trade;
+};
 /* ==========================================
    ==========================================
 */
@@ -394,6 +446,8 @@ const querySnapshotToIdAndDataArray = (
 export const getNowTimeStamp = (): firestore.Timestamp =>
     admin.firestore.Timestamp.now();
 
+export const timestampToDate = (timeStamp: firestore.Timestamp): Date =>
+    new Date(timeStamp.toMillis());
 /* ==========================================
         Firebase Authentication 
    ==========================================

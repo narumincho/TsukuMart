@@ -73,14 +73,14 @@ const dateTimeTypeConfig: g.GraphQLScalarTypeConfig<Date, number> = {
     serialize: (value: Date): number => value.getTime(),
     parseValue: (value: number): Date => new Date(value),
     parseLiteral: ast => {
-        if (ast.kind !== "FloatValue") {
-            return null;
+        if (ast.kind === "FloatValue" || ast.kind === "IntValue") {
+            try {
+                return new Date(Number.parseInt(ast.value));
+            } catch {
+                return null;
+            }
         }
-        try {
-            return new Date(Number.parseInt(ast.value));
-        } catch {
-            return null;
-        }
+        return null;
     }
 };
 
@@ -314,7 +314,7 @@ export const universityGraphQLObjectType = new g.GraphQLObjectType({
  * ====================================
  */
 export const refreshTokenAndAccessTokenGraphQLType = new g.GraphQLObjectType({
-    name: "refreshTokenAndAccessToken",
+    name: "RefreshTokenAndAccessToken",
     fields: {
         refreshToken: {
             type: g.GraphQLNonNull(g.GraphQLString),
@@ -356,16 +356,6 @@ export type User = {
     createdAt: Date;
     soldProductAll: Array<Product>;
 };
-
-export const userToInternal = (user: User): UserInternal => ({
-    id: user.id,
-    displayName: user.displayName,
-    imageUrl: user.imageUrl,
-    introduction: user.introduction,
-    university: universityToInternal(user.university),
-    createdAt: user.createdAt,
-    soldProductAll: user.soldProductAll.map(productToInternal)
-});
 /** ==============================
  *         User Private
  * ===============================
@@ -381,7 +371,8 @@ export type UserPrivateInternal = {
     boughtProductAll: Array<ProductInternal>;
     likedProductAll: Array<ProductInternal>;
     historyViewProductAll: Array<ProductInternal>;
-    draftProducts: Array<DraftProduct>
+    draftProducts: Array<DraftProduct>;
+    tradeAll: Array<Trade>;
 };
 
 export type UserPrivate = {
@@ -395,7 +386,7 @@ export type UserPrivate = {
     boughtProductAll: Array<Product>;
     likedProductAll: Array<Product>;
     historyViewProductAll: Array<Product>;
-    draftProducts: Array<DraftProduct>
+    draftProducts: Array<DraftProduct>;
 };
 
 /** ==============================
@@ -412,6 +403,7 @@ export type ProductInternal = {
     likedCount: number;
     viewedCount: number;
     seller: UserInternal;
+    createdAt: Date;
 };
 
 export type Product = {
@@ -424,20 +416,8 @@ export type Product = {
     likedCount: number;
     viewedCount: number;
     seller: User;
+    createdAt: Date;
 };
-
-export const productToInternal = (product: Product): ProductInternal => ({
-    id: product.id,
-    name: product.name,
-    price: product.price,
-    description: product.description,
-    condition: product.condition,
-    category: product.category,
-    likedCount: product.likedCount,
-    viewedCount: product.viewedCount,
-    seller: userToInternal(product.seller)
-});
-
 /** ==============================
  *        Draft Product
  * ===============================
@@ -449,6 +429,8 @@ export type DraftProduct = {
     price: number | null;
     condition: Condition | null;
     category: Category | null;
+    createdAt: Date;
+    updateAt: Date;
 };
 
 /** ==============================
@@ -632,11 +614,56 @@ export type Category = keyof typeof categoryValues;
 export const categoryDescription = "商品を分類するカテゴリー";
 
 export const categoryGraphQLType = new g.GraphQLEnumType({
-    name: "category",
+    name: "Category",
     values: categoryValues,
     description: categoryDescription
 });
 
+/* ===============================
+ *             Trade
+ * ===============================
+ */
+export type Trade = {
+    id: string;
+    product: Product;
+    buyer: User;
+    comment: Array<TradeComment>;
+    createdAt: Date;
+    updateAt: Date;
+};
+
+/* ===============================
+ *        Trade Comment
+ * ===============================
+ */
+export type TradeComment = {
+    commentId: string;
+    body: string;
+    speaker: SellerOrBuyer;
+    createdAt: Date;
+};
+/* ===============================
+ *        Trade Comment
+ * ===============================
+ */
+const sellerOrBuyerValues = {
+    seller: {
+        description: "商品を売る人"
+    },
+    buyer: {
+        description: "商品を買う人"
+    }
+};
+
+export type SellerOrBuyer = keyof typeof sellerOrBuyerValues;
+
+export const sellerOrBuyerDescription = "商品を買う人か、商品を売る人か";
+
+export const sellerOrBuyerGraphQLType = new g.GraphQLEnumType({
+    name: "SellerOrBuyer",
+    values: sellerOrBuyerValues,
+    description: sellerOrBuyerDescription
+});
 /* ===============================
  *      LogInService And Id
  * ===============================

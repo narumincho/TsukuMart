@@ -4,6 +4,18 @@ import * as databaseLow from "./databaseLow";
 import * as key from "./key";
 import * as type from "./type";
 import Maybe from "graphql/tsutils/Maybe";
+import { user } from "firebase-functions/lib/providers/auth";
+
+/** resolveで返すべき部分型を生成する */
+type Return<Type> = Type extends Array<infer E>
+    ? Array<ReturnLoop<E>>
+    : ReturnLoop<Type>;
+
+/** resolveで返すべき部分型を生成する型関数のループ */
+type ReturnLoop<Type> = {
+    0: Type;
+    1: { id: string } & { [k in keyof Type]?: Return<Type[k]> };
+}[Type extends { id: string } ? 1 : 0];
 
 /**
  * 指定したStateがつくマート自身が発行したものかどうか調べ、あったらそのStateを削除する
@@ -135,11 +147,11 @@ export const addUserBeforeEmailVerificationAndSendEmail = async (
     email: string,
     university: type.University
 ): Promise<void> => {
-    console.log("auth userを作成中")
+    console.log("auth userを作成中");
     const authUser = await databaseLow.createFirebaseAuthUserByRandomPassword(
         email
     );
-    console.log("auth userを作成成功")
+    console.log("auth userを作成成功");
     const flatUniversity = type.universityToInternal(university);
     await databaseLow.addUserBeforeEmailVerification(logInAccountServiceId, {
         firebaseAuthUserId: authUser.id,
@@ -149,7 +161,7 @@ export const addUserBeforeEmailVerificationAndSendEmail = async (
         graduate: flatUniversity.graduate,
         email: email
     });
-    console.log("データベースにBeforeEmailVerificationのユーザーを作成")
+    console.log("データベースにBeforeEmailVerificationのユーザーを作成");
     await databaseLow.sendEmailVerification(email, authUser.password);
 };
 
@@ -160,22 +172,16 @@ export const addUserBeforeEmailVerificationAndSendEmail = async (
 export const getAccessTokenAndRefreshToken = async (
     logInAccountServiceId: type.LogInServiceAndId
 ): Promise<{ refreshToken: string; accessToken: string }> => {
-    const docList = await databaseLow.getUserListFromCondition(
-        "logInAccountServiceId",
-        "==",
-        type.logInServiceAndIdToString(logInAccountServiceId)
+    const userDataMaybe = await databaseLow.getUserByLogInServiceAndId(
+        logInAccountServiceId
     );
     // ユーザーが存在するなら
-    if (docList.length !== 0) {
+    if (userDataMaybe !== null) {
         const refreshId = createRefreshId();
-        const queryDocumentSnapshot = docList[0];
-        queryDocumentSnapshot.ref.set({
-            lastRefreshId: refreshId
-        });
-        const userData = queryDocumentSnapshot.data();
+        await databaseLow.updateRefreshId(refreshId, userDataMaybe.ref);
         return {
-            accessToken: createAccessToken(userData.id, false),
-            refreshToken: createRefreshToken(userData.id, refreshId)
+            accessToken: createAccessToken(userDataMaybe.id, false),
+            refreshToken: createRefreshToken(userDataMaybe.id, refreshId)
         };
     }
 
@@ -195,14 +201,18 @@ export const getAccessTokenAndRefreshToken = async (
                 logInAccountServiceId: type.logInServiceAndIdToString(
                     logInAccountServiceId
                 ),
-                displayName: userBeforeEmailVerification.name as string,
+                displayName: userBeforeEmailVerification.name,
                 imageUrl: userBeforeEmailVerification.imageUrl.toString(),
-                schoolAndDepartment: userBeforeEmailVerification.schoolAndDepartment as type.SchoolAndDepartment | null,
-                graduate: userBeforeEmailVerification.graduate as type.Graduate | null,
+                schoolAndDepartment:
+                    userBeforeEmailVerification.schoolAndDepartment,
+                graduate: userBeforeEmailVerification.graduate,
                 introduction: "",
                 lastRefreshId: refreshId,
                 createdAt: databaseLow.getNowTimeStamp(),
-                email: userBeforeEmailVerification.email
+                email: userBeforeEmailVerification.email,
+                trade: [],
+                likedProducts: [],
+                soldProducts: []
             });
             await databaseLow.deleteUserBeforeEmailVerification(
                 logInAccountServiceId
@@ -328,6 +338,32 @@ export const getUserData = async (
     Pick<
         type.User,
         "displayName" | "imageUrl" | "introduction" | "university" | "createdAt"
+    > & { soldProductAll: Array<{ id: string }> }
+> => {
+    const userData = await databaseLow.getUserData(id);
+    return {
+        displayName: userData.displayName,
+        imageUrl: new URL(userData.imageUrl),
+        introduction: userData.introduction,
+        university: type.universityFromInternal({
+            graduate: userData.graduate,
+            schoolAndDepartment: userData.schoolAndDepartment
+        }),
+        createdAt: databaseLow.timestampToDate(userData.createdAt),
+        soldProductAll: [
+            {
+                id: ""
+            }
+        ]
+    };
+};
+
+export const getUserPrivate = async (
+    id: string
+): Promise<
+    Pick<
+        type.UserPrivate,
+        "displayName" | "imageUrl" | "introduction" | "university" | "createdAt"
     >
 > => {
     const userData = await databaseLow.getUserData(id);
@@ -339,7 +375,7 @@ export const getUserData = async (
             graduate: userData.graduate,
             schoolAndDepartment: userData.schoolAndDepartment
         }),
-        createdAt: new Date(userData.createdAt.toMillis())
+        createdAt: databaseLow.timestampToDate(userData.createdAt)
     };
 };
 
@@ -350,7 +386,12 @@ export const getAllUser = async (): Promise<
     Array<
         Pick<
             type.User,
-            "id" | "displayName" | "imageUrl" | "university" | "introduction"
+            | "id"
+            | "displayName"
+            | "imageUrl"
+            | "university"
+            | "introduction"
+            | "createdAt"
         >
     >
 > =>
@@ -362,7 +403,8 @@ export const getAllUser = async (): Promise<
             graduate: data.graduate,
             schoolAndDepartment: data.schoolAndDepartment
         }),
-        introduction: data.introduction
+        introduction: data.introduction,
+        createdAt: databaseLow.timestampToDate(data.createdAt)
     }));
 
 export const markProductInHistory = async (
@@ -390,22 +432,28 @@ export const addDraftProductData = async (
         type.DraftProduct,
         "name" | "price" | "description" | "condition" | "category"
     >
-): Promise<type.DraftProduct> => ({
-    draftId: await databaseLow.addDraftProductData(userId, {
+): Promise<type.DraftProduct> => {
+    const nowTime = databaseLow.getNowTimeStamp();
+    const nowTimeAsDate = databaseLow.timestampToDate(nowTime);
+    return {
+        draftId: await databaseLow.addDraftProductData(userId, {
+            name: data.name,
+            description: data.description,
+            price: data.price,
+            condition: data.condition,
+            category: data.category,
+            createdAt: nowTime,
+            updateAt: nowTime
+        }),
         name: data.name,
-        description: data.description,
         price: data.price,
+        description: data.description,
         condition: data.condition,
         category: data.category,
-        createdAt: databaseLow.getNowTimeStamp(),
-        updateAt: databaseLow.getNowTimeStamp()
-    }),
-    name: data.name,
-    price: data.price,
-    description: data.description,
-    condition: data.condition,
-    category: data.category
-});
+        createdAt: nowTimeAsDate,
+        updateAt: nowTimeAsDate
+    };
+};
 
 export const getDraftProducts = async (
     userId: string
@@ -417,22 +465,53 @@ export const getDraftProducts = async (
         price: data.price,
         description: data.description,
         condition: data.condition,
-        category: data.category
+        category: data.category,
+        createdAt: databaseLow.timestampToDate(data.createdAt),
+        updateAt: databaseLow.timestampToDate(data.createdAt)
     }));
 };
 
 export const updateDraftProduct = async (
     userId: string,
-    data: type.DraftProduct
-): Promise<type.DraftProduct> => {
-    await databaseLow.updateDraftProduct(userId, data.draftId, data);
+    data: Pick<
+        type.DraftProduct,
+        "draftId" | "name" | "price" | "description" | "category" | "condition"
+    >
+): Promise<
+    Pick<
+        type.DraftProduct,
+        | "draftId"
+        | "name"
+        | "price"
+        | "description"
+        | "category"
+        | "condition"
+        | "createdAt"
+        | "updateAt"
+    >
+> => {
+    const nowTime = databaseLow.getNowTimeStamp();
+    const beforeData = await databaseLow.getDraftProductData(
+        userId,
+        data.draftId
+    );
+    await databaseLow.updateDraftProduct(userId, data.draftId, {
+        name: data.name,
+        price: data.price,
+        description: data.description,
+        category: data.category,
+        condition: data.condition,
+        updateAt: nowTime
+    });
     return {
         draftId: data.draftId,
         name: data.name,
         price: data.price,
         description: data.description,
         category: data.category,
-        condition: data.condition
+        condition: data.condition,
+        createdAt: databaseLow.timestampToDate(beforeData.createdAt),
+        updateAt: databaseLow.timestampToDate(nowTime)
     };
 };
 
@@ -443,6 +522,51 @@ export const deleteDraftProduct = async (
     await databaseLow.deleteDraftProduct(userId, draftId);
 };
 
+export const getTrades = async (
+    userId: string
+): Promise<
+    Array<
+        Pick<type.Trade, "id" | "comment" | "createdAt" | "updateAt"> & {
+            product: { id: string };
+            buyer: { id: string };
+        }
+    >
+> =>
+    (await databaseLow.getAllTradeData(userId)).map(({ id, data }) => ({
+        id: id,
+        product: {
+            id: data.productId
+        },
+        buyer: {
+            id: data.buyerUserId
+        },
+        comment: [],
+        createdAt: databaseLow.timestampToDate(data.createdAt),
+        updateAt: databaseLow.timestampToDate(data.updateAt)
+    }));
+
+export const getTrade = async (
+    id: string
+): Promise<
+    Pick<type.Trade, "id" | "comment" | "createdAt" | "updateAt"> & {
+        product: { id: string };
+        buyer: { id: string };
+    }
+> => {
+    const data = await databaseLow.getTradeData(id);
+    return {
+        id: id,
+        product: {
+            id: data.productId
+        },
+        buyer: {
+            id: data.buyerUserId
+        },
+        comment: [],
+        createdAt: databaseLow.timestampToDate(data.createdAt),
+        updateAt: databaseLow.timestampToDate(data.updateAt)
+    };
+};
 /**
  * プロフィールを設定する
  * @param id ユーザーID
@@ -515,6 +639,7 @@ export const getProduct = async (
         | "category"
         | "likedCount"
         | "viewedCount"
+        | "createdAt"
     > & {
         seller: Pick<type.User, "id" | "displayName" | "imageUrl">;
     }
@@ -532,7 +657,8 @@ export const getProduct = async (
             id: data.sellerId,
             displayName: data.sellerDisplayName,
             imageUrl: new URL(data.sellerImageUrl)
-        }
+        },
+        createdAt: databaseLow.timestampToDate(data.createdAt)
     };
 };
 
@@ -545,8 +671,9 @@ export const sellProduct = async (
         type.Product,
         "name" | "price" | "description" | "condition" | "category"
     >
-): Promise<Pick<type.Product, "id" | "name" | "price">> => {
+): Promise<Pick<type.Product, "id" | "name" | "price" | "createdAt">> => {
     const userData = await databaseLow.getUserData(userId);
+    const nowTimestamp = databaseLow.getNowTimeStamp();
     const productId = await databaseLow.addProductData({
         name: data.name,
         price: data.price,
@@ -557,11 +684,13 @@ export const sellProduct = async (
         viewedCount: 0,
         sellerId: userId,
         sellerDisplayName: userData.displayName,
-        sellerImageUrl: userData.imageUrl
+        sellerImageUrl: userData.imageUrl,
+        createdAt: nowTimestamp
     });
     return {
         id: productId,
         name: data.name,
-        price: data.price
+        price: data.price,
+        createdAt: databaseLow.timestampToDate(nowTimestamp)
     };
 };
