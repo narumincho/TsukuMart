@@ -332,6 +332,7 @@ type ProductData = {
     sellerDisplayName: string;
     sellerImageUrl: string;
     createdAt: firestore.Timestamp;
+    updateAt: firestore.Timestamp;
 };
 
 /**

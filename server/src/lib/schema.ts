@@ -106,6 +106,7 @@ const setProductData = async (
     source.viewedCount = data.viewedCount;
     source.createdAt = data.createdAt;
     source.seller = data.seller;
+    source.updateAt = data.updateAt;
     return data;
 };
 
@@ -236,6 +237,17 @@ const productGraphQLType: g.GraphQLObjectType<
                     return source.createdAt;
                 },
                 description: "出品された日時"
+            }),
+            updateAt: makeObjectField({
+                type: g.GraphQLNonNull(type.dateTimeGraphQLType),
+                args: {},
+                resolve: async (source, args, context, info) => {
+                    if (source.updateAt === undefined) {
+                        return (await setProductData(source)).updateAt;
+                    }
+                    return source.updateAt;
+                },
+                description: "更新日時"
             })
         })
 });

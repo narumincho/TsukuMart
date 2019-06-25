@@ -640,6 +640,7 @@ export const getProduct = async (
         | "likedCount"
         | "viewedCount"
         | "createdAt"
+        | "updateAt"
     > & {
         seller: Pick<type.User, "id" | "displayName" | "imageUrl">;
     }
@@ -658,7 +659,8 @@ export const getProduct = async (
             displayName: data.sellerDisplayName,
             imageUrl: new URL(data.sellerImageUrl)
         },
-        createdAt: databaseLow.timestampToDate(data.createdAt)
+        createdAt: databaseLow.timestampToDate(data.createdAt),
+        updateAt: databaseLow.timestampToDate(data.updateAt)
     };
 };
 
@@ -671,7 +673,19 @@ export const sellProduct = async (
         type.Product,
         "name" | "price" | "description" | "condition" | "category"
     >
-): Promise<Pick<type.Product, "id" | "name" | "price" | "createdAt">> => {
+): Promise<
+    Pick<
+        type.Product,
+        | "id"
+        | "name"
+        | "price"
+        | "description"
+        | "condition"
+        | "category"
+        | "createdAt"
+        | "updateAt"
+    >
+> => {
     const userData = await databaseLow.getUserData(userId);
     const nowTimestamp = databaseLow.getNowTimestamp();
     const productId = await databaseLow.addProductData({
@@ -685,13 +699,18 @@ export const sellProduct = async (
         sellerId: userId,
         sellerDisplayName: userData.displayName,
         sellerImageUrl: userData.imageUrl,
-        createdAt: nowTimestamp
+        createdAt: nowTimestamp,
+        updateAt: nowTimestamp
     });
     return {
         id: productId,
         name: data.name,
         price: data.price,
-        createdAt: databaseLow.timestampToDate(nowTimestamp)
+        description: data.description,
+        condition: data.condition,
+        category: data.category,
+        createdAt: databaseLow.timestampToDate(nowTimestamp),
+        updateAt: databaseLow.timestampToDate(nowTimestamp)
     };
 };
 
@@ -735,6 +754,7 @@ export const createProductComment = async (
         speakerDisplayName: userData.displayName,
         speakerImageUrl: userData.imageUrl
     });
+    await databaseLow.updateProductData(productId, { updateAt: nowTimestamp });
     return (await databaseLow.getProductComments(productId)).map(
         ({ id, data }) => ({
             commentId: id,

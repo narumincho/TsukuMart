@@ -405,6 +405,7 @@ export type ProductInternal = {
     seller: UserInternal;
     comments: Array<ProductComment>;
     createdAt: Date;
+    updateAt: Date;
 };
 
 export type Product = {
@@ -419,6 +420,7 @@ export type Product = {
     seller: User;
     comments: Array<ProductComment>;
     createdAt: Date;
+    updateAt: Date;
 };
 /** ==============================
  *      Product Comment
