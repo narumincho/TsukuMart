@@ -121,7 +121,11 @@ export const saveUserImage = async (
     if (400 * 400 * 3 < arrayBuffer.byteLength) {
         throw new Error("too large image");
     }
-    return await databaseLow.saveStorageFile("user", arrayBuffer, mimeType);
+    return await databaseLow.saveFileToCloudStorage(
+        "user",
+        arrayBuffer,
+        mimeType
+    );
 };
 
 /**
@@ -637,6 +641,8 @@ export const getProduct = async (
         | "description"
         | "condition"
         | "category"
+        | "thumbnailUrl"
+        | "imageUrls"
         | "likedCount"
         | "viewedCount"
         | "createdAt"
@@ -652,6 +658,8 @@ export const getProduct = async (
         description: data.description,
         condition: data.condition,
         category: data.category,
+        thumbnailUrl: new URL(data.thumbnailUrl),
+        imageUrls: data.imageUrls.map(s => new URL(s)),
         likedCount: data.likedCount,
         viewedCount: data.viewedCount,
         seller: {
@@ -672,7 +680,7 @@ export const sellProduct = async (
     data: Pick<
         type.Product,
         "name" | "price" | "description" | "condition" | "category"
-    >
+    > & { images: Array<type.DataURL> }
 ): Promise<
     Pick<
         type.Product,
@@ -682,11 +690,24 @@ export const sellProduct = async (
         | "description"
         | "condition"
         | "category"
+        | "thumbnailUrl"
+        | "imageUrls"
         | "createdAt"
         | "updateAt"
     >
 > => {
     const userData = await databaseLow.getUserData(userId);
+
+    const thumbnailUrl = await databaseLow.saveThumbnailImageToCloudStorage(
+        "productThumbnail",
+        data.images[0].data,
+        data.images[0].mimeType
+    );
+    const imageUrls = await Promise.all(
+        data.images.map(({ data, mimeType }) =>
+            databaseLow.saveFileToCloudStorage("product", data, mimeType)
+        )
+    );
     const nowTimestamp = databaseLow.getNowTimestamp();
     const productId = await databaseLow.addProductData({
         name: data.name,
@@ -694,6 +715,8 @@ export const sellProduct = async (
         description: data.description,
         condition: data.condition,
         category: data.category,
+        thumbnailUrl: thumbnailUrl.toString(),
+        imageUrls: imageUrls.map(url => url.toString()),
         likedCount: 0,
         viewedCount: 0,
         sellerId: userId,
@@ -709,6 +732,8 @@ export const sellProduct = async (
         description: data.description,
         condition: data.condition,
         category: data.category,
+        thumbnailUrl: thumbnailUrl,
+        imageUrls: imageUrls,
         createdAt: databaseLow.timestampToDate(nowTimestamp),
         updateAt: databaseLow.timestampToDate(nowTimestamp)
     };

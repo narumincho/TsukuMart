@@ -400,6 +400,8 @@ export type ProductInternal = {
     description: string;
     condition: Condition;
     category: Category;
+    thumbnailUrl: URL;
+    imageUrls: Array<URL>;
     likedCount: number;
     viewedCount: number;
     seller: UserInternal;
@@ -415,6 +417,8 @@ export type Product = {
     description: string;
     condition: Condition;
     category: Category;
+    thumbnailUrl: URL;
+    imageUrls: Array<URL>;
     likedCount: number;
     viewedCount: number;
     seller: User;

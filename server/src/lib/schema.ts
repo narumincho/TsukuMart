@@ -102,6 +102,8 @@ const setProductData = async (
     source.description = data.description;
     source.condition = data.condition;
     source.category = data.category;
+    source.thumbnailUrl = data.thumbnailUrl;
+    source.imageUrls = data.imageUrls;
     source.likedCount = data.likedCount;
     source.viewedCount = data.viewedCount;
     source.createdAt = data.createdAt;
@@ -176,6 +178,30 @@ const productGraphQLType: g.GraphQLObjectType<
                     return source.category;
                 },
                 description: type.categoryDescription
+            }),
+            thumbnailUrl: makeObjectField({
+                type: g.GraphQLNonNull(type.urlGraphQLType),
+                args: {},
+                resolve: async (source, args, context, info) => {
+                    if (source.thumbnailUrl === undefined) {
+                        return (await setProductData(source)).thumbnailUrl;
+                    }
+                    return source.thumbnailUrl;
+                },
+                description: "一覧で表示すべきサムネイル画像のURL"
+            }),
+            imageUrls: makeObjectField({
+                type: g.GraphQLNonNull(
+                    g.GraphQLList(g.GraphQLNonNull(type.urlGraphQLType))
+                ),
+                args: {},
+                resolve: async (source, args, context, info) => {
+                    if (source.imageUrls === undefined) {
+                        return (await setProductData(source)).imageUrls;
+                    }
+                    return source.imageUrls;
+                },
+                description: "商品画像のURL"
             }),
             likedCount: makeObjectField({
                 type: g.GraphQLNonNull(g.GraphQLInt),
@@ -1076,6 +1102,7 @@ const updateProfile = makeQueryOrMutationField<
 const sellProduct = makeQueryOrMutationField<
     {
         accessToken: string;
+        images: Array<type.DataURL>;
     } & Pick<
         type.ProductInternal,
         "name" | "price" | "description" | "condition" | "category"
@@ -1099,6 +1126,12 @@ const sellProduct = makeQueryOrMutationField<
             type: g.GraphQLNonNull(g.GraphQLString),
             description: "説明文"
         },
+        images: {
+            type: g.GraphQLNonNull(
+                g.GraphQLList(g.GraphQLNonNull(type.dataUrlGraphQLType))
+            ),
+            description: "商品画像"
+        },
         condition: {
             type: g.GraphQLNonNull(type.conditionGraphQLType),
             description: type.conditionDescription
@@ -1116,7 +1149,8 @@ const sellProduct = makeQueryOrMutationField<
             price: args.price,
             description: args.description,
             condition: args.condition,
-            category: args.category
+            category: args.category,
+            images: args.images
         });
     },
     description: "商品の出品する"

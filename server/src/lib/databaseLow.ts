@@ -4,6 +4,7 @@ import * as firestore from "@google-cloud/firestore";
 import * as admin from "firebase-admin";
 import * as stream from "stream";
 import { URL } from "url";
+import * as sharp from "sharp";
 
 firebase.initializeApp({
     apiKey: "AIzaSyDmKHgxpyKvnq-zxdj0tYSG6QIMotHKRBU",
@@ -326,6 +327,8 @@ type ProductData = {
     description: string;
     condition: type.Condition;
     category: type.Category;
+    thumbnailUrl: string;
+    imageUrls: Array<string>;
     likedCount: number;
     viewedCount: number;
     sellerId: string;
@@ -575,7 +578,7 @@ export const sendEmailVerification = async (
  * ごくまれにかぶるかも
  * @param folderName フォルダの名
  */
-export const saveStorageFile = async (
+export const saveFileToCloudStorage = async (
     folderName: string,
     data: ArrayBuffer,
     mimeType: string
@@ -588,6 +591,33 @@ export const saveStorageFile = async (
             file.name
     );
 };
+
+export const saveThumbnailImageToCloudStorage = async (
+    folderName: string,
+    data: Buffer,
+    mimeType: string
+): Promise<URL> =>
+    new Promise((resolve, reject) => {
+        const id = createRandomFileName();
+        const file = storage.file(folderName + "/" + id);
+        const writeStream: stream.Writable = file.createWriteStream({
+            contentType: mimeType
+        });
+        writeStream.pipe(
+            sharp()
+                .resize(300, 300)
+                .composite([{ input: data }])
+                .jpeg()
+        );
+        writeStream.addListener("finish", () =>
+            resolve(
+                new URL(
+                    "https://asia-northeast1-tsukumart-f0971.cloudfunctions.net/image/" +
+                        file.name
+                )
+            )
+        );
+    });
 /**
  * ランダムなファイル名を生成する
  */
