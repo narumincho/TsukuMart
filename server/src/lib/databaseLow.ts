@@ -402,6 +402,34 @@ export const getProductListFromCondition = async <
     value: ProductData[Field]
 ): Promise<firestore.QueryDocumentSnapshot[]> =>
     (await productCollectionRef.where(fieldName, operator, value).get()).docs;
+
+type ProductComment = {
+    body: string;
+    speakerId: string;
+    speakerDisplayName: string;
+    speakerImageUrl: string;
+    createdAt: firestore.Timestamp;
+};
+
+export const getProductComments = async (
+    id: string
+): Promise<Array<{ id: string; data: ProductComment }>> =>
+    (await querySnapshotToIdAndDataArray(
+        await productCollectionRef
+            .doc(id)
+            .collection("comment")
+            .get()
+    )) as Array<{ id: string; data: ProductComment }>;
+
+export const createProductComment = async (
+    id: string,
+    data: ProductComment
+): Promise<void> => {
+    await productCollectionRef
+        .doc(id)
+        .collection("comment")
+        .add(data);
+};
 /* ==========================================
                     Trade
    ==========================================
@@ -427,6 +455,29 @@ export const getTradeData = async (id: string): Promise<Trade> => {
     }
     return data as Trade;
 };
+
+type TradeComment = {
+    body: string;
+    speaker: type.SellerOrBuyer;
+    createdAt: firestore.Timestamp;
+};
+
+export const getTradeComments = async (
+    id: string
+): Promise<Array<{ id: string; data: TradeComment }>> =>
+    (await querySnapshotToIdAndDataArray(
+        await tradeCollectionRef
+            .doc(id)
+            .collection("comment")
+            .get()
+    )) as Array<{ id: string; data: TradeComment }>;
+
+export const createTradeComment = async (id: string, data: TradeComment) => {
+    await tradeCollectionRef
+        .doc(id)
+        .collection("comment")
+        .add(data);
+};
 /* ==========================================
    ==========================================
 */
@@ -443,7 +494,7 @@ const querySnapshotToIdAndDataArray = (
                 Time Stamp
    ==========================================
 */
-export const getNowTimeStamp = (): firestore.Timestamp =>
+export const getNowTimestamp = (): firestore.Timestamp =>
     admin.firestore.Timestamp.now();
 
 export const timestampToDate = (timeStamp: firestore.Timestamp): Date =>

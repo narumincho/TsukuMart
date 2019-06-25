@@ -208,7 +208,7 @@ export const getAccessTokenAndRefreshToken = async (
                 graduate: userBeforeEmailVerification.graduate,
                 introduction: "",
                 lastRefreshId: refreshId,
-                createdAt: databaseLow.getNowTimeStamp(),
+                createdAt: databaseLow.getNowTimestamp(),
                 email: userBeforeEmailVerification.email,
                 trade: [],
                 likedProducts: [],
@@ -412,7 +412,7 @@ export const markProductInHistory = async (
     productId: string
 ): Promise<void> => {
     await databaseLow.addHistoryViewProductData(userId, productId, {
-        createdAt: databaseLow.getNowTimeStamp()
+        createdAt: databaseLow.getNowTimestamp()
     });
     await databaseLow.updateProductData(productId, {
         viewedCount: (await databaseLow.getProduct(productId)).viewedCount + 1
@@ -433,7 +433,7 @@ export const addDraftProductData = async (
         "name" | "price" | "description" | "condition" | "category"
     >
 ): Promise<type.DraftProduct> => {
-    const nowTime = databaseLow.getNowTimeStamp();
+    const nowTime = databaseLow.getNowTimestamp();
     const nowTimeAsDate = databaseLow.timestampToDate(nowTime);
     return {
         draftId: await databaseLow.addDraftProductData(userId, {
@@ -490,7 +490,7 @@ export const updateDraftProduct = async (
         | "updateAt"
     >
 > => {
-    const nowTime = databaseLow.getNowTimeStamp();
+    const nowTime = databaseLow.getNowTimestamp();
     const beforeData = await databaseLow.getDraftProductData(
         userId,
         data.draftId
@@ -673,7 +673,7 @@ export const sellProduct = async (
     >
 ): Promise<Pick<type.Product, "id" | "name" | "price" | "createdAt">> => {
     const userData = await databaseLow.getUserData(userId);
-    const nowTimestamp = databaseLow.getNowTimeStamp();
+    const nowTimestamp = databaseLow.getNowTimestamp();
     const productId = await databaseLow.addProductData({
         name: data.name,
         price: data.price,
@@ -693,4 +693,58 @@ export const sellProduct = async (
         price: data.price,
         createdAt: databaseLow.timestampToDate(nowTimestamp)
     };
+};
+
+export const getProductComments = async (
+    productId: string
+): Promise<
+    Array<
+        Pick<type.ProductComment, "body" | "commentId" | "createdAt"> & {
+            speaker: Pick<type.User, "id" | "displayName" | "imageUrl">;
+        }
+    >
+> =>
+    (await databaseLow.getProductComments(productId)).map(({ id, data }) => ({
+        commentId: id,
+        body: data.body,
+        createdAt: databaseLow.timestampToDate(data.createdAt),
+        speaker: {
+            id: data.speakerId,
+            displayName: data.speakerDisplayName,
+            imageUrl: new URL(data.speakerImageUrl)
+        }
+    }));
+
+export const createProductComment = async (
+    userId: string,
+    productId: string,
+    data: Pick<type.ProductComment, "body">
+): Promise<
+    Array<
+        Pick<type.ProductComment, "body" | "commentId" | "createdAt"> & {
+            speaker: Pick<type.User, "id" | "displayName" | "imageUrl">;
+        }
+    >
+> => {
+    const userData = await databaseLow.getUserData(userId);
+    const nowTimestamp = databaseLow.getNowTimestamp();
+    await databaseLow.createProductComment(productId, {
+        body: data.body,
+        createdAt: nowTimestamp,
+        speakerId: userData.displayName,
+        speakerDisplayName: userData.displayName,
+        speakerImageUrl: userData.imageUrl
+    });
+    return (await databaseLow.getProductComments(productId)).map(
+        ({ id, data }) => ({
+            commentId: id,
+            body: data.body,
+            createdAt: databaseLow.timestampToDate(data.createdAt),
+            speaker: {
+                id: data.speakerId,
+                displayName: data.speakerDisplayName,
+                imageUrl: new URL(data.speakerImageUrl)
+            }
+        })
+    );
 };

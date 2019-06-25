@@ -66,7 +66,7 @@ type Return<Type> = Type extends Array<infer E>
 
 /** resolveで返すべき部分型を生成する型関数のループ */
 type ReturnLoop<Type> = {
-    0: Type;
+    0: { [k in keyof Type]: Return<Type[k]> };
     1: { id: string } & { [k in keyof Type]?: Return<Type[k]> };
 }[Type extends { id: string } ? 1 : 0];
 
@@ -209,6 +209,23 @@ const productGraphQLType: g.GraphQLObjectType<
                 },
                 description: "出品者"
             }),
+            comments: makeObjectField({
+                type: g.GraphQLNonNull(
+                    g.GraphQLList(g.GraphQLNonNull(productCommentGraphQLType))
+                ),
+                args: {},
+                resolve: async (source, args, context, info) => {
+                    if (source.comments === undefined) {
+                        const comments = await database.getProductComments(
+                            source.id
+                        );
+                        source.comments = comments;
+                        return comments;
+                    }
+                    return source.comments;
+                },
+                description: ""
+            }),
             createdAt: makeObjectField({
                 type: g.GraphQLNonNull(type.dateTimeGraphQLType),
                 args: {},
@@ -220,6 +237,33 @@ const productGraphQLType: g.GraphQLObjectType<
                 },
                 description: "出品された日時"
             })
+        })
+});
+/*  =============================================================
+                         Product Comment
+    =============================================================
+*/
+const productCommentGraphQLType = new g.GraphQLObjectType({
+    name: "ProductComment",
+    fields: () =>
+        makeObjectFieldMap<type.TradeComment>({
+            commentId: {
+                type: g.GraphQLNonNull(g.GraphQLString),
+                description:
+                    "商品のコメントを識別するためのID。商品内で閉じたID。"
+            },
+            body: {
+                type: g.GraphQLNonNull(g.GraphQLString),
+                description: "本文"
+            },
+            speaker: {
+                type: g.GraphQLNonNull(userGraphQLType),
+                description: "発言者"
+            },
+            createdAt: {
+                type: g.GraphQLNonNull(type.dateTimeGraphQLType),
+                description: "コメントが作成された日時"
+            }
         })
 });
 

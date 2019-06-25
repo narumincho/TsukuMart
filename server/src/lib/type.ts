@@ -403,6 +403,7 @@ export type ProductInternal = {
     likedCount: number;
     viewedCount: number;
     seller: UserInternal;
+    comments: Array<ProductComment>;
     createdAt: Date;
 };
 
@@ -416,7 +417,25 @@ export type Product = {
     likedCount: number;
     viewedCount: number;
     seller: User;
+    comments: Array<ProductComment>;
     createdAt: Date;
+};
+/** ==============================
+ *      Product Comment
+ * ===============================
+ */
+export type ProductComment = {
+    commentId: string;
+    body: string;
+    speaker: User;
+    createdAt: Date;
+};
+
+export type ProductCommentInternal = {
+    commentId: string;
+    body: string;
+    speaker: UserInternal;
+    createAt: Date;
 };
 /** ==============================
  *        Draft Product
