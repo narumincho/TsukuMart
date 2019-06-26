@@ -9,6 +9,7 @@ module Page.User exposing
     )
 
 import Api
+import BasicParts
 import Data.LogInState as LogInState
 import Data.University
 import Data.User as User
@@ -18,7 +19,7 @@ import Html.Events
 import Html.Keyed
 import Icon
 import Page.Component.University as CompUniversity
-import BasicParts
+import SiteMap
 
 
 type Model
@@ -304,34 +305,34 @@ normalMyProfileView user =
 -}
 userView : User.WithProfile -> List (Html.Html msg)
 userView userWithProfile =
-    [ imageView (User.withProfileGetImageUrl userWithProfile)
-    , nickNameView (User.withProfileGetDisplayName userWithProfile)
+    [ imageAndDisplayNameView
+        (User.withProfileGetImageUrl userWithProfile)
+        (User.withProfileGetDisplayName userWithProfile)
     , introductionView (User.withProfileGetIntroduction userWithProfile)
     ]
         ++ universityView (User.withProfileGetUniversity userWithProfile)
-        ++ [ Html.text ("ユーザーID " ++ (userWithProfile |> User.withProfileGetId |> User.idToString)) ]
+        ++ [ Html.text ("ユーザーID " ++ (userWithProfile |> User.withProfileGetId |> User.idToString))
+           , userDataLink
+           ]
 
 
-imageView : String -> Html.Html msg
-imageView url =
+imageAndDisplayNameView : String -> String -> Html.Html msg
+imageAndDisplayNameView url displayName =
     Html.div
         [ Html.Attributes.style "display" "flex"
         , Html.Attributes.style "justify-content" "center"
         ]
         [ Html.img
             [ Html.Attributes.style "border-radius" "50%"
-            , Html.Attributes.style "width" "100%"
+            , Html.Attributes.style "width" "50%"
             , Html.Attributes.src url
             ]
             []
-        ]
-
-
-nickNameView : String -> Html.Html msg
-nickNameView nickName =
-    Html.div
-        []
-        [ Html.div [ Html.Attributes.style "font-size" "2rem" ] [ Html.text nickName ]
+        , Html.div
+            [ Html.Attributes.style "flex-grow" "1"
+            , Html.Attributes.style "font-size" "1.5rem"
+            ]
+            [ Html.text displayName ]
         ]
 
 
@@ -392,6 +393,36 @@ universityView university =
                 Nothing ->
                     []
            )
+
+
+userDataLink : Html.Html msg
+userDataLink =
+    Html.div
+        [ Html.Attributes.style "display" "grid"
+        , Html.Attributes.style "gap" "8px"
+        , Html.Attributes.style "padding" "0 0 48px 0"
+        ]
+        [ userDataLinkItem SiteMap.likeHistoryUrl "いいねした商品"
+        , userDataLinkItem SiteMap.likeHistoryUrl "閲覧した商品"
+        , userDataLinkItem SiteMap.soldProductsUrl "出品した商品"
+        , userDataLinkItem SiteMap.boughtProductsUrl "購入した商品"
+        , userDataLinkItem "" "取引中の商品"
+        , userDataLinkItem "" "コメントをした商品"
+        ]
+
+
+userDataLinkItem : String -> String -> Html.Html msg
+userDataLinkItem link text =
+    Html.a
+        [ Html.Attributes.href link
+        , Html.Attributes.style "text-decoration" "none"
+        , Html.Attributes.style "color" "black"
+        , Html.Attributes.style "background-color" "#999"
+        , Html.Attributes.style "padding" "16px"
+        , Html.Attributes.style "font-size" "1.5rem"
+        , Html.Attributes.style "text-align" "center"
+        ]
+        [ Html.text text ]
 
 
 toEditButton : Html.Html Msg
