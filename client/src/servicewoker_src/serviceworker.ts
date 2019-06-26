@@ -27,9 +27,9 @@ const cachesName = "image-chase";
         return await fetch(request);
     };
 
-    self.addEventListener("fetch", e => {
-        e.respondWith(cacheFn(e.request));
-    });
+    // self.addEventListener("fetch", e => {
+    //     e.respondWith(cacheFn(e.request));
+    // });
 
     self.addEventListener("sync", e => {
         console.log("syncを受け取った", e);

@@ -53,7 +53,7 @@ type Msg
     | MsgInputUniversity CompUniversity.Model
     | MsgBackToViewMode
     | MsgChangeProfile Api.Token Api.ProfileUpdateData
-    | MsgChangeProfileResponse (Result () User.WithProfile)
+    | MsgChangeProfileResponse (Result String User.WithProfile)
     | MsgLogOut
     | MsgUserProfileResponse (Result String User.WithProfile)
 
@@ -552,7 +552,7 @@ editModelToProfileUpdateData { displayName, introduction, universitySelect } =
                 Just
                     { displayName = displayName
                     , introduction = introduction
-                    , image = ""
+                    , image = Nothing
                     , university = university
                     }
 

@@ -20,6 +20,7 @@ import Page.Exhibition
 import Page.Home
 import Page.LikeAndHistory
 import Page.LogIn
+import Page.Notification
 import Page.Product
 import Page.Search
 import Page.SignUp
@@ -67,7 +68,7 @@ port changeSelectedIndex : { id : String, index : Int } -> Cmd msg
 
 type Model
     = Model
-        { page : Page -- 開いているページ
+        { page : PageModel -- 開いているページ
         , wideScreen : Bool
         , message : Maybe String -- ちょっとしたことがあったら表示するもの
         , logInState : Data.LogInState.LogInState
@@ -77,7 +78,7 @@ type Model
         }
 
 
-type Page
+type PageModel
     = PageHome Page.Home.Model
     | PageSignUp Page.SignUp.Model
     | PageLogIn Page.LogIn.Model
@@ -88,6 +89,7 @@ type Page
     | PageProduct Page.Product.Model
     | PageUser Page.User.Model
     | PageSearch Page.Search.Model
+    | PageNotification Page.Notification.Model
     | PageAbout Page.About.Model
     | PageSiteMapXml
 
@@ -107,9 +109,15 @@ type Msg
     | SellProductResponse (Result () ())
     | LikeProductResponse Data.Product.Id (Result () ())
     | UnlikeProductResponse Data.Product.Id (Result () ())
-    | ChangeProfileResponse (Result () Data.User.WithProfile)
+    | ChangeProfileResponse (Result String Data.User.WithProfile)
     | HistoryBack
-    | HomePageMsg Page.Home.Msg
+    | PageMsg PageMsg
+    | GetNowTime (Result () ( Time.Posix, Time.Zone ))
+    | LogInOrSignUpUrlResponse (Result String Url.Url)
+
+
+type PageMsg
+    = HomePageMsg Page.Home.Msg
     | LikeAndHistoryPageMsg Page.LikeAndHistory.Msg
     | BoughtProductsPageMsg Page.BoughtProducts.Msg
     | SoldProductsPageMsg Page.SoldProducts.Msg
@@ -117,10 +125,9 @@ type Msg
     | ExhibitionPageMsg Page.Exhibition.Msg
     | SignUpMsg Page.SignUp.Msg
     | SearchPageMsg Page.Search.Msg
+    | NotificationMsg Page.Notification.Msg
     | UserPageMsg Page.User.Msg
     | ProductPageMsg Page.Product.Msg
-    | GetNowTime (Result () ( Time.Posix, Time.Zone ))
-    | LogInOrSignUpUrlResponse (Result String Url.Url)
 
 
 main : Program { refreshToken : Maybe String } Model Msg
@@ -171,7 +178,7 @@ init { refreshToken } url key =
     )
 
 
-urlParserInit : Data.LogInState.LogInState -> Browser.Navigation.Key -> Url.Url -> Maybe ( Page, Cmd Msg )
+urlParserInit : Data.LogInState.LogInState -> Browser.Navigation.Key -> Url.Url -> Maybe ( PageModel, Cmd Msg )
 urlParserInit logInState key url =
     let
         ( accessTokenAndRefreshToken, page ) =
@@ -188,7 +195,7 @@ urlParserInit logInState key url =
             Nothing
 
 
-urlParserInitResultToPageAndCmd : Data.LogInState.LogInState -> SiteMap.UrlParserInitResult -> ( Page, Cmd Msg )
+urlParserInitResultToPageAndCmd : Data.LogInState.LogInState -> SiteMap.UrlParserInitResult -> ( PageModel, Cmd Msg )
 urlParserInitResultToPageAndCmd logInState page =
     case page of
         SiteMap.InitHome ->
@@ -249,6 +256,12 @@ urlParserInitResultToPageAndCmd logInState page =
                 |> Tuple.mapBoth
                     PageSearch
                     searchPageEmitListToCmd
+
+        SiteMap.InitNotification ->
+            Page.Notification.initModel
+                |> Tuple.mapBoth
+                    PageNotification
+                    notificationEmitListToCmd
 
         SiteMap.InitSiteMap ->
             ( PageSiteMapXml, Cmd.none )
@@ -434,23 +447,8 @@ update msg (Model rec) =
                     , Cmd.none
                     )
 
-        LogInPageMsg logInPageMsg ->
-            case rec.page of
-                PageLogIn logInModel ->
-                    let
-                        ( newModel, emitList ) =
-                            Page.LogIn.update
-                                logInPageMsg
-                                logInModel
-                    in
-                    ( Model { rec | page = PageLogIn newModel }
-                    , logInPageEmitListToCmd rec.key emitList
-                    )
-
-                _ ->
-                    ( Model rec
-                    , Cmd.none
-                    )
+        PageMsg pageMsg ->
+            updatePageMsg pageMsg (Model rec)
 
         GetMyProfileResponse response ->
             ( case response of
@@ -477,89 +475,6 @@ update msg (Model rec) =
                     Model { rec | message = Just "出品できませんでした" }
             , Cmd.none
             )
-
-        ExhibitionPageMsg exhibitionMsg ->
-            case rec.page of
-                PageExhibition exhibitionPageModel ->
-                    let
-                        ( newModel, emitList ) =
-                            Page.Exhibition.update rec.logInState exhibitionMsg exhibitionPageModel
-                    in
-                    ( Model { rec | page = PageExhibition newModel }
-                    , exhibitionPageEmitListToCmd emitList
-                    )
-
-                _ ->
-                    ( Model rec
-                    , Cmd.none
-                    )
-
-        SignUpMsg signUpMsg ->
-            case rec.page of
-                PageSignUp signUpPageModel ->
-                    let
-                        ( newModel, emitList ) =
-                            Page.SignUp.update signUpMsg signUpPageModel
-                    in
-                    ( Model { rec | page = PageSignUp newModel }
-                    , signUpPageEmitListToCmd emitList
-                    )
-
-                _ ->
-                    ( Model rec
-                    , Cmd.none
-                    )
-
-        SearchPageMsg pageMsg ->
-            case rec.page of
-                PageSearch pageModel ->
-                    let
-                        ( newModel, emitList ) =
-                            Page.Search.update pageMsg pageModel
-                    in
-                    ( Model { rec | page = PageSearch newModel }
-                    , searchPageEmitListToCmd emitList
-                    )
-
-                _ ->
-                    ( Model rec
-                    , Cmd.none
-                    )
-
-        UserPageMsg profileMsg ->
-            case rec.page of
-                PageUser profileModel ->
-                    let
-                        ( newModel, emitList ) =
-                            Page.User.update rec.logInState profileMsg profileModel
-                    in
-                    ( Model
-                        { rec
-                            | page = PageUser newModel
-                        }
-                    , userPageEmitListToCmd emitList
-                    )
-
-                _ ->
-                    ( Model rec
-                    , Cmd.none
-                    )
-
-        ProductPageMsg productPageMsg ->
-            case rec.page of
-                PageProduct productPageModel ->
-                    let
-                        ( newModel, emitList ) =
-                            Page.Product.update productPageMsg productPageModel
-                    in
-                    ( Model { rec | page = PageProduct newModel }
-                    , productPageEmitListToCmd emitList
-                    )
-
-                _ ->
-                    ( Model rec
-                    , Cmd.none
-                    )
 
         LikeProductResponse id response ->
             let
@@ -604,9 +519,9 @@ update msg (Model rec) =
                             , Cmd.none
                             )
 
-                Err () ->
+                Err text ->
                     ( Model
-                        { rec | message = Just "プロフィール更新に失敗しました" }
+                        { rec | message = Just ("プロフィール更新に失敗しました " ++ text) }
                     , Cmd.none
                     )
 
@@ -614,74 +529,6 @@ update msg (Model rec) =
             ( Model rec
             , Browser.Navigation.back rec.key 1
             )
-
-        HomePageMsg pageMsg ->
-            case rec.page of
-                PageHome homePageModel ->
-                    let
-                        ( newModel, emitList ) =
-                            homePageModel
-                                |> Page.Home.update pageMsg
-                    in
-                    ( Model { rec | page = PageHome newModel }
-                    , homePageEmitListToCmd emitList
-                    )
-
-                _ ->
-                    ( Model rec
-                    , Cmd.none
-                    )
-
-        LikeAndHistoryPageMsg pageMsg ->
-            case rec.page of
-                PageLikeAndHistory likeAndHistoryModel ->
-                    let
-                        ( newModel, emitList ) =
-                            likeAndHistoryModel
-                                |> Page.LikeAndHistory.update rec.logInState pageMsg
-                    in
-                    ( Model { rec | page = PageLikeAndHistory newModel }
-                    , likeAndHistoryEmitListToCmd emitList
-                    )
-
-                _ ->
-                    ( Model rec
-                    , Cmd.none
-                    )
-
-        BoughtProductsPageMsg pageMsg ->
-            case rec.page of
-                PageBoughtProducts pageModel ->
-                    let
-                        ( newModel, emitMaybe ) =
-                            pageModel
-                                |> Page.BoughtProducts.update pageMsg
-                    in
-                    ( Model { rec | page = PageBoughtProducts newModel }
-                    , boughtProductsPageEmitListToCmd emitMaybe
-                    )
-
-                _ ->
-                    ( Model rec
-                    , Cmd.none
-                    )
-
-        SoldProductsPageMsg pageMsg ->
-            case rec.page of
-                PageSoldProducts pageModel ->
-                    let
-                        ( newModel, emitMaybe ) =
-                            pageModel
-                                |> Page.SoldProducts.update pageMsg
-                    in
-                    ( Model { rec | page = PageSoldProducts newModel }
-                    , soldProductsPageEmitListToCmd emitMaybe
-                    )
-
-                _ ->
-                    ( Model rec
-                    , Cmd.none
-                    )
 
         GetNowTime result ->
             case result of
@@ -711,6 +558,82 @@ update msg (Model rec) =
                     )
 
 
+updatePageMsg : PageMsg -> Model -> ( Model, Cmd Msg )
+updatePageMsg pageMsg (Model rec) =
+    (case ( pageMsg, rec.page ) of
+        ( HomePageMsg msg, PageHome model ) ->
+            model
+                |> Page.Home.update msg
+                |> mapPageModel PageHome homePageEmitListToCmd
+
+        ( LikeAndHistoryPageMsg msg, PageLikeAndHistory model ) ->
+            model
+                |> Page.LikeAndHistory.update rec.logInState msg
+                |> mapPageModel PageLikeAndHistory likeAndHistoryEmitListToCmd
+
+        ( BoughtProductsPageMsg msg, PageBoughtProducts model ) ->
+            model
+                |> Page.BoughtProducts.update msg
+                |> mapPageModel PageBoughtProducts boughtProductsPageEmitListToCmd
+
+        ( SoldProductsPageMsg msg, PageSoldProducts model ) ->
+            model
+                |> Page.SoldProducts.update msg
+                |> mapPageModel PageSoldProducts soldProductsPageEmitListToCmd
+
+        ( LogInPageMsg msg, PageLogIn model ) ->
+            model
+                |> Page.LogIn.update msg
+                |> mapPageModel PageLogIn (logInPageEmitListToCmd rec.key)
+
+        ( ExhibitionPageMsg msg, PageExhibition model ) ->
+            model
+                |> Page.Exhibition.update rec.logInState msg
+                |> mapPageModel PageExhibition exhibitionPageEmitListToCmd
+
+        ( SignUpMsg msg, PageSignUp model ) ->
+            model
+                |> Page.SignUp.update msg
+                |> mapPageModel PageSignUp signUpPageEmitListToCmd
+
+        ( SearchPageMsg msg, PageSearch model ) ->
+            model
+                |> Page.Search.update msg
+                |> mapPageModel PageSearch searchPageEmitListToCmd
+
+        ( NotificationMsg msg, PageNotification model ) ->
+            model
+                |> Page.Notification.update msg
+                |> mapPageModel PageNotification notificationEmitListToCmd
+
+        ( UserPageMsg msg, PageUser model ) ->
+            model
+                |> Page.User.update rec.logInState msg
+                |> mapPageModel PageUser userPageEmitListToCmd
+
+        ( ProductPageMsg msg, PageProduct model ) ->
+            model
+                |> Page.Product.update msg
+                |> mapPageModel PageProduct productPageEmitListToCmd
+
+        ( _, _ ) ->
+            \model -> ( model, Cmd.none )
+    )
+        (Model rec)
+
+
+mapPageModel :
+    (eachPageModel -> PageModel)
+    -> (eachPageEmitList -> Cmd Msg)
+    -> ( eachPageModel, eachPageEmitList )
+    -> Model
+    -> ( Model, Cmd Msg )
+mapPageModel modelFunc emitListFunc ( eachPageMsg, eachPageEmitList ) (Model rec) =
+    ( Model { rec | page = modelFunc eachPageMsg }
+    , emitListFunc eachPageEmitList
+    )
+
+
 
 {- ===================== Page Emit To Msg ======================== -}
 
@@ -721,13 +644,13 @@ homePageEmitListToCmd =
         (\emit ->
             case emit of
                 Page.Home.EmitGetRecentProducts ->
-                    Api.getRecentProductList (\result -> HomePageMsg (Page.Home.GetRecentProductsResponse result))
+                    Api.getRecentProductList (\result -> PageMsg (HomePageMsg (Page.Home.GetRecentProductsResponse result)))
 
                 Page.Home.EmitGetRecommendProducts ->
-                    Api.getRecommendProductList (\result -> HomePageMsg (Page.Home.GetRecommendProductsResponse result))
+                    Api.getRecommendProductList (\result -> PageMsg (HomePageMsg (Page.Home.GetRecommendProductsResponse result)))
 
                 Page.Home.EmitGetFreeProducts ->
-                    Api.getFreeProductList (\result -> HomePageMsg (Page.Home.GetFreeProductsResponse result))
+                    Api.getFreeProductList (\result -> PageMsg (HomePageMsg (Page.Home.GetFreeProductsResponse result)))
 
                 Page.Home.EmitProducts e ->
                     productListEmitToCmd e
@@ -741,7 +664,7 @@ likeAndHistoryEmitListToCmd =
         (\emit ->
             case emit of
                 Page.LikeAndHistory.EmitGetLikedProduts token ->
-                    Api.getLikedProducts token (\result -> LikeAndHistoryPageMsg (Page.LikeAndHistory.LikedProdutsResponse result))
+                    Api.getLikedProducts token (\result -> PageMsg (LikeAndHistoryPageMsg (Page.LikeAndHistory.LikedProdutsResponse result)))
 
                 Page.LikeAndHistory.EmitGetHistoryProduts token ->
                     Cmd.none
@@ -763,7 +686,7 @@ soldProductsPageEmitListToCmd =
                 Page.SoldProducts.EmitGetSoldProducts token ->
                     Api.getSoldProductList token
                         (\result ->
-                            SoldProductsPageMsg (Page.SoldProducts.GetSoldProductListResponse result)
+                            PageMsg (SoldProductsPageMsg (Page.SoldProducts.GetSoldProductListResponse result))
                         )
 
                 Page.SoldProducts.EmitLogInOrSignUp e ->
@@ -781,7 +704,7 @@ boughtProductsPageEmitListToCmd =
         (\emit ->
             case emit of
                 Page.BoughtProducts.EmitGetPurchaseProducts token ->
-                    Api.getBoughtProductList token (\result -> BoughtProductsPageMsg (Page.BoughtProducts.GetPurchaseProductsResponse result))
+                    Api.getBoughtProductList token (\result -> PageMsg (BoughtProductsPageMsg (Page.BoughtProducts.GetPurchaseProductsResponse result)))
 
                 Page.BoughtProducts.EmitLogInOrSignUp e ->
                     logInOrSignUpEmitToCmd e
@@ -858,6 +781,17 @@ searchPageEmitListToCmd =
         >> Cmd.batch
 
 
+notificationEmitListToCmd : List Page.Notification.Emit -> Cmd Msg
+notificationEmitListToCmd =
+    List.map
+        (\emit ->
+            case emit of
+                Page.Notification.Emit ->
+                    Cmd.none
+        )
+        >> Cmd.batch
+
+
 userPageEmitListToCmd : List Page.User.Emit -> Cmd Msg
 userPageEmitListToCmd =
     List.map
@@ -883,7 +817,7 @@ userPageEmitListToCmd =
 
                 Page.User.EmitGetUserProfile userId ->
                     Api.getUserProfile userId
-                        (\e -> UserPageMsg (Page.User.MsgUserProfileResponse e))
+                        (\e -> PageMsg (UserPageMsg (Page.User.MsgUserProfileResponse e)))
 
                 Page.User.EmitAddLogMessage log ->
                     Task.succeed ()
@@ -898,13 +832,16 @@ productPageEmitListToCmd =
         (\emit ->
             case emit of
                 Page.Product.EmitGetProduct { productId } ->
-                    Api.getProduct productId (\result -> ProductPageMsg (Page.Product.GetProductResponse result))
+                    Api.getProduct productId (\result -> PageMsg (ProductPageMsg (Page.Product.GetProductResponse result)))
 
                 Page.Product.EmitGetCommentList { productId } ->
-                    Api.getProductComments productId (\result -> ProductPageMsg (Page.Product.GetCommentListResponse result))
+                    Api.getProductComments productId (\result -> PageMsg (ProductPageMsg (Page.Product.GetCommentListResponse result)))
 
                 Page.Product.EmitPostComment token { productId } comment ->
-                    Api.postProductComment token productId comment (\result -> ProductPageMsg (Page.Product.PostCommentResponse result))
+                    Api.postProductComment token
+                        productId
+                        comment
+                        (\result -> PageMsg (ProductPageMsg (Page.Product.PostCommentResponse result)))
 
                 Page.Product.EmitLike token id ->
                     Api.likeProduct token id (LikeProductResponse id)
@@ -913,7 +850,7 @@ productPageEmitListToCmd =
                     Api.unlikeProduct token id (UnlikeProductResponse id)
 
                 Page.Product.EmitTradeStart token id ->
-                    Api.tradeStart token id (\result -> ProductPageMsg (Page.Product.TradeStartResponse result))
+                    Api.tradeStart token id (\result -> PageMsg (ProductPageMsg (Page.Product.TradeStartResponse result)))
 
                 Page.Product.EmitAddLogMessage log ->
                     Task.succeed ()
@@ -933,7 +870,10 @@ productPageEmitListToCmd =
                     productEditorEmitToCmd e
 
                 Page.Product.EmitUpdateProductData token productId requestData ->
-                    Api.editProduct token productId requestData (\m -> ProductPageMsg (Page.Product.UpdateProductDataResponse m))
+                    Api.editProduct token
+                        productId
+                        requestData
+                        (\m -> PageMsg (ProductPageMsg (Page.Product.UpdateProductDataResponse m)))
         )
         >> Cmd.batch
 
@@ -982,7 +922,7 @@ productEditorEmitToCmd emit =
             changeSelectedIndex { id = id, index = index }
 
 
-urlParserResultToModel : Maybe ( Page, Cmd Msg ) -> ( Page, Maybe String, Cmd Msg )
+urlParserResultToModel : Maybe ( PageModel, Cmd Msg ) -> ( PageModel, Maybe String, Cmd Msg )
 urlParserResultToModel parserResult =
     case parserResult of
         Just ( page, cmd ) ->
@@ -1002,13 +942,13 @@ urlParserResultToModel parserResult =
             )
 
 
-urlParser : Model -> Url.Url -> Maybe ( Page, Cmd Msg )
+urlParser : Model -> Url.Url -> Maybe ( PageModel, Cmd Msg )
 urlParser model url =
     SiteMap.urlParser url
         |> Maybe.map (urlParserResultToPageAndCmd model)
 
 
-urlParserResultToPageAndCmd : Model -> SiteMap.UrlParserResult -> ( Page, Cmd Msg )
+urlParserResultToPageAndCmd : Model -> SiteMap.UrlParserResult -> ( PageModel, Cmd Msg )
 urlParserResultToPageAndCmd (Model rec) result =
     case result of
         SiteMap.Home ->
@@ -1092,6 +1032,12 @@ urlParserResultToPageAndCmd (Model rec) result =
                     PageSearch
                     searchPageEmitListToCmd
 
+        SiteMap.Notification ->
+            Page.Notification.initModel
+                |> Tuple.mapBoth
+                    PageNotification
+                    notificationEmitListToCmd
+
         SiteMap.About ->
             ( PageAbout Page.About.aboutModel, Cmd.none )
 
@@ -1107,7 +1053,7 @@ urlParserResultToPageAndCmd (Model rec) result =
 {-| 指定したページにあるメインの商品ID
 Products Listの表示になったときにその商品のところへスクロールできるように
 -}
-getProductId : Page -> Maybe Data.Product.Id
+getProductId : PageModel -> Maybe Data.Product.Id
 getProductId page =
     case page of
         PageProduct productModel ->
@@ -1119,7 +1065,7 @@ getProductId page =
 
 {-| 各ページにいいねを押した結果を反映するように通知する
 -}
-likeProduct : Data.Product.Id -> Result () () -> Data.LogInState.LogInState -> Page -> ( Page, Cmd Msg )
+likeProduct : Data.Product.Id -> Result () () -> Data.LogInState.LogInState -> PageModel -> ( PageModel, Cmd Msg )
 likeProduct productId result logInState page =
     let
         productListMsg =
@@ -1183,7 +1129,7 @@ likeProduct productId result logInState page =
 
 {-| 各ページにいいねを外した結果を反映するように通知する
 -}
-unlikeProduct : Data.Product.Id -> Result () () -> Data.LogInState.LogInState -> Page -> ( Page, Cmd Msg )
+unlikeProduct : Data.Product.Id -> Result () () -> Data.LogInState.LogInState -> PageModel -> ( PageModel, Cmd Msg )
 unlikeProduct productId result logInState page =
     let
         productListMsg =
@@ -1268,7 +1214,7 @@ view (Model { page, wideScreen, message, logInState, now }) =
                 else
                     []
                )
-            ++ [ BasicParts.tabView wideScreen tab
+            ++ [ BasicParts.tabView wideScreen tab |> Html.map PageMsg
                , Html.div
                     [ Html.Attributes.style "padding"
                         ((if BasicParts.isTabNone tab then
@@ -1290,6 +1236,7 @@ view (Model { page, wideScreen, message, logInState, now }) =
                     , Html.Attributes.style "width" "100%"
                     ]
                     html
+                    |> Html.map PageMsg
                ]
             ++ (case message of
                     Just m ->
@@ -1311,11 +1258,11 @@ titleAndTabDataAndMainView :
     Data.LogInState.LogInState
     -> Bool
     -> Maybe ( Time.Posix, Time.Zone )
-    -> Page
+    -> PageModel
     ->
         { title : String
-        , tab : BasicParts.Tab Msg
-        , html : List (Html.Html Msg)
+        , tab : BasicParts.Tab PageMsg
+        , html : List (Html.Html PageMsg)
         }
 titleAndTabDataAndMainView logInState isWideScreenMode nowMaybe page =
     case page of
@@ -1369,6 +1316,11 @@ titleAndTabDataAndMainView logInState isWideScreenMode nowMaybe page =
                 |> Page.Search.view
                 |> mapPageData SearchPageMsg
 
+        PageNotification pageModel ->
+            pageModel
+                |> Page.Notification.view
+                |> mapPageData NotificationMsg
+
         PageAbout pageModel ->
             pageModel
                 |> Page.About.view
@@ -1378,9 +1330,9 @@ titleAndTabDataAndMainView logInState isWideScreenMode nowMaybe page =
 
 
 mapPageData :
-    (eachPageMsg -> Msg)
+    (eachPageMsg -> PageMsg)
     -> { title : Maybe String, tab : BasicParts.Tab eachPageMsg, html : List (Html.Html eachPageMsg) }
-    -> { title : String, tab : BasicParts.Tab Msg, html : List (Html.Html Msg) }
+    -> { title : String, tab : BasicParts.Tab PageMsg, html : List (Html.Html PageMsg) }
 mapPageData f { title, tab, html } =
     { title =
         case title of

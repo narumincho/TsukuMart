@@ -122,25 +122,6 @@ sendConfirmEmailRequestBody =
             )
 
 
-universityToSimpleRecord : University.University -> { graduate : Maybe University.Graduate, department : Maybe University.SchoolAndDepartment }
-universityToSimpleRecord universityData =
-    case universityData of
-        University.GraduateTsukuba graduate schoolAndDepartment ->
-            { graduate = Just graduate
-            , department = Just schoolAndDepartment
-            }
-
-        University.GraduateNotTsukuba graduate ->
-            { graduate = Just graduate
-            , department = Nothing
-            }
-
-        University.NotGraduate schoolAndDepartment ->
-            { graduate = Nothing
-            , department = Just schoolAndDepartment
-            }
-
-
 {-| アクセストークンやリフレッシュトークン
 -}
 type Token
@@ -224,40 +205,44 @@ getMyProfile accessToken callBack =
             ]
         )
         (Json.Decode.field "userPrivate"
-            (Json.Decode.succeed
-                (\id displayName imageId introduction schoolAndDepartment graduate ->
-                    User.withProfileFromApi
-                        { id = id
-                        , displayName = displayName
-                        , imageId = imageId
-                        , introduction = introduction
-                        , university =
-                            University.universityFromIdString
-                                { graduateMaybe = graduate, departmentMaybe = schoolAndDepartment }
-                        }
-                )
-                |> Json.Decode.Pipeline.required "id" Json.Decode.string
-                |> Json.Decode.Pipeline.required "displayName" Json.Decode.string
-                |> Json.Decode.Pipeline.required "imageId" Json.Decode.string
-                |> Json.Decode.Pipeline.required "introduction" Json.Decode.string
-                |> Json.Decode.Pipeline.requiredAt
-                    [ "university", "schoolAndDepartment" ]
-                    (Json.Decode.nullable Json.Decode.string)
-                |> Json.Decode.Pipeline.requiredAt
-                    [ "university", "graduate" ]
-                    (Json.Decode.nullable Json.Decode.string)
-                |> Json.Decode.andThen
-                    (\userMaybe ->
-                        case userMaybe of
-                            Just user ->
-                                Json.Decode.succeed user
-
-                            Nothing ->
-                                Json.Decode.fail "invalid university"
-                    )
-            )
+            profileDecoder
         )
         callBack
+
+
+profileDecoder : Json.Decode.Decoder User.WithProfile
+profileDecoder =
+    Json.Decode.succeed
+        (\id displayName imageId introduction schoolAndDepartment graduate ->
+            User.withProfileFromApi
+                { id = id
+                , displayName = displayName
+                , imageId = imageId
+                , introduction = introduction
+                , university =
+                    University.universityFromIdString
+                        { graduateMaybe = graduate, departmentMaybe = schoolAndDepartment }
+                }
+        )
+        |> Json.Decode.Pipeline.required "id" Json.Decode.string
+        |> Json.Decode.Pipeline.required "displayName" Json.Decode.string
+        |> Json.Decode.Pipeline.required "imageId" Json.Decode.string
+        |> Json.Decode.Pipeline.required "introduction" Json.Decode.string
+        |> Json.Decode.Pipeline.requiredAt
+            [ "university", "schoolAndDepartment" ]
+            (Json.Decode.nullable Json.Decode.string)
+        |> Json.Decode.Pipeline.requiredAt
+            [ "university", "graduate" ]
+            (Json.Decode.nullable Json.Decode.string)
+        |> Json.Decode.andThen
+            (\userMaybe ->
+                case userMaybe of
+                    Just user ->
+                        Json.Decode.succeed user
+
+                    Nothing ->
+                        Json.Decode.fail "invalid university"
+            )
 
 
 
@@ -300,8 +285,8 @@ type EditProductRequest
         }
 
 
-editProduct : Token -> Product.Id -> EditProductRequest -> (Result () () -> msg) -> Cmd msg
-editProduct token productId editProductRequest msg =
+editProduct : Token -> Product.Id -> EditProductRequest -> (Result String () -> msg) -> Cmd msg
+editProduct accessToken productId editProductRequest callBack =
     Cmd.none
 
 
@@ -315,14 +300,45 @@ editProduct token productId editProductRequest msg =
 type alias ProfileUpdateData =
     { displayName : String
     , introduction : String
-    , image : String
+    , image : Maybe String
     , university : University.University
     }
 
 
-updateProfile : Token -> ProfileUpdateData -> (Result () User.WithProfile -> msg) -> Cmd msg
-updateProfile token profile msg =
-    Cmd.none
+updateProfile : Token -> ProfileUpdateData -> (Result String User.WithProfile -> msg) -> Cmd msg
+updateProfile accessToken { displayName, introduction, image, university } callBack =
+    graphQlApiRequest
+        (Mutation
+            [ Field
+                { name = "updateProfile"
+                , args =
+                    [ ( "accessToken", GraphQLString (tokenToString accessToken) )
+                    , ( "displayName", GraphQLString displayName )
+                    , ( "image", nullableGraphQLValue GraphQLString image )
+                    , ( "introduction", GraphQLString introduction )
+                    , ( "university", universityToGraphQLValue university )
+                    ]
+                , return =
+                    [ Field { name = "id", args = [], return = [] }
+                    , Field { name = "displayName", args = [], return = [] }
+                    , Field { name = "imageId", args = [], return = [] }
+                    , Field { name = "introduction", args = [], return = [] }
+                    , Field
+                        { name = "university"
+                        , args = []
+                        , return =
+                            [ Field { name = "schoolAndDepartment", args = [], return = [] }
+                            , Field { name = "graduate", args = [], return = [] }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        )
+        (Json.Decode.field "updateProfile"
+            profileDecoder
+        )
+        callBack
 
 
 
@@ -416,38 +432,7 @@ getUserProfile userId callBack =
             ]
         )
         (Json.Decode.field "user"
-            (Json.Decode.succeed
-                (\id displayName imageId introduction schoolAndDepartment graduate ->
-                    User.withProfileFromApi
-                        { id = id
-                        , displayName = displayName
-                        , imageId = imageId
-                        , introduction = introduction
-                        , university =
-                            University.universityFromIdString
-                                { graduateMaybe = graduate, departmentMaybe = schoolAndDepartment }
-                        }
-                )
-                |> Json.Decode.Pipeline.required "id" Json.Decode.string
-                |> Json.Decode.Pipeline.required "displayName" Json.Decode.string
-                |> Json.Decode.Pipeline.required "imageId" Json.Decode.string
-                |> Json.Decode.Pipeline.required "introduction" Json.Decode.string
-                |> Json.Decode.Pipeline.requiredAt
-                    [ "university", "schoolAndDepartment" ]
-                    (Json.Decode.nullable Json.Decode.string)
-                |> Json.Decode.Pipeline.requiredAt
-                    [ "university", "graduate" ]
-                    (Json.Decode.nullable Json.Decode.string)
-                |> Json.Decode.andThen
-                    (\userMaybe ->
-                        case userMaybe of
-                            Just user ->
-                                Json.Decode.succeed user
-
-                            Nothing ->
-                                Json.Decode.fail "invalid university"
-                    )
-            )
+            profileDecoder
         )
         callBack
 
@@ -897,6 +882,16 @@ graphQLValueToString graphQLValue =
 
         GraphQLNull ->
             "null"
+
+
+nullableGraphQLValue : (a -> GraphQLValue) -> Maybe a -> GraphQLValue
+nullableGraphQLValue func maybe =
+    case maybe of
+        Just a ->
+            func a
+
+        Nothing ->
+            GraphQLNull
 
 
 graphQlRequestBody : String -> Http.Body

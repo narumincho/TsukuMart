@@ -9,6 +9,7 @@ module SiteMap exposing
     , homeUrl
     , likeHistoryUrl
     , logInUrl
+    , notificationUrl
     , productUrl
     , searchUrl
     , siteMapXml
@@ -39,6 +40,7 @@ type UrlParserInitResult
     | InitProduct Data.Product.Id
     | InitUser Data.User.Id
     | InitSearch Data.SearchCondition.Condition
+    | InitNotification
     | InitSiteMap
     | InitAbout
     | InitAboutPrivacyPolicy
@@ -75,6 +77,7 @@ urlParserInit url =
       , productParser |> parserMap InitProduct
       , userParser |> parserMap InitUser
       , searchParser fragmentDict |> parserMap InitSearch
+      , notificationParser |> parserMap (always InitNotification)
       , siteMapParser |> parserMap (always InitSiteMap)
       , aboutParser |> parserMap (always InitAbout)
       , aboutPrivacyPolicyParser |> parserMap (always InitAboutPrivacyPolicy)
@@ -113,6 +116,7 @@ type UrlParserResult
     | Product Data.Product.Id
     | User Data.User.Id
     | Search Data.SearchCondition.Condition
+    | Notification
     | SiteMap
     | About
     | AboutPrivacyPolicy
@@ -140,6 +144,7 @@ urlParser url =
     , productParser |> parserMap Product
     , userParser |> parserMap User
     , searchParser fragmentDict |> parserMap Search
+    , notificationParser |> parserMap (always Notification)
     , siteMapParser |> parserMap (always SiteMap)
     , aboutParser |> parserMap (always About)
     , aboutPrivacyPolicyParser |> parserMap (always AboutPrivacyPolicy)
@@ -382,17 +387,43 @@ searchParser fragment path =
 
 searchUrl : Data.SearchCondition.Condition -> String
 searchUrl condition =
-    case condition of
-        Data.SearchCondition.None ->
-            searchPath
+    Url.Builder.absolute
+        [ case condition of
+            Data.SearchCondition.None ->
+                searchPath
 
-        Data.SearchCondition.ByText text ->
-            searchPath ++ "#text=" ++ Url.percentEncode text
+            Data.SearchCondition.ByText text ->
+                searchPath ++ "#text=" ++ Url.percentEncode text
+        ]
+        []
 
 
 searchPath : String
 searchPath =
     "search"
+
+
+
+{- notification -}
+
+
+notificationParser : List String -> Maybe ()
+notificationParser path =
+    if path == [ notificationPath ] then
+        Just ()
+
+    else
+        Nothing
+
+
+notificationUrl : String
+notificationUrl =
+    Url.Builder.absolute [ notificationPath ] []
+
+
+notificationPath : String
+notificationPath =
+    "notification"
 
 
 

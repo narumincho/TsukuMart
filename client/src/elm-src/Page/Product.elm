@@ -14,6 +14,7 @@ module Page.Product exposing
 -}
 
 import Api
+import BasicParts
 import Data.LogInState as LogInState
 import Data.Product as Product
 import Data.User
@@ -25,7 +26,6 @@ import Page.Component.ProductEditor as ProductEditor
 import SiteMap
 import Svg
 import Svg.Attributes
-import BasicParts
 import Time
 
 
@@ -86,7 +86,7 @@ type Msg
     | MsgBackToViewMode
     | MsgByProductEditor ProductEditor.Msg
     | UpdateProductData Api.Token Product.Id ProductEditor.RequestData
-    | UpdateProductDataResponse (Result () ())
+    | UpdateProductDataResponse (Result String ())
 
 
 {-| 指定したIDの商品詳細ページ
@@ -328,9 +328,9 @@ update msg model =
                 Ok () ->
                     update MsgBackToViewMode model
 
-                Err () ->
+                Err text ->
                     ( model
-                    , []
+                    , [ EmitAddLogMessage ("商品の編集に失敗しました " ++ text) ]
                     )
 
 

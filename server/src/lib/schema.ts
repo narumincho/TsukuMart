@@ -761,7 +761,7 @@ const hello = makeQueryOrMutationField<{}, string>({
     args: {},
     type: g.GraphQLNonNull(g.GraphQLString),
     resolve: async () => {
-        return "Hello World! I'm Tsuku Bird.";
+        return "Hello World! I'm Tsuku Bird. 🐦";
     },
     description: "世界に挨拶する"
 });
@@ -1060,7 +1060,7 @@ const updateProfile = makeQueryOrMutationField<
     >,
     type.UserPrivateInternal
 >({
-    type: userPrivateGraphQLType,
+    type: g.GraphQLNonNull(userPrivateGraphQLType),
     args: {
         accessToken: {
             type: g.GraphQLNonNull(g.GraphQLString),
