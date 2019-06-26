@@ -209,7 +209,7 @@ getMyProfile accessToken callBack =
                 , return =
                     [ Field { name = "id", args = [], return = [] }
                     , Field { name = "displayName", args = [], return = [] }
-                    , Field { name = "imageUrl", args = [], return = [] }
+                    , Field { name = "imageId", args = [], return = [] }
                     , Field { name = "introduction", args = [], return = [] }
                     , Field
                         { name = "university"
@@ -225,11 +225,11 @@ getMyProfile accessToken callBack =
         )
         (Json.Decode.field "userPrivate"
             (Json.Decode.succeed
-                (\id displayName imageUrl introduction schoolAndDepartment graduate ->
+                (\id displayName imageId introduction schoolAndDepartment graduate ->
                     User.withProfileFromApi
                         { id = id
                         , displayName = displayName
-                        , imageUrl = imageUrl
+                        , imageId = imageId
                         , introduction = introduction
                         , university =
                             University.universityFromIdString
@@ -238,7 +238,7 @@ getMyProfile accessToken callBack =
                 )
                 |> Json.Decode.Pipeline.required "id" Json.Decode.string
                 |> Json.Decode.Pipeline.required "displayName" Json.Decode.string
-                |> Json.Decode.Pipeline.required "imageUrl" Json.Decode.string
+                |> Json.Decode.Pipeline.required "imageId" Json.Decode.string
                 |> Json.Decode.Pipeline.required "introduction" Json.Decode.string
                 |> Json.Decode.Pipeline.requiredAt
                     [ "university", "schoolAndDepartment" ]
@@ -397,11 +397,11 @@ getUserProfile userId callBack =
         (Query
             [ Field
                 { name = "user"
-                , args = [("id", GraphQLString (User.idToString userId)) ]
+                , args = [ ( "id", GraphQLString (User.idToString userId) ) ]
                 , return =
                     [ Field { name = "id", args = [], return = [] }
                     , Field { name = "displayName", args = [], return = [] }
-                    , Field { name = "imageUrl", args = [], return = [] }
+                    , Field { name = "imageId", args = [], return = [] }
                     , Field { name = "introduction", args = [], return = [] }
                     , Field
                         { name = "university"
@@ -417,11 +417,11 @@ getUserProfile userId callBack =
         )
         (Json.Decode.field "user"
             (Json.Decode.succeed
-                (\id displayName imageUrl introduction schoolAndDepartment graduate ->
+                (\id displayName imageId introduction schoolAndDepartment graduate ->
                     User.withProfileFromApi
                         { id = id
                         , displayName = displayName
-                        , imageUrl = imageUrl
+                        , imageId = imageId
                         , introduction = introduction
                         , university =
                             University.universityFromIdString
@@ -430,7 +430,7 @@ getUserProfile userId callBack =
                 )
                 |> Json.Decode.Pipeline.required "id" Json.Decode.string
                 |> Json.Decode.Pipeline.required "displayName" Json.Decode.string
-                |> Json.Decode.Pipeline.required "imageUrl" Json.Decode.string
+                |> Json.Decode.Pipeline.required "imageId" Json.Decode.string
                 |> Json.Decode.Pipeline.required "introduction" Json.Decode.string
                 |> Json.Decode.Pipeline.requiredAt
                     [ "university", "schoolAndDepartment" ]
@@ -450,7 +450,6 @@ getUserProfile userId callBack =
             )
         )
         callBack
-
 
 
 
@@ -925,39 +924,20 @@ graphQlResponseDecoder decoder response =
 
         Http.BadStatus_ _ body ->
             body
-                |> Json.Decode.decodeString
-                    (Json.Decode.field "errors"
-                        (Json.Decode.list
-                            (Json.Decode.succeed
-                                (\message lineAndColumnList ->
-                                    "message"
-                                        ++ message
-                                        ++ " at "
-                                        ++ (lineAndColumnList
-                                                |> List.map (\( line, column ) -> line ++ ":" ++ column)
-                                                |> String.join ","
-                                           )
-                                )
-                                |> Json.Decode.Pipeline.required "message" Json.Decode.string
-                                |> Json.Decode.Pipeline.required "locations"
-                                    (Json.Decode.list
-                                        (Json.Decode.succeed Tuple.pair
-                                            |> Json.Decode.Pipeline.required "line" Json.Decode.string
-                                            |> Json.Decode.Pipeline.required "column" Json.Decode.string
-                                        )
-                                    )
-                            )
-                        )
-                    )
+                |> Json.Decode.decodeString graphQLErrorResponseDecoder
                 |> (\result ->
                         case result of
                             Ok errMsg ->
                                 Err errMsg
 
                             Err decodeError ->
-                                Err [ "err message decoder error" ++ Json.Decode.errorToString decodeError ]
+                                Err
+                                    [ "ElmのJSONデコーダーのエラー「"
+                                        ++ Json.Decode.errorToString decodeError
+                                        ++ "」"
+                                    ]
                    )
-                |> Result.mapError (String.join ", ")
+                |> Result.mapError (String.join ",\n")
 
         Http.GoodStatus_ _ body ->
             body
@@ -966,3 +946,32 @@ graphQlResponseDecoder decoder response =
                         decoder
                     )
                 |> Result.mapError Json.Decode.errorToString
+
+
+graphQLErrorResponseDecoder : Json.Decode.Decoder (List String)
+graphQLErrorResponseDecoder =
+    Json.Decode.field "errors"
+        (Json.Decode.list
+            (Json.Decode.succeed
+                (\message lineAndColumnList ->
+                    "message"
+                        ++ message
+                        ++ " at "
+                        ++ (lineAndColumnList
+                                |> List.map
+                                    (\( line, column ) ->
+                                        String.fromInt line ++ ":" ++ String.fromInt column
+                                    )
+                                |> String.join ","
+                           )
+                )
+                |> Json.Decode.Pipeline.required "message" Json.Decode.string
+                |> Json.Decode.Pipeline.required "locations"
+                    (Json.Decode.list
+                        (Json.Decode.succeed Tuple.pair
+                            |> Json.Decode.Pipeline.required "line" Json.Decode.int
+                            |> Json.Decode.Pipeline.required "column" Json.Decode.int
+                        )
+                    )
+            )
+        )

@@ -25,7 +25,7 @@ type WithName
     = WithName
         { id : Id
         , displayName : String
-        , imageUrl : String
+        , imageId : String
         }
 
 
@@ -35,7 +35,7 @@ type WithProfile
     = WithProfile
         { id : Id
         , displayName : String
-        , imageUrl : String
+        , imageId : String
         , introduction : String
         , university : University.University
         }
@@ -57,24 +57,24 @@ idFromString =
     Id
 
 
-withNameFromApi : { id : String, displayName : String, imageUrl : String } -> WithName
-withNameFromApi { id, displayName, imageUrl } =
+withNameFromApi : { id : String, displayName : String, imageId : String } -> WithName
+withNameFromApi { id, displayName, imageId } =
     WithName
         { id = idFromString id
         , displayName = displayName
-        , imageUrl = imageUrl
+        , imageId = imageId
         }
 
 
-withProfileFromApi : { id : String, displayName : String, imageUrl : String, introduction : String, university : Maybe University.University } -> Maybe WithProfile
-withProfileFromApi { id, displayName, imageUrl, introduction, university } =
+withProfileFromApi : { id : String, displayName : String, imageId : String, introduction : String, university : Maybe University.University } -> Maybe WithProfile
+withProfileFromApi { id, displayName, imageId, introduction, university } =
     university
         |> Maybe.map
             (\u ->
                 WithProfile
                     { id = idFromString id
                     , displayName = displayName
-                    , imageUrl = imageUrl
+                    , imageId = imageId
                     , introduction = introduction
                     , university = u
                     }
@@ -92,8 +92,8 @@ withNameGetDisplayName (WithName { displayName }) =
 
 
 withNameGetImageUrl : WithName -> String
-withNameGetImageUrl (WithName { imageUrl }) =
-    imageUrl
+withNameGetImageUrl (WithName { imageId }) =
+    "https://asia-northeast1-tsukumart-f0971.cloudfunctions.net/image/" ++ imageId
 
 
 withProfileGetId : WithProfile -> Id
@@ -107,8 +107,8 @@ withProfileGetDisplayName (WithProfile { displayName }) =
 
 
 withProfileGetImageUrl : WithProfile -> String
-withProfileGetImageUrl (WithProfile { imageUrl }) =
-    imageUrl
+withProfileGetImageUrl (WithProfile { imageId }) =
+    "https://asia-northeast1-tsukumart-f0971.cloudfunctions.net/image/" ++ imageId
 
 
 withProfileGetIntroduction : WithProfile -> String
