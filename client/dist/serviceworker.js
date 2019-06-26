@@ -14,7 +14,6 @@ const cachesName = "image-chase";
         })());
     });
     const cacheFn = async (request) => {
-        console.log(request.url, "リクエストを検知");
         return await fetch(request);
     };
     self.addEventListener("fetch", e => {

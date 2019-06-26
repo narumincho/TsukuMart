@@ -24,15 +24,19 @@ const tokenUrl = (refreshToken: string, accessToken: string): URL =>
  * 新規登録フォームへのURLを作成
  * @param sendEmailToken
  * @param name
- * @param imageUrl
+ * @param imageId
  */
-const signUpUrl = (sendEmailToken: string, name: string, imageUrl: URL): URL =>
+const signUpUrl = (
+    sendEmailToken: string,
+    name: string,
+    imageId: string
+): URL =>
     utilUrl.fromStringWithFragment(
         domain + "/signup",
         new Map([
             ["sendEmailToken", sendEmailToken],
             ["name", name],
-            ["imageUrl", imageUrl.toString()]
+            ["imageId", imageId]
         ])
     );
 
@@ -97,17 +101,17 @@ export const googleLogInReceiver = async (
             tokenUrl(token.refreshToken, token.accessToken).toString()
         );
     } catch {
-        const imageUrl = await getAndSaveUserImage(new URL(googleData.picture));
+        const imageId = await getAndSaveUserImage(new URL(googleData.picture));
         await database.addUserInUserBeforeInputData(
             logInServiceAndId,
             googleData.name,
-            imageUrl
+            imageId
         );
         response.redirect(
             signUpUrl(
                 createSendEmailToken(logInServiceAndId),
                 googleData.name,
-                imageUrl
+                imageId
             ).toString()
         );
     }
@@ -164,15 +168,15 @@ const createSendEmailToken = (id: type.LogInServiceAndId) => {
     return jwt.sign(payload, key.sendEmailTokenSecret, { algorithm: "HS256" });
 };
 
-const getAndSaveUserImage = async (imageUrl: URL): Promise<URL> => {
-    const response: AxiosResponse<ArrayBuffer> = await axios.get(
-        imageUrl.toString(),
+const getAndSaveUserImage = async (imageId: URL): Promise<string> => {
+    const response: AxiosResponse<Buffer> = await axios.get(
+        imageId.toString(),
         {
             responseType: "arraybuffer"
         }
     );
     const mimeType: string = response.headers["content-type"];
-    return await database.saveUserImage(response.data, mimeType);
+    return await database.saveImage(response.data, mimeType);
 };
 
 /* =====================================================================
@@ -259,17 +263,17 @@ query {
         console.log("ユーザーを探すところでエラー発生" + e);
         // ユーザーが存在しないなら作成し、リフレッシュトークンを返す
 
-        const imageUrl = await getAndSaveUserImage(
+        const imageId = await getAndSaveUserImage(
             new URL(gitHubData.avatarUrl)
         );
         await database.addUserInUserBeforeInputData(
             logInServiceAndId,
             gitHubData.name,
-            imageUrl
+            imageId
         );
         const sendEmailToken = createSendEmailToken(logInServiceAndId);
         response.redirect(
-            signUpUrl(sendEmailToken, gitHubData.name, imageUrl).toString()
+            signUpUrl(sendEmailToken, gitHubData.name, imageId).toString()
         );
     }
 };
@@ -315,25 +319,23 @@ export const twitterLogInReceiver = async (
     } catch {
         switch (twitterData.c) {
             case logInWithTwitter.AuthReturnC.NormalAccount: {
-                const imageUrl = await getAndSaveUserImage(
-                    twitterData.imageUrl
-                );
+                const imageId = await getAndSaveUserImage(twitterData.imageUrl);
                 await database.addUserInUserBeforeInputData(
                     logInServiceAndId,
                     twitterData.name,
-                    imageUrl
+                    imageId
                 );
                 response.redirect(
                     signUpUrl(
                         createSendEmailToken(logInServiceAndId),
                         twitterData.name,
-                        imageUrl
+                        imageId
                     ).toString()
                 );
                 return;
             }
             case logInWithTwitter.AuthReturnC.SecretAccount: {
-                const imageUrl = await getAndSaveUserImage(
+                const imageId = await getAndSaveUserImage(
                     new URL(
                         "https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png"
                     )
@@ -341,13 +343,13 @@ export const twitterLogInReceiver = async (
                 await database.addUserInUserBeforeInputData(
                     logInServiceAndId,
                     "",
-                    imageUrl
+                    imageId
                 );
                 response.redirect(
                     signUpUrl(
                         createSendEmailToken(logInServiceAndId),
                         "",
-                        imageUrl
+                        imageId
                     ).toString()
                 );
             }
@@ -415,17 +417,17 @@ export const lineLogInReceiver = async (
             tokenUrl(token.refreshToken, token.accessToken).toString()
         );
     } catch {
-        const imageUrl = await getAndSaveUserImage(new URL(lineData.picture));
+        const imageId = await getAndSaveUserImage(new URL(lineData.picture));
         await database.addUserInUserBeforeInputData(
             logInServiceAndId,
             lineData.name,
-            imageUrl
+            imageId
         );
         response.redirect(
             signUpUrl(
                 createSendEmailToken(logInServiceAndId),
                 lineData.name,
-                imageUrl
+                imageId
             ).toString()
         );
     }

@@ -102,21 +102,14 @@ export const image = functions
             response.status(200).send("");
             return;
         }
-        const pathSplited: Array<string> = request.path.split("/");
-        const folderName: string | undefined = pathSplited[1];
-        const fileName: string | undefined = pathSplited[2];
-        if (folderName === undefined || fileName == undefined) {
-            console.log("ファイルの指定がおかしい", request.path);
-            response.status(404).send("invalid image path");
-            return;
-        }
         try {
             response.setHeader("Cache-Control", "public max-age=3600");
-            databaseLow.getImageReadStream(folderName, fileName).pipe(response);
+            databaseLow
+                .getImageReadStream(request.path.substring(1))
+                .pipe(response);
         } catch (e) {
             console.log(
-                "指定した、ファイルがない",
-                folderName + "/" + fileName
+                `指定した、ファイルID=(${request.path.substring(1)})がない`
             );
             response.status(404).send("not found");
         }

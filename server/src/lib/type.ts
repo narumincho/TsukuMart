@@ -340,7 +340,7 @@ export type RefreshTokenAndAccessToken = {
 export type UserInternal = {
     id: string;
     displayName: string;
-    imageUrl: URL;
+    imageId: string;
     introduction: string;
     university: UniversityInternal;
     soldProductAll: Array<ProductInternal>;
@@ -350,7 +350,7 @@ export type UserInternal = {
 export type User = {
     id: string;
     displayName: string;
-    imageUrl: URL;
+    imageId: string;
     introduction: string;
     university: University;
     createdAt: Date;
@@ -363,7 +363,7 @@ export type User = {
 export type UserPrivateInternal = {
     id: string;
     displayName: string;
-    imageUrl: URL;
+    imageId: string;
     introduction: string;
     university: UniversityInternal;
     createdAt: Date;
@@ -378,7 +378,7 @@ export type UserPrivateInternal = {
 export type UserPrivate = {
     id: string;
     displayName: string;
-    imageUrl: URL;
+    imageId: string;
     introduction: string;
     university: University;
     createdAt: Date;
@@ -400,10 +400,11 @@ export type ProductInternal = {
     description: string;
     condition: Condition;
     category: Category;
-    thumbnailUrl: URL;
-    imageUrls: Array<URL>;
+    thumbnailImageId: string;
+    imageIds: Array<string>;
     likedCount: number;
     viewedCount: number;
+    status: ProductStatus;
     seller: UserInternal;
     comments: Array<ProductComment>;
     createdAt: Date;
@@ -417,10 +418,11 @@ export type Product = {
     description: string;
     condition: Condition;
     category: Category;
-    thumbnailUrl: URL;
-    imageUrls: Array<URL>;
+    thumbnailImageId: string;
+    imageIds: Array<string>;
     likedCount: number;
     viewedCount: number;
+    status: ProductStatus;
     seller: User;
     comments: Array<ProductComment>;
     createdAt: Date;
@@ -444,6 +446,29 @@ export type ProductCommentInternal = {
     createAt: Date;
 };
 /** ==============================
+ *      Product Status
+ * ===============================
+ */
+const productStatusValues = {
+    selling: {
+        description: "出品中"
+    },
+    trading: {
+        description: "取引中"
+    },
+    soldout: {
+        description: "売り切れ"
+    }
+};
+
+export type ProductStatus = keyof typeof productStatusValues;
+
+export const productStatusGraphQLType = new g.GraphQLEnumType({
+    name: "ProductStatus",
+    description: "取引中の状態",
+    values: productStatusValues
+});
+/** ==============================
  *        Draft Product
  * ===============================
  */
@@ -454,6 +479,8 @@ export type DraftProduct = {
     price: number | null;
     condition: Condition | null;
     category: Category | null;
+    thumbnailImageId: string;
+    imageIds: Array<string>;
     createdAt: Date;
     updateAt: Date;
 };

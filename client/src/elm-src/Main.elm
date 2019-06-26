@@ -195,10 +195,10 @@ urlParserInitResultToPageAndCmd logInState page =
             Page.Home.initModel Nothing
                 |> Tuple.mapBoth PageHome homePageEmitListToCmd
 
-        SiteMap.InitSignUp { name, imageUrl, sendEmailToken } ->
+        SiteMap.InitSignUp { name, imageId, sendEmailToken } ->
             Page.SignUp.initModel
                 { name = name
-                , imageUrl = imageUrl
+                , imageId = imageId
                 , sendEmailToken = sendEmailToken
                 }
                 |> Tuple.mapBoth PageSignUp signUpPageEmitListToCmd

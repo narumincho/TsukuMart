@@ -30,7 +30,7 @@ import Url.Builder
 
 type UrlParserInitResult
     = InitHome
-    | InitSignUp { sendEmailToken : String, name : String, imageUrl : String }
+    | InitSignUp { sendEmailToken : String, name : String, imageId : String }
     | InitLogIn
     | InitLikeAndHistory
     | IntiSoldProducts
@@ -169,14 +169,14 @@ homeUrl =
 signUpParser :
     Dict.Dict String String
     -> List String
-    -> Maybe { sendEmailToken : String, name : String, imageUrl : String }
+    -> Maybe { sendEmailToken : String, name : String, imageId : String }
 signUpParser fragment path =
-    case ( path, ( fragment |> Dict.get "sendEmailToken", fragment |> Dict.get "name", fragment |> Dict.get "imageUrl" ) ) of
-        ( [ "signup" ], ( Just sendEmailToken, Just name, Just imageUrl ) ) ->
+    case ( path, ( fragment |> Dict.get "sendEmailToken", fragment |> Dict.get "name", fragment |> Dict.get "imageId" ) ) of
+        ( [ "signup" ], ( Just sendEmailToken, Just name, Just imageId ) ) ->
             Just
                 { sendEmailToken = sendEmailToken
                 , name = name
-                , imageUrl = imageUrl
+                , imageId = imageId
                 }
 
         ( _, ( _, _, _ ) ) ->

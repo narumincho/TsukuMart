@@ -11,6 +11,7 @@ module Page.SignUp exposing
 -}
 
 import Api
+import BasicParts
 import Data.EmailAddress
 import Data.SAddress
 import Data.StudentId
@@ -20,7 +21,6 @@ import Html.Events
 import Html.Keyed
 import Json.Decode
 import Page.Component.University as CompUniversity
-import BasicParts
 
 
 type Model
@@ -62,13 +62,13 @@ type Msg
 
 {-| すべて空白の新規登録画面を表示するためのModel
 -}
-initModel : { name : String, imageUrl : String, sendEmailToken : String } -> ( Model, List Emit )
-initModel { name, imageUrl, sendEmailToken } =
+initModel : { name : String, imageId : String, sendEmailToken : String } -> ( Model, List Emit )
+initModel { name, imageId, sendEmailToken } =
     ( Normal
         { sAddressOrStudentId = analysisStudentIdOrSAddress ""
         , university = CompUniversity.initSelect
         , nickName = name
-        , image = ServiceImage imageUrl
+        , image = ServiceImage imageId
         , sendEmailToken = sendEmailToken
         }
     , [ EmitAddEventListenerForUserImage { labelId = imageLabelId, inputId = imageInputId }
@@ -338,7 +338,8 @@ imageForm image =
                     , Html.Attributes.src
                         (case image of
                             ServiceImage url ->
-                                url
+                                "https://asia-northeast1-tsukumart-f0971.cloudfunctions.net/image/"
+                                    ++ url
 
                             CustomizeImage dataUrl ->
                                 dataUrl

@@ -4,7 +4,6 @@ import * as databaseLow from "./databaseLow";
 import * as key from "./key";
 import * as type from "./type";
 import Maybe from "graphql/tsutils/Maybe";
-import { user } from "firebase-functions/lib/providers/auth";
 
 /** resolveで返すべき部分型を生成する */
 type Return<Type> = Type extends Array<infer E>
@@ -74,20 +73,18 @@ export const generateAndWriteLineLogInState = async (): Promise<string> =>
 
 /**
  * ユーザー情報を入力する前のユーザーを保存する
- * @param accountService 使うアカウントのサービス
- * @param accountServiceId それぞれのアカウントのユーザーID
+ * @param logInServiceAndId 使うアカウントのサービスとそれぞれのアカウントのユーザーID
  * @param name 各サービスのアカウント名
- * @param imageUrl つくマートのサーバーにダウンロードしたアカウント画像のURL
- * @returns ユーザー情報を入力する前のユーザーID
+ * @param imageId つくマートのサーバーにダウンロードしたアカウント画像の画像ID
  */
 export const addUserInUserBeforeInputData = async (
     logInServiceAndId: type.LogInServiceAndId,
     name: string,
-    imageUrl: URL
+    imageId: string
 ): Promise<void> => {
     await databaseLow.addUserBeforeInputData(logInServiceAndId, {
         name,
-        imageUrl: imageUrl.toString()
+        imageId: imageId
     });
 };
 
@@ -99,73 +96,36 @@ export const getUserInUserBeforeInputData = async (
     logInAccountServiceId: type.LogInServiceAndId
 ): Promise<{
     name: string;
-    imageUrl: URL;
+    imageId: string;
 }> => {
     const data = await databaseLow.getAndDeleteUserBeforeInputData(
         logInAccountServiceId
     );
     return {
         name: data.name,
-        imageUrl: new URL(data.imageUrl)
+        imageId: data.imageId
     };
-};
-/**
- * ユーザーのプロフィール画像をCloud Storageに保存する。ごくまれにファイル名がかぶるかも。
- * @param arrayBuffer バイナリ
- * @param mimeType https://ja.wikipedia.org/wiki/%E3%83%A1%E3%83%87%E3%82%A3%E3%82%A2%E3%82%BF%E3%82%A4%E3%83%97
- */
-export const saveUserImage = async (
-    arrayBuffer: ArrayBuffer,
-    mimeType: string
-): Promise<URL> => {
-    if (400 * 400 * 3 < arrayBuffer.byteLength) {
-        throw new Error("too large image");
-    }
-    return await databaseLow.saveFileToCloudStorage(
-        "user",
-        arrayBuffer,
-        mimeType
-    );
-};
-
-/**
- * ユーザーのプロフィール画像をCloud Storageから削除する
- * @param fileName ファイル名
- */
-export const deleteUserImage = async (url: URL): Promise<void> => {
-    const result = url
-        .toString()
-        .match(
-            /^https:\/\/asia-northeast1-tsukumart-f0971.cloudfunctions.net\/image\/user\/(.+)$/
-        );
-    if (result === null) {
-        throw new Error("user image delete error");
-    }
-    await databaseLow.deleteStorageFile("user", result[1]);
 };
 
 export const addUserBeforeEmailVerificationAndSendEmail = async (
     logInAccountServiceId: type.LogInServiceAndId,
     name: string,
-    imageUrl: URL,
+    imageId: string,
     email: string,
     university: type.University
 ): Promise<void> => {
-    console.log("auth userを作成中");
     const authUser = await databaseLow.createFirebaseAuthUserByRandomPassword(
         email
     );
-    console.log("auth userを作成成功");
     const flatUniversity = type.universityToInternal(university);
     await databaseLow.addUserBeforeEmailVerification(logInAccountServiceId, {
         firebaseAuthUserId: authUser.id,
         name: name,
-        imageUrl: imageUrl.toString(),
+        imageId: imageId,
         schoolAndDepartment: flatUniversity.schoolAndDepartment,
         graduate: flatUniversity.graduate,
         email: email
     });
-    console.log("データベースにBeforeEmailVerificationのユーザーを作成");
     await databaseLow.sendEmailVerification(email, authUser.password);
 };
 
@@ -206,7 +166,7 @@ export const getAccessTokenAndRefreshToken = async (
                     logInAccountServiceId
                 ),
                 displayName: userBeforeEmailVerification.name,
-                imageUrl: userBeforeEmailVerification.imageUrl.toString(),
+                imageId: userBeforeEmailVerification.imageId,
                 schoolAndDepartment:
                     userBeforeEmailVerification.schoolAndDepartment,
                 graduate: userBeforeEmailVerification.graduate,
@@ -341,13 +301,13 @@ export const getUserData = async (
 ): Promise<
     Pick<
         type.User,
-        "displayName" | "imageUrl" | "introduction" | "university" | "createdAt"
+        "displayName" | "imageId" | "introduction" | "university" | "createdAt"
     > & { soldProductAll: Array<{ id: string }> }
 > => {
     const userData = await databaseLow.getUserData(id);
     return {
         displayName: userData.displayName,
-        imageUrl: new URL(userData.imageUrl),
+        imageId: userData.imageId,
         introduction: userData.introduction,
         university: type.universityFromInternal({
             graduate: userData.graduate,
@@ -367,13 +327,13 @@ export const getUserPrivate = async (
 ): Promise<
     Pick<
         type.UserPrivate,
-        "displayName" | "imageUrl" | "introduction" | "university" | "createdAt"
+        "displayName" | "imageId" | "introduction" | "university" | "createdAt"
     >
 > => {
     const userData = await databaseLow.getUserData(id);
     return {
         displayName: userData.displayName,
-        imageUrl: new URL(userData.imageUrl),
+        imageId: userData.imageId,
         introduction: userData.introduction,
         university: type.universityFromInternal({
             graduate: userData.graduate,
@@ -392,7 +352,7 @@ export const getAllUser = async (): Promise<
             type.User,
             | "id"
             | "displayName"
-            | "imageUrl"
+            | "imageId"
             | "university"
             | "introduction"
             | "createdAt"
@@ -402,7 +362,7 @@ export const getAllUser = async (): Promise<
     (await databaseLow.getAllUserData()).map(({ id, data }) => ({
         id: id,
         displayName: data.displayName,
-        imageUrl: new URL(data.imageUrl),
+        imageId: data.imageId,
         university: type.universityFromInternal({
             graduate: data.graduate,
             schoolAndDepartment: data.schoolAndDepartment
@@ -435,10 +395,20 @@ export const addDraftProductData = async (
     data: Pick<
         type.DraftProduct,
         "name" | "price" | "description" | "condition" | "category"
-    >
+    > & { images: Array<type.DataURL> }
 ): Promise<type.DraftProduct> => {
     const nowTime = databaseLow.getNowTimestamp();
     const nowTimeAsDate = databaseLow.timestampToDate(nowTime);
+    const thumbnailImageId = await databaseLow.saveThumbnailImageToCloudStorage(
+        data.images[0].data,
+        data.images[0].mimeType
+    );
+    const imageIds = await Promise.all(
+        data.images.map(({ data, mimeType }) =>
+            databaseLow.saveFileToCloudStorage(data, mimeType)
+        )
+    );
+
     return {
         draftId: await databaseLow.addDraftProductData(userId, {
             name: data.name,
@@ -446,6 +416,8 @@ export const addDraftProductData = async (
             price: data.price,
             condition: data.condition,
             category: data.category,
+            thumbnailImageId: thumbnailImageId,
+            imageIds: imageIds,
             createdAt: nowTime,
             updateAt: nowTime
         }),
@@ -454,6 +426,8 @@ export const addDraftProductData = async (
         description: data.description,
         condition: data.condition,
         category: data.category,
+        thumbnailImageId: thumbnailImageId,
+        imageIds: imageIds,
         createdAt: nowTimeAsDate,
         updateAt: nowTimeAsDate
     };
@@ -461,44 +435,62 @@ export const addDraftProductData = async (
 
 export const getDraftProducts = async (
     userId: string
-): Promise<Array<type.DraftProduct>> => {
-    const draftProduct = await databaseLow.getAllDraftProductData(userId);
-    return draftProduct.map(({ id, data }) => ({
+): Promise<Array<type.DraftProduct>> =>
+    (await databaseLow.getAllDraftProductData(userId)).map(({ id, data }) => ({
         draftId: id,
         name: data.name,
         price: data.price,
         description: data.description,
         condition: data.condition,
         category: data.category,
+        thumbnailImageId: data.thumbnailImageId,
+        imageIds: data.imageIds,
         createdAt: databaseLow.timestampToDate(data.createdAt),
         updateAt: databaseLow.timestampToDate(data.createdAt)
     }));
-};
-
 export const updateDraftProduct = async (
     userId: string,
     data: Pick<
         type.DraftProduct,
         "draftId" | "name" | "price" | "description" | "category" | "condition"
-    >
-): Promise<
-    Pick<
-        type.DraftProduct,
-        | "draftId"
-        | "name"
-        | "price"
-        | "description"
-        | "category"
-        | "condition"
-        | "createdAt"
-        | "updateAt"
-    >
-> => {
+    > & { deleteImagesAt: Array<number>; addImages: Array<type.DataURL> }
+): Promise<type.DraftProduct> => {
     const nowTime = databaseLow.getNowTimestamp();
     const beforeData = await databaseLow.getDraftProductData(
         userId,
         data.draftId
     );
+
+    const newImageIds: Array<string> = [];
+    let restFirstImage: boolean = true;
+    let deleteAtIndex = 0;
+    for (let i = 0; i < beforeData.imageIds.length; i++) {
+        if (i === data.deleteImagesAt[deleteAtIndex]) {
+            if (i === 0) {
+                restFirstImage = false;
+            }
+            deleteAtIndex += 1;
+        } else {
+            newImageIds.push(beforeData.imageIds[i]);
+        }
+    }
+    for (let i = 0; i < data.addImages.length; i++) {
+        newImageIds.push(
+            await databaseLow.saveThumbnailImageToCloudStorage(
+                data.addImages[i].data,
+                data.addImages[i].mimeType
+            )
+        );
+    }
+    if (newImageIds.length <= 0) {
+        throw new Error("商品画像がなくなってしまった");
+    }
+    let thumbnailImageId = beforeData.thumbnailImageId;
+    if (!restFirstImage) {
+        thumbnailImageId = await databaseLow.saveThumbnailImageFromCloudStorageToCloudStorage(
+            newImageIds[0]
+        );
+    }
     await databaseLow.updateDraftProduct(userId, data.draftId, {
         name: data.name,
         price: data.price,
@@ -515,7 +507,9 @@ export const updateDraftProduct = async (
         category: data.category,
         condition: data.condition,
         createdAt: databaseLow.timestampToDate(beforeData.createdAt),
-        updateAt: databaseLow.timestampToDate(nowTime)
+        updateAt: databaseLow.timestampToDate(nowTime),
+        thumbnailImageId: thumbnailImageId,
+        imageIds: newImageIds
     };
 };
 
@@ -584,10 +578,10 @@ export const setProfile = async (
 ): Promise<
     Pick<
         type.UserPrivate,
-        "id" | "displayName" | "imageUrl" | "introduction" | "university"
+        "id" | "displayName" | "imageId" | "introduction" | "university"
     >
 > => {
-    let imageUrl: URL;
+    let imageId: string;
     const universityInternal = type.universityToInternal(data.university);
     if (data.image === null || data.image === undefined) {
         databaseLow.updateUserData(id, {
@@ -596,12 +590,15 @@ export const setProfile = async (
             graduate: universityInternal.graduate,
             schoolAndDepartment: universityInternal.schoolAndDepartment
         });
-        imageUrl = new URL((await databaseLow.getUserData(id)).imageUrl);
+        imageId = (await databaseLow.getUserData(id)).imageId;
     } else {
-        imageUrl = await saveUserImage(data.image.data, data.image.mimeType);
+        imageId = await databaseLow.saveFileToCloudStorage(
+            data.image.data,
+            data.image.mimeType
+        );
         databaseLow.updateUserData(id, {
             displayName: data.displayName,
-            imageUrl: imageUrl.toString(),
+            imageId: imageId,
             introduction: data.introduction,
             graduate: universityInternal.graduate,
             schoolAndDepartment: universityInternal.schoolAndDepartment
@@ -610,10 +607,19 @@ export const setProfile = async (
     return {
         id: id,
         displayName: data.displayName,
-        imageUrl: imageUrl,
+        imageId: imageId,
         introduction: data.introduction,
         university: data.university
     };
+};
+
+export const saveImage = async (
+    data: Buffer,
+    mimeType: string
+): Promise<string> => await databaseLow.saveFileToCloudStorage(data, mimeType);
+
+export const deleteImage = async (imageId: string): Promise<void> => {
+    await databaseLow.deleteStorageFile(imageId);
 };
 
 /* ==========================================
@@ -641,14 +647,15 @@ export const getProduct = async (
         | "description"
         | "condition"
         | "category"
-        | "thumbnailUrl"
-        | "imageUrls"
+        | "thumbnailImageId"
+        | "imageIds"
         | "likedCount"
         | "viewedCount"
+        | "status"
         | "createdAt"
         | "updateAt"
     > & {
-        seller: Pick<type.User, "id" | "displayName" | "imageUrl">;
+        seller: Pick<type.User, "id" | "displayName" | "imageId">;
     }
 > => {
     const data = await databaseLow.getProduct(id);
@@ -658,14 +665,15 @@ export const getProduct = async (
         description: data.description,
         condition: data.condition,
         category: data.category,
-        thumbnailUrl: new URL(data.thumbnailUrl),
-        imageUrls: data.imageUrls.map(s => new URL(s)),
+        thumbnailImageId: data.thumbnailImageId,
+        imageIds: data.imageIds,
         likedCount: data.likedCount,
         viewedCount: data.viewedCount,
+        status: data.status,
         seller: {
             id: data.sellerId,
             displayName: data.sellerDisplayName,
-            imageUrl: new URL(data.sellerImageUrl)
+            imageId: data.sellerImageId
         },
         createdAt: databaseLow.timestampToDate(data.createdAt),
         updateAt: databaseLow.timestampToDate(data.updateAt)
@@ -690,22 +698,21 @@ export const sellProduct = async (
         | "description"
         | "condition"
         | "category"
-        | "thumbnailUrl"
-        | "imageUrls"
+        | "thumbnailImageId"
+        | "imageIds"
         | "createdAt"
         | "updateAt"
     >
 > => {
     const userData = await databaseLow.getUserData(userId);
 
-    const thumbnailUrl = await databaseLow.saveThumbnailImageToCloudStorage(
-        "productThumbnail",
+    const thumbnailImageId = await databaseLow.saveThumbnailImageToCloudStorage(
         data.images[0].data,
         data.images[0].mimeType
     );
-    const imageUrls = await Promise.all(
+    const imagesIds = await Promise.all(
         data.images.map(({ data, mimeType }) =>
-            databaseLow.saveFileToCloudStorage("product", data, mimeType)
+            databaseLow.saveFileToCloudStorage(data, mimeType)
         )
     );
     const nowTimestamp = databaseLow.getNowTimestamp();
@@ -715,13 +722,14 @@ export const sellProduct = async (
         description: data.description,
         condition: data.condition,
         category: data.category,
-        thumbnailUrl: thumbnailUrl.toString(),
-        imageUrls: imageUrls.map(url => url.toString()),
+        thumbnailImageId: thumbnailImageId,
+        imageIds: imagesIds,
         likedCount: 0,
         viewedCount: 0,
+        status: "selling",
         sellerId: userId,
         sellerDisplayName: userData.displayName,
-        sellerImageUrl: userData.imageUrl,
+        sellerImageId: userData.imageId,
         createdAt: nowTimestamp,
         updateAt: nowTimestamp
     });
@@ -732,8 +740,8 @@ export const sellProduct = async (
         description: data.description,
         condition: data.condition,
         category: data.category,
-        thumbnailUrl: thumbnailUrl,
-        imageUrls: imageUrls,
+        thumbnailImageId: thumbnailImageId,
+        imageIds: imagesIds,
         createdAt: databaseLow.timestampToDate(nowTimestamp),
         updateAt: databaseLow.timestampToDate(nowTimestamp)
     };
@@ -744,7 +752,7 @@ export const getProductComments = async (
 ): Promise<
     Array<
         Pick<type.ProductComment, "body" | "commentId" | "createdAt"> & {
-            speaker: Pick<type.User, "id" | "displayName" | "imageUrl">;
+            speaker: Pick<type.User, "id" | "displayName" | "imageId">;
         }
     >
 > =>
@@ -755,7 +763,7 @@ export const getProductComments = async (
         speaker: {
             id: data.speakerId,
             displayName: data.speakerDisplayName,
-            imageUrl: new URL(data.speakerImageUrl)
+            imageId: data.speakerImageId
         }
     }));
 
@@ -766,7 +774,7 @@ export const createProductComment = async (
 ): Promise<
     Array<
         Pick<type.ProductComment, "body" | "commentId" | "createdAt"> & {
-            speaker: Pick<type.User, "id" | "displayName" | "imageUrl">;
+            speaker: Pick<type.User, "id" | "displayName" | "imageId">;
         }
     >
 > => {
@@ -777,7 +785,7 @@ export const createProductComment = async (
         createdAt: nowTimestamp,
         speakerId: userData.displayName,
         speakerDisplayName: userData.displayName,
-        speakerImageUrl: userData.imageUrl
+        speakerImageId: userData.imageId
     });
     await databaseLow.updateProductData(productId, { updateAt: nowTimestamp });
     return (await databaseLow.getProductComments(productId)).map(
@@ -788,7 +796,7 @@ export const createProductComment = async (
             speaker: {
                 id: data.speakerId,
                 displayName: data.speakerDisplayName,
-                imageUrl: new URL(data.speakerImageUrl)
+                imageId: data.speakerImageId
             }
         })
     );

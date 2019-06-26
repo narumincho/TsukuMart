@@ -5,6 +5,7 @@ import * as admin from "firebase-admin";
 import * as stream from "stream";
 import { URL } from "url";
 import * as sharp from "sharp";
+import { Storage } from "@google-cloud/storage";
 
 firebase.initializeApp({
     apiKey: "AIzaSyDmKHgxpyKvnq-zxdj0tYSG6QIMotHKRBU",
@@ -38,7 +39,7 @@ const tradeCollectionRef = dataBase.collection("trade");
 type UserData = {
     logInAccountServiceId: string;
     displayName: string;
-    imageUrl: string;
+    imageId: string;
     schoolAndDepartment: type.SchoolAndDepartment | null;
     graduate: type.Graduate | null;
     introduction: string;
@@ -115,6 +116,8 @@ type DraftProductData = {
     price: number | null;
     condition: type.Condition | null;
     category: type.Category | null;
+    thumbnailImageId: string;
+    imageIds: Array<string>;
     createdAt: firestore.Timestamp;
     updateAt: firestore.Timestamp;
 };
@@ -254,7 +257,7 @@ export const deleteUser = async () => {
 */
 type UserBeforeInputDataData = {
     name: string;
-    imageUrl: string;
+    imageId: string;
 };
 
 export const addUserBeforeInputData = async (
@@ -288,7 +291,7 @@ export const getAndDeleteUserBeforeInputData = async (
 type UserBeforeEmailVerificationData = {
     firebaseAuthUserId: string;
     name: string;
-    imageUrl: string;
+    imageId: string;
     schoolAndDepartment: type.SchoolAndDepartment | null;
     graduate: type.Graduate | null;
     email: string;
@@ -327,13 +330,14 @@ type ProductData = {
     description: string;
     condition: type.Condition;
     category: type.Category;
-    thumbnailUrl: string;
-    imageUrls: Array<string>;
+    thumbnailImageId: string;
+    imageIds: Array<string>;
     likedCount: number;
     viewedCount: number;
+    status: type.ProductStatus;
     sellerId: string;
     sellerDisplayName: string;
-    sellerImageUrl: string;
+    sellerImageId: string;
     createdAt: firestore.Timestamp;
     updateAt: firestore.Timestamp;
 };
@@ -411,7 +415,7 @@ type ProductComment = {
     body: string;
     speakerId: string;
     speakerDisplayName: string;
-    speakerImageUrl: string;
+    speakerImageId: string;
     createdAt: firestore.Timestamp;
 };
 
@@ -572,6 +576,7 @@ export const sendEmailVerification = async (
             Firebase Cloud Storage
    ==========================================
 */
+const userImageFolderName = "";
 /**
  * Firebase Cloud Storageで新しくファイルを作成する
  * 被らないIDで保存したかったが、すでに存在しているかのチェックがうまくいかない
@@ -579,52 +584,52 @@ export const sendEmailVerification = async (
  * @param folderName フォルダの名
  */
 export const saveFileToCloudStorage = async (
-    folderName: string,
     data: ArrayBuffer,
     mimeType: string
-): Promise<URL> => {
+): Promise<string> => {
     const id = createRandomFileName();
-    const file = storage.file(folderName + "/" + id);
+    const file = storage.file(id);
     await file.save(data, { contentType: mimeType });
-    return new URL(
-        "https://asia-northeast1-tsukumart-f0971.cloudfunctions.net/image/" +
-            file.name
-    );
+    return id;
 };
 
 export const saveThumbnailImageToCloudStorage = async (
-    folderName: string,
     data: Buffer,
     mimeType: string
-): Promise<URL> =>
+): Promise<string> =>
     new Promise((resolve, reject) => {
         const id = createRandomFileName();
-        const file = storage.file(folderName + "/" + id);
+        const file = storage.file(id);
         const writeStream: stream.Writable = file.createWriteStream({
             contentType: mimeType
         });
-        writeStream.pipe(
-            sharp()
-                .resize(300, 300)
-                .composite([{ input: data }])
-                .jpeg()
-        );
-        writeStream.addListener("finish", () =>
-            resolve(
-                new URL(
-                    "https://asia-northeast1-tsukumart-f0971.cloudfunctions.net/image/" +
-                        file.name
-                )
-            )
-        );
+        const readStream = sharp()
+            .resize(300, 300, { fit: "inside" })
+            .composite([{ input: data }])
+            .jpeg();
+        readStream.pipe(writeStream);
+        readStream.addListener("end", () => resolve(id));
+    });
+
+export const saveThumbnailImageFromCloudStorageToCloudStorage = async (
+    fileId: string
+): Promise<string> =>
+    new Promise((resolve, reject) => {
+        const thumbnailFileId = createRandomFileName();
+        const writeStream = storage.file(thumbnailFileId).createWriteStream();
+        const readStream = storage.file(fileId).createReadStream();
+        readStream.addListener("end", () => {
+            resolve(thumbnailFileId);
+        });
+        readStream.pipe(writeStream);
     });
 /**
  * ランダムなファイル名を生成する
  */
 const createRandomFileName = (): string => {
     let id = "";
-    const charTable: string = "0123456789abcdefghijklmnopqrstuvwxyz";
-    for (let i = 0; i < 20; i++) {
+    const charTable = "0123456789abcdefghijklmnopqrstuvwxyz";
+    for (let i = 0; i < 22; i++) {
         id += charTable[(Math.random() * charTable.length) | 0];
     }
     return id;
@@ -632,14 +637,10 @@ const createRandomFileName = (): string => {
 
 /**
  * Firebase Cloud Storageにあるファイルを削除する
- * @param folderName フォルダ名
- * @param fileName ファイル名
+ * @param fileId ファイルID
  */
-export const deleteStorageFile = async (
-    folderName: string,
-    fileName: string
-): Promise<void> => {
-    await storage.file(folderName + "/" + fileName).delete();
+export const deleteStorageFile = async (fileId: string): Promise<void> => {
+    await storage.file(fileId).delete();
 };
 
 /**
@@ -647,11 +648,8 @@ export const deleteStorageFile = async (
  * @param folderName フォルダ名
  * @param fileName ファイル名
  */
-export const getImageReadStream = (
-    folderName: string,
-    fileName: string
-): stream.Readable =>
-    storage.file(folderName + "/" + fileName).createReadStream();
+export const getImageReadStream = (fileId: string): stream.Readable =>
+    storage.file(fileId).createReadStream();
 
 /**
  * Googleへの OpenId ConnectのStateを生成して保存する

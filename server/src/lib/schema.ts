@@ -102,10 +102,11 @@ const setProductData = async (
     source.description = data.description;
     source.condition = data.condition;
     source.category = data.category;
-    source.thumbnailUrl = data.thumbnailUrl;
-    source.imageUrls = data.imageUrls;
+    source.thumbnailImageId = data.thumbnailImageId;
+    source.imageIds = data.imageIds;
     source.likedCount = data.likedCount;
     source.viewedCount = data.viewedCount;
+    source.status = data.status;
     source.createdAt = data.createdAt;
     source.seller = data.seller;
     source.updateAt = data.updateAt;
@@ -179,27 +180,27 @@ const productGraphQLType: g.GraphQLObjectType<
                 },
                 description: type.categoryDescription
             }),
-            thumbnailUrl: makeObjectField({
-                type: g.GraphQLNonNull(type.urlGraphQLType),
+            thumbnailImageId: makeObjectField({
+                type: g.GraphQLNonNull(g.GraphQLString),
                 args: {},
                 resolve: async (source, args, context, info) => {
-                    if (source.thumbnailUrl === undefined) {
-                        return (await setProductData(source)).thumbnailUrl;
+                    if (source.thumbnailImageId === undefined) {
+                        return (await setProductData(source)).thumbnailImageId;
                     }
-                    return source.thumbnailUrl;
+                    return source.thumbnailImageId;
                 },
                 description: "一覧で表示すべきサムネイル画像のURL"
             }),
-            imageUrls: makeObjectField({
+            imageIds: makeObjectField({
                 type: g.GraphQLNonNull(
-                    g.GraphQLList(g.GraphQLNonNull(type.urlGraphQLType))
+                    g.GraphQLList(g.GraphQLNonNull(g.GraphQLString))
                 ),
                 args: {},
                 resolve: async (source, args, context, info) => {
-                    if (source.imageUrls === undefined) {
-                        return (await setProductData(source)).imageUrls;
+                    if (source.imageIds === undefined) {
+                        return (await setProductData(source)).imageIds;
                     }
-                    return source.imageUrls;
+                    return source.imageIds;
                 },
                 description: "商品画像のURL"
             }),
@@ -251,7 +252,18 @@ const productGraphQLType: g.GraphQLObjectType<
                     }
                     return source.comments;
                 },
-                description: ""
+                description: "コメント"
+            }),
+            status: makeObjectField({
+                type: g.GraphQLNonNull(type.productStatusGraphQLType),
+                args: {},
+                resolve: async (source, args, context, info) => {
+                    if (source.status === undefined) {
+                        return (await setProductData(source)).status;
+                    }
+                    return source.status;
+                },
+                description: "取引の状態"
             }),
             createdAt: makeObjectField({
                 type: g.GraphQLNonNull(type.dateTimeGraphQLType),
@@ -346,6 +358,14 @@ export const draftProductGraphQLType = new g.GraphQLObjectType<
                 description:
                     "商品を分類するカテゴリー まだ決めていない場合はnull"
             },
+            thumbnailImageId: {
+                type: g.GraphQLNonNull(g.GraphQLString),
+                description: "サムネイル画像"
+            },
+            imageIds: {
+                type: g.GraphQLNonNull(g.GraphQLString),
+                description: "画像"
+            },
             createdAt: {
                 type: type.dateTimeGraphQLType,
                 description: "作成日時"
@@ -367,7 +387,7 @@ const setUserData = async (
 ): ReturnType<typeof database.getUserData> => {
     const userData = await database.getUserData(source.id);
     source.displayName = userData.displayName;
-    source.imageUrl = userData.imageUrl;
+    source.imageId = userData.imageId;
     source.introduction = userData.introduction;
     source.university = type.universityToInternal(userData.university);
     source.createdAt = userData.createdAt;
@@ -393,14 +413,14 @@ const userGraphQLType = new g.GraphQLObjectType({
                 },
                 description: "表示名"
             }),
-            imageUrl: makeObjectField({
+            imageId: makeObjectField({
                 type: g.GraphQLNonNull(type.urlGraphQLType),
                 args: {},
                 resolve: async (source, args, context, info) => {
-                    if (source.imageUrl === undefined) {
-                        return (await setUserData(source)).imageUrl;
+                    if (source.imageId === undefined) {
+                        return (await setUserData(source)).imageId;
                     }
-                    return source.imageUrl;
+                    return source.imageId;
                 },
                 description: "プロフィール画像のURL"
             }),
@@ -462,7 +482,7 @@ const setUserPrivateData = async (
 ): ReturnType<typeof database.getUserData> => {
     const userData = await database.getUserData(source.id);
     source.displayName = userData.displayName;
-    source.imageUrl = userData.imageUrl;
+    source.imageId = userData.imageId;
     source.introduction = userData.introduction;
     source.university = type.universityToInternal(userData.university);
     source.createdAt = userData.createdAt;
@@ -488,16 +508,17 @@ const userPrivateGraphQLType = new g.GraphQLObjectType({
                 },
                 description: "表示名"
             }),
-            imageUrl: makeObjectField({
-                type: g.GraphQLNonNull(type.urlGraphQLType),
+            imageId: makeObjectField({
+                type: g.GraphQLNonNull(g.GraphQLString),
                 args: {},
                 resolve: async (source, args, context, info) => {
-                    if (source.imageUrl === undefined) {
-                        return (await setUserData(source)).imageUrl;
+                    if (source.imageId === undefined) {
+                        return (await setUserData(source)).imageId;
                     }
-                    return source.imageUrl;
+                    return source.imageId;
                 },
-                description: "プロフィール画像のURL"
+                description:
+                    "プロフィール画像ID https://asia-northeast1-tsukumart-f0971.cloudfunctions.net/image/{imageID}"
             }),
             introduction: makeObjectField({
                 type: g.GraphQLNonNull(g.GraphQLString),
@@ -761,7 +782,7 @@ const user = makeQueryOrMutationField<
         return {
             id: args.id,
             displayName: userData.displayName,
-            imageUrl: userData.imageUrl,
+            imageId: userData.imageId,
             introduction: userData.introduction,
             university: type.universityToInternal(userData.university)
         };
@@ -774,10 +795,10 @@ const userAll = makeQueryOrMutationField<{}, Array<type.UserInternal>>({
     args: {},
     resolve: async () => {
         return (await database.getAllUser()).map(
-            ({ id, displayName, imageUrl, introduction }) => ({
+            ({ id, displayName, imageId, introduction }) => ({
                 id,
                 displayName,
-                imageUrl,
+                imageId,
                 introduction
             })
         );
@@ -802,7 +823,7 @@ const userPrivate = makeQueryOrMutationField<
         return {
             id: accessTokenData.id,
             displayName: userData.displayName,
-            imageUrl: userData.imageUrl,
+            imageId: userData.imageId,
             introduction: userData.introduction,
             university: type.universityToInternal(userData.university),
             soldProductAll: [],
@@ -839,26 +860,7 @@ const productAll = makeQueryOrMutationField<{}, Array<type.ProductInternal>>({
     args: {},
     type: g.GraphQLNonNull(g.GraphQLList(g.GraphQLNonNull(productGraphQLType))),
     resolve: async () => {
-        return [
-            {
-                id: "id",
-                name: "商品名",
-                price: 100,
-                seller: {
-                    id: "id",
-                    displayName: "出品者",
-                    imageUrl: new URL(
-                        "https://tsukumart-f0971.web.app/temp_temp_temp"
-                    ),
-                    introduction: "紹介文",
-                    university: {
-                        graduate: null,
-                        schoolAndDepartment: "cis"
-                    },
-                    soldProductAll: []
-                }
-            }
-        ];
+        return [];
     },
     description: "すべての商品(売れたものも含まれる)を取得する"
 });
@@ -992,23 +994,23 @@ const sendConformEmail = makeQueryOrMutationField<
             logInAccountServiceId
         );
         console.log("前に入力したデータを受け取った");
-        let imageUrl: URL;
+        let imageId: string;
         if (args.image !== null && args.image !== undefined) {
-            imageUrl = await database.saveUserImage(
+            imageId = await database.saveImage(
                 args.image.data,
                 args.image.mimeType
             );
-            await database.deleteUserImage(userBeforeInputData.imageUrl);
+            await database.deleteImage(userBeforeInputData.imageId);
         } else {
-            imageUrl = userBeforeInputData.imageUrl;
+            imageId = userBeforeInputData.imageId;
         }
 
-        console.log(`画像のURLを取得 ${imageUrl}`);
+        console.log(`画像のURLを取得 ${imageId}`);
         const university = type.universityFromInternal(universityUnsafe);
         await database.addUserBeforeEmailVerificationAndSendEmail(
             logInAccountServiceId,
             args.displayName,
-            imageUrl,
+            imageId,
             args.email,
             university
         );
@@ -1180,7 +1182,7 @@ const markProductInHistory = makeQueryOrMutationField<
 });
 
 const addDraftProduct = makeQueryOrMutationField<
-    { accessToken: string } & Pick<
+    { accessToken: string; images: Array<type.DataURL> } & Pick<
         type.DraftProduct,
         "name" | "price" | "description" | "condition" | "category"
     >,
@@ -1211,6 +1213,12 @@ const addDraftProduct = makeQueryOrMutationField<
         category: {
             type: type.categoryGraphQLType,
             description: type.categoryDescription + "まだ決めていない場合はnull"
+        },
+        images: {
+            type: g.GraphQLNonNull(
+                g.GraphQLList(g.GraphQLNonNull(type.dataUrlGraphQLType))
+            ),
+            description: "画像"
         }
     },
     type: g.GraphQLNonNull(draftProductGraphQLType),
@@ -1221,14 +1229,19 @@ const addDraftProduct = makeQueryOrMutationField<
             price: args.price,
             description: args.description,
             condition: args.condition,
-            category: args.category
+            category: args.category,
+            images: args.images
         });
     },
     description: "商品の下書きを登録する"
 });
 
 const updateDraftProduct = makeQueryOrMutationField<
-    { accessToken: string } & Pick<
+    {
+        accessToken: string;
+        deleteImagesAt: Array<number>;
+        addImages: Array<type.DataURL>;
+    } & Pick<
         type.DraftProduct,
         "draftId" | "name" | "price" | "description" | "condition" | "category"
     >,
@@ -1263,6 +1276,19 @@ const updateDraftProduct = makeQueryOrMutationField<
         category: {
             type: type.categoryGraphQLType,
             description: type.categoryDescription + "まだ決めていない場合はnull"
+        },
+        deleteImagesAt: {
+            type: g.GraphQLNonNull(
+                g.GraphQLList(g.GraphQLNonNull(g.GraphQLInt))
+            ),
+            description:
+                "削除する画像のインデックス。必ず昇順。例:[0,3] 0番目と3番目を削除"
+        },
+        addImages: {
+            type: g.GraphQLNonNull(
+                g.GraphQLList(g.GraphQLNonNull(type.dataUrlGraphQLType))
+            ),
+            description: "末尾に追加する画像"
         }
     },
     type: g.GraphQLNonNull(
@@ -1276,7 +1302,9 @@ const updateDraftProduct = makeQueryOrMutationField<
             price: args.price,
             description: args.description,
             category: args.category,
-            condition: args.condition
+            condition: args.condition,
+            deleteImagesAt: args.deleteImagesAt,
+            addImages: args.addImages
         });
     },
     description: "商品の下書きを編集する"
