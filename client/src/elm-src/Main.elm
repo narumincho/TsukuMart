@@ -157,14 +157,14 @@ main =
 init : { refreshToken : Maybe String } -> Url.Url -> Browser.Navigation.Key -> ( Model, Cmd Msg )
 init { refreshToken } url key =
     let
-        ( page, message, cmd ) =
+        ( page, cmd ) =
             urlParserInit Data.LogInState.None key url
                 |> urlParserResultToModel
     in
     ( Model
         { page = page
         , wideScreen = False
-        , message = message
+        , message = Nothing
         , logInState = Data.LogInState.None
         , notificationVisible = False
         , key = key
@@ -174,6 +174,7 @@ init { refreshToken } url key =
         ((case refreshToken of
             Just refreshTokenString ->
                 [ Api.tokenRefresh { refresh = Api.tokenFromString refreshTokenString } LogInResponse
+                , Task.succeed () |> Task.perform (always (AddLogMessage "ログイン中"))
                 ]
 
             Nothing ->
@@ -327,15 +328,11 @@ update msg (Model rec) =
 
         UrlChange url ->
             let
-                ( page, message, cmd ) =
+                ( page, cmd ) =
                     urlParser (Model rec) url
                         |> urlParserResultToModel
             in
-            ( Model
-                { rec
-                    | page = page
-                    , message = message
-                }
+            ( Model { rec | page = page }
             , cmd
             )
 
@@ -1041,12 +1038,11 @@ productEditorEmissionToCmd emission =
             changeSelectedIndex { id = id, index = index }
 
 
-urlParserResultToModel : Maybe ( PageModel, Cmd Msg ) -> ( PageModel, Maybe String, Cmd Msg )
+urlParserResultToModel : Maybe ( PageModel, Cmd Msg ) -> ( PageModel, Cmd Msg )
 urlParserResultToModel parserResult =
     case parserResult of
         Just ( page, cmd ) ->
             ( page
-            , Nothing
             , cmd
             )
 
@@ -1056,8 +1052,11 @@ urlParserResultToModel parserResult =
                     Page.Home.initModel Nothing
             in
             ( PageHome homeModel
-            , Just "指定したページが見つからないのでホームに移動しました"
-            , homePageEmissionListToCmd emission
+            , (Task.succeed ()
+                |> Task.perform (always (AddLogMessage "指定したページが見つからないのでホームに移動しました"))
+              )
+                :: [ homePageEmissionListToCmd emission ]
+                |> Cmd.batch
             )
 
 
