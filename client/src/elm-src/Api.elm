@@ -11,7 +11,7 @@ module Api exposing
     , getFreeProductList
     , getHistoryViewProducts
     , getLikedProducts
-    , getMyProfile
+    , getMyNameAndLikedProductsId
     , getProduct
     , getProductComments
     , getRecentProductList
@@ -43,7 +43,6 @@ import Http
 import Json.Decode
 import Json.Decode.Pipeline
 import Json.Encode
-import Task
 import Time
 import Url
 
@@ -145,7 +144,7 @@ tokenToString (Token string) =
 
 
 {- =================================================
-           Tokenの更新 /auth/token/refresh/
+                   Tokenの更新
    =================================================
 -}
 
@@ -178,45 +177,56 @@ tokenRefresh { refresh } callBack =
         callBack
 
 
-
-{- ============================================================
-               自分のプロフィールを取得する
-   ============================================================
--}
-
-
-getMyProfile : Token -> (Result String User.WithProfile -> msg) -> Cmd msg
-getMyProfile accessToken callBack =
+getMyNameAndLikedProductsId : Token -> (Result String ( User.WithName, List Product.Id ) -> msg) -> Cmd msg
+getMyNameAndLikedProductsId token callBack =
     graphQlApiRequest
         (Query
             [ Field
                 { name = "userPrivate"
-                , args = [ ( "accessToken", GraphQLString (tokenToString accessToken) ) ]
+                , args = [ ( "accessToken", GraphQLString (tokenToString token) ) ]
                 , return =
                     [ Field { name = "id", args = [], return = [] }
                     , Field { name = "displayName", args = [], return = [] }
                     , Field { name = "imageId", args = [], return = [] }
-                    , Field { name = "introduction", args = [], return = [] }
                     , Field
-                        { name = "university"
+                        { name = "likedProductAll"
                         , args = []
                         , return =
-                            [ Field { name = "schoolAndDepartment", args = [], return = [] }
-                            , Field { name = "graduate", args = [], return = [] }
-                            ]
+                            [ Field { name = "id", args = [], return = [] } ]
                         }
                     ]
                 }
             ]
         )
         (Json.Decode.field "userPrivate"
-            profileDecoder
+            profileAndLikedProductsIdDecoder
         )
         callBack
 
 
-profileDecoder : Json.Decode.Decoder User.WithProfile
-profileDecoder =
+profileAndLikedProductsIdDecoder : Json.Decode.Decoder ( User.WithName, List Product.Id )
+profileAndLikedProductsIdDecoder =
+    Json.Decode.succeed
+        (\id displayName imageId likedProductIds ->
+            ( User.withNameFromApi
+                { id = id
+                , displayName = displayName
+                , imageId = imageId
+                }
+            , likedProductIds |> List.map Product.idFromString
+            )
+        )
+        |> Json.Decode.Pipeline.required "id" Json.Decode.string
+        |> Json.Decode.Pipeline.required "displayName" Json.Decode.string
+        |> Json.Decode.Pipeline.required "imageId" Json.Decode.string
+        |> Json.Decode.Pipeline.required "likedProductAll"
+            (Json.Decode.list
+                (Json.Decode.field "id" Json.Decode.string)
+            )
+
+
+userWithProfileDecoder : Json.Decode.Decoder User.WithProfile
+userWithProfileDecoder =
     Json.Decode.succeed
         (\id displayName imageId introduction schoolAndDepartment graduate ->
             User.withProfileFromApi
@@ -341,7 +351,7 @@ updateProfile accessToken { displayName, introduction, image, university } callB
             ]
         )
         (Json.Decode.field "updateProfile"
-            profileDecoder
+            userWithProfileDecoder
         )
         callBack
 
@@ -462,7 +472,7 @@ getUserProfile userId callBack =
             ]
         )
         (Json.Decode.field "user"
-            profileDecoder
+            userWithProfileDecoder
         )
         callBack
 
@@ -510,7 +520,7 @@ getFreeProductList msg =
 -}
 
 
-getProduct : Product.Id -> (Result () Product.Product -> msg) -> Cmd msg
+getProduct : Product.Id -> (Result String Product.ProductDetail -> msg) -> Cmd msg
 getProduct id msg =
     Cmd.none
 
@@ -574,7 +584,7 @@ deleteProduct token productId =
 -}
 
 
-likeProduct : Token -> Product.Id -> (Result () () -> msg) -> Cmd msg
+likeProduct : Token -> Product.Id -> (Result String Int -> msg) -> Cmd msg
 likeProduct token productId msg =
     Cmd.none
 
@@ -586,7 +596,7 @@ likeProduct token productId msg =
 -}
 
 
-unlikeProduct : Token -> Product.Id -> (Result () () -> msg) -> Cmd msg
+unlikeProduct : Token -> Product.Id -> (Result String Int -> msg) -> Cmd msg
 unlikeProduct token productId msg =
     Cmd.none
 
@@ -598,7 +608,7 @@ unlikeProduct token productId msg =
 -}
 
 
-getProductComments : Product.Id -> (Result () (List Product.Comment) -> msg) -> Cmd msg
+getProductComments : Product.Id -> (Result String (List Product.Comment) -> msg) -> Cmd msg
 getProductComments productId msg =
     Cmd.none
 
@@ -626,7 +636,7 @@ commentListDecoder =
 -}
 
 
-postProductComment : Token -> Product.Id -> String -> (Result () Product.Comment -> msg) -> Cmd msg
+postProductComment : Token -> Product.Id -> String -> (Result String Product.Comment -> msg) -> Cmd msg
 postProductComment accessToken productId comment msg =
     Cmd.none
 
@@ -652,7 +662,7 @@ commentNormalDecoder userName userId =
 -}
 
 
-tradeStart : Token -> Product.Id -> (Result () () -> msg) -> Cmd msg
+tradeStart : Token -> Product.Id -> (Result String () -> msg) -> Cmd msg
 tradeStart token productId msg =
     Cmd.none
 

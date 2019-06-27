@@ -33,7 +33,7 @@ type Msg
 
 
 header : Bool -> Html.Html Msg
-header isWideScreenMode =
+header isWideScreen =
     Html.header
         []
         [ backArrow
@@ -44,7 +44,7 @@ header isWideScreenMode =
             [ Html.h1
                 [ Html.Attributes.class "h1"
                 , Html.Attributes.style "padding"
-                    (if isWideScreenMode then
+                    (if isWideScreen then
                         "0.5rem 0.5rem 0.5rem 2rem"
 
                      else
@@ -307,8 +307,8 @@ menu logInState =
             Data.LogInState.LoadingProfile _ ->
                 menuLogInStateLoadingProfile
 
-            Data.LogInState.Ok { userWithProfile } ->
-                menuLogInStateOk userWithProfile
+            Data.LogInState.Ok { userWithName } ->
+                menuLogInStateOk userWithName
         )
 
 
@@ -385,8 +385,8 @@ menuLogInStateLoadingProfile =
     ]
 
 
-menuLogInStateOk : Data.User.WithProfile -> List (Html.Html msg)
-menuLogInStateOk userWithProfile =
+menuLogInStateOk : Data.User.WithName -> List (Html.Html msg)
+menuLogInStateOk userWithName =
     [ Html.a
         [ Html.Attributes.class "menu-item"
         , Html.Attributes.href SiteMap.homeUrl
@@ -406,7 +406,7 @@ menuLogInStateOk userWithProfile =
     , Html.a
         [ Html.Attributes.href
             (SiteMap.userUrl
-                (Data.User.withProfileGetId userWithProfile)
+                (Data.User.withNameGetId userWithName)
             )
         , Html.Attributes.class "menu-item"
         ]
@@ -416,12 +416,12 @@ menuLogInStateOk userWithProfile =
             , Html.Attributes.style "border-radius" "50%"
             , Html.Attributes.style "flex-shrink" "0"
             , Html.Attributes.style "padding" "4px"
-            , Html.Attributes.src (Data.User.withProfileGetImageUrl userWithProfile)
+            , Html.Attributes.src (Data.User.withNameGetImageUrl userWithName)
             ]
             []
         , Html.div
             []
-            [ Html.text (Data.User.withProfileGetDisplayName userWithProfile) ]
+            [ Html.text (Data.User.withNameGetDisplayName userWithName) ]
         ]
     , subMenuItem SiteMap.likedProductsUrl "いいねした商品"
     , subMenuItem SiteMap.historyUrl "閲覧した商品"
@@ -514,10 +514,10 @@ isTabNone tab =
 {-| タブの見た目
 -}
 tabView : Bool -> Tab msg -> Html.Html msg
-tabView isWideScreenMode tabData =
+tabView isWideScreen tabData =
     Html.div
         (Html.Attributes.classList
-            [ ( "mainTab", True ), ( "mainTab-wide", isWideScreenMode ) ]
+            [ ( "mainTab", True ), ( "mainTab-wide", isWideScreen ) ]
             :: (case tabData of
                     None ->
                         [ Html.Attributes.style "height" "0" ]
@@ -644,7 +644,7 @@ bottomNavigation logInState =
                 , bottomNavigationItem (Just SiteMap.logInUrl) Nothing "ユーザー"
                 ]
 
-        Data.LogInState.Ok { userWithProfile } ->
+        Data.LogInState.Ok { userWithName } ->
             Html.div
                 [ Html.Attributes.style "display" "grid"
                 , Html.Attributes.style "grid-template-columns" "1fr 1fr 1fr 1fr"
@@ -663,11 +663,11 @@ bottomNavigation logInState =
                     "検索"
                 , bottomNavigationItem (Just SiteMap.notificationUrl) (Just Icon.notifications) "通知"
                 , bottomNavigationItem
-                    (Just (SiteMap.userUrl (Data.User.withProfileGetId userWithProfile)))
+                    (Just (SiteMap.userUrl (Data.User.withNameGetId userWithName)))
                     (Just
                         (always
                             (Html.img
-                                [ Html.Attributes.src (Data.User.withProfileGetImageUrl userWithProfile)
+                                [ Html.Attributes.src (Data.User.withNameGetImageUrl userWithName)
                                 , Html.Attributes.style "width" "32px"
                                 , Html.Attributes.style "border-radius" "50%"
                                 ]

@@ -14,7 +14,7 @@ module Data.User exposing
     , withProfileGetImageUrl
     , withProfileGetIntroduction
     , withProfileGetUniversity
-    )
+    , withProfileToWithName)
 
 import Data.University as University
 
@@ -40,6 +40,13 @@ type WithProfile
         , university : University.University
         }
 
+withProfileToWithName : WithProfile -> WithName
+withProfileToWithName (WithProfile rec) =
+    WithName
+        { id = rec.id
+        , displayName = rec.displayName
+        , imageId = rec.imageId
+        }
 
 {-| ユーザーを識別するためのID
 -}

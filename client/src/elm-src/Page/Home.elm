@@ -1,12 +1,12 @@
 module Page.Home exposing (Emission(..), Model, Msg(..), getAllProducts, initModel, update, view)
 
+import BasicParts
 import Data.LogInState as LogInState
 import Data.Product as Product
 import Html
 import Html.Attributes
 import Page.Component.ProductList as ProductList
 import SiteMap
-import BasicParts
 
 
 type Model
@@ -128,29 +128,16 @@ update msg (Model rec) =
                     rec.productListModel |> ProductList.update productListMsg
             in
             ( case productListMsg of
-                ProductList.LikeResponse id (Ok ()) ->
+                ProductList.UpdateLikedCountResponse id (Ok likedCount) ->
                     let
                         likeFunc =
-                            Maybe.map (Product.updateById id Product.like)
+                            Maybe.map (Product.updateById id (Product.updateLikedCount likedCount))
                     in
                     Model
                         { rec
                             | recent = likeFunc rec.recent
                             , recommend = likeFunc rec.recommend
                             , free = likeFunc rec.free
-                            , productListModel = newModel
-                        }
-
-                ProductList.UnlikeResponse id (Ok ()) ->
-                    let
-                        unlikeFunc =
-                            Maybe.map (Product.updateById id Product.unlike)
-                    in
-                    Model
-                        { rec
-                            | recent = unlikeFunc rec.recent
-                            , recommend = unlikeFunc rec.recommend
-                            , free = unlikeFunc rec.free
                             , productListModel = newModel
                         }
 
@@ -165,7 +152,7 @@ view :
     -> Bool
     -> Model
     -> { title : Maybe String, tab : BasicParts.Tab Msg, html : List (Html.Html Msg) }
-view logInState isWideScreenMode (Model rec) =
+view logInState isWideScreen (Model rec) =
     { title = Nothing
     , tab =
         BasicParts.tabMulti
@@ -184,7 +171,7 @@ view logInState isWideScreenMode (Model rec) =
     , html =
         [ ProductList.view rec.productListModel
             logInState
-            isWideScreenMode
+            isWideScreen
             (case rec.tabSelect of
                 TabRecent ->
                     rec.recent

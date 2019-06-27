@@ -33,12 +33,12 @@ type alias EditModel =
     { displayName : String
     , introduction : String
     , universitySelect : CompUniversity.Model
+    , before: User.WithProfile
     }
 
 
 type Emission
-    = EmissionGetMyProfile { accessToken : Api.Token }
-    | EmissionGetUserProfile User.Id
+    = EmissionGetUserProfile User.Id
     | EmissionChangeProfile Api.Token Api.ProfileUpdateData
     | EmissionReplaceElementText { id : String, text : String }
     | EmissionUniversity CompUniversity.Emission
@@ -58,28 +58,11 @@ type Msg
     | MsgUserProfileResponse (Result String User.WithProfile)
 
 
-initModelWithName : LogInState.LogInState -> User.WithName -> ( Model, List Emission )
-initModelWithName logInState userWithName =
-    let
-        targetUserId =
-            User.withNameGetId userWithName
-    in
-    case logInState of
-        LogInState.Ok { accessToken, userWithProfile } ->
-            if User.withProfileGetId userWithProfile == targetUserId then
-                ( Normal userWithProfile
-                , [ EmissionGetMyProfile { accessToken = accessToken } ]
-                )
-
-            else
-                ( LoadingWithUserIdAndName userWithName
-                , [ EmissionGetUserProfile targetUserId ]
-                )
-
-        _ ->
-            ( LoadingWithUserIdAndName userWithName
-            , [ EmissionGetUserProfile targetUserId ]
-            )
+initModelWithName : User.WithName -> ( Model, List Emission )
+initModelWithName userWithNameInit =
+    ( LoadingWithUserIdAndName userWithNameInit
+    , [ EmissionGetUserProfile (User.withNameGetId userWithNameInit) ]
+    )
 
 
 {-| 外部ページから飛んで来たときはユーザーIDだけを頼りにしてユーザーページを作らなければならない
@@ -87,10 +70,10 @@ initModelWithName logInState userWithName =
 initModelFromId : LogInState.LogInState -> User.Id -> ( Model, List Emission )
 initModelFromId logInState userId =
     case logInState of
-        LogInState.Ok { accessToken, userWithProfile } ->
-            if User.withProfileGetId userWithProfile == userId then
-                ( Normal userWithProfile
-                , [ EmissionGetMyProfile { accessToken = accessToken } ]
+        LogInState.Ok { userWithName } ->
+            if User.withNameGetId userWithName == userId then
+                ( LoadingWithUserIdAndName userWithName
+                , [ EmissionGetUserProfile userId ]
                 )
 
             else
@@ -108,12 +91,12 @@ initModelFromId logInState userId =
 {- ====== Update ====== -}
 
 
-update : LogInState.LogInState -> Msg -> Model -> ( Model, List Emission )
-update logInState msg model =
+update : Msg -> Model -> ( Model, List Emission )
+update msg model =
     case msg of
         MsgToEditMode ->
-            case logInState of
-                LogInState.Ok { userWithProfile } ->
+            case model of
+                Normal userWithProfile ->
                     toEditMode userWithProfile
 
                 _ ->
@@ -152,9 +135,9 @@ update logInState msg model =
             )
 
         MsgBackToViewMode ->
-            ( case logInState of
-                LogInState.Ok { userWithProfile } ->
-                    Normal userWithProfile
+            ( case model of
+                Edit { before } ->
+                    Normal before
 
                 _ ->
                     model
@@ -222,6 +205,7 @@ toEditMode userWithProfile =
         { displayName = displayName
         , introduction = introduction
         , universitySelect = universitySelect
+        , before = userWithProfile
         }
     , [ EmissionReplaceElementText { id = nickNameEditorId, text = displayName }
       , EmissionReplaceElementText { id = introductionEditorId, text = introduction }
@@ -245,8 +229,8 @@ view logInState model =
         [ Html.div
             [ Html.Attributes.class "container" ]
             (case ( logInState, model ) of
-                ( LogInState.Ok { userWithProfile }, Normal normalUser ) ->
-                    if User.withProfileGetId userWithProfile == User.withProfileGetId normalUser then
+                ( LogInState.Ok { userWithName }, Normal normalUser ) ->
+                    if User.withNameGetId userWithName == User.withProfileGetId normalUser then
                         normalMyProfileView normalUser
 
                     else

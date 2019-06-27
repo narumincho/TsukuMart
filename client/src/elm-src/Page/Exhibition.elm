@@ -58,6 +58,7 @@ initModel =
                 , description = ""
                 , price = Nothing
                 , condition = Nothing
+                , category = Nothing
                 , image = Nothing
                 }
     in
@@ -139,6 +140,7 @@ updateWhenLogIn msg page =
                         , description = rec.request.description
                         , price = Just rec.request.price
                         , condition = Just rec.request.condition
+                        , category = Just rec.request.category
                         , image = Just rec.request.image
                         }
                         |> Tuple.mapBoth

@@ -34,23 +34,19 @@ import Time
 
 
 type Model
-    = Loading
-        { productId : Product.Id
-        }
-    | WaitNewData
-        { product : Product.Product
-        }
+    = Loading Product.Id
+    | WaitNewData Product.Product
     | Normal
         { product : Product.ProductDetail
         , sending : Bool -- いいねを送信中か送信中じゃないか
         , comment : String
         }
     | Edit
-        { beforeProduct : Product.Product
-        , editorModel : ProductEditor.Model
+        { beforeProduct : Product.ProductDetail
+        , productEditor : ProductEditor.Model
         }
     | Confirm
-        { product : Product.Product
+        { product : Product.ProductDetail
         }
 
 
@@ -69,15 +65,15 @@ type Emission
 
 
 type Msg
-    = GetProductResponse (Result () Product.Product)
-    | GetCommentListResponse (Result () (List Product.Comment))
-    | PostCommentResponse (Result () Product.Comment)
+    = GetProductResponse (Result String Product.ProductDetail)
+    | GetCommentListResponse (Result String (List Product.Comment))
+    | PostCommentResponse (Result String Product.Comment)
     | Like Api.Token Product.Id
     | UnLike Api.Token Product.Id
-    | LikeResponse (Result () ())
-    | UnlikeResponse (Result () ())
+    | LikeResponse (Result String Int)
+    | UnlikeResponse (Result String Int)
     | TradeStart Api.Token Product.Id
-    | TradeStartResponse (Result () ())
+    | TradeStartResponse (Result String ())
     | ToConfirmPage
     | InputComment String
     | SendComment Api.Token
@@ -93,16 +89,16 @@ type Msg
 -}
 initModel : Product.Id -> ( Model, List Emission )
 initModel id =
-    ( Loading { productId = id }
+    ( Loading id
     , [ EmissionGetProduct { productId = id } ]
     )
 
 
-{-| 商品の内容があらかじめ、わかっているときのもの。でも、一応また聞きに行く
+{-| 一覧画面から商品の内容が一部わかっているときのもの
 -}
 initModelFromProduct : Product.Product -> ( Model, List Emission )
 initModelFromProduct product =
-    ( Normal { product = product, sending = False, comment = "" }
+    ( WaitNewData product
     , [ EmissionGetProduct { productId = Product.getId product } ]
     )
 
@@ -112,20 +108,20 @@ initModelFromProduct product =
 getProductId : Model -> Product.Id
 getProductId model =
     case model of
-        Loading { productId } ->
+        Loading productId ->
             productId
 
-        WaitNewData { product } ->
+        WaitNewData product ->
             Product.getId product
 
         Normal { product } ->
-            Product.getId product
+            Product.detailGetId product
 
         Edit { beforeProduct } ->
-            Product.getId beforeProduct
+            Product.detailGetId beforeProduct
 
         Confirm { product } ->
-            Product.getId product
+            Product.detailGetId product
 
 
 update : Msg -> Model -> ( Model, List Emission )
@@ -133,23 +129,28 @@ update msg model =
     case msg of
         GetProductResponse productsResult ->
             case ( model, productsResult ) of
+                ( WaitNewData rec, Ok product ) ->
+                    ( Normal { product = product, sending = False, comment = "" }
+                    , [ EmissionGetCommentList { productId = Product.detailGetId product }
+                      , EmissionUpdateNowTime
+                      ]
+                    )
+
                 ( Normal rec, Ok product ) ->
                     ( Normal { rec | product = product }
-                    , [ EmissionGetCommentList { productId = Product.getId product }
+                    , [ EmissionGetCommentList { productId = Product.detailGetId product }
                       , EmissionUpdateNowTime
                       ]
                     )
 
-                ( _, Ok product ) ->
-                    ( Normal { product = product, sending = False, comment = "" }
-                    , [ EmissionGetCommentList { productId = Product.getId product }
-                      , EmissionUpdateNowTime
-                      ]
-                    )
-
-                ( _, Err () ) ->
+                ( _, Err text ) ->
                     ( model
-                    , [ EmissionAddLogMessage "商品情報の取得に失敗しました" ]
+                    , [ EmissionAddLogMessage ("商品情報の取得に失敗しました " ++ text) ]
+                    )
+
+                ( _, _ ) ->
+                    ( model
+                    , [ EmissionAddLogMessage "画面がNormalでないときに商品情報を受け取ってしまった" ]
                     )
 
         GetCommentListResponse commentListResult ->
@@ -159,9 +160,9 @@ update msg model =
                     , []
                     )
 
-                ( _, Err () ) ->
+                ( _, Err text ) ->
                     ( model
-                    , [ EmissionAddLogMessage "コメント取得に失敗しました" ]
+                    , [ EmissionAddLogMessage ("コメント取得に失敗しました " ++ text) ]
                     )
 
                 ( _, _ ) ->
@@ -176,8 +177,8 @@ update msg model =
                     , []
                     )
 
-                ( _, Err () ) ->
-                    ( model, [ EmissionAddLogMessage "コメントの送信に失敗しました" ] )
+                ( _, Err text ) ->
+                    ( model, [ EmissionAddLogMessage ("コメントの送信に失敗しました" ++ text) ] )
 
                 ( _, _ ) ->
                     ( model, [] )
@@ -203,32 +204,46 @@ update msg model =
             )
 
         LikeResponse result ->
-            ( case ( result, model ) of
-                ( Ok (), Normal rec ) ->
-                    Normal
+            case ( result, model ) of
+                ( Ok likedCount, Normal rec ) ->
+                    ( Normal
                         { rec
-                            | product = rec.product |> Product.like
+                            | product = rec.product |> Product.detailUpdateLikedCount likedCount
                             , sending = False
                         }
+                    , []
+                    )
 
-                ( _, _ ) ->
-                    model
-            , []
-            )
+                ( Ok _, _ ) ->
+                    ( model
+                    , [ EmissionAddLogMessage "画面がNormalでないときにいいねの結果を受け取ってしまった" ]
+                    )
+
+                ( Err text, _ ) ->
+                    ( model
+                    , [ EmissionAddLogMessage ("いいねをするのに失敗 " ++ text) ]
+                    )
 
         UnlikeResponse result ->
-            ( case ( result, model ) of
-                ( Ok (), Normal rec ) ->
-                    Normal
+            case ( result, model ) of
+                ( Ok likedCount, Normal rec ) ->
+                    ( Normal
                         { rec
-                            | product = rec.product |> Product.unlike
+                            | product = rec.product |> Product.detailUpdateLikedCount likedCount
                             , sending = False
                         }
+                    , []
+                    )
 
-                ( _, _ ) ->
-                    model
-            , []
-            )
+                ( Ok _, _ ) ->
+                    ( model
+                    , [ EmissionAddLogMessage "画面がNormalでないときにいいねを外すの結果を受け取ってしまった" ]
+                    )
+
+                ( Err text, _ ) ->
+                    ( model
+                    , [ EmissionAddLogMessage ("いいねを外すのに失敗 " ++ text) ]
+                    )
 
         TradeStart token productId ->
             ( model
@@ -241,8 +256,8 @@ update msg model =
                 Ok () ->
                     [ EmissionAddLogMessage "取引開始" ]
 
-                Err () ->
-                    [ EmissionAddLogMessage "取引開始を失敗しました" ]
+                Err text ->
+                    [ EmissionAddLogMessage ("取引開始を失敗しました " ++ text) ]
             )
 
         ToConfirmPage ->
@@ -271,7 +286,7 @@ update msg model =
             case model of
                 Normal { comment, product } ->
                     ( model
-                    , [ EmissionPostComment token { productId = Product.getId product } comment ]
+                    , [ EmissionPostComment token { productId = Product.detailGetId product } comment ]
                     )
 
                 _ ->
@@ -297,8 +312,12 @@ update msg model =
         MsgBackToViewMode ->
             case model of
                 Edit { beforeProduct } ->
-                    ( WaitNewData { product = beforeProduct }
-                    , [ EmissionGetProduct { productId = Product.getId beforeProduct } ]
+                    ( Normal
+                        { product = beforeProduct
+                        , sending = False
+                        , comment = ""
+                        }
+                    , [ EmissionGetProduct { productId = Product.detailGetId beforeProduct } ]
                     )
 
                 _ ->
@@ -307,9 +326,9 @@ update msg model =
         MsgByProductEditor productEditorMsg ->
             case model of
                 Edit r ->
-                    ProductEditor.update productEditorMsg r.editorModel
+                    ProductEditor.update productEditorMsg r.productEditor
                         |> Tuple.mapBoth
-                            (\editorModel -> Edit { r | editorModel = editorModel })
+                            (\editorModel -> Edit { r | productEditor = editorModel })
                             (List.map EmissionByProductEditor)
 
                 _ ->
@@ -340,7 +359,7 @@ view :
     -> Maybe ( Time.Posix, Time.Zone )
     -> Model
     -> { title : Maybe String, tab : BasicParts.Tab Msg, html : List (Html.Html Msg) }
-view logInState isWideScreenMode nowMaybe model =
+view logInState isWideScreen nowMaybe model =
     case model of
         Loading _ ->
             { title = Just "商品詳細ページ 読み込み中"
@@ -348,7 +367,7 @@ view logInState isWideScreenMode nowMaybe model =
             , html = [ Html.text "読み込み中" ]
             }
 
-        WaitNewData { product } ->
+        WaitNewData product ->
             { title = Just (Product.getName product)
             , tab = BasicParts.tabNone
             , html =
@@ -357,57 +376,23 @@ view logInState isWideScreenMode nowMaybe model =
                     [ Html.div
                         [ Html.Attributes.class "product" ]
                         [ Html.text "最新の情報を取得中…"
-                        , productsViewImage (Product.getFirstImageUrl product) (Product.getOthersImageUrlList product)
+                        , productsViewImage [ Product.getThumbnailImageUrl product ]
                         , productsViewName (Product.getName product)
-                        , productsViewLike LogInState.None False product
-                        , sellerNameView (Product.getSellerId product) (Product.getSellerName product)
-                        , descriptionView (Product.getDescription product)
-                        , productsViewCondition (Product.getCondition product)
+                        , productsViewLike
+                            LogInState.None
+                            False
+                            (Product.getLikedCount product)
+                            (Product.getId product)
                         ]
                     ]
                 ]
             }
 
         Normal { product, sending } ->
-            { title = Just (Product.getName product)
-            , tab = BasicParts.tabNone
-            , html =
-                [ Html.div
-                    [ Html.Attributes.class "container" ]
-                    [ Html.div
-                        [ Html.Attributes.class "product" ]
-                        ([ productsViewImage (Product.getFirstImageUrl product) (Product.getOthersImageUrlList product)
-                         , productsViewName (Product.getName product)
-                         , productsViewLike logInState sending product
-                         , sellerNameView (Product.getSellerId product) (Product.getSellerName product)
-                         , descriptionView (Product.getDescription product)
-                         , productsViewCondition (Product.getCondition product)
-                         , commentListView nowMaybe (Product.getSellerId product) logInState (Product.getCommentList product)
-                         ]
-                            ++ (case logInState of
-                                    LogInState.Ok { accessToken, userWithProfile } ->
-                                        if
-                                            Data.User.withProfileGetId userWithProfile
-                                                == Product.getSellerId product
-                                        then
-                                            [ editButton
-                                            , deleteView (Product.getId product) accessToken
-                                            ]
+            normalView logInState isWideScreen nowMaybe sending product
 
-                                        else
-                                            []
-
-                                    _ ->
-                                        []
-                               )
-                        )
-                    , productsViewPriceAndBuyButton isWideScreenMode (Product.getPrice product)
-                    ]
-                ]
-            }
-
-        Edit { editorModel, beforeProduct } ->
-            { title = Just (Product.getName beforeProduct)
+        Edit { productEditor, beforeProduct } ->
+            { title = Just (Product.detailGetName beforeProduct)
             , tab = BasicParts.tabNone
             , html =
                 [ Html.div
@@ -418,13 +403,13 @@ view logInState isWideScreenMode nowMaybe model =
                             Just accessToken ->
                                 [ Html.text "編集画面"
                                 ]
-                                    ++ (ProductEditor.view editorModel
+                                    ++ (ProductEditor.view productEditor
                                             |> List.map (Html.map MsgByProductEditor)
                                        )
                                     ++ [ editOkCancelButton
                                             accessToken
-                                            (Product.getId beforeProduct)
-                                            (ProductEditor.toRequestData editorModel)
+                                            (Product.detailGetId beforeProduct)
+                                            (ProductEditor.toRequestData productEditor)
                                        ]
 
                             Nothing ->
@@ -435,7 +420,7 @@ view logInState isWideScreenMode nowMaybe model =
             }
 
         Confirm { product } ->
-            { title = Just (Product.getName product)
+            { title = Just (Product.detailGetName product)
             , tab = BasicParts.tabNone
             , html =
                 [ Html.div
@@ -443,25 +428,75 @@ view logInState isWideScreenMode nowMaybe model =
                     [ Html.div
                         [ Html.Attributes.class "product" ]
                         [ Html.text "購入確認画面。この商品の取引を開始しますか?"
-                        , productsViewImage (Product.getFirstImageUrl product) (Product.getOthersImageUrlList product)
-                        , productsViewName (Product.getName product)
-                        , descriptionView (Product.getDescription product)
-                        , productsViewCondition (Product.getCondition product)
-                        , tradeStartButton logInState (Product.getId product)
+                        , productsViewImage (Product.detailGetImageUrls product)
+                        , productsViewName (Product.detailGetName product)
+                        , descriptionView (Product.detailGetDescription product)
+                        , productsViewCondition (Product.detailGetCondition product)
+                        , tradeStartButton logInState (Product.detailGetId product)
                         ]
                     ]
                 ]
             }
 
 
-productsViewImage : String -> List String -> Html.Html msg
-productsViewImage url urlList =
+normalView :
+    LogInState.LogInState
+    -> Bool
+    -> Maybe ( Time.Posix, Time.Zone )
+    -> Bool
+    -> Product.ProductDetail
+    -> { title : Maybe String, tab : BasicParts.Tab Msg, html : List (Html.Html Msg) }
+normalView logInState isWideScreen nowMaybe sending product =
+    { title = Just (Product.detailGetName product)
+    , tab = BasicParts.tabNone
+    , html =
+        [ Html.div
+            [ Html.Attributes.class "container" ]
+            [ Html.div
+                [ Html.Attributes.class "product" ]
+                ([ productsViewImage (Product.detailGetImageUrls product)
+                 , productsViewName (Product.detailGetName product)
+                 , productsViewLike
+                    logInState
+                    sending
+                    (Product.detailGetLikedCount product)
+                    (Product.detailGetId product)
+                 , sellerNameView (Product.detailGetSellerId product) (Product.detailGetSellerName product)
+                 , descriptionView (Product.detailGetDescription product)
+                 , productsViewCondition (Product.detailGetCondition product)
+                 , commentListView nowMaybe (Product.detailGetSellerId product) logInState (Product.detailGetCommentList product)
+                 ]
+                    ++ (case logInState of
+                            LogInState.Ok { accessToken, userWithName } ->
+                                if
+                                    Data.User.withNameGetId userWithName
+                                        == Product.detailGetSellerId product
+                                then
+                                    [ editButton
+                                    , deleteView (Product.detailGetId product) accessToken
+                                    ]
+
+                                else
+                                    []
+
+                            _ ->
+                                []
+                       )
+                )
+            , productsViewPriceAndBuyButton isWideScreen (Product.detailGetPrice product)
+            ]
+        ]
+    }
+
+
+productsViewImage : List String -> Html.Html msg
+productsViewImage urlList =
     Html.div
         [ Html.Attributes.class "product-imageListContainer" ]
         [ Html.div
             [ Html.Attributes.class "product-imageList"
             ]
-            (url :: urlList |> List.map imageView)
+            (urlList |> List.map imageView)
         ]
 
 
@@ -481,50 +516,45 @@ productsViewName name =
         [ Html.text name ]
 
 
-productsViewLike : LogInState.LogInState -> Bool -> Product.Product -> Html.Html Msg
-productsViewLike logInState sending product =
+productsViewLike : LogInState.LogInState -> Bool -> Int -> Product.Id -> Html.Html Msg
+productsViewLike logInState sending likedCount id =
     Html.div
         [ Html.Attributes.class "product-like-container" ]
-        [ likeButton logInState sending product
+        [ likeButton logInState sending likedCount id
         ]
 
 
-likeButton : LogInState.LogInState -> Bool -> Product.Product -> Html.Html Msg
-likeButton logInState sending product =
+likeButton : LogInState.LogInState -> Bool -> Int -> Product.Id -> Html.Html Msg
+likeButton logInState sending likedCount id =
     if sending then
         Html.button
             [ Html.Attributes.class "product-like-sending"
             , Html.Attributes.class "product-like"
             ]
-            (itemLikeBody (Product.getLikedCount product))
+            (itemLikeBody likedCount)
 
     else
         case logInState of
-            LogInState.Ok { userWithProfile, accessToken } ->
-                let
-                    userId =
-                        Data.User.withProfileGetId userWithProfile
-                in
-                if False then
-                    -- TODO いいねで自分がいいねした商品から判断する
+            LogInState.Ok { likedProductIds, accessToken } ->
+                if List.member id likedProductIds then
                     Html.button
-                        [ Html.Events.onClick (UnLike accessToken (Product.getId product))
+                        [ Html.Events.onClick (UnLike accessToken id)
                         , Html.Attributes.class "product-liked"
                         , Html.Attributes.class "product-like"
                         ]
-                        (itemLikeBody (Product.getLikedCount product))
+                        (itemLikeBody likedCount)
 
                 else
                     Html.button
-                        [ Html.Events.onClick (Like accessToken (Product.getId product))
+                        [ Html.Events.onClick (Like accessToken id)
                         , Html.Attributes.class "product-like"
                         ]
-                        (itemLikeBody (Product.getLikedCount product))
+                        (itemLikeBody likedCount)
 
             _ ->
                 Html.div
                     [ Html.Attributes.class "product-like-label" ]
-                    (itemLikeBody (Product.getLikedCount product))
+                    (itemLikeBody likedCount)
 
 
 itemLikeBody : Int -> List (Html.Html msg)
@@ -536,20 +566,14 @@ itemLikeBody count =
     ]
 
 
-sellerNameView : Data.User.Id -> Maybe String -> Html.Html msg
-sellerNameView userId nameMaybe =
+sellerNameView : Data.User.Id -> String -> Html.Html msg
+sellerNameView userId name =
     Html.div
         []
         [ Html.div [ Html.Attributes.class "product-label" ] [ Html.text "出品者" ]
         , Html.a
             [ Html.Attributes.href (SiteMap.userUrl userId) ]
-            [ case nameMaybe of
-                Just name ->
-                    Html.text name
-
-                Nothing ->
-                    Html.text "出品者の名前を取得中"
-            ]
+            [ Html.text name ]
         ]
 
 
@@ -609,7 +633,7 @@ commentListView nowMaybe sellerId logInState commentListMaybe =
         (case commentListMaybe of
             Just commentList ->
                 case logInState of
-                    LogInState.Ok { accessToken, userWithProfile } ->
+                    LogInState.Ok { accessToken, userWithName } ->
                         [ commentInputArea accessToken ]
                             ++ (commentList
                                     |> List.reverse
@@ -617,7 +641,7 @@ commentListView nowMaybe sellerId logInState commentListMaybe =
                                         (commentView nowMaybe
                                             sellerId
                                             (Just
-                                                (Data.User.withProfileGetId userWithProfile)
+                                                (Data.User.withNameGetId userWithName)
                                             )
                                         )
                                )
@@ -747,11 +771,11 @@ commentInputArea token =
 
 
 productsViewPriceAndBuyButton : Bool -> Int -> Html.Html Msg
-productsViewPriceAndBuyButton isWideScreenMode price =
+productsViewPriceAndBuyButton isWideScreen price =
     Html.div
         [ Html.Attributes.classList
             [ ( "product-priceAndBuyButton", True )
-            , ( "product-priceAndBuyButton-wide", isWideScreenMode )
+            , ( "product-priceAndBuyButton-wide", isWideScreen )
             ]
         ]
         [ Html.div [ Html.Attributes.class "product-price" ] [ Html.text (Product.priceToString price) ]

@@ -65,6 +65,7 @@ type alias RequestData =
     , description : String
     , price : Int
     , condition : Product.Condition
+    , category : Category.Category
     , image : ImageList
     }
 
@@ -270,9 +271,9 @@ imageDeleteAt index image =
 
 
 toRequestData : Model -> Maybe RequestData
-toRequestData (Model { name, description, price, condition, image }) =
-    case ( price, condition ) of
-        ( Just p, Just c ) ->
+toRequestData (Model { name, description, price, condition, category, image }) =
+    case ( price, condition, category ) of
+        ( Just p, Just conditionValue, Just categoryValue ) ->
             if nameCheck name == Nothing && priceCheck price == Nothing then
                 image
                     |> Maybe.map
@@ -280,7 +281,8 @@ toRequestData (Model { name, description, price, condition, image }) =
                             { name = name
                             , description = description
                             , price = p
-                            , condition = c
+                            , condition = conditionValue
+                            , category = categoryValue
                             , image = i
                             }
                         )
@@ -288,7 +290,7 @@ toRequestData (Model { name, description, price, condition, image }) =
             else
                 Nothing
 
-        ( _, _ ) ->
+        ( _, _, _ ) ->
             Nothing
 
 

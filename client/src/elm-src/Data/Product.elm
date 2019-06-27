@@ -3,6 +3,7 @@ module Data.Product exposing
     , Condition
     , Id
     , Product
+    , ProductDetail
     , Status
     , addComment
     , conditionAll
@@ -11,13 +12,24 @@ module Data.Product exposing
     , conditionToIdString
     , conditionToJapaneseString
     , createdAtToString
+    , detailGetCommentList
+    , detailGetCondition
+    , detailGetDescription
+    , detailGetId
+    , detailGetImageUrls
+    , detailGetLikedCount
+    , detailGetName
+    , detailGetPrice
+    , detailGetSellerId
+    , detailGetSellerName
+    , detailUpdateLikedCount
     , getId
     , getLikedCount
     , getName
     , getPrice
+    , getThumbnailImageUrl
     , idFromString
     , idToString
-    , like
     , priceToString
     , priceToStringWithoutYen
     , searchFromId
@@ -25,9 +37,9 @@ module Data.Product exposing
     , statusAll
     , statusFromIdString
     , statusToIdString
-    , unlike
     , updateById
-    , getThumbnailImageUrl, detailGetImageUrls, detailGetSellerId, detailGetSellerName, detailGetCommentList, ProductDetail)
+    , updateLikedCount
+    )
 
 {-| 商品
 -}
@@ -348,28 +360,16 @@ detailGetLikedCount (ProductDetail { likedCount }) =
     likedCount
 
 
-{-| いいねをする
+{-| いいねの数を更新する
 -}
-like : Product -> Product
-like (Product rec) =
-    Product { rec | likedCount = rec.likedCount + 1 }
+updateLikedCount : Int -> Product -> Product
+updateLikedCount likedCount (Product rec) =
+    Product { rec | likedCount = likedCount }
 
 
-detailLike : ProductDetail -> ProductDetail
-detailLike (ProductDetail rec) =
-    ProductDetail { rec | likedCount = rec.likedCount + 1 }
-
-
-{-| いいねを外す
--}
-unlike : Product -> Product
-unlike (Product rec) =
-    Product { rec | likedCount = max 0 (rec.likedCount - 1) }
-
-
-detailUnlike : ProductDetail -> ProductDetail
-detailUnlike (ProductDetail rec) =
-    ProductDetail { rec | likedCount = max 0 (rec.likedCount - 1) }
+detailUpdateLikedCount : Int -> ProductDetail -> ProductDetail
+detailUpdateLikedCount likedCount (ProductDetail rec) =
+    ProductDetail { rec | likedCount = likedCount }
 
 
 {-| 商品の説明

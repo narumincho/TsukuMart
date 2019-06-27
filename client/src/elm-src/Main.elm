@@ -113,10 +113,10 @@ type Msg
     | SignUpConfirmResponse (Result String ())
     | ReceiveProductImages (List String)
     | ReceiveUserImage String
-    | GetMyProfileResponse (Result String Data.User.WithProfile)
+    | GetMyProfileAndLikedProductIdsResponse (Result String ( Data.User.WithName, List Data.Product.Id ))
     | SellProductResponse (Result () ())
-    | LikeProductResponse Data.Product.Id (Result () ())
-    | UnlikeProductResponse Data.Product.Id (Result () ())
+    | LikeProductResponse Data.Product.Id (Result String Int)
+    | UnlikeProductResponse Data.Product.Id (Result String Int)
     | ChangeProfileResponse (Result String Data.User.WithProfile)
     | HistoryBack
     | PageMsg PageMsg
@@ -371,7 +371,7 @@ update msg (Model rec) =
                                 Data.LogInState.LoadingProfile accessTokenAndRefreshToken
                         }
                     , Cmd.batch
-                        [ Api.getMyProfile accessTokenAndRefreshToken.accessToken GetMyProfileResponse
+                        [ Api.getMyNameAndLikedProductsId accessTokenAndRefreshToken.accessToken GetMyProfileAndLikedProductIdsResponse
                         , saveRefreshTokenToLocalStorage
                             (Api.tokenToString accessTokenAndRefreshToken.refreshToken)
                         ]
@@ -461,14 +461,14 @@ update msg (Model rec) =
         PageMsg pageMsg ->
             updatePageMsg pageMsg (Model rec)
 
-        GetMyProfileResponse response ->
+        GetMyProfileAndLikedProductIdsResponse response ->
             ( case response of
                 Ok userWithProfile ->
                     Model
                         { rec
                             | logInState =
                                 rec.logInState
-                                    |> Data.LogInState.addUserWithProfile userWithProfile
+                                    |> Data.LogInState.addUserWithNameAndLikedProductIds userWithProfile
                         }
 
                 Err string ->
@@ -490,18 +490,26 @@ update msg (Model rec) =
         LikeProductResponse id response ->
             let
                 ( page, cmd ) =
-                    likeProduct id response rec.logInState rec.page
+                    updateLikedCountInEachPageProduct id response rec.page
             in
-            ( Model { rec | page = page }
+            ( Model
+                { rec
+                    | page = page
+                    , logInState = Data.LogInState.likeProduct id rec.logInState
+                }
             , cmd
             )
 
         UnlikeProductResponse id response ->
             let
                 ( page, cmd ) =
-                    unlikeProduct id response rec.logInState rec.page
+                    updateLikedCountInEachPageProduct id response rec.page
             in
-            ( Model { rec | page = page }
+            ( Model
+                { rec
+                    | page = page
+                    , logInState = Data.LogInState.unlikeProduct id rec.logInState
+                }
             , cmd
             )
 
@@ -513,13 +521,14 @@ update msg (Model rec) =
                             let
                                 ( newModel, emissionList ) =
                                     profileModel
-                                        |> Page.User.update rec.logInState (Page.User.MsgChangeProfileResponse response)
+                                        |> Page.User.update (Page.User.MsgChangeProfileResponse response)
                             in
                             ( Model
                                 { rec
                                     | logInState =
                                         rec.logInState
-                                            |> Data.LogInState.addUserWithProfile newProfile
+                                            |> Data.LogInState.updateWithName
+                                                (Data.User.withProfileToWithName newProfile)
                                     , page = PageUser newModel
                                 }
                             , userPageEmissionListToCmd emissionList
@@ -619,7 +628,7 @@ updatePageMsg pageMsg (Model rec) =
 
         ( UserPageMsg msg, PageUser model ) ->
             model
-                |> Page.User.update rec.logInState msg
+                |> Page.User.update msg
                 |> mapPageModel PageUser userPageEmissionListToCmd
 
         ( ProductPageMsg msg, PageProduct model ) ->
@@ -913,9 +922,6 @@ userPageEmissionListToCmd =
     List.map
         (\emission ->
             case emission of
-                Page.User.EmissionGetMyProfile { accessToken } ->
-                    Api.getMyProfile accessToken GetMyProfileResponse
-
                 Page.User.EmissionChangeProfile token profile ->
                     Api.updateProfile token profile ChangeProfileResponse
 
@@ -1193,11 +1199,11 @@ getProductId page =
 
 {-| 各ページにいいねを押した結果を反映するように通知する
 -}
-likeProduct : Data.Product.Id -> Result () () -> Data.LogInState.LogInState -> PageModel -> ( PageModel, Cmd Msg )
-likeProduct productId result logInState page =
+updateLikedCountInEachPageProduct : Data.Product.Id -> Result String Int -> PageModel -> ( PageModel, Cmd Msg )
+updateLikedCountInEachPageProduct productId result page =
     let
         productListMsg =
-            Page.Component.ProductList.LikeResponse productId result
+            Page.Component.ProductList.UpdateLikedCountResponse productId result
     in
     case page of
         PageHome pageMsg ->
@@ -1243,69 +1249,6 @@ likeProduct productId result logInState page =
             let
                 ( newModel, emissionList ) =
                     pageMsg |> Page.Product.update (Page.Product.LikeResponse result)
-            in
-            ( PageProduct newModel
-            , productPageEmissionListToCmd emissionList
-            )
-
-        _ ->
-            ( page
-            , Cmd.none
-            )
-
-
-{-| 各ページにいいねを外した結果を反映するように通知する
--}
-unlikeProduct : Data.Product.Id -> Result () () -> Data.LogInState.LogInState -> PageModel -> ( PageModel, Cmd Msg )
-unlikeProduct productId result logInState page =
-    let
-        productListMsg =
-            Page.Component.ProductList.UnlikeResponse productId result
-    in
-    case page of
-        PageHome pageMsg ->
-            let
-                ( newModel, emissionList ) =
-                    pageMsg |> Page.Home.update (Page.Home.MsgByProductList productListMsg)
-            in
-            ( PageHome newModel
-            , homePageEmissionListToCmd emissionList
-            )
-
-        PageHistory pageMsg ->
-            let
-                ( newModel, emissionList ) =
-                    pageMsg
-                        |> Page.History.update (Page.History.MsgByProductList productListMsg)
-            in
-            ( PageHistory newModel
-            , historyEmissionListToCmd emissionList
-            )
-
-        PageSoldProducts pageMsg ->
-            let
-                ( newModel, emissionList ) =
-                    pageMsg
-                        |> Page.SoldProducts.update (Page.SoldProducts.MsgByProductList productListMsg)
-            in
-            ( PageSoldProducts newModel
-            , soldProductsPageEmissionListToCmd emissionList
-            )
-
-        PageBoughtProducts pageMsg ->
-            let
-                ( newModel, emissionList ) =
-                    pageMsg
-                        |> Page.BoughtProducts.update (Page.BoughtProducts.MsgByProductList productListMsg)
-            in
-            ( PageBoughtProducts newModel
-            , boughtProductsPageEmissionListToCmd emissionList
-            )
-
-        PageProduct pageMsg ->
-            let
-                ( newModel, emissionList ) =
-                    pageMsg |> Page.Product.update (Page.Product.UnlikeResponse result)
             in
             ( PageProduct newModel
             , productPageEmissionListToCmd emissionList
@@ -1390,46 +1333,46 @@ titleAndTabDataAndMainView :
         , tab : BasicParts.Tab PageMsg
         , html : List (Html.Html PageMsg)
         }
-titleAndTabDataAndMainView logInState isWideScreenMode nowMaybe page =
+titleAndTabDataAndMainView logInState isWideScreen nowMaybe page =
     case page of
         PageHome model ->
             model
-                |> Page.Home.view logInState isWideScreenMode
+                |> Page.Home.view logInState isWideScreen
                 |> mapPageData HomePageMsg
 
         PageLikedProducts model ->
             model
-                |> Page.LikedProducts.view logInState isWideScreenMode
+                |> Page.LikedProducts.view logInState isWideScreen
                 |> mapPageData LikedProductsPageMsg
 
         PageHistory model ->
             model
-                |> Page.History.view logInState isWideScreenMode
+                |> Page.History.view logInState isWideScreen
                 |> mapPageData HistoryPageMsg
 
         PageBoughtProducts model ->
             model
-                |> Page.BoughtProducts.view logInState isWideScreenMode
+                |> Page.BoughtProducts.view logInState isWideScreen
                 |> mapPageData BoughtProductsPageMsg
 
         PageSoldProducts model ->
             model
-                |> Page.SoldProducts.view logInState isWideScreenMode
+                |> Page.SoldProducts.view logInState isWideScreen
                 |> mapPageData SoldProductsPageMsg
 
         PageTradingProducts model ->
             model
-                |> Page.TradingProducts.view logInState isWideScreenMode
+                |> Page.TradingProducts.view logInState isWideScreen
                 |> mapPageData TradingProductsPageMsg
 
         PageTradedProducts model ->
             model
-                |> Page.TradedProducts.view logInState isWideScreenMode
+                |> Page.TradedProducts.view logInState isWideScreen
                 |> mapPageData TradedProductsPageMsg
 
         PageCommentedProducts model ->
             model
-                |> Page.CommentedProducts.view logInState isWideScreenMode
+                |> Page.CommentedProducts.view logInState isWideScreen
                 |> mapPageData CommentedProductsPageMsg
 
         PageExhibition model ->
@@ -1449,7 +1392,7 @@ titleAndTabDataAndMainView logInState isWideScreenMode nowMaybe page =
 
         PageProduct model ->
             model
-                |> Page.Product.view logInState isWideScreenMode nowMaybe
+                |> Page.Product.view logInState isWideScreen nowMaybe
                 |> mapPageData ProductPageMsg
 
         PageUser model ->

@@ -100,17 +100,10 @@ update msg (Model rec) =
                     rec.productList |> ProductList.update productListMsg
             in
             ( case productListMsg of
-                ProductList.LikeResponse id (Ok ()) ->
+                ProductList.UpdateLikedCountResponse id (Ok likedCount) ->
                     Model
                         { rec
-                            | normal = likeProduct id rec.normal
-                            , productList = newModel
-                        }
-
-                ProductList.UnlikeResponse id (Ok ()) ->
-                    Model
-                        { rec
-                            | normal = unlikeProduct id rec.normal
+                            | normal = updateLikedCount likedCount id rec.normal
                             , productList = newModel
                         }
 
@@ -120,8 +113,8 @@ update msg (Model rec) =
             )
 
 
-likeProduct : Product.Id -> NormalModel -> NormalModel
-likeProduct id normalModel =
+updateLikedCount : Int -> Product.Id -> NormalModel -> NormalModel
+updateLikedCount likedCount id normalModel =
     case normalModel of
         Loading ->
             Loading
@@ -129,23 +122,7 @@ likeProduct id normalModel =
         Normal products ->
             Normal
                 (products
-                    |> Product.updateById id Product.like
-                )
-
-        Error ->
-            Error
-
-
-unlikeProduct : Product.Id -> NormalModel -> NormalModel
-unlikeProduct id normalModel =
-    case normalModel of
-        Loading ->
-            Loading
-
-        Normal products ->
-            Normal
-                (products
-                    |> Product.updateById id Product.unlike
+                    |> Product.updateById id (Product.updateLikedCount likedCount)
                 )
 
         Error ->
@@ -157,7 +134,7 @@ view :
     -> Bool
     -> Model
     -> { title : Maybe String, tab : BasicParts.Tab Msg, html : List (Html.Html Msg) }
-view logInState isWideScreenMode (Model rec) =
+view logInState isWideScreen (Model rec) =
     { title = Just "コメントした商品"
     , tab = BasicParts.tabSingle "コメントした商品"
     , html =
@@ -178,7 +155,7 @@ view logInState isWideScreenMode (Model rec) =
                 [ ProductList.view
                     rec.productList
                     logInState
-                    isWideScreenMode
+                    isWideScreen
                     (case rec.normal of
                         Loading ->
                             Nothing

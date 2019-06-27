@@ -6,7 +6,6 @@ module Page.Component.ProductList exposing (Emission(..), Model, Msg(..), initMo
 import Api
 import Data.LogInState
 import Data.Product as Product
-import Data.User
 import Html
 import Html.Attributes
 import Html.Events
@@ -21,8 +20,7 @@ type Model
 type Msg
     = Like Api.Token Product.Id
     | UnLike Api.Token Product.Id
-    | LikeResponse Product.Id (Result () ())
-    | UnlikeResponse Product.Id (Result () ())
+    | UpdateLikedCountResponse Product.Id (Result String Int)
 
 
 type Emission
@@ -56,12 +54,7 @@ update msg _ =
             , [ EmissionUnlike token productId ]
             )
 
-        LikeResponse _ _ ->
-            ( Model { sending = False }
-            , []
-            )
-
-        UnlikeResponse _ _ ->
+        UpdateLikedCountResponse _ _ ->
             ( Model { sending = False }
             , []
             )
@@ -83,7 +76,7 @@ view (Model { sending }) logInState isWideMode productList =
             emptyView
 
         Just (x :: xs) ->
-            productListView sending logInState isWideMode x xs
+            listView sending logInState isWideMode x xs
 
         Nothing ->
             Html.div
@@ -111,8 +104,8 @@ emptyView =
         ]
 
 
-productListView : Bool -> Data.LogInState.LogInState -> Bool -> Product.Product -> List Product.Product -> Html.Html Msg
-productListView sending logInState isWideMode product productList =
+listView : Bool -> Data.LogInState.LogInState -> Bool -> Product.Product -> List Product.Product -> Html.Html Msg
+listView sending logInState isWideMode product productList =
     Html.div
         [ Html.Attributes.style "display" "grid"
         , Html.Attributes.style "grid-template-columns"
@@ -124,18 +117,18 @@ productListView sending logInState isWideMode product productList =
             )
         ]
         ((product :: productList)
-            |> List.map (productListItem logInState sending)
+            |> List.map (item logInState sending)
         )
 
 
-productListItem : Data.LogInState.LogInState -> Bool -> Product.Product -> Html.Html Msg
-productListItem logInState sending product =
+item : Data.LogInState.LogInState -> Bool -> Product.Product -> Html.Html Msg
+item logInState sending product =
     Html.a
         [ Html.Attributes.class "productList-item"
         , Html.Attributes.href (SiteMap.productUrl (Product.getId product))
         , Html.Attributes.id (productIdString (Product.getId product))
         ]
-        [ itemImage (Product.getName product) (Product.idToString product)
+        [ itemImage (Product.getName product) (Product.idToString (Product.getId product))
         , Html.div
             [ Html.Attributes.class "productList-name" ]
             [ Html.text (Product.getName product) ]
@@ -175,12 +168,8 @@ itemLike logInState sending product =
 
     else
         case logInState of
-            Data.LogInState.Ok { userWithProfile, accessToken } ->
-                let
-                    userId =
-                        Data.User.withProfileGetId userWithProfile
-                in
-                if False then
+            Data.LogInState.Ok { likedProductIds, accessToken } ->
+                if List.member (Product.getId product) likedProductIds then
                     Html.button
                         [ Html.Events.custom "click"
                             (Json.Decode.succeed
