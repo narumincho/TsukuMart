@@ -174,9 +174,10 @@ export const getAccessTokenAndRefreshToken = async (
                 lastRefreshId: refreshId,
                 createdAt: databaseLow.getNowTimestamp(),
                 email: userBeforeEmailVerification.email,
-                trade: [],
-                likedProducts: [],
-                soldProducts: []
+                traded: [],
+                trading: [],
+                soldProducts: [],
+                boughtProducts: []
             });
             await databaseLow.deleteUserBeforeEmailVerification(
                 logInAccountServiceId
@@ -300,9 +301,14 @@ export const getUserData = async (
     id: string
 ): Promise<
     Pick<
-        type.User,
+        type.UserPrivate,
         "displayName" | "imageId" | "introduction" | "university" | "createdAt"
-    > & { soldProductAll: Array<{ id: string }> }
+    > & {
+        soldProductAll: Array<{ id: string }>;
+        boughtProductAll: Array<{ id: string }>;
+        tradingAll: Array<{ id: string }>;
+        tradedAll: Array<{ id: string }>;
+    }
 > => {
     const userData = await databaseLow.getUserData(id);
     return {
@@ -314,13 +320,17 @@ export const getUserData = async (
             schoolAndDepartment: userData.schoolAndDepartment
         }),
         createdAt: databaseLow.timestampToDate(userData.createdAt),
-        soldProductAll: [
-            {
-                id: ""
-            }
-        ]
+        soldProductAll: userData.soldProducts.map(id => ({ id: id })),
+        boughtProductAll: userData.boughtProducts.map(id => ({ id: id })),
+        tradingAll: userData.trading.map(id => ({ id })),
+        tradedAll: userData.traded.map(id => ({ id }))
     };
 };
+
+export const getLikedProductData = async (
+    userId: string
+): Promise<Array<{ id: string }>> =>
+    databaseLow.getAllLikedProductsData(userId);
 
 export const getUserPrivate = async (
     id: string

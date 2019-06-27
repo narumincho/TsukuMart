@@ -486,6 +486,10 @@ const setUserPrivateData = async (
     source.introduction = userData.introduction;
     source.university = type.universityToInternal(userData.university);
     source.createdAt = userData.createdAt;
+    source.tradingAll = userData.tradingAll;
+    source.tradedAll = userData.tradedAll;
+    source.soldProductAll = userData.soldProductAll;
+    source.boughtProductAll = userData.boughtProductAll;
     return userData;
 };
 
@@ -502,7 +506,7 @@ const userPrivateGraphQLType = new g.GraphQLObjectType({
                 args: {},
                 resolve: async (source, args, context, info) => {
                     if (source.displayName === undefined) {
-                        return (await setUserData(source)).displayName;
+                        return (await setUserPrivateData(source)).displayName;
                     }
                     return source.displayName;
                 },
@@ -513,7 +517,7 @@ const userPrivateGraphQLType = new g.GraphQLObjectType({
                 args: {},
                 resolve: async (source, args, context, info) => {
                     if (source.imageId === undefined) {
-                        return (await setUserData(source)).imageId;
+                        return (await setUserPrivateData(source)).imageId;
                     }
                     return source.imageId;
                 },
@@ -525,7 +529,7 @@ const userPrivateGraphQLType = new g.GraphQLObjectType({
                 args: {},
                 resolve: async (source, args, context, info) => {
                     if (source.introduction === undefined) {
-                        return (await setUserData(source)).introduction;
+                        return (await setUserPrivateData(source)).introduction;
                     }
                     return source.introduction;
                 },
@@ -537,7 +541,7 @@ const userPrivateGraphQLType = new g.GraphQLObjectType({
                 resolve: async (source, args, context, info) => {
                     if (source.university === undefined) {
                         return type.universityToInternal(
-                            (await setUserData(source)).university
+                            (await setUserPrivateData(source)).university
                         );
                     }
                     return source.university;
@@ -549,7 +553,7 @@ const userPrivateGraphQLType = new g.GraphQLObjectType({
                 args: {},
                 resolve: async (source, args, context, info) => {
                     if (source.createdAt === undefined) {
-                        return (await setUserData(source)).createdAt;
+                        return (await setUserPrivateData(source)).createdAt;
                     }
                     return source.createdAt;
                 },
@@ -561,7 +565,11 @@ const userPrivateGraphQLType = new g.GraphQLObjectType({
                 ),
                 args: {},
                 resolve: async (source, args, context, info) => {
-                    return [];
+                    if (source.soldProductAll === undefined) {
+                        return (await setUserPrivateData(source))
+                            .soldProductAll;
+                    }
+                    return source.soldProductAll;
                 },
                 description: "出品した商品すべて"
             }),
@@ -571,7 +579,11 @@ const userPrivateGraphQLType = new g.GraphQLObjectType({
                 ),
                 args: {},
                 resolve: async (source, args, context, info) => {
-                    return [];
+                    if (source.boughtProductAll === undefined) {
+                        return (await setUserPrivateData(source))
+                            .boughtProductAll;
+                    }
+                    return source.boughtProductAll;
                 },
                 description: "購入した商品すべて"
             }),
@@ -581,7 +593,14 @@ const userPrivateGraphQLType = new g.GraphQLObjectType({
                 ),
                 args: {},
                 resolve: async (source, args, context, info) => {
-                    return [];
+                    if (source.likedProductAll === undefined) {
+                        const likedProducts = await database.getLikedProductData(
+                            source.id
+                        );
+                        source.likedProductAll = likedProducts;
+                        return likedProducts;
+                    }
+                    return source.likedProductAll;
                 },
                 description: "いいねした商品すべて"
             }),
@@ -623,18 +642,31 @@ const userPrivateGraphQLType = new g.GraphQLObjectType({
                 },
                 description: "下書きの商品"
             }),
-            tradeAll: makeObjectField({
+            tradingAll: makeObjectField({
                 type: g.GraphQLNonNull(
                     g.GraphQLList(g.GraphQLNonNull(tradeGraphQLType))
                 ),
                 args: {},
                 resolve: async (source, args, context, info) => {
-                    if (source.tradeAll === undefined) {
-                        return []; // TODO
+                    if (source.tradingAll === undefined) {
+                        return (await setUserPrivateData(source)).tradingAll;
                     }
-                    return source.tradeAll;
+                    return source.tradingAll;
                 },
-                description: "取引データ"
+                description: "取引中の取引データ"
+            }),
+            tradedAll: makeObjectField({
+                type: g.GraphQLNonNull(
+                    g.GraphQLList(g.GraphQLNonNull(tradeGraphQLType))
+                ),
+                args: {},
+                resolve: async (source, args, context, info) => {
+                    if (source.tradedAll === undefined) {
+                        return (await setUserPrivateData(source)).tradedAll;
+                    }
+                    return source.tradedAll;
+                },
+                description: "取引した取引データ"
             })
         }),
     description: "個人的な情報を含んだユーザーの情報"

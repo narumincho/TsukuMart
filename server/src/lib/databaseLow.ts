@@ -45,9 +45,10 @@ type UserData = {
     introduction: string;
     lastRefreshId: string;
     createdAt: firestore.Timestamp;
-    trade: Array<string>;
-    likedProducts: Array<string>;
+    trading: Array<string>;
+    traded: Array<string>;
     soldProducts: Array<string>;
+    boughtProducts: Array<string>;
 };
 /**
  * ユーザーのデータを取得する
@@ -79,7 +80,7 @@ type HistoryViewProductData = {
 };
 
 /**
- * ユーザーの商品の閲覧記録に商品を登録する。すでにあるフィールドは削除する
+ * ユーザーの商品の閲覧記録に商品を登録する。
  * @param userId
  * @param productId
  */
@@ -96,7 +97,7 @@ export const addHistoryViewProductData = async (
 };
 
 /**
- * ユーザー商品を閲覧記録を最後に閲覧した順に取得する
+ * 最後に閲覧した順に閲覧履歴を取得する
  * @param userId
  */
 export const getHistoryViewProductData = async (
@@ -109,6 +110,37 @@ export const getHistoryViewProductData = async (
             .orderBy("createdAt")
             .get()
     )) as Array<{ id: string; data: HistoryViewProductData }>;
+
+type LikedProductData = {
+    createdAt: firestore.Timestamp;
+};
+
+export const addLikedProductData = async (
+    userId: string,
+    productId: string,
+    data: LikedProductData
+): Promise<void> => {
+    await userCollectionRef
+        .doc(userId)
+        .collection("likedProduct")
+        .doc(productId)
+        .set(data);
+};
+
+/**
+ * 最後にいいねした順にいいねした商品を取得する
+ * @param userId
+ */
+export const getAllLikedProductsData = async (
+    userId: string
+): Promise<Array<{ id: string; data: LikedProductData }>> =>
+    (await querySnapshotToIdAndDataArray(
+        await userCollectionRef
+            .doc(userId)
+            .collection("likedProduct")
+            .orderBy("createdAt")
+            .get()
+    )) as Array<{ id: string; data: LikedProductData }>;
 
 type DraftProductData = {
     name: string;

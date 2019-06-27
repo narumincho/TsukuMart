@@ -372,7 +372,8 @@ export type UserPrivateInternal = {
     likedProductAll: Array<ProductInternal>;
     historyViewProductAll: Array<ProductInternal>;
     draftProducts: Array<DraftProduct>;
-    tradeAll: Array<Trade>;
+    tradingAll: Array<Trade>;
+    tradedAll: Array<Trade>;
 };
 
 export type UserPrivate = {
@@ -387,6 +388,8 @@ export type UserPrivate = {
     likedProductAll: Array<Product>;
     historyViewProductAll: Array<Product>;
     draftProducts: Array<DraftProduct>;
+    tradingAll: Array<Trade>;
+    tradedAll: Array<Trade>;
 };
 
 /** ==============================
