@@ -406,8 +406,9 @@ userDataLink =
         , userDataLinkItem SiteMap.historyUrl "閲覧した商品"
         , userDataLinkItem SiteMap.soldProductsUrl "出品した商品"
         , userDataLinkItem SiteMap.boughtProductsUrl "購入した商品"
-        , userDataLinkItem "" "取引中の商品"
-        , userDataLinkItem "" "コメントをした商品"
+        , userDataLinkItem SiteMap.tradingProductsUrl "取引中の商品"
+        , userDataLinkItem SiteMap.tradedProductsUrl "取引した商品"
+        , userDataLinkItem SiteMap.commentedProductsUrl "コメントをした商品"
         ]
 
 

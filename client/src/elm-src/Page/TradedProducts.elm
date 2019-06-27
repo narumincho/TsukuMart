@@ -1,4 +1,4 @@
-module Page.TradingProducts exposing
+module Page.TradedProducts exposing
     ( Emission(..)
     , Model
     , Msg(..)
@@ -38,7 +38,7 @@ type Msg
 
 
 type Emission
-    = EmissionGetTradingProducts Api.Token
+    = EmissionGetTradedProducts Api.Token
     | EmissionByLogIn LogIn.Emission
     | EmissionByProductList ProductList.Emission
     | EmissionAddLogMessage String
@@ -57,7 +57,7 @@ initModel goodIdMaybe logInState =
         }
     , (case LogInState.getAccessToken logInState of
         Just accessToken ->
-            [ EmissionGetTradingProducts accessToken
+            [ EmissionGetTradedProducts accessToken
             ]
 
         Nothing ->
@@ -81,7 +81,7 @@ update msg (Model rec) =
                 Err errorMessage ->
                     ( Model
                         { rec | normal = Error }
-                    , [ EmissionAddLogMessage ("取引中の商品の取得に失敗 " ++ errorMessage) ]
+                    , [ EmissionAddLogMessage ("取引した商品の取得に失敗 " ++ errorMessage) ]
                     )
 
         MsgByLogIn logInOrSignUpMsg ->
@@ -158,8 +158,8 @@ view :
     -> Model
     -> { title : Maybe String, tab : BasicParts.Tab Msg, html : List (Html.Html Msg) }
 view logInState isWideScreenMode (Model rec) =
-    { title = Just "取引中の商品"
-    , tab = BasicParts.tabSingle "取引中の商品"
+    { title = Just "取引した商品"
+    , tab = BasicParts.tabSingle "取引中した商品"
     , html =
         case logInState of
             LogInState.None ->

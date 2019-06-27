@@ -29,7 +29,7 @@ module Api exposing
     , tradeStart
     , unlikeProduct
     , updateProfile
-    )
+    , getTradingProductList, getCommentedProductList, getTradedProductList)
 
 import Data.EmailAddress as EmailAddress
 import Data.Product as Product
@@ -387,6 +387,41 @@ getSoldProductList token msg =
 
 getBoughtProductList : Token -> (Result String (List Product.Product) -> msg) -> Cmd msg
 getBoughtProductList token msg =
+    Cmd.none
+
+
+
+{- ============================================================
+               自分の取引中の商品を取得する
+   ============================================================
+-}
+
+
+getTradingProductList : Token -> (Result String (List Product.Product) -> msg) -> Cmd msg
+getTradingProductList token msg =
+    Cmd.none
+
+
+{- ============================================================
+               自分が取引したの商品を取得する
+   ============================================================
+-}
+
+
+getTradedProductList : Token -> (Result String (List Product.Product) -> msg) -> Cmd msg
+getTradedProductList token msg =
+    Cmd.none
+
+
+
+{- ============================================================
+               自分がコメントした商品を取得する
+   ============================================================
+-}
+
+
+getCommentedProductList : Token -> (Result String (List Product.Product) -> msg) -> Cmd msg
+getCommentedProductList token msg =
     Cmd.none
 
 

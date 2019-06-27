@@ -18,7 +18,7 @@ module SiteMap exposing
     , urlParser
     , urlParserInit
     , userUrl
-    )
+    , tradingProductsUrl, commentedProductsUrl, tradedProductsUrl)
 
 import Api
 import Data.Product
@@ -36,8 +36,11 @@ type UrlParserInitResult
     | InitLogIn
     | InitLikedProducts
     | InitHistory
-    | IntiSoldProducts
+    | InitSoldProducts
     | InitBoughtProducts
+    | InitTradingProducts
+    | InitTradedProducts
+    | InitCommentedProducts
     | InitExhibition
     | InitProduct Data.Product.Id
     | InitUser Data.User.Id
@@ -76,6 +79,9 @@ urlParserInit url =
       , historyParser |> parserMap (always InitHistory)
       , soldProductsParser |> parserMap (always InitExhibition)
       , boughtProductsParser |> parserMap (always InitBoughtProducts)
+      , tradingProductsParser |> parserMap (always InitTradingProducts)
+      , tradedProductsParser |> parserMap (always InitTradedProducts)
+      , commentedProductsParser |> parserMap (always InitCommentedProducts)
       , exhibitionParser |> parserMap (always InitExhibition)
       , productParser |> parserMap InitProduct
       , userParser |> parserMap InitUser
@@ -115,6 +121,9 @@ type UrlParserResult
     | History
     | SoldProducts
     | BoughtProducts
+    | TradingProducts
+    | TradedProducts
+    | CommentedProducts
     | Exhibition
     | ExhibitionConfirm
     | Product Data.Product.Id
@@ -144,6 +153,9 @@ urlParser url =
     , historyParser |> parserMap (always History)
     , soldProductsParser |> parserMap (always SoldProducts)
     , boughtProductsParser |> parserMap (always BoughtProducts)
+    , tradingProductsParser |> parserMap (always TradingProducts)
+    , tradedProductsParser |> parserMap (always TradedProducts)
+    , commentedProductsParser |> parserMap (always CommentedProducts)
     , exhibitionParser |> parserMap (always Exhibition)
     , exhibitionConfirmParser |> parserMap (always ExhibitionConfirm)
     , productParser |> parserMap Product
@@ -337,9 +349,47 @@ tradingProductsPath : List String
 tradingProductsPath =
     [ "treading-products" ]
 
+{- Traded Products -}
+
+tradedProductsParser : List String -> Maybe ()
+tradedProductsParser path =
+    if path == tradedProductsPath then
+        Just ()
+    else
+        Nothing
+
+tradedProductsUrl : String
+tradedProductsUrl =
+    Url.Builder.absolute tradedProductsPath []
+
+tradedProductsPath : List String
+tradedProductsPath =
+    [ "traded-products" ]
+
+{- Commented Products -}
 
 
-{- exhibition -}
+commentedProductsParser : List String -> Maybe ()
+commentedProductsParser path =
+    if path == tradingProductsPath then
+        Just ()
+
+    else
+        Nothing
+
+
+commentedProductsUrl : String
+commentedProductsUrl =
+    Url.Builder.absolute tradingProductsPath []
+
+
+commentedProductsPath : List String
+commentedProductsPath =
+    [ "treading-products" ]
+
+
+
+{- Exhibition -}
 
 
 exhibitionParser : List String -> Maybe ()

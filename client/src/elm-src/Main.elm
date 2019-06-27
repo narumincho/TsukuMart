@@ -12,6 +12,7 @@ import Html.Attributes
 import Html.Keyed
 import Page.About
 import Page.BoughtProducts
+import Page.CommentedProducts
 import Page.Component.LogIn
 import Page.Component.ProductEditor
 import Page.Component.ProductList
@@ -27,6 +28,8 @@ import Page.Search
 import Page.SignUp
 import Page.SiteMap
 import Page.SoldProducts
+import Page.TradedProducts
+import Page.TradingProducts
 import Page.User
 import SiteMap
 import Task
@@ -87,6 +90,9 @@ type PageModel
     | PageHistory Page.History.Model
     | PageSoldProducts Page.SoldProducts.Model
     | PageBoughtProducts Page.BoughtProducts.Model
+    | PageTradingProducts Page.TradingProducts.Model
+    | PageTradedProducts Page.TradedProducts.Model
+    | PageCommentedProducts Page.CommentedProducts.Model
     | PageExhibition Page.Exhibition.Model
     | PageProduct Page.Product.Model
     | PageUser Page.User.Model
@@ -122,8 +128,11 @@ type PageMsg
     = HomePageMsg Page.Home.Msg
     | LikedProductsPageMsg Page.LikedProducts.Msg
     | HistoryPageMsg Page.History.Msg
-    | BoughtProductsPageMsg Page.BoughtProducts.Msg
     | SoldProductsPageMsg Page.SoldProducts.Msg
+    | BoughtProductsPageMsg Page.BoughtProducts.Msg
+    | TradingProductsPageMsg Page.TradingProducts.Msg
+    | TradedProductsPageMsg Page.TradedProducts.Msg
+    | CommentedProductsPageMsg Page.CommentedProducts.Msg
     | LogInPageMsg Page.LogIn.Msg
     | ExhibitionPageMsg Page.Exhibition.Msg
     | SignUpMsg Page.SignUp.Msg
@@ -228,13 +237,25 @@ urlParserInitResultToPageAndCmd logInState page =
                     PageHistory
                     historyEmissionListToCmd
 
-        SiteMap.IntiSoldProducts ->
+        SiteMap.InitSoldProducts ->
             Page.SoldProducts.initModel Nothing logInState
                 |> Tuple.mapBoth PageSoldProducts soldProductsPageEmissionListToCmd
 
         SiteMap.InitBoughtProducts ->
             Page.BoughtProducts.initModel Nothing logInState
                 |> Tuple.mapBoth PageBoughtProducts boughtProductsPageEmissionListToCmd
+
+        SiteMap.InitTradingProducts ->
+            Page.TradingProducts.initModel Nothing logInState
+                |> Tuple.mapBoth PageTradingProducts tradingProductsEmissionListToCmd
+
+        SiteMap.InitTradedProducts ->
+            Page.TradedProducts.initModel Nothing logInState
+                |> Tuple.mapBoth PageTradedProducts tradedProductsEmissionListToCmd
+
+        SiteMap.InitCommentedProducts ->
+            Page.CommentedProducts.initModel Nothing logInState
+                |> Tuple.mapBoth PageCommentedProducts commentedProductsEmissionListToCmd
 
         SiteMap.InitExhibition ->
             Page.Exhibition.initModel
@@ -738,6 +759,81 @@ boughtProductsPageEmissionListToCmd =
         >> Cmd.batch
 
 
+tradingProductsEmissionListToCmd : List Page.TradingProducts.Emission -> Cmd Msg
+tradingProductsEmissionListToCmd =
+    List.map
+        (\emission ->
+            case emission of
+                Page.TradingProducts.EmissionGetTradingProducts token ->
+                    Api.getTradingProductList token
+                        (\result ->
+                            PageMsg
+                                (TradingProductsPageMsg (Page.TradingProducts.GetProductsResponse result))
+                        )
+
+                Page.TradingProducts.EmissionByLogIn e ->
+                    logInEmissionToCmd e
+
+                Page.TradingProducts.EmissionByProductList e ->
+                    productListEmissionToCmd e
+
+                Page.TradingProducts.EmissionAddLogMessage log ->
+                    Task.succeed ()
+                        |> Task.perform (always (AddLogMessage log))
+        )
+        >> Cmd.batch
+
+
+tradedProductsEmissionListToCmd : List Page.TradedProducts.Emission -> Cmd Msg
+tradedProductsEmissionListToCmd =
+    List.map
+        (\emission ->
+            case emission of
+                Page.TradedProducts.EmissionGetTradedProducts token ->
+                    Api.getTradedProductList token
+                        (\result ->
+                            PageMsg
+                                (TradingProductsPageMsg (Page.TradingProducts.GetProductsResponse result))
+                        )
+
+                Page.TradedProducts.EmissionByLogIn e ->
+                    logInEmissionToCmd e
+
+                Page.TradedProducts.EmissionByProductList e ->
+                    productListEmissionToCmd e
+
+                Page.TradedProducts.EmissionAddLogMessage log ->
+                    Task.succeed ()
+                        |> Task.perform (always (AddLogMessage log))
+        )
+        >> Cmd.batch
+
+
+commentedProductsEmissionListToCmd : List Page.CommentedProducts.Emission -> Cmd Msg
+commentedProductsEmissionListToCmd =
+    List.map
+        (\emission ->
+            case emission of
+                Page.CommentedProducts.EmissionGetCommentedProducts token ->
+                    Api.getTradingProductList token
+                        (\result ->
+                            PageMsg
+                                (TradingProductsPageMsg (Page.TradingProducts.GetProductsResponse result))
+                        )
+
+                Page.CommentedProducts.EmissionByLogIn e ->
+                    logInEmissionToCmd e
+
+                Page.CommentedProducts.EmissionByProductList e ->
+                    productListEmissionToCmd e
+
+                Page.CommentedProducts.EmissionAddLogMessage log ->
+                    Task.succeed ()
+                        |> Task.perform (always (AddLogMessage log))
+        )
+        >> Cmd.batch
+
+
 logInPageEmissionListToCmd : Browser.Navigation.Key -> List Page.LogIn.Emission -> Cmd Msg
 logInPageEmissionListToCmd key =
     List.map
@@ -998,6 +1094,18 @@ urlParserResultToPageAndCmd (Model rec) result =
         SiteMap.BoughtProducts ->
             Page.BoughtProducts.initModel (getProductId rec.page) rec.logInState
                 |> Tuple.mapBoth PageBoughtProducts boughtProductsPageEmissionListToCmd
+
+        SiteMap.TradingProducts ->
+            Page.TradingProducts.initModel (getProductId rec.page) rec.logInState
+                |> Tuple.mapBoth PageTradingProducts tradingProductsEmissionListToCmd
+
+        SiteMap.TradedProducts ->
+            Page.TradedProducts.initModel (getProductId rec.page) rec.logInState
+                |> Tuple.mapBoth PageTradedProducts tradedProductsEmissionListToCmd
+
+        SiteMap.CommentedProducts ->
+            Page.CommentedProducts.initModel (getProductId rec.page) rec.logInState
+                |> Tuple.mapBoth PageCommentedProducts commentedProductsEmissionListToCmd
 
         SiteMap.Exhibition ->
             case rec.page of
@@ -1285,68 +1393,83 @@ titleAndTabDataAndMainView :
         }
 titleAndTabDataAndMainView logInState isWideScreenMode nowMaybe page =
     case page of
-        PageHome pageModel ->
-            pageModel
+        PageHome model ->
+            model
                 |> Page.Home.view logInState isWideScreenMode
                 |> mapPageData HomePageMsg
-
-        PageExhibition pageModel ->
-            pageModel
-                |> Page.Exhibition.view logInState
-                |> mapPageData ExhibitionPageMsg
 
         PageLikedProducts model ->
             model
                 |> Page.LikedProducts.view logInState isWideScreenMode
                 |> mapPageData LikedProductsPageMsg
 
-        PageHistory pageModel ->
-            pageModel
+        PageHistory model ->
+            model
                 |> Page.History.view logInState isWideScreenMode
                 |> mapPageData HistoryPageMsg
 
-        PageBoughtProducts pageModel ->
-            pageModel
+        PageBoughtProducts model ->
+            model
                 |> Page.BoughtProducts.view logInState isWideScreenMode
                 |> mapPageData BoughtProductsPageMsg
 
-        PageSoldProducts pageModel ->
-            pageModel
+        PageSoldProducts model ->
+            model
                 |> Page.SoldProducts.view logInState isWideScreenMode
                 |> mapPageData SoldProductsPageMsg
 
-        PageSignUp pageModel ->
-            pageModel
+        PageTradingProducts model ->
+            model
+                |> Page.TradingProducts.view logInState isWideScreenMode
+                |> mapPageData TradingProductsPageMsg
+
+        PageTradedProducts model ->
+            model
+                |> Page.TradedProducts.view logInState isWideScreenMode
+                |> mapPageData TradedProductsPageMsg
+
+        PageCommentedProducts model ->
+            model
+                |> Page.CommentedProducts.view logInState isWideScreenMode
+                |> mapPageData CommentedProductsPageMsg
+
+        PageExhibition model ->
+            model
+                |> Page.Exhibition.view logInState
+                |> mapPageData ExhibitionPageMsg
+
+        PageSignUp model ->
+            model
                 |> Page.SignUp.view
                 |> mapPageData SignUpMsg
 
-        PageLogIn pageModel ->
-            pageModel
+        PageLogIn model ->
+            model
                 |> Page.LogIn.view
                 |> mapPageData LogInPageMsg
 
-        PageProduct pageModel ->
-            pageModel
+        PageProduct model ->
+            model
                 |> Page.Product.view logInState isWideScreenMode nowMaybe
                 |> mapPageData ProductPageMsg
 
-        PageUser pageModel ->
-            pageModel
+        PageUser model ->
+            model
                 |> Page.User.view logInState
                 |> mapPageData UserPageMsg
 
-        PageSearch pageModel ->
-            pageModel
+        PageSearch model ->
+            model
                 |> Page.Search.view
                 |> mapPageData SearchPageMsg
 
-        PageNotification pageModel ->
-            pageModel
+        PageNotification model ->
+            model
                 |> Page.Notification.view
                 |> mapPageData NotificationMsg
 
-        PageAbout pageModel ->
-            pageModel
+        PageAbout model ->
+            model
                 |> Page.About.view
 
         PageSiteMapXml ->
