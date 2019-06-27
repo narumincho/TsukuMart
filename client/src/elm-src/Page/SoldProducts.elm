@@ -1,4 +1,4 @@
-module Page.SoldProducts exposing (Emit(..), Model, Msg(..), initModel, update, view)
+module Page.SoldProducts exposing (Emission(..), Model, Msg(..), initModel, update, view)
 
 import Api
 import BasicParts
@@ -24,10 +24,10 @@ type NormalModel
     | Error
 
 
-type Emit
-    = EmitGetSoldProducts Api.Token
-    | EmitLogInOrSignUp LogInOrSignUp.Emit
-    | EmitByProductList ProductList.Emit
+type Emission
+    = EmissionGetSoldProducts Api.Token
+    | EmissionLogInOrSignUp LogInOrSignUp.Emission
+    | EmissionByProductList ProductList.Emission
 
 
 type Msg
@@ -36,10 +36,10 @@ type Msg
     | MsgByProductList ProductList.Msg
 
 
-initModel : Maybe Data.Product.Id -> LogInState.LogInState -> ( Model, List Emit )
+initModel : Maybe Data.Product.Id -> LogInState.LogInState -> ( Model, List Emission )
 initModel productIdMaybe logInState =
     let
-        ( productListModel, emitList ) =
+        ( productListModel, emissionList ) =
             ProductList.initModel productIdMaybe
     in
     ( Model
@@ -49,16 +49,16 @@ initModel productIdMaybe logInState =
         }
     , (case LogInState.getAccessToken logInState of
         Just accessToken ->
-            [ EmitGetSoldProducts accessToken ]
+            [ EmissionGetSoldProducts accessToken ]
 
         Nothing ->
             []
       )
-        ++ (emitList |> List.map EmitByProductList)
+        ++ (emissionList |> List.map EmissionByProductList)
     )
 
 
-update : Msg -> Model -> ( Model, List Emit )
+update : Msg -> Model -> ( Model, List Emission )
 update msg (Model rec) =
     case msg of
         GetSoldProductListResponse result ->
@@ -76,16 +76,16 @@ update msg (Model rec) =
 
         LogInOrSignUpMsg logInOrSignUpMsg ->
             let
-                ( newModel, emitList ) =
+                ( newModel, emissionList ) =
                     LogInOrSignUp.update logInOrSignUpMsg rec.logInOrSignUpModel
             in
             ( Model { rec | logInOrSignUpModel = newModel }
-            , emitList |> List.map EmitLogInOrSignUp
+            , emissionList |> List.map EmissionLogInOrSignUp
             )
 
         MsgByProductList productListMsg ->
             let
-                ( newModel, emitList ) =
+                ( newModel, emissionList ) =
                     rec.productListModel |> ProductList.update productListMsg
             in
             ( case productListMsg of
@@ -135,7 +135,7 @@ update msg (Model rec) =
 
                 _ ->
                     Model { rec | productListModel = newModel }
-            , emitList |> List.map EmitByProductList
+            , emissionList |> List.map EmissionByProductList
             )
 
 

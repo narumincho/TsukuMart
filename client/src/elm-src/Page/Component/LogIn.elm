@@ -1,5 +1,5 @@
 module Page.Component.LogIn exposing
-    ( Emit(..)
+    ( Emission(..)
     , Model
     , Msg(..)
     , initModel
@@ -28,8 +28,8 @@ type MouseState
     | MouseStateDown Data.SocialLoginService.SocialLoginService
 
 
-type Emit
-    = EmitLogInOrSignUp Data.SocialLoginService.SocialLoginService
+type Emission
+    = EmissionLogInOrSignUp Data.SocialLoginService.SocialLoginService
 
 
 type Msg
@@ -48,12 +48,12 @@ initModel =
         }
 
 
-update : Msg -> Model -> ( Model, List Emit )
+update : Msg -> Model -> ( Model, List Emission )
 update msg (Model r) =
     case msg of
         LogInOrSignUpRequest service ->
             ( Model { r | waitLogInUrl = Just service }
-            , [ EmitLogInOrSignUp service ]
+            , [ EmissionLogInOrSignUp service ]
             )
 
         MouseEnterLogInButton service ->

@@ -160,7 +160,7 @@ urlParser url =
 
 homeParser : List String -> Maybe ()
 homeParser path =
-    if path == [] then
+    if path == homePath then
         Just ()
 
     else
@@ -169,7 +169,12 @@ homeParser path =
 
 homeUrl : String
 homeUrl =
-    Url.Builder.absolute [] []
+    Url.Builder.absolute homePath []
+
+
+homePath : List String
+homePath =
+    []
 
 
 
@@ -199,7 +204,7 @@ signUpParser fragment path =
 
 logInParser : List String -> Maybe ()
 logInParser path =
-    if path == [ logInPath ] then
+    if path == logInPath then
         Just ()
 
     else
@@ -208,12 +213,12 @@ logInParser path =
 
 logInUrl : String
 logInUrl =
-    Url.Builder.absolute [ logInPath ] []
+    Url.Builder.absolute logInPath []
 
 
-logInPath : String
+logInPath : List String
 logInPath =
-    "login"
+    [ "login" ]
 
 
 
@@ -222,7 +227,7 @@ logInPath =
 
 likedProductsParser : List String -> Maybe ()
 likedProductsParser path =
-    if path == [ likedProductsPath ] then
+    if path == likedProductsPath then
         Just ()
 
     else
@@ -232,13 +237,13 @@ likedProductsParser path =
 likedProductsUrl : String
 likedProductsUrl =
     Url.Builder.absolute
-        [ likedProductsPath ]
+        likedProductsPath
         []
 
 
-likedProductsPath : String
+likedProductsPath : List String
 likedProductsPath =
-    "like"
+    [ "liked-products" ]
 
 
 
@@ -247,7 +252,7 @@ likedProductsPath =
 
 historyParser : List String -> Maybe ()
 historyParser path =
-    if path == [ historyPath ] then
+    if path == historyPath then
         Just ()
 
     else
@@ -256,12 +261,12 @@ historyParser path =
 
 historyUrl : String
 historyUrl =
-    Url.Builder.absolute [ historyPath ] []
+    Url.Builder.absolute historyPath []
 
 
-historyPath : String
+historyPath : List String
 historyPath =
-    "history"
+    [ "history" ]
 
 
 
@@ -270,7 +275,7 @@ historyPath =
 
 soldProductsParser : List String -> Maybe ()
 soldProductsParser path =
-    if path == [ soldProductsPath ] then
+    if path == soldProductsPath then
         Just ()
 
     else
@@ -279,12 +284,12 @@ soldProductsParser path =
 
 soldProductsUrl : String
 soldProductsUrl =
-    Url.Builder.absolute [ soldProductsPath ] []
+    Url.Builder.absolute soldProductsPath []
 
 
-soldProductsPath : String
+soldProductsPath : List String
 soldProductsPath =
-    "sold-products"
+    [ "sold-products" ]
 
 
 
@@ -293,7 +298,7 @@ soldProductsPath =
 
 boughtProductsParser : List String -> Maybe ()
 boughtProductsParser path =
-    if path == [ boughtProductsPath ] then
+    if path == boughtProductsPath then
         Just ()
 
     else
@@ -302,12 +307,35 @@ boughtProductsParser path =
 
 boughtProductsUrl : String
 boughtProductsUrl =
-    Url.Builder.absolute [ boughtProductsPath ] []
+    Url.Builder.absolute boughtProductsPath []
 
 
-boughtProductsPath : String
+boughtProductsPath : List String
 boughtProductsPath =
-    "bought-products"
+    [ "bought-products" ]
+
+
+
+{- Trading Products -}
+
+
+tradingProductsParser : List String -> Maybe ()
+tradingProductsParser path =
+    if path == tradingProductsPath then
+        Just ()
+
+    else
+        Nothing
+
+
+tradingProductsUrl : String
+tradingProductsUrl =
+    Url.Builder.absolute tradingProductsPath []
+
+
+tradingProductsPath : List String
+tradingProductsPath =
+    [ "treading-products" ]
 
 
 
@@ -316,7 +344,7 @@ boughtProductsPath =
 
 exhibitionParser : List String -> Maybe ()
 exhibitionParser path =
-    if path == [ exhibitionPath ] then
+    if path == exhibitionPath then
         Just ()
 
     else
@@ -325,17 +353,17 @@ exhibitionParser path =
 
 exhibitionUrl : String
 exhibitionUrl =
-    Url.Builder.absolute [ exhibitionPath ] []
+    Url.Builder.absolute exhibitionPath []
 
 
-exhibitionPath : String
+exhibitionPath : List String
 exhibitionPath =
-    "exhibition"
+    [ "exhibition" ]
 
 
 exhibitionConfirmParser : List String -> Maybe ()
 exhibitionConfirmParser path =
-    if path == [ exhibitionPath, exhibitionConfirmPath ] then
+    if path == exhibitionConfirmPath then
         Just ()
 
     else
@@ -344,12 +372,12 @@ exhibitionConfirmParser path =
 
 exhibitionConfirmUrl : String
 exhibitionConfirmUrl =
-    Url.Builder.absolute [ exhibitionPath, exhibitionConfirmPath ] []
+    Url.Builder.absolute exhibitionConfirmPath []
 
 
-exhibitionConfirmPath : String
+exhibitionConfirmPath : List String
 exhibitionConfirmPath =
-    "confirm"
+    exhibitionPath ++ [ "confirm" ]
 
 
 
@@ -387,12 +415,7 @@ userParser path =
 
 userUrl : Data.User.Id -> String
 userUrl userId =
-    Url.Builder.absolute [ userPath, Data.User.idToString userId ] []
-
-
-userPath : String
-userPath =
-    "user"
+    Url.Builder.absolute [ "user", Data.User.idToString userId ] []
 
 
 
@@ -401,7 +424,7 @@ userPath =
 
 searchParser : Dict.Dict String String -> List String -> Maybe Data.SearchCondition.Condition
 searchParser fragment path =
-    if path == [ searchPath ] then
+    if path == searchPath then
         Just
             (case fragment |> Dict.get "text" of
                 Just text ->
@@ -418,19 +441,19 @@ searchParser fragment path =
 searchUrl : Data.SearchCondition.Condition -> String
 searchUrl condition =
     Url.Builder.absolute
-        [ case condition of
+        (case condition of
             Data.SearchCondition.None ->
                 searchPath
 
             Data.SearchCondition.ByText text ->
-                searchPath ++ "#text=" ++ Url.percentEncode text
-        ]
+                searchPath ++ [ "#text=" ++ Url.percentEncode text ]
+        )
         []
 
 
-searchPath : String
+searchPath : List String
 searchPath =
-    "search"
+    [ "search" ]
 
 
 

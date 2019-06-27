@@ -1,4 +1,4 @@
-module Page.Component.ProductList exposing (Emit(..), Model, Msg(..), initModel, update, view)
+module Page.Component.ProductList exposing (Emission(..), Model, Msg(..), initModel, update, view)
 
 {-| 商品の一覧表示
 -}
@@ -25,35 +25,35 @@ type Msg
     | UnlikeResponse Product.Id (Result () ())
 
 
-type Emit
-    = EmitLike Api.Token Product.Id
-    | EmitUnlike Api.Token Product.Id
-    | EmitScrollIntoView String
+type Emission
+    = EmissionLike Api.Token Product.Id
+    | EmissionUnlike Api.Token Product.Id
+    | EmissionScrollIntoView String
 
 
-initModel : Maybe Product.Id -> ( Model, List Emit )
+initModel : Maybe Product.Id -> ( Model, List Emission )
 initModel productIdMaybe =
     ( Model { sending = False }
     , case productIdMaybe of
         Just id ->
-            [ EmitScrollIntoView (productIdString id) ]
+            [ EmissionScrollIntoView (productIdString id) ]
 
         Nothing ->
             []
     )
 
 
-update : Msg -> Model -> ( Model, List Emit )
+update : Msg -> Model -> ( Model, List Emission )
 update msg _ =
     case msg of
         Like token productId ->
             ( Model { sending = True }
-            , [ EmitLike token productId ]
+            , [ EmissionLike token productId ]
             )
 
         UnLike token productId ->
             ( Model { sending = True }
-            , [ EmitUnlike token productId ]
+            , [ EmissionUnlike token productId ]
             )
 
         LikeResponse _ _ ->

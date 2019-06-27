@@ -1,5 +1,5 @@
 module Page.Component.ProductEditor exposing
-    ( Emit(..)
+    ( Emission(..)
     , ImageList(..)
     , Model
     , Msg(..)
@@ -8,7 +8,7 @@ module Page.Component.ProductEditor exposing
     , initModel
     , requestDataToApiRequest
     , requestDataToEditApiRequest
-    , resendEmit
+    , resendEmission
     , toRequestData
     , update
     , view
@@ -43,10 +43,10 @@ type ImageList
     | Image4 String String String String
 
 
-type Emit
-    = EmitAddEventListenerForProductImages { labelId : String, inputId : String }
-    | EmitReplaceText { id : String, text : String }
-    | EmitChangeSelectedIndex { id : String, index : Int }
+type Emission
+    = EmissionAddEventListenerForProductImages { labelId : String, inputId : String }
+    | EmissionReplaceText { id : String, text : String }
+    | EmissionChangeSelectedIndex { id : String, index : Int }
 
 
 type Msg
@@ -67,7 +67,7 @@ type alias RequestData =
     }
 
 
-initModel : { name : String, description : String, price : Maybe Int, condition : Maybe Product.Condition, image : Maybe ImageList } -> ( Model, List Emit )
+initModel : { name : String, description : String, price : Maybe Int, condition : Maybe Product.Condition, image : Maybe ImageList } -> ( Model, List Emission )
 initModel { name, description, price, condition, image } =
     let
         model =
@@ -80,21 +80,21 @@ initModel { name, description, price, condition, image } =
                 }
     in
     ( model
-    , resendEmit model
+    , resendEmission model
     )
 
 
-resendEmit : Model -> List Emit
-resendEmit (Model rec) =
-    [ EmitAddEventListenerForProductImages { labelId = photoAddLabelId, inputId = photoAddInputId }
-    , EmitReplaceText { id = nameEditorId, text = rec.name }
-    , EmitReplaceText { id = descriptionEditorId, text = rec.description }
-    , EmitReplaceText { id = priceEditorId, text = rec.price |> Maybe.map String.fromInt |> Maybe.withDefault "" }
-    , EmitChangeSelectedIndex { id = conditionEditorId, index = rec.condition |> Maybe.map (\c -> Product.conditionIndex c + 1) |> Maybe.withDefault 0 }
+resendEmission : Model -> List Emission
+resendEmission (Model rec) =
+    [ EmissionAddEventListenerForProductImages { labelId = photoAddLabelId, inputId = photoAddInputId }
+    , EmissionReplaceText { id = nameEditorId, text = rec.name }
+    , EmissionReplaceText { id = descriptionEditorId, text = rec.description }
+    , EmissionReplaceText { id = priceEditorId, text = rec.price |> Maybe.map String.fromInt |> Maybe.withDefault "" }
+    , EmissionChangeSelectedIndex { id = conditionEditorId, index = rec.condition |> Maybe.map (\c -> Product.conditionIndex c + 1) |> Maybe.withDefault 0 }
     ]
 
 
-update : Msg -> Model -> ( Model, List Emit )
+update : Msg -> Model -> ( Model, List Emission )
 update msg (Model rec) =
     case msg of
         InputName nameString ->

@@ -1,4 +1,4 @@
-module Page.Home exposing (Emit(..), Model, Msg(..), getAllProducts, initModel, update, view)
+module Page.Home exposing (Emission(..), Model, Msg(..), getAllProducts, initModel, update, view)
 
 import Data.LogInState as LogInState
 import Data.Product as Product
@@ -25,11 +25,11 @@ type TabSelect
     | TabFree
 
 
-type Emit
-    = EmitGetRecentProducts
-    | EmitGetRecommendProducts
-    | EmitGetFreeProducts
-    | EmitProducts ProductList.Emit
+type Emission
+    = EmissionGetRecentProducts
+    | EmissionGetRecommendProducts
+    | EmissionGetFreeProducts
+    | EmissionProducts ProductList.Emission
 
 
 type Msg
@@ -42,10 +42,10 @@ type Msg
 
 {-| 最初の状態。真ん中のタブ「おすすめ」が選択されている。Maybe Product.Idで指定した商品のところまでスクロールする
 -}
-initModel : Maybe Product.Id -> ( Model, List Emit )
+initModel : Maybe Product.Id -> ( Model, List Emission )
 initModel productIdMaybe =
     let
-        ( productListModel, emitList ) =
+        ( productListModel, emissionList ) =
             ProductList.initModel productIdMaybe
     in
     ( Model
@@ -55,7 +55,7 @@ initModel productIdMaybe =
         , free = Nothing
         , productListModel = productListModel
         }
-    , [ EmitGetRecommendProducts ] ++ (emitList |> List.map EmitProducts)
+    , [ EmissionGetRecommendProducts ] ++ (emissionList |> List.map EmissionProducts)
     )
 
 
@@ -76,20 +76,20 @@ getAllProducts (Model rec) =
         |> Maybe.withDefault []
 
 
-update : Msg -> Model -> ( Model, List Emit )
+update : Msg -> Model -> ( Model, List Emission )
 update msg (Model rec) =
     case msg of
         SelectTab tabSelect ->
             ( Model { rec | tabSelect = tabSelect }
             , case tabSelect of
                 TabRecent ->
-                    [ EmitGetRecentProducts ]
+                    [ EmissionGetRecentProducts ]
 
                 TabRecommend ->
-                    [ EmitGetRecommendProducts ]
+                    [ EmissionGetRecommendProducts ]
 
                 TabFree ->
-                    [ EmitGetFreeProducts ]
+                    [ EmissionGetFreeProducts ]
             )
 
         GetRecentProductsResponse result ->
@@ -124,7 +124,7 @@ update msg (Model rec) =
 
         MsgByProductList productListMsg ->
             let
-                ( newModel, emitList ) =
+                ( newModel, emissionList ) =
                     rec.productListModel |> ProductList.update productListMsg
             in
             ( case productListMsg of
@@ -156,7 +156,7 @@ update msg (Model rec) =
 
                 _ ->
                     Model { rec | productListModel = newModel }
-            , emitList |> List.map EmitProducts
+            , emissionList |> List.map EmissionProducts
             )
 
 

@@ -1,5 +1,5 @@
 module Page.Product exposing
-    ( Emit(..)
+    ( Emission(..)
     , Model
     , Msg(..)
     , getProductId
@@ -54,18 +54,18 @@ type Model
         }
 
 
-type Emit
-    = EmitGetProduct { productId : Product.Id }
-    | EmitGetCommentList { productId : Product.Id }
-    | EmitPostComment Api.Token { productId : Product.Id } String
-    | EmitLike Api.Token Product.Id
-    | EmitUnLike Api.Token Product.Id
-    | EmitTradeStart Api.Token Product.Id
-    | EmitAddLogMessage String
-    | EmitUpdateNowTime
-    | EmitDelete Api.Token Product.Id
-    | EmitByProductEditor ProductEditor.Emit
-    | EmitUpdateProductData Api.Token Product.Id Api.EditProductRequest
+type Emission
+    = EmissionGetProduct { productId : Product.Id }
+    | EmissionGetCommentList { productId : Product.Id }
+    | EmissionPostComment Api.Token { productId : Product.Id } String
+    | EmissionLike Api.Token Product.Id
+    | EmissionUnLike Api.Token Product.Id
+    | EmissionTradeStart Api.Token Product.Id
+    | EmissionAddLogMessage String
+    | EmissionUpdateNowTime
+    | EmissionDelete Api.Token Product.Id
+    | EmissionByProductEditor ProductEditor.Emission
+    | EmissionUpdateProductData Api.Token Product.Id Api.EditProductRequest
 
 
 type Msg
@@ -91,19 +91,19 @@ type Msg
 
 {-| 指定したIDの商品詳細ページ
 -}
-initModel : Product.Id -> ( Model, List Emit )
+initModel : Product.Id -> ( Model, List Emission )
 initModel id =
     ( Loading { productId = id }
-    , [ EmitGetProduct { productId = id } ]
+    , [ EmissionGetProduct { productId = id } ]
     )
 
 
 {-| 商品の内容があらかじめ、わかっているときのもの。でも、一応また聞きに行く
 -}
-initModelFromProduct : Product.Product -> ( Model, List Emit )
+initModelFromProduct : Product.Product -> ( Model, List Emission )
 initModelFromProduct product =
     ( Normal { product = product, sending = False, comment = "" }
-    , [ EmitGetProduct { productId = Product.getId product } ]
+    , [ EmissionGetProduct { productId = Product.getId product } ]
     )
 
 
@@ -128,28 +128,28 @@ getProductId model =
             Product.getId product
 
 
-update : Msg -> Model -> ( Model, List Emit )
+update : Msg -> Model -> ( Model, List Emission )
 update msg model =
     case msg of
         GetProductResponse productsResult ->
             case ( model, productsResult ) of
                 ( Normal rec, Ok product ) ->
                     ( Normal { rec | product = product }
-                    , [ EmitGetCommentList { productId = Product.getId product }
-                      , EmitUpdateNowTime
+                    , [ EmissionGetCommentList { productId = Product.getId product }
+                      , EmissionUpdateNowTime
                       ]
                     )
 
                 ( _, Ok product ) ->
                     ( Normal { product = product, sending = False, comment = "" }
-                    , [ EmitGetCommentList { productId = Product.getId product }
-                      , EmitUpdateNowTime
+                    , [ EmissionGetCommentList { productId = Product.getId product }
+                      , EmissionUpdateNowTime
                       ]
                     )
 
                 ( _, Err () ) ->
                     ( model
-                    , [ EmitAddLogMessage "商品情報の取得に失敗しました" ]
+                    , [ EmissionAddLogMessage "商品情報の取得に失敗しました" ]
                     )
 
         GetCommentListResponse commentListResult ->
@@ -161,12 +161,12 @@ update msg model =
 
                 ( _, Err () ) ->
                     ( model
-                    , [ EmitAddLogMessage "コメント取得に失敗しました" ]
+                    , [ EmissionAddLogMessage "コメント取得に失敗しました" ]
                     )
 
                 ( _, _ ) ->
                     ( model
-                    , [ EmitAddLogMessage "画面がNormalでないときにコメントを受け取ってしまった" ]
+                    , [ EmissionAddLogMessage "画面がNormalでないときにコメントを受け取ってしまった" ]
                     )
 
         PostCommentResponse result ->
@@ -177,7 +177,7 @@ update msg model =
                     )
 
                 ( _, Err () ) ->
-                    ( model, [ EmitAddLogMessage "コメントの送信に失敗しました" ] )
+                    ( model, [ EmissionAddLogMessage "コメントの送信に失敗しました" ] )
 
                 ( _, _ ) ->
                     ( model, [] )
@@ -189,7 +189,7 @@ update msg model =
 
                 _ ->
                     model
-            , [ EmitLike token id ]
+            , [ EmissionLike token id ]
             )
 
         UnLike token id ->
@@ -199,7 +199,7 @@ update msg model =
 
                 _ ->
                     model
-            , [ EmitUnLike token id ]
+            , [ EmissionUnLike token id ]
             )
 
         LikeResponse result ->
@@ -232,17 +232,17 @@ update msg model =
 
         TradeStart token productId ->
             ( model
-            , [ EmitTradeStart token productId ]
+            , [ EmissionTradeStart token productId ]
             )
 
         TradeStartResponse result ->
             ( model
             , case result of
                 Ok () ->
-                    [ EmitAddLogMessage "取引開始" ]
+                    [ EmissionAddLogMessage "取引開始" ]
 
                 Err () ->
-                    [ EmitAddLogMessage "取引開始を失敗しました" ]
+                    [ EmissionAddLogMessage "取引開始を失敗しました" ]
             )
 
         ToConfirmPage ->
@@ -271,7 +271,7 @@ update msg model =
             case model of
                 Normal { comment, product } ->
                     ( model
-                    , [ EmitPostComment token { productId = Product.getId product } comment ]
+                    , [ EmissionPostComment token { productId = Product.getId product } comment ]
                     )
 
                 _ ->
@@ -281,7 +281,7 @@ update msg model =
 
         Delete token productId ->
             ( model
-            , [ EmitDelete token productId ]
+            , [ EmissionDelete token productId ]
             )
 
         EditProduct ->
@@ -298,7 +298,7 @@ update msg model =
             case model of
                 Edit { beforeProduct } ->
                     ( WaitNewData { product = beforeProduct }
-                    , [ EmitGetProduct { productId = Product.getId beforeProduct } ]
+                    , [ EmissionGetProduct { productId = Product.getId beforeProduct } ]
                     )
 
                 _ ->
@@ -310,14 +310,14 @@ update msg model =
                     ProductEditor.update productEditorMsg r.editorModel
                         |> Tuple.mapBoth
                             (\editorModel -> Edit { r | editorModel = editorModel })
-                            (List.map EmitByProductEditor)
+                            (List.map EmissionByProductEditor)
 
                 _ ->
                     ( model, [] )
 
         UpdateProductData token productId requestData ->
             ( model
-            , [ EmitUpdateProductData token
+            , [ EmissionUpdateProductData token
                     productId
                     (ProductEditor.requestDataToEditApiRequest requestData)
               ]
@@ -330,7 +330,7 @@ update msg model =
 
                 Err text ->
                     ( model
-                    , [ EmitAddLogMessage ("商品の編集に失敗しました " ++ text) ]
+                    , [ EmissionAddLogMessage ("商品の編集に失敗しました " ++ text) ]
                     )
 
 

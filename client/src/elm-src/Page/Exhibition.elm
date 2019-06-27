@@ -1,5 +1,5 @@
 module Page.Exhibition exposing
-    ( Emit(..)
+    ( Emission(..)
     , Model
     , Msg(..)
     , initModel
@@ -35,10 +35,10 @@ type Page
         }
 
 
-type Emit
-    = EmitLogInOrSignUp LogIn.Emit
-    | EmitSellProducts ( Api.Token, Api.SellProductRequest )
-    | EmitByProductsEditor ProductEditor.Emit
+type Emission
+    = EmissionLogInOrSignUp LogIn.Emission
+    | EmissionSellProducts ( Api.Token, Api.SellProductRequest )
+    | EmissionByProductsEditor ProductEditor.Emission
 
 
 type Msg
@@ -49,10 +49,10 @@ type Msg
     | MsgByProductEditor ProductEditor.Msg
 
 
-initModel : ( Model, List Emit )
+initModel : ( Model, List Emission )
 initModel =
     let
-        ( editorModel, editorEmit ) =
+        ( editorModel, editorEmission ) =
             ProductEditor.initModel
                 { name = ""
                 , description = ""
@@ -65,7 +65,7 @@ initModel =
         { logInOrSignUpModel = LogIn.initModel
         , page = EditPage editorModel
         }
-    , editorEmit |> List.map EmitByProductsEditor
+    , editorEmission |> List.map EmissionByProductsEditor
     )
 
 
@@ -91,7 +91,7 @@ toConfirmPageMsgFromModel logInState (Model rec) =
 -}
 
 
-update : Data.LogInState.LogInState -> Msg -> Model -> ( Model, List Emit )
+update : Data.LogInState.LogInState -> Msg -> Model -> ( Model, List Emission )
 update logInState msg (Model rec) =
     case logInState of
         Data.LogInState.None ->
@@ -105,7 +105,7 @@ update logInState msg (Model rec) =
                     )
 
 
-updateWhenLogIn : Msg -> Page -> ( Page, List Emit )
+updateWhenLogIn : Msg -> Page -> ( Page, List Emission )
 updateWhenLogIn msg page =
     case page of
         EditPage productEditorModel ->
@@ -119,7 +119,7 @@ updateWhenLogIn msg page =
                     ProductEditor.update m productEditorModel
                         |> Tuple.mapBoth
                             EditPage
-                            (List.map EmitByProductsEditor)
+                            (List.map EmissionByProductsEditor)
 
                 _ ->
                     ( EditPage productEditorModel
@@ -130,7 +130,7 @@ updateWhenLogIn msg page =
             case msg of
                 SellProduct data ->
                     ( ConfirmPage { rec | sending = True }
-                    , [ EmitSellProducts data ]
+                    , [ EmissionSellProducts data ]
                     )
 
                 ToEditPage ->
@@ -143,7 +143,7 @@ updateWhenLogIn msg page =
                         }
                         |> Tuple.mapBoth
                             EditPage
-                            (List.map EmitByProductsEditor)
+                            (List.map EmissionByProductsEditor)
 
                 _ ->
                     ( ConfirmPage rec
@@ -151,19 +151,19 @@ updateWhenLogIn msg page =
                     )
 
 
-updateWhenNoLogIn : Msg -> Model -> ( Model, List Emit )
+updateWhenNoLogIn : Msg -> Model -> ( Model, List Emission )
 updateWhenNoLogIn msg (Model rec) =
     case msg of
         LogInOrSignUpMsg m ->
             let
-                exEmit =
+                exEmission =
                     []
             in
             rec.logInOrSignUpModel
                 |> LogIn.update m
                 |> Tuple.mapBoth
                     (\logInModel -> Model { rec | logInOrSignUpModel = logInModel })
-                    (\e -> (e |> List.map EmitLogInOrSignUp) ++ exEmit)
+                    (\e -> (e |> List.map EmissionLogInOrSignUp) ++ exEmission)
 
         _ ->
             ( Model rec, [] )

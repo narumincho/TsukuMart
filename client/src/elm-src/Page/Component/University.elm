@@ -1,7 +1,7 @@
 module Page.Component.University exposing
-    ( Emit(..)
+    ( Emission(..)
     , Model
-    , emit
+    , emission
     , getUniversity
     , initSelect
     , selectFromUniversity
@@ -100,18 +100,18 @@ getUniversity universitySelect =
             Nothing
 
 
-type Emit
-    = EmitChangeSelectedIndex { id : String, index : Int }
+type Emission
+    = EmissionChangeSelectedIndex { id : String, index : Int }
 
 
-emit : Model -> List Emit
-emit model =
+emission : Model -> List Emission
+emission model =
     case model of
         UniversitySchool schoolSelect ->
-            schoolEmit schoolSelect
+            schoolEmission schoolSelect
 
         UniversityGraduate (GraduateSelect graduate schoolSelect) ->
-            [ EmitChangeSelectedIndex
+            [ EmissionChangeSelectedIndex
                 { id = graduateSelectId
                 , index =
                     case graduate of
@@ -124,40 +124,40 @@ emit model =
             ]
                 ++ (case schoolSelect of
                         Just s ->
-                            schoolEmit s
+                            schoolEmission s
 
                         Nothing ->
                             []
                    )
 
 
-schoolEmit : SchoolSelect -> List Emit
-schoolEmit schoolSelect =
+schoolEmission : SchoolSelect -> List Emission
+schoolEmission schoolSelect =
     case schoolSelect of
         SchoolNone ->
-            [ EmitChangeSelectedIndex
+            [ EmissionChangeSelectedIndex
                 { id = schoolSelectId
                 , index = 0
                 }
             ]
 
         SchoolSelectSchool school ->
-            [ EmitChangeSelectedIndex
+            [ EmissionChangeSelectedIndex
                 { id = schoolSelectId
                 , index = Data.University.schoolToIndex school + 1
                 }
-            , EmitChangeSelectedIndex
+            , EmissionChangeSelectedIndex
                 { id = departmentSelectId
                 , index = 0
                 }
             ]
 
         SchoolSelectSchoolAndDepartment schoolAndDepartment ->
-            [ EmitChangeSelectedIndex
+            [ EmissionChangeSelectedIndex
                 { id = schoolSelectId
                 , index = Data.University.schoolToIndex (Data.University.schoolFromDepartment schoolAndDepartment) + 1
                 }
-            , EmitChangeSelectedIndex
+            , EmissionChangeSelectedIndex
                 { id = departmentSelectId
                 , index = Data.University.departmentToIndexInSchool schoolAndDepartment + 1
                 }

@@ -1,5 +1,5 @@
 module Page.SignUp exposing
-    ( Emit(..)
+    ( Emission(..)
     , Model
     , Msg(..)
     , initModel
@@ -42,12 +42,12 @@ type Image
 
 {-| ここから発生するイベント
 -}
-type Emit
-    = EmitAddEventListenerForUserImage { labelId : String, inputId : String }
-    | EmitSignUp Api.SignUpRequest
-    | EmitByUniversityComp CompUniversity.Emit
-    | EmitReplaceElementText { id : String, text : String }
-    | EmitAddLogMessage String
+type Emission
+    = EmissionAddEventListenerForUserImage { labelId : String, inputId : String }
+    | EmissionSignUp Api.SignUpRequest
+    | EmissionByUniversityComp CompUniversity.Emission
+    | EmissionReplaceElementText { id : String, text : String }
+    | EmissionAddLogMessage String
 
 
 type Msg
@@ -62,7 +62,7 @@ type Msg
 
 {-| すべて空白の新規登録画面を表示するためのModel
 -}
-initModel : { name : String, imageId : String, sendEmailToken : String } -> ( Model, List Emit )
+initModel : { name : String, imageId : String, sendEmailToken : String } -> ( Model, List Emission )
 initModel { name, imageId, sendEmailToken } =
     ( Normal
         { sAddressOrStudentId = analysisStudentIdOrSAddress ""
@@ -71,8 +71,8 @@ initModel { name, imageId, sendEmailToken } =
         , image = ServiceImage imageId
         , sendEmailToken = sendEmailToken
         }
-    , [ EmitAddEventListenerForUserImage { labelId = imageLabelId, inputId = imageInputId }
-      , EmitReplaceElementText
+    , [ EmissionAddEventListenerForUserImage { labelId = imageLabelId, inputId = imageInputId }
+      , EmissionReplaceElementText
             { id = displayNameFormId
             , text = name
             }
@@ -80,7 +80,7 @@ initModel { name, imageId, sendEmailToken } =
     )
 
 
-update : Msg -> Model -> ( Model, List Emit )
+update : Msg -> Model -> ( Model, List Emission )
 update msg model =
     case msg of
         InputStudentIdOrEmailAddress string ->
@@ -120,7 +120,7 @@ update msg model =
 
                 _ ->
                     model
-            , CompUniversity.emit universitySelect |> List.map EmitByUniversityComp
+            , CompUniversity.emission universitySelect |> List.map EmissionByUniversityComp
             )
 
         InputDisplayName string ->
@@ -139,7 +139,7 @@ update msg model =
         SignUp signUpRequest ->
             ( Sending
                 { emailAddress = signUpRequest.emailAddress }
-            , [ EmitSignUp signUpRequest ]
+            , [ EmissionSignUp signUpRequest ]
             )
 
         SignUpResponse result ->
@@ -152,7 +152,7 @@ update msg model =
 
                 ( _, Err string ) ->
                     ( model
-                    , [ EmitAddLogMessage string ]
+                    , [ EmissionAddLogMessage string ]
                     )
 
                 ( _, _ ) ->

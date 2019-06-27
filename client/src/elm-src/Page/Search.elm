@@ -1,4 +1,4 @@
-module Page.Search exposing (Model, Msg, view, update, initModel, Emit(..))
+module Page.Search exposing (Model, Msg, view, update, initModel, Emission(..))
 
 import BasicParts
 import Data.SearchCondition as SearchCondition
@@ -14,11 +14,11 @@ type Msg
     = Msg
 
 
-type Emit
-    = EmitReplaceElementText { id : String, text : String }
+type Emission
+    = EmissionReplaceElementText { id : String, text : String }
 
 
-initModel : SearchCondition.Condition -> ( Model, List Emit )
+initModel : SearchCondition.Condition -> ( Model, List Emission )
 initModel condition =
     ( Condition condition
     , case condition of
@@ -26,11 +26,11 @@ initModel condition =
             []
 
         SearchCondition.ByText text ->
-            [ EmitReplaceElementText { id = textAreaId, text = text } ]
+            [ EmissionReplaceElementText { id = textAreaId, text = text } ]
     )
 
 
-update : Msg -> Model -> ( Model, List Emit )
+update : Msg -> Model -> ( Model, List Emission )
 update msg model =
     ( model, [] )
 

@@ -1,5 +1,5 @@
 module Page.User exposing
-    ( Emit(..)
+    ( Emission(..)
     , Model
     , Msg(..)
     , initModelFromId
@@ -36,14 +36,14 @@ type alias EditModel =
     }
 
 
-type Emit
-    = EmitGetMyProfile { accessToken : Api.Token }
-    | EmitGetUserProfile User.Id
-    | EmitChangeProfile Api.Token Api.ProfileUpdateData
-    | EmitReplaceElementText { id : String, text : String }
-    | EmitUniversity CompUniversity.Emit
-    | EmitLogOut
-    | EmitAddLogMessage String
+type Emission
+    = EmissionGetMyProfile { accessToken : Api.Token }
+    | EmissionGetUserProfile User.Id
+    | EmissionChangeProfile Api.Token Api.ProfileUpdateData
+    | EmissionReplaceElementText { id : String, text : String }
+    | EmissionUniversity CompUniversity.Emission
+    | EmissionLogOut
+    | EmissionAddLogMessage String
 
 
 type Msg
@@ -58,7 +58,7 @@ type Msg
     | MsgUserProfileResponse (Result String User.WithProfile)
 
 
-initModelWithName : LogInState.LogInState -> User.WithName -> ( Model, List Emit )
+initModelWithName : LogInState.LogInState -> User.WithName -> ( Model, List Emission )
 initModelWithName logInState userWithName =
     let
         targetUserId =
@@ -68,39 +68,39 @@ initModelWithName logInState userWithName =
         LogInState.Ok { accessToken, userWithProfile } ->
             if User.withProfileGetId userWithProfile == targetUserId then
                 ( Normal userWithProfile
-                , [ EmitGetMyProfile { accessToken = accessToken } ]
+                , [ EmissionGetMyProfile { accessToken = accessToken } ]
                 )
 
             else
                 ( LoadingWithUserIdAndName userWithName
-                , [ EmitGetUserProfile targetUserId ]
+                , [ EmissionGetUserProfile targetUserId ]
                 )
 
         _ ->
             ( LoadingWithUserIdAndName userWithName
-            , [ EmitGetUserProfile targetUserId ]
+            , [ EmissionGetUserProfile targetUserId ]
             )
 
 
 {-| 外部ページから飛んで来たときはユーザーIDだけを頼りにしてユーザーページを作らなければならない
 -}
-initModelFromId : LogInState.LogInState -> User.Id -> ( Model, List Emit )
+initModelFromId : LogInState.LogInState -> User.Id -> ( Model, List Emission )
 initModelFromId logInState userId =
     case logInState of
         LogInState.Ok { accessToken, userWithProfile } ->
             if User.withProfileGetId userWithProfile == userId then
                 ( Normal userWithProfile
-                , [ EmitGetMyProfile { accessToken = accessToken } ]
+                , [ EmissionGetMyProfile { accessToken = accessToken } ]
                 )
 
             else
                 ( LoadingWithUserId userId
-                , [ EmitGetUserProfile userId ]
+                , [ EmissionGetUserProfile userId ]
                 )
 
         _ ->
             ( LoadingWithUserId userId
-            , [ EmitGetUserProfile userId ]
+            , [ EmissionGetUserProfile userId ]
             )
 
 
@@ -108,7 +108,7 @@ initModelFromId logInState userId =
 {- ====== Update ====== -}
 
 
-update : LogInState.LogInState -> Msg -> Model -> ( Model, List Emit )
+update : LogInState.LogInState -> Msg -> Model -> ( Model, List Emission )
 update logInState msg model =
     case msg of
         MsgToEditMode ->
@@ -148,7 +148,7 @@ update logInState msg model =
 
                 _ ->
                     model
-            , CompUniversity.emit select |> List.map EmitUniversity
+            , CompUniversity.emission select |> List.map EmissionUniversity
             )
 
         MsgBackToViewMode ->
@@ -163,24 +163,24 @@ update logInState msg model =
 
         MsgChangeProfile token profile ->
             ( model
-            , [ EmitChangeProfile token profile ]
+            , [ EmissionChangeProfile token profile ]
             )
 
         MsgChangeProfileResponse result ->
             case result of
                 Ok profile ->
                     ( Normal profile
-                    , [ EmitAddLogMessage "ユーザー情報を更新しました" ]
+                    , [ EmissionAddLogMessage "ユーザー情報を更新しました" ]
                     )
 
                 _ ->
                     ( model
-                    , [ EmitAddLogMessage "ユーザー情報を更新に失敗しました" ]
+                    , [ EmissionAddLogMessage "ユーザー情報を更新に失敗しました" ]
                     )
 
         MsgLogOut ->
             ( model
-            , [ EmitLogOut ]
+            , [ EmissionLogOut ]
             )
 
         MsgUserProfileResponse result ->
@@ -202,11 +202,11 @@ update logInState msg model =
 
                 ( _, Err string ) ->
                     ( model
-                    , [ EmitAddLogMessage ("ユーザー情報の取得に失敗しました " ++ string) ]
+                    , [ EmissionAddLogMessage ("ユーザー情報の取得に失敗しました " ++ string) ]
                     )
 
 
-toEditMode : User.WithProfile -> ( Model, List Emit )
+toEditMode : User.WithProfile -> ( Model, List Emission )
 toEditMode userWithProfile =
     let
         displayName =
@@ -223,10 +223,10 @@ toEditMode userWithProfile =
         , introduction = introduction
         , universitySelect = universitySelect
         }
-    , [ EmitReplaceElementText { id = nickNameEditorId, text = displayName }
-      , EmitReplaceElementText { id = introductionEditorId, text = introduction }
+    , [ EmissionReplaceElementText { id = nickNameEditorId, text = displayName }
+      , EmissionReplaceElementText { id = introductionEditorId, text = introduction }
       ]
-        ++ (CompUniversity.emit universitySelect |> List.map EmitUniversity)
+        ++ (CompUniversity.emission universitySelect |> List.map EmissionUniversity)
     )
 
 

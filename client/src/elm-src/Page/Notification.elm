@@ -1,5 +1,5 @@
 module Page.Notification exposing
-    ( Emit(..)
+    ( Emission(..)
     , Model
     , Msg
     , initModel
@@ -20,16 +20,16 @@ type Model
     = Model
 
 
-type Emit
-    = Emit
+type Emission
+    = Emission
 
 
-initModel : ( Model, List Emit )
+initModel : ( Model, List Emission )
 initModel =
     ( Model, [] )
 
 
-update : Msg -> Model -> ( Model, List Emit )
+update : Msg -> Model -> ( Model, List Emission )
 update msg model =
     ( model, [] )
 
