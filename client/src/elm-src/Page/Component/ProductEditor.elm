@@ -8,7 +8,7 @@ module Page.Component.ProductEditor exposing
     , initModel
     , requestDataToApiRequest
     , requestDataToEditApiRequest
-    , resendEmission
+    , sendEmission
     , toRequestData
     , update
     , view
@@ -16,6 +16,7 @@ module Page.Component.ProductEditor exposing
 
 import Api
 import Array
+import Data.Category as Category
 import Data.Product as Product
 import Html
 import Html.Attributes
@@ -32,6 +33,7 @@ type Model
         , description : String
         , price : Maybe Int
         , condition : Maybe Product.Condition
+        , category : Maybe Category.Category
         , image : Maybe ImageList
         }
 
@@ -67,25 +69,34 @@ type alias RequestData =
     }
 
 
-initModel : { name : String, description : String, price : Maybe Int, condition : Maybe Product.Condition, image : Maybe ImageList } -> ( Model, List Emission )
-initModel { name, description, price, condition, image } =
+initModel :
+    { name : String
+    , description : String
+    , price : Maybe Int
+    , condition : Maybe Product.Condition
+    , category : Maybe Category.Category
+    , image : Maybe ImageList
+    }
+    -> ( Model, List Emission )
+initModel rec =
     let
         model =
             Model
-                { name = name
-                , description = description
-                , price = price
-                , condition = condition
-                , image = image
+                { name = rec.name
+                , description = rec.description
+                , price = rec.price
+                , condition = rec.condition
+                , category = rec.category
+                , image = rec.image
                 }
     in
     ( model
-    , resendEmission model
+    , sendEmission model
     )
 
 
-resendEmission : Model -> List Emission
-resendEmission (Model rec) =
+sendEmission : Model -> List Emission
+sendEmission (Model rec) =
     [ EmissionAddEventListenerForProductImages { labelId = photoAddLabelId, inputId = photoAddInputId }
     , EmissionReplaceText { id = nameEditorId, text = rec.name }
     , EmissionReplaceText { id = descriptionEditorId, text = rec.description }

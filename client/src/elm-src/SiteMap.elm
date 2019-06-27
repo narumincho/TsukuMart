@@ -449,7 +449,7 @@ productParser : List String -> Maybe Data.Product.Id
 productParser path =
     case path of
         [ "product", productIdString ] ->
-            productIdString |> String.toInt |> Maybe.map Data.Product.idFromInt
+            productIdString |> Data.Product.idFromString |> Just
 
         _ ->
             Nothing

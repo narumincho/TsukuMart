@@ -1,7 +1,6 @@
 module Data.Product exposing
     ( Comment
     , Condition
-    , CreatedTime(..)
     , Id
     , Product
     , Status
@@ -12,38 +11,28 @@ module Data.Product exposing
     , conditionToIdString
     , conditionToJapaneseString
     , createdAtToString
-    , getCommentCreatedAtString
-    , getCommentList
-    , getCondition
-    , getDescription
-    , getFirstImageUrl
     , getId
     , getLikedCount
     , getName
-    , getOthersImageUrlList
     , getPrice
-    , getSellerId
-    , getSellerName
-    , idFromInt
+    , idFromString
     , idToString
     , like
-    , updateById
-    , makeDetailFromApi
-    , makeNormalFromApi
     , priceToString
     , priceToStringWithoutYen
-    , replaceCommentTimeStringToTimePosix
     , searchFromId
     , setCommentList
     , statusAll
     , statusFromIdString
     , statusToIdString
     , unlike
-    )
+    , updateById
+    , getThumbnailImageUrl, detailGetImageUrls, detailGetSellerId, detailGetSellerName, detailGetCommentList, ProductDetail)
 
 {-| 商品
 -}
 
+import Data.Category as Category
 import Data.User as User
 import Time
 import Time.Extra
@@ -53,128 +42,120 @@ import Utility
 type Product
     = Product
         { id : Id
-        , name : String -- 長さは1～255文字
+        , name : String
+        , price : Int
+        , category : Category.SubCategory
+        , status : Status
+        , thumbnailImageId : String
+        , likedCount : Int
+        }
+
+
+type ProductDetail
+    = ProductDetail
+        { id : Id
+        , name : String
         , description : String
         , price : Int
         , condition : Condition
+        , category : Category.SubCategory
         , status : Status
-        , image0Url : String
-        , image1Url : Maybe String
-        , image2Url : Maybe String
-        , image3Url : Maybe String
-        , seller : User.Id
-        , sellerName : Maybe String
-        , likeCount : Int
+        , imageIds : ( String, List String )
+        , likedCount : Int
+        , sellerId : User.Id
+        , sellerName : String
+        , sellerImageId : String
         , commentList : Maybe (List Comment)
         }
 
 
 type Id
-    = Id Int
+    = Id String
 
 
 idToString : Id -> String
 idToString (Id id) =
-    String.fromInt id
+    id
 
 
-idFromInt : Int -> Id
-idFromInt id =
-    Id id
+idFromString : String -> Id
+idFromString =
+    Id
 
 
 type alias Comment =
     { text : String
-    , createdAt : CreatedTime
+    , createdAt : Time.Posix
     , userName : String
     , userId : User.Id
     }
 
 
-type CreatedTime
-    = CreatedTimeString String
-    | CreatedTimePosix Time.Posix
-
-
-makeNormalFromApi :
-    { id : Int
+fromApi :
+    { id : String
     , name : String
-    , description : String
     , price : Int
-    , condition : Condition
+    , category : Category.SubCategory
     , status : Status
-    , image0Url : String
-    , image1Url : Maybe String
-    , image2Url : Maybe String
-    , image3Url : Maybe String
-    , seller : String
+    , thumbnailImageId : String
     , likeCount : Int
     }
     -> Product
-makeNormalFromApi { id, name, likeCount, description, price, condition, status, image0Url, image1Url, image2Url, image3Url, seller } =
+fromApi rec =
     Product
-        { id = Id id
-        , name = name
-        , description = description
-        , price = price
-        , condition = condition
-        , status = status
-        , image0Url = image0Url
-        , image1Url = image1Url
-        , image2Url = image2Url
-        , image3Url = image3Url
-        , seller = User.idFromString seller
-        , sellerName = Nothing
-        , likeCount = max 0 likeCount
-        , commentList = Nothing
+        { id = Id rec.id
+        , name = rec.name
+        , price = rec.price
+        , status = rec.status
+        , category = rec.category
+        , thumbnailImageId = rec.thumbnailImageId
+        , likedCount = max 0 rec.likeCount
         }
 
 
-makeDetailFromApi :
-    { id : Int
+detailFromApi :
+    { id : String
     , name : String
     , description : String
     , price : Int
     , condition : Condition
+    , category : Category.SubCategory
     , status : Status
-    , image0Url : String
-    , image1Url : Maybe String
-    , image2Url : Maybe String
-    , image3Url : Maybe String
-    , seller : String
+    , imageIds : ( String, List String )
+    , likedCount : Int
+    , sellerId : User.Id
     , sellerName : String
-    , likeCount : Int
+    , sellerImageId : String
     }
-    -> Product
-makeDetailFromApi { id, name, description, price, condition, status, image0Url, image1Url, image2Url, image3Url, seller, sellerName, likeCount } =
-    Product
-        { id = Id id
-        , name = name
-        , description = description
-        , price = price
-        , condition = condition
-        , status = status
-        , image0Url = image0Url
-        , image1Url = image1Url
-        , image2Url = image2Url
-        , image3Url = image3Url
-        , seller = User.idFromString seller
-        , sellerName = Just sellerName
-        , likeCount = max 0 likeCount
+    -> ProductDetail
+detailFromApi rec =
+    ProductDetail
+        { id = Id rec.id
+        , name = rec.name
+        , description = rec.description
+        , price = rec.price
+        , condition = rec.condition
+        , category = rec.category
+        , status = rec.status
+        , imageIds = rec.imageIds
+        , likedCount = rec.likedCount
+        , sellerId = rec.sellerId
+        , sellerName = rec.sellerName
+        , sellerImageId = rec.sellerImageId
         , commentList = Nothing
         }
 
 
-setCommentList : List Comment -> Product -> Product
-setCommentList commentList (Product rec) =
-    Product { rec | commentList = Just commentList }
+setCommentList : List Comment -> ProductDetail -> ProductDetail
+setCommentList commentList (ProductDetail rec) =
+    ProductDetail { rec | commentList = Just commentList }
 
 
-addComment : Comment -> Product -> Product
-addComment comment (Product rec) =
+addComment : Comment -> ProductDetail -> ProductDetail
+addComment comment (ProductDetail rec) =
     case rec.commentList of
         Just commentList ->
-            Product
+            ProductDetail
                 { rec
                     | commentList =
                         Just
@@ -182,39 +163,14 @@ addComment comment (Product rec) =
                 }
 
         _ ->
-            Product rec
+            ProductDetail rec
 
 
-replaceCommentTimeStringToTimePosix : List Time.Posix -> Product -> Product
-replaceCommentTimeStringToTimePosix timeList (Product rec) =
-    case rec.commentList of
-        Just commentList ->
-            Product
-                { rec
-                    | commentList = Just (commentTimeStringToTimePosix commentList timeList)
-                }
 
-        _ ->
-            Product rec
-
-
-commentTimeStringToTimePosix : List Comment -> List Time.Posix -> List Comment
-commentTimeStringToTimePosix commentList commentTimePosix =
-    case ( commentList, commentTimePosix ) of
-        ( cs :: csx, cp :: cpx ) ->
-            { userName = cs.userName
-            , createdAt = CreatedTimePosix cp
-            , userId = cs.userId
-            , text = cs.text
-            }
-                :: commentTimeStringToTimePosix csx cpx
-
-        ( cs :: csx, [] ) ->
-            cs
-                :: commentTimeStringToTimePosix csx []
-
-        ( [], _ ) ->
-            []
+{- ============================================================
+                        Condition
+   ============================================================
+-}
 
 
 type Condition
@@ -306,6 +262,13 @@ conditionFromStringLoop idString conditionList =
             Nothing
 
 
+
+{- ============================================================
+                            Status
+   ============================================================
+-}
+
+
 type Status
     = Selling
     | Trading
@@ -356,6 +319,11 @@ getId (Product { id }) =
     id
 
 
+detailGetId : ProductDetail -> Id
+detailGetId (ProductDetail { id }) =
+    id
+
+
 {-| 商品の名前
 -}
 getName : Product -> String
@@ -363,31 +331,51 @@ getName (Product { name }) =
     name
 
 
+detailGetName : ProductDetail -> String
+detailGetName (ProductDetail { name }) =
+    name
+
+
 {-| いいねをされた数
 -}
 getLikedCount : Product -> Int
-getLikedCount (Product { likeCount }) =
-    likeCount
+getLikedCount (Product { likedCount }) =
+    likedCount
+
+
+detailGetLikedCount : ProductDetail -> Int
+detailGetLikedCount (ProductDetail { likedCount }) =
+    likedCount
 
 
 {-| いいねをする
 -}
 like : Product -> Product
 like (Product rec) =
-    Product { rec | likeCount = rec.likeCount + 1 }
+    Product { rec | likedCount = rec.likedCount + 1 }
+
+
+detailLike : ProductDetail -> ProductDetail
+detailLike (ProductDetail rec) =
+    ProductDetail { rec | likedCount = rec.likedCount + 1 }
 
 
 {-| いいねを外す
 -}
 unlike : Product -> Product
 unlike (Product rec) =
-    Product { rec | likeCount = max 0 (rec.likeCount - 1) }
+    Product { rec | likedCount = max 0 (rec.likedCount - 1) }
+
+
+detailUnlike : ProductDetail -> ProductDetail
+detailUnlike (ProductDetail rec) =
+    ProductDetail { rec | likedCount = max 0 (rec.likedCount - 1) }
 
 
 {-| 商品の説明
 -}
-getDescription : Product -> String
-getDescription (Product { description }) =
+detailGetDescription : ProductDetail -> String
+detailGetDescription (ProductDetail { description }) =
     description
 
 
@@ -398,96 +386,74 @@ getPrice (Product { price }) =
     price
 
 
+detailGetPrice : ProductDetail -> Int
+detailGetPrice (ProductDetail { price }) =
+    price
+
+
 {-| 商品の状態
 -}
-getCondition : Product -> Condition
-getCondition (Product { condition }) =
+detailGetCondition : ProductDetail -> Condition
+detailGetCondition (ProductDetail { condition }) =
     condition
 
 
-{-| 商品の最初の画像のURL
+{-| 商品のサムネイル画像のURL
 -}
-getFirstImageUrl : Product -> String
-getFirstImageUrl (Product { image0Url }) =
-    image0Url
+getThumbnailImageUrl : Product -> String
+getThumbnailImageUrl (Product { thumbnailImageId }) =
+    "https://asia-northeast1-tsukumart-f0971.cloudfunctions.net/image/" ++ thumbnailImageId
 
 
-{-| 商品の最初以外の画像のURL
--}
-getOthersImageUrlList : Product -> List String
-getOthersImageUrlList (Product { image1Url, image2Url, image3Url }) =
-    [ image1Url, image2Url, image3Url ] |> List.map maybeToList |> List.concat
-
-
-maybeToList : Maybe a -> List a
-maybeToList aMaybe =
-    case aMaybe of
-        Just a ->
-            [ a ]
-
-        Nothing ->
-            []
+detailGetImageUrls : ProductDetail -> List String
+detailGetImageUrls (ProductDetail { imageIds }) =
+    Tuple.first imageIds
+        :: Tuple.second imageIds
+        |> List.map (\id -> "https://asia-northeast1-tsukumart-f0971.cloudfunctions.net/image/" ++ id)
 
 
 {-| 出品者のUser IDを取得する
 -}
-getSellerId : Product -> User.Id
-getSellerId (Product { seller }) =
-    seller
+detailGetSellerId : ProductDetail -> User.Id
+detailGetSellerId (ProductDetail { sellerId }) =
+    sellerId
 
 
 {-| 出品者の名前を取得する
 -}
-getSellerName : Product -> Maybe String
-getSellerName (Product { sellerName }) =
+detailGetSellerName : ProductDetail -> String
+detailGetSellerName (ProductDetail { sellerName }) =
     sellerName
 
 
 {-| 商品のコメントを取得する
 -}
-getCommentList : Product -> Maybe (List Comment)
-getCommentList (Product { commentList }) =
+detailGetCommentList : ProductDetail -> Maybe (List Comment)
+detailGetCommentList (ProductDetail { commentList }) =
     commentList
 
 
-getCommentCreatedAtString : List Comment -> List String
-getCommentCreatedAtString commentList =
-    commentList
-        |> List.map
-            (\{ createdAt } ->
-                case createdAt of
-                    CreatedTimePosix _ ->
-                        "済み"
-
-                    CreatedTimeString timeString ->
-                        timeString
-            )
-
-
-createdAtToString : Maybe ( Time.Posix, Time.Zone ) -> CreatedTime -> String
+createdAtToString : Maybe ( Time.Posix, Time.Zone ) -> Time.Posix -> String
 createdAtToString nowMaybe createdTime =
-    case ( createdTime, nowMaybe ) of
-        ( CreatedTimeString string, _ ) ->
-            string
-
-        ( CreatedTimePosix posix, Just ( nowPosix, zone ) ) ->
-            if (nowPosix |> Time.Extra.diff Time.Extra.Month zone posix) == 0 then
+    case nowMaybe of
+        Just ( nowPosix, zone ) ->
+            if (nowPosix |> Time.Extra.diff Time.Extra.Month zone createdTime) == 0 then
                 let
                     diffDay =
                         nowPosix
-                            |> Time.Extra.diff Time.Extra.Day zone posix
+                            |> Time.Extra.diff Time.Extra.Day zone createdTime
 
                     diffHour =
                         nowPosix
-                            |> Time.Extra.diff Time.Extra.Hour zone posix
+                            |> Time.Extra.diff Time.Extra.Hour zone createdTime
 
                     diffMinute =
                         nowPosix
-                            |> Time.Extra.diff Time.Extra.Minute zone posix
+                            |> Time.Extra.diff Time.Extra.Minute zone createdTime
 
                     diffSecond =
                         nowPosix
-                            |> Time.Extra.diff Time.Extra.Second zone posix
+                            |> Time.Extra.diff Time.Extra.Second zone createdTime
                 in
                 if diffDay /= 0 then
                     String.fromInt diffDay ++ "日前"
@@ -502,10 +468,10 @@ createdAtToString nowMaybe createdTime =
                     String.fromInt diffSecond ++ "秒前"
 
             else
-                posixAndZoneToString posix zone
+                posixAndZoneToString createdTime zone
 
-        ( CreatedTimePosix posix, Nothing ) ->
-            posixAndZoneToString posix Time.utc ++ "(UTC)"
+        Nothing ->
+            posixAndZoneToString createdTime Time.utc ++ "(UTC)"
 
 
 posixAndZoneToString : Time.Posix -> Time.Zone -> String

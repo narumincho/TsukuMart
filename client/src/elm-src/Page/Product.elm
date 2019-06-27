@@ -41,7 +41,7 @@ type Model
         { product : Product.Product
         }
     | Normal
-        { product : Product.Product
+        { product : Product.ProductDetail
         , sending : Bool -- いいねを送信中か送信中じゃないか
         , comment : String
         }

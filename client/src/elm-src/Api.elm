@@ -7,6 +7,7 @@ module Api exposing
     , deleteProduct
     , editProduct
     , getBoughtProductList
+    , getCommentedProductList
     , getFreeProductList
     , getHistoryViewProducts
     , getLikedProducts
@@ -17,6 +18,8 @@ module Api exposing
     , getRecommendProductList
     , getSoldProductList
     , getTradeComment
+    , getTradedProductList
+    , getTradingProductList
     , getUserProfile
     , likeProduct
     , logInOrSignUpUrlRequest
@@ -29,7 +32,7 @@ module Api exposing
     , tradeStart
     , unlikeProduct
     , updateProfile
-    , getTradingProductList, getCommentedProductList, getTradedProductList)
+    )
 
 import Data.EmailAddress as EmailAddress
 import Data.Product as Product
@@ -41,6 +44,7 @@ import Json.Decode
 import Json.Decode.Pipeline
 import Json.Encode
 import Task
+import Time
 import Url
 
 
@@ -402,6 +406,7 @@ getTradingProductList token msg =
     Cmd.none
 
 
+
 {- ============================================================
                自分が取引したの商品を取得する
    ============================================================
@@ -611,24 +616,7 @@ commentResponseToResult response =
 
 commentListDecoder : Json.Decode.Decoder (Result () (List Product.Comment))
 commentListDecoder =
-    Json.Decode.list commentDecoder
-        |> Json.Decode.map Ok
-
-
-commentDecoder : Json.Decode.Decoder Product.Comment
-commentDecoder =
-    Json.Decode.map4
-        (\text createdAt userName userId ->
-            { text = text
-            , createdAt = Product.CreatedTimeString createdAt
-            , userName = userName
-            , userId = User.idFromString userId
-            }
-        )
-        (Json.Decode.field "text" Json.Decode.string)
-        (Json.Decode.field "created_at" Json.Decode.string)
-        (Json.Decode.field "prof" (Json.Decode.field "nick" Json.Decode.string))
-        (Json.Decode.field "prof" (Json.Decode.field "user" Json.Decode.string))
+    Json.Decode.succeed (Ok [])
 
 
 
@@ -648,13 +636,13 @@ commentNormalDecoder userName userId =
     Json.Decode.map2
         (\text createdAt ->
             { text = text
-            , createdAt = Product.CreatedTimeString createdAt
+            , createdAt = Time.millisToPosix (floor createdAt)
             , userName = userName
             , userId = userId
             }
         )
         (Json.Decode.field "text" Json.Decode.string)
-        (Json.Decode.field "created_at" Json.Decode.string)
+        (Json.Decode.field "created_at" Json.Decode.float)
 
 
 
