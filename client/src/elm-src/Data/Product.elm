@@ -7,7 +7,7 @@ module Data.Product exposing
     , Status
     , addComment
     , conditionAll
-    , conditionFromString
+    , conditionFromIdString
     , conditionIndex
     , conditionToIdString
     , conditionToJapaneseString
@@ -27,7 +27,7 @@ module Data.Product exposing
     , idFromInt
     , idToString
     , like
-    , listMapIf
+    , updateById
     , makeDetailFromApi
     , makeNormalFromApi
     , priceToString
@@ -269,26 +269,26 @@ conditionToIdString : Condition -> String
 conditionToIdString condition =
     case condition of
         ConditionNew ->
-            "New"
+            "new"
 
         ConditionLikeNew ->
-            "Like New"
+            "likeNew"
 
         ConditionVeryGood ->
-            "Very Good"
+            "veryGood"
 
         ConditionGood ->
-            "Good"
+            "good"
 
         ConditionAcceptable ->
-            "Acceptable"
+            "acceptable"
 
         ConditionJunk ->
-            "Junk"
+            "junk"
 
 
-conditionFromString : String -> Maybe Condition
-conditionFromString idString =
+conditionFromIdString : String -> Maybe Condition
+conditionFromIdString idString =
     conditionFromStringLoop idString conditionAll
 
 
@@ -307,23 +307,19 @@ conditionFromStringLoop idString conditionList =
 
 
 type Status
-    = Draft
-    | Selling
+    = Selling
     | Trading
     | SoldOut
 
 
 statusAll : List Status
 statusAll =
-    [ Draft, Selling, Trading, SoldOut ]
+    [ Selling, Trading, SoldOut ]
 
 
 statusToIdString : Status -> String
 statusToIdString status =
     case status of
-        Draft ->
-            "draft"
-
         Selling ->
             "selling"
 
@@ -331,7 +327,7 @@ statusToIdString status =
             "trading"
 
         SoldOut ->
-            "soldout"
+            "soldOut"
 
 
 statusFromIdString : String -> Maybe Status
@@ -619,15 +615,15 @@ searchFromId id list =
             Nothing
 
 
-listMapIf : (Product -> Bool) -> (Product -> Product) -> List Product -> List Product
-listMapIf condition f list =
+updateById : Id -> (Product -> Product) -> List Product -> List Product
+updateById id f list =
     case list of
         x :: xs ->
-            if condition x then
-                f x :: listMapIf condition f xs
+            if getId x == id then
+                f x :: updateById id f xs
 
             else
-                x :: listMapIf condition f xs
+                x :: updateById id f xs
 
         [] ->
             []

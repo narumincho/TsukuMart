@@ -8,6 +8,7 @@ module Api exposing
     , editProduct
     , getBoughtProductList
     , getFreeProductList
+    , getHistoryViewProducts
     , getLikedProducts
     , getMyProfile
     , getProduct
@@ -343,39 +344,29 @@ updateProfile accessToken { displayName, introduction, image, university } callB
 
 
 {- ============================================================
-       自分がいいねした商品を取得する /{version}/currentuser/profile/
+                   自分がいいねした商品を取得する
    ============================================================
 -}
 
 
-getLikedProducts : Token -> (Result () (List Product.Product) -> msg) -> Cmd msg
+getLikedProducts : Token -> (Result String (List Product.Product) -> msg) -> Cmd msg
 getLikedProducts token msg =
     Cmd.none
 
 
 
-{- =================================================================================
-       自分が閲覧した商品を取得    TODO APIが対応していない とりあえず常に Ok []
-   =================================================================================
+{- ============================================================
+                    自分が閲覧した商品を取得
+   ============================================================
 -}
 
 
-getHistoryViewProducts : Token -> (Result () (List Product.Product) -> msg) -> Cmd msg
+getHistoryViewProducts : Token -> (Result String (List Product.Product) -> msg) -> Cmd msg
 getHistoryViewProducts token msg =
-    Task.succeed ()
-        |> Task.perform (always (msg (Ok [])))
+    Cmd.none
 
 
 
---    Http.request
---        { method = "GET"
---        , url = urlBuilder [ "v1", "currentuser", "history" ]
---        , headers = [ tokenToHeader token ]
---        , body = Http.emptyBody
---        , expect = Http.expectStringResponse msg getGoodListResponseToResult
---        , timeout = Nothing
---        , tracker = Nothing
---        }
 {- ============================================================
                自分が出品した商品を取得する
    ============================================================
@@ -394,10 +385,9 @@ getSoldProductList token msg =
 -}
 
 
-getBoughtProductList : Token -> (Result () (List Product.Product) -> msg) -> Cmd msg
+getBoughtProductList : Token -> (Result String (List Product.Product) -> msg) -> Cmd msg
 getBoughtProductList token msg =
-    Task.succeed ()
-        |> Task.perform (always (msg (Ok [])))
+    Cmd.none
 
 
 
@@ -461,39 +451,6 @@ getRecommendProductList msg =
     Cmd.none
 
 
-productNormalResponseDecoder : Json.Decode.Decoder Product.Product
-productNormalResponseDecoder =
-    Json.Decode.succeed
-        (\id name description price condition status image0Url image1Url image2Url image3Url likeCount seller ->
-            Product.makeNormalFromApi
-                { id = id
-                , name = name
-                , description = description
-                , price = price
-                , condition = condition
-                , status = status
-                , image0Url = image0Url
-                , image1Url = image1Url
-                , image2Url = image2Url
-                , image3Url = image3Url
-                , likeCount = likeCount
-                , seller = seller
-                }
-        )
-        |> Json.Decode.Pipeline.required "id" Json.Decode.int
-        |> Json.Decode.Pipeline.required "name" Json.Decode.string
-        |> Json.Decode.Pipeline.required "description" Json.Decode.string
-        |> Json.Decode.Pipeline.required "price" Json.Decode.int
-        |> Json.Decode.Pipeline.required "condition" conditionDecoder
-        |> Json.Decode.Pipeline.required "status" statusDecoder
-        |> Json.Decode.Pipeline.required "image1" Json.Decode.string
-        |> Json.Decode.Pipeline.required "image2" (Json.Decode.nullable Json.Decode.string)
-        |> Json.Decode.Pipeline.required "image3" (Json.Decode.nullable Json.Decode.string)
-        |> Json.Decode.Pipeline.required "image4" (Json.Decode.nullable Json.Decode.string)
-        |> Json.Decode.Pipeline.required "likeCount" Json.Decode.int
-        |> Json.Decode.Pipeline.required "seller" Json.Decode.string
-
-
 
 {- =================================================================================
        0円の商品を取得
@@ -518,47 +475,12 @@ getProduct id msg =
     Cmd.none
 
 
-productDetailResponseDecoder : Json.Decode.Decoder Product.Product
-productDetailResponseDecoder =
-    Json.Decode.succeed
-        (\id name description price condition status image0Url image1Url image2Url image3Url likeCount seller sellerName ->
-            Product.makeDetailFromApi
-                { id = id
-                , name = name
-                , description = description
-                , price = price
-                , condition = condition
-                , status = status
-                , image0Url = image0Url
-                , image1Url = image1Url
-                , image2Url = image2Url
-                , image3Url = image3Url
-                , likeCount = likeCount
-                , seller = seller
-                , sellerName = sellerName
-                }
-        )
-        |> Json.Decode.Pipeline.required "id" Json.Decode.int
-        |> Json.Decode.Pipeline.required "name" Json.Decode.string
-        |> Json.Decode.Pipeline.required "description" Json.Decode.string
-        |> Json.Decode.Pipeline.required "price" Json.Decode.int
-        |> Json.Decode.Pipeline.required "condition" conditionDecoder
-        |> Json.Decode.Pipeline.required "status" statusDecoder
-        |> Json.Decode.Pipeline.required "image1" Json.Decode.string
-        |> Json.Decode.Pipeline.required "image2" (Json.Decode.nullable Json.Decode.string)
-        |> Json.Decode.Pipeline.required "image3" (Json.Decode.nullable Json.Decode.string)
-        |> Json.Decode.Pipeline.required "image4" (Json.Decode.nullable Json.Decode.string)
-        |> Json.Decode.Pipeline.required "likeCount" Json.Decode.int
-        |> Json.Decode.Pipeline.required "seller" (Json.Decode.field "user" Json.Decode.string)
-        |> Json.Decode.Pipeline.required "seller" (Json.Decode.field "nick" Json.Decode.string)
-
-
 conditionDecoder : Json.Decode.Decoder Product.Condition
 conditionDecoder =
     Json.Decode.string
         |> Json.Decode.andThen
             (\idString ->
-                case Product.conditionFromString idString of
+                case Product.conditionFromIdString idString of
                     Just condition ->
                         Json.Decode.succeed condition
 

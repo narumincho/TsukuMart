@@ -17,8 +17,9 @@ import Page.Component.ProductEditor
 import Page.Component.ProductList
 import Page.Component.University
 import Page.Exhibition
+import Page.History
 import Page.Home
-import Page.LikeAndHistory
+import Page.LikedProducts
 import Page.LogIn
 import Page.Notification
 import Page.Product
@@ -82,7 +83,8 @@ type PageModel
     = PageHome Page.Home.Model
     | PageSignUp Page.SignUp.Model
     | PageLogIn Page.LogIn.Model
-    | PageLikeAndHistory Page.LikeAndHistory.Model
+    | PageLikedProducts Page.LikedProducts.Model
+    | PageHistory Page.History.Model
     | PageSoldProducts Page.SoldProducts.Model
     | PageBoughtProducts Page.BoughtProducts.Model
     | PageExhibition Page.Exhibition.Model
@@ -118,7 +120,8 @@ type Msg
 
 type PageMsg
     = HomePageMsg Page.Home.Msg
-    | LikeAndHistoryPageMsg Page.LikeAndHistory.Msg
+    | LikedProductsPageMsg Page.LikedProducts.Msg
+    | HistoryPageMsg Page.History.Msg
     | BoughtProductsPageMsg Page.BoughtProducts.Msg
     | SoldProductsPageMsg Page.SoldProducts.Msg
     | LogInPageMsg Page.LogIn.Msg
@@ -215,53 +218,43 @@ urlParserInitResultToPageAndCmd logInState page =
             , Cmd.none
             )
 
-        SiteMap.InitLikeAndHistory ->
-            Page.LikeAndHistory.initModel Nothing logInState
+        SiteMap.InitLikedProducts ->
+            Page.LikedProducts.initModel Nothing logInState
+                |> Tuple.mapBoth PageLikedProducts likedProductsEmitListToCmd
+
+        SiteMap.InitHistory ->
+            Page.History.initModel Nothing logInState
                 |> Tuple.mapBoth
-                    PageLikeAndHistory
-                    likeAndHistoryEmitListToCmd
+                    PageHistory
+                    historyEmitListToCmd
 
         SiteMap.IntiSoldProducts ->
             Page.SoldProducts.initModel Nothing logInState
-                |> Tuple.mapBoth
-                    PageSoldProducts
-                    soldProductsPageEmitListToCmd
+                |> Tuple.mapBoth PageSoldProducts soldProductsPageEmitListToCmd
 
         SiteMap.InitBoughtProducts ->
             Page.BoughtProducts.initModel Nothing logInState
-                |> Tuple.mapBoth
-                    PageBoughtProducts
-                    boughtProductsPageEmitListToCmd
+                |> Tuple.mapBoth PageBoughtProducts boughtProductsPageEmitListToCmd
 
         SiteMap.InitExhibition ->
             Page.Exhibition.initModel
-                |> Tuple.mapBoth
-                    PageExhibition
-                    exhibitionPageEmitListToCmd
+                |> Tuple.mapBoth PageExhibition exhibitionPageEmitListToCmd
 
         SiteMap.InitProduct productId ->
             Page.Product.initModel productId
-                |> Tuple.mapBoth
-                    PageProduct
-                    productPageEmitListToCmd
+                |> Tuple.mapBoth PageProduct productPageEmitListToCmd
 
         SiteMap.InitUser userId ->
             Page.User.initModelFromId logInState userId
-                |> Tuple.mapBoth
-                    PageUser
-                    userPageEmitListToCmd
+                |> Tuple.mapBoth PageUser userPageEmitListToCmd
 
         SiteMap.InitSearch condition ->
             Page.Search.initModel condition
-                |> Tuple.mapBoth
-                    PageSearch
-                    searchPageEmitListToCmd
+                |> Tuple.mapBoth PageSearch searchPageEmitListToCmd
 
         SiteMap.InitNotification ->
             Page.Notification.initModel
-                |> Tuple.mapBoth
-                    PageNotification
-                    notificationEmitListToCmd
+                |> Tuple.mapBoth PageNotification notificationEmitListToCmd
 
         SiteMap.InitSiteMap ->
             ( PageSiteMapXml, Cmd.none )
@@ -566,10 +559,10 @@ updatePageMsg pageMsg (Model rec) =
                 |> Page.Home.update msg
                 |> mapPageModel PageHome homePageEmitListToCmd
 
-        ( LikeAndHistoryPageMsg msg, PageLikeAndHistory model ) ->
+        ( HistoryPageMsg msg, PageHistory model ) ->
             model
-                |> Page.LikeAndHistory.update rec.logInState msg
-                |> mapPageModel PageLikeAndHistory likeAndHistoryEmitListToCmd
+                |> Page.History.update msg
+                |> mapPageModel PageHistory historyEmitListToCmd
 
         ( BoughtProductsPageMsg msg, PageBoughtProducts model ) ->
             model
@@ -658,22 +651,44 @@ homePageEmitListToCmd =
         >> Cmd.batch
 
 
-likeAndHistoryEmitListToCmd : List Page.LikeAndHistory.Emit -> Cmd Msg
-likeAndHistoryEmitListToCmd =
+likedProductsEmitListToCmd : List Page.LikedProducts.Emit -> Cmd Msg
+likedProductsEmitListToCmd =
     List.map
         (\emit ->
             case emit of
-                Page.LikeAndHistory.EmitGetLikedProduts token ->
-                    Api.getLikedProducts token (\result -> PageMsg (LikeAndHistoryPageMsg (Page.LikeAndHistory.LikedProdutsResponse result)))
+                Page.LikedProducts.EmitGetLikedProducts token ->
+                    Api.getLikedProducts token (\result -> PageMsg (LikedProductsPageMsg (Page.LikedProducts.GetProductsResponse result)))
 
-                Page.LikeAndHistory.EmitGetHistoryProduts token ->
-                    Cmd.none
+                Page.LikedProducts.EmitByLogIn e ->
+                    logInEmitToCmd e
 
-                Page.LikeAndHistory.EmitLogInOrSignUp e ->
-                    logInOrSignUpEmitToCmd e
-
-                Page.LikeAndHistory.EmitByProductList e ->
+                Page.LikedProducts.EmitByProductList e ->
                     productListEmitToCmd e
+
+                Page.LikedProducts.EmitAddLogMessage log ->
+                    Task.succeed ()
+                        |> Task.perform (always (AddLogMessage log))
+        )
+        >> Cmd.batch
+
+
+historyEmitListToCmd : List Page.History.Emit -> Cmd Msg
+historyEmitListToCmd =
+    List.map
+        (\emit ->
+            case emit of
+                Page.History.EmitGetHistoryProducts token ->
+                    Api.getHistoryViewProducts token (\result -> PageMsg (HistoryPageMsg (Page.History.GetProductsResponse result)))
+
+                Page.History.EmitByLogIn e ->
+                    logInEmitToCmd e
+
+                Page.History.EmitByProductList e ->
+                    productListEmitToCmd e
+
+                Page.History.EmitAddLogMessage log ->
+                    Task.succeed ()
+                        |> Task.perform (always (AddLogMessage log))
         )
         >> Cmd.batch
 
@@ -690,7 +705,7 @@ soldProductsPageEmitListToCmd =
                         )
 
                 Page.SoldProducts.EmitLogInOrSignUp e ->
-                    logInOrSignUpEmitToCmd e
+                    logInEmitToCmd e
 
                 Page.SoldProducts.EmitByProductList e ->
                     productListEmitToCmd e
@@ -704,13 +719,21 @@ boughtProductsPageEmitListToCmd =
         (\emit ->
             case emit of
                 Page.BoughtProducts.EmitGetPurchaseProducts token ->
-                    Api.getBoughtProductList token (\result -> PageMsg (BoughtProductsPageMsg (Page.BoughtProducts.GetPurchaseProductsResponse result)))
+                    Api.getBoughtProductList token
+                        (\result ->
+                            PageMsg
+                                (BoughtProductsPageMsg (Page.BoughtProducts.GetProductsResponse result))
+                        )
 
-                Page.BoughtProducts.EmitLogInOrSignUp e ->
-                    logInOrSignUpEmitToCmd e
+                Page.BoughtProducts.EmitByLogIn e ->
+                    logInEmitToCmd e
 
                 Page.BoughtProducts.EmitByProductList e ->
                     productListEmitToCmd e
+
+                Page.BoughtProducts.EmitAddLogMessage log ->
+                    Task.succeed ()
+                        |> Task.perform (always (AddLogMessage log))
         )
         >> Cmd.batch
 
@@ -721,7 +744,7 @@ logInPageEmitListToCmd key =
         (\emit ->
             case emit of
                 Page.LogIn.LogInOrSignUpEmit e ->
-                    logInOrSignUpEmitToCmd e
+                    logInEmitToCmd e
 
                 Page.LogIn.EmitPageToHome ->
                     Browser.Navigation.pushUrl key SiteMap.homeUrl
@@ -735,7 +758,7 @@ exhibitionPageEmitListToCmd =
         (\emit ->
             case emit of
                 Page.Exhibition.EmitLogInOrSignUp e ->
-                    logInOrSignUpEmitToCmd e
+                    logInEmitToCmd e
 
                 Page.Exhibition.EmitSellProducts ( token, request ) ->
                     Api.sellProduct token request SellProductResponse
@@ -882,8 +905,8 @@ productPageEmitListToCmd =
 {- ===================== Page Component Emit To Msg ======================== -}
 
 
-logInOrSignUpEmitToCmd : Page.Component.LogIn.Emit -> Cmd Msg
-logInOrSignUpEmitToCmd emit =
+logInEmitToCmd : Page.Component.LogIn.Emit -> Cmd Msg
+logInEmitToCmd emit =
     case emit of
         Page.Component.LogIn.EmitLogInOrSignUp service ->
             Api.logInOrSignUpUrlRequest service LogInOrSignUpUrlResponse
@@ -960,23 +983,21 @@ urlParserResultToPageAndCmd (Model rec) result =
             , Cmd.none
             )
 
-        SiteMap.LikeAndHistory ->
-            Page.LikeAndHistory.initModel (getProductId rec.page) rec.logInState
-                |> Tuple.mapBoth
-                    PageLikeAndHistory
-                    likeAndHistoryEmitListToCmd
+        SiteMap.LikedProducts ->
+            Page.LikedProducts.initModel (getProductId rec.page) rec.logInState
+                |> Tuple.mapBoth PageLikedProducts likedProductsEmitListToCmd
+
+        SiteMap.History ->
+            Page.History.initModel (getProductId rec.page) rec.logInState
+                |> Tuple.mapBoth PageHistory historyEmitListToCmd
 
         SiteMap.SoldProducts ->
             Page.SoldProducts.initModel (getProductId rec.page) rec.logInState
-                |> Tuple.mapBoth
-                    PageSoldProducts
-                    soldProductsPageEmitListToCmd
+                |> Tuple.mapBoth PageSoldProducts soldProductsPageEmitListToCmd
 
         SiteMap.BoughtProducts ->
             Page.BoughtProducts.initModel (getProductId rec.page) rec.logInState
-                |> Tuple.mapBoth
-                    PageBoughtProducts
-                    boughtProductsPageEmitListToCmd
+                |> Tuple.mapBoth PageBoughtProducts boughtProductsPageEmitListToCmd
 
         SiteMap.Exhibition ->
             case rec.page of
@@ -1081,15 +1102,14 @@ likeProduct productId result logInState page =
             , homePageEmitListToCmd emitList
             )
 
-        PageLikeAndHistory pageMsg ->
+        PageHistory pageMsg ->
             let
                 ( newModel, emitList ) =
                     pageMsg
-                        |> Page.LikeAndHistory.update logInState
-                            (Page.LikeAndHistory.MsgByProductList productListMsg)
+                        |> Page.History.update (Page.History.MsgByProductList productListMsg)
             in
-            ( PageLikeAndHistory newModel
-            , likeAndHistoryEmitListToCmd emitList
+            ( PageHistory newModel
+            , historyEmitListToCmd emitList
             )
 
         PageSoldProducts pageMsg ->
@@ -1145,15 +1165,14 @@ unlikeProduct productId result logInState page =
             , homePageEmitListToCmd emitList
             )
 
-        PageLikeAndHistory pageMsg ->
+        PageHistory pageMsg ->
             let
                 ( newModel, emitList ) =
                     pageMsg
-                        |> Page.LikeAndHistory.update logInState
-                            (Page.LikeAndHistory.MsgByProductList productListMsg)
+                        |> Page.History.update (Page.History.MsgByProductList productListMsg)
             in
-            ( PageLikeAndHistory newModel
-            , likeAndHistoryEmitListToCmd emitList
+            ( PageHistory newModel
+            , historyEmitListToCmd emitList
             )
 
         PageSoldProducts pageMsg ->
@@ -1276,10 +1295,15 @@ titleAndTabDataAndMainView logInState isWideScreenMode nowMaybe page =
                 |> Page.Exhibition.view logInState
                 |> mapPageData ExhibitionPageMsg
 
-        PageLikeAndHistory pageModel ->
+        PageLikedProducts model ->
+            model
+                |> Page.LikedProducts.view logInState isWideScreenMode
+                |> mapPageData LikedProductsPageMsg
+
+        PageHistory pageModel ->
             pageModel
-                |> Page.LikeAndHistory.view logInState isWideScreenMode
-                |> mapPageData LikeAndHistoryPageMsg
+                |> Page.History.view logInState isWideScreenMode
+                |> mapPageData HistoryPageMsg
 
         PageBoughtProducts pageModel ->
             pageModel

@@ -6,8 +6,9 @@ module SiteMap exposing
     , boughtProductsUrl
     , exhibitionConfirmUrl
     , exhibitionUrl
+    , historyUrl
     , homeUrl
-    , likeHistoryUrl
+    , likedProductsUrl
     , logInUrl
     , notificationUrl
     , productUrl
@@ -33,7 +34,8 @@ type UrlParserInitResult
     = InitHome
     | InitSignUp { sendEmailToken : String, name : String, imageId : String }
     | InitLogIn
-    | InitLikeAndHistory
+    | InitLikedProducts
+    | InitHistory
     | IntiSoldProducts
     | InitBoughtProducts
     | InitExhibition
@@ -70,7 +72,8 @@ urlParserInit url =
     , [ homeParser |> parserMap (always InitHome)
       , signUpParser fragmentDict |> parserMap InitSignUp
       , logInParser |> parserMap (always InitLogIn)
-      , likeHistoryParser |> parserMap (always InitLikeAndHistory)
+      , likedProductsParser |> parserMap (always InitLikedProducts)
+      , historyParser |> parserMap (always InitHistory)
       , soldProductsParser |> parserMap (always InitExhibition)
       , boughtProductsParser |> parserMap (always InitBoughtProducts)
       , exhibitionParser |> parserMap (always InitExhibition)
@@ -108,7 +111,8 @@ oneOf list =
 type UrlParserResult
     = Home
     | LogIn
-    | LikeAndHistory
+    | LikedProducts
+    | History
     | SoldProducts
     | BoughtProducts
     | Exhibition
@@ -136,7 +140,8 @@ urlParser url =
     in
     [ homeParser |> parserMap (always Home)
     , logInParser |> parserMap (always LogIn)
-    , likeHistoryParser |> parserMap (always LikeAndHistory)
+    , likedProductsParser |> parserMap (always LikedProducts)
+    , historyParser |> parserMap (always History)
     , soldProductsParser |> parserMap (always SoldProducts)
     , boughtProductsParser |> parserMap (always BoughtProducts)
     , exhibitionParser |> parserMap (always Exhibition)
@@ -212,26 +217,51 @@ logInPath =
 
 
 
-{- like-history -}
+{- like -}
 
 
-likeHistoryParser : List String -> Maybe ()
-likeHistoryParser path =
-    if path == [ likeHistoryPath ] then
+likedProductsParser : List String -> Maybe ()
+likedProductsParser path =
+    if path == [ likedProductsPath ] then
         Just ()
 
     else
         Nothing
 
 
-likeHistoryUrl : String
-likeHistoryUrl =
-    Url.Builder.absolute [ likeHistoryPath ] []
+likedProductsUrl : String
+likedProductsUrl =
+    Url.Builder.absolute
+        [ likedProductsPath ]
+        []
 
 
-likeHistoryPath : String
-likeHistoryPath =
-    "like-history"
+likedProductsPath : String
+likedProductsPath =
+    "like"
+
+
+
+{- history -}
+
+
+historyParser : List String -> Maybe ()
+historyParser path =
+    if path == [ historyPath ] then
+        Just ()
+
+    else
+        Nothing
+
+
+historyUrl : String
+historyUrl =
+    Url.Builder.absolute [ historyPath ] []
+
+
+historyPath : String
+historyPath =
+    "history"
 
 
 

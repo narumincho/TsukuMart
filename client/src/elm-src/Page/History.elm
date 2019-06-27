@@ -1,4 +1,4 @@
-module Page.LikedProducts exposing
+module Page.History exposing
     ( Emit(..)
     , Model
     , Msg(..)
@@ -38,7 +38,7 @@ type Msg
 
 
 type Emit
-    = EmitGetLikedProducts Api.Token
+    = EmitGetHistoryProducts Api.Token
     | EmitByLogIn LogIn.Emit
     | EmitByProductList ProductList.Emit
     | EmitAddLogMessage String
@@ -57,7 +57,7 @@ initModel goodIdMaybe logInState =
         }
     , (case LogInState.getAccessToken logInState of
         Just accessToken ->
-            [ EmitGetLikedProducts accessToken
+            [ EmitGetHistoryProducts accessToken
             ]
 
         Nothing ->
@@ -81,7 +81,7 @@ update msg (Model rec) =
                 Err errorMessage ->
                     ( Model
                         { rec | normal = Error }
-                    , [ EmitAddLogMessage ("いいねした商品の取得に失敗 " ++ errorMessage) ]
+                    , [ EmitAddLogMessage ("閲覧履歴の取得に失敗 " ++ errorMessage) ]
                     )
 
         MsgByLogIn logInOrSignUpMsg ->
@@ -158,8 +158,8 @@ view :
     -> Model
     -> { title : Maybe String, tab : BasicParts.Tab Msg, html : List (Html.Html Msg) }
 view logInState isWideScreenMode (Model rec) =
-    { title = Just "いいねした商品"
-    , tab = BasicParts.tabSingle "いいねした商品"
+    { title = Just "いいね・閲覧した商品"
+    , tab = BasicParts.tabSingle "閲覧履歴"
     , html =
         case logInState of
             LogInState.None ->

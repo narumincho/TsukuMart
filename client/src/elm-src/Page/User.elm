@@ -402,8 +402,8 @@ userDataLink =
         , Html.Attributes.style "gap" "8px"
         , Html.Attributes.style "padding" "0 0 48px 0"
         ]
-        [ userDataLinkItem SiteMap.likeHistoryUrl "いいねした商品"
-        , userDataLinkItem SiteMap.likeHistoryUrl "閲覧した商品"
+        [ userDataLinkItem SiteMap.likedProductsUrl "いいねした商品"
+        , userDataLinkItem SiteMap.historyUrl "閲覧した商品"
         , userDataLinkItem SiteMap.soldProductsUrl "出品した商品"
         , userDataLinkItem SiteMap.boughtProductsUrl "購入した商品"
         , userDataLinkItem "" "取引中の商品"

@@ -456,7 +456,7 @@ const productStatusValues = {
     trading: {
         description: "取引中"
     },
-    soldout: {
+    soldOut: {
         description: "売り切れ"
     }
 };

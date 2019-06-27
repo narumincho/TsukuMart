@@ -52,7 +52,7 @@ requestAnimationFrame(() => {
         }
     });
     const windowResizeListener = () => {
-        if (1000 < innerWidth) {
+        if (1000 < window.innerWidth) {
             app.ports.toWideScreenMode.send(null);
         }
         else {

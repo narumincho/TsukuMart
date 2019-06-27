@@ -1,13 +1,13 @@
 module Page.SoldProducts exposing (Emit(..), Model, Msg(..), initModel, update, view)
 
 import Api
+import BasicParts
 import Data.LogInState as LogInState
 import Data.Product
 import Html
 import Html.Attributes
 import Page.Component.LogIn as LogInOrSignUp
 import Page.Component.ProductList as ProductList
-import BasicParts
 
 
 type Model
@@ -90,10 +90,6 @@ update msg (Model rec) =
             in
             ( case productListMsg of
                 ProductList.LikeResponse id (Ok ()) ->
-                    let
-                        likeFunc =
-                            Data.Product.listMapIf (\g -> Data.Product.getId g == id) Data.Product.like
-                    in
                     Model
                         { rec
                             | normalModel =
@@ -103,7 +99,12 @@ update msg (Model rec) =
 
                                     Normal { soldProductList } ->
                                         Normal
-                                            { soldProductList = likeFunc soldProductList }
+                                            { soldProductList =
+                                                Data.Product.updateById
+                                                    id
+                                                    Data.Product.like
+                                                    soldProductList
+                                            }
 
                                     Error ->
                                         Error
@@ -111,10 +112,6 @@ update msg (Model rec) =
                         }
 
                 ProductList.UnlikeResponse id (Ok ()) ->
-                    let
-                        unlikeFunc =
-                            Data.Product.listMapIf (\g -> Data.Product.getId g == id) Data.Product.unlike
-                    in
                     Model
                         { rec
                             | normalModel =
@@ -124,7 +121,12 @@ update msg (Model rec) =
 
                                     Normal { soldProductList } ->
                                         Normal
-                                            { soldProductList = unlikeFunc soldProductList }
+                                            { soldProductList =
+                                                Data.Product.updateById
+                                                    id
+                                                    Data.Product.unlike
+                                                    soldProductList
+                                            }
 
                                     Error ->
                                         Error

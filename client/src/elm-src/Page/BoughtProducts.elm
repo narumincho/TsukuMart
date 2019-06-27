@@ -1,51 +1,59 @@
-module Page.BoughtProducts exposing (Emit(..), Model, Msg(..), initModel, update, view)
+module Page.BoughtProducts exposing
+    ( Emit(..)
+    , Model
+    , Msg(..)
+    , initModel
+    , update
+    , view
+    )
 
 import Api
+import BasicParts
 import Data.LogInState as LogInState
-import Data.Product
+import Data.Product as Product
 import Html
 import Html.Attributes
 import Page.Component.LogIn as LogIn
 import Page.Component.ProductList as ProductList
-import BasicParts
 
 
 type Model
     = Model
-        { normalModel : NormalModel
-        , logInModel : LogIn.Model
-        , productListModel : ProductList.Model
+        { normal : NormalModel
+        , logIn : LogIn.Model
+        , productList : ProductList.Model
         }
 
 
 type NormalModel
     = Loading
-    | Normal (List Data.Product.Product)
+    | Normal (List Product.Product)
     | Error
+
+
+type Msg
+    = GetProductsResponse (Result String (List Product.Product))
+    | MsgByLogIn LogIn.Msg
+    | MsgByProductList ProductList.Msg
 
 
 type Emit
     = EmitGetPurchaseProducts Api.Token
-    | EmitLogInOrSignUp LogIn.Emit
+    | EmitByLogIn LogIn.Emit
     | EmitByProductList ProductList.Emit
+    | EmitAddLogMessage String
 
 
-type Msg
-    = GetPurchaseProductsResponse (Result () (List Data.Product.Product))
-    | LogInOrSignUpMsg LogIn.Msg
-    | MsgByProductList ProductList.Msg
-
-
-initModel : Maybe Data.Product.Id -> LogInState.LogInState -> ( Model, List Emit )
+initModel : Maybe Product.Id -> LogInState.LogInState -> ( Model, List Emit )
 initModel productIdMaybe logInState =
     let
-        ( productListModel, emitList ) =
+        ( productListModel, productListEmitList ) =
             ProductList.initModel productIdMaybe
     in
     ( Model
-        { logInModel = LogIn.initModel
-        , normalModel = Loading
-        , productListModel = productListModel
+        { normal = Loading
+        , logIn = LogIn.initModel
+        , productList = productListModel
         }
     , (case LogInState.getAccessToken logInState of
         Just accessToken ->
@@ -54,62 +62,62 @@ initModel productIdMaybe logInState =
         Nothing ->
             []
       )
-        ++ (emitList |> List.map EmitByProductList)
+        ++ (productListEmitList |> List.map EmitByProductList)
     )
 
 
 update : Msg -> Model -> ( Model, List Emit )
 update msg (Model rec) =
     case msg of
-        GetPurchaseProductsResponse result ->
+        GetProductsResponse result ->
             case result of
                 Ok products ->
                     ( Model
-                        { rec | normalModel = Normal products }
+                        { rec | normal = Normal products }
                     , []
                     )
 
-                Err () ->
-                    ( Model { rec | normalModel = Error }
-                    , []
+                Err errorMessage ->
+                    ( Model { rec | normal = Error }
+                    , [ EmitAddLogMessage ("商品の取得に失敗 " ++ errorMessage) ]
                     )
 
-        LogInOrSignUpMsg logInOrSignUpMsg ->
+        MsgByLogIn logInOrSignUpMsg ->
             let
                 ( newModel, emitList ) =
-                    LogIn.update logInOrSignUpMsg rec.logInModel
+                    LogIn.update logInOrSignUpMsg rec.logIn
             in
-            ( Model { rec | logInModel = newModel }
-            , emitList |> List.map EmitLogInOrSignUp
+            ( Model { rec | logIn = newModel }
+            , emitList |> List.map EmitByLogIn
             )
 
         MsgByProductList productListMsg ->
             let
                 ( newModel, emitList ) =
-                    rec.productListModel |> ProductList.update productListMsg
+                    rec.productList |> ProductList.update productListMsg
             in
             ( case productListMsg of
                 ProductList.LikeResponse id (Ok ()) ->
                     Model
                         { rec
-                            | normalModel = likeProduct id rec.normalModel
-                            , productListModel = newModel
+                            | normal = likeProduct id rec.normal
+                            , productList = newModel
                         }
 
                 ProductList.UnlikeResponse id (Ok ()) ->
                     Model
                         { rec
-                            | normalModel = unlikeProduct id rec.normalModel
-                            , productListModel = newModel
+                            | normal = unlikeProduct id rec.normal
+                            , productList = newModel
                         }
 
                 _ ->
-                    Model { rec | productListModel = newModel }
+                    Model { rec | productList = newModel }
             , emitList |> List.map EmitByProductList
             )
 
 
-likeProduct : Data.Product.Id -> NormalModel -> NormalModel
+likeProduct : Product.Id -> NormalModel -> NormalModel
 likeProduct id normalModel =
     case normalModel of
         Loading ->
@@ -118,14 +126,14 @@ likeProduct id normalModel =
         Normal products ->
             Normal
                 (products
-                    |> Data.Product.listMapIf (\g -> Data.Product.getId g == id) Data.Product.like
+                    |> Product.updateById id Product.like
                 )
 
         Error ->
             Error
 
 
-unlikeProduct : Data.Product.Id -> NormalModel -> NormalModel
+unlikeProduct : Product.Id -> NormalModel -> NormalModel
 unlikeProduct id normalModel =
     case normalModel of
         Loading ->
@@ -134,7 +142,7 @@ unlikeProduct id normalModel =
         Normal products ->
             Normal
                 (products
-                    |> Data.Product.listMapIf (\g -> Data.Product.getId g == id) Data.Product.unlike
+                    |> Product.updateById id Product.unlike
                 )
 
         Error ->
@@ -158,17 +166,17 @@ view logInState isWideScreenMode (Model rec) =
                         []
                         [ Html.text "ログインか新規登録をして、購入した商品一覧機能を使えるようにしよう!" ]
                     , LogIn.view
-                        rec.logInModel
-                        |> Html.map LogInOrSignUpMsg
+                        rec.logIn
+                        |> Html.map MsgByLogIn
                     ]
                 ]
 
             _ ->
                 [ ProductList.view
-                    rec.productListModel
+                    rec.productList
                     logInState
                     isWideScreenMode
-                    (case rec.normalModel of
+                    (case rec.normal of
                         Loading ->
                             Nothing
 

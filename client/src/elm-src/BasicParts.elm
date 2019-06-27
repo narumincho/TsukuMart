@@ -371,8 +371,8 @@ menuLogInStateLoadingProfile =
     , Html.a
         [ Html.Attributes.class "menu-item" ]
         [ Html.text "プロフィール情報を読み込み中" ]
-    , subMenuItem SiteMap.likeHistoryUrl "いいねした商品"
-    , subMenuItem SiteMap.likeHistoryUrl "閲覧した商品"
+    , subMenuItem SiteMap.likedProductsUrl "いいねした商品"
+    , subMenuItem SiteMap.historyUrl "閲覧した商品"
     , subMenuItem SiteMap.soldProductsUrl "出品した商品"
     , subMenuItem SiteMap.boughtProductsUrl "購入した商品"
     , subMenuItem "" "取引中の商品"
@@ -423,8 +423,8 @@ menuLogInStateOk userWithProfile =
             []
             [ Html.text (Data.User.withProfileGetDisplayName userWithProfile) ]
         ]
-    , subMenuItem SiteMap.likeHistoryUrl "いいねした商品"
-    , subMenuItem SiteMap.likeHistoryUrl "閲覧した商品"
+    , subMenuItem SiteMap.likedProductsUrl "いいねした商品"
+    , subMenuItem SiteMap.historyUrl "閲覧した商品"
     , subMenuItem SiteMap.soldProductsUrl "出品した商品"
     , subMenuItem SiteMap.boughtProductsUrl "購入した商品"
     , subMenuItem "" "取引中の商品"
@@ -640,7 +640,7 @@ bottomNavigation logInState =
                     )
                     (Just Icon.search)
                     "検索"
-                , bottomNavigationItem Nothing (Just Icon.notifications) "通知"
+                , bottomNavigationItem (Just SiteMap.notificationUrl) (Just Icon.notifications) "通知"
                 , bottomNavigationItem (Just SiteMap.logInUrl) Nothing "ユーザー"
                 ]
 
@@ -661,7 +661,7 @@ bottomNavigation logInState =
                     )
                     (Just Icon.search)
                     "検索"
-                , bottomNavigationItem Nothing (Just Icon.notifications) "通知"
+                , bottomNavigationItem (Just SiteMap.notificationUrl) (Just Icon.notifications) "通知"
                 , bottomNavigationItem
                     (Just (SiteMap.userUrl (Data.User.withProfileGetId userWithProfile)))
                     (Just

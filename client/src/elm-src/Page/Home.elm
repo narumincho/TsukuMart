@@ -131,7 +131,7 @@ update msg (Model rec) =
                 ProductList.LikeResponse id (Ok ()) ->
                     let
                         likeFunc =
-                            Maybe.map (Product.listMapIf (\g -> Product.getId g == id) Product.like)
+                            Maybe.map (Product.updateById id Product.like)
                     in
                     Model
                         { rec
@@ -144,7 +144,7 @@ update msg (Model rec) =
                 ProductList.UnlikeResponse id (Ok ()) ->
                     let
                         unlikeFunc =
-                            Maybe.map (Product.listMapIf (\g -> Product.getId g == id) Product.unlike)
+                            Maybe.map (Product.updateById id Product.unlike)
                     in
                     Model
                         { rec
