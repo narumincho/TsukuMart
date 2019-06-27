@@ -4,6 +4,7 @@ module SiteMap exposing
     , aboutPrivacyPolicyUrl
     , aboutUrl
     , boughtProductsUrl
+    , commentedProductsUrl
     , exhibitionConfirmUrl
     , exhibitionUrl
     , historyUrl
@@ -15,10 +16,12 @@ module SiteMap exposing
     , searchUrl
     , siteMapXml
     , soldProductsUrl
+    , tradedProductsUrl
+    , tradingProductsUrl
     , urlParser
     , urlParserInit
     , userUrl
-    , tradingProductsUrl, commentedProductsUrl, tradedProductsUrl)
+    )
 
 import Api
 import Data.Product
@@ -349,29 +352,37 @@ tradingProductsPath : List String
 tradingProductsPath =
     [ "treading-products" ]
 
+
+
 {- Traded Products -}
+
 
 tradedProductsParser : List String -> Maybe ()
 tradedProductsParser path =
     if path == tradedProductsPath then
         Just ()
+
     else
         Nothing
+
 
 tradedProductsUrl : String
 tradedProductsUrl =
     Url.Builder.absolute tradedProductsPath []
 
+
 tradedProductsPath : List String
 tradedProductsPath =
     [ "traded-products" ]
+
+
 
 {- Commented Products -}
 
 
 commentedProductsParser : List String -> Maybe ()
 commentedProductsParser path =
-    if path == tradingProductsPath then
+    if path == commentedProductsPath then
         Just ()
 
     else
@@ -380,7 +391,7 @@ commentedProductsParser path =
 
 commentedProductsUrl : String
 commentedProductsUrl =
-    Url.Builder.absolute tradingProductsPath []
+    Url.Builder.absolute commentedProductsPath []
 
 
 commentedProductsPath : List String
