@@ -6,6 +6,10 @@ module Data.Product exposing
     , ProductDetail
     , Status
     , addComment
+    , commentFromApi
+    , commentGetBody
+    , commentGetCreatedAt
+    , commentGetSpeaker
     , conditionAll
     , conditionFromIdString
     , conditionIndex
@@ -20,9 +24,9 @@ module Data.Product exposing
     , detailGetLikedCount
     , detailGetName
     , detailGetPrice
-    , detailGetSellerId
-    , detailGetSellerName
+    , detailGetSeller
     , detailUpdateLikedCount
+    , fromDetail
     , getId
     , getLikedCount
     , getName
@@ -45,6 +49,7 @@ module Data.Product exposing
 -}
 
 import Data.Category as Category
+import Data.ImageId as ImageId
 import Data.User as User
 import Time
 import Time.Extra
@@ -58,7 +63,7 @@ type Product
         , price : Int
         , category : Category.SubCategory
         , status : Status
-        , thumbnailImageId : String
+        , thumbnailImageId : ImageId.ImageId
         , likedCount : Int
         }
 
@@ -72,11 +77,9 @@ type ProductDetail
         , condition : Condition
         , category : Category.SubCategory
         , status : Status
-        , imageIds : ( String, List String )
+        , imageIds : ( ImageId.ImageId, List ImageId.ImageId )
         , likedCount : Int
-        , sellerId : User.Id
-        , sellerName : String
-        , sellerImageId : String
+        , seller : User.WithName
         , commentList : Maybe (List Comment)
         }
 
@@ -95,21 +98,13 @@ idFromString =
     Id
 
 
-type alias Comment =
-    { text : String
-    , createdAt : Time.Posix
-    , userName : String
-    , userId : User.Id
-    }
-
-
 fromApi :
     { id : String
     , name : String
     , price : Int
     , category : Category.SubCategory
     , status : Status
-    , thumbnailImageId : String
+    , thumbnailImageId : ImageId.ImageId
     , likeCount : Int
     }
     -> Product
@@ -133,11 +128,9 @@ detailFromApi :
     , condition : Condition
     , category : Category.SubCategory
     , status : Status
-    , imageIds : ( String, List String )
+    , imageIds : ( ImageId.ImageId, List ImageId.ImageId )
     , likedCount : Int
-    , sellerId : User.Id
-    , sellerName : String
-    , sellerImageId : String
+    , seller : User.WithName
     }
     -> ProductDetail
 detailFromApi rec =
@@ -151,9 +144,7 @@ detailFromApi rec =
         , status = rec.status
         , imageIds = rec.imageIds
         , likedCount = rec.likedCount
-        , sellerId = rec.sellerId
-        , sellerName = rec.sellerName
-        , sellerImageId = rec.sellerImageId
+        , seller = rec.seller
         , commentList = Nothing
         }
 
@@ -324,6 +315,56 @@ statusFromIdStringLoop idString statusList =
             Nothing
 
 
+
+{- ============================================================
+                        Condition
+   ============================================================
+-}
+
+
+type Comment
+    = Comment
+        { body : String
+        , createdAt : Time.Posix
+        , speaker : User.WithName
+        }
+
+
+commentFromApi : { body : String, createdAt : Time.Posix, speaker : User.WithName } -> Comment
+commentFromApi =
+    Comment
+
+
+commentGetBody : Comment -> String
+commentGetBody (Comment { body }) =
+    body
+
+
+commentGetCreatedAt : Comment -> Time.Posix
+commentGetCreatedAt (Comment { createdAt }) =
+    createdAt
+
+
+commentGetSpeaker : Comment -> User.WithName
+commentGetSpeaker (Comment { speaker }) =
+    speaker
+
+
+{-| 詳細データから簡易データの形式にするが、サムネイル画像は商品画像の0枚目になる
+-}
+fromDetail : ProductDetail -> Product
+fromDetail (ProductDetail rec) =
+    Product
+        { id = rec.id
+        , name = rec.name
+        , price = rec.price
+        , category = rec.category
+        , status = rec.status
+        , thumbnailImageId = Tuple.first rec.imageIds
+        , likedCount = rec.likedCount
+        }
+
+
 {-| 商品のID
 -}
 getId : Product -> Id
@@ -402,28 +443,21 @@ detailGetCondition (ProductDetail { condition }) =
 -}
 getThumbnailImageUrl : Product -> String
 getThumbnailImageUrl (Product { thumbnailImageId }) =
-    "https://asia-northeast1-tsukumart-f0971.cloudfunctions.net/image/" ++ thumbnailImageId
+    ImageId.toUrlString thumbnailImageId
 
 
 detailGetImageUrls : ProductDetail -> List String
 detailGetImageUrls (ProductDetail { imageIds }) =
     Tuple.first imageIds
         :: Tuple.second imageIds
-        |> List.map (\id -> "https://asia-northeast1-tsukumart-f0971.cloudfunctions.net/image/" ++ id)
+        |> List.map ImageId.toUrlString
 
 
-{-| 出品者のUser IDを取得する
+{-| 出品者を取得する
 -}
-detailGetSellerId : ProductDetail -> User.Id
-detailGetSellerId (ProductDetail { sellerId }) =
-    sellerId
-
-
-{-| 出品者の名前を取得する
--}
-detailGetSellerName : ProductDetail -> String
-detailGetSellerName (ProductDetail { sellerName }) =
-    sellerName
+detailGetSeller : ProductDetail -> User.WithName
+detailGetSeller (ProductDetail { seller }) =
+    seller
 
 
 {-| 商品のコメントを取得する

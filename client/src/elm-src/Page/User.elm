@@ -6,7 +6,7 @@ module Page.User exposing
     , initModelWithName
     , update
     , view
-    )
+    , getUser)
 
 import Api
 import BasicParts
@@ -33,7 +33,7 @@ type alias EditModel =
     { displayName : String
     , introduction : String
     , universitySelect : CompUniversity.Model
-    , before: User.WithProfile
+    , before : User.WithProfile
     }
 
 
@@ -85,6 +85,22 @@ initModelFromId logInState userId =
             ( LoadingWithUserId userId
             , [ EmissionGetUserProfile userId ]
             )
+
+
+getUser : Model -> List User.WithName
+getUser model =
+    case model of
+        LoadingWithUserId _ ->
+            []
+
+        LoadingWithUserIdAndName withName ->
+            [ withName ]
+
+        Normal withProfile ->
+            [ User.withProfileToWithName withProfile ]
+
+        Edit { before } ->
+            [ User.withProfileToWithName before ]
 
 
 
@@ -243,7 +259,7 @@ view logInState model =
                     loadingWithUserIdView userId
 
                 ( _, LoadingWithUserIdAndName withName ) ->
-                    loadingWithUserIdAndNameView (User.withNameGetDisplayName withName)
+                    loadingWithUserIdAndNameView withName
 
                 ( LogInState.Ok { accessToken }, Edit editModel ) ->
                     editView accessToken editModel
@@ -261,9 +277,12 @@ loadingWithUserIdView userId =
     ]
 
 
-loadingWithUserIdAndNameView : String -> List (Html.Html msg)
-loadingWithUserIdAndNameView userName =
-    [ Html.text (userName ++ "さんのプロフィーを読み込み中")
+loadingWithUserIdAndNameView : User.WithName -> List (Html.Html msg)
+loadingWithUserIdAndNameView userWithName =
+    [ imageAndDisplayNameView
+        (User.withNameGetImageUrl userWithName)
+        (User.withNameGetDisplayName userWithName)
+    , Html.text (User.withNameGetDisplayName userWithName ++ "さんの紹介文、学群学類を読み込み中")
     ]
 
 

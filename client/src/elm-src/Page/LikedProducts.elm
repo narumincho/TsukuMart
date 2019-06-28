@@ -5,7 +5,7 @@ module Page.LikedProducts exposing
     , initModel
     , update
     , view
-    )
+    , getAllProducts)
 
 import Api
 import BasicParts
@@ -65,6 +65,18 @@ initModel goodIdMaybe logInState =
       )
         ++ (emissionList |> List.map EmissionByProductList)
     )
+
+
+{-| この画面から取得できる商品のデータを集める
+-}
+getAllProducts : Model -> List Product.Product
+getAllProducts (Model { normal }) =
+    case normal of
+        Normal products ->
+            products
+
+        _ ->
+            []
 
 
 update : Msg -> Model -> ( Model, List Emission )

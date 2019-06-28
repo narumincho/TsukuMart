@@ -4,6 +4,7 @@ module Data.User exposing
     , WithProfile
     , idFromString
     , idToString
+    , searchFromId
     , withNameFromApi
     , withNameGetDisplayName
     , withNameGetId
@@ -14,8 +15,10 @@ module Data.User exposing
     , withProfileGetImageUrl
     , withProfileGetIntroduction
     , withProfileGetUniversity
-    , withProfileToWithName)
+    , withProfileToWithName
+    )
 
+import Data.ImageId as ImageId
 import Data.University as University
 
 
@@ -25,7 +28,7 @@ type WithName
     = WithName
         { id : Id
         , displayName : String
-        , imageId : String
+        , imageId : ImageId.ImageId
         }
 
 
@@ -35,10 +38,11 @@ type WithProfile
     = WithProfile
         { id : Id
         , displayName : String
-        , imageId : String
+        , imageId : ImageId.ImageId
         , introduction : String
         , university : University.University
         }
+
 
 withProfileToWithName : WithProfile -> WithName
 withProfileToWithName (WithProfile rec) =
@@ -47,6 +51,7 @@ withProfileToWithName (WithProfile rec) =
         , displayName = rec.displayName
         , imageId = rec.imageId
         }
+
 
 {-| ユーザーを識別するためのID
 -}
@@ -64,7 +69,7 @@ idFromString =
     Id
 
 
-withNameFromApi : { id : String, displayName : String, imageId : String } -> WithName
+withNameFromApi : { id : String, displayName : String, imageId : ImageId.ImageId } -> WithName
 withNameFromApi { id, displayName, imageId } =
     WithName
         { id = idFromString id
@@ -73,7 +78,14 @@ withNameFromApi { id, displayName, imageId } =
         }
 
 
-withProfileFromApi : { id : String, displayName : String, imageId : String, introduction : String, university : Maybe University.University } -> Maybe WithProfile
+withProfileFromApi :
+    { id : String
+    , displayName : String
+    , imageId : ImageId.ImageId
+    , introduction : String
+    , university : Maybe University.University
+    }
+    -> Maybe WithProfile
 withProfileFromApi { id, displayName, imageId, introduction, university } =
     university
         |> Maybe.map
@@ -100,7 +112,7 @@ withNameGetDisplayName (WithName { displayName }) =
 
 withNameGetImageUrl : WithName -> String
 withNameGetImageUrl (WithName { imageId }) =
-    "https://asia-northeast1-tsukumart-f0971.cloudfunctions.net/image/" ++ imageId
+    ImageId.toUrlString imageId
 
 
 withProfileGetId : WithProfile -> Id
@@ -115,7 +127,7 @@ withProfileGetDisplayName (WithProfile { displayName }) =
 
 withProfileGetImageUrl : WithProfile -> String
 withProfileGetImageUrl (WithProfile { imageId }) =
-    "https://asia-northeast1-tsukumart-f0971.cloudfunctions.net/image/" ++ imageId
+    ImageId.toUrlString imageId
 
 
 withProfileGetIntroduction : WithProfile -> String
@@ -126,3 +138,17 @@ withProfileGetIntroduction (WithProfile { introduction }) =
 withProfileGetUniversity : WithProfile -> University.University
 withProfileGetUniversity (WithProfile { university }) =
     university
+
+
+searchFromId : Id -> List WithName -> Maybe WithName
+searchFromId id list =
+    case list of
+        x :: xs ->
+            if withNameGetId x == id then
+                Just x
+
+            else
+                searchFromId id xs
+
+        [] ->
+            Nothing

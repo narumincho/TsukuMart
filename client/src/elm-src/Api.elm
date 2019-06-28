@@ -32,9 +32,11 @@ module Api exposing
     , tradeStart
     , unlikeProduct
     , updateProfile
+    , userWithNameDecoder
     )
 
 import Data.EmailAddress as EmailAddress
+import Data.ImageId as ImageId
 import Data.Product as Product
 import Data.SocialLoginService
 import Data.University as University
@@ -218,11 +220,26 @@ profileAndLikedProductsIdDecoder =
         )
         |> Json.Decode.Pipeline.required "id" Json.Decode.string
         |> Json.Decode.Pipeline.required "displayName" Json.Decode.string
-        |> Json.Decode.Pipeline.required "imageId" Json.Decode.string
+        |> Json.Decode.Pipeline.required "imageId" imageIdDecoder
         |> Json.Decode.Pipeline.required "likedProductAll"
             (Json.Decode.list
                 (Json.Decode.field "id" Json.Decode.string)
             )
+
+
+userWithNameDecoder : Json.Decode.Decoder User.WithName
+userWithNameDecoder =
+    Json.Decode.succeed
+        (\id displayName imageId ->
+            User.withNameFromApi
+                { id = id
+                , displayName = displayName
+                , imageId = imageId
+                }
+        )
+        |> Json.Decode.Pipeline.required "id" Json.Decode.string
+        |> Json.Decode.Pipeline.required "displayName" Json.Decode.string
+        |> Json.Decode.Pipeline.required "imageId" imageIdDecoder
 
 
 userWithProfileDecoder : Json.Decode.Decoder User.WithProfile
@@ -241,7 +258,7 @@ userWithProfileDecoder =
         )
         |> Json.Decode.Pipeline.required "id" Json.Decode.string
         |> Json.Decode.Pipeline.required "displayName" Json.Decode.string
-        |> Json.Decode.Pipeline.required "imageId" Json.Decode.string
+        |> Json.Decode.Pipeline.required "imageId" imageIdDecoder
         |> Json.Decode.Pipeline.required "introduction" Json.Decode.string
         |> Json.Decode.Pipeline.requiredAt
             [ "university", "schoolAndDepartment" ]
@@ -258,6 +275,12 @@ userWithProfileDecoder =
                     Nothing ->
                         Json.Decode.fail "invalid university"
             )
+
+
+imageIdDecoder : Json.Decode.Decoder ImageId.ImageId
+imageIdDecoder =
+    Json.Decode.string
+        |> Json.Decode.map (\string -> ImageId.fromString string)
 
 
 
@@ -641,18 +664,25 @@ postProductComment accessToken productId comment msg =
     Cmd.none
 
 
-commentNormalDecoder : String -> User.Id -> Json.Decode.Decoder Product.Comment
-commentNormalDecoder userName userId =
-    Json.Decode.map2
-        (\text createdAt ->
-            { text = text
-            , createdAt = Time.millisToPosix (floor createdAt)
-            , userName = userName
-            , userId = userId
-            }
+commentDecoder : String -> User.Id -> Json.Decode.Decoder Product.Comment
+commentDecoder userName userId =
+    Json.Decode.succeed
+        (\body createdAt speaker ->
+            Product.commentFromApi
+                { body = body
+                , createdAt = createdAt
+                , speaker = speaker
+                }
         )
-        (Json.Decode.field "text" Json.Decode.string)
-        (Json.Decode.field "created_at" Json.Decode.float)
+        |> Json.Decode.Pipeline.required "body" Json.Decode.string
+        |> Json.Decode.Pipeline.required "createdAt" dateTimeDecoder
+        |> Json.Decode.Pipeline.required "speaker" userWithNameDecoder
+
+
+dateTimeDecoder : Json.Decode.Decoder Time.Posix
+dateTimeDecoder =
+    Json.Decode.float
+        |> Json.Decode.map (floor >> Time.millisToPosix)
 
 
 

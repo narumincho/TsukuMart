@@ -1140,22 +1140,23 @@ urlParserResultToPageAndCmd (Model rec) result =
                     ( rec.page, Cmd.none )
 
         SiteMap.Product productId ->
-            (case rec.page of
-                PageHome pageModel ->
-                    case Data.Product.searchFromId productId (Page.Home.getAllProducts pageModel) of
-                        Just product ->
-                            Page.Product.initModelFromProduct product
+            (case getProductFromPage productId rec.page of
+                Just product ->
+                    Page.Product.initModelFromProduct product
 
-                        Nothing ->
-                            Page.Product.initModel productId
-
-                _ ->
+                Nothing ->
                     Page.Product.initModel productId
             )
                 |> Tuple.mapBoth PageProduct productPageEmissionListToCmd
 
         SiteMap.User userId ->
-            Page.User.initModelFromId rec.logInState userId
+            (case getUserFromPage userId rec.page of
+                Just userWithName ->
+                    Page.User.initModelWithName userWithName
+
+                Nothing ->
+                    Page.User.initModelFromId rec.logInState userId
+            )
                 |> Tuple.mapBoth
                     PageUser
                     userPageEmissionListToCmd
@@ -1195,6 +1196,62 @@ getProductId page =
 
         _ ->
             Nothing
+
+
+getProductFromPage : Data.Product.Id -> PageModel -> Maybe Data.Product.Product
+getProductFromPage productId pageModel =
+    (case pageModel of
+        PageHome model ->
+            Page.Home.getAllProducts model
+
+        PageLikedProducts model ->
+            Page.LikedProducts.getAllProducts model
+
+        PageHistory model ->
+            Page.History.getAllProducts model
+
+        PageSoldProducts model ->
+            Page.SoldProducts.getAllProducts model
+
+        PageBoughtProducts model ->
+            Page.BoughtProducts.getAllProducts model
+
+        PageTradingProducts model ->
+            Page.TradingProducts.getAllProducts model
+
+        PageTradedProducts model ->
+            Page.TradedProducts.getAllProducts model
+
+        PageCommentedProducts model ->
+            Page.CommentedProducts.getAllProducts model
+
+        PageProduct model ->
+            case Page.Product.getProduct model of
+                Just product ->
+                    [ product ]
+
+                Nothing ->
+                    []
+
+        _ ->
+            []
+    )
+        |> Data.Product.searchFromId productId
+
+
+getUserFromPage : Data.User.Id -> PageModel -> Maybe Data.User.WithName
+getUserFromPage userId pageModel =
+    (case pageModel of
+        PageProduct model ->
+            Page.Product.getUser model
+
+        PageUser model ->
+            Page.User.getUser model
+
+        _ ->
+            []
+    )
+        |> Data.User.searchFromId userId
 
 
 {-| 各ページにいいねを押した結果を反映するように通知する

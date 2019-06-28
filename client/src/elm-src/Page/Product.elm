@@ -2,7 +2,9 @@ module Page.Product exposing
     ( Emission(..)
     , Model
     , Msg(..)
+    , getProduct
     , getProductId
+    , getUser
     , imageView
     , initModel
     , initModelFromProduct
@@ -17,7 +19,7 @@ import Api
 import BasicParts
 import Data.LogInState as LogInState
 import Data.Product as Product
-import Data.User
+import Data.User as User
 import Html
 import Html.Attributes
 import Html.Events
@@ -122,6 +124,58 @@ getProductId model =
 
         Confirm { product } ->
             Product.detailGetId product
+
+
+{-| 表示している商品を取得する
+-}
+getProduct : Model -> Maybe Product.Product
+getProduct model =
+    case model of
+        Loading _ ->
+            Nothing
+
+        WaitNewData product ->
+            Just product
+
+        Normal { product } ->
+            Just (Product.fromDetail product)
+
+        Edit { beforeProduct } ->
+            Just (Product.fromDetail beforeProduct)
+
+        Confirm { product } ->
+            Just (Product.fromDetail product)
+
+
+getUser : Model -> List User.WithName
+getUser model =
+    case model of
+        Loading _ ->
+            []
+
+        WaitNewData _ ->
+            []
+
+        Normal { product } ->
+            productGetUser product
+
+        Edit { beforeProduct } ->
+            productGetUser beforeProduct
+
+        Confirm { product } ->
+            productGetUser product
+
+
+productGetUser : Product.ProductDetail -> List User.WithName
+productGetUser product =
+    (product
+        |> Product.detailGetSeller
+    )
+        :: (product
+                |> Product.detailGetCommentList
+                |> Maybe.withDefault []
+                |> List.map Product.commentGetSpeaker
+           )
 
 
 update : Msg -> Model -> ( Model, List Emission )
@@ -461,16 +515,19 @@ normalView logInState isWideScreen nowMaybe sending product =
                     sending
                     (Product.detailGetLikedCount product)
                     (Product.detailGetId product)
-                 , sellerNameView (Product.detailGetSellerId product) (Product.detailGetSellerName product)
+                 , sellerNameView (Product.detailGetSeller product)
                  , descriptionView (Product.detailGetDescription product)
                  , productsViewCondition (Product.detailGetCondition product)
-                 , commentListView nowMaybe (Product.detailGetSellerId product) logInState (Product.detailGetCommentList product)
+                 , commentListView nowMaybe
+                    (product |> Product.detailGetSeller |> User.withNameGetId)
+                    logInState
+                    (Product.detailGetCommentList product)
                  ]
                     ++ (case logInState of
                             LogInState.Ok { accessToken, userWithName } ->
                                 if
-                                    Data.User.withNameGetId userWithName
-                                        == Product.detailGetSellerId product
+                                    User.withNameGetId userWithName
+                                        == User.withNameGetId (Product.detailGetSeller product)
                                 then
                                     [ editButton
                                     , deleteView (Product.detailGetId product) accessToken
@@ -566,14 +623,21 @@ itemLikeBody count =
     ]
 
 
-sellerNameView : Data.User.Id -> String -> Html.Html msg
-sellerNameView userId name =
+sellerNameView : User.WithName -> Html.Html msg
+sellerNameView user =
     Html.div
         []
         [ Html.div [ Html.Attributes.class "product-label" ] [ Html.text "出品者" ]
         , Html.a
-            [ Html.Attributes.href (SiteMap.userUrl userId) ]
-            [ Html.text name ]
+            [ Html.Attributes.href (SiteMap.userUrl (User.withNameGetId user)) ]
+            [ Html.img
+                [ Html.Attributes.style "border-radius" "50%"
+                , Html.Attributes.style "width" "3rem"
+                , Html.Attributes.src (User.withNameGetImageUrl user)
+                ]
+                []
+            , Html.text (User.withNameGetDisplayName user)
+            ]
         ]
 
 
@@ -626,7 +690,7 @@ deleteView productId token =
     コメントの表示
 
 -}
-commentListView : Maybe ( Time.Posix, Time.Zone ) -> Data.User.Id -> LogInState.LogInState -> Maybe (List Product.Comment) -> Html.Html Msg
+commentListView : Maybe ( Time.Posix, Time.Zone ) -> User.Id -> LogInState.LogInState -> Maybe (List Product.Comment) -> Html.Html Msg
 commentListView nowMaybe sellerId logInState commentListMaybe =
     Html.div
         [ Html.Attributes.class "product-commentList" ]
@@ -641,7 +705,7 @@ commentListView nowMaybe sellerId logInState commentListMaybe =
                                         (commentView nowMaybe
                                             sellerId
                                             (Just
-                                                (Data.User.withNameGetId userWithName)
+                                                (User.withNameGetId userWithName)
                                             )
                                         )
                                )
@@ -656,14 +720,17 @@ commentListView nowMaybe sellerId logInState commentListMaybe =
         )
 
 
-commentView : Maybe ( Time.Posix, Time.Zone ) -> Data.User.Id -> Maybe Data.User.Id -> Product.Comment -> Html.Html msg
-commentView nowMaybe sellerId myIdMaybe { text, createdAt, userName, userId } =
+commentView : Maybe ( Time.Posix, Time.Zone ) -> User.Id -> Maybe User.Id -> Product.Comment -> Html.Html msg
+commentView nowMaybe sellerId myIdMaybe comment =
     let
+        speaker =
+            comment |> Product.commentGetSpeaker
+
         isSellerComment =
-            sellerId == userId
+            sellerId == User.withNameGetId speaker
 
         isMyComment =
-            myIdMaybe == Just userId
+            myIdMaybe == Just (User.withNameGetId speaker)
     in
     Html.div
         [ Html.Attributes.class "product-comment" ]
@@ -675,9 +742,16 @@ commentView nowMaybe sellerId myIdMaybe { text, createdAt, userName, userId } =
                  else
                     "product-comment-name"
                 )
-            , Html.Attributes.href (SiteMap.userUrl userId)
+            , Html.Attributes.href (SiteMap.userUrl (User.withNameGetId speaker))
             ]
-            [ Html.text userName ]
+            [ Html.img
+                [ Html.Attributes.style "border-radius" "50%"
+                , Html.Attributes.style "width" "3rem"
+                , Html.Attributes.src (User.withNameGetImageUrl speaker)
+                ]
+                []
+            , Html.text (User.withNameGetDisplayName speaker)
+            ]
         , Html.div
             [ Html.Attributes.class
                 (if isSellerComment then
@@ -700,7 +774,7 @@ commentView nowMaybe sellerId myIdMaybe { text, createdAt, userName, userId } =
                             , ( "product-comment-text-seller", isSellerComment )
                             ]
                         ]
-                        [ Html.text text ]
+                        [ Html.text (Product.commentGetBody comment) ]
                    ]
                 ++ (if isSellerComment then
                         []
@@ -711,7 +785,7 @@ commentView nowMaybe sellerId myIdMaybe { text, createdAt, userName, userId } =
             )
         , Html.div
             [ Html.Attributes.class "product-comment-time" ]
-            [ Html.text (Product.createdAtToString nowMaybe createdAt) ]
+            [ Html.text (Product.createdAtToString nowMaybe (Product.commentGetCreatedAt comment)) ]
         ]
 
 

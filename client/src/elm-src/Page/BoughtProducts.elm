@@ -2,6 +2,7 @@ module Page.BoughtProducts exposing
     ( Emission(..)
     , Model
     , Msg(..)
+    , getAllProducts
     , initModel
     , update
     , view
@@ -64,6 +65,18 @@ initModel productIdMaybe logInState =
       )
         ++ (productListEmissionList |> List.map EmissionByProductList)
     )
+
+
+{-| この画面から取得できる商品のデータを集める
+-}
+getAllProducts : Model -> List Product.Product
+getAllProducts (Model { normal }) =
+    case normal of
+        Normal products ->
+            products
+
+        _ ->
+            []
 
 
 update : Msg -> Model -> ( Model, List Emission )
