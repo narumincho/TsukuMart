@@ -61,7 +61,7 @@ type Product
         { id : Id
         , name : String
         , price : Int
-        , category : Category.SubCategory
+        , category : Category.Category
         , status : Status
         , thumbnailImageId : ImageId.ImageId
         , likedCount : Int
@@ -75,7 +75,7 @@ type ProductDetail
         , description : String
         , price : Int
         , condition : Condition
-        , category : Category.SubCategory
+        , category : Category.Category
         , status : Status
         , imageIds : ( ImageId.ImageId, List ImageId.ImageId )
         , likedCount : Int
@@ -102,7 +102,7 @@ fromApi :
     { id : String
     , name : String
     , price : Int
-    , category : Category.SubCategory
+    , category : Category.Category
     , status : Status
     , thumbnailImageId : ImageId.ImageId
     , likeCount : Int
@@ -126,7 +126,7 @@ detailFromApi :
     , description : String
     , price : Int
     , condition : Condition
-    , category : Category.SubCategory
+    , category : Category.Category
     , status : Status
     , imageIds : ( ImageId.ImageId, List ImageId.ImageId )
     , likedCount : Int

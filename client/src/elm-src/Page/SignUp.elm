@@ -66,7 +66,7 @@ initModel : { name : String, imageId : String, sendEmailToken : String } -> ( Mo
 initModel { name, imageId, sendEmailToken } =
     ( Normal
         { sAddressOrStudentId = analysisStudentIdOrSAddress ""
-        , university = CompUniversity.initSelect
+        , university = CompUniversity.initModelNone
         , nickName = name
         , image = ServiceImage imageId
         , sendEmailToken = sendEmailToken

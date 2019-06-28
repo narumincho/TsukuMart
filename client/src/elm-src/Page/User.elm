@@ -215,7 +215,7 @@ toEditMode userWithProfile =
             User.withProfileGetIntroduction userWithProfile
 
         universitySelect =
-            CompUniversity.selectFromUniversity (User.withProfileGetUniversity userWithProfile)
+            CompUniversity.initModelFromUniversity (User.withProfileGetUniversity userWithProfile)
     in
     ( Edit
         { displayName = displayName

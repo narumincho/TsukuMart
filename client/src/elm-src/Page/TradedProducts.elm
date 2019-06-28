@@ -149,7 +149,7 @@ view :
     -> { title : Maybe String, tab : BasicParts.Tab Msg, html : List (Html.Html Msg) }
 view logInState isWideScreen (Model rec) =
     { title = Just "取引した商品"
-    , tab = BasicParts.tabSingle "取引中した商品"
+    , tab = BasicParts.tabSingle "取引した商品"
     , html =
         case logInState of
             LogInState.None ->

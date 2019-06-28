@@ -30,7 +30,7 @@ type Model
 type Page
     = EditPage ProductEditor.Model
     | ConfirmPage
-        { request : ProductEditor.RequestData
+        { request : Api.SellProductRequest
         , sending : Bool
         }
 
@@ -38,11 +38,11 @@ type Page
 type Emission
     = EmissionLogInOrSignUp LogIn.Emission
     | EmissionSellProducts ( Api.Token, Api.SellProductRequest )
-    | EmissionByProductsEditor ProductEditor.Emission
+    | EmissionByProductEditor ProductEditor.Emission
 
 
 type Msg
-    = ToConfirmPage ( Api.Token, ProductEditor.RequestData )
+    = ToConfirmPage ( Api.Token , Api.SellProductRequest )
     | ToEditPage
     | LogInOrSignUpMsg LogIn.Msg
     | SellProduct ( Api.Token, Api.SellProductRequest )
@@ -66,7 +66,7 @@ initModel =
         { logInOrSignUpModel = LogIn.initModel
         , page = EditPage editorModel
         }
-    , editorEmission |> List.map EmissionByProductsEditor
+    , editorEmission |> List.map EmissionByProductEditor
     )
 
 
@@ -120,7 +120,7 @@ updateWhenLogIn msg page =
                     ProductEditor.update m productEditorModel
                         |> Tuple.mapBoth
                             EditPage
-                            (List.map EmissionByProductsEditor)
+                            (List.map EmissionByProductEditor)
 
                 _ ->
                     ( EditPage productEditorModel
@@ -145,7 +145,7 @@ updateWhenLogIn msg page =
                         }
                         |> Tuple.mapBoth
                             EditPage
-                            (List.map EmissionByProductsEditor)
+                            (List.map EmissionByProductEditor)
 
                 _ ->
                     ( ConfirmPage rec

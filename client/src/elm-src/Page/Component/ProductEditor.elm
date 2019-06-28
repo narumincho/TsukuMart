@@ -3,12 +3,10 @@ module Page.Component.ProductEditor exposing
     , ImageList(..)
     , Model
     , Msg(..)
-    , RequestData
     , imageListToBlobUrlList
     , initModel
     , requestDataToApiRequest
     , requestDataToEditApiRequest
-    , sendEmission
     , toRequestData
     , update
     , view
@@ -33,16 +31,15 @@ type Model
         , description : String
         , price : Maybe Int
         , condition : Maybe Product.Condition
-        , category : Maybe Category.Category
-        , image : Maybe ImageList
+        , category : CategorySelect
+        , addImages : List String
         }
 
 
-type ImageList
-    = Image1 String
-    | Image2 String String
-    | Image3 String String String
-    | Image4 String String String String
+type CategorySelect
+    = CategoryNone
+    | CategoryGroupSelect Category.Group
+    | CategorySelect Category.Category
 
 
 type Emission
@@ -56,27 +53,38 @@ type Msg
     | InputDescription String
     | InputPrice String
     | InputCondition (Maybe Product.Condition)
+    | InputCategoryGroup (Maybe Category.Group)
+    | InputCategory (Maybe Category.Category)
     | DeleteImage Int
     | InputImageList (List String)
 
 
-type alias RequestData =
-    { name : String
-    , description : String
-    , price : Int
-    , condition : Product.Condition
-    , category : Category.Category
-    , image : ImageList
-    }
+initModelBlank : ( Model, List Emission )
+initModelBlank =
+    ( Model
+        { name = ""
+        , description = ""
+        , price = Nothing
+        , condition = Nothing
+        , category = CategoryNone
+        , addImages = []
+        }
+    , [ EmissionAddEventListenerForProductImages { labelId = photoAddLabelId, inputId = photoAddInputId }
+      , EmissionReplaceText { id = nameEditorId, text = "" }
+      , EmissionReplaceText { id = descriptionEditorId, text = "" }
+      , EmissionReplaceText { id = priceEditorId, text = "" }
+      , EmissionChangeSelectedIndex { id = conditionEditorId, index = 0 }
+      ]
+    )
 
 
 initModel :
     { name : String
     , description : String
-    , price : Maybe Int
-    , condition : Maybe Product.Condition
-    , category : Maybe Category.Category
-    , image : Maybe ImageList
+    , price : Int
+    , condition : Product.Condition
+    , category : Category.Category
+    , addImages : List String
     }
     -> ( Model, List Emission )
 initModel rec =
@@ -87,7 +95,13 @@ initModel rec =
                 , description = rec.description
                 , price = rec.price
                 , condition = rec.condition
-                , category = rec.category
+                , category =
+                    case rec.category of
+                        Just category ->
+                            CategorySelect category
+
+                        Nothing ->
+                            CategoryNone
                 , image = rec.image
                 }
     in
@@ -270,21 +284,22 @@ imageDeleteAt index image =
                     image
 
 
-toRequestData : Model -> Maybe RequestData
+toRequestData : Model -> Maybe Api.SellProductRequest
 toRequestData (Model { name, description, price, condition, category, image }) =
     case ( price, condition, category ) of
-        ( Just p, Just conditionValue, Just categoryValue ) ->
+        ( Just p, Just conditionValue, CategorySelect categoryValue ) ->
             if nameCheck name == Nothing && priceCheck price == Nothing then
                 image
                     |> Maybe.map
                         (\i ->
-                            { name = name
-                            , description = description
-                            , price = p
-                            , condition = conditionValue
-                            , category = categoryValue
-                            , image = i
-                            }
+                            Api.SellProductRequest
+                                { name = name
+                                , description = description
+                                , price = p
+                                , condition = conditionValue
+                                , category = categoryValue
+                                , imageList = i
+                                }
                         )
 
             else
@@ -305,9 +320,9 @@ requestDataToApiRequest { name, description, price, condition, image } =
         }
 
 
-requestDataToEditApiRequest : RequestData -> Api.EditProductRequest
+requestDataToEditApiRequest : RequestData -> Api.UpdateProductRequest
 requestDataToEditApiRequest { name, description, price, condition, image } =
-    Api.EditProductRequest
+    Api.UpdateProductRequest
         { name = name
         , description = description
         , price = price
@@ -352,6 +367,9 @@ priceCheck priceMaybe =
 
         Nothing ->
             Just "0 ～ 100万円の価格を入力してください"
+
+
+imagesCheck : Maybe
 
 
 view : Model -> List (Html.Html Msg)

@@ -1,15 +1,14 @@
 module Page.Component.University exposing
     ( Emission(..)
     , Model
-    , emission
     , getUniversity
-    , initSelect
-    , selectFromUniversity
+    , initModelFromUniversity
+    , initModelNone
     , view
     )
 
 import Array
-import Data.University
+import Data.University as University
 import Html
 import Html.Attributes
 import Html.Events
@@ -17,151 +16,108 @@ import Json.Decode
 
 
 type Model
-    = UniversitySchool SchoolSelect
-    | UniversityGraduate GraduateSelect
+    = School SchoolSelect
+    | GraduateTsukuba
+        { graduate : Maybe University.Graduate
+        , school : SchoolSelect
+        }
+    | GraduateNoTsukuba (Maybe University.Graduate)
 
 
 type SchoolSelect
     = SchoolNone
-    | SchoolSelectSchool Data.University.School
-    | SchoolSelectSchoolAndDepartment Data.University.SchoolAndDepartment
+    | SchoolSchool University.School
+    | SchoolSchoolAndDepartment University.SchoolAndDepartment
 
 
-type GraduateSelect
-    = GraduateSelect (Maybe Data.University.Graduate) (Maybe SchoolSelect)
-
-
-{-| 何も選択していない状態
--}
-initSelect : Model
-initSelect =
-    UniversitySchool SchoolNone
-
-
-{-| データから選択モデルへ
--}
-selectFromUniversity : Data.University.University -> Model
-selectFromUniversity university =
-    case university of
-        Data.University.GraduateTsukuba graduate schoolAndDepartment ->
-            UniversityGraduate
-                (GraduateSelect (Just graduate) (Just (SchoolSelectSchoolAndDepartment schoolAndDepartment)))
-
-        Data.University.GraduateNotTsukuba graduate ->
-            UniversityGraduate
-                (GraduateSelect (Just graduate) Nothing)
-
-        Data.University.NotGraduate schoolAndDepartment ->
-            UniversitySchool
-                (SchoolSelectSchoolAndDepartment schoolAndDepartment)
-
-
-schoolSelectGetSchool : SchoolSelect -> Maybe Data.University.School
-schoolSelectGetSchool schoolSelect =
-    case schoolSelect of
-        SchoolNone ->
-            Nothing
-
-        SchoolSelectSchool school ->
-            Just school
-
-        SchoolSelectSchoolAndDepartment schoolAndDepartment ->
-            Just (Data.University.schoolFromDepartment schoolAndDepartment)
-
-
-schoolSelectGetDepartment : SchoolSelect -> Maybe Data.University.SchoolAndDepartment
-schoolSelectGetDepartment schoolSelect =
-    case schoolSelect of
-        SchoolNone ->
-            Nothing
-
-        SchoolSelectSchool _ ->
-            Nothing
-
-        SchoolSelectSchoolAndDepartment schoolAndDepartment ->
-            Just schoolAndDepartment
-
-
-{-| 学群学類研究科の情報を取得する
--}
-getUniversity : Model -> Maybe Data.University.University
-getUniversity universitySelect =
-    case universitySelect of
-        UniversitySchool (SchoolSelectSchoolAndDepartment schoolAndDepartment) ->
-            Just (Data.University.NotGraduate schoolAndDepartment)
-
-        UniversityGraduate (GraduateSelect (Just graduate) (Just (SchoolSelectSchoolAndDepartment schoolAndDepartment))) ->
-            Just (Data.University.GraduateTsukuba graduate schoolAndDepartment)
-
-        UniversityGraduate (GraduateSelect (Just graduate) Nothing) ->
-            Just (Data.University.GraduateNotTsukuba graduate)
-
-        _ ->
-            Nothing
+type Msg
+    = SwitchGraduate
+    | SwitchSchool
+    | SwitchGraduateTsukuba
+    | SwitchGraduateNoTsukuba
+    | SelectGraduate Int
+    | SelectSchool Int
+    | SelectDepartment Int
 
 
 type Emission
     = EmissionChangeSelectedIndex { id : String, index : Int }
 
 
-emission : Model -> List Emission
-emission model =
-    case model of
-        UniversitySchool schoolSelect ->
-            schoolEmission schoolSelect
+{-| 何も選択していない状態
+-}
+initModelNone : ( Model, List Emission )
+initModelNone =
+    ( School SchoolNone
+    , [ EmissionChangeSelectedIndex
+            { id = schoolSelectId, index = 0 }
+      ]
+    )
 
-        UniversityGraduate (GraduateSelect graduate schoolSelect) ->
-            [ EmissionChangeSelectedIndex
-                { id = graduateSelectId
-                , index =
-                    case graduate of
-                        Just g ->
-                            Data.University.graduateToIndex g + 1
 
-                        Nothing ->
-                            0
+{-| 最初から選択している状態
+-}
+initModelFromUniversity : University.University -> ( Model, List Emission )
+initModelFromUniversity university =
+    case university of
+        University.GraduateTsukuba graduate schoolAndDepartment ->
+            ( GraduateTsukuba
+                { graduate = Just graduate
+                , school = SchoolSchoolAndDepartment schoolAndDepartment
                 }
-            ]
-                ++ (case schoolSelect of
-                        Just s ->
-                            schoolEmission s
+            , [ EmissionChangeSelectedIndex
+                    { id = graduateSelectId, index = University.graduateToIndex graduate }
+              , EmissionChangeSelectedIndex
+                    { id = schoolSelectId, index = University.schoolToIndex (University.schoolFromDepartment schoolAndDepartment) }
+              , EmissionChangeSelectedIndex
+                    { id = departmentSelectId, index = University.departmentToIndexInSchool schoolAndDepartment }
+              ]
+            )
 
-                        Nothing ->
-                            []
-                   )
+        University.GraduateNoTsukuba graduate ->
+            ( GraduateNoTsukuba (Just graduate)
+            , [ EmissionChangeSelectedIndex
+                    { id = graduateSelectId, index = University.graduateToIndex graduate }
+              ]
+            )
+
+        University.NotGraduate schoolAndDepartment ->
+            ( School
+                (SchoolSchoolAndDepartment schoolAndDepartment)
+            , [ EmissionChangeSelectedIndex
+                    { id = schoolSelectId, index = University.schoolToIndex (University.schoolFromDepartment schoolAndDepartment) }
+              , EmissionChangeSelectedIndex
+                    { id = departmentSelectId, index = University.departmentToIndexInSchool schoolAndDepartment }
+              ]
+            )
 
 
-schoolEmission : SchoolSelect -> List Emission
-schoolEmission schoolSelect =
-    case schoolSelect of
-        SchoolNone ->
-            [ EmissionChangeSelectedIndex
-                { id = schoolSelectId
-                , index = 0
-                }
-            ]
+{-| 学群学類研究科の情報を取得する
+-}
+getUniversity : Model -> Maybe University.University
+getUniversity universitySelect =
+    case universitySelect of
+        School (SchoolSchoolAndDepartment schoolAndDepartment) ->
+            Just (University.NotGraduate schoolAndDepartment)
 
-        SchoolSelectSchool school ->
-            [ EmissionChangeSelectedIndex
-                { id = schoolSelectId
-                , index = Data.University.schoolToIndex school + 1
-                }
-            , EmissionChangeSelectedIndex
-                { id = departmentSelectId
-                , index = 0
-                }
-            ]
+        GraduateTsukuba { graduate, school } ->
+            case ( graduate, school ) of
+                ( Just g, SchoolSchoolAndDepartment s ) ->
+                    Just (University.GraduateTsukuba g s)
 
-        SchoolSelectSchoolAndDepartment schoolAndDepartment ->
-            [ EmissionChangeSelectedIndex
-                { id = schoolSelectId
-                , index = Data.University.schoolToIndex (Data.University.schoolFromDepartment schoolAndDepartment) + 1
-                }
-            , EmissionChangeSelectedIndex
-                { id = departmentSelectId
-                , index = Data.University.departmentToIndexInSchool schoolAndDepartment + 1
-                }
-            ]
+                ( _, _ ) ->
+                    Nothing
+
+        GraduateNoTsukuba (Just graduate) ->
+            Just (University.GraduateNoTsukuba graduate)
+
+        _ ->
+            Nothing
+
+
+update : Msg -> Model -> ( Model, List Emission )
+update msg model =
+    ( model, [] )
 
 
 
@@ -173,35 +129,28 @@ schoolEmission schoolSelect =
 
 {-| 研究科学群学類入力フォーム
 -}
-view : Model -> List ( String, Html.Html Model )
-view universitySelect =
-    [ ( "schoolOrGraduate", schoolOrGraduateView universitySelect )
-    ]
-        ++ (case universitySelect of
-                UniversitySchool schoolSelect ->
-                    schoolView schoolSelect
-                        |> List.map (Tuple.mapSecond (Html.map UniversitySchool))
+view : Model -> List ( String, Html.Html Msg )
+view model =
+    case model of
+        School schoolSelect ->
+            schoolOrGraduateView True
+                :: schoolView schoolSelect
 
-                UniversityGraduate graduateSelect ->
-                    graduateView graduateSelect
-                        |> List.map (Tuple.mapSecond (Html.map UniversityGraduate))
-           )
+        GraduateTsukuba { graduate, school } ->
+            schoolOrGraduateView False
+                :: graduateTsukubaView graduate school
+
+        GraduateNoTsukuba graduate ->
+            schoolOrGraduateView False
+                :: graduateNoTsukubaView graduate
 
 
 {-| 研究科に所属しているかしていないか?
 -}
-schoolOrGraduateView : Model -> Html.Html Model
-schoolOrGraduateView university =
-    let
-        leftSelect =
-            case university of
-                UniversitySchool _ ->
-                    True
-
-                UniversityGraduate _ ->
-                    False
-    in
-    Html.div
+schoolOrGraduateView : Bool -> ( String, Html.Html Msg )
+schoolOrGraduateView leftSelect =
+    ( "schoolOrGraduate"
+    , Html.div
         []
         [ Html.label
             [ Html.Attributes.class "form-label" ]
@@ -215,12 +164,11 @@ schoolOrGraduateView university =
                     ]
                  , Html.Attributes.style "border-radius" ".4rem 0 0 .4rem"
                  ]
-                    ++ (case university of
-                            UniversitySchool _ ->
-                                []
+                    ++ (if leftSelect then
+                            []
 
-                            UniversityGraduate _ ->
-                                [ Html.Events.onClick (UniversitySchool SchoolNone) ]
+                        else
+                            [ Html.Events.onClick SwitchSchool ]
                        )
                 )
                 [ Html.text "学群生" ]
@@ -231,128 +179,57 @@ schoolOrGraduateView university =
                     ]
                  , Html.Attributes.style "border-radius" "0 .4rem .4rem 0"
                  ]
-                    ++ (case university of
-                            UniversitySchool _ ->
-                                [ Html.Events.onClick
-                                    (UniversityGraduate
-                                        (GraduateSelect
-                                            Nothing
-                                            (Just SchoolNone)
-                                        )
-                                    )
-                                ]
+                    ++ (if leftSelect then
+                            [ Html.Events.onClick SwitchGraduate ]
 
-                            UniversityGraduate _ ->
-                                []
+                        else
+                            []
                        )
                 )
                 [ Html.text "院生" ]
             ]
         ]
+    )
 
 
 {-| 研究科に所属していない人のフォーム
 -}
-schoolView : SchoolSelect -> List ( String, Html.Html SchoolSelect )
+schoolView : SchoolSelect -> List ( String, Html.Html Msg )
 schoolView schoolSelect =
-    let
-        schoolForm =
-            ( "selectSchool"
-            , selectSchoolView (schoolSelectGetSchool schoolSelect)
-                |> Html.map
-                    (\m ->
-                        case m of
-                            Just school ->
-                                case Data.University.schoolToOnlyOneDepartment school of
-                                    Just schoolAndDepartment ->
-                                        SchoolSelectSchoolAndDepartment schoolAndDepartment
-
-                                    Nothing ->
-                                        SchoolSelectSchool school
-
-                            Nothing ->
-                                SchoolNone
-                    )
-            )
-
-        departmentSelectForm school =
-            case selectDepartmentView school (schoolSelectGetDepartment schoolSelect) of
-                Just v ->
-                    Just
-                        ( "s=" ++ Data.University.schoolToIdString school
-                        , v
-                            |> Html.map
-                                (\m ->
-                                    case m of
-                                        Just z ->
-                                            SchoolSelectSchoolAndDepartment z
-
-                                        Nothing ->
-                                            SchoolSelectSchool school
-                                )
-                        )
-
-                Nothing ->
-                    Nothing
-    in
     case schoolSelect of
         SchoolNone ->
-            [ schoolForm ]
+            [ selectSchoolView Nothing ]
 
-        SchoolSelectSchool school ->
-            case departmentSelectForm school of
-                Just departV ->
-                    [ schoolForm, departV ]
+        SchoolSchool school ->
+            [ selectSchoolView (Just school)
+            , selectDepartmentView school Nothing
+            ]
 
-                Nothing ->
-                    [ schoolForm ]
-
-        SchoolSelectSchoolAndDepartment department ->
-            case departmentSelectForm (Data.University.schoolFromDepartment department) of
-                Just departV ->
-                    [ schoolForm, departV ]
-
-                Nothing ->
-                    [ schoolForm ]
+        SchoolSchoolAndDepartment department ->
+            [ selectSchoolView (Just (University.schoolFromDepartment department))
+            , selectDepartmentView (University.schoolFromDepartment department) (Just department)
+            ]
 
 
-{-| 研究科に所属している人のフォーム
--}
-graduateView : GraduateSelect -> List ( String, Html.Html GraduateSelect )
-graduateView (GraduateSelect graduateSelect schoolSelect) =
-    [ ( "selectGraduate"
-      , selectGraduateView graduateSelect
-            |> Html.map (\g -> GraduateSelect g schoolSelect)
-      )
-    , ( "tsukubaUniversitySchoolOrNo"
-      , graduateYesNoTsukubaView (schoolSelect /= Nothing)
-            |> Html.map
-                (always
-                    (GraduateSelect graduateSelect
-                        (case schoolSelect of
-                            Just _ ->
-                                Nothing
-
-                            Nothing ->
-                                Just SchoolNone
-                        )
-                    )
-                )
-      )
+graduateTsukubaView : Maybe University.Graduate -> SchoolSelect -> List ( String, Html.Html Msg )
+graduateTsukubaView graduateSelect schoolSelect =
+    [ graduateSelectView graduateSelect
+    , graduateYesNoTsukubaView True
     ]
-        ++ (case schoolSelect of
-                Just school ->
-                    schoolView school
-                        |> List.map (Tuple.mapSecond (Html.map (\s -> GraduateSelect graduateSelect (Just s))))
-
-                Nothing ->
-                    []
-           )
+        ++ schoolView schoolSelect
 
 
-selectGraduateView : Maybe Data.University.Graduate -> Html.Html (Maybe Data.University.Graduate)
-selectGraduateView graduateMaybe =
-    Html.div
+graduateNoTsukubaView : Maybe University.Graduate -> List ( String, Html.Html Msg )
+graduateNoTsukubaView graduateSelect =
+    [ graduateSelectView graduateSelect
+    , graduateYesNoTsukubaView False
+    ]
+
+
+graduateSelectView : Maybe University.Graduate -> ( String, Html.Html Msg )
+graduateSelectView graduateMaybe =
+    ( "selectGraduate"
+    , Html.div
         []
         [ Html.label
             [ Html.Attributes.class "form-label"
@@ -362,17 +239,24 @@ selectGraduateView graduateMaybe =
         , Html.select
             [ Html.Attributes.class "form-menu"
             , Html.Attributes.id graduateSelectId
-            , Html.Events.on "change" selectGraduateDecoder
+            , Html.Events.on "change" (selectDecoder |> Json.Decode.map SelectGraduate)
             ]
-            ([ Html.option [] [ Html.text "--選択してください--" ] ]
-                ++ (Data.University.graduateAllValue
+            ((case graduateMaybe of
+                Just _ ->
+                    [ blankOption ]
+
+                Nothing ->
+                    []
+             )
+                ++ (University.graduateAllValue
                         |> List.map
                             (\s ->
-                                Html.option [] [ Html.text (Data.University.graduateToJapaneseString s) ]
+                                Html.option [] [ Html.text (University.graduateToJapaneseString s) ]
                             )
                    )
             )
         ]
+    )
 
 
 graduateSelectId : String
@@ -380,20 +264,13 @@ graduateSelectId =
     "signUp-selectGraduate"
 
 
-selectGraduateDecoder : Json.Decode.Decoder (Maybe Data.University.Graduate)
-selectGraduateDecoder =
-    Json.Decode.at
-        [ "target", "selectedIndex" ]
-        Json.Decode.int
-        |> Json.Decode.map (\index -> Data.University.graduateAllValue |> Array.fromList |> Array.get (index - 1))
-
-
 {-| 筑波大学に所属していたかしていなかったか
 Boolは左(筑波大学所属していた)を選択しているか
 -}
-graduateYesNoTsukubaView : Bool -> Html.Html ()
+graduateYesNoTsukubaView : Bool -> ( String, Html.Html Msg )
 graduateYesNoTsukubaView leftSelect =
-    Html.div
+    ( "tsukubaUniversitySchoolOrNo"
+    , Html.div
         []
         [ Html.label
             [ Html.Attributes.class "form-label" ]
@@ -411,7 +288,7 @@ graduateYesNoTsukubaView leftSelect =
                             []
 
                         else
-                            [ Html.Events.onClick () ]
+                            [ Html.Events.onClick SwitchGraduateTsukuba ]
                        )
                 )
                 [ Html.text "筑波大学に所属していた" ]
@@ -423,7 +300,7 @@ graduateYesNoTsukubaView leftSelect =
                  , Html.Attributes.style "border-radius" "0 .4rem .4rem 0"
                  ]
                     ++ (if leftSelect then
-                            [ Html.Events.onClick () ]
+                            [ Html.Events.onClick SwitchGraduateNoTsukuba ]
 
                         else
                             []
@@ -432,13 +309,15 @@ graduateYesNoTsukubaView leftSelect =
                 [ Html.text "筑波大学に所属していなかった" ]
             ]
         ]
+    )
 
 
 {-| 学群の選択
 -}
-selectSchoolView : Maybe Data.University.School -> Html.Html (Maybe Data.University.School)
+selectSchoolView : Maybe University.School -> ( String, Html.Html Msg )
 selectSchoolView schoolMaybe =
-    Html.div
+    ( "schoolSelect"
+    , Html.div
         []
         [ Html.label
             [ Html.Attributes.class "form-label"
@@ -448,17 +327,24 @@ selectSchoolView schoolMaybe =
         , Html.select
             [ Html.Attributes.class "form-menu"
             , Html.Attributes.id schoolSelectId
-            , Html.Events.on "change" selectSchoolDecoder
+            , Html.Events.on "change" (selectDecoder |> Json.Decode.map SelectSchool)
             ]
-            ([ Html.option [] [ Html.text "--選択してください--" ] ]
-                ++ (Data.University.schoolAll
+            ((case schoolMaybe of
+                Just _ ->
+                    [ blankOption ]
+
+                Nothing ->
+                    []
+             )
+                ++ (University.schoolAll
                         |> List.map
                             (\s ->
-                                Html.option [] [ Html.text (Data.University.schoolToJapaneseString s) ]
+                                Html.option [] [ Html.text (University.schoolToJapaneseString s) ]
                             )
                    )
             )
         ]
+    )
 
 
 schoolSelectId : String
@@ -466,46 +352,44 @@ schoolSelectId =
     "signUp-selectSchool"
 
 
-selectSchoolDecoder : Json.Decode.Decoder (Maybe Data.University.School)
-selectSchoolDecoder =
-    Json.Decode.at
-        [ "target", "selectedIndex" ]
-        Json.Decode.int
-        |> Json.Decode.map (\index -> Data.University.schoolAll |> Array.fromList |> Array.get (index - 1))
-
-
 {-| 学類の選択
 -}
-selectDepartmentView : Data.University.School -> Maybe Data.University.SchoolAndDepartment -> Maybe (Html.Html (Maybe Data.University.SchoolAndDepartment))
+selectDepartmentView : University.School -> Maybe University.SchoolAndDepartment -> ( String, Html.Html Msg )
 selectDepartmentView school departmentMaybe =
-    case Data.University.schoolToDepartmentList school of
-        [] ->
-            Nothing
+    ( "selectDepartment"
+    , Html.div
+        []
+        [ Html.label
+            [ Html.Attributes.class "form-label"
+            , Html.Attributes.for departmentSelectId
+            ]
+            [ Html.text "学類" ]
+        , Html.select
+            [ Html.Attributes.class "form-menu"
+            , Html.Attributes.id departmentSelectId
+            , Html.Events.on "change" (selectDecoder |> Json.Decode.map SelectDepartment)
+            ]
+            ((case departmentMaybe of
+                Just _ ->
+                    [ blankOption ]
 
-        departmentList ->
-            Just
-                (Html.div
+                Nothing ->
                     []
-                    [ Html.label
-                        [ Html.Attributes.class "form-label"
-                        , Html.Attributes.for departmentSelectId
-                        ]
-                        [ Html.text "学類" ]
-                    , Html.select
-                        [ Html.Attributes.class "form-menu"
-                        , Html.Attributes.id departmentSelectId
-                        , Html.Events.on "change" (selectDepartmentDecoder school)
-                        ]
-                        ([ Html.option [] [ Html.text "--選択してください--" ] ]
-                            ++ (departmentList
-                                    |> List.map
-                                        (\s ->
-                                            Html.option [] [ Html.text (Data.University.departmentToJapaneseString s |> Maybe.withDefault "?") ]
-                                        )
-                               )
-                        )
-                    ]
-                )
+             )
+                ++ (University.schoolToDepartmentList school
+                        |> List.map
+                            (\s ->
+                                Html.option [] [ Html.text (University.departmentToJapaneseString s |> Maybe.withDefault "?") ]
+                            )
+                   )
+            )
+        ]
+    )
+
+
+blankOption : Html.Html msg
+blankOption =
+    Html.option [] [ Html.text "--選択してください--" ]
 
 
 departmentSelectId : String
@@ -513,10 +397,8 @@ departmentSelectId =
     "signUp-selectDepartment"
 
 
-selectDepartmentDecoder : Data.University.School -> Json.Decode.Decoder (Maybe Data.University.SchoolAndDepartment)
-selectDepartmentDecoder school =
+selectDecoder : Json.Decode.Decoder Int
+selectDecoder =
     Json.Decode.at
         [ "target", "selectedIndex" ]
         Json.Decode.int
-        |> Json.Decode.map
-            (\index -> Data.University.schoolToDepartmentList school |> Array.fromList |> Array.get (index - 1))

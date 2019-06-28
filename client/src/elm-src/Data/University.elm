@@ -40,7 +40,7 @@ import Utility
 -}
 type University
     = GraduateTsukuba Graduate SchoolAndDepartment
-    | GraduateNotTsukuba Graduate
+    | GraduateNoTsukuba Graduate
     | NotGraduate SchoolAndDepartment
 
 
@@ -55,7 +55,7 @@ universityToJapaneseString university =
             , department = departmentToJapaneseString schoolAndDepartment
             }
 
-        GraduateNotTsukuba graduate ->
+        GraduateNoTsukuba graduate ->
             { graduate = Just (graduateToJapaneseString graduate)
             , school = Nothing
             , department = Nothing
@@ -75,7 +75,7 @@ universityFromIdString { graduateMaybe, departmentMaybe } =
             Just (GraduateTsukuba graduate department)
 
         ( Nothing, Just graduate ) ->
-            Just (GraduateNotTsukuba graduate)
+            Just (GraduateNoTsukuba graduate)
 
         ( Just department, Nothing ) ->
             Just (NotGraduate department)

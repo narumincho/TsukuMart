@@ -1,5 +1,5 @@
 module Api exposing
-    ( EditProductRequest(..)
+    ( UpdateProductRequest(..)
     , ProfileUpdateData
     , SellProductRequest(..)
     , SignUpRequest
@@ -35,6 +35,7 @@ module Api exposing
     , userWithNameDecoder
     )
 
+import Data.Category as Category
 import Data.EmailAddress as EmailAddress
 import Data.ImageId as ImageId
 import Data.Product as Product
@@ -104,7 +105,7 @@ universityToGraphQLValue university =
                 , ( "schoolAndDepartment", GraphQLEnum (University.departmentToIdString schoolAndDepartment) )
                 ]
 
-            University.GraduateNotTsukuba graduate ->
+            University.GraduateNoTsukuba graduate ->
                 [ ( "graduate", GraphQLEnum (University.graduateToIdString graduate) ) ]
 
             University.NotGraduate schoolAndDepartment ->
@@ -296,6 +297,7 @@ type SellProductRequest
         , description : String
         , price : Int
         , condition : Product.Condition
+        , category : Category.Category
         , imageList : List String
         }
 
@@ -312,8 +314,8 @@ sellProduct token sellProductRequest msg =
 -}
 
 
-type EditProductRequest
-    = EditProductRequest
+type UpdateProductRequest
+    = UpdateProductRequest
         { name : String
         , description : String
         , price : Int
@@ -323,7 +325,7 @@ type EditProductRequest
         }
 
 
-editProduct : Token -> Product.Id -> EditProductRequest -> (Result String () -> msg) -> Cmd msg
+editProduct : Token -> Product.Id -> UpdateProductRequest -> (Result String () -> msg) -> Cmd msg
 editProduct accessToken productId editProductRequest callBack =
     Cmd.none
 

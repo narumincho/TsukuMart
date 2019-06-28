@@ -396,7 +396,7 @@ commentedProductsUrl =
 
 commentedProductsPath : List String
 commentedProductsPath =
-    [ "treading-products" ]
+    [ "commented-products" ]
 
 
 

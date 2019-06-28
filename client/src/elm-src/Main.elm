@@ -865,7 +865,7 @@ exhibitionPageEmissionListToCmd =
                 Page.Exhibition.EmissionSellProducts ( token, request ) ->
                     Api.sellProduct token request SellProductResponse
 
-                Page.Exhibition.EmissionByProductsEditor e ->
+                Page.Exhibition.EmissionByProductEditor e ->
                     productEditorEmissionToCmd e
         )
         >> Cmd.batch

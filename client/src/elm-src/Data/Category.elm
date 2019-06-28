@@ -1,17 +1,17 @@
 module Data.Category exposing
-    ( Category
-    , SubCategory
+    ( Group
+    , Category
+    , groupAll
     , categoryAll
-    , subCategoryAll
-    , subCategoryFromIdString
-    , subCategoryToIndexInCategory
-    , subCategoryToJapaneseString
+    , categoryFromIdString
+    , categoryToIndexInCategory
+    , categoryToJapaneseString
     )
 
 import Utility
 
 
-type Category
+type Group
     = Furniture
     | Appliance
     | Fashion
@@ -23,8 +23,8 @@ type Category
 
 {-| すべての大まかなカテゴリー
 -}
-categoryAll : List Category
-categoryAll =
+groupAll : List Group
+groupAll =
     [ Furniture
     , Appliance
     , Fashion
@@ -35,8 +35,8 @@ categoryAll =
     ]
 
 
-categoryToJapaneseString : Category -> String
-categoryToJapaneseString category =
+groupToJapaneseString : Group -> String
+groupToJapaneseString category =
     case category of
         Furniture ->
             "家具"
@@ -60,8 +60,8 @@ categoryToJapaneseString category =
             "ホビー・雑貨"
 
 
-categoryToSubCategoryList : Category -> List SubCategory
-categoryToSubCategoryList category =
+groupToCategoryList : Group -> List Category
+groupToCategoryList category =
     case category of
         Furniture ->
             [ FurnitureTable
@@ -130,8 +130,8 @@ categoryToSubCategoryList category =
             ]
 
 
-categoryFromSubCategory : SubCategory -> Category
-categoryFromSubCategory subCategory =
+groupFromCategory : Category -> Group
+groupFromCategory subCategory =
     case subCategory of
         FurnitureTable ->
             Furniture
@@ -269,7 +269,7 @@ categoryFromSubCategory subCategory =
             Hobby
 
 
-type SubCategory
+type Category
     = FurnitureTable
     | FurnitureChair
     | FurnitureChest
@@ -319,8 +319,8 @@ type SubCategory
 
 {-| すべてのカテゴリー
 -}
-subCategoryAll : List SubCategory
-subCategoryAll =
+categoryAll : List Category
+categoryAll =
     [ FurnitureTable
     , FurnitureChair
     , FurnitureChest
@@ -369,17 +369,17 @@ subCategoryAll =
     ]
 
 
-subCategoryToIndexInCategory : SubCategory -> Int
-subCategoryToIndexInCategory subCategory =
+categoryToIndexInCategory : Category -> Int
+categoryToIndexInCategory subCategory =
     subCategory
-        |> categoryFromSubCategory
-        |> categoryToSubCategoryList
+        |> groupFromCategory
+        |> groupToCategoryList
         |> Utility.getFirstIndex subCategory
         |> Maybe.withDefault 0
 
 
-subCategoryToJapaneseString : SubCategory -> String
-subCategoryToJapaneseString subCategory =
+categoryToJapaneseString : Category -> String
+categoryToJapaneseString subCategory =
     case subCategory of
         FurnitureTable ->
             "家具 / 机"
@@ -517,8 +517,8 @@ subCategoryToJapaneseString subCategory =
             "ホビー・雑貨 / その他"
 
 
-subCategoryToIdString : SubCategory -> String
-subCategoryToIdString subCategory =
+categoryToIdString : Category -> String
+categoryToIdString subCategory =
     case subCategory of
         FurnitureTable ->
             "furnitureTable"
@@ -656,8 +656,8 @@ subCategoryToIdString subCategory =
             "hobbyOther"
 
 
-subCategoryFromIdString : String -> Maybe SubCategory
-subCategoryFromIdString id =
+categoryFromIdString : String -> Maybe Category
+categoryFromIdString id =
     case id of
         "furnitureTable" ->
             Just FurnitureTable

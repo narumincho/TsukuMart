@@ -63,7 +63,7 @@ type Emission
     | EmissionUpdateNowTime
     | EmissionDelete Api.Token Product.Id
     | EmissionByProductEditor ProductEditor.Emission
-    | EmissionUpdateProductData Api.Token Product.Id Api.EditProductRequest
+    | EmissionUpdateProductData Api.Token Product.Id Api.UpdateProductRequest
 
 
 type Msg
