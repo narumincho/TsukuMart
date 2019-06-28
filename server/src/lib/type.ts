@@ -10,17 +10,7 @@ const urlTypeScalarTypeConfig: g.GraphQLScalarTypeConfig<URL, string> = {
     name: "URL",
     description: `URL 文字列で指定する 例"https://narumincho.com/definy/spec.html"`,
     serialize: (url: URL): string => url.toString(),
-    parseValue: (value: string): URL => new URL(value),
-    parseLiteral: (ast): URL | null => {
-        if (ast.kind !== "StringValue") {
-            return null;
-        }
-        try {
-            return new URL(ast.value);
-        } catch {
-            return null;
-        }
-    }
+    parseValue: (value: string): URL => new URL(value)
 };
 
 export const urlGraphQLType = new g.GraphQLScalarType(urlTypeScalarTypeConfig);
@@ -31,33 +21,21 @@ export const urlGraphQLType = new g.GraphQLScalarType(urlTypeScalarTypeConfig);
  */
 export type DataURL = { mimeType: string; data: Buffer };
 
-const dataUrlParser = (value: string): DataURL => {
-    const imageDataUrlMimeType = value.match(/^data:(.+);base64,(.+)$/);
-    if (imageDataUrlMimeType === null) {
-        throw new Error("invalid DataURL");
-    }
-    return {
-        mimeType: imageDataUrlMimeType[1],
-        data: Buffer.from(imageDataUrlMimeType[2], "base64")
-    };
-};
-
 const dataUrlTypeConfig: g.GraphQLScalarTypeConfig<DataURL, string> = {
     name: "DataURL",
     description:
         "DataURL (https://developer.mozilla.org/ja/docs/Web/HTTP/Basics_of_HTTP/Data_URIs) base64エンコードのみサポート",
     serialize: (value: DataURL): string =>
         "data:" + value.mimeType + ";base64," + value.data.toString(),
-    parseValue: dataUrlParser,
-    parseLiteral: ast => {
-        if (ast.kind !== "StringValue") {
-            return null;
+    parseValue: (value: string): DataURL => {
+        const imageDataUrlMimeType = value.match(/^data:(.+);base64,(.+)$/);
+        if (imageDataUrlMimeType === null) {
+            throw new Error("invalid DataURL");
         }
-        try {
-            return dataUrlParser(ast.value);
-        } catch {
-            return null;
-        }
+        return {
+            mimeType: imageDataUrlMimeType[1],
+            data: Buffer.from(imageDataUrlMimeType[2], "base64")
+        };
     }
 };
 
