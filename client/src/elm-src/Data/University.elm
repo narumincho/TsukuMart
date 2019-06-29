@@ -14,6 +14,7 @@ module Data.University exposing
     , graduateToJapaneseString
     , schoolAll
     , schoolFromDepartment
+    , schoolFromIndex
     , schoolToDepartmentList
     , schoolToIdString
     , schoolToIndex
@@ -126,6 +127,12 @@ schoolToIndex school =
     schoolAll
         |> Utility.getFirstIndex school
         |> Maybe.withDefault 0
+
+
+schoolFromIndex : Int -> Maybe School
+schoolFromIndex index =
+    schoolAll
+        |> Utility.getAt index
 
 
 {-| 学群の識別用の文字列を取得する

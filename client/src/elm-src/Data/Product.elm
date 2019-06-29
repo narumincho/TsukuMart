@@ -15,6 +15,7 @@ module Data.Product exposing
     , conditionIndex
     , conditionToIdString
     , conditionToJapaneseString
+    , conditonFromIndex
     , createdAtToString
     , detailGetCommentList
     , detailGetCondition
@@ -198,8 +199,15 @@ conditionAll =
 
 conditionIndex : Condition -> Int
 conditionIndex condition =
-    Utility.getFirstIndex condition conditionAll
+    conditionAll
+        |> Utility.getFirstIndex condition
         |> Maybe.withDefault 0
+
+
+conditonFromIndex : Int -> Maybe Condition
+conditonFromIndex index =
+    conditionAll
+        |> Utility.getAt index
 
 
 conditionToJapaneseString : Condition -> String

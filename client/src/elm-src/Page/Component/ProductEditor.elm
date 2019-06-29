@@ -1,11 +1,9 @@
 module Page.Component.ProductEditor exposing
     ( Emission(..)
-    , ImageList(..)
     , Model
     , Msg(..)
     , imageListToBlobUrlList
     , initModel
-    , requestDataToApiRequest
     , requestDataToEditApiRequest
     , toRequestData
     , update
@@ -52,9 +50,9 @@ type Msg
     = InputName String
     | InputDescription String
     | InputPrice String
-    | InputCondition (Maybe Product.Condition)
-    | InputCategoryGroup (Maybe Category.Group)
-    | InputCategory (Maybe Category.Category)
+    | InputCondition Int
+    | InputCategoryGroup Int
+    | InputCategory Int
     | DeleteImage Int
     | InputImageList (List String)
 
@@ -87,22 +85,16 @@ initModel :
     , addImages : List String
     }
     -> ( Model, List Emission )
-initModel rec =
+initModel { name, description, price, condition, category, addImages } =
     let
         model =
             Model
-                { name = rec.name
-                , description = rec.description
-                , price = rec.price
-                , condition = rec.condition
-                , category =
-                    case rec.category of
-                        Just category ->
-                            CategorySelect category
-
-                        Nothing ->
-                            CategoryNone
-                , image = rec.image
+                { name = name
+                , description = description
+                , price = Just price
+                , condition = Just condition
+                , category = CategorySelect category
+                , addImages = addImages
                 }
     in
     ( model
@@ -150,8 +142,73 @@ update msg (Model rec) =
             , []
             )
 
-        InputCondition conditionMaybe ->
-            ( Model { rec | condition = conditionMaybe }
+        InputCondition index ->
+            ( case Product.conditonFromIndex index of
+                Just condition ->
+                    Model
+                        { rec
+                            | condition = Just condition
+                        }
+
+                Nothing ->
+                    Model rec
+            , []
+            )
+
+        InputCategoryGroup index ->
+            ( case Category.groupFromIndex index of
+                Just categoryGroup ->
+                    Model
+                        { rec
+                            | category =
+                                case rec.category of
+                                    CategoryNone ->
+                                        CategoryGroupSelect categoryGroup
+
+                                    CategoryGroupSelect _ ->
+                                        CategoryGroupSelect categoryGroup
+
+                                    CategorySelect category ->
+                                        if Category.groupFromCategory category == categoryGroup then
+                                            CategorySelect category
+
+                                        else
+                                            CategoryGroupSelect categoryGroup
+                        }
+
+                Nothing ->
+                    Model rec
+            , []
+            )
+
+        InputCategory index ->
+            ( Model
+                { rec
+                    | category =
+                        case rec.category of
+                            CategoryNone ->
+                                CategoryNone
+
+                            CategoryGroupSelect group ->
+                                case Category.fromIndexInGroup group index of
+                                    Just category ->
+                                        CategorySelect category
+
+                                    Nothing ->
+                                        CategoryGroupSelect group
+
+                            CategorySelect beforeCategory ->
+                                case
+                                    Category.fromIndexInGroup
+                                        (Category.groupFromCategory beforeCategory)
+                                        index
+                                of
+                                    Just afterCategory ->
+                                        CategorySelect afterCategory
+
+                                    Nothing ->
+                                        CategorySelect beforeCategory
+                }
             , []
             )
 
@@ -285,10 +342,10 @@ imageDeleteAt index image =
 
 
 toRequestData : Model -> Maybe Api.SellProductRequest
-toRequestData (Model { name, description, price, condition, category, image }) =
+toRequestData (Model { name, description, price, condition, category, addImages }) =
     case ( price, condition, category ) of
         ( Just p, Just conditionValue, CategorySelect categoryValue ) ->
-            if nameCheck name == Nothing && priceCheck price == Nothing then
+            if nameCheck name == Nothing && priceCheck price == Nothing && imagesCheck addImages == Nothing then
                 image
                     |> Maybe.map
                         (\i ->
@@ -307,17 +364,6 @@ toRequestData (Model { name, description, price, condition, category, image }) =
 
         ( _, _, _ ) ->
             Nothing
-
-
-requestDataToApiRequest : RequestData -> Api.SellProductRequest
-requestDataToApiRequest { name, description, price, condition, image } =
-    Api.SellProductRequest
-        { name = name
-        , description = description
-        , price = price
-        , condition = condition
-        , imageList = []
-        }
 
 
 requestDataToEditApiRequest : RequestData -> Api.UpdateProductRequest
@@ -369,7 +415,20 @@ priceCheck priceMaybe =
             Just "0 ～ 100万円の価格を入力してください"
 
 
-imagesCheck : Maybe
+imagesCheck : List String -> Maybe String
+imagesCheck images =
+    let
+        length =
+            List.length images
+    in
+    if length < 1 then
+        Just "画像は1枚以上必要です"
+
+    else if 4 < length then
+        Just "画像は4枚以内でなければいけません"
+
+    else
+        Nothing
 
 
 view : Model -> List (Html.Html Msg)

@@ -1,11 +1,17 @@
 module Data.Category exposing
-    ( Group
-    , Category
-    , groupAll
+    ( Category
+    , Group
     , categoryAll
-    , categoryFromIdString
-    , categoryToIndexInCategory
-    , categoryToJapaneseString
+    , fromIdString
+    , fromIndexInGroup
+    , toIndexInGroup
+    , toJapaneseString
+    , groupAll
+    , groupFromCategory
+    , groupFromIndex
+    , groupToCategoryList
+    , groupToIndex
+    , groupToJapaneseString
     )
 
 import Utility
@@ -33,6 +39,19 @@ groupAll =
     , Food
     , Hobby
     ]
+
+
+groupToIndex : Group -> Int
+groupToIndex group =
+    groupAll
+        |> Utility.getFirstIndex group
+        |> Maybe.withDefault 0
+
+
+groupFromIndex : Int -> Maybe Group
+groupFromIndex index =
+    groupAll
+        |> Utility.getAt index
 
 
 groupToJapaneseString : Group -> String
@@ -369,17 +388,23 @@ categoryAll =
     ]
 
 
-categoryToIndexInCategory : Category -> Int
-categoryToIndexInCategory subCategory =
+toIndexInGroup : Category -> Int
+toIndexInGroup subCategory =
     subCategory
         |> groupFromCategory
         |> groupToCategoryList
         |> Utility.getFirstIndex subCategory
         |> Maybe.withDefault 0
 
+fromIndexInGroup : Group -> Int -> Maybe Category
+fromIndexInGroup group index =
+    group
+        |> groupToCategoryList
+        |> Utility.getAt index
 
-categoryToJapaneseString : Category -> String
-categoryToJapaneseString subCategory =
+
+toJapaneseString : Category -> String
+toJapaneseString subCategory =
     case subCategory of
         FurnitureTable ->
             "家具 / 机"
@@ -517,8 +542,8 @@ categoryToJapaneseString subCategory =
             "ホビー・雑貨 / その他"
 
 
-categoryToIdString : Category -> String
-categoryToIdString subCategory =
+toIdString : Category -> String
+toIdString subCategory =
     case subCategory of
         FurnitureTable ->
             "furnitureTable"
@@ -656,8 +681,8 @@ categoryToIdString subCategory =
             "hobbyOther"
 
 
-categoryFromIdString : String -> Maybe Category
-categoryFromIdString id =
+fromIdString : String -> Maybe Category
+fromIdString id =
     case id of
         "furnitureTable" ->
             Just FurnitureTable

@@ -1,20 +1,6 @@
-module Utility exposing (getFirstIndex, toMapper, toMapperGetterMaybe)
+module Utility exposing (getFirstIndex, getAt)
 
-
-toMapper : (big -> small) -> (small -> big -> big) -> (small -> small) -> big -> big
-toMapper getter setter f big =
-    big
-        |> setter (f (getter big))
-
-
-toMapperGetterMaybe : (big -> Maybe small) -> (small -> big -> big) -> (small -> small) -> big -> big
-toMapperGetterMaybe getter setter f big =
-    case big |> getter of
-        Just value ->
-            big |> setter (f value)
-
-        Nothing ->
-            big
+import Array
 
 
 getFirstIndex : a -> List a -> Maybe Int
@@ -30,3 +16,10 @@ getFirstIndex element list =
 
         [] ->
             Nothing
+
+
+getAt : Int -> List a -> Maybe a
+getAt index list =
+    list
+        |> Array.fromList
+        |> Array.get index

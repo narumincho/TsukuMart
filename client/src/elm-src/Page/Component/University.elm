@@ -7,7 +7,6 @@ module Page.Component.University exposing
     , view
     )
 
-import Array
 import Data.University as University
 import Html
 import Html.Attributes
