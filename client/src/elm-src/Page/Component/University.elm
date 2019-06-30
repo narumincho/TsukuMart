@@ -1,12 +1,13 @@
 module Page.Component.University exposing
     ( Emission(..)
     , Model
+    , Msg
     , getUniversity
     , initModelFromUniversity
     , initModelNone
     , update
     , view
-    , Msg)
+    )
 
 import Data.University as University
 import Html
@@ -117,7 +118,136 @@ getUniversity universitySelect =
 
 update : Msg -> Model -> ( Model, List Emission )
 update msg model =
-    ( model, [] )
+    ( case msg of
+        SwitchGraduate ->
+            case model of
+                School schoolSelect ->
+                    GraduateTsukuba
+                        { school = schoolSelect
+                        , graduate = Nothing
+                        }
+
+                _ ->
+                    model
+
+        SwitchSchool ->
+            case model of
+                School _ ->
+                    model
+
+                GraduateTsukuba { school } ->
+                    School school
+
+                GraduateNoTsukuba _ ->
+                    School SchoolNone
+
+        SwitchGraduateTsukuba ->
+            case model of
+                GraduateNoTsukuba graduate ->
+                    GraduateTsukuba
+                        { school = SchoolNone
+                        , graduate = graduate
+                        }
+
+                _ ->
+                    model
+
+        SwitchGraduateNoTsukuba ->
+            case model of
+                GraduateTsukuba { graduate } ->
+                    GraduateNoTsukuba
+                        graduate
+
+                _ ->
+                    model
+
+        SelectGraduate index ->
+            case University.graduateFromIndex index of
+                Just graduate ->
+                    case model of
+                        GraduateTsukuba rec ->
+                            GraduateTsukuba { rec | graduate = Just graduate }
+
+                        GraduateNoTsukuba _ ->
+                            GraduateNoTsukuba (Just graduate)
+
+                        School _ ->
+                            model
+
+                Nothing ->
+                    model
+
+        SelectSchool index ->
+            case model of
+                School school ->
+                    School (selectSchool index school)
+
+                GraduateTsukuba rec ->
+                    GraduateTsukuba
+                        { rec
+                            | school = selectSchool index rec.school
+                        }
+
+                GraduateNoTsukuba _ ->
+                    model
+
+        SelectDepartment index ->
+            case model of
+                School school ->
+                    School (selectDepartment index school)
+
+                GraduateTsukuba rec ->
+                    GraduateTsukuba { rec | school = selectDepartment index rec.school }
+
+                GraduateNoTsukuba _ ->
+                    model
+    , []
+    )
+
+
+selectSchool : Int -> SchoolSelect -> SchoolSelect
+selectSchool index schoolSelect =
+    case University.schoolFromIndex index of
+        Just school ->
+            case schoolSelect of
+                SchoolNone ->
+                    SchoolSchool school
+
+                SchoolSchool _ ->
+                    SchoolSchool school
+
+                SchoolSchoolAndDepartment schoolAndDepartment ->
+                    if University.schoolFromDepartment schoolAndDepartment == school then
+                        schoolSelect
+
+                    else
+                        SchoolSchool school
+
+        Nothing ->
+            schoolSelect
+
+
+selectDepartment : Int -> SchoolSelect -> SchoolSelect
+selectDepartment index schoolSelect =
+    case schoolSelect of
+        SchoolNone ->
+            SchoolNone
+
+        SchoolSchool school ->
+            case University.departmentFromIndexInSchool school index of
+                Just department ->
+                    SchoolSchoolAndDepartment department
+
+                Nothing ->
+                    schoolSelect
+
+        SchoolSchoolAndDepartment schoolAndDepartment ->
+            case University.departmentFromIndexInSchool (University.schoolFromDepartment schoolAndDepartment) index of
+                Just department ->
+                    SchoolSchoolAndDepartment department
+
+                Nothing ->
+                    schoolSelect
 
 
 

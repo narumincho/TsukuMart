@@ -128,7 +128,7 @@ updateWhenLogIn msg page =
                     )
 
                 BackToEditPage ->
-                    ProductEditor.initModelFromSellRequstData
+                    ProductEditor.initModelFromSellRequestData
                         rec.request
                         |> Tuple.mapBoth
                             EditPage

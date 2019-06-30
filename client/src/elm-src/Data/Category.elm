@@ -1,7 +1,7 @@
 module Data.Category exposing
     ( Category
     , Group
-    , categoryAll
+    , all
     , fromIdString
     , fromIndexInGroup
     , toIndexInGroup
@@ -338,8 +338,8 @@ type Category
 
 {-| すべてのカテゴリー
 -}
-categoryAll : List Category
-categoryAll =
+all : List Category
+all =
     [ FurnitureTable
     , FurnitureChair
     , FurnitureChest

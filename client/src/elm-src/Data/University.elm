@@ -4,11 +4,13 @@ module Data.University exposing
     , SchoolAndDepartment
     , University(..)
     , departmentFromIdString
+    , departmentFromIndexInSchool
     , departmentToIdString
     , departmentToIndexInSchool
     , departmentToJapaneseString
     , graduateAllValue
     , graduateFromIdString
+    , graduateFromIndex
     , graduateToIdString
     , graduateToIndex
     , graduateToJapaneseString
@@ -425,6 +427,13 @@ departmentToIndexInSchool department =
         |> Maybe.withDefault 0
 
 
+departmentFromIndexInSchool : School -> Int -> Maybe SchoolAndDepartment
+departmentFromIndexInSchool school index =
+    school
+        |> schoolToDepartmentList
+        |> Utility.getAt index
+
+
 departmentToIdString : SchoolAndDepartment -> String
 departmentToIdString department =
     case department of
@@ -645,6 +654,12 @@ graduateToIndex : Graduate -> Int
 graduateToIndex graduate =
     Utility.getFirstIndex graduate graduateAllValue
         |> Maybe.withDefault 0
+
+
+graduateFromIndex : Int -> Maybe Graduate
+graduateFromIndex index =
+    graduateAllValue
+        |> Utility.getAt index
 
 
 graduateToJapaneseString : Graduate -> String

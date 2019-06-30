@@ -4,7 +4,7 @@ module Page.Component.ProductEditor exposing
     , Msg(..)
     , initModel
     , initModelBlank
-    , initModelFromSellRequstData
+    , initModelFromSellRequestData
     , toSoldRequest
     , toUpdateRequest
     , update
@@ -78,13 +78,13 @@ initModelBlank =
       , EmissionReplaceText { id = nameEditorId, text = "" }
       , EmissionReplaceText { id = descriptionEditorId, text = "" }
       , EmissionReplaceText { id = priceEditorId, text = "" }
-      , EmissionChangeSelectedIndex { id = conditionEditorId, index = 0 }
+      , EmissionChangeSelectedIndex { id = conditionSelectId, index = 0 }
       ]
     )
 
 
-initModelFromSellRequstData : Api.SellProductRequest -> ( Model, List Emission )
-initModelFromSellRequstData (Api.SellProductRequest rec) =
+initModelFromSellRequestData : Api.SellProductRequest -> ( Model, List Emission )
+initModelFromSellRequestData (Api.SellProductRequest rec) =
     ( Model
         { name = rec.name
         , description = rec.description
@@ -104,7 +104,7 @@ initModelFromSellRequstData (Api.SellProductRequest rec) =
       , EmissionReplaceText
             { id = priceEditorId, text = String.fromInt rec.price }
       , EmissionChangeSelectedIndex
-            { id = conditionEditorId, index = rec.condition |> Product.conditionIndex }
+            { id = conditionSelectId, index = rec.condition |> Product.conditionIndex }
       ]
     )
 
@@ -138,26 +138,22 @@ initModel { name, description, price, condition, category, imageIds } =
       , EmissionReplaceText
             { id = priceEditorId, text = String.fromInt price }
       , EmissionChangeSelectedIndex
-            { id = conditionEditorId, index = condition |> Product.conditionIndex }
+            { id = conditionSelectId, index = condition |> Product.conditionIndex }
       ]
     )
 
 
 update : Msg -> Model -> ( Model, List Emission )
 update msg (Model rec) =
-    case msg of
+    ( case msg of
         InputName nameString ->
-            ( Model { rec | name = nameString }
-            , []
-            )
+            Model { rec | name = nameString }
 
         InputDescription descriptionString ->
-            ( Model { rec | description = descriptionString }
-            , []
-            )
+            Model { rec | description = descriptionString }
 
         InputPrice priceString ->
-            ( Model
+            Model
                 { rec
                     | price =
                         String.toInt priceString
@@ -170,11 +166,9 @@ update msg (Model rec) =
                                         Nothing
                                 )
                 }
-            , []
-            )
 
         SelectCondition index ->
-            ( case Product.conditonFromIndex index of
+            case Product.conditonFromIndex index of
                 Just condition ->
                     Model
                         { rec
@@ -183,11 +177,9 @@ update msg (Model rec) =
 
                 Nothing ->
                     Model rec
-            , []
-            )
 
         SelectCategoryGroup index ->
-            ( case Category.groupFromIndex index of
+            case Category.groupFromIndex index of
                 Just categoryGroup ->
                     Model
                         { rec
@@ -209,11 +201,9 @@ update msg (Model rec) =
 
                 Nothing ->
                     Model rec
-            , []
-            )
 
         SelectCategory index ->
-            ( Model
+            Model
                 { rec
                     | category =
                         case rec.category of
@@ -240,8 +230,6 @@ update msg (Model rec) =
                                     Nothing ->
                                         CategorySelect beforeCategory
                 }
-            , []
-            )
 
         DeleteImage index ->
             let
@@ -253,19 +241,17 @@ update msg (Model rec) =
                         , deleteIndex = rec.deleteImagesAt
                         }
             in
-            ( Model
+            Model
                 { rec
                     | addImages = addImages
                     , deleteImagesAt = deleteIndex
                 }
-            , []
-            )
 
         InputImageList dataUrlList ->
-            ( Model
+            Model
                 { rec | addImages = rec.addImages ++ dataUrlList }
-            , []
-            )
+    , []
+    )
 
 
 imageDeleteAt :
@@ -439,6 +425,7 @@ view (Model rec) =
            , descriptionView
            , priceView rec.price
            , conditionView rec.condition
+           , categoryView rec.category
            ]
 
 
@@ -683,16 +670,22 @@ conditionView condition =
     Html.div
         []
         [ Html.label
-            [ Html.Attributes.for conditionEditorId
+            [ Html.Attributes.for conditionSelectId
             , Html.Attributes.class "form-label"
             ]
             [ Html.text "商品の状態" ]
         , Html.select
-            [ Html.Attributes.id conditionEditorId
+            [ Html.Attributes.id conditionSelectId
             , Html.Attributes.class "form-menu"
             , Html.Events.on "change" (selectDecoder |> Json.Decode.map SelectCondition)
             ]
-            ([ Html.option [] [ Html.text "--選択してください--" ] ]
+            ((case condition of
+                Just _ ->
+                    []
+
+                Nothing ->
+                    [ blankOption ]
+             )
                 ++ (Product.conditionAll
                         |> List.map
                             (\s ->
@@ -703,9 +696,14 @@ conditionView condition =
         ]
 
 
-conditionEditorId : String
-conditionEditorId =
+conditionSelectId : String
+conditionSelectId =
     "exhibition-selectCondition"
+
+
+blankOption : Html.Html msg
+blankOption =
+    Html.option [] [ Html.text "--選択してください--" ]
 
 
 selectDecoder : Json.Decode.Decoder Int
@@ -713,3 +711,102 @@ selectDecoder =
     Json.Decode.at
         [ "target", "selectedIndex" ]
         Json.Decode.int
+
+
+
+{- =======================================================
+                       Category
+   =======================================================
+-}
+
+
+categoryView : CategorySelect -> Html.Html Msg
+categoryView categorySelect =
+    Html.div
+        []
+        (case categorySelect of
+            CategoryNone ->
+                [ selectCategoryGroupView Nothing ]
+
+            CategoryGroupSelect group ->
+                [ selectCategoryGroupView (Just group)
+                , selectCategoryView Nothing
+                ]
+
+            CategorySelect category ->
+                [ selectCategoryGroupView (Just (Category.groupFromCategory category))
+                , selectCategoryView (Just category)
+                ]
+        )
+
+
+selectCategoryGroupView : Maybe Category.Group -> Html.Html Msg
+selectCategoryGroupView categoryGroup =
+    Html.div
+        []
+        [ Html.label
+            [ Html.Attributes.for conditionSelectId
+            , Html.Attributes.class "form-label"
+            ]
+            [ Html.text "カテゴリ グループ" ]
+        , Html.select
+            [ Html.Attributes.id categoryGroupSelectId
+            , Html.Attributes.class "form-menu"
+            , Html.Events.on "change" (selectDecoder |> Json.Decode.map SelectCategoryGroup)
+            ]
+            ((case categoryGroup of
+                Just _ ->
+                    []
+
+                Nothing ->
+                    [ blankOption ]
+             )
+                ++ (Category.groupAll
+                        |> List.map
+                            (\g ->
+                                Html.option [] [ Html.text (Category.groupToJapaneseString g) ]
+                            )
+                   )
+            )
+        ]
+
+
+categoryGroupSelectId : String
+categoryGroupSelectId =
+    "select-category-group"
+
+
+selectCategoryView : Maybe Category.Category -> Html.Html Msg
+selectCategoryView category =
+    Html.div
+        []
+        [ Html.label
+            [ Html.Attributes.for conditionSelectId
+            , Html.Attributes.class "form-label"
+            ]
+            [ Html.text "カテゴリ" ]
+        , Html.select
+            [ Html.Attributes.id categorySelectId
+            , Html.Attributes.class "form-menu"
+            , Html.Events.on "change" (selectDecoder |> Json.Decode.map SelectCategory)
+            ]
+            ((case category of
+                Just _ ->
+                    []
+
+                Nothing ->
+                    [ blankOption ]
+             )
+                ++ (Category.all
+                        |> List.map
+                            (\c ->
+                                Html.option [] [ Html.text (Category.toJapaneseString c) ]
+                            )
+                   )
+            )
+        ]
+
+
+categorySelectId : String
+categorySelectId =
+    "select-category"
