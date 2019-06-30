@@ -4,14 +4,15 @@ module Data.Category exposing
     , all
     , fromIdString
     , fromIndexInGroup
-    , toIndexInGroup
-    , toJapaneseString
     , groupAll
     , groupFromCategory
     , groupFromIndex
     , groupToCategoryList
     , groupToIndex
     , groupToJapaneseString
+    , toIdString
+    , toIndexInGroup
+    , toJapaneseString
     )
 
 import Utility
@@ -395,6 +396,7 @@ toIndexInGroup subCategory =
         |> groupToCategoryList
         |> Utility.getFirstIndex subCategory
         |> Maybe.withDefault 0
+
 
 fromIndexInGroup : Group -> Int -> Maybe Category
 fromIndexInGroup group index =

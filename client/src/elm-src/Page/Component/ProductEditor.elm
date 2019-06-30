@@ -179,7 +179,7 @@ update msg (Model rec) =
                 }
 
         SelectCondition index ->
-            case Product.conditonFromIndex index of
+            case Product.conditionFromIndex index of
                 Just condition ->
                     Model
                         { rec

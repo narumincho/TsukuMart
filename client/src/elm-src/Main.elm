@@ -114,7 +114,7 @@ type Msg
     | ReceiveProductImages (List String)
     | ReceiveUserImage String
     | GetMyProfileAndLikedProductIdsResponse (Result String ( Data.User.WithName, List Data.Product.Id ))
-    | SellProductResponse (Result String ())
+    | SellProductResponse (Result String Data.Product.ProductDetail)
     | LikeProductResponse Data.Product.Id (Result String Int)
     | UnlikeProductResponse Data.Product.Id (Result String Int)
     | ChangeProfileResponse (Result String Data.User.WithProfile)
@@ -477,7 +477,7 @@ update msg (Model rec) =
 
         SellProductResponse response ->
             ( case response of
-                Ok () ->
+                Ok productDetail ->
                     Model
                         { rec | message = Just "出品しました" }
 

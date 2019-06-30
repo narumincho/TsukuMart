@@ -15,7 +15,7 @@ module Data.Product exposing
     , conditionIndex
     , conditionToIdString
     , conditionToJapaneseString
-    , conditonFromIndex
+    , conditionFromIndex
     , createdAtToString
     , detailGetCommentList
     , detailGetCondition
@@ -44,7 +44,7 @@ module Data.Product exposing
     , statusToIdString
     , updateById
     , updateLikedCount
-    )
+    , detailFromApi)
 
 {-| 商品
 -}
@@ -204,8 +204,8 @@ conditionIndex condition =
         |> Maybe.withDefault 0
 
 
-conditonFromIndex : Int -> Maybe Condition
-conditonFromIndex index =
+conditionFromIndex : Int -> Maybe Condition
+conditionFromIndex index =
     conditionAll
         |> Utility.getAt index
 

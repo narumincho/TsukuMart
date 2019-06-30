@@ -303,9 +303,143 @@ type SellProductRequest
         }
 
 
-sellProduct : Token -> SellProductRequest -> (Result String () -> msg) -> Cmd msg
-sellProduct token sellProductRequest callBack =
-    Cmd.none
+sellProduct : Token -> SellProductRequest -> (Result String Product.ProductDetail -> msg) -> Cmd msg
+sellProduct token (SellProductRequest request) callBack =
+    graphQlApiRequest
+        (Mutation
+            [ Field
+                { name = "sellProduct"
+                , args =
+                    [ ( "accessToken", GraphQLString (tokenToString token) )
+                    , ( "name", GraphQLString request.name )
+                    , ( "price", GraphQLInt request.price )
+                    , ( "description", GraphQLString request.description )
+                    , ( "images", GraphQLList (request.images |> List.map GraphQLString) )
+                    , ( "condition", GraphQLEnum (Product.conditionToIdString request.condition) )
+                    , ( "category", GraphQLEnum (Category.toIdString request.category) )
+                    ]
+                , return =
+                    []
+                }
+            ]
+        )
+        productDecoder
+        callBack
+
+
+productDecoder : Json.Decode.Decoder Product.ProductDetail
+productDecoder =
+    Json.Decode.succeed
+        (\id name description price condition category status imageIds likedCount seller ->
+            Product.detailFromApi
+                { id = id
+                , name = name
+                , description = description
+                , price = price
+                , condition = condition
+                , category = category
+                , status = status
+                , imageIds = imageIds
+                , likedCount = likedCount
+                , seller = seller
+                }
+        )
+        |> Json.Decode.Pipeline.required "id" Json.Decode.string
+        |> Json.Decode.Pipeline.required "name" Json.Decode.string
+        |> Json.Decode.Pipeline.required "description" Json.Decode.string
+        |> Json.Decode.Pipeline.required "price" Json.Decode.int
+        |> Json.Decode.Pipeline.required "condition" conditionDecoder
+        |> Json.Decode.Pipeline.required "category" categoryDecoder
+        |> Json.Decode.Pipeline.required "status" statusDecoder
+        |> Json.Decode.Pipeline.required "imageIds" imageIdsDecoder
+        |> Json.Decode.Pipeline.required "likedCount" Json.Decode.int
+        |> Json.Decode.Pipeline.required "seller" userWithNameDecoder
+
+
+conditionDecoder : Json.Decode.Decoder Product.Condition
+conditionDecoder =
+    Json.Decode.string
+        |> Json.Decode.andThen
+            (\idString ->
+                case Product.conditionFromIdString idString of
+                    Just condition ->
+                        Json.Decode.succeed condition
+
+                    Nothing ->
+                        Json.Decode.fail
+                            (enumErrorMsg
+                                idString
+                                "condition"
+                                Product.conditionAll
+                                Product.conditionToIdString
+                            )
+            )
+
+
+categoryDecoder : Json.Decode.Decoder Category.Category
+categoryDecoder =
+    Json.Decode.string
+        |> Json.Decode.andThen
+            (\idString ->
+                case Category.fromIdString idString of
+                    Just category ->
+                        Json.Decode.succeed category
+
+                    Nothing ->
+                        Json.Decode.fail
+                            (enumErrorMsg
+                                idString
+                                "category"
+                                Category.all
+                                Category.toIdString
+                            )
+            )
+
+
+statusDecoder : Json.Decode.Decoder Product.Status
+statusDecoder =
+    Json.Decode.string
+        |> Json.Decode.andThen
+            (\idString ->
+                case Product.statusFromIdString idString of
+                    Just status ->
+                        Json.Decode.succeed status
+
+                    Nothing ->
+                        Json.Decode.fail
+                            (enumErrorMsg
+                                idString
+                                "status"
+                                Product.statusAll
+                                Product.statusToIdString
+                            )
+            )
+
+
+imageIdsDecoder : Json.Decode.Decoder ( ImageId.ImageId, List ImageId.ImageId )
+imageIdsDecoder =
+    Json.Decode.list Json.Decode.string
+        |> Json.Decode.andThen
+            (\list ->
+                case list of
+                    [] ->
+                        Json.Decode.fail "imageIds length is 0"
+
+                    x :: xs ->
+                        Json.Decode.succeed ( ImageId.fromString x, xs |> List.map ImageId.fromString )
+            )
+
+
+enumErrorMsg : String -> String -> List a -> (a -> String) -> String
+enumErrorMsg idString idName all toString =
+    "I can't understand \""
+        ++ idString
+        ++ "\" in "
+        ++ idName
+        ++ "."
+        ++ "expect \""
+        ++ (all |> List.map toString |> String.join "\" or \"")
+        ++ "\"."
 
 
 
@@ -529,7 +663,7 @@ getRecommendProductList msg =
 
 
 {- =================================================================================
-       0円の商品を取得
+                        0円の商品を取得
    =================================================================================
 -}
 
@@ -549,46 +683,6 @@ getFreeProductList msg =
 getProduct : Product.Id -> (Result String Product.ProductDetail -> msg) -> Cmd msg
 getProduct id msg =
     Cmd.none
-
-
-conditionDecoder : Json.Decode.Decoder Product.Condition
-conditionDecoder =
-    Json.Decode.string
-        |> Json.Decode.andThen
-            (\idString ->
-                case Product.conditionFromIdString idString of
-                    Just condition ->
-                        Json.Decode.succeed condition
-
-                    Nothing ->
-                        Json.Decode.fail
-                            ("I can't understand conditionId=\""
-                                ++ idString
-                                ++ "\" except \""
-                                ++ String.join "\" or \"" (Product.conditionAll |> List.map Product.conditionToIdString)
-                                ++ "\""
-                            )
-            )
-
-
-statusDecoder : Json.Decode.Decoder Product.Status
-statusDecoder =
-    Json.Decode.string
-        |> Json.Decode.andThen
-            (\idString ->
-                case Product.statusFromIdString idString of
-                    Just status ->
-                        Json.Decode.succeed status
-
-                    Nothing ->
-                        Json.Decode.fail
-                            ("I can't understand statusId=\""
-                                ++ idString
-                                ++ "\" except \""
-                                ++ String.join "\" or \"" (Product.statusAll |> List.map Product.statusToIdString)
-                                ++ "\""
-                            )
-            )
 
 
 
@@ -801,6 +895,7 @@ type GraphQLValue
     | GraphQLInt Int
     | GraphQLFloat Float
     | GraphQLObject (List ( String, GraphQLValue ))
+    | GraphQLList (List GraphQLValue)
     | GraphQLNull
 
 
@@ -867,6 +962,11 @@ graphQLValueToString graphQLValue =
                         |> String.join ", "
                    )
                 ++ "}"
+
+        GraphQLList list ->
+            "["
+                ++ (list |> List.map graphQLValueToString |> String.join ", ")
+                ++ "]"
 
         GraphQLNull ->
             "null"
