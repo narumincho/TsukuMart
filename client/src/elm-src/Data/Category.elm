@@ -497,16 +497,16 @@ toJapaneseString subCategory =
             "自転車・車両 / バイク"
 
         VehicleCar ->
-            "自転車・車両 / 自動車-> "
+            "自転車・車両 / 自動車"
 
         VehicleOther ->
             "自転車・車両 / その他"
 
         FoodFood ->
-            "食料品 / 食料-> "
+            "食料品 / 食料"
 
         FoodBeverage ->
-            "食料品 / 飲料-> "
+            "食料品 / 飲料"
 
         FoodOther ->
             "食料品 / その他"

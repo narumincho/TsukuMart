@@ -207,24 +207,28 @@ update msg model =
 
 selectSchool : Int -> SchoolSelect -> SchoolSelect
 selectSchool index schoolSelect =
-    case University.schoolFromIndex index of
-        Just school ->
-            case schoolSelect of
-                SchoolNone ->
-                    SchoolSchool school
+    case schoolSelect of
+        SchoolNone ->
+            University.schoolFromIndex (index - 1)
+                |> Maybe.map SchoolSchool
+                |> Maybe.withDefault schoolSelect
 
-                SchoolSchool _ ->
-                    SchoolSchool school
+        SchoolSchool _ ->
+            University.schoolFromIndex index
+                |> Maybe.map SchoolSchool
+                |> Maybe.withDefault schoolSelect
 
-                SchoolSchoolAndDepartment schoolAndDepartment ->
+        SchoolSchoolAndDepartment schoolAndDepartment ->
+            case University.schoolFromIndex index of
+                Just school ->
                     if University.schoolFromDepartment schoolAndDepartment == school then
                         schoolSelect
 
                     else
                         SchoolSchool school
 
-        Nothing ->
-            schoolSelect
+                Nothing ->
+                    schoolSelect
 
 
 selectDepartment : Int -> SchoolSelect -> SchoolSelect
@@ -234,7 +238,7 @@ selectDepartment index schoolSelect =
             SchoolNone
 
         SchoolSchool school ->
-            case University.departmentFromIndexInSchool school index of
+            case University.departmentFromIndexInSchool school (index - 1) of
                 Just department ->
                     SchoolSchoolAndDepartment department
 
@@ -486,7 +490,7 @@ schoolSelectId =
 -}
 selectDepartmentView : University.School -> Maybe University.SchoolAndDepartment -> ( String, Html.Html Msg )
 selectDepartmentView school departmentMaybe =
-    ( "selectDepartment"
+    ( "selectDepartment-" ++ University.schoolToIdString school
     , Html.div
         []
         [ Html.label

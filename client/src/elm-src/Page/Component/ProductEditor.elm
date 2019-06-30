@@ -18,6 +18,7 @@ import Data.Product as Product
 import Html
 import Html.Attributes
 import Html.Events
+import Html.Keyed
 import Json.Decode
 import Set
 import Svg
@@ -79,6 +80,8 @@ initModelBlank =
       , EmissionReplaceText { id = descriptionEditorId, text = "" }
       , EmissionReplaceText { id = priceEditorId, text = "" }
       , EmissionChangeSelectedIndex { id = conditionSelectId, index = 0 }
+      , EmissionChangeSelectedIndex { id = categoryGroupSelectId, index = 0 }
+      , EmissionChangeSelectedIndex { id = categorySelectId, index = 0 }
       ]
     )
 
@@ -105,6 +108,10 @@ initModelFromSellRequestData (Api.SellProductRequest rec) =
             { id = priceEditorId, text = String.fromInt rec.price }
       , EmissionChangeSelectedIndex
             { id = conditionSelectId, index = rec.condition |> Product.conditionIndex }
+      , EmissionChangeSelectedIndex
+            { id = categoryGroupSelectId, index = Category.groupToIndex (Category.groupFromCategory rec.category) }
+      , EmissionChangeSelectedIndex
+            { id = categorySelectId, index = Category.toIndexInGroup rec.category }
       ]
     )
 
@@ -139,6 +146,10 @@ initModel { name, description, price, condition, category, imageIds } =
             { id = priceEditorId, text = String.fromInt price }
       , EmissionChangeSelectedIndex
             { id = conditionSelectId, index = condition |> Product.conditionIndex }
+      , EmissionChangeSelectedIndex
+            { id = categoryGroupSelectId, index = Category.groupToIndex (Category.groupFromCategory category) }
+      , EmissionChangeSelectedIndex
+            { id = categorySelectId, index = Category.toIndexInGroup category }
       ]
     )
 
@@ -179,56 +190,16 @@ update msg (Model rec) =
                     Model rec
 
         SelectCategoryGroup index ->
-            case Category.groupFromIndex index of
-                Just categoryGroup ->
-                    Model
-                        { rec
-                            | category =
-                                case rec.category of
-                                    CategoryNone ->
-                                        CategoryGroupSelect categoryGroup
-
-                                    CategoryGroupSelect _ ->
-                                        CategoryGroupSelect categoryGroup
-
-                                    CategorySelect category ->
-                                        if Category.groupFromCategory category == categoryGroup then
-                                            CategorySelect category
-
-                                        else
-                                            CategoryGroupSelect categoryGroup
-                        }
-
-                Nothing ->
-                    Model rec
+            Model
+                { rec
+                    | category =
+                        selectCategoryGroup index rec.category
+                }
 
         SelectCategory index ->
             Model
                 { rec
-                    | category =
-                        case rec.category of
-                            CategoryNone ->
-                                CategoryNone
-
-                            CategoryGroupSelect group ->
-                                case Category.fromIndexInGroup group index of
-                                    Just category ->
-                                        CategorySelect category
-
-                                    Nothing ->
-                                        CategoryGroupSelect group
-
-                            CategorySelect beforeCategory ->
-                                case
-                                    Category.fromIndexInGroup
-                                        (Category.groupFromCategory beforeCategory)
-                                        index
-                                of
-                                    Just afterCategory ->
-                                        CategorySelect afterCategory
-
-                                    Nothing ->
-                                        CategorySelect beforeCategory
+                    | category = selectCategory index rec.category
                 }
 
         DeleteImage index ->
@@ -252,6 +223,55 @@ update msg (Model rec) =
                 { rec | addImages = rec.addImages ++ dataUrlList }
     , []
     )
+
+
+selectCategoryGroup : Int -> CategorySelect -> CategorySelect
+selectCategoryGroup index categorySelect =
+    case categorySelect of
+        CategoryNone ->
+            Category.groupFromIndex (index - 1)
+                |> Maybe.map CategoryGroupSelect
+                |> Maybe.withDefault categorySelect
+
+        CategoryGroupSelect _ ->
+            Category.groupFromIndex index
+                |> Maybe.map CategoryGroupSelect
+                |> Maybe.withDefault categorySelect
+
+        CategorySelect category ->
+            case Category.groupFromIndex index of
+                Just group ->
+                    if Category.groupFromCategory category == group then
+                        categorySelect
+
+                    else
+                        CategoryGroupSelect group
+
+                Nothing ->
+                    categorySelect
+
+
+selectCategory : Int -> CategorySelect -> CategorySelect
+selectCategory index categorySelect =
+    case categorySelect of
+        CategoryNone ->
+            CategoryNone
+
+        CategoryGroupSelect group ->
+            case Category.fromIndexInGroup group (index - 1) of
+                Just category ->
+                    CategorySelect category
+
+                Nothing ->
+                    categorySelect
+
+        CategorySelect category ->
+            case Category.fromIndexInGroup (Category.groupFromCategory category) index of
+                Just newCategory ->
+                    CategorySelect newCategory
+
+                Nothing ->
+                    categorySelect
 
 
 imageDeleteAt :
@@ -420,7 +440,11 @@ view (Model rec) =
      else
         [ photoAdd ]
     )
-        ++ [ photoCardList []
+        ++ [ photoCardList
+                { addImages = rec.addImages
+                , deleteAt = rec.deleteImagesAt
+                , beforeImageIds = rec.beforeImageIds
+                }
            , nameView rec.name
            , descriptionView
            , priceView rec.price
@@ -493,14 +517,30 @@ photoAddIcon =
         ]
 
 
-photoCardList : List String -> Html.Html Msg
-photoCardList imageUrlList =
+photoCardList : { addImages : List String, deleteAt : Set.Set Int, beforeImageIds : List ImageId.ImageId } -> Html.Html Msg
+photoCardList rec =
     Html.div
         [ Html.Attributes.class "exhibition-photo-cardList-container" ]
         [ Html.div
             [ Html.Attributes.class "exhibition-photo-cardList" ]
-            (imageUrlList |> List.indexedMap photoImage)
+            (rec |> toImageUrlList |> List.indexedMap photoImage)
         ]
+
+
+toImageUrlList : { addImages : List String, deleteAt : Set.Set Int, beforeImageIds : List ImageId.ImageId } -> List String
+toImageUrlList { addImages, deleteAt, beforeImageIds } =
+    (addImages
+        |> List.indexedMap
+            (\index image ->
+                if deleteAt |> Set.member index then
+                    []
+
+                else
+                    [ image ]
+            )
+        |> List.concat
+    )
+        ++ (beforeImageIds |> List.map ImageId.toUrlString)
 
 
 photoImage : Int -> String -> Html.Html Msg
@@ -722,27 +762,34 @@ selectDecoder =
 
 categoryView : CategorySelect -> Html.Html Msg
 categoryView categorySelect =
-    Html.div
+    Html.Keyed.node "div"
         []
         (case categorySelect of
             CategoryNone ->
                 [ selectCategoryGroupView Nothing ]
 
             CategoryGroupSelect group ->
-                [ selectCategoryGroupView (Just group)
-                , selectCategoryView Nothing
+                [ selectCategoryGroupView
+                    (Just group)
+                , selectCategoryView
+                    group
+                    Nothing
                 ]
 
             CategorySelect category ->
-                [ selectCategoryGroupView (Just (Category.groupFromCategory category))
-                , selectCategoryView (Just category)
+                [ selectCategoryGroupView
+                    (Just (Category.groupFromCategory category))
+                , selectCategoryView
+                    (Category.groupFromCategory category)
+                    (Just category)
                 ]
         )
 
 
-selectCategoryGroupView : Maybe Category.Group -> Html.Html Msg
+selectCategoryGroupView : Maybe Category.Group -> ( String, Html.Html Msg )
 selectCategoryGroupView categoryGroup =
-    Html.div
+    ( "selectCategoryGroup"
+    , Html.div
         []
         [ Html.label
             [ Html.Attributes.for conditionSelectId
@@ -769,6 +816,7 @@ selectCategoryGroupView categoryGroup =
                    )
             )
         ]
+    )
 
 
 categoryGroupSelectId : String
@@ -776,9 +824,11 @@ categoryGroupSelectId =
     "select-category-group"
 
 
-selectCategoryView : Maybe Category.Category -> Html.Html Msg
-selectCategoryView category =
-    Html.div
+selectCategoryView : Category.Group -> Maybe Category.Category -> ( String, Html.Html Msg )
+selectCategoryView group category =
+    ( "selectCategory" ++ Category.groupToJapaneseString group
+      -- TODO ascii以外は避けたい
+    , Html.div
         []
         [ Html.label
             [ Html.Attributes.for conditionSelectId
@@ -797,7 +847,7 @@ selectCategoryView category =
                 Nothing ->
                     [ blankOption ]
              )
-                ++ (Category.all
+                ++ (Category.groupToCategoryList group
                         |> List.map
                             (\c ->
                                 Html.option [] [ Html.text (Category.toJapaneseString c) ]
@@ -805,6 +855,7 @@ selectCategoryView category =
                    )
             )
         ]
+    )
 
 
 categorySelectId : String
