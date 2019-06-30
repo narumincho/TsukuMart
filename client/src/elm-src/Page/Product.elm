@@ -83,7 +83,7 @@ type Msg
     | EditProduct
     | MsgBackToViewMode
     | MsgByProductEditor ProductEditor.Msg
-    | UpdateProductData Api.Token Product.Id ProductEditor.RequestData
+    | UpdateProductData Api.Token Product.Id Api.UpdateProductRequest
     | UpdateProductDataResponse (Result String ())
 
 
@@ -390,9 +390,7 @@ update msg model =
 
         UpdateProductData token productId requestData ->
             ( model
-            , [ EmissionUpdateProductData token
-                    productId
-                    (ProductEditor.requestDataToEditApiRequest requestData)
+            , [ EmissionUpdateProductData token productId requestData
               ]
             )
 
@@ -463,7 +461,7 @@ view logInState isWideScreen nowMaybe model =
                                     ++ [ editOkCancelButton
                                             accessToken
                                             (Product.detailGetId beforeProduct)
-                                            (ProductEditor.toRequestData productEditor)
+                                            (ProductEditor.toUpdateRequest productEditor)
                                        ]
 
                             Nothing ->
@@ -877,7 +875,7 @@ tradeStartButton logInState productId =
         ]
 
 
-editOkCancelButton : Api.Token -> Product.Id -> Maybe ProductEditor.RequestData -> Html.Html Msg
+editOkCancelButton : Api.Token -> Product.Id -> Maybe Api.UpdateProductRequest -> Html.Html Msg
 editOkCancelButton token productId requestDataMaybe =
     Html.div
         [ Html.Attributes.class "profile-editButtonArea" ]

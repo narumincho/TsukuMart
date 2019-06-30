@@ -114,7 +114,7 @@ type Msg
     | ReceiveProductImages (List String)
     | ReceiveUserImage String
     | GetMyProfileAndLikedProductIdsResponse (Result String ( Data.User.WithName, List Data.Product.Id ))
-    | SellProductResponse (Result () ())
+    | SellProductResponse (Result String ())
     | LikeProductResponse Data.Product.Id (Result String Int)
     | UnlikeProductResponse Data.Product.Id (Result String Int)
     | ChangeProfileResponse (Result String Data.User.WithProfile)
@@ -885,7 +885,7 @@ signUpPageEmissionListToCmd =
                 Page.SignUp.EmissionSignUp signUpRequest ->
                     Api.sendConfirmEmail signUpRequest (\response -> SignUpConfirmResponse response)
 
-                Page.SignUp.EmissionByUniversityComp e ->
+                Page.SignUp.EmissionByUniversity e ->
                     universityEmissionToCmd e
 
                 Page.SignUp.EmissionAddLogMessage log ->
@@ -928,7 +928,7 @@ userPageEmissionListToCmd =
                 Page.User.EmissionReplaceElementText idAndText ->
                     replaceText idAndText
 
-                Page.User.EmissionUniversity e ->
+                Page.User.EmissionByUniversity e ->
                     universityEmissionToCmd e
 
                 Page.User.EmissionLogOut ->
@@ -1116,7 +1116,7 @@ urlParserResultToPageAndCmd (Model rec) result =
             case rec.page of
                 PageExhibition exhibitionModel ->
                     exhibitionModel
-                        |> Page.Exhibition.update rec.logInState Page.Exhibition.ToEditPage
+                        |> Page.Exhibition.update rec.logInState Page.Exhibition.BackToEditPage
                         |> Tuple.mapBoth PageExhibition exhibitionPageEmissionListToCmd
 
                 _ ->

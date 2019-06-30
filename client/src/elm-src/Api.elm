@@ -1,9 +1,9 @@
 module Api exposing
-    ( UpdateProductRequest(..)
-    , ProfileUpdateData
+    ( ProfileUpdateData
     , SellProductRequest(..)
     , SignUpRequest
     , Token
+    , UpdateProductRequest(..)
     , deleteProduct
     , editProduct
     , getBoughtProductList
@@ -46,6 +46,7 @@ import Http
 import Json.Decode
 import Json.Decode.Pipeline
 import Json.Encode
+import Set
 import Time
 import Url
 
@@ -298,12 +299,12 @@ type SellProductRequest
         , price : Int
         , condition : Product.Condition
         , category : Category.Category
-        , imageList : List String
+        , images : List String
         }
 
 
-sellProduct : Token -> SellProductRequest -> (Result () () -> msg) -> Cmd msg
-sellProduct token sellProductRequest msg =
+sellProduct : Token -> SellProductRequest -> (Result String () -> msg) -> Cmd msg
+sellProduct token sellProductRequest callBack =
     Cmd.none
 
 
@@ -321,7 +322,7 @@ type UpdateProductRequest
         , price : Int
         , condition : Product.Condition
         , addImageList : List String
-        , deleteImageIndex : List Int
+        , deleteImageIndex : Set.Set Int
         }
 
 

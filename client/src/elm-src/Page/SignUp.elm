@@ -20,14 +20,14 @@ import Html.Attributes
 import Html.Events
 import Html.Keyed
 import Json.Decode
-import Page.Component.University as CompUniversity
+import Page.Component.University as UniversityComponent
 
 
 type Model
     = Normal
         { sAddressOrStudentId : AnalysisStudentIdOrSAddressResult
         , image : Image
-        , university : CompUniversity.Model
+        , university : UniversityComponent.Model
         , nickName : String
         , sendEmailToken : String
         }
@@ -45,7 +45,7 @@ type Image
 type Emission
     = EmissionAddEventListenerForUserImage { labelId : String, inputId : String }
     | EmissionSignUp Api.SignUpRequest
-    | EmissionByUniversityComp CompUniversity.Emission
+    | EmissionByUniversity UniversityComponent.Emission
     | EmissionReplaceElementText { id : String, text : String }
     | EmissionAddLogMessage String
 
@@ -54,7 +54,7 @@ type Msg
     = InputStudentIdOrEmailAddress String
     | ReceiveUserImage String
     | InputSAddress AnalysisStudentIdOrSAddressResult
-    | InputUniversity CompUniversity.Model
+    | MsgByUniversity UniversityComponent.Msg
     | InputDisplayName String
     | SignUp Api.SignUpRequest
     | SignUpResponse (Result String ())
@@ -64,9 +64,13 @@ type Msg
 -}
 initModel : { name : String, imageId : String, sendEmailToken : String } -> ( Model, List Emission )
 initModel { name, imageId, sendEmailToken } =
+    let
+        ( universityModel, universityEmissions ) =
+            UniversityComponent.initModelNone
+    in
     ( Normal
         { sAddressOrStudentId = analysisStudentIdOrSAddress ""
-        , university = CompUniversity.initModelNone
+        , university = universityModel
         , nickName = name
         , image = ServiceImage imageId
         , sendEmailToken = sendEmailToken
@@ -77,6 +81,7 @@ initModel { name, imageId, sendEmailToken } =
             , text = name
             }
       ]
+        ++ (universityEmissions |> List.map EmissionByUniversity)
     )
 
 
@@ -113,15 +118,21 @@ update msg model =
             , []
             )
 
-        InputUniversity universitySelect ->
-            ( case model of
+        MsgByUniversity universityMsg ->
+            case model of
                 Normal rec ->
-                    Normal { rec | university = universitySelect }
+                    let
+                        ( universityModel, universityEmissions ) =
+                            UniversityComponent.update
+                                universityMsg
+                                rec.university
+                    in
+                    ( Normal { rec | university = universityModel }
+                    , universityEmissions |> List.map EmissionByUniversity
+                    )
 
                 _ ->
-                    model
-            , CompUniversity.emission universitySelect |> List.map EmissionByUniversityComp
-            )
+                    ( model, [] )
 
         InputDisplayName string ->
             ( case model of
@@ -194,15 +205,15 @@ view userSignUpPage =
     }
 
 
-normalView : AnalysisStudentIdOrSAddressResult -> CompUniversity.Model -> String -> Image -> String -> Html.Html Msg
+normalView : AnalysisStudentIdOrSAddressResult -> UniversityComponent.Model -> String -> Image -> String -> Html.Html Msg
 normalView studentIdOrTsukubaEmailAddress university nickName image sendEmailToken =
     Html.Keyed.node "div"
         [ Html.Attributes.class "form" ]
         (studentHasSAddressFormList studentIdOrTsukubaEmailAddress
             ++ imageForm image
             ++ displayNameForm nickName
-            ++ (CompUniversity.view university
-                    |> List.map (Tuple.mapSecond (Html.map InputUniversity))
+            ++ (UniversityComponent.view university
+                    |> List.map (Tuple.mapSecond (Html.map MsgByUniversity))
                )
             ++ [ ( "submit"
                  , signUpSubmitButton
@@ -445,9 +456,9 @@ signUpSubmitButton signUpRequestMaybe =
 
 {-| 画面の情報から新規登録できる情報を入力しているかと、新規登録に必要なデータを取りだす
 -}
-getSendEmailRequest : AnalysisStudentIdOrSAddressResult -> CompUniversity.Model -> String -> Image -> String -> Maybe Api.SignUpRequest
+getSendEmailRequest : AnalysisStudentIdOrSAddressResult -> UniversityComponent.Model -> String -> Image -> String -> Maybe Api.SignUpRequest
 getSendEmailRequest studentIdOrSAddress university nickName image sendEmailToken =
-    case ( analysisStudentIdOrSAddressResultToEmailAddress studentIdOrSAddress, CompUniversity.getUniversity university ) of
+    case ( analysisStudentIdOrSAddressResultToEmailAddress studentIdOrSAddress, UniversityComponent.getUniversity university ) of
         ( Just emailAddress, Just universityData ) ->
             if 1 <= String.length nickName && String.length nickName <= 50 then
                 Just

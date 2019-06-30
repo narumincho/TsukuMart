@@ -108,7 +108,7 @@ requestAnimationFrame(() => {
         fileList: FileList
     ): Promise<Array<string>> =>
         await Promise.all(
-            new Array(Math.min(fileList.length, 4)).fill(0).map(
+            new Array(Math.min(fileList.length, 10)).fill(0).map(
                 (_, index) =>
                     new Promise((resolve, reject) => {
                         const file = fileList.item(index) as File;

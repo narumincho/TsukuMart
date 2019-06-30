@@ -42,8 +42,8 @@ type Emission
 
 
 type Msg
-    = ToConfirmPage ( Api.Token , Api.SellProductRequest )
-    | ToEditPage
+    = ToConfirmPage ( Api.Token, Api.SellProductRequest )
+    | BackToEditPage
     | LogInOrSignUpMsg LogIn.Msg
     | SellProduct ( Api.Token, Api.SellProductRequest )
     | MsgByProductEditor ProductEditor.Msg
@@ -53,14 +53,7 @@ initModel : ( Model, List Emission )
 initModel =
     let
         ( editorModel, editorEmission ) =
-            ProductEditor.initModel
-                { name = ""
-                , description = ""
-                , price = Nothing
-                , condition = Nothing
-                , category = Nothing
-                , image = Nothing
-                }
+            ProductEditor.initModelBlank
     in
     ( Model
         { logInOrSignUpModel = LogIn.initModel
@@ -74,11 +67,11 @@ toConfirmPageMsgFromModel : Data.LogInState.LogInState -> Model -> Maybe Msg
 toConfirmPageMsgFromModel logInState (Model rec) =
     case ( rec.page, logInState ) of
         ( EditPage editModel, Data.LogInState.LoadingProfile { accessToken } ) ->
-            ProductEditor.toRequestData editModel
+            ProductEditor.toSoldRequest editModel
                 |> Maybe.map (\request -> ToConfirmPage ( accessToken, request ))
 
         ( EditPage editModel, Data.LogInState.Ok { accessToken } ) ->
-            ProductEditor.toRequestData editModel
+            ProductEditor.toSoldRequest editModel
                 |> Maybe.map (\request -> ToConfirmPage ( accessToken, request ))
 
         ( _, _ ) ->
@@ -134,15 +127,9 @@ updateWhenLogIn msg page =
                     , [ EmissionSellProducts data ]
                     )
 
-                ToEditPage ->
-                    ProductEditor.initModel
-                        { name = rec.request.name
-                        , description = rec.request.description
-                        , price = Just rec.request.price
-                        , condition = Just rec.request.condition
-                        , category = Just rec.request.category
-                        , image = Just rec.request.image
-                        }
+                BackToEditPage ->
+                    ProductEditor.initModelFromSellRequstData
+                        rec.request
                         |> Tuple.mapBoth
                             EditPage
                             (List.map EmissionByProductEditor)
@@ -235,7 +222,7 @@ editView productEditorModel =
     , (ProductEditor.view productEditorModel
         |> List.map (Html.map MsgByProductEditor)
       )
-        ++ [ toConformPageButton (ProductEditor.toRequestData productEditorModel /= Nothing) ]
+        ++ [ toConformPageButton (ProductEditor.toSoldRequest productEditorModel /= Nothing) ]
     )
 
 
@@ -264,10 +251,10 @@ toConformPageButton available =
 -}
 
 
-confirmView : Api.Token -> ProductEditor.RequestData -> Bool -> ( String, List (Html.Html Msg) )
-confirmView accessToken requestData sending =
+confirmView : Api.Token -> Api.SellProductRequest -> Bool -> ( String, List (Html.Html Msg) )
+confirmView accessToken (Api.SellProductRequest requestData) sending =
     ( "出品 確認"
-    , [ confirmViewImage requestData.image
+    , [ confirmViewImage requestData.images
       , Html.div [ Html.Attributes.class "exhibition-confirm-item" ]
             [ Html.span [] [ Html.text "商品名" ]
             , Html.span [ Html.Attributes.class "exhibition-confirm-item-value" ] [ Html.text requestData.name ]
@@ -301,7 +288,7 @@ confirmView accessToken requestData sending =
                 ]
 
              else
-                [ Html.Events.onClick (SellProduct ( accessToken, ProductEditor.requestDataToApiRequest requestData ))
+                [ Html.Events.onClick (SellProduct ( accessToken, Api.SellProductRequest requestData ))
                 , Html.Attributes.class "mainButton"
                 , Html.Attributes.disabled False
                 ]
@@ -311,19 +298,19 @@ confirmView accessToken requestData sending =
     )
 
 
-confirmViewImage : ProductEditor.ImageList -> Html.Html Msg
-confirmViewImage imageList =
+confirmViewImage : List String -> Html.Html Msg
+confirmViewImage images =
     Html.div
         [ Html.Attributes.class "exhibition-photo-cardList-container" ]
         [ Html.div
             [ Html.Attributes.class "exhibition-photo-cardList" ]
-            (ProductEditor.imageListToBlobUrlList (Just imageList)
+            (images
                 |> List.map
-                    (\blobUrl ->
+                    (\dataUrl ->
                         Html.div
                             [ Html.Attributes.class "exhibition-photo-card" ]
                             [ Html.img
-                                [ Html.Attributes.src blobUrl
+                                [ Html.Attributes.src dataUrl
                                 , Html.Attributes.class "exhibition-photo-card-image"
                                 ]
                                 []

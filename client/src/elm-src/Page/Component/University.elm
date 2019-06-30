@@ -4,8 +4,9 @@ module Page.Component.University exposing
     , getUniversity
     , initModelFromUniversity
     , initModelNone
+    , update
     , view
-    )
+    , Msg)
 
 import Data.University as University
 import Html

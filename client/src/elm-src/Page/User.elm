@@ -2,11 +2,12 @@ module Page.User exposing
     ( Emission(..)
     , Model
     , Msg(..)
+    , getUser
     , initModelFromId
     , initModelWithName
     , update
     , view
-    , getUser)
+    )
 
 import Api
 import BasicParts
@@ -18,7 +19,7 @@ import Html.Attributes
 import Html.Events
 import Html.Keyed
 import Icon
-import Page.Component.University as CompUniversity
+import Page.Component.University as UniversityComponent
 import SiteMap
 
 
@@ -32,7 +33,7 @@ type Model
 type alias EditModel =
     { displayName : String
     , introduction : String
-    , universitySelect : CompUniversity.Model
+    , university : UniversityComponent.Model
     , before : User.WithProfile
     }
 
@@ -41,7 +42,7 @@ type Emission
     = EmissionGetUserProfile User.Id
     | EmissionChangeProfile Api.Token Api.ProfileUpdateData
     | EmissionReplaceElementText { id : String, text : String }
-    | EmissionUniversity CompUniversity.Emission
+    | EmissionByUniversity UniversityComponent.Emission
     | EmissionLogOut
     | EmissionAddLogMessage String
 
@@ -50,7 +51,7 @@ type Msg
     = MsgToEditMode
     | MsgInputDisplayName String
     | MsgInputIntroduction String
-    | MsgInputUniversity CompUniversity.Model
+    | MsgByUniversity UniversityComponent.Msg
     | MsgBackToViewMode
     | MsgChangeProfile Api.Token Api.ProfileUpdateData
     | MsgChangeProfileResponse (Result String User.WithProfile)
@@ -140,15 +141,21 @@ update msg model =
             , []
             )
 
-        MsgInputUniversity select ->
-            ( case model of
+        MsgByUniversity componentMsg ->
+            case model of
                 Edit r ->
-                    Edit { r | universitySelect = select }
+                    let
+                        ( componentModel, componentEmittions ) =
+                            UniversityComponent.update
+                                componentMsg
+                                r.university
+                    in
+                    ( Edit { r | university = componentModel }
+                    , componentEmittions |> List.map EmissionByUniversity
+                    )
 
                 _ ->
-                    model
-            , CompUniversity.emission select |> List.map EmissionUniversity
-            )
+                    ( model, [] )
 
         MsgBackToViewMode ->
             ( case model of
@@ -214,19 +221,20 @@ toEditMode userWithProfile =
         introduction =
             User.withProfileGetIntroduction userWithProfile
 
-        universitySelect =
-            CompUniversity.initModelFromUniversity (User.withProfileGetUniversity userWithProfile)
+        ( universityModel, universityEmissions ) =
+            UniversityComponent.initModelFromUniversity
+                (User.withProfileGetUniversity userWithProfile)
     in
     ( Edit
         { displayName = displayName
         , introduction = introduction
-        , universitySelect = universitySelect
+        , university = universityModel
         , before = userWithProfile
         }
     , [ EmissionReplaceElementText { id = nickNameEditorId, text = displayName }
       , EmissionReplaceElementText { id = introductionEditorId, text = introduction }
       ]
-        ++ (CompUniversity.emission universitySelect |> List.map EmissionUniversity)
+        ++ (universityEmissions |> List.map EmissionByUniversity)
     )
 
 
@@ -458,7 +466,9 @@ editView access editModel =
         ([ ( "nickNameEditor", nickNameEditor editModel.displayName )
          , ( "introductionEditor", introductionEditor editModel.introduction )
          ]
-            ++ (CompUniversity.view editModel.universitySelect |> List.map (Tuple.mapSecond (Html.map MsgInputUniversity)))
+            ++ (UniversityComponent.view editModel.university
+                    |> List.map (Tuple.mapSecond (Html.map MsgByUniversity))
+               )
             ++ [ ( "button", editButton access editModel )
                ]
         )
@@ -549,15 +559,15 @@ editButton token editModel =
 
 
 editModelToProfileUpdateData : EditModel -> Maybe Api.ProfileUpdateData
-editModelToProfileUpdateData { displayName, introduction, universitySelect } =
+editModelToProfileUpdateData { displayName, introduction, university } =
     if 1 <= String.length displayName && String.length displayName <= 50 then
-        case CompUniversity.getUniversity universitySelect of
-            Just university ->
+        case UniversityComponent.getUniversity university of
+            Just univ ->
                 Just
                     { displayName = displayName
                     , introduction = introduction
                     , image = Nothing
-                    , university = university
+                    , university = univ
                     }
 
             Nothing ->

@@ -2,25 +2,28 @@ module Page.Component.ProductEditor exposing
     ( Emission(..)
     , Model
     , Msg(..)
-    , imageListToBlobUrlList
     , initModel
-    , requestDataToEditApiRequest
-    , toRequestData
+    , initModelBlank
+    , initModelFromSellRequstData
+    , toSoldRequest
+    , toUpdateRequest
     , update
     , view
     )
 
 import Api
-import Array
 import Data.Category as Category
+import Data.ImageId as ImageId
 import Data.Product as Product
 import Html
 import Html.Attributes
 import Html.Events
 import Json.Decode
+import Set
 import Svg
 import Svg.Attributes
 import Svg.Events
+import Utility
 
 
 type Model
@@ -31,6 +34,8 @@ type Model
         , condition : Maybe Product.Condition
         , category : CategorySelect
         , addImages : List String
+        , beforeImageIds : List ImageId.ImageId
+        , deleteImagesAt : Set.Set Int
         }
 
 
@@ -50,9 +55,9 @@ type Msg
     = InputName String
     | InputDescription String
     | InputPrice String
-    | InputCondition Int
-    | InputCategoryGroup Int
-    | InputCategory Int
+    | SelectCondition Int
+    | SelectCategoryGroup Int
+    | SelectCategory Int
     | DeleteImage Int
     | InputImageList (List String)
 
@@ -66,6 +71,8 @@ initModelBlank =
         , condition = Nothing
         , category = CategoryNone
         , addImages = []
+        , beforeImageIds = []
+        , deleteImagesAt = Set.empty
         }
     , [ EmissionAddEventListenerForProductImages { labelId = photoAddLabelId, inputId = photoAddInputId }
       , EmissionReplaceText { id = nameEditorId, text = "" }
@@ -76,40 +83,64 @@ initModelBlank =
     )
 
 
+initModelFromSellRequstData : Api.SellProductRequest -> ( Model, List Emission )
+initModelFromSellRequstData (Api.SellProductRequest rec) =
+    ( Model
+        { name = rec.name
+        , description = rec.description
+        , price = Just rec.price
+        , condition = Just rec.condition
+        , category = CategorySelect rec.category
+        , addImages = rec.images
+        , beforeImageIds = []
+        , deleteImagesAt = Set.empty
+        }
+    , [ EmissionAddEventListenerForProductImages
+            { labelId = photoAddLabelId, inputId = photoAddInputId }
+      , EmissionReplaceText
+            { id = nameEditorId, text = rec.name }
+      , EmissionReplaceText
+            { id = descriptionEditorId, text = rec.description }
+      , EmissionReplaceText
+            { id = priceEditorId, text = String.fromInt rec.price }
+      , EmissionChangeSelectedIndex
+            { id = conditionEditorId, index = rec.condition |> Product.conditionIndex }
+      ]
+    )
+
+
 initModel :
     { name : String
     , description : String
     , price : Int
     , condition : Product.Condition
     , category : Category.Category
-    , addImages : List String
+    , imageIds : List ImageId.ImageId
     }
     -> ( Model, List Emission )
-initModel { name, description, price, condition, category, addImages } =
-    let
-        model =
-            Model
-                { name = name
-                , description = description
-                , price = Just price
-                , condition = Just condition
-                , category = CategorySelect category
-                , addImages = addImages
-                }
-    in
-    ( model
-    , sendEmission model
+initModel { name, description, price, condition, category, imageIds } =
+    ( Model
+        { name = name
+        , description = description
+        , price = Just price
+        , condition = Just condition
+        , category = CategorySelect category
+        , addImages = []
+        , beforeImageIds = imageIds
+        , deleteImagesAt = Set.empty
+        }
+    , [ EmissionAddEventListenerForProductImages
+            { labelId = photoAddLabelId, inputId = photoAddInputId }
+      , EmissionReplaceText
+            { id = nameEditorId, text = name }
+      , EmissionReplaceText
+            { id = descriptionEditorId, text = description }
+      , EmissionReplaceText
+            { id = priceEditorId, text = String.fromInt price }
+      , EmissionChangeSelectedIndex
+            { id = conditionEditorId, index = condition |> Product.conditionIndex }
+      ]
     )
-
-
-sendEmission : Model -> List Emission
-sendEmission (Model rec) =
-    [ EmissionAddEventListenerForProductImages { labelId = photoAddLabelId, inputId = photoAddInputId }
-    , EmissionReplaceText { id = nameEditorId, text = rec.name }
-    , EmissionReplaceText { id = descriptionEditorId, text = rec.description }
-    , EmissionReplaceText { id = priceEditorId, text = rec.price |> Maybe.map String.fromInt |> Maybe.withDefault "" }
-    , EmissionChangeSelectedIndex { id = conditionEditorId, index = rec.condition |> Maybe.map (\c -> Product.conditionIndex c + 1) |> Maybe.withDefault 0 }
-    ]
 
 
 update : Msg -> Model -> ( Model, List Emission )
@@ -142,7 +173,7 @@ update msg (Model rec) =
             , []
             )
 
-        InputCondition index ->
+        SelectCondition index ->
             ( case Product.conditonFromIndex index of
                 Just condition ->
                     Model
@@ -155,7 +186,7 @@ update msg (Model rec) =
             , []
             )
 
-        InputCategoryGroup index ->
+        SelectCategoryGroup index ->
             ( case Category.groupFromIndex index of
                 Just categoryGroup ->
                     Model
@@ -181,7 +212,7 @@ update msg (Model rec) =
             , []
             )
 
-        InputCategory index ->
+        SelectCategory index ->
             ( Model
                 { rec
                     | category =
@@ -213,151 +244,93 @@ update msg (Model rec) =
             )
 
         DeleteImage index ->
+            let
+                { addImages, deleteIndex } =
+                    imageDeleteAt
+                        index
+                        { beforeImageIdLength = rec.beforeImageIds |> List.length
+                        , addImages = rec.addImages
+                        , deleteIndex = rec.deleteImagesAt
+                        }
+            in
             ( Model
                 { rec
-                    | image = imageDeleteAt index rec.image
+                    | addImages = addImages
+                    , deleteImagesAt = deleteIndex
                 }
             , []
             )
 
         InputImageList dataUrlList ->
             ( Model
-                { rec | image = imageAdd dataUrlList rec.image }
+                { rec | addImages = rec.addImages ++ dataUrlList }
             , []
             )
 
 
-imageAdd : List String -> Maybe ImageList -> Maybe ImageList
-imageAdd fileList imageSelected =
-    case fileList of
-        [] ->
-            imageSelected
+imageDeleteAt :
+    Int
+    -> { beforeImageIdLength : Int, addImages : List String, deleteIndex : Set.Set Int }
+    -> { addImages : List String, deleteIndex : Set.Set Int }
+imageDeleteAt index { beforeImageIdLength, addImages, deleteIndex } =
+    case beforeImageAddDeleteIndex index beforeImageIdLength deleteIndex 0 of
+        Just newDeleteIndex ->
+            { addImages = addImages
+            , deleteIndex = newDeleteIndex
+            }
 
-        a0 :: [] ->
-            case imageSelected of
-                Nothing ->
-                    Just (Image1 a0)
-
-                Just (Image1 i0) ->
-                    Just (Image2 i0 a0)
-
-                Just (Image2 i0 i1) ->
-                    Just (Image3 i0 i1 a0)
-
-                Just (Image3 i0 i1 i2) ->
-                    Just (Image4 i0 i1 i2 a0)
-
-                Just (Image4 _ _ _ _) ->
-                    imageSelected
-
-        a0 :: a1 :: [] ->
-            case imageSelected of
-                Nothing ->
-                    Just (Image2 a0 a1)
-
-                Just (Image1 i0) ->
-                    Just (Image3 i0 a0 a1)
-
-                Just (Image2 i0 i1) ->
-                    Just (Image4 i0 i1 a0 a1)
-
-                _ ->
-                    imageSelected
-
-        a0 :: a1 :: a2 :: [] ->
-            case imageSelected of
-                Nothing ->
-                    Just (Image3 a0 a1 a2)
-
-                Just (Image1 i0) ->
-                    Just (Image4 i0 a0 a1 a2)
-
-                _ ->
-                    imageSelected
-
-        a0 :: a1 :: a2 :: a3 :: _ ->
-            case imageSelected of
-                Nothing ->
-                    Just (Image4 a0 a1 a2 a3)
-
-                _ ->
-                    imageSelected
-
-
-imageDeleteAt : Int -> Maybe ImageList -> Maybe ImageList
-imageDeleteAt index image =
-    case image of
         Nothing ->
-            Nothing
-
-        Just (Image1 _) ->
-            case index of
-                0 ->
-                    Nothing
-
-                _ ->
-                    image
-
-        Just (Image2 i0 i1) ->
-            case index of
-                0 ->
-                    Just (Image1 i1)
-
-                1 ->
-                    Just (Image1 i0)
-
-                _ ->
-                    image
-
-        Just (Image3 i0 i1 i2) ->
-            case index of
-                0 ->
-                    Just (Image2 i1 i2)
-
-                1 ->
-                    Just (Image2 i0 i2)
-
-                2 ->
-                    Just (Image2 i0 i1)
-
-                _ ->
-                    image
-
-        Just (Image4 i0 i1 i2 i3) ->
-            case index of
-                0 ->
-                    Just (Image3 i1 i2 i3)
-
-                1 ->
-                    Just (Image3 i0 i2 i3)
-
-                2 ->
-                    Just (Image3 i0 i1 i3)
-
-                3 ->
-                    Just (Image3 i0 i1 i2)
-
-                _ ->
-                    image
+            { addImages =
+                addImages
+                    |> Utility.removeAt
+                        (index - (beforeImageIdLength - Set.size deleteIndex))
+            , deleteIndex = deleteIndex
+            }
 
 
-toRequestData : Model -> Maybe Api.SellProductRequest
-toRequestData (Model { name, description, price, condition, category, addImages }) =
-    case ( price, condition, category ) of
-        ( Just p, Just conditionValue, CategorySelect categoryValue ) ->
-            if nameCheck name == Nothing && priceCheck price == Nothing && imagesCheck addImages == Nothing then
-                image
-                    |> Maybe.map
-                        (\i ->
-                            Api.SellProductRequest
-                                { name = name
-                                , description = description
-                                , price = p
-                                , condition = conditionValue
-                                , category = categoryValue
-                                , imageList = i
-                                }
-                        )
+beforeImageAddDeleteIndex : Int -> Int -> Set.Set Int -> Int -> Maybe (Set.Set Int)
+beforeImageAddDeleteIndex index beforeImageIdLength deleteAt offset =
+    if offset <= beforeImageIdLength then
+        if Set.member offset deleteAt then
+            beforeImageAddDeleteIndex
+                index
+                beforeImageIdLength
+                deleteAt
+                (offset + 1)
+
+        else if index == 0 then
+            Just (deleteAt |> Set.insert offset)
+
+        else
+            beforeImageAddDeleteIndex
+                (index - 1)
+                beforeImageIdLength
+                deleteAt
+                (offset + 1)
+
+    else
+        Nothing
+
+
+toSoldRequest : Model -> Maybe Api.SellProductRequest
+toSoldRequest (Model rec) =
+    case ( priceCheck rec.price, rec.condition, rec.category ) of
+        ( Ok price, Just condition, CategorySelect category ) ->
+            if
+                nameCheck rec.name
+                    == Nothing
+                    && imagesCheck rec.addImages
+                    == Nothing
+            then
+                Api.SellProductRequest
+                    { name = rec.name
+                    , description = rec.description
+                    , price = price
+                    , condition = condition
+                    , category = category
+                    , images = rec.addImages
+                    }
+                    |> Just
 
             else
                 Nothing
@@ -366,16 +339,31 @@ toRequestData (Model { name, description, price, condition, category, addImages 
             Nothing
 
 
-requestDataToEditApiRequest : RequestData -> Api.UpdateProductRequest
-requestDataToEditApiRequest { name, description, price, condition, image } =
-    Api.UpdateProductRequest
-        { name = name
-        , description = description
-        , price = price
-        , condition = condition
-        , addImageList = []
-        , deleteImageIndex = []
-        }
+toUpdateRequest : Model -> Maybe Api.UpdateProductRequest
+toUpdateRequest (Model rec) =
+    case ( rec.price, rec.condition, rec.category ) of
+        ( Just price, Just condition, CategorySelect category ) ->
+            if
+                nameCheck rec.name
+                    == Nothing
+                    && imagesCheck rec.addImages
+                    == Nothing
+            then
+                Api.UpdateProductRequest
+                    { name = rec.name
+                    , description = rec.description
+                    , price = price
+                    , condition = condition
+                    , addImageList = rec.addImages
+                    , deleteImageIndex = rec.deleteImagesAt
+                    }
+                    |> Just
+
+            else
+                Nothing
+
+        ( _, _, _ ) ->
+            Nothing
 
 
 {-| 指定された名前が正常か調べる。Nothingなら異常なし、Just Stringはエラーメッセージ
@@ -398,21 +386,21 @@ nameCheck name =
 
 {-| 指定された価格が正常か調べる。Nothingなら異常なし、Just Stringはエラーメッセージ
 -}
-priceCheck : Maybe Int -> Maybe String
+priceCheck : Maybe Int -> Result String Int
 priceCheck priceMaybe =
     case priceMaybe of
         Just price ->
             if price < 0 then
-                Just "価格は正の値で入力してください"
+                Err "価格は正の値で入力してください"
 
             else if 1000000 < price then
-                Just "価格は100万円以下でないといけません"
+                Err "価格は100万円以下でないといけません"
 
             else
-                Nothing
+                Ok price
 
         Nothing ->
-            Just "0 ～ 100万円の価格を入力してください"
+            Err "0 ～ 100万円の価格を入力してください"
 
 
 imagesCheck : List String -> Maybe String
@@ -433,18 +421,30 @@ imagesCheck images =
 
 view : Model -> List (Html.Html Msg)
 view (Model rec) =
-    (if 4 <= List.length (imageListToBlobUrlList rec.image) then
+    (if
+        4
+            <= imageCount
+                { addImagesLength = rec.addImages |> List.length
+                , deleteIndexSize = rec.deleteImagesAt |> Set.size
+                , beforeImageIdsLength = rec.beforeImageIds |> List.length
+                }
+     then
         []
 
      else
-        photoAdd
+        [ photoAdd ]
     )
-        ++ [ photoCardList (imageListToBlobUrlList rec.image)
+        ++ [ photoCardList []
            , nameView rec.name
            , descriptionView
            , priceView rec.price
-           , conditionView |> Html.map InputCondition
+           , conditionView rec.condition
            ]
+
+
+imageCount : { addImagesLength : Int, deleteIndexSize : Int, beforeImageIdsLength : Int } -> Int
+imageCount { addImagesLength, deleteIndexSize, beforeImageIdsLength } =
+    beforeImageIdsLength - deleteIndexSize + addImagesLength
 
 
 
@@ -454,23 +454,25 @@ view (Model rec) =
 -}
 
 
-photoAdd : List (Html.Html Msg)
+photoAdd : Html.Html Msg
 photoAdd =
-    [ Html.label
-        [ Html.Attributes.class "exhibition-photo-add"
-        , Html.Attributes.id photoAddLabelId
-        , Html.Attributes.for photoAddInputId
-        ]
-        [ photoAddIcon ]
-    , Html.input
-        [ Html.Attributes.style "display" "none"
-        , Html.Attributes.id photoAddInputId
-        , Html.Attributes.type_ "file"
-        , Html.Attributes.multiple True
-        , Html.Attributes.accept "image/*"
-        ]
+    Html.div
         []
-    ]
+        [ Html.label
+            [ Html.Attributes.class "exhibition-photo-add"
+            , Html.Attributes.id photoAddLabelId
+            , Html.Attributes.for photoAddInputId
+            ]
+            [ photoAddIcon ]
+        , Html.input
+            [ Html.Attributes.style "display" "none"
+            , Html.Attributes.id photoAddInputId
+            , Html.Attributes.type_ "file"
+            , Html.Attributes.multiple True
+            , Html.Attributes.accept "image/*"
+            ]
+            []
+        ]
 
 
 photoAddLabelId : String
@@ -545,25 +547,6 @@ photoDeleteButton =
             [ Svg.Attributes.x1 "7", Svg.Attributes.y1 "3", Svg.Attributes.x2 "3", Svg.Attributes.y2 "7" ]
             []
         ]
-
-
-imageListToBlobUrlList : Maybe ImageList -> List String
-imageListToBlobUrlList imageList =
-    case imageList of
-        Nothing ->
-            []
-
-        Just (Image1 i0) ->
-            [ i0 ]
-
-        Just (Image2 i0 i1) ->
-            [ i0, i1 ]
-
-        Just (Image3 i0 i1 i2) ->
-            [ i0, i1, i2 ]
-
-        Just (Image4 i0 i1 i2 i3) ->
-            [ i0, i1, i2, i3 ]
 
 
 
@@ -695,8 +678,8 @@ priceEditorId =
 -}
 
 
-conditionView : Html.Html (Maybe Product.Condition)
-conditionView =
+conditionView : Maybe Product.Condition -> Html.Html Msg
+conditionView condition =
     Html.div
         []
         [ Html.label
@@ -707,7 +690,7 @@ conditionView =
         , Html.select
             [ Html.Attributes.id conditionEditorId
             , Html.Attributes.class "form-menu"
-            , Html.Events.on "change" selectConditionDecoder
+            , Html.Events.on "change" (selectDecoder |> Json.Decode.map SelectCondition)
             ]
             ([ Html.option [] [ Html.text "--選択してください--" ] ]
                 ++ (Product.conditionAll
@@ -725,9 +708,8 @@ conditionEditorId =
     "exhibition-selectCondition"
 
 
-selectConditionDecoder : Json.Decode.Decoder (Maybe Product.Condition)
-selectConditionDecoder =
+selectDecoder : Json.Decode.Decoder Int
+selectDecoder =
     Json.Decode.at
         [ "target", "selectedIndex" ]
         Json.Decode.int
-        |> Json.Decode.map (\index -> Product.conditionAll |> Array.fromList |> Array.get (index - 1))

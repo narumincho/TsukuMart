@@ -1,4 +1,4 @@
-module Utility exposing (getFirstIndex, getAt)
+module Utility exposing (getAt, getFirstIndex, removeAt)
 
 import Array
 
@@ -23,3 +23,8 @@ getAt index list =
     list
         |> Array.fromList
         |> Array.get index
+
+
+removeAt : Int -> List a -> List a
+removeAt index list =
+    List.take index list ++ List.drop (index + 1) list
