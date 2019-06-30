@@ -227,28 +227,22 @@ update msg (Model rec) =
 
 selectCategoryGroup : Int -> CategorySelect -> CategorySelect
 selectCategoryGroup index categorySelect =
-    case categorySelect of
-        CategoryNone ->
-            Category.groupFromIndex (index - 1)
-                |> Maybe.map CategoryGroupSelect
-                |> Maybe.withDefault categorySelect
+    case ( Category.groupFromIndex (index - 1), categorySelect ) of
+        ( Just group, CategoryNone ) ->
+            CategoryGroupSelect group
 
-        CategoryGroupSelect _ ->
-            Category.groupFromIndex index
-                |> Maybe.map CategoryGroupSelect
-                |> Maybe.withDefault categorySelect
+        ( Just group, CategoryGroupSelect _ ) ->
+            CategoryGroupSelect group
 
-        CategorySelect category ->
-            case Category.groupFromIndex index of
-                Just group ->
-                    if Category.groupFromCategory category == group then
-                        categorySelect
+        ( Just group, CategorySelect category ) ->
+            if Category.groupFromCategory category == group then
+                categorySelect
 
-                    else
-                        CategoryGroupSelect group
+            else
+                CategoryGroupSelect group
 
-                Nothing ->
-                    categorySelect
+        ( _, _ ) ->
+            categorySelect
 
 
 selectCategory : Int -> CategorySelect -> CategorySelect
@@ -266,7 +260,7 @@ selectCategory index categorySelect =
                     categorySelect
 
         CategorySelect category ->
-            case Category.fromIndexInGroup (Category.groupFromCategory category) index of
+            case Category.fromIndexInGroup (Category.groupFromCategory category) (index - 1) of
                 Just newCategory ->
                     CategorySelect newCategory
 
@@ -719,14 +713,8 @@ conditionView condition =
             , Html.Attributes.class "form-menu"
             , Html.Events.on "change" (selectDecoder |> Json.Decode.map SelectCondition)
             ]
-            ((case condition of
-                Just _ ->
-                    []
-
-                Nothing ->
-                    [ blankOption ]
-             )
-                ++ (Product.conditionAll
+            (blankOption
+                :: (Product.conditionAll
                         |> List.map
                             (\s ->
                                 Html.option [] [ Html.text (Product.conditionToJapaneseString s) ]
@@ -801,14 +789,8 @@ selectCategoryGroupView categoryGroup =
             , Html.Attributes.class "form-menu"
             , Html.Events.on "change" (selectDecoder |> Json.Decode.map SelectCategoryGroup)
             ]
-            ((case categoryGroup of
-                Just _ ->
-                    []
-
-                Nothing ->
-                    [ blankOption ]
-             )
-                ++ (Category.groupAll
+            (blankOption
+                :: (Category.groupAll
                         |> List.map
                             (\g ->
                                 Html.option [] [ Html.text (Category.groupToJapaneseString g) ]
@@ -840,14 +822,8 @@ selectCategoryView group category =
             , Html.Attributes.class "form-menu"
             , Html.Events.on "change" (selectDecoder |> Json.Decode.map SelectCategory)
             ]
-            ((case category of
-                Just _ ->
-                    []
-
-                Nothing ->
-                    [ blankOption ]
-             )
-                ++ (Category.groupToCategoryList group
+            (blankOption
+                :: (Category.groupToCategoryList group
                         |> List.map
                             (\c ->
                                 Html.option [] [ Html.text (Category.toJapaneseString c) ]

@@ -118,117 +118,84 @@ getUniversity universitySelect =
 
 update : Msg -> Model -> ( Model, List Emission )
 update msg model =
-    ( case msg of
-        SwitchGraduate ->
-            case model of
-                School schoolSelect ->
-                    GraduateTsukuba
-                        { school = schoolSelect
-                        , graduate = Nothing
-                        }
+    ( case ( msg, model ) of
+        ( SwitchGraduate, School schoolSelect ) ->
+            GraduateTsukuba
+                { school = schoolSelect
+                , graduate = Nothing
+                }
 
-                _ ->
-                    model
+        ( SwitchSchool, GraduateTsukuba { school } ) ->
+            School school
 
-        SwitchSchool ->
-            case model of
-                School _ ->
-                    model
+        ( SwitchSchool, GraduateNoTsukuba _ ) ->
+            School SchoolNone
 
-                GraduateTsukuba { school } ->
-                    School school
+        ( SwitchGraduateTsukuba, GraduateNoTsukuba graduate ) ->
+            GraduateTsukuba
+                { school = SchoolNone
+                , graduate = graduate
+                }
 
-                GraduateNoTsukuba _ ->
-                    School SchoolNone
+        ( SwitchGraduateNoTsukuba, GraduateTsukuba { graduate } ) ->
+            GraduateNoTsukuba
+                graduate
 
-        SwitchGraduateTsukuba ->
-            case model of
-                GraduateNoTsukuba graduate ->
-                    GraduateTsukuba
-                        { school = SchoolNone
-                        , graduate = graduate
-                        }
-
-                _ ->
-                    model
-
-        SwitchGraduateNoTsukuba ->
-            case model of
-                GraduateTsukuba { graduate } ->
-                    GraduateNoTsukuba
-                        graduate
-
-                _ ->
-                    model
-
-        SelectGraduate index ->
-            case University.graduateFromIndex index of
+        ( SelectGraduate index, GraduateTsukuba rec ) ->
+            case University.graduateFromIndex (index - 1) of
                 Just graduate ->
-                    case model of
-                        GraduateTsukuba rec ->
-                            GraduateTsukuba { rec | graduate = Just graduate }
-
-                        GraduateNoTsukuba _ ->
-                            GraduateNoTsukuba (Just graduate)
-
-                        School _ ->
-                            model
+                    GraduateTsukuba { rec | graduate = Just graduate }
 
                 Nothing ->
                     model
 
-        SelectSchool index ->
-            case model of
-                School school ->
-                    School (selectSchool index school)
+        ( SelectGraduate index, GraduateNoTsukuba _ ) ->
+            case University.graduateFromIndex (index - 1) of
+                Just graduate ->
+                    GraduateNoTsukuba (Just graduate)
 
-                GraduateTsukuba rec ->
-                    GraduateTsukuba
-                        { rec
-                            | school = selectSchool index rec.school
-                        }
-
-                GraduateNoTsukuba _ ->
+                Nothing ->
                     model
 
-        SelectDepartment index ->
-            case model of
-                School school ->
-                    School (selectDepartment index school)
+        ( SelectSchool index, School school ) ->
+            School (selectSchool index school)
 
-                GraduateTsukuba rec ->
-                    GraduateTsukuba { rec | school = selectDepartment index rec.school }
+        ( SelectSchool index, GraduateTsukuba rec ) ->
+            GraduateTsukuba
+                { rec
+                    | school = selectSchool index rec.school
+                }
 
-                GraduateNoTsukuba _ ->
-                    model
+        ( SelectDepartment index, School school ) ->
+            School (selectDepartment index school)
+
+        ( SelectDepartment index, GraduateTsukuba rec ) ->
+            GraduateTsukuba { rec | school = selectDepartment index rec.school }
+
+        ( _, _ ) ->
+            model
     , []
     )
 
 
 selectSchool : Int -> SchoolSelect -> SchoolSelect
 selectSchool index schoolSelect =
-    case schoolSelect of
-        SchoolNone ->
-            University.schoolFromIndex (index - 1)
-                |> Maybe.map SchoolSchool
-                |> Maybe.withDefault schoolSelect
+    case ( University.schoolFromIndex (index - 1), schoolSelect ) of
+        ( Just school, SchoolNone ) ->
+            SchoolSchool school
 
-        SchoolSchool _ ->
-            University.schoolFromIndex index
-                |> Maybe.map SchoolSchool
-                |> Maybe.withDefault schoolSelect
+        ( Just school, SchoolSchool _ ) ->
+            SchoolSchool school
 
-        SchoolSchoolAndDepartment schoolAndDepartment ->
-            case University.schoolFromIndex index of
-                Just school ->
-                    if University.schoolFromDepartment schoolAndDepartment == school then
-                        schoolSelect
+        ( Just school, SchoolSchoolAndDepartment schoolAndDepartment ) ->
+            if University.schoolFromDepartment schoolAndDepartment == school then
+                schoolSelect
 
-                    else
-                        SchoolSchool school
+            else
+                SchoolSchool school
 
-                Nothing ->
-                    schoolSelect
+        ( _, _ ) ->
+            schoolSelect
 
 
 selectDepartment : Int -> SchoolSelect -> SchoolSelect
@@ -246,7 +213,11 @@ selectDepartment index schoolSelect =
                     schoolSelect
 
         SchoolSchoolAndDepartment schoolAndDepartment ->
-            case University.departmentFromIndexInSchool (University.schoolFromDepartment schoolAndDepartment) index of
+            case
+                University.departmentFromIndexInSchool
+                    (University.schoolFromDepartment schoolAndDepartment)
+                    index
+            of
                 Just department ->
                     SchoolSchoolAndDepartment department
 
@@ -375,14 +346,8 @@ graduateSelectView graduateMaybe =
             , Html.Attributes.id graduateSelectId
             , Html.Events.on "change" (selectDecoder |> Json.Decode.map SelectGraduate)
             ]
-            ((case graduateMaybe of
-                Just _ ->
-                    [ blankOption ]
-
-                Nothing ->
-                    []
-             )
-                ++ (University.graduateAllValue
+            (blankOption
+                :: (University.graduateAllValue
                         |> List.map
                             (\s ->
                                 Html.option [] [ Html.text (University.graduateToJapaneseString s) ]
@@ -463,14 +428,8 @@ selectSchoolView schoolMaybe =
             , Html.Attributes.id schoolSelectId
             , Html.Events.on "change" (selectDecoder |> Json.Decode.map SelectSchool)
             ]
-            ((case schoolMaybe of
-                Just _ ->
-                    [ blankOption ]
-
-                Nothing ->
-                    []
-             )
-                ++ (University.schoolAll
+            (blankOption
+                :: (University.schoolAll
                         |> List.map
                             (\s ->
                                 Html.option [] [ Html.text (University.schoolToJapaneseString s) ]
@@ -503,14 +462,8 @@ selectDepartmentView school departmentMaybe =
             , Html.Attributes.id departmentSelectId
             , Html.Events.on "change" (selectDecoder |> Json.Decode.map SelectDepartment)
             ]
-            ((case departmentMaybe of
-                Just _ ->
-                    [ blankOption ]
-
-                Nothing ->
-                    []
-             )
-                ++ (University.schoolToDepartmentList school
+            (blankOption
+                :: (University.schoolToDepartmentList school
                         |> List.map
                             (\s ->
                                 Html.option [] [ Html.text (University.departmentToJapaneseString s |> Maybe.withDefault "?") ]
