@@ -157,12 +157,15 @@ main =
 init : { refreshToken : Maybe String } -> Url.Url -> Browser.Navigation.Key -> ( Model, Cmd Msg )
 init { refreshToken } url key =
     let
-        ( page, cmd ) =
-            urlParserInit Data.LogInState.None key url
+        ( accessTokenAndRefreshTokenByUrl, page ) =
+            SiteMap.urlParserInit url
+
+        ( newPage, cmd ) =
+            urlParserInit Data.LogInState.None key page
                 |> urlParserResultToModel
     in
     ( Model
-        { page = page
+        { page = newPage
         , wideScreen = False
         , message = Nothing
         , logInState = Data.LogInState.None
@@ -171,13 +174,20 @@ init { refreshToken } url key =
         , now = Nothing
         }
     , Cmd.batch
-        ((case refreshToken of
-            Just refreshTokenString ->
-                [ Api.tokenRefresh { refresh = Api.tokenFromString refreshTokenString } LogInResponse
+        ((case ( accessTokenAndRefreshTokenByUrl, refreshToken ) of
+            ( Just accessTokenAndRefreshToken, _ ) ->
+                [ logInResponseCmd accessTokenAndRefreshToken key url
                 , Task.succeed () |> Task.perform (always (AddLogMessage "ログイン中"))
                 ]
 
-            Nothing ->
+            ( Nothing, Just refreshTokenString ) ->
+                [ Api.tokenRefresh
+                    { refresh = Api.tokenFromString refreshTokenString }
+                    LogInResponse
+                , Task.succeed () |> Task.perform (always (AddLogMessage "ログイン中"))
+                ]
+
+            ( Nothing, Nothing ) ->
                 []
          )
             ++ [ cmd
@@ -191,17 +201,11 @@ init { refreshToken } url key =
     )
 
 
-urlParserInit : Data.LogInState.LogInState -> Browser.Navigation.Key -> Url.Url -> Maybe ( PageModel, Cmd Msg )
-urlParserInit logInState key url =
-    let
-        ( accessTokenAndRefreshToken, page ) =
-            SiteMap.urlParserInit url
-    in
+urlParserInit : Data.LogInState.LogInState -> Browser.Navigation.Key -> Maybe SiteMap.UrlParserInitResult -> Maybe ( PageModel, Cmd Msg )
+urlParserInit logInState key page =
     case page of
         Just p ->
             urlParserInitResultToPageAndCmd logInState p
-                |> Tuple.mapSecond
-                    (\c -> Cmd.batch [ c, logInResponseCmd accessTokenAndRefreshToken key url ])
                 |> Just
 
         Nothing ->
@@ -288,27 +292,22 @@ urlParserInitResultToPageAndCmd logInState page =
             ( PageAbout Page.About.privacyPolicyModel, Cmd.none )
 
 
-logInResponseCmd : Maybe { accessToken : Api.Token, refreshToken : Api.Token } -> Browser.Navigation.Key -> Url.Url -> Cmd Msg
-logInResponseCmd accessTokenAndRefreshToken key url =
-    case accessTokenAndRefreshToken of
-        Just { accessToken, refreshToken } ->
-            Cmd.batch
-                [ Task.perform
-                    (always
-                        (LogInResponse
-                            (Ok
-                                { accessToken = accessToken
-                                , refreshToken = refreshToken
-                                }
-                            )
-                        )
+logInResponseCmd : { accessToken : Api.Token, refreshToken : Api.Token } -> Browser.Navigation.Key -> Url.Url -> Cmd Msg
+logInResponseCmd { accessToken, refreshToken } key url =
+    Cmd.batch
+        [ Task.perform
+            (always
+                (LogInResponse
+                    (Ok
+                        { accessToken = accessToken
+                        , refreshToken = refreshToken
+                        }
                     )
-                    (Task.succeed ())
-                , Browser.Navigation.replaceUrl key (Url.toString { url | query = Nothing })
-                ]
-
-        Nothing ->
-            Cmd.none
+                )
+            )
+            (Task.succeed ())
+        , Browser.Navigation.replaceUrl key (Url.toString { url | query = Nothing })
+        ]
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )

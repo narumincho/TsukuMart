@@ -877,7 +877,7 @@ const product = makeQueryOrMutationField<
         }
     },
     type: g.GraphQLNonNull(productGraphQLType),
-    resolve: async (source, args) => {
+    resolve: async (source, args, context, info) => {
         if (await database.existsProduct(args.id)) {
             return {
                 id: args.id
@@ -891,8 +891,8 @@ const product = makeQueryOrMutationField<
 const productAll = makeQueryOrMutationField<{}, Array<type.ProductInternal>>({
     args: {},
     type: g.GraphQLNonNull(g.GraphQLList(g.GraphQLNonNull(productGraphQLType))),
-    resolve: async () => {
-        return [];
+    resolve: async (source, args, context, info) => {
+        return database.getAllProducts();
     },
     description: "すべての商品(売れたものも含まれる)を取得する"
 });

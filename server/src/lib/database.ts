@@ -636,6 +636,49 @@ export const deleteImage = async (imageId: string): Promise<void> => {
                     Product
    ==========================================
 */
+export const getAllProducts = async (): Promise<
+    Array<
+        Pick<
+            type.Product,
+            | "id"
+            | "name"
+            | "price"
+            | "description"
+            | "condition"
+            | "category"
+            | "thumbnailImageId"
+            | "imageIds"
+            | "likedCount"
+            | "viewedCount"
+            | "status"
+            | "createdAt"
+            | "updateAt"
+        > & {
+            seller: Pick<type.User, "id" | "displayName" | "imageId">;
+        }
+    >
+> =>
+    (await databaseLow.getAllProductData()).map(({ id, data }) => ({
+        id: id,
+        name: data.name,
+        price: data.price,
+        description: data.description,
+        condition: data.condition,
+        category: data.category,
+        thumbnailImageId: data.thumbnailImageId,
+        imageIds: data.imageIds,
+        likedCount: data.likedCount,
+        viewedCount: data.viewedCount,
+        status: data.status,
+        createdAt: databaseLow.timestampToDate(data.createdAt),
+        updateAt: databaseLow.timestampToDate(data.updateAt),
+        seller: {
+            id: data.sellerId,
+            displayName: data.sellerDisplayName,
+            imageId: data.sellerImageId
+        }
+    }));
+
 /**
  * 指定したIDの商品があるかどうか調べる
  * @param id
@@ -742,6 +785,9 @@ export const sellProduct = async (
         sellerImageId: userData.imageId,
         createdAt: nowTimestamp,
         updateAt: nowTimestamp
+    });
+    await databaseLow.updateUserData(userId, {
+        soldProducts: userData.soldProducts.concat(productId)
     });
     return {
         id: productId,
