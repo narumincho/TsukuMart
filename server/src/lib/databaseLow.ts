@@ -356,7 +356,7 @@ export const deleteUserBeforeEmailVerification = async (
                     Product
    ==========================================
 */
-type ProductData = {
+export type ProductData = {
     name: string;
     price: number;
     description: string;
@@ -428,20 +428,68 @@ export const getAllProductData = async (): Promise<
         id: string;
         data: ProductData;
     }>;
+
 /**
- * 商品の条件を指定して検索する
+ *  商品を新着順で取得する
+ */
+export const getRecentProductData = async (): Promise<
+    Array<{ id: string; data: ProductData }>
+> =>
+    (await querySnapshotToIdAndDataArray(
+        await getProductsOrderBy("createdAt", "desc")
+    )) as Array<{
+        id: string;
+        data: ProductData;
+    }>;
+
+/**
+ * 商品をいいねが多い順に取得する
+ */
+export const getRecommendProductData = async (): Promise<
+    Array<{ id: string; data: ProductData }>
+> =>
+    (await querySnapshotToIdAndDataArray(
+        await getProductsOrderBy("likedCount", "desc")
+    )) as Array<{ id: string; data: ProductData }>;
+
+/**
+ * 0円の商品を取得する
+ */
+export const getFreeProductData = async (): Promise<
+    Array<{ id: string; data: ProductData }>
+> =>
+    (await querySnapshotToIdAndDataArray(
+        await getProductsFromCondition("price", "==", 0, "createdAt", "desc")
+    )) as Array<{ id: string; data: ProductData }>;
+/**
+ * 商品の条件を指定して、指定した順番で取得する
  * @param fieldName
  * @param operator
  * @param value
  */
-export const getProductListFromCondition = async <
-    Field extends keyof ProductData
+const getProductsFromCondition = async <
+    WhereField extends keyof ProductData,
+    OrderByField extends keyof ProductData
 >(
-    fieldName: Field,
+    fieldName: WhereField,
     operator: firestore.WhereFilterOp,
-    value: ProductData[Field]
-): Promise<firestore.QueryDocumentSnapshot[]> =>
-    (await productCollectionRef.where(fieldName, operator, value).get()).docs;
+    value: ProductData[WhereField],
+    orderByField: OrderByField,
+    directionStr: firestore.OrderByDirection
+): Promise<firestore.QuerySnapshot> =>
+    await productCollectionRef
+        .where(fieldName, operator, value)
+        .orderBy(orderByField, directionStr)
+        .get();
+
+/**
+ * すべての商品を指定した順番で取得する
+ */
+const getProductsOrderBy = async <Field extends keyof ProductData>(
+    field: Field,
+    directionStr: firestore.OrderByDirection
+): Promise<firestore.QuerySnapshot> =>
+    await productCollectionRef.orderBy(field, directionStr).get();
 
 type ProductComment = {
     body: string;

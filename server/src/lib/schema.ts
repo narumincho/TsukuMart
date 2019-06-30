@@ -891,10 +891,40 @@ const product = makeQueryOrMutationField<
 const productAll = makeQueryOrMutationField<{}, Array<type.ProductInternal>>({
     args: {},
     type: g.GraphQLNonNull(g.GraphQLList(g.GraphQLNonNull(productGraphQLType))),
-    resolve: async (source, args, context, info) => {
-        return database.getAllProducts();
-    },
+    resolve: async (source, args, context, info) => database.getAllProducts(),
     description: "すべての商品(売れたものも含まれる)を取得する"
+});
+
+const productRecentAll = makeQueryOrMutationField<
+    {},
+    Array<type.ProductInternal>
+>({
+    args: {},
+    type: g.GraphQLNonNull(g.GraphQLList(g.GraphQLNonNull(productGraphQLType))),
+    resolve: async (source, args, context, info) =>
+        database.getRecentProducts(),
+    description: "すべての商品(売れたものを含む)を新着順に取得する"
+});
+
+const productRecommendAll = makeQueryOrMutationField<
+    {},
+    Array<type.ProductInternal>
+>({
+    args: {},
+    type: g.GraphQLNonNull(g.GraphQLList(g.GraphQLNonNull(productGraphQLType))),
+    resolve: async (source, args, context, info) =>
+        database.getRecommendProducts(),
+    description: "すべての商品(売れたものを含む)をいいねが多い順に取得する"
+});
+
+const productFreeAll = makeQueryOrMutationField<
+    {},
+    Array<type.ProductInternal>
+>({
+    args: {},
+    type: g.GraphQLNonNull(g.GraphQLList(g.GraphQLNonNull(productGraphQLType))),
+    resolve: async (source, args, context, info) => database.getFreeProducts(),
+    description: "すべての0円の商品(売れたものも含まれる)を取得する"
 });
 
 /*  =============================================================
@@ -1383,6 +1413,9 @@ export const schema = new g.GraphQLSchema({
             userAll,
             userPrivate,
             product,
+            productRecentAll,
+            productRecommendAll,
+            productFreeAll,
             productAll
         }
     }),

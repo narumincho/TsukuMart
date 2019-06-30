@@ -636,49 +636,75 @@ export const deleteImage = async (imageId: string): Promise<void> => {
                     Product
    ==========================================
 */
-export const getAllProducts = async (): Promise<
-    Array<
-        Pick<
-            type.Product,
-            | "id"
-            | "name"
-            | "price"
-            | "description"
-            | "condition"
-            | "category"
-            | "thumbnailImageId"
-            | "imageIds"
-            | "likedCount"
-            | "viewedCount"
-            | "status"
-            | "createdAt"
-            | "updateAt"
-        > & {
-            seller: Pick<type.User, "id" | "displayName" | "imageId">;
-        }
-    >
-> =>
-    (await databaseLow.getAllProductData()).map(({ id, data }) => ({
-        id: id,
-        name: data.name,
-        price: data.price,
-        description: data.description,
-        condition: data.condition,
-        category: data.category,
-        thumbnailImageId: data.thumbnailImageId,
-        imageIds: data.imageIds,
-        likedCount: data.likedCount,
-        viewedCount: data.viewedCount,
-        status: data.status,
-        createdAt: databaseLow.timestampToDate(data.createdAt),
-        updateAt: databaseLow.timestampToDate(data.updateAt),
-        seller: {
-            id: data.sellerId,
-            displayName: data.sellerDisplayName,
-            imageId: data.sellerImageId
-        }
-    }));
+type ProductReturnLowCost = Pick<
+    type.Product,
+    | "id"
+    | "name"
+    | "price"
+    | "description"
+    | "condition"
+    | "category"
+    | "thumbnailImageId"
+    | "imageIds"
+    | "likedCount"
+    | "viewedCount"
+    | "status"
+    | "createdAt"
+    | "updateAt"
+> & {
+    seller: Pick<type.User, "id" | "displayName" | "imageId">;
+};
 
+const productReturnLowCostFromDatabaseLow = ({
+    id,
+    data
+}: {
+    id: string;
+    data: databaseLow.ProductData;
+}): ProductReturnLowCost => ({
+    id: id,
+    name: data.name,
+    price: data.price,
+    description: data.description,
+    condition: data.condition,
+    category: data.category,
+    thumbnailImageId: data.thumbnailImageId,
+    imageIds: data.imageIds,
+    likedCount: data.likedCount,
+    viewedCount: data.viewedCount,
+    status: data.status,
+    createdAt: databaseLow.timestampToDate(data.createdAt),
+    updateAt: databaseLow.timestampToDate(data.updateAt),
+    seller: {
+        id: data.sellerId,
+        displayName: data.sellerDisplayName,
+        imageId: data.sellerImageId
+    }
+});
+
+export const getAllProducts = async (): Promise<Array<ProductReturnLowCost>> =>
+    (await databaseLow.getAllProductData()).map(
+        productReturnLowCostFromDatabaseLow
+    );
+
+export const getRecentProducts = async (): Promise<
+    Array<ProductReturnLowCost>
+> =>
+    (await databaseLow.getRecentProductData()).map(
+        productReturnLowCostFromDatabaseLow
+    );
+
+export const getRecommendProducts = async (): Promise<
+    Array<ProductReturnLowCost>
+> =>
+    (await databaseLow.getRecentProductData()).map(
+        productReturnLowCostFromDatabaseLow
+    );
+
+export const getFreeProducts = async (): Promise<Array<ProductReturnLowCost>> =>
+    (await databaseLow.getFreeProductData()).map(
+        productReturnLowCostFromDatabaseLow
+    );
 /**
  * 指定したIDの商品があるかどうか調べる
  * @param id
