@@ -704,7 +704,7 @@ export const getRecentProducts = async (): Promise<
 export const getRecommendProducts = async (): Promise<
     Array<ProductReturnLowCost>
 > =>
-    (await databaseLow.getRecentProductData()).map(
+    (await databaseLow.getRecommendProductData()).map(
         productReturnLowCostFromDatabaseLow
     );
 

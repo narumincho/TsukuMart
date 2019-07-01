@@ -128,7 +128,7 @@ item logInState sending product =
         , Html.Attributes.href (SiteMap.productUrl (Product.getId product))
         , Html.Attributes.id (productIdString (Product.getId product))
         ]
-        [ itemImage (Product.getName product) (Product.idToString (Product.getId product))
+        [ itemImage (Product.getName product) (Product.getThumbnailImageUrl product)
         , Html.div
             [ Html.Attributes.class "productList-name" ]
             [ Html.text (Product.getName product) ]

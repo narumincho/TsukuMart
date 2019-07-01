@@ -14,7 +14,7 @@ requestAnimationFrame(() => {
         });
         image.src = window.URL.createObjectURL(file);
     });
-    const resize = (width, height) => {
+    const insideSize = (width, height) => {
         if (1024 < Math.max(width, height)) {
             if (height < width) {
                 return {
@@ -37,7 +37,7 @@ requestAnimationFrame(() => {
         const image = new Image();
         image.addEventListener("load", () => {
             const canvas = document.createElement("canvas");
-            const size = resize(image.width, image.height);
+            const size = insideSize(image.width, image.height);
             canvas.width = size.width;
             canvas.height = size.height;
             const context = canvas.getContext("2d");

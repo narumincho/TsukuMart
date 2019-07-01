@@ -57,8 +57,7 @@ initModel goodIdMaybe logInState =
         }
     , (case LogInState.getAccessToken logInState of
         Just accessToken ->
-            [ EmissionGetLikedProducts accessToken
-            ]
+            [ EmissionGetLikedProducts accessToken ]
 
         Nothing ->
             []

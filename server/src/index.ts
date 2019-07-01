@@ -10,7 +10,7 @@ console.log("run index.js 2019-05-27");
 export const indexHtml = functions
     .region("us-central1")
     .https.onRequest((request, response) => {
-        response.setHeader("Content-Type", "text/html");
+        response.setHeader("content-type", "text/html");
         response.send(`<!doctype html>
 <html lang="ja">
 
@@ -57,7 +57,7 @@ export const api = functions
                 "Access-Control-Allow-Methods",
                 "POST, GET, OPTIONS"
             );
-            response.setHeader("Access-Control-Allow-Headers", "Content-Type");
+            response.setHeader("Access-Control-Allow-Headers", "content-type");
             response.setHeader("Access-Control-Max-Age", 3600);
             response.status(200).send("");
             return;
@@ -97,7 +97,7 @@ export const image = functions
                 "Access-Control-Allow-Methods",
                 "POST, GET, OPTIONS"
             );
-            response.setHeader("Access-Control-Allow-Headers", "Content-Type");
+            response.setHeader("Access-Control-Allow-Headers", "content-type");
             response.setHeader("Access-Control-Max-Age", 3600);
             response.status(200).send("");
             return;

@@ -58,8 +58,7 @@ initModel goodIdMaybe logInState =
         }
     , (case LogInState.getAccessToken logInState of
         Just accessToken ->
-            [ EmissionGetHistoryProducts accessToken
-            ]
+            [ EmissionGetHistoryProducts accessToken ]
 
         Nothing ->
             []

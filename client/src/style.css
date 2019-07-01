@@ -249,8 +249,8 @@ header {
 .exhibition {
     display: grid;
     max-width: 40rem;
-    gap: 1rem;
-    padding: 1rem;
+    gap: 32px;
+    padding: 16px;
     box-sizing: border-box;
     width: 100%;
 }
@@ -633,11 +633,6 @@ header {
     font-size: 1rem;
     text-align: center;
 }
-
-/*===============================================
-                Sign Up 新規登録画面
-===============================================*/
-
 /*===============================================
             Profile ユーザーページ画面
 ===============================================*/

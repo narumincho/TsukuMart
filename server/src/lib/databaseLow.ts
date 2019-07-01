@@ -2,10 +2,8 @@ import * as type from "./type";
 import * as firebase from "firebase";
 import * as firestore from "@google-cloud/firestore";
 import * as admin from "firebase-admin";
-import * as stream from "stream";
-import { URL } from "url";
 import * as sharp from "sharp";
-import { Storage } from "@google-cloud/storage";
+import * as stream from "stream";
 
 firebase.initializeApp({
     apiKey: "AIzaSyDmKHgxpyKvnq-zxdj0tYSG6QIMotHKRBU",
@@ -474,15 +472,15 @@ export const getFreeProductData = async (): Promise<
     Array<{ id: string; data: ProductData }>
 > =>
     (await querySnapshotToIdAndDataArray(
-        await getProductsFromCondition("price", "==", 0, "createdAt", "desc")
+        await getProductsCondition("price", "==", 0)
     )) as Array<{ id: string; data: ProductData }>;
 /**
- * 商品の条件を指定して、指定した順番で取得する
+ * 商品の条件を指定して、指定した順番で取得する。複合クエリの指定が事前に必要
  * @param fieldName
  * @param operator
  * @param value
  */
-const getProductsFromCondition = async <
+const getProductsConditionOrderBy = async <
     WhereField extends keyof ProductData,
     OrderByField extends keyof ProductData
 >(
@@ -496,6 +494,19 @@ const getProductsFromCondition = async <
         .where(fieldName, operator, value)
         .orderBy(orderByField, directionStr)
         .get();
+
+/**
+ * 商品の条件を指定して取得する
+ * @param fieldName
+ * @param operator
+ * @param value
+ */
+const getProductsCondition = async <WhereField extends keyof ProductData>(
+    fieldName: WhereField,
+    operator: firestore.WhereFilterOp,
+    value: ProductData[WhereField]
+): Promise<firestore.QuerySnapshot> =>
+    await productCollectionRef.where(fieldName, operator, value).get();
 
 /**
  * すべての商品を指定した順番で取得する
@@ -671,7 +682,6 @@ export const sendEmailVerification = async (
             Firebase Cloud Storage
    ==========================================
 */
-const userImageFolderName = "";
 /**
  * Firebase Cloud Storageで新しくファイルを作成する
  * 被らないIDで保存したかったが、すでに存在しているかのチェックがうまくいかない
@@ -682,7 +692,7 @@ export const saveFileToCloudStorage = async (
     data: ArrayBuffer,
     mimeType: string
 ): Promise<string> => {
-    const id = createRandomFileName();
+    const id = createRandomFileId();
     const file = storage.file(id);
     await file.save(data, { contentType: mimeType });
     return id;
@@ -691,37 +701,40 @@ export const saveFileToCloudStorage = async (
 export const saveThumbnailImageToCloudStorage = async (
     data: Buffer,
     mimeType: string
-): Promise<string> =>
-    new Promise((resolve, reject) => {
-        const id = createRandomFileName();
-        const file = storage.file(id);
-        const writeStream: stream.Writable = file.createWriteStream({
-            contentType: mimeType
-        });
-        const readStream = sharp()
+): Promise<string> => {
+    const fileId = createRandomFileId();
+    const file = storage.file(fileId);
+    file.save(
+        await sharp(data)
             .resize(300, 300, { fit: "inside" })
-            .composite([{ input: data }])
-            .jpeg();
-        readStream.pipe(writeStream);
-        readStream.addListener("end", () => resolve(id));
-    });
+            .toBuffer(),
+        { contentType: mimeType }
+    );
+    return fileId;
+};
 
 export const saveThumbnailImageFromCloudStorageToCloudStorage = async (
     fileId: string
 ): Promise<string> =>
     new Promise((resolve, reject) => {
-        const thumbnailFileId = createRandomFileName();
+        const thumbnailFileId = createRandomFileId();
         const writeStream = storage.file(thumbnailFileId).createWriteStream();
         const readStream = storage.file(fileId).createReadStream();
         readStream.addListener("end", () => {
             resolve(thumbnailFileId);
         });
-        readStream.pipe(writeStream);
+        readStream
+            .pipe(
+                sharp()
+                    .resize(300, 300, { fit: "inside" })
+                    .jpeg()
+            )
+            .pipe(writeStream);
     });
 /**
  * ランダムなファイル名を生成する
  */
-const createRandomFileName = (): string => {
+const createRandomFileId = (): string => {
     let id = "";
     const charTable = "0123456789abcdefghijklmnopqrstuvwxyz";
     for (let i = 0; i < 22; i++) {

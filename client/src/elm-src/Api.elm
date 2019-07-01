@@ -348,7 +348,7 @@ sellProduct token (SellProductRequest request) callBack =
                 }
             ]
         )
-        productDetailDecoder
+        (Jd.field "sellProduct" productDetailDecoder)
         callBack
 
 
@@ -609,7 +609,9 @@ getLikedProducts accessToken callBack =
                 }
             ]
         )
-        (Jd.list productDecoder)
+        (Jd.field "userPrivate"
+            (Jd.field "likedProductAll" (Jd.list productDecoder))
+        )
         callBack
 
 
@@ -637,7 +639,9 @@ getHistoryViewProducts accessToken callBack =
                 }
             ]
         )
-        (Jd.list productDecoder)
+        (Jd.field "userPrivate"
+            (Jd.field "historyViewProductAll" (Jd.list productDecoder))
+        )
         callBack
 
 
@@ -665,7 +669,9 @@ getSoldProductList userId callBack =
                 }
             ]
         )
-        (Jd.list productDecoder)
+        (Jd.field "user"
+            (Jd.field "soldProductAll" (Jd.list productDecoder))
+        )
         callBack
 
 
@@ -693,7 +699,9 @@ getBoughtProductList accessToken callBack =
                 }
             ]
         )
-        (Jd.list productDecoder)
+        (Jd.field "userPrivate"
+            (Jd.field "boughtProductAll" (Jd.list productDecoder))
+        )
         callBack
 
 
@@ -721,7 +729,9 @@ getTradingProductList accessToken callBack =
                 }
             ]
         )
-        (Jd.list tradeDecoder)
+        (Jd.field "userPrivate"
+            (Jd.field "tradingAll" (Jd.list tradeDecoder))
+        )
         callBack
 
 
@@ -788,7 +798,9 @@ getTradedProductList accessToken callBack =
                 }
             ]
         )
-        (Jd.list tradeDecoder)
+        (Jd.field "userPrivate"
+            (Jd.field "tradedAll" (Jd.list tradeDecoder))
+        )
         callBack
 
 
@@ -816,7 +828,9 @@ getCommentedProductList accessToken callBack =
                 }
             ]
         )
-        (Jd.list productDecoder)
+        (Jd.field "userPrivate"
+            (Jd.field "commentedProductAll" (Jd.list productDecoder))
+        )
         callBack
 
 
@@ -862,7 +876,9 @@ getRecentProductList callBack =
                 }
             ]
         )
-        (Jd.list productDecoder)
+        (Jd.field "productRecentAll"
+            (Jd.list productDecoder)
+        )
         callBack
 
 
@@ -884,7 +900,9 @@ getRecommendProductList callBack =
                 }
             ]
         )
-        (Jd.list productDecoder)
+        (Jd.field "productRecommendAll"
+            (Jd.list productDecoder)
+        )
         callBack
 
 
@@ -900,13 +918,15 @@ getFreeProductList callBack =
     graphQlApiRequest
         (Query
             [ Field
-                { name = "productRecommendAll"
+                { name = "productFreeAll"
                 , args = []
                 , return = productReturn
                 }
             ]
         )
-        (Jd.list productDecoder)
+        (Jd.field "productFreeAll"
+            (Jd.list productDecoder)
+        )
         callBack
 
 
@@ -928,7 +948,7 @@ getProduct id callBack =
                 }
             ]
         )
-        productDetailDecoder
+        (Jd.field "product" productDetailDecoder)
         callBack
 
 
@@ -997,8 +1017,8 @@ postProductComment accessToken productId comment msg =
     Cmd.none
 
 
-commentDecoder : String -> User.Id -> Jd.Decoder Product.Comment
-commentDecoder userName userId =
+commentDecoder : Jd.Decoder Product.Comment
+commentDecoder =
     Jd.succeed
         (\body createdAt speaker ->
             Product.commentFromApi

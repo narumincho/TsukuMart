@@ -83,7 +83,7 @@ requestAnimationFrame(() => {
             image.src = window.URL.createObjectURL(file);
         });
 
-    const resize = (
+    const insideSize = (
         width: number,
         height: number
     ): { width: number; height: number } => {
@@ -115,7 +115,7 @@ requestAnimationFrame(() => {
                         const image = new Image();
                         image.addEventListener("load", () => {
                             const canvas = document.createElement("canvas");
-                            const size = resize(image.width, image.height);
+                            const size = insideSize(image.width, image.height);
                             canvas.width = size.width;
                             canvas.height = size.height;
                             const context = canvas.getContext(
