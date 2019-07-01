@@ -36,10 +36,11 @@ type Emission
     = EmissionGetSoldProducts Api.Token
     | EmissionLogInOrSignUp LogIn.Emission
     | EmissionByProductList ProductList.Emission
+    | EmissionAddLogMessage String
 
 
 type Msg
-    = GetSoldProductListResponse (Result () (List Product.Product))
+    = GetSoldProductListResponse (Result String (List Product.Product))
     | LogInOrSignUpMsg LogIn.Msg
     | MsgByProductList ProductList.Msg
 
@@ -89,9 +90,9 @@ update msg (Model rec) =
                     , []
                     )
 
-                Err () ->
+                Err errorMessage ->
                     ( Model { rec | normal = Error }
-                    , []
+                    , [ EmissionAddLogMessage errorMessage ]
                     )
 
         LogInOrSignUpMsg logInOrSignUpMsg ->

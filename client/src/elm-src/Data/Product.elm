@@ -110,7 +110,7 @@ fromApi :
     , category : Category.Category
     , status : Status
     , thumbnailImageId : ImageId.ImageId
-    , likeCount : Int
+    , likedCount : Int
     }
     -> Product
 fromApi rec =
@@ -121,7 +121,7 @@ fromApi rec =
         , status = rec.status
         , category = rec.category
         , thumbnailImageId = rec.thumbnailImageId
-        , likedCount = max 0 rec.likeCount
+        , likedCount = max 0 rec.likedCount
         }
 
 

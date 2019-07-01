@@ -115,6 +115,21 @@ type LikedProductData = {
     createdAt: firestore.Timestamp;
 };
 
+type CommentedProductData = {
+    createdAt: firestore.Timestamp;
+};
+
+export const getCommentedProductData = async (
+    userId: string
+): Promise<Array<{ id: string; data: CommentedProductData }>> =>
+    (await querySnapshotToIdAndDataArray(
+        await userCollectionRef
+            .doc(userId)
+            .collection("commentedProduct")
+            .orderBy("createdAt")
+            .get()
+    )) as Array<{ id: string; data: CommentedProductData }>;
+
 export const addLikedProductData = async (
     userId: string,
     productId: string,

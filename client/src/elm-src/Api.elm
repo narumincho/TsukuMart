@@ -5,7 +5,6 @@ module Api exposing
     , Token
     , UpdateProductRequest(..)
     , deleteProduct
-    , editProduct
     , getBoughtProductList
     , getCommentedProductList
     , getFreeProductList
@@ -31,6 +30,7 @@ module Api exposing
     , tokenToString
     , tradeStart
     , unlikeProduct
+    , updateProduct
     , updateProfile
     , userWithNameDecoder
     )
@@ -40,6 +40,7 @@ import Data.EmailAddress as EmailAddress
 import Data.ImageId as ImageId
 import Data.Product as Product
 import Data.SocialLoginService
+import Data.Trade as Trade
 import Data.University as University
 import Data.User as User
 import Http
@@ -359,14 +360,14 @@ productReturn =
     , Field { name = "category", args = [], return = [] }
     , Field { name = "status", args = [], return = [] }
     , Field { name = "thumbnailImageId", args = [], return = [] }
-    , Field { name = "likeCount", args = [], return = [] }
+    , Field { name = "likedCount", args = [], return = [] }
     ]
 
 
 productDecoder : Jd.Decoder Product.Product
 productDecoder =
     Jd.succeed
-        (\id name price category status thumbnailImageId likeCount ->
+        (\id name price category status thumbnailImageId likedCount ->
             Product.fromApi
                 { id = id
                 , name = name
@@ -374,7 +375,7 @@ productDecoder =
                 , category = category
                 , status = status
                 , thumbnailImageId = thumbnailImageId
-                , likeCount = likeCount
+                , likedCount = likedCount
                 }
         )
         |> Jdp.required "id" Jd.string
@@ -383,7 +384,7 @@ productDecoder =
         |> Jdp.required "category" categoryDecoder
         |> Jdp.required "status" statusDecoder
         |> Jdp.required "thumbnailImageId" imageIdDecoder
-        |> Jdp.required "likeCount" Jd.int
+        |> Jdp.required "likedCount" Jd.int
 
 
 productDetailReturn : List Field
@@ -541,8 +542,8 @@ type UpdateProductRequest
         }
 
 
-editProduct : Token -> Product.Id -> UpdateProductRequest -> (Result String () -> msg) -> Cmd msg
-editProduct accessToken productId editProductRequest callBack =
+updateProduct : Token -> Product.Id -> UpdateProductRequest -> (Result String () -> msg) -> Cmd msg
+updateProduct accessToken productId editProductRequest callBack =
     Cmd.none
 
 
@@ -592,8 +593,24 @@ updateProfile accessToken { displayName, introduction, image, university } callB
 
 
 getLikedProducts : Token -> (Result String (List Product.Product) -> msg) -> Cmd msg
-getLikedProducts token msg =
-    Cmd.none
+getLikedProducts accessToken callBack =
+    graphQlApiRequest
+        (Query
+            [ Field
+                { name = "userPrivate"
+                , args = [ ( "accessToken", GraphQLString (tokenToString accessToken) ) ]
+                , return =
+                    [ Field
+                        { name = "likedProductAll"
+                        , args = []
+                        , return = productReturn
+                        }
+                    ]
+                }
+            ]
+        )
+        (Jd.list productDecoder)
+        callBack
 
 
 
@@ -604,20 +621,52 @@ getLikedProducts token msg =
 
 
 getHistoryViewProducts : Token -> (Result String (List Product.Product) -> msg) -> Cmd msg
-getHistoryViewProducts token msg =
-    Cmd.none
+getHistoryViewProducts accessToken callBack =
+    graphQlApiRequest
+        (Query
+            [ Field
+                { name = "userPrivate"
+                , args = [ ( "accessToken", GraphQLString (tokenToString accessToken) ) ]
+                , return =
+                    [ Field
+                        { name = "historyViewProductAll"
+                        , args = []
+                        , return = productReturn
+                        }
+                    ]
+                }
+            ]
+        )
+        (Jd.list productDecoder)
+        callBack
 
 
 
 {- ============================================================
-               自分が出品した商品を取得する
+                    出品した商品を取得する
    ============================================================
 -}
 
 
-getSoldProductList : Token -> (Result () (List Product.Product) -> msg) -> Cmd msg
-getSoldProductList token msg =
-    Cmd.none
+getSoldProductList : User.Id -> (Result String (List Product.Product) -> msg) -> Cmd msg
+getSoldProductList userId callBack =
+    graphQlApiRequest
+        (Query
+            [ Field
+                { name = "user"
+                , args = [ ( "id", GraphQLString (User.idToString userId) ) ]
+                , return =
+                    [ Field
+                        { name = "soldProductAll"
+                        , args = []
+                        , return = productReturn
+                        }
+                    ]
+                }
+            ]
+        )
+        (Jd.list productDecoder)
+        callBack
 
 
 
@@ -628,32 +677,119 @@ getSoldProductList token msg =
 
 
 getBoughtProductList : Token -> (Result String (List Product.Product) -> msg) -> Cmd msg
-getBoughtProductList token msg =
-    Cmd.none
+getBoughtProductList accessToken callBack =
+    graphQlApiRequest
+        (Query
+            [ Field
+                { name = "userPrivate"
+                , args = [ ( "accessToken", GraphQLString (tokenToString accessToken) ) ]
+                , return =
+                    [ Field
+                        { name = "boughtProductAll"
+                        , args = []
+                        , return = productReturn
+                        }
+                    ]
+                }
+            ]
+        )
+        (Jd.list productDecoder)
+        callBack
 
 
 
 {- ============================================================
-               自分の取引中の商品を取得する
+                      取引中の取引の取得する
    ============================================================
 -}
 
 
-getTradingProductList : Token -> (Result String (List Product.Product) -> msg) -> Cmd msg
-getTradingProductList token msg =
-    Cmd.none
+getTradingProductList : Token -> (Result String (List Trade.Trade) -> msg) -> Cmd msg
+getTradingProductList accessToken callBack =
+    graphQlApiRequest
+        (Query
+            [ Field
+                { name = "userPrivate"
+                , args = [ ( "accessToken", GraphQLString (tokenToString accessToken) ) ]
+                , return =
+                    [ Field
+                        { name = "tradingAll"
+                        , args = []
+                        , return = tradeReturn
+                        }
+                    ]
+                }
+            ]
+        )
+        (Jd.list tradeDecoder)
+        callBack
+
+
+tradeReturn : List Field
+tradeReturn =
+    [ Field { name = "id", args = [], return = [] }
+    , Field
+        { name = "product"
+        , args = []
+        , return =
+            productReturn
+                ++ [ Field
+                        { name = "seller", args = [], return = userWithNameReturn }
+                   ]
+        }
+    , Field { name = "buyer", args = [], return = userWithNameReturn }
+    , Field { name = "createdAt", args = [], return = [] }
+    , Field { name = "updateAt", args = [], return = [] }
+    ]
+
+
+tradeDecoder : Jd.Decoder Trade.Trade
+tradeDecoder =
+    Jd.succeed
+        (\id product seller buyer createdAt updateAt ->
+            Trade.fromApi
+                { id = id
+                , product = product
+                , seller = seller
+                , buyer = buyer
+                , createdAt = createdAt
+                , updateAt = updateAt
+                }
+        )
+        |> Jdp.required "id" Jd.string
+        |> Jdp.required "product" productDecoder
+        |> Jdp.requiredAt [ "product", "seller" ] userWithNameDecoder
+        |> Jdp.required "buyer" userWithNameDecoder
+        |> Jdp.required "createdAt" dateTimeDecoder
+        |> Jdp.required "updateAt" dateTimeDecoder
 
 
 
 {- ============================================================
-               自分が取引したの商品を取得する
+                      取引したの取引の取得する
    ============================================================
 -}
 
 
-getTradedProductList : Token -> (Result String (List Product.Product) -> msg) -> Cmd msg
-getTradedProductList token msg =
-    Cmd.none
+getTradedProductList : Token -> (Result String (List Trade.Trade) -> msg) -> Cmd msg
+getTradedProductList accessToken callBack =
+    graphQlApiRequest
+        (Query
+            [ Field
+                { name = "userPrivate"
+                , args = [ ( "accessToken", GraphQLString (tokenToString accessToken) ) ]
+                , return =
+                    [ Field
+                        { name = "tradedAll"
+                        , args = []
+                        , return = tradeReturn
+                        }
+                    ]
+                }
+            ]
+        )
+        (Jd.list tradeDecoder)
+        callBack
 
 
 
@@ -664,8 +800,24 @@ getTradedProductList token msg =
 
 
 getCommentedProductList : Token -> (Result String (List Product.Product) -> msg) -> Cmd msg
-getCommentedProductList token msg =
-    Cmd.none
+getCommentedProductList accessToken callBack =
+    graphQlApiRequest
+        (Query
+            [ Field
+                { name = "userPrivate"
+                , args = [ ( "accessToken", GraphQLString (tokenToString accessToken) ) ]
+                , return =
+                    [ Field
+                        { name = "commentedProductAll"
+                        , args = []
+                        , return = productReturn
+                        }
+                    ]
+                }
+            ]
+        )
+        (Jd.list productDecoder)
+        callBack
 
 
 
@@ -766,8 +918,18 @@ getFreeProductList callBack =
 
 
 getProduct : Product.Id -> (Result String Product.ProductDetail -> msg) -> Cmd msg
-getProduct id msg =
-    Cmd.none
+getProduct id callBack =
+    graphQlApiRequest
+        (Query
+            [ Field
+                { name = "product"
+                , args = [ ( "id", GraphQLString (Product.idToString id) ) ]
+                , return = productDetailReturn
+                }
+            ]
+        )
+        productDetailDecoder
+        callBack
 
 
 
@@ -818,20 +980,9 @@ getProductComments productId msg =
     Cmd.none
 
 
-commentResponseToResult : Http.Response String -> Result () (List Product.Comment)
-commentResponseToResult response =
-    case response of
-        Http.GoodStatus_ _ body ->
-            Jd.decodeString commentListDecoder body
-                |> Result.withDefault (Err ())
-
-        _ ->
-            Err ()
-
-
-commentListDecoder : Jd.Decoder (Result () (List Product.Comment))
+commentListDecoder : Jd.Decoder (List Product.Comment)
 commentListDecoder =
-    Jd.succeed (Ok [])
+    Jd.succeed []
 
 
 

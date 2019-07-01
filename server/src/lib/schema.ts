@@ -625,6 +625,23 @@ const userPrivateGraphQLType = new g.GraphQLObjectType({
                 },
                 description: "閲覧した商品"
             }),
+            commentedProductAll: makeObjectField({
+                type: g.GraphQLNonNull(
+                    g.GraphQLList(g.GraphQLNonNull(productGraphQLType))
+                ),
+                args: {},
+                resolve: async (source, args, context, info) => {
+                    if (source.commentedProductAll === undefined) {
+                        const data = await database.getCommentedProducts(
+                            source.id
+                        );
+                        source.commentedProductAll = data;
+                        return data;
+                    }
+                    return source.commentedProductAll;
+                },
+                description: "コメントした商品"
+            }),
             draftProducts: makeObjectField({
                 type: g.GraphQLNonNull(
                     g.GraphQLList(g.GraphQLNonNull(draftProductGraphQLType))

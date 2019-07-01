@@ -673,9 +673,10 @@ homePageEmissionListToCmd =
 
                 Page.Home.EmissionProducts e ->
                     productListEmissionToCmd e
+
                 Page.Home.EmissionAddLogMessage log ->
                     Task.succeed ()
-                                            |> Task.perform (always (AddLogMessage log))
+                        |> Task.perform (always (AddLogMessage log))
         )
         >> Cmd.batch
 
@@ -728,7 +729,8 @@ soldProductsPageEmissionListToCmd =
         (\emission ->
             case emission of
                 Page.SoldProducts.EmissionGetSoldProducts token ->
-                    Api.getSoldProductList token
+                    Api.getSoldProductList (Data.User.idFromString "sorena")
+                        -- TODO
                         (\result ->
                             PageMsg (SoldProductsPageMsg (Page.SoldProducts.GetSoldProductListResponse result))
                         )
@@ -738,6 +740,10 @@ soldProductsPageEmissionListToCmd =
 
                 Page.SoldProducts.EmissionByProductList e ->
                     productListEmissionToCmd e
+
+                Page.SoldProducts.EmissionAddLogMessage log ->
+                    Task.succeed ()
+                        |> Task.perform (always (AddLogMessage log))
         )
         >> Cmd.batch
 
@@ -801,7 +807,7 @@ tradedProductsEmissionListToCmd =
                     Api.getTradedProductList token
                         (\result ->
                             PageMsg
-                                (TradingProductsPageMsg (Page.TradingProducts.GetProductsResponse result))
+                                (TradedProductsPageMsg (Page.TradedProducts.GetTradesResponse result))
                         )
 
                 Page.TradedProducts.EmissionByLogIn e ->
@@ -823,10 +829,10 @@ commentedProductsEmissionListToCmd =
         (\emission ->
             case emission of
                 Page.CommentedProducts.EmissionGetCommentedProducts token ->
-                    Api.getTradingProductList token
+                    Api.getCommentedProductList token
                         (\result ->
                             PageMsg
-                                (TradingProductsPageMsg (Page.TradingProducts.GetProductsResponse result))
+                                (CommentedProductsPageMsg (Page.CommentedProducts.GetProductsResponse result))
                         )
 
                 Page.CommentedProducts.EmissionByLogIn e ->
@@ -994,7 +1000,7 @@ productPageEmissionListToCmd =
                     productEditorEmissionToCmd e
 
                 Page.Product.EmissionUpdateProductData token productId requestData ->
-                    Api.editProduct token
+                    Api.updateProduct token
                         productId
                         requestData
                         (\m -> PageMsg (ProductPageMsg (Page.Product.UpdateProductDataResponse m)))

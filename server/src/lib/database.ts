@@ -395,10 +395,17 @@ export const markProductInHistory = async (
 
 export const getHistoryViewProduct = async (
     userId: string
-): Promise<Array<{ id: string }>> => {
-    const data = await databaseLow.getHistoryViewProductData(userId);
-    return data.map(value => ({ id: value.id }));
-};
+): Promise<Array<{ id: string }>> =>
+    (await databaseLow.getHistoryViewProductData(userId)).map(value => ({
+        id: value.id
+    }));
+
+export const getCommentedProducts = async (
+    userId: string
+): Promise<Array<{ id: string }>> =>
+    (await databaseLow.getCommentedProductData(userId)).map(value => ({
+        id: value.id
+    }));
 
 export const addDraftProductData = async (
     userId: string,

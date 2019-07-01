@@ -12,6 +12,7 @@ import Api
 import BasicParts
 import Data.LogInState as LogInState
 import Data.Product as Product
+import Data.Trade as Trade
 import Html
 import Html.Attributes
 import Page.Component.LogIn as LogIn
@@ -33,7 +34,7 @@ type NormalModel
 
 
 type Msg
-    = GetProductsResponse (Result String (List Product.Product))
+    = GetProductsResponse (Result String (List Trade.Trade))
     | MsgByLogIn LogIn.Msg
     | MsgByProductList ProductList.Msg
 
@@ -86,9 +87,9 @@ update msg (Model rec) =
         GetProductsResponse result ->
             case result of
                 Ok products ->
-                    ( Model
-                        { rec | normal = Normal products }
-                    , []
+                    ( Model rec
+                    , [ EmissionAddLogMessage "取引データの表示幅を調整中" ]
+                      -- TODO
                     )
 
                 Err errorMessage ->
