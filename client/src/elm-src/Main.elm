@@ -673,6 +673,9 @@ homePageEmissionListToCmd =
 
                 Page.Home.EmissionProducts e ->
                     productListEmissionToCmd e
+                Page.Home.EmissionAddLogMessage log ->
+                    Task.succeed ()
+                                            |> Task.perform (always (AddLogMessage log))
         )
         >> Cmd.batch
 

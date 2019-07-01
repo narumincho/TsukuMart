@@ -30,13 +30,14 @@ type Emission
     | EmissionGetRecommendProducts
     | EmissionGetFreeProducts
     | EmissionProducts ProductList.Emission
+    | EmissionAddLogMessage String
 
 
 type Msg
     = SelectTab TabSelect
-    | GetRecentProductsResponse (Result () (List Product.Product))
-    | GetRecommendProductsResponse (Result () (List Product.Product))
-    | GetFreeProductsResponse (Result () (List Product.Product))
+    | GetRecentProductsResponse (Result String (List Product.Product))
+    | GetRecommendProductsResponse (Result String (List Product.Product))
+    | GetFreeProductsResponse (Result String (List Product.Product))
     | MsgByProductList ProductList.Msg
 
 
@@ -93,34 +94,32 @@ update msg (Model rec) =
             )
 
         GetRecentProductsResponse result ->
-            ( case result of
+            case result of
                 Ok goodList ->
-                    Model { rec | recent = Just goodList }
+                    ( Model { rec | recent = Just goodList }, [] )
 
-                Err () ->
-                    Model rec
-            , []
-            )
+                Err errorMessage ->
+                    ( Model rec
+                    , [ EmissionAddLogMessage errorMessage ]
+                    )
 
         GetRecommendProductsResponse result ->
-            ( case result of
+            case result of
                 Ok goodList ->
-                    Model { rec | recommend = Just goodList }
+                    ( Model { rec | recommend = Just goodList }, [] )
 
-                Err () ->
-                    Model rec
-            , []
-            )
+                Err errorMessage ->
+                    ( Model rec
+                    , [ EmissionAddLogMessage errorMessage ]
+                    )
 
         GetFreeProductsResponse result ->
-            ( case result of
+            case result of
                 Ok goodList ->
-                    Model { rec | free = Just goodList }
+                    ( Model { rec | free = Just goodList }, [] )
 
-                Err () ->
-                    Model rec
-            , []
-            )
+                Err errorMessage ->
+                    ( Model rec, [ EmissionAddLogMessage errorMessage ] )
 
         MsgByProductList productListMsg ->
             let

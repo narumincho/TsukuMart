@@ -43,9 +43,9 @@ import Data.SocialLoginService
 import Data.University as University
 import Data.User as User
 import Http
-import Json.Decode
-import Json.Decode.Pipeline
-import Json.Encode
+import Json.Decode as Jd
+import Json.Decode.Pipeline as Jdp
+import Json.Encode as Je
 import Set
 import Time
 import Url
@@ -116,17 +116,17 @@ universityToGraphQLValue university =
 
 {-| 新規登録のJSONを生成
 -}
-sendConfirmEmailRequestBody : Json.Decode.Decoder ()
+sendConfirmEmailRequestBody : Jd.Decoder ()
 sendConfirmEmailRequestBody =
-    Json.Decode.field "sendConformEmail"
-        Json.Decode.string
-        |> Json.Decode.andThen
+    Jd.field "sendConformEmail"
+        Jd.string
+        |> Jd.andThen
             (\result ->
                 if result == "ok" then
-                    Json.Decode.succeed ()
+                    Jd.succeed ()
 
                 else
-                    Json.Decode.fail "okでなかった"
+                    Jd.fail "okでなかった"
             )
 
 
@@ -167,15 +167,15 @@ tokenRefresh { refresh } callBack =
                 }
             ]
         )
-        (Json.Decode.field "getAccessTokenAndUpdateRefreshToken"
-            (Json.Decode.succeed
+        (Jd.field "getAccessTokenAndUpdateRefreshToken"
+            (Jd.succeed
                 (\refreshToken accessToken ->
                     { accessToken = tokenFromString accessToken
                     , refreshToken = tokenFromString refreshToken
                     }
                 )
-                |> Json.Decode.Pipeline.required "refreshToken" Json.Decode.string
-                |> Json.Decode.Pipeline.required "accessToken" Json.Decode.string
+                |> Jdp.required "refreshToken" Jd.string
+                |> Jdp.required "accessToken" Jd.string
             )
         )
         callBack
@@ -202,15 +202,15 @@ getMyNameAndLikedProductsId token callBack =
                 }
             ]
         )
-        (Json.Decode.field "userPrivate"
+        (Jd.field "userPrivate"
             profileAndLikedProductsIdDecoder
         )
         callBack
 
 
-profileAndLikedProductsIdDecoder : Json.Decode.Decoder ( User.WithName, List Product.Id )
+profileAndLikedProductsIdDecoder : Jd.Decoder ( User.WithName, List Product.Id )
 profileAndLikedProductsIdDecoder =
-    Json.Decode.succeed
+    Jd.succeed
         (\id displayName imageId likedProductIds ->
             ( User.withNameFromApi
                 { id = id
@@ -220,18 +220,26 @@ profileAndLikedProductsIdDecoder =
             , likedProductIds |> List.map Product.idFromString
             )
         )
-        |> Json.Decode.Pipeline.required "id" Json.Decode.string
-        |> Json.Decode.Pipeline.required "displayName" Json.Decode.string
-        |> Json.Decode.Pipeline.required "imageId" imageIdDecoder
-        |> Json.Decode.Pipeline.required "likedProductAll"
-            (Json.Decode.list
-                (Json.Decode.field "id" Json.Decode.string)
+        |> Jdp.required "id" Jd.string
+        |> Jdp.required "displayName" Jd.string
+        |> Jdp.required "imageId" imageIdDecoder
+        |> Jdp.required "likedProductAll"
+            (Jd.list
+                (Jd.field "id" Jd.string)
             )
 
 
-userWithNameDecoder : Json.Decode.Decoder User.WithName
+userWithNameReturn : List Field
+userWithNameReturn =
+    [ Field { name = "id", args = [], return = [] }
+    , Field { name = "displayName", args = [], return = [] }
+    , Field { name = "imageId", args = [], return = [] }
+    ]
+
+
+userWithNameDecoder : Jd.Decoder User.WithName
 userWithNameDecoder =
-    Json.Decode.succeed
+    Jd.succeed
         (\id displayName imageId ->
             User.withNameFromApi
                 { id = id
@@ -239,14 +247,31 @@ userWithNameDecoder =
                 , imageId = imageId
                 }
         )
-        |> Json.Decode.Pipeline.required "id" Json.Decode.string
-        |> Json.Decode.Pipeline.required "displayName" Json.Decode.string
-        |> Json.Decode.Pipeline.required "imageId" imageIdDecoder
+        |> Jdp.required "id" Jd.string
+        |> Jdp.required "displayName" Jd.string
+        |> Jdp.required "imageId" imageIdDecoder
 
 
-userWithProfileDecoder : Json.Decode.Decoder User.WithProfile
+userWithProfileReturn : List Field
+userWithProfileReturn =
+    [ Field { name = "id", args = [], return = [] }
+    , Field { name = "displayName", args = [], return = [] }
+    , Field { name = "imageId", args = [], return = [] }
+    , Field { name = "introduction", args = [], return = [] }
+    , Field
+        { name = "university"
+        , args = []
+        , return =
+            [ Field { name = "schoolAndDepartment", args = [], return = [] }
+            , Field { name = "graduate", args = [], return = [] }
+            ]
+        }
+    ]
+
+
+userWithProfileDecoder : Jd.Decoder User.WithProfile
 userWithProfileDecoder =
-    Json.Decode.succeed
+    Jd.succeed
         (\id displayName imageId introduction schoolAndDepartment graduate ->
             User.withProfileFromApi
                 { id = id
@@ -258,31 +283,31 @@ userWithProfileDecoder =
                         { graduateMaybe = graduate, departmentMaybe = schoolAndDepartment }
                 }
         )
-        |> Json.Decode.Pipeline.required "id" Json.Decode.string
-        |> Json.Decode.Pipeline.required "displayName" Json.Decode.string
-        |> Json.Decode.Pipeline.required "imageId" imageIdDecoder
-        |> Json.Decode.Pipeline.required "introduction" Json.Decode.string
-        |> Json.Decode.Pipeline.requiredAt
+        |> Jdp.required "id" Jd.string
+        |> Jdp.required "displayName" Jd.string
+        |> Jdp.required "imageId" imageIdDecoder
+        |> Jdp.required "introduction" Jd.string
+        |> Jdp.requiredAt
             [ "university", "schoolAndDepartment" ]
-            (Json.Decode.nullable Json.Decode.string)
-        |> Json.Decode.Pipeline.requiredAt
+            (Jd.nullable Jd.string)
+        |> Jdp.requiredAt
             [ "university", "graduate" ]
-            (Json.Decode.nullable Json.Decode.string)
-        |> Json.Decode.andThen
+            (Jd.nullable Jd.string)
+        |> Jd.andThen
             (\userMaybe ->
                 case userMaybe of
                     Just user ->
-                        Json.Decode.succeed user
+                        Jd.succeed user
 
                     Nothing ->
-                        Json.Decode.fail "invalid university"
+                        Jd.fail "invalid university"
             )
 
 
-imageIdDecoder : Json.Decode.Decoder ImageId.ImageId
+imageIdDecoder : Jd.Decoder ImageId.ImageId
 imageIdDecoder =
-    Json.Decode.string
-        |> Json.Decode.map (\string -> ImageId.fromString string)
+    Jd.string
+        |> Jd.map (\string -> ImageId.fromString string)
 
 
 
@@ -318,18 +343,72 @@ sellProduct token (SellProductRequest request) callBack =
                     , ( "condition", GraphQLEnum (Product.conditionToIdString request.condition) )
                     , ( "category", GraphQLEnum (Category.toIdString request.category) )
                     ]
-                , return =
-                    []
+                , return = productDetailReturn
                 }
             ]
         )
-        productDecoder
+        productDetailDecoder
         callBack
 
 
-productDecoder : Json.Decode.Decoder Product.ProductDetail
+productReturn : List Field
+productReturn =
+    [ Field { name = "id", args = [], return = [] }
+    , Field { name = "name", args = [], return = [] }
+    , Field { name = "price", args = [], return = [] }
+    , Field { name = "category", args = [], return = [] }
+    , Field { name = "status", args = [], return = [] }
+    , Field { name = "thumbnailImageId", args = [], return = [] }
+    , Field { name = "likeCount", args = [], return = [] }
+    ]
+
+
+productDecoder : Jd.Decoder Product.Product
 productDecoder =
-    Json.Decode.succeed
+    Jd.succeed
+        (\id name price category status thumbnailImageId likeCount ->
+            Product.fromApi
+                { id = id
+                , name = name
+                , price = price
+                , category = category
+                , status = status
+                , thumbnailImageId = thumbnailImageId
+                , likeCount = likeCount
+                }
+        )
+        |> Jdp.required "id" Jd.string
+        |> Jdp.required "name" Jd.string
+        |> Jdp.required "price" Jd.int
+        |> Jdp.required "category" categoryDecoder
+        |> Jdp.required "status" statusDecoder
+        |> Jdp.required "thumbnailImageId" imageIdDecoder
+        |> Jdp.required "likeCount" Jd.int
+
+
+productDetailReturn : List Field
+productDetailReturn =
+    [ Field { name = "id", args = [], return = [] }
+    , Field { name = "name", args = [], return = [] }
+    , Field { name = "description", args = [], return = [] }
+    , Field { name = "price", args = [], return = [] }
+    , Field { name = "condition", args = [], return = [] }
+    , Field { name = "category", args = [], return = [] }
+    , Field { name = "status", args = [], return = [] }
+    , Field { name = "imageIds", args = [], return = [] }
+    , Field { name = "likedCount", args = [], return = [] }
+    , Field
+        { name = "seller"
+        , args = []
+        , return = userWithNameReturn
+        }
+    , Field { name = "createdAt", args = [], return = [] }
+    ]
+
+
+productDetailDecoder : Jd.Decoder Product.ProductDetail
+productDetailDecoder =
+    Jd.succeed
         (\id name description price condition category status imageIds likedCount seller createdAt ->
             Product.detailFromApi
                 { id = id
@@ -345,30 +424,30 @@ productDecoder =
                 , createdAt = createdAt
                 }
         )
-        |> Json.Decode.Pipeline.required "id" Json.Decode.string
-        |> Json.Decode.Pipeline.required "name" Json.Decode.string
-        |> Json.Decode.Pipeline.required "description" Json.Decode.string
-        |> Json.Decode.Pipeline.required "price" Json.Decode.int
-        |> Json.Decode.Pipeline.required "condition" conditionDecoder
-        |> Json.Decode.Pipeline.required "category" categoryDecoder
-        |> Json.Decode.Pipeline.required "status" statusDecoder
-        |> Json.Decode.Pipeline.required "imageIds" imageIdsDecoder
-        |> Json.Decode.Pipeline.required "likedCount" Json.Decode.int
-        |> Json.Decode.Pipeline.required "seller" userWithNameDecoder
-        |> Json.Decode.Pipeline.required "createdAt" dateTimeDecoder
+        |> Jdp.required "id" Jd.string
+        |> Jdp.required "name" Jd.string
+        |> Jdp.required "description" Jd.string
+        |> Jdp.required "price" Jd.int
+        |> Jdp.required "condition" conditionDecoder
+        |> Jdp.required "category" categoryDecoder
+        |> Jdp.required "status" statusDecoder
+        |> Jdp.required "imageIds" imageIdsDecoder
+        |> Jdp.required "likedCount" Jd.int
+        |> Jdp.required "seller" userWithNameDecoder
+        |> Jdp.required "createdAt" dateTimeDecoder
 
 
-conditionDecoder : Json.Decode.Decoder Product.Condition
+conditionDecoder : Jd.Decoder Product.Condition
 conditionDecoder =
-    Json.Decode.string
-        |> Json.Decode.andThen
+    Jd.string
+        |> Jd.andThen
             (\idString ->
                 case Product.conditionFromIdString idString of
                     Just condition ->
-                        Json.Decode.succeed condition
+                        Jd.succeed condition
 
                     Nothing ->
-                        Json.Decode.fail
+                        Jd.fail
                             (enumErrorMsg
                                 idString
                                 "condition"
@@ -378,17 +457,17 @@ conditionDecoder =
             )
 
 
-categoryDecoder : Json.Decode.Decoder Category.Category
+categoryDecoder : Jd.Decoder Category.Category
 categoryDecoder =
-    Json.Decode.string
-        |> Json.Decode.andThen
+    Jd.string
+        |> Jd.andThen
             (\idString ->
                 case Category.fromIdString idString of
                     Just category ->
-                        Json.Decode.succeed category
+                        Jd.succeed category
 
                     Nothing ->
-                        Json.Decode.fail
+                        Jd.fail
                             (enumErrorMsg
                                 idString
                                 "category"
@@ -398,17 +477,17 @@ categoryDecoder =
             )
 
 
-statusDecoder : Json.Decode.Decoder Product.Status
+statusDecoder : Jd.Decoder Product.Status
 statusDecoder =
-    Json.Decode.string
-        |> Json.Decode.andThen
+    Jd.string
+        |> Jd.andThen
             (\idString ->
                 case Product.statusFromIdString idString of
                     Just status ->
-                        Json.Decode.succeed status
+                        Jd.succeed status
 
                     Nothing ->
-                        Json.Decode.fail
+                        Jd.fail
                             (enumErrorMsg
                                 idString
                                 "status"
@@ -418,17 +497,17 @@ statusDecoder =
             )
 
 
-imageIdsDecoder : Json.Decode.Decoder ( ImageId.ImageId, List ImageId.ImageId )
+imageIdsDecoder : Jd.Decoder ( ImageId.ImageId, List ImageId.ImageId )
 imageIdsDecoder =
-    Json.Decode.list Json.Decode.string
-        |> Json.Decode.andThen
+    Jd.list Jd.string
+        |> Jd.andThen
             (\list ->
                 case list of
                     [] ->
-                        Json.Decode.fail "imageIds length is 0"
+                        Jd.fail "imageIds length is 0"
 
                     x :: xs ->
-                        Json.Decode.succeed ( ImageId.fromString x, xs |> List.map ImageId.fromString )
+                        Jd.succeed ( ImageId.fromString x, xs |> List.map ImageId.fromString )
             )
 
 
@@ -495,24 +574,11 @@ updateProfile accessToken { displayName, introduction, image, university } callB
                     , ( "introduction", GraphQLString introduction )
                     , ( "university", universityToGraphQLValue university )
                     ]
-                , return =
-                    [ Field { name = "id", args = [], return = [] }
-                    , Field { name = "displayName", args = [], return = [] }
-                    , Field { name = "imageId", args = [], return = [] }
-                    , Field { name = "introduction", args = [], return = [] }
-                    , Field
-                        { name = "university"
-                        , args = []
-                        , return =
-                            [ Field { name = "schoolAndDepartment", args = [], return = [] }
-                            , Field { name = "graduate", args = [], return = [] }
-                            ]
-                        }
-                    ]
+                , return = userWithProfileReturn
                 }
             ]
         )
-        (Json.Decode.field "updateProfile"
+        (Jd.field "updateProfile"
             userWithProfileDecoder
         )
         callBack
@@ -616,24 +682,11 @@ getUserProfile userId callBack =
             [ Field
                 { name = "user"
                 , args = [ ( "id", GraphQLString (User.idToString userId) ) ]
-                , return =
-                    [ Field { name = "id", args = [], return = [] }
-                    , Field { name = "displayName", args = [], return = [] }
-                    , Field { name = "imageId", args = [], return = [] }
-                    , Field { name = "introduction", args = [], return = [] }
-                    , Field
-                        { name = "university"
-                        , args = []
-                        , return =
-                            [ Field { name = "schoolAndDepartment", args = [], return = [] }
-                            , Field { name = "graduate", args = [], return = [] }
-                            ]
-                        }
-                    ]
+                , return = userWithProfileReturn
                 }
             ]
         )
-        (Json.Decode.field "user"
+        (Jd.field "user"
             userWithProfileDecoder
         )
         callBack
@@ -646,9 +699,19 @@ getUserProfile userId callBack =
 -}
 
 
-getRecentProductList : (Result () (List Product.Product) -> msg) -> Cmd msg
-getRecentProductList msg =
-    Cmd.none
+getRecentProductList : (Result String (List Product.Product) -> msg) -> Cmd msg
+getRecentProductList callBack =
+    graphQlApiRequest
+        (Query
+            [ Field
+                { name = "productRecentAll"
+                , args = []
+                , return = productReturn
+                }
+            ]
+        )
+        (Jd.list productDecoder)
+        callBack
 
 
 
@@ -658,9 +721,19 @@ getRecentProductList msg =
 -}
 
 
-getRecommendProductList : (Result () (List Product.Product) -> msg) -> Cmd msg
-getRecommendProductList msg =
-    Cmd.none
+getRecommendProductList : (Result String (List Product.Product) -> msg) -> Cmd msg
+getRecommendProductList callBack =
+    graphQlApiRequest
+        (Query
+            [ Field
+                { name = "productRecommendAll"
+                , args = []
+                , return = productReturn
+                }
+            ]
+        )
+        (Jd.list productDecoder)
+        callBack
 
 
 
@@ -670,9 +743,19 @@ getRecommendProductList msg =
 -}
 
 
-getFreeProductList : (Result () (List Product.Product) -> msg) -> Cmd msg
-getFreeProductList msg =
-    Cmd.none
+getFreeProductList : (Result String (List Product.Product) -> msg) -> Cmd msg
+getFreeProductList callBack =
+    graphQlApiRequest
+        (Query
+            [ Field
+                { name = "productRecommendAll"
+                , args = []
+                , return = productReturn
+                }
+            ]
+        )
+        (Jd.list productDecoder)
+        callBack
 
 
 
@@ -739,16 +822,16 @@ commentResponseToResult : Http.Response String -> Result () (List Product.Commen
 commentResponseToResult response =
     case response of
         Http.GoodStatus_ _ body ->
-            Json.Decode.decodeString commentListDecoder body
+            Jd.decodeString commentListDecoder body
                 |> Result.withDefault (Err ())
 
         _ ->
             Err ()
 
 
-commentListDecoder : Json.Decode.Decoder (Result () (List Product.Comment))
+commentListDecoder : Jd.Decoder (Result () (List Product.Comment))
 commentListDecoder =
-    Json.Decode.succeed (Ok [])
+    Jd.succeed (Ok [])
 
 
 
@@ -763,9 +846,9 @@ postProductComment accessToken productId comment msg =
     Cmd.none
 
 
-commentDecoder : String -> User.Id -> Json.Decode.Decoder Product.Comment
+commentDecoder : String -> User.Id -> Jd.Decoder Product.Comment
 commentDecoder userName userId =
-    Json.Decode.succeed
+    Jd.succeed
         (\body createdAt speaker ->
             Product.commentFromApi
                 { body = body
@@ -773,15 +856,15 @@ commentDecoder userName userId =
                 , speaker = speaker
                 }
         )
-        |> Json.Decode.Pipeline.required "body" Json.Decode.string
-        |> Json.Decode.Pipeline.required "createdAt" dateTimeDecoder
-        |> Json.Decode.Pipeline.required "speaker" userWithNameDecoder
+        |> Jdp.required "body" Jd.string
+        |> Jdp.required "createdAt" dateTimeDecoder
+        |> Jdp.required "speaker" userWithNameDecoder
 
 
-dateTimeDecoder : Json.Decode.Decoder Time.Posix
+dateTimeDecoder : Jd.Decoder Time.Posix
 dateTimeDecoder =
-    Json.Decode.float
-        |> Json.Decode.map (floor >> Time.millisToPosix)
+    Jd.float
+        |> Jd.map (floor >> Time.millisToPosix)
 
 
 
@@ -857,17 +940,17 @@ logInOrSignUpUrlRequest service callBack =
         callBack
 
 
-logInOrSignUpUrlResponseToResult : Json.Decode.Decoder Url.Url
+logInOrSignUpUrlResponseToResult : Jd.Decoder Url.Url
 logInOrSignUpUrlResponseToResult =
-    Json.Decode.field "getLogInUrl" Json.Decode.string
-        |> Json.Decode.andThen
+    Jd.field "getLogInUrl" Jd.string
+        |> Jd.andThen
             (\urlString ->
                 case Url.fromString urlString of
                     Just url ->
-                        Json.Decode.succeed url
+                        Jd.succeed url
 
                     Nothing ->
-                        Json.Decode.fail "url"
+                        Jd.fail "url"
             )
 
 
@@ -901,7 +984,7 @@ type GraphQLValue
     | GraphQLNull
 
 
-graphQlApiRequest : Query -> Json.Decode.Decoder a -> (Result String a -> msg) -> Cmd msg
+graphQlApiRequest : Query -> Jd.Decoder a -> (Result String a -> msg) -> Cmd msg
 graphQlApiRequest query responseDecoder callBack =
     Http.post
         { url = "https://asia-northeast1-tsukumart-f0971.cloudfunctions.net/api"
@@ -946,7 +1029,7 @@ graphQLValueToString : GraphQLValue -> String
 graphQLValueToString graphQLValue =
     case graphQLValue of
         GraphQLString string ->
-            string |> Json.Encode.string |> Json.Encode.encode 0
+            string |> Je.string |> Je.encode 0
 
         GraphQLEnum string ->
             string
@@ -987,15 +1070,15 @@ nullableGraphQLValue func maybe =
 graphQlRequestBody : String -> Http.Body
 graphQlRequestBody queryOrMutation =
     Http.jsonBody
-        (Json.Encode.object
+        (Je.object
             [ ( "query"
-              , Json.Encode.string queryOrMutation
+              , Je.string queryOrMutation
               )
             ]
         )
 
 
-graphQlResponseDecoder : Json.Decode.Decoder a -> Http.Response String -> Result String a
+graphQlResponseDecoder : Jd.Decoder a -> Http.Response String -> Result String a
 graphQlResponseDecoder decoder response =
     case response of
         Http.BadUrl_ _ ->
@@ -1009,7 +1092,7 @@ graphQlResponseDecoder decoder response =
 
         Http.BadStatus_ _ body ->
             body
-                |> Json.Decode.decodeString graphQLErrorResponseDecoder
+                |> Jd.decodeString graphQLErrorResponseDecoder
                 |> (\result ->
                         case result of
                             Ok errMsg ->
@@ -1018,7 +1101,7 @@ graphQlResponseDecoder decoder response =
                             Err decodeError ->
                                 Err
                                     [ "ElmのJSONデコーダーのエラー「"
-                                        ++ Json.Decode.errorToString decodeError
+                                        ++ Jd.errorToString decodeError
                                         ++ "」"
                                     ]
                    )
@@ -1026,18 +1109,18 @@ graphQlResponseDecoder decoder response =
 
         Http.GoodStatus_ _ body ->
             body
-                |> Json.Decode.decodeString
-                    (Json.Decode.field "data"
+                |> Jd.decodeString
+                    (Jd.field "data"
                         decoder
                     )
-                |> Result.mapError Json.Decode.errorToString
+                |> Result.mapError Jd.errorToString
 
 
-graphQLErrorResponseDecoder : Json.Decode.Decoder (List String)
+graphQLErrorResponseDecoder : Jd.Decoder (List String)
 graphQLErrorResponseDecoder =
-    Json.Decode.field "errors"
-        (Json.Decode.list
-            (Json.Decode.succeed
+    Jd.field "errors"
+        (Jd.list
+            (Jd.succeed
                 (\message lineAndColumnList ->
                     "message"
                         ++ message
@@ -1050,12 +1133,12 @@ graphQLErrorResponseDecoder =
                                 |> String.join ","
                            )
                 )
-                |> Json.Decode.Pipeline.required "message" Json.Decode.string
-                |> Json.Decode.Pipeline.required "locations"
-                    (Json.Decode.list
-                        (Json.Decode.succeed Tuple.pair
-                            |> Json.Decode.Pipeline.required "line" Json.Decode.int
-                            |> Json.Decode.Pipeline.required "column" Json.Decode.int
+                |> Jdp.required "message" Jd.string
+                |> Jdp.required "locations"
+                    (Jd.list
+                        (Jd.succeed Tuple.pair
+                            |> Jdp.required "line" Jd.int
+                            |> Jdp.required "column" Jd.int
                         )
                     )
             )
