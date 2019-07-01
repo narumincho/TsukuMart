@@ -481,8 +481,8 @@ update msg (Model rec) =
                     Model
                         { rec | message = Just "出品しました" }
 
-                Err _ ->
-                    Model { rec | message = Just "出品できませんでした" }
+                Err errorMessage ->
+                    Model { rec | message = Just ("出品できませんでした " ++ errorMessage) }
             , Cmd.none
             )
 

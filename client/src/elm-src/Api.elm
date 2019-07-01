@@ -330,7 +330,7 @@ sellProduct token (SellProductRequest request) callBack =
 productDecoder : Json.Decode.Decoder Product.ProductDetail
 productDecoder =
     Json.Decode.succeed
-        (\id name description price condition category status imageIds likedCount seller ->
+        (\id name description price condition category status imageIds likedCount seller createdAt ->
             Product.detailFromApi
                 { id = id
                 , name = name
@@ -342,6 +342,7 @@ productDecoder =
                 , imageIds = imageIds
                 , likedCount = likedCount
                 , seller = seller
+                , createdAt = createdAt
                 }
         )
         |> Json.Decode.Pipeline.required "id" Json.Decode.string
@@ -354,6 +355,7 @@ productDecoder =
         |> Json.Decode.Pipeline.required "imageIds" imageIdsDecoder
         |> Json.Decode.Pipeline.required "likedCount" Json.Decode.int
         |> Json.Decode.Pipeline.required "seller" userWithNameDecoder
+        |> Json.Decode.Pipeline.required "createdAt" dateTimeDecoder
 
 
 conditionDecoder : Json.Decode.Decoder Product.Condition

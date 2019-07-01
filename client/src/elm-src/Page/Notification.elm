@@ -7,6 +7,14 @@ module Page.Notification exposing
     , view
     )
 
+{-
+   通知をするタイミング。
+   出品した商品にコメントが付いた
+   取引が開始された
+   取引にコメントが付いた
+   取り引きが終了した
+-}
+
 import BasicParts
 import Html
 import Html.Attributes

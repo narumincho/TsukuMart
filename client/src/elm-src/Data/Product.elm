@@ -12,13 +12,15 @@ module Data.Product exposing
     , commentGetSpeaker
     , conditionAll
     , conditionFromIdString
+    , conditionFromIndex
     , conditionIndex
     , conditionToIdString
     , conditionToJapaneseString
-    , conditionFromIndex
     , createdAtToString
+    , detailFromApi
     , detailGetCommentList
     , detailGetCondition
+    , detailGetCreatedAt
     , detailGetDescription
     , detailGetId
     , detailGetImageUrls
@@ -27,6 +29,7 @@ module Data.Product exposing
     , detailGetPrice
     , detailGetSeller
     , detailUpdateLikedCount
+    , fromApi
     , fromDetail
     , getId
     , getLikedCount
@@ -44,7 +47,7 @@ module Data.Product exposing
     , statusToIdString
     , updateById
     , updateLikedCount
-    , detailFromApi)
+    )
 
 {-| 商品
 -}
@@ -82,6 +85,7 @@ type ProductDetail
         , likedCount : Int
         , seller : User.WithName
         , commentList : Maybe (List Comment)
+        , createdAt : Time.Posix
         }
 
 
@@ -132,6 +136,7 @@ detailFromApi :
     , imageIds : ( ImageId.ImageId, List ImageId.ImageId )
     , likedCount : Int
     , seller : User.WithName
+    , createdAt : Time.Posix
     }
     -> ProductDetail
 detailFromApi rec =
@@ -147,6 +152,7 @@ detailFromApi rec =
         , likedCount = rec.likedCount
         , seller = rec.seller
         , commentList = Nothing
+        , createdAt = rec.createdAt
         }
 
 
@@ -466,6 +472,11 @@ detailGetImageUrls (ProductDetail { imageIds }) =
 detailGetSeller : ProductDetail -> User.WithName
 detailGetSeller (ProductDetail { seller }) =
     seller
+
+
+detailGetCreatedAt : ProductDetail -> Time.Posix
+detailGetCreatedAt (ProductDetail { createdAt }) =
+    createdAt
 
 
 {-| 商品のコメントを取得する
