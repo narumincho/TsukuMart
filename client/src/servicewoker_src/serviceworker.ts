@@ -1,6 +1,4 @@
 // Tsukumart Service Worker
-const cachesName = "image-chase";
-
 ((self: ServiceWorkerGlobalScope) => {
     self.addEventListener("install", e => {
         e.waitUntil(
@@ -22,14 +20,32 @@ const cachesName = "image-chase";
         );
     });
 
-    const cacheFn = async (request: Request): Promise<Response> => {
-        // console.log(request.url, "リクエストを検知");
-        return await fetch(request);
-    };
+    self.addEventListener("fetch", e => {
+        e.waitUntil(() => {
+            const accept = e.request.headers.get("accept");
+            if (accept === null) {
+                return;
+            }
+            if (/text\/html/.test(accept) && !navigator.onLine) {
+                return new Response(`
+<!doctype html>
+<html lang="ja">
 
-    // self.addEventListener("fetch", e => {
-    //     e.respondWith(cacheFn(e.request));
-    // });
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>つくマート</title>
+</head>
+
+<body>
+    オフライン時、つくマートを使うことはできません
+</body>
+
+</html>
+`);
+            }
+        });
+    });
 
     self.addEventListener("sync", e => {
         console.log("syncを受け取った", e);

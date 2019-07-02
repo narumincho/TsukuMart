@@ -366,6 +366,7 @@ menuLogInStateLoadingProfile =
         ]
     , Html.a
         [ Html.Attributes.class "menu-item"
+        , Html.Attributes.href SiteMap.notificationUrl
         ]
         [ Icon.notifications menuIconStyle, Html.text "通知" ]
     , Html.a
@@ -402,6 +403,7 @@ menuLogInStateOk userWithName =
         [ Icon.search menuIconStyle, Html.text "検索" ]
     , Html.a
         [ Html.Attributes.class "menu-item"
+        , Html.Attributes.href SiteMap.notificationUrl
         ]
         [ Icon.notifications menuIconStyle, Html.text "通知" ]
     , Html.a

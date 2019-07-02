@@ -166,47 +166,54 @@ requestAnimationFrame(() => {
 
     /* 指定されたidのHTML要素のテキストを変える */
     app.ports.replaceText.subscribe(({ id, text }) => {
-        requestAnimationFrame(() => {
+        const replaceText = () => {
             const element = document.getElementById(id) as
                 | HTMLInputElement
                 | HTMLTextAreaElement;
             if (element === null) {
                 console.warn(`id=${id}の要素が存在しません`);
+                window.requestAnimationFrame(replaceText);
                 return;
             }
             element.value = text;
-        });
+        };
+        window.requestAnimationFrame(replaceText);
     });
     /* 指定されたidの要素が表示されるようにスクロールさせる */
     app.ports.elementScrollIntoView.subscribe(id => {
-        requestAnimationFrame(() => {
+        const scrollIntoView = () => {
             const element = document.getElementById(id);
             if (element === null) {
                 console.warn(`id=${id}の要素が存在しません`);
+                window.requestAnimationFrame(scrollIntoView);
                 return;
             }
             element.scrollIntoView({ behavior: "smooth", block: "center" });
-        });
+        };
+        window.requestAnimationFrame(scrollIntoView);
     });
     /* 指定されたidの要素のselectedIndexを変更する */
     app.ports.changeSelectedIndex.subscribe(({ id, index }) => {
-        requestAnimationFrame(() => {
+        const changeSelectedIndex = () => {
             const element = document.getElementById(id) as HTMLSelectElement;
             if (element === null) {
                 console.warn(`id=${id}の要素が存在しません`);
+                window.requestAnimationFrame(changeSelectedIndex);
                 return;
             }
             element.selectedIndex = index;
-        });
+        };
+        window.requestAnimationFrame(changeSelectedIndex);
     });
     /* アカウント画像の入力イベントを設定する */
     app.ports.addEventListenerForUserImage.subscribe(({ inputId, labelId }) => {
-        requestAnimationFrame(() => {
+        const addEventListenerForUserImage = () => {
             const inputElement = document.getElementById(
                 inputId
             ) as HTMLInputElement;
             if (inputElement === null) {
                 console.warn(`id=${inputId}の要素が存在しません`);
+                window.requestAnimationFrame(addEventListenerForUserImage);
                 return;
             }
             inputElement.addEventListener("input", async e => {
@@ -224,6 +231,7 @@ requestAnimationFrame(() => {
             const labelElement = document.getElementById(labelId);
             if (labelElement === null) {
                 console.warn(`id=${labelId}の要素が存在しません`);
+                window.requestAnimationFrame(addEventListenerForUserImage);
                 return;
             }
             labelElement.addEventListener("dragover", e => {
@@ -244,18 +252,22 @@ requestAnimationFrame(() => {
                     await userImageFileResizeAndConvertToDataUrl(file)
                 );
             });
-        });
+        };
+        window.requestAnimationFrame(addEventListenerForUserImage);
     });
 
     /* 商品画像の入力イベントを設定する */
     app.ports.addEventListenerForProductImages.subscribe(
         ({ inputId, labelId }) => {
-            requestAnimationFrame(() => {
+            const addEventListenerForProductImages = () => {
                 const inputElement = document.getElementById(
                     inputId
                 ) as HTMLInputElement;
                 if (inputElement === null) {
                     console.warn(`id=${inputId}の要素が存在しません`);
+                    window.requestAnimationFrame(
+                        addEventListenerForProductImages
+                    );
                     return;
                 }
                 inputElement.addEventListener("input", async e => {
@@ -273,6 +285,9 @@ requestAnimationFrame(() => {
                 const labelElement = document.getElementById(labelId);
                 if (labelElement === null) {
                     console.warn(`id=${labelId}の要素が存在しません`);
+                    window.requestAnimationFrame(
+                        addEventListenerForProductImages
+                    );
                     return;
                 }
                 labelElement.addEventListener("dragover", e => {
@@ -290,7 +305,8 @@ requestAnimationFrame(() => {
                         )
                     );
                 });
-            });
+            };
+            window.requestAnimationFrame(addEventListenerForProductImages);
         }
     );
     navigator.serviceWorker.register("/serviceworker.js", { scope: "/" });

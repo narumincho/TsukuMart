@@ -8,13 +8,11 @@ module Page.SoldProducts exposing
     , view
     )
 
-import Api
 import BasicParts
 import Data.LogInState as LogInState
 import Data.Product as Product
 import Data.User as User
 import Html
-import Html.Attributes
 import Page.Component.ProductList as ProductList
 
 
