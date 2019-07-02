@@ -406,142 +406,148 @@ fromIndexInGroup group index =
 
 
 toJapaneseString : Category -> String
-toJapaneseString subCategory =
-    case subCategory of
-        FurnitureTable ->
-            "家具 / 机"
+toJapaneseString category =
+    (category
+        |> groupFromCategory
+        |> groupToJapaneseString
+    )
+        ++ " / "
+        ++ (case category of
+                FurnitureTable ->
+                    "机"
 
-        FurnitureChair ->
-            "家具 家具  / イス"
+                FurnitureChair ->
+                    "イス"
 
-        FurnitureChest ->
-            "家具 / タンス・棚"
+                FurnitureChest ->
+                    "タンス・棚"
 
-        FurnitureBed ->
-            "家具 / 寝具"
+                FurnitureBed ->
+                    "寝具"
 
-        FurnitureKitchen ->
-            "家具 / 食器・調理器具"
+                FurnitureKitchen ->
+                    "食器・調理器具"
 
-        FurnitureCurtain ->
-            "家具 / カーテン"
+                FurnitureCurtain ->
+                    "カーテン"
 
-        FurnitureMat ->
-            "家具 / マット・カーペット"
+                FurnitureMat ->
+                    "マット・カーペット"
 
-        FurnitureOther ->
-            "家具 / その他"
+                FurnitureOther ->
+                    "その他"
 
-        ApplianceRefrigerator ->
-            "電化製品・電子機器 / 冷蔵庫"
+                ApplianceRefrigerator ->
+                    "冷蔵庫"
 
-        ApplianceMicrowave ->
-            "電化製品・電子機器 / 電子レンジ"
+                ApplianceMicrowave ->
+                    "電子レンジ"
 
-        ApplianceWashing ->
-            "電化製品・電子機器 / 洗濯機"
+                ApplianceWashing ->
+                    "洗濯機"
 
-        ApplianceVacuum ->
-            "電化製品・電子機器 / 掃除機"
+                ApplianceVacuum ->
+                    "掃除機"
 
-        ApplianceTemperature ->
-            "電化製品・電子機器 / 冷暖房・扇風機"
+                ApplianceTemperature ->
+                    "冷暖房・扇風機"
 
-        ApplianceHumidity ->
-            "電化製品・電子機器 / 加湿器・除湿機"
+                ApplianceHumidity ->
+                    "加湿器・除湿機"
 
-        ApplianceLight ->
-            "電化製品・電子機器 / 照明・ライト"
+                ApplianceLight ->
+                    "照明・ライト"
 
-        ApplianceTv ->
-            "電化製品・電子機器 / TV・ディスプレイ・プロジェクター"
+                ApplianceTv ->
+                    "TV・ディスプレイ・プロジェクター"
 
-        ApplianceSpeaker ->
-            "電化製品・電子機器 / スピーカー"
+                ApplianceSpeaker ->
+                    "スピーカー"
 
-        ApplianceSmartphone ->
-            "電化製品・電子機器 / スマホ・タブレット"
+                ApplianceSmartphone ->
+                    "スマホ・タブレット"
 
-        AppliancePc ->
-            "電化製品・電子機器 / パソコン"
+                AppliancePc ->
+                    "パソコン"
 
-        ApplianceCommunication ->
-            "電化製品・電子機器 / Wi-Fi ルーター・通信機器"
+                ApplianceCommunication ->
+                    "Wi-Fi ルーター・通信機器"
 
-        ApplianceOther ->
-            "電化製品・電子機器 / その他"
+                ApplianceOther ->
+                    "その他"
 
-        FashionMens ->
-            "ファッション / メンズ"
+                FashionMens ->
+                    "メンズ"
 
-        FashionLadies ->
-            "ファッション / レディース"
+                FashionLadies ->
+                    "レディース"
 
-        FashionOther ->
-            "ファッション / その他"
+                FashionOther ->
+                    "その他"
 
-        BookTextbook ->
-            "教科書・本 / 教科書"
+                BookTextbook ->
+                    "教科書"
 
-        BookBook ->
-            "教科書・本 / 本"
+                BookBook ->
+                    "本"
 
-        BookComic ->
-            "教科書・本 / 漫画"
+                BookComic ->
+                    "漫画"
 
-        BookOther ->
-            "教科書・本 / その他"
+                BookOther ->
+                    "その他"
 
-        VehicleBicycle ->
-            "自転車・車両 / 自転車"
+                VehicleBicycle ->
+                    "自転車"
 
-        VehicleBike ->
-            "自転車・車両 / バイク"
+                VehicleBike ->
+                    "バイク"
 
-        VehicleCar ->
-            "自転車・車両 / 自動車"
+                VehicleCar ->
+                    "自動車"
 
-        VehicleOther ->
-            "自転車・車両 / その他"
+                VehicleOther ->
+                    "その他"
 
-        FoodFood ->
-            "食料品 / 食料"
+                FoodFood ->
+                    "食料"
 
-        FoodBeverage ->
-            "食料品 / 飲料"
+                FoodBeverage ->
+                    "飲料"
 
-        FoodOther ->
-            "食料品 / その他"
+                FoodOther ->
+                    "その他"
 
-        HobbyDisc ->
-            "ホビー・雑貨 / CD・DVD"
+                HobbyDisc ->
+                    "CD・DVD"
 
-        HobbyInstrument ->
-            "ホビー・雑貨 / 楽器"
+                HobbyInstrument ->
+                    "楽器"
 
-        HobbyCamera ->
-            "ホビー・雑貨 / カメラ"
+                HobbyCamera ->
+                    "カメラ"
 
-        HobbyGame ->
-            "ホビー・雑貨 / ゲーム"
+                HobbyGame ->
+                    "ゲーム"
 
-        HobbySport ->
-            "ホビー・雑貨 / スポーツ"
+                HobbySport ->
+                    "スポーツ"
 
-        HobbyArt ->
-            "ホビー・雑貨 / 美術・芸術品"
+                HobbyArt ->
+                    "美術・芸術品"
 
-        HobbyAccessory ->
-            "ホビー・雑貨 / 雑貨・小物"
+                HobbyAccessory ->
+                    "雑貨・小物"
 
-        HobbyDaily ->
-            "ホビー・雑貨 / 日用品"
+                HobbyDaily ->
+                    "日用品"
 
-        HobbyHandmade ->
-            "ホビー・雑貨 / ハンドメイド"
+                HobbyHandmade ->
+                    "ハンドメイド"
 
-        HobbyOther ->
-            "ホビー・雑貨 / その他"
+                HobbyOther ->
+                    "その他"
+           )
 
 
 toIdString : Category -> String

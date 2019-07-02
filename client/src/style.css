@@ -711,8 +711,7 @@ header {
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
-    padding: 0.5rem;
+    border: solid 1px rgba(0, 0, 0, 0.4);
     text-decoration: none;
     color: black;
 }
@@ -724,12 +723,14 @@ header {
 .productList-name {
     font-size: 1.5rem;
     overflow-wrap: break-word;
+    padding: 4px 8px;
 }
 
 .productList-priceAndLike {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
+    padding: 4px 8px;
 }
 
 .productList-price {

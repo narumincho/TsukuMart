@@ -183,7 +183,13 @@ update msg model =
     case msg of
         GetProductResponse productsResult ->
             case ( model, productsResult ) of
-                ( WaitNewData rec, Ok product ) ->
+                ( Loading _, Ok product ) ->
+                    ( Normal { product = product, sending = False, comment = "" }
+                    , [ EmissionGetCommentList { productId = Product.detailGetId product }
+                      , EmissionUpdateNowTime
+                      ]
+                    )
+                ( WaitNewData _, Ok product ) ->
                     ( Normal { product = product, sending = False, comment = "" }
                     , [ EmissionGetCommentList { productId = Product.detailGetId product }
                       , EmissionUpdateNowTime
