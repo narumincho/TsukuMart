@@ -298,7 +298,9 @@ normalView : User.WithProfile -> List (Html.Html Msg)
 normalView user =
     [ Html.div
         [ Html.Attributes.class "profile" ]
-        (userView user)
+        (userView user
+            ++ [ userDataLink (User.withProfileGetId user) ]
+        )
     ]
 
 
@@ -307,6 +309,7 @@ normalMyProfileView user =
     [ Html.div
         [ Html.Attributes.class "profile" ]
         (userView user
+            ++ [ userPrivateDataLink (User.withProfileGetId user) ]
             ++ [ toEditButton, logOutButton ]
         )
     ]
@@ -323,7 +326,6 @@ userView userWithProfile =
     ]
         ++ universityView (User.withProfileGetUniversity userWithProfile)
         ++ [ Html.text ("ユーザーID " ++ (userWithProfile |> User.withProfileGetId |> User.idToString))
-           , userDataLink
            ]
 
 
@@ -406,8 +408,19 @@ universityView university =
            )
 
 
-userDataLink : Html.Html msg
-userDataLink =
+userDataLink : User.Id -> Html.Html msg
+userDataLink userId =
+    Html.div
+        [ Html.Attributes.style "display" "grid"
+        , Html.Attributes.style "gap" "8px"
+        , Html.Attributes.style "padding" "0 0 48px 0"
+        ]
+        [ userDataLinkItem (SiteMap.soldProductsUrl userId) "出品した商品"
+        ]
+
+
+userPrivateDataLink : User.Id -> Html.Html msg
+userPrivateDataLink userId =
     Html.div
         [ Html.Attributes.style "display" "grid"
         , Html.Attributes.style "gap" "8px"
@@ -415,10 +428,10 @@ userDataLink =
         ]
         [ userDataLinkItem SiteMap.likedProductsUrl "いいねした商品"
         , userDataLinkItem SiteMap.historyUrl "閲覧した商品"
-        , userDataLinkItem SiteMap.soldProductsUrl "出品した商品"
+        , userDataLinkItem (SiteMap.soldProductsUrl userId) "出品した商品"
         , userDataLinkItem SiteMap.boughtProductsUrl "購入した商品"
-        , userDataLinkItem SiteMap.tradingProductsUrl "取引中の商品"
-        , userDataLinkItem SiteMap.tradedProductsUrl "取引した商品"
+        , userDataLinkItem SiteMap.tradingProductsUrl "進行中の取引"
+        , userDataLinkItem SiteMap.tradedProductsUrl "過去にした取引"
         , userDataLinkItem SiteMap.commentedProductsUrl "コメントをした商品"
         ]
 
@@ -443,7 +456,7 @@ toEditButton =
         [ Html.Attributes.class "mainButton"
         , Html.Events.onClick MsgToEditMode
         ]
-        [ Icon.edit
+        [ Icon.edit "width:32px;height:32px"
         , Html.text "編集する"
         ]
 
@@ -463,7 +476,7 @@ editView : Api.Token -> EditModel -> List (Html.Html Msg)
 editView access editModel =
     [ Html.Keyed.node "div"
         [ Html.Attributes.class "form" ]
-        ([ ( "nickNameEditor", nickNameEditor editModel.displayName )
+        ([ ( "nickNameEditor", displayNameEditor editModel.displayName )
          , ( "introductionEditor", introductionEditor editModel.introduction )
          ]
             ++ (UniversityComponent.view editModel.university
@@ -475,8 +488,8 @@ editView access editModel =
     ]
 
 
-nickNameEditor : String -> Html.Html Msg
-nickNameEditor nickName =
+displayNameEditor : String -> Html.Html Msg
+displayNameEditor displayName =
     Html.div
         []
         ([ Html.label
@@ -492,10 +505,10 @@ nickNameEditor nickName =
             ]
             []
          ]
-            ++ (if String.length nickName < 1 then
+            ++ (if String.length displayName < 1 then
                     [ Html.text "表示名は 1文字以上である必要があります" ]
 
-                else if 50 < String.length nickName then
+                else if 50 < String.length displayName then
                     [ Html.text "表示名は 50文字以内である必要があります" ]
 
                 else

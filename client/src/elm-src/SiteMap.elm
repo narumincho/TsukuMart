@@ -39,7 +39,7 @@ type UrlParserInitResult
     | InitLogIn
     | InitLikedProducts
     | InitHistory
-    | InitSoldProducts
+    | InitSoldProducts Data.User.Id
     | InitBoughtProducts
     | InitTradingProducts
     | InitTradedProducts
@@ -80,7 +80,7 @@ urlParserInit url =
       , logInParser |> parserMap (always InitLogIn)
       , likedProductsParser |> parserMap (always InitLikedProducts)
       , historyParser |> parserMap (always InitHistory)
-      , soldProductsParser |> parserMap (always InitExhibition)
+      , soldProductsParser |> parserMap InitSoldProducts
       , boughtProductsParser |> parserMap (always InitBoughtProducts)
       , tradingProductsParser |> parserMap (always InitTradingProducts)
       , tradedProductsParser |> parserMap (always InitTradedProducts)
@@ -122,7 +122,7 @@ type UrlParserResult
     | LogIn
     | LikedProducts
     | History
-    | SoldProducts
+    | SoldProducts Data.User.Id
     | BoughtProducts
     | TradingProducts
     | TradedProducts
@@ -154,7 +154,7 @@ urlParser url =
     , logInParser |> parserMap (always LogIn)
     , likedProductsParser |> parserMap (always LikedProducts)
     , historyParser |> parserMap (always History)
-    , soldProductsParser |> parserMap (always SoldProducts)
+    , soldProductsParser |> parserMap SoldProducts
     , boughtProductsParser |> parserMap (always BoughtProducts)
     , tradingProductsParser |> parserMap (always TradingProducts)
     , tradedProductsParser |> parserMap (always TradedProducts)
@@ -288,23 +288,30 @@ historyPath =
 {- Sold Products -}
 
 
-soldProductsParser : List String -> Maybe ()
+soldProductsParser : List String -> Maybe Data.User.Id
 soldProductsParser path =
-    if path == soldProductsPath then
-        Just ()
+    case path of
+        [ p, userId ] ->
+            if p == soldProductsPath then
+                Just (Data.User.idFromString userId)
 
-    else
-        Nothing
+            else
+                Nothing
+
+        _ ->
+            Nothing
 
 
-soldProductsUrl : String
-soldProductsUrl =
-    Url.Builder.absolute soldProductsPath []
+soldProductsUrl : Data.User.Id -> String
+soldProductsUrl userId =
+    Url.Builder.absolute
+        [ soldProductsPath, Data.User.idToString userId ]
+        []
 
 
-soldProductsPath : List String
+soldProductsPath : String
 soldProductsPath =
-    [ "sold-products" ]
+    "sold-products"
 
 
 

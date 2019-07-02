@@ -371,12 +371,13 @@ menuLogInStateLoadingProfile =
     , Html.a
         [ Html.Attributes.class "menu-item" ]
         [ Html.text "プロフィール情報を読み込み中" ]
-    , subMenuItem SiteMap.likedProductsUrl "いいねした商品"
-    , subMenuItem SiteMap.historyUrl "閲覧した商品"
-    , subMenuItem SiteMap.soldProductsUrl "出品した商品"
-    , subMenuItem SiteMap.boughtProductsUrl "購入した商品"
-    , subMenuItem "" "取引中の商品"
-    , subMenuItem "" "コメントをした商品"
+    , subMenuItem (Just SiteMap.likedProductsUrl) "いいねした商品"
+    , subMenuItem (Just SiteMap.historyUrl) "閲覧した商品"
+    , subMenuItem (Just SiteMap.boughtProductsUrl) "購入した商品"
+    , subMenuItem Nothing "出品した商品"
+    , subMenuItem (Just SiteMap.tradingProductsUrl) "進行中の取引"
+    , subMenuItem (Just SiteMap.tradedProductsUrl) "過去にした取引"
+    , subMenuItem (Just SiteMap.commentedProductsUrl) "コメントをした商品"
     , Html.a
         [ Html.Attributes.class "menu-item"
         , Html.Attributes.href SiteMap.aboutUrl
@@ -423,12 +424,13 @@ menuLogInStateOk userWithName =
             []
             [ Html.text (Data.User.withNameGetDisplayName userWithName) ]
         ]
-    , subMenuItem SiteMap.likedProductsUrl "いいねした商品"
-    , subMenuItem SiteMap.historyUrl "閲覧した商品"
-    , subMenuItem SiteMap.soldProductsUrl "出品した商品"
-    , subMenuItem SiteMap.boughtProductsUrl "購入した商品"
-    , subMenuItem "" "取引中の商品"
-    , subMenuItem "" "コメントをした商品"
+    , subMenuItem (Just SiteMap.likedProductsUrl) "いいねした商品"
+    , subMenuItem (Just SiteMap.historyUrl) "閲覧した商品"
+    , subMenuItem (Just SiteMap.boughtProductsUrl) "購入した商品"
+    , subMenuItem (Just (SiteMap.soldProductsUrl (Data.User.withNameGetId userWithName))) "出品した商品"
+    , subMenuItem (Just SiteMap.tradingProductsUrl) "進行中の取引"
+    , subMenuItem (Just SiteMap.tradedProductsUrl) "過去にした取引"
+    , subMenuItem (Just SiteMap.commentedProductsUrl) "コメントをした商品"
     , Html.a
         [ Html.Attributes.class "menu-item"
         , Html.Attributes.href SiteMap.aboutUrl
@@ -442,14 +444,24 @@ menuIconStyle =
     "width:32px;padding:8px;fill:black"
 
 
-subMenuItem : String -> String -> Html.Html msg
-subMenuItem link text =
-    Html.a
-        [ Html.Attributes.class "menu-item"
-        , Html.Attributes.href link
-        , Html.Attributes.style "padding" "4px 0px 4px 52px"
-        , Html.Attributes.style "font-size" "1.3rem"
-        ]
+subMenuItem : Maybe String -> String -> Html.Html msg
+subMenuItem linkMaybe text =
+    (case linkMaybe of
+        Just link ->
+            Html.a
+                [ Html.Attributes.class "menu-item"
+                , Html.Attributes.href link
+                , Html.Attributes.style "padding" "4px 0px 4px 52px"
+                , Html.Attributes.style "font-size" "1.3rem"
+                ]
+
+        Nothing ->
+            Html.div
+                [ Html.Attributes.class "menu-item"
+                , Html.Attributes.style "padding" "4px 0px 4px 52px"
+                , Html.Attributes.style "font-size" "1.3rem"
+                ]
+    )
         [ Html.text text ]
 
 

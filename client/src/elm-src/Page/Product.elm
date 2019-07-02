@@ -189,6 +189,7 @@ update msg model =
                       , EmissionUpdateNowTime
                       ]
                     )
+
                 ( WaitNewData _, Ok product ) ->
                     ( Normal { product = product, sending = False, comment = "" }
                     , [ EmissionGetCommentList { productId = Product.detailGetId product }
@@ -673,7 +674,7 @@ editButton =
         [ Html.Attributes.class "subButton"
         , Html.Events.onClick EditProduct
         ]
-        [ Icon.edit
+        [ Icon.edit "width:32px;height:32px"
         , Html.text "編集する"
         ]
 
@@ -684,7 +685,7 @@ deleteView productId token =
         [ Html.Attributes.class "product-deleteButton"
         , Html.Events.onClick (Delete token productId)
         ]
-        [ Icon.delete
+        [ Icon.delete "width:32px;height:32px;fill:#eee"
         , Html.text "削除する"
         ]
 

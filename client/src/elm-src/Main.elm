@@ -242,8 +242,8 @@ urlParserInitResultToPageAndCmd logInState page =
                     PageHistory
                     historyEmissionListToCmd
 
-        SiteMap.InitSoldProducts ->
-            Page.SoldProducts.initModel Nothing logInState
+        SiteMap.InitSoldProducts userId ->
+            Page.SoldProducts.initModel userId Nothing
                 |> Tuple.mapBoth PageSoldProducts soldProductsPageEmissionListToCmd
 
         SiteMap.InitBoughtProducts ->
@@ -728,15 +728,11 @@ soldProductsPageEmissionListToCmd =
     List.map
         (\emission ->
             case emission of
-                Page.SoldProducts.EmissionGetSoldProducts token ->
-                    Api.getSoldProductList (Data.User.idFromString "sorena")
-                        -- TODO
+                Page.SoldProducts.EmissionGetSoldProducts userId ->
+                    Api.getSoldProductList userId
                         (\result ->
                             PageMsg (SoldProductsPageMsg (Page.SoldProducts.GetSoldProductListResponse result))
                         )
-
-                Page.SoldProducts.EmissionLogInOrSignUp e ->
-                    logInEmissionToCmd e
 
                 Page.SoldProducts.EmissionByProductList e ->
                     productListEmissionToCmd e
@@ -1100,8 +1096,8 @@ urlParserResultToPageAndCmd (Model rec) result =
             Page.History.initModel (getProductId rec.page) rec.logInState
                 |> Tuple.mapBoth PageHistory historyEmissionListToCmd
 
-        SiteMap.SoldProducts ->
-            Page.SoldProducts.initModel (getProductId rec.page) rec.logInState
+        SiteMap.SoldProducts userId ->
+            Page.SoldProducts.initModel userId (getProductId rec.page)
                 |> Tuple.mapBoth PageSoldProducts soldProductsPageEmissionListToCmd
 
         SiteMap.BoughtProducts ->

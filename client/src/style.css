@@ -524,8 +524,7 @@ header {
 
 .product-deleteButton {
     background-color: #bd2e2e;
-    color: #111;
-    fill: #111;
+    color: #eee;
     padding: 1rem;
     width: 100%;
     font-size: 1.5rem;
@@ -883,11 +882,6 @@ header {
 
 .subButton:hover {
     background-color: #bbb;
-}
-
-.icon {
-    width: 2rem;
-    height: 2rem;
 }
 
 /*===============================================
