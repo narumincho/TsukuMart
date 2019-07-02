@@ -465,7 +465,10 @@ const userGraphQLType = new g.GraphQLObjectType({
                 ),
                 args: {},
                 resolve: async (source, args, context, info) => {
-                    return [];
+                    if (source.soldProductAll === undefined) {
+                        return (await setUserData(source)).soldProductAll;
+                    }
+                    return source.soldProductAll;
                 },
                 description: "出品した商品すべて"
             })
@@ -833,7 +836,9 @@ const user = makeQueryOrMutationField<
             displayName: userData.displayName,
             imageId: userData.imageId,
             introduction: userData.introduction,
-            university: type.universityToInternal(userData.university)
+            university: type.universityToInternal(userData.university),
+            createdAt: userData.createdAt,
+            soldProductAll: userData.soldProductAll
         };
     },
     description: "ユーザーの情報を取得する"
@@ -843,14 +848,15 @@ const userAll = makeQueryOrMutationField<{}, Array<type.UserInternal>>({
     type: g.GraphQLNonNull(g.GraphQLList(g.GraphQLNonNull(userGraphQLType))),
     args: {},
     resolve: async () => {
-        return (await database.getAllUser()).map(
-            ({ id, displayName, imageId, introduction }) => ({
-                id,
-                displayName,
-                imageId,
-                introduction
-            })
-        );
+        return (await database.getAllUser()).map(userData => ({
+            id: userData.id,
+            displayName: userData.displayName,
+            imageId: userData.imageId,
+            introduction: userData.introduction,
+            university: type.universityToInternal(userData.university),
+            createdAt: userData.createdAt,
+            soldProductAll: userData.soldProductAll
+        }));
     },
     description: "すべてのユーザーの情報を取得する"
 });
@@ -868,17 +874,7 @@ const userPrivate = makeQueryOrMutationField<
     type: g.GraphQLNonNull(userPrivateGraphQLType),
     resolve: async (source, args) => {
         const accessTokenData = database.verifyAccessToken(args.accessToken);
-        const userData = await database.getUserData(accessTokenData.id);
-        return {
-            id: accessTokenData.id,
-            displayName: userData.displayName,
-            imageId: userData.imageId,
-            introduction: userData.introduction,
-            university: type.universityToInternal(userData.university),
-            soldProductAll: [],
-            boughtProductAll: [],
-            likedProductAll: []
-        };
+        return await database.getUserData(accessTokenData.id);
     },
     description: "個人的な情報を含んだユーザーの情報を取得する"
 });
@@ -894,21 +890,16 @@ const product = makeQueryOrMutationField<
         }
     },
     type: g.GraphQLNonNull(productGraphQLType),
-    resolve: async (source, args, context, info) => {
-        if (await database.existsProduct(args.id)) {
-            return {
-                id: args.id
-            };
-        }
-        throw new Error(`product (id=${args.id}) dose not exists`);
-    },
+    resolve: async (source, args, context, info) =>
+        await database.getProduct(args.id),
     description: "商品の情報を取得する"
 });
 
 const productAll = makeQueryOrMutationField<{}, Array<type.ProductInternal>>({
     args: {},
     type: g.GraphQLNonNull(g.GraphQLList(g.GraphQLNonNull(productGraphQLType))),
-    resolve: async (source, args, context, info) => database.getAllProducts(),
+    resolve: async (source, args, context, info) =>
+        await database.getAllProducts(),
     description: "すべての商品(売れたものも含まれる)を取得する"
 });
 
@@ -1174,7 +1165,11 @@ const updateProfile = makeQueryOrMutationField<
             university: type.universityFromInternal(university)
         });
         return {
-            id: profileData.id
+            id: profileData.id,
+            displayName: profileData.displayName,
+            introduction: profileData.introduction,
+            university: type.universityToInternal(profileData.university),
+            imageId: profileData.imageId
         };
     },
     description: "プロフィールの更新"

@@ -1,20 +1,8 @@
 import * as jwt from "jsonwebtoken";
-import { URL } from "url";
 import * as databaseLow from "./databaseLow";
 import * as key from "./key";
 import * as type from "./type";
 import Maybe from "graphql/tsutils/Maybe";
-
-/** resolveで返すべき部分型を生成する */
-type Return<Type> = Type extends Array<infer E>
-    ? Array<ReturnLoop<E>>
-    : ReturnLoop<Type>;
-
-/** resolveで返すべき部分型を生成する型関数のループ */
-type ReturnLoop<Type> = {
-    0: Type;
-    1: { id: string } & { [k in keyof Type]?: Return<Type[k]> };
-}[Type extends { id: string } ? 1 : 0];
 
 /**
  * 指定したStateがつくマート自身が発行したものかどうか調べ、あったらそのStateを削除する
@@ -292,94 +280,59 @@ const createRefreshId = (): string => {
                     User
    ==========================================
 */
+type UserReturnLowConst = Pick<
+    type.UserPrivate,
+    | "id"
+    | "displayName"
+    | "imageId"
+    | "introduction"
+    | "university"
+    | "createdAt"
+> & {
+    soldProductAll: Array<{ id: string }>;
+    boughtProductAll: Array<{ id: string }>;
+    tradingAll: Array<{ id: string }>;
+    tradedAll: Array<{ id: string }>;
+};
 
 /**
  * 指定したユーザーの情報を取得する
  * @param id ユーザーID
  */
-export const getUserData = async (
+export const getUserData = async (id: string): Promise<UserReturnLowConst> =>
+    databaseLowUserDataToUserDataLowCost(await databaseLow.getUserData(id), id);
+
+const databaseLowUserDataToUserDataLowCost = (
+    userData: databaseLow.UserData,
     id: string
-): Promise<
-    Pick<
-        type.UserPrivate,
-        "displayName" | "imageId" | "introduction" | "university" | "createdAt"
-    > & {
-        soldProductAll: Array<{ id: string }>;
-        boughtProductAll: Array<{ id: string }>;
-        tradingAll: Array<{ id: string }>;
-        tradedAll: Array<{ id: string }>;
-    }
-> => {
-    const userData = await databaseLow.getUserData(id);
-    return {
-        displayName: userData.displayName,
-        imageId: userData.imageId,
-        introduction: userData.introduction,
-        university: type.universityFromInternal({
-            graduate: userData.graduate,
-            schoolAndDepartment: userData.schoolAndDepartment
-        }),
-        createdAt: databaseLow.timestampToDate(userData.createdAt),
-        soldProductAll: userData.soldProducts.map(id => ({ id: id })),
-        boughtProductAll: userData.boughtProducts.map(id => ({ id: id })),
-        tradingAll: userData.trading.map(id => ({ id })),
-        tradedAll: userData.traded.map(id => ({ id }))
-    };
-};
+): UserReturnLowConst => ({
+    id: id,
+    displayName: userData.displayName,
+    imageId: userData.imageId,
+    introduction: userData.introduction,
+    university: type.universityFromInternal({
+        graduate: userData.graduate,
+        schoolAndDepartment: userData.schoolAndDepartment
+    }),
+    createdAt: databaseLow.timestampToDate(userData.createdAt),
+    soldProductAll: userData.soldProducts.map(id => ({ id: id })),
+    boughtProductAll: userData.boughtProducts.map(id => ({ id: id })),
+    tradingAll: userData.trading.map(id => ({ id })),
+    tradedAll: userData.traded.map(id => ({ id }))
+});
 
 export const getLikedProductData = async (
     userId: string
 ): Promise<Array<{ id: string }>> =>
     databaseLow.getAllLikedProductsData(userId);
 
-export const getUserPrivate = async (
-    id: string
-): Promise<
-    Pick<
-        type.UserPrivate,
-        "displayName" | "imageId" | "introduction" | "university" | "createdAt"
-    >
-> => {
-    const userData = await databaseLow.getUserData(id);
-    return {
-        displayName: userData.displayName,
-        imageId: userData.imageId,
-        introduction: userData.introduction,
-        university: type.universityFromInternal({
-            graduate: userData.graduate,
-            schoolAndDepartment: userData.schoolAndDepartment
-        }),
-        createdAt: databaseLow.timestampToDate(userData.createdAt)
-    };
-};
-
 /**
  * すべてのユーザーの情報を取得する
  */
-export const getAllUser = async (): Promise<
-    Array<
-        Pick<
-            type.User,
-            | "id"
-            | "displayName"
-            | "imageId"
-            | "university"
-            | "introduction"
-            | "createdAt"
-        >
-    >
-> =>
-    (await databaseLow.getAllUserData()).map(({ id, data }) => ({
-        id: id,
-        displayName: data.displayName,
-        imageId: data.imageId,
-        university: type.universityFromInternal({
-            graduate: data.graduate,
-            schoolAndDepartment: data.schoolAndDepartment
-        }),
-        introduction: data.introduction,
-        createdAt: databaseLow.timestampToDate(data.createdAt)
-    }));
+export const getAllUser = async (): Promise<Array<UserReturnLowConst>> =>
+    (await databaseLow.getAllUserData()).map(({ id, data }) =>
+        databaseLowUserDataToUserDataLowCost(data, id)
+    );
 
 export const markProductInHistory = async (
     userId: string,
@@ -723,48 +676,11 @@ export const existsProduct = async (id: string): Promise<boolean> =>
  * 商品のデータを取得する
  * @param id
  */
-export const getProduct = async (
-    id: string
-): Promise<
-    Pick<
-        type.Product,
-        | "name"
-        | "price"
-        | "description"
-        | "condition"
-        | "category"
-        | "thumbnailImageId"
-        | "imageIds"
-        | "likedCount"
-        | "viewedCount"
-        | "status"
-        | "createdAt"
-        | "updateAt"
-    > & {
-        seller: Pick<type.User, "id" | "displayName" | "imageId">;
-    }
-> => {
-    const data = await databaseLow.getProduct(id);
-    return {
-        name: data.name,
-        price: data.price,
-        description: data.description,
-        condition: data.condition,
-        category: data.category,
-        thumbnailImageId: data.thumbnailImageId,
-        imageIds: data.imageIds,
-        likedCount: data.likedCount,
-        viewedCount: data.viewedCount,
-        status: data.status,
-        seller: {
-            id: data.sellerId,
-            displayName: data.sellerDisplayName,
-            imageId: data.sellerImageId
-        },
-        createdAt: databaseLow.timestampToDate(data.createdAt),
-        updateAt: databaseLow.timestampToDate(data.updateAt)
-    };
-};
+export const getProduct = async (id: string): Promise<ProductReturnLowCost> =>
+    productReturnLowCostFromDatabaseLow({
+        id: id,
+        data: await databaseLow.getProduct(id)
+    });
 
 /**
  * 商品を出品する

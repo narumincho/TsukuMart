@@ -34,7 +34,7 @@ const tradeCollectionRef = dataBase.collection("trade");
                     User
    ==========================================
 */
-type UserData = {
+export type UserData = {
     logInAccountServiceId: string;
     displayName: string;
     imageId: string;
