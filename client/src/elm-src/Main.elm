@@ -267,7 +267,7 @@ urlParserInitResultToPageAndCmd logInState page =
                 |> Tuple.mapBoth PageExhibition exhibitionPageEmissionListToCmd
 
         SiteMap.InitProduct productId ->
-            Page.Product.initModel productId
+            Page.Product.initModel logInState productId
                 |> Tuple.mapBoth PageProduct productPageEmissionListToCmd
 
         SiteMap.InitUser userId ->
@@ -967,7 +967,19 @@ productPageEmissionListToCmd =
         (\emission ->
             case emission of
                 Page.Product.EmissionGetProduct { productId } ->
-                    Api.getProduct productId (\result -> PageMsg (ProductPageMsg (Page.Product.GetProductResponse result)))
+                    Api.getProduct productId
+                        (\result ->
+                            PageMsg
+                                (ProductPageMsg (Page.Product.GetProductResponse result))
+                        )
+
+                Page.Product.EmissionGetProductAndMarkHistory { productId, accessToken } ->
+                    Api.markProductInHistory accessToken
+                        productId
+                        (\result ->
+                            PageMsg
+                                (ProductPageMsg (Page.Product.GetProductResponse result))
+                        )
 
                 Page.Product.EmissionGetCommentList { productId } ->
                     Api.getProductComments productId (\result -> PageMsg (ProductPageMsg (Page.Product.GetCommentListResponse result)))
@@ -1155,10 +1167,10 @@ urlParserResultToPageAndCmd (Model rec) result =
         SiteMap.Product productId ->
             (case getProductFromPage productId rec.page of
                 Just product ->
-                    Page.Product.initModelFromProduct product
+                    Page.Product.initModelFromProduct rec.logInState product
 
                 Nothing ->
-                    Page.Product.initModel productId
+                    Page.Product.initModel rec.logInState productId
             )
                 |> Tuple.mapBoth PageProduct productPageEmissionListToCmd
 

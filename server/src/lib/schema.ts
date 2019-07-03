@@ -122,8 +122,8 @@ const productGraphQLType: g.GraphQLObjectType<
     fields: () =>
         makeObjectFieldMap<type.ProductInternal>({
             id: {
-                type: g.GraphQLNonNull(g.GraphQLString),
-                description: "商品を識別するためのID"
+                type: g.GraphQLNonNull(g.GraphQLID),
+                description: "商品を識別するためのID。String"
             },
             name: makeObjectField({
                 type: g.GraphQLNonNull(g.GraphQLString),
@@ -298,9 +298,9 @@ const productCommentGraphQLType = new g.GraphQLObjectType({
     fields: () =>
         makeObjectFieldMap<type.TradeComment>({
             commentId: {
-                type: g.GraphQLNonNull(g.GraphQLString),
+                type: g.GraphQLNonNull(g.GraphQLID),
                 description:
-                    "商品のコメントを識別するためのID。商品内で閉じたID。"
+                    "商品のコメントを識別するためのID。商品内で閉じたID。String"
             },
             body: {
                 type: g.GraphQLNonNull(g.GraphQLString),
@@ -333,9 +333,9 @@ export const draftProductGraphQLType = new g.GraphQLObjectType<
     fields: () =>
         makeObjectFieldMap<type.DraftProduct>({
             draftId: {
-                type: g.GraphQLNonNull(g.GraphQLString),
+                type: g.GraphQLNonNull(g.GraphQLID),
                 description:
-                    "下書きの商品を識別するためのID。ユーザー内で閉じたID。"
+                    "下書きの商品を識別するためのID。ユーザー内で閉じたID。String"
             },
             name: {
                 type: g.GraphQLNonNull(g.GraphQLString),
@@ -399,8 +399,8 @@ const userGraphQLType = new g.GraphQLObjectType({
     fields: () =>
         makeObjectFieldMap<type.UserInternal>({
             id: {
-                type: g.GraphQLNonNull(g.GraphQLString),
-                description: "ユーザーを識別するためのID"
+                type: g.GraphQLNonNull(g.GraphQLID),
+                description: "ユーザーを識別するためのID。String"
             },
             displayName: makeObjectField({
                 type: g.GraphQLNonNull(g.GraphQLString),
@@ -501,8 +501,8 @@ const userPrivateGraphQLType = new g.GraphQLObjectType({
     fields: () =>
         makeObjectFieldMap<type.UserPrivateInternal>({
             id: {
-                type: g.GraphQLNonNull(g.GraphQLString),
-                description: "ユーザーを識別するためのID"
+                type: g.GraphQLNonNull(g.GraphQLID),
+                description: "ユーザーを識別するためのID。String"
             },
             displayName: makeObjectField({
                 type: g.GraphQLNonNull(g.GraphQLString),
@@ -713,8 +713,8 @@ const tradeGraphQLType = new g.GraphQLObjectType({
     fields: () =>
         makeObjectFieldMap<type.Trade>({
             id: {
-                type: g.GraphQLNonNull(g.GraphQLString),
-                description: "取引データを識別するためのID"
+                type: g.GraphQLNonNull(g.GraphQLID),
+                description: "取引データを識別するためのID。String"
             },
             product: makeObjectField({
                 type: g.GraphQLNonNull(productGraphQLType),
@@ -785,9 +785,9 @@ const tradeCommentGraphQLType = new g.GraphQLObjectType({
     fields: () =>
         makeObjectFieldMap<type.TradeComment>({
             commentId: {
-                type: g.GraphQLNonNull(g.GraphQLString),
+                type: g.GraphQLNonNull(g.GraphQLID),
                 description:
-                    "取引のコメントを識別するためのID。取引内で閉じたID。"
+                    "取引のコメントを識別するためのID。取引内で閉じたID。String"
             },
             body: {
                 type: g.GraphQLNonNull(g.GraphQLString),
@@ -818,21 +818,18 @@ const hello = makeQueryOrMutationField<{}, string>({
     description: "世界に挨拶する"
 });
 
-const user = makeQueryOrMutationField<
-    Pick<type.UserInternal, "id">,
-    type.UserInternal
->({
+const user = makeQueryOrMutationField<{ userId: string }, type.UserInternal>({
     type: g.GraphQLNonNull(userGraphQLType),
     args: {
-        id: {
-            type: g.GraphQLNonNull(g.GraphQLString),
+        userId: {
+            type: g.GraphQLNonNull(g.GraphQLID),
             description: "ユーザーを識別するためのID"
         }
     },
     resolve: async (source, args) => {
-        const userData = await database.getUserData(args.id);
+        const userData = await database.getUserData(args.userId);
         return {
-            id: args.id,
+            id: args.userId,
             displayName: userData.displayName,
             imageId: userData.imageId,
             introduction: userData.introduction,
@@ -880,18 +877,18 @@ const userPrivate = makeQueryOrMutationField<
 });
 
 const product = makeQueryOrMutationField<
-    Pick<type.ProductInternal, "id">,
+    { productId: string },
     type.ProductInternal
 >({
     args: {
-        id: {
-            type: g.GraphQLNonNull(g.GraphQLString),
-            description: "商品を識別するためのID"
+        productId: {
+            type: g.GraphQLNonNull(g.GraphQLID),
+            description: productGraphQLType.getFields()["id"].description
         }
     },
     type: g.GraphQLNonNull(productGraphQLType),
     resolve: async (source, args, context, info) =>
-        await database.getProduct(args.id),
+        await database.getProduct(args.productId),
     description: "商品の情報を取得する"
 });
 
@@ -1234,7 +1231,7 @@ const sellProduct = makeQueryOrMutationField<
 
 const markProductInHistory = makeQueryOrMutationField<
     { accessToken: string; productId: string },
-    type.Unit
+    type.ProductInternal
 >({
     args: {
         accessToken: {
@@ -1242,21 +1239,20 @@ const markProductInHistory = makeQueryOrMutationField<
             description: type.accessTokenDescription
         },
         productId: {
-            type: g.GraphQLNonNull(g.GraphQLString),
-            description: "見たと記録する商品ID"
+            type: g.GraphQLNonNull(g.GraphQLID),
+            description: productGraphQLType.getFields()["id"].description
         }
     },
     type: g.GraphQLNonNull(type.unitGraphQLType),
     resolve: async (source, args) => {
         const { id } = database.verifyAccessToken(args.accessToken);
-        await database.markProductInHistory(id, args.productId);
-        return "ok";
+        return await database.markProductInHistory(id, args.productId);
     },
     description: "商品を閲覧したと記録する"
 });
 
 const likeProduct = makeQueryOrMutationField<
-    { accessToken: string; id: string },
+    { accessToken: string; productId: string },
     type.ProductInternal
 >({
     args: {
@@ -1264,21 +1260,21 @@ const likeProduct = makeQueryOrMutationField<
             type: g.GraphQLNonNull(g.GraphQLString),
             description: "アクセストークン"
         },
-        id: {
-            type: g.GraphQLNonNull(g.GraphQLString),
-            description: "商品を識別するためのID"
+        productId: {
+            type: g.GraphQLNonNull(g.GraphQLID),
+            description: productGraphQLType.getFields()["id"].description
         }
     },
     type: g.GraphQLNonNull(productGraphQLType),
     resolve: async (source, args, context, info) => {
         const { id } = database.verifyAccessToken(args.accessToken);
-        return await database.likeProduct(id, args.id);
+        return await database.likeProduct(id, args.productId);
     },
     description: "商品にいいねをする"
 });
 
 const unlikeProduct = makeQueryOrMutationField<
-    { accessToken: string; id: string },
+    { accessToken: string; productId: string },
     type.ProductInternal
 >({
     args: {
@@ -1286,15 +1282,15 @@ const unlikeProduct = makeQueryOrMutationField<
             type: g.GraphQLNonNull(g.GraphQLString),
             description: "アクセストークン"
         },
-        id: {
-            type: g.GraphQLNonNull(g.GraphQLString),
-            description: "商品を識別するためのID"
+        productId: {
+            type: g.GraphQLNonNull(g.GraphQLID),
+            description: productGraphQLType.getFields()["id"].description
         }
     },
     type: g.GraphQLNonNull(productGraphQLType),
     resolve: async (source, args, context, info) => {
         const { id } = database.verifyAccessToken(args.accessToken);
-        return await database.unlikeProduct(id, args.id);
+        return await database.unlikeProduct(id, args.productId);
     },
     description: "商品からいいねを外す"
 });
@@ -1450,7 +1446,7 @@ const deleteDraftProduct = makeQueryOrMutationField<
         await database.deleteDraftProduct(id, args.draftId);
         return database.getDraftProducts(id);
     },
-    description: ""
+    description: "商品の下書きを削除する"
 });
 
 /*  =============================================================

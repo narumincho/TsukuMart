@@ -300,25 +300,31 @@ type UserReturnLowConst = Pick<
  * @param id ユーザーID
  */
 export const getUserData = async (id: string): Promise<UserReturnLowConst> =>
-    databaseLowUserDataToUserDataLowCost(await databaseLow.getUserData(id), id);
+    databaseLowUserDataToUserDataLowCost({
+        id: id,
+        data: await databaseLow.getUserData(id)
+    });
 
-const databaseLowUserDataToUserDataLowCost = (
-    userData: databaseLow.UserData,
-    id: string
-): UserReturnLowConst => ({
+const databaseLowUserDataToUserDataLowCost = ({
+    id,
+    data
+}: {
+    id: string;
+    data: databaseLow.UserData;
+}): UserReturnLowConst => ({
     id: id,
-    displayName: userData.displayName,
-    imageId: userData.imageId,
-    introduction: userData.introduction,
+    displayName: data.displayName,
+    imageId: data.imageId,
+    introduction: data.introduction,
     university: type.universityFromInternal({
-        graduate: userData.graduate,
-        schoolAndDepartment: userData.schoolAndDepartment
+        graduate: data.graduate,
+        schoolAndDepartment: data.schoolAndDepartment
     }),
-    createdAt: databaseLow.timestampToDate(userData.createdAt),
-    soldProductAll: userData.soldProducts.map(id => ({ id: id })),
-    boughtProductAll: userData.boughtProducts.map(id => ({ id: id })),
-    tradingAll: userData.trading.map(id => ({ id })),
-    tradedAll: userData.traded.map(id => ({ id }))
+    createdAt: databaseLow.timestampToDate(data.createdAt),
+    soldProductAll: data.soldProducts.map(id => ({ id: id })),
+    boughtProductAll: data.boughtProducts.map(id => ({ id: id })),
+    tradingAll: data.trading.map(id => ({ id })),
+    tradedAll: data.traded.map(id => ({ id }))
 });
 
 export const getLikedProductData = async (
@@ -330,19 +336,23 @@ export const getLikedProductData = async (
  * すべてのユーザーの情報を取得する
  */
 export const getAllUser = async (): Promise<Array<UserReturnLowConst>> =>
-    (await databaseLow.getAllUserData()).map(({ id, data }) =>
-        databaseLowUserDataToUserDataLowCost(data, id)
+    (await databaseLow.getAllUserData()).map(
+        databaseLowUserDataToUserDataLowCost
     );
 
 export const markProductInHistory = async (
     userId: string,
     productId: string
-): Promise<void> => {
+): Promise<ProductReturnLowCost> => {
     await databaseLow.addHistoryViewProductData(userId, productId, {
         createdAt: databaseLow.getNowTimestamp()
     });
     await databaseLow.updateProductData(productId, {
         viewedCount: (await databaseLow.getProduct(productId)).viewedCount + 1
+    });
+    return productReturnLowCostFromDatabaseLow({
+        id: productId,
+        data: await databaseLow.getProduct(productId)
     });
 };
 
@@ -805,7 +815,7 @@ export const likeProduct = async (
     userId: string,
     productId: string
 ): Promise<ProductReturnLowCost> => {
-    console.log("database likeProduct");
+    console.log(`いいね user=${userId} productId=${productId}`);
     const likedProducts = await databaseLow.getAllLikedProductsData(userId);
     const productData = await databaseLow.getProduct(productId);
     if (!isIncludeProductId(likedProducts, productId)) {
@@ -814,21 +824,15 @@ export const likeProduct = async (
             data: productData
         });
     }
-    console.log("現在のいいね数" + productData.likedCount);
     await databaseLow.updateProductData(productId, {
         likedCount: productData.likedCount + 1
     });
     await databaseLow.addLikedProductData(userId, productId, {
         createdAt: databaseLow.getNowTimestamp()
     });
-    console.log("現在返すいいね数" + productData.likedCount + 1);
-    console.log(
-        "現在返すいいね数(データベースから再読込)" +
-            (await databaseLow.getProduct(productId)).likedCount
-    );
     return productReturnLowCostFromDatabaseLow({
         id: productId,
-        data: { ...productData, likedCount: productData.likedCount + 1 }
+        data: await databaseLow.getProduct(productId)
     });
 };
 
@@ -850,7 +854,7 @@ export const unlikeProduct = async (
     await databaseLow.deleteLikedProductData(userId, productId);
     return productReturnLowCostFromDatabaseLow({
         id: productId,
-        data: { ...productData, likedCount: productData.likedCount - 1 }
+        data: await databaseLow.getProduct(productId)
     });
 };
 

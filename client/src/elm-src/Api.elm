@@ -33,7 +33,7 @@ module Api exposing
     , updateProduct
     , updateProfile
     , userWithNameDecoder
-    )
+    , markProductInHistory)
 
 import Data.Category as Category
 import Data.EmailAddress as EmailAddress
@@ -658,7 +658,7 @@ getSoldProductList userId callBack =
         (Query
             [ Field
                 { name = "user"
-                , args = [ ( "id", GraphQLString (User.idToString userId) ) ]
+                , args = [ ( "userId", GraphQLString (User.idToString userId) ) ]
                 , return =
                     [ Field
                         { name = "soldProductAll"
@@ -847,7 +847,7 @@ getUserProfile userId callBack =
         (Query
             [ Field
                 { name = "user"
-                , args = [ ( "id", GraphQLString (User.idToString userId) ) ]
+                , args = [ ( "userId", GraphQLString (User.idToString userId) ) ]
                 , return = userWithProfileReturn
                 }
             ]
@@ -943,7 +943,7 @@ getProduct id callBack =
         (Query
             [ Field
                 { name = "product"
-                , args = [ ( "id", GraphQLString (Product.idToString id) ) ]
+                , args = [ ( "productId", GraphQLString (Product.idToString id) ) ]
                 , return = productDetailReturn
                 }
             ]
@@ -966,6 +966,31 @@ deleteProduct token productId =
 
 
 {- ==============================================================================
+                              商品を閲覧履歴に追加する
+   ==============================================================================
+-}
+
+
+markProductInHistory : Token -> Product.Id -> (Result String Product.ProductDetail -> msg) -> Cmd msg
+markProductInHistory accessToken productId callBack =
+    graphQlApiRequest
+        (Mutation
+            [ Field
+                { name = "markProductInHistory"
+                , args =
+                    [ ( "accessToken", GraphQLString (tokenToString accessToken) )
+                    , ( "productId", GraphQLString (Product.idToString productId) )
+                    ]
+                , return = productDetailReturn
+                }
+            ]
+        )
+        (Jd.field "markProductInHistory" productDetailDecoder)
+        callBack
+
+
+
+{- ==============================================================================
                               商品にいいねをする
    ==============================================================================
 -}
@@ -979,7 +1004,7 @@ likeProduct accessToken productId callBack =
                 { name = "likeProduct"
                 , args =
                     [ ( "accessToken", GraphQLString (tokenToString accessToken) )
-                    , ( "id", GraphQLString (Product.idToString productId) )
+                    , ( "productId", GraphQLString (Product.idToString productId) )
                     ]
                 , return = productOnlyLikeCountReturn
                 }
@@ -1016,7 +1041,7 @@ unlikeProduct accessToken productId callBack =
                 { name = "unlikeProduct"
                 , args =
                     [ ( "accessToken", GraphQLString (tokenToString accessToken) )
-                    , ( "id", GraphQLString (Product.idToString productId) )
+                    , ( "productId", GraphQLString (Product.idToString productId) )
                     ]
                 , return = productOnlyLikeCountReturn
                 }

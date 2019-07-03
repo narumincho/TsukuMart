@@ -54,6 +54,7 @@ type Model
 
 type Emission
     = EmissionGetProduct { productId : Product.Id }
+    | EmissionGetProductAndMarkHistory { productId : Product.Id, accessToken : Api.Token }
     | EmissionGetCommentList { productId : Product.Id }
     | EmissionPostComment Api.Token { productId : Product.Id } String
     | EmissionLike Api.Token Product.Id
@@ -89,19 +90,37 @@ type Msg
 
 {-| 指定したIDの商品詳細ページ
 -}
-initModel : Product.Id -> ( Model, List Emission )
-initModel id =
+initModel : LogInState.LogInState -> Product.Id -> ( Model, List Emission )
+initModel logInState id =
     ( Loading id
-    , [ EmissionGetProduct { productId = id } ]
+    , case LogInState.getAccessToken logInState of
+        Just accessToken ->
+            [ EmissionGetProductAndMarkHistory
+                { productId = id
+                , accessToken = accessToken
+                }
+            ]
+
+        Nothing ->
+            [ EmissionGetProduct { productId = id } ]
     )
 
 
 {-| 一覧画面から商品の内容が一部わかっているときのもの
 -}
-initModelFromProduct : Product.Product -> ( Model, List Emission )
-initModelFromProduct product =
+initModelFromProduct : LogInState.LogInState -> Product.Product -> ( Model, List Emission )
+initModelFromProduct logInState product =
     ( WaitNewData product
-    , [ EmissionGetProduct { productId = Product.getId product } ]
+    , case LogInState.getAccessToken logInState of
+        Just accessToken ->
+            [ EmissionGetProductAndMarkHistory
+                { productId = Product.getId product
+                , accessToken = accessToken
+                }
+            ]
+
+        Nothing ->
+            [ EmissionGetProduct { productId = Product.getId product } ]
     )
 
 
