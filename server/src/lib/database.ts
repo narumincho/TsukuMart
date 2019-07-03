@@ -855,7 +855,7 @@ export const likeProduct = async (
     });
     return productReturnLowCostFromDatabaseLow({
         id: productId,
-        data: await databaseLow.getProduct(productId)
+        data: { ...productData, likedCount: productData.likedCount + 1 }
     });
 };
 
@@ -877,7 +877,7 @@ export const unlikeProduct = async (
     await databaseLow.deleteLikedProductData(userId, productId);
     return productReturnLowCostFromDatabaseLow({
         id: productId,
-        data: await databaseLow.getProduct(productId)
+        data: { ...productData, likedCount: productData.likedCount - 1 }
     });
 };
 

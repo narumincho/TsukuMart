@@ -113,7 +113,9 @@ requestAnimationFrame(() => {
                     new Promise((resolve, reject) => {
                         const file = fileList.item(index) as File;
                         const image = new Image();
+                        window.alert("create image");
                         image.addEventListener("load", () => {
+                            window.alert("image url" + image.src);
                             const canvas = document.createElement("canvas");
                             const size = insideSize(image.width, image.height);
                             canvas.width = size.width;

@@ -162,7 +162,6 @@ init { refreshToken } url key =
 
         ( newPage, cmd ) =
             urlParserInit Data.LogInState.None key page
-                |> urlParserResultToModel
     in
     ( Model
         { page = newPage
@@ -201,23 +200,22 @@ init { refreshToken } url key =
     )
 
 
-urlParserInit : Data.LogInState.LogInState -> Browser.Navigation.Key -> Maybe SiteMap.UrlParserInitResult -> Maybe ( PageModel, Cmd Msg )
+urlParserInit : Data.LogInState.LogInState -> Browser.Navigation.Key -> Maybe SiteMap.UrlParserInitResult -> ( PageModel, Cmd Msg )
 urlParserInit logInState key page =
     case page of
         Just p ->
-            urlParserInitResultToPageAndCmd logInState p
-                |> Just
+            urlParserInitResultToPageAndCmd key logInState p
 
         Nothing ->
-            Nothing
+            pageNotFound
 
 
-urlParserInitResultToPageAndCmd : Data.LogInState.LogInState -> SiteMap.UrlParserInitResult -> ( PageModel, Cmd Msg )
-urlParserInitResultToPageAndCmd logInState page =
+urlParserInitResultToPageAndCmd : Browser.Navigation.Key -> Data.LogInState.LogInState -> SiteMap.UrlParserInitResult -> ( PageModel, Cmd Msg )
+urlParserInitResultToPageAndCmd key logInState page =
     case page of
         SiteMap.InitHome ->
             Page.Home.initModel Nothing
-                |> Tuple.mapBoth PageHome homePageEmissionListToCmd
+                |> mapPageModel PageHome homePageEmissionToCmd
 
         SiteMap.InitSignUp { name, imageId, sendEmailToken } ->
             Page.SignUp.initModel
@@ -225,62 +223,59 @@ urlParserInitResultToPageAndCmd logInState page =
                 , imageId = imageId
                 , sendEmailToken = sendEmailToken
                 }
-                |> Tuple.mapBoth PageSignUp signUpPageEmissionListToCmd
+                |> mapPageModel PageSignUp signUpPageEmissionToCmd
 
         SiteMap.InitLogIn ->
-            ( PageLogIn Page.LogIn.initModel
-            , Cmd.none
-            )
+            Page.LogIn.initModel
+                |> mapPageModel PageLogIn (logInPageEmissionToCmd key)
 
         SiteMap.InitLikedProducts ->
             Page.LikedProducts.initModel Nothing logInState
-                |> Tuple.mapBoth PageLikedProducts likedProductsEmissionListToCmd
+                |> mapPageModel PageLikedProducts likedProductsEmissionToCmd
 
         SiteMap.InitHistory ->
             Page.History.initModel Nothing logInState
-                |> Tuple.mapBoth
-                    PageHistory
-                    historyEmissionListToCmd
+                |> mapPageModel PageHistory historyEmissionToCmd
 
         SiteMap.InitSoldProducts userId ->
             Page.SoldProducts.initModel userId Nothing
-                |> Tuple.mapBoth PageSoldProducts soldProductsPageEmissionListToCmd
+                |> mapPageModel PageSoldProducts soldProductsPageEmissionToCmd
 
         SiteMap.InitBoughtProducts ->
             Page.BoughtProducts.initModel Nothing logInState
-                |> Tuple.mapBoth PageBoughtProducts boughtProductsPageEmissionListToCmd
+                |> mapPageModel PageBoughtProducts boughtProductsPageEmissionToCmd
 
         SiteMap.InitTradingProducts ->
             Page.TradingProducts.initModel Nothing logInState
-                |> Tuple.mapBoth PageTradingProducts tradingProductsEmissionListToCmd
+                |> mapPageModel PageTradingProducts tradingProductsEmissionToCmd
 
         SiteMap.InitTradedProducts ->
             Page.TradedProducts.initModel Nothing logInState
-                |> Tuple.mapBoth PageTradedProducts tradedProductsEmissionListToCmd
+                |> mapPageModel PageTradedProducts tradedProductsEmissionToCmd
 
         SiteMap.InitCommentedProducts ->
             Page.CommentedProducts.initModel Nothing logInState
-                |> Tuple.mapBoth PageCommentedProducts commentedProductsEmissionListToCmd
+                |> mapPageModel PageCommentedProducts commentedProductsEmissionToCmd
 
         SiteMap.InitExhibition ->
             Page.Exhibition.initModel
-                |> Tuple.mapBoth PageExhibition exhibitionPageEmissionListToCmd
+                |> mapPageModel PageExhibition exhibitionPageEmissionToCmd
 
         SiteMap.InitProduct productId ->
             Page.Product.initModel logInState productId
-                |> Tuple.mapBoth PageProduct productPageEmissionListToCmd
+                |> mapPageModel PageProduct productPageEmissionToCmd
 
         SiteMap.InitUser userId ->
             Page.User.initModelFromId logInState userId
-                |> Tuple.mapBoth PageUser userPageEmissionListToCmd
+                |> mapPageModel PageUser userPageEmissionToCmd
 
         SiteMap.InitSearch condition ->
             Page.Search.initModel condition
-                |> Tuple.mapBoth PageSearch searchPageEmissionListToCmd
+                |> mapPageModel PageSearch searchPageEmissionToCmd
 
         SiteMap.InitNotification ->
             Page.Notification.initModel
-                |> Tuple.mapBoth PageNotification notificationEmissionListToCmd
+                |> mapPageModel PageNotification notificationEmissionToCmd
 
         SiteMap.InitSiteMap ->
             ( PageSiteMapXml, Cmd.none )
@@ -326,14 +321,7 @@ update msg (Model rec) =
             )
 
         UrlChange url ->
-            let
-                ( page, cmd ) =
-                    urlParser (Model rec) url
-                        |> urlParserResultToModel
-            in
-            ( Model { rec | page = page }
-            , cmd
-            )
+            urlParser (Model rec) url
 
         UrlRequest urlRequest ->
             ( Model rec
@@ -386,7 +374,7 @@ update msg (Model rec) =
             case response of
                 Ok _ ->
                     let
-                        ( newModel, emissionList ) =
+                        ( newModel, emissions ) =
                             Page.Home.initModel (getProductId rec.page)
                     in
                     ( Model
@@ -395,9 +383,10 @@ update msg (Model rec) =
                             , page = PageHome newModel
                         }
                     , Cmd.batch
-                        [ Browser.Navigation.pushUrl rec.key SiteMap.homeUrl
-                        , homePageEmissionListToCmd emissionList
-                        ]
+                        ([ Browser.Navigation.pushUrl rec.key SiteMap.homeUrl
+                         ]
+                            ++ List.map homePageEmissionToCmd emissions
+                        )
                     )
 
                 Err e ->
@@ -409,7 +398,7 @@ update msg (Model rec) =
             case rec.page of
                 PageExhibition exhibitionPageModel ->
                     let
-                        ( newModel, emissionList ) =
+                        ( newModel, emissions ) =
                             Page.Exhibition.update
                                 rec.logInState
                                 (Page.Exhibition.MsgByProductEditor
@@ -418,12 +407,12 @@ update msg (Model rec) =
                                 exhibitionPageModel
                     in
                     ( Model { rec | page = PageExhibition newModel }
-                    , exhibitionPageEmissionListToCmd emissionList
+                    , emissions |> List.map exhibitionPageEmissionToCmd |> Cmd.batch
                     )
 
                 PageProduct productPageModel ->
                     let
-                        ( newModel, emissionList ) =
+                        ( newModel, emissions ) =
                             Page.Product.update
                                 (Page.Product.MsgByProductEditor
                                     (Page.Component.ProductEditor.InputImageList dataUrlList)
@@ -431,7 +420,7 @@ update msg (Model rec) =
                                 productPageModel
                     in
                     ( Model { rec | page = PageProduct newModel }
-                    , productPageEmissionListToCmd emissionList
+                    , emissions |> List.map productPageEmissionToCmd |> Cmd.batch
                     )
 
                 _ ->
@@ -449,7 +438,7 @@ update msg (Model rec) =
                                 pageModel
                     in
                     ( Model { rec | page = PageSignUp newModel }
-                    , signUpPageEmissionListToCmd emissionList
+                    , emissionList |> List.map signUpPageEmissionToCmd |> Cmd.batch
                     )
 
                 _ ->
@@ -458,7 +447,13 @@ update msg (Model rec) =
                     )
 
         PageMsg pageMsg ->
-            updatePageMsg pageMsg (Model rec)
+            let
+                ( pageModel, cmd ) =
+                    updatePageMsg pageMsg (Model rec)
+            in
+            ( Model { rec | page = pageModel }
+            , cmd
+            )
 
         GetMyProfileAndLikedProductIdsResponse response ->
             ( case response of
@@ -518,7 +513,7 @@ update msg (Model rec) =
                     case rec.page of
                         PageUser profileModel ->
                             let
-                                ( newModel, emissionList ) =
+                                ( newModel, emissions ) =
                                     profileModel
                                         |> Page.User.update (Page.User.MsgChangeProfileResponse response)
                             in
@@ -530,7 +525,7 @@ update msg (Model rec) =
                                                 (Data.User.withProfileToWithName newProfile)
                                     , page = PageUser newModel
                                 }
-                            , userPageEmissionListToCmd emissionList
+                            , emissions |> List.map userPageEmissionToCmd |> Cmd.batch
                             )
 
                         _ ->
@@ -577,99 +572,96 @@ update msg (Model rec) =
                     )
 
 
-updatePageMsg : PageMsg -> Model -> ( Model, Cmd Msg )
+updatePageMsg : PageMsg -> Model -> ( PageModel, Cmd Msg )
 updatePageMsg pageMsg (Model rec) =
-    (case ( pageMsg, rec.page ) of
+    case ( pageMsg, rec.page ) of
         ( HomePageMsg msg, PageHome model ) ->
             model
                 |> Page.Home.update msg
-                |> mapPageModel PageHome homePageEmissionListToCmd
+                |> mapPageModel PageHome homePageEmissionToCmd
 
         ( LikedProductsPageMsg msg, PageLikedProducts model ) ->
             model
                 |> Page.LikedProducts.update msg
-                |> mapPageModel PageLikedProducts likedProductsEmissionListToCmd
+                |> mapPageModel PageLikedProducts likedProductsEmissionToCmd
 
         ( HistoryPageMsg msg, PageHistory model ) ->
             model
                 |> Page.History.update msg
-                |> mapPageModel PageHistory historyEmissionListToCmd
+                |> mapPageModel PageHistory historyEmissionToCmd
 
         ( SoldProductsPageMsg msg, PageSoldProducts model ) ->
             model
                 |> Page.SoldProducts.update msg
-                |> mapPageModel PageSoldProducts soldProductsPageEmissionListToCmd
+                |> mapPageModel PageSoldProducts soldProductsPageEmissionToCmd
 
         ( BoughtProductsPageMsg msg, PageBoughtProducts model ) ->
             model
                 |> Page.BoughtProducts.update msg
-                |> mapPageModel PageBoughtProducts boughtProductsPageEmissionListToCmd
+                |> mapPageModel PageBoughtProducts boughtProductsPageEmissionToCmd
 
         ( TradingProductsPageMsg msg, PageTradingProducts model ) ->
             model
                 |> Page.TradingProducts.update msg
-                |> mapPageModel PageTradingProducts tradingProductsEmissionListToCmd
+                |> mapPageModel PageTradingProducts tradingProductsEmissionToCmd
 
         ( TradedProductsPageMsg msg, PageTradedProducts model ) ->
             model
                 |> Page.TradedProducts.update msg
-                |> mapPageModel PageTradedProducts tradedProductsEmissionListToCmd
+                |> mapPageModel PageTradedProducts tradedProductsEmissionToCmd
 
         ( CommentedProductsPageMsg msg, PageCommentedProducts model ) ->
             model
                 |> Page.CommentedProducts.update msg
-                |> mapPageModel PageCommentedProducts commentedProductsEmissionListToCmd
+                |> mapPageModel PageCommentedProducts commentedProductsEmissionToCmd
 
         ( LogInPageMsg msg, PageLogIn model ) ->
             model
                 |> Page.LogIn.update msg
-                |> mapPageModel PageLogIn (logInPageEmissionListToCmd rec.key)
+                |> mapPageModel PageLogIn (logInPageEmissionToCmd rec.key)
 
         ( ExhibitionPageMsg msg, PageExhibition model ) ->
             model
                 |> Page.Exhibition.update rec.logInState msg
-                |> mapPageModel PageExhibition exhibitionPageEmissionListToCmd
+                |> mapPageModel PageExhibition exhibitionPageEmissionToCmd
 
         ( SignUpMsg msg, PageSignUp model ) ->
             model
                 |> Page.SignUp.update msg
-                |> mapPageModel PageSignUp signUpPageEmissionListToCmd
+                |> mapPageModel PageSignUp signUpPageEmissionToCmd
 
         ( SearchPageMsg msg, PageSearch model ) ->
             model
                 |> Page.Search.update msg
-                |> mapPageModel PageSearch searchPageEmissionListToCmd
+                |> mapPageModel PageSearch searchPageEmissionToCmd
 
         ( NotificationMsg msg, PageNotification model ) ->
             model
                 |> Page.Notification.update msg
-                |> mapPageModel PageNotification notificationEmissionListToCmd
+                |> mapPageModel PageNotification notificationEmissionToCmd
 
         ( UserPageMsg msg, PageUser model ) ->
             model
                 |> Page.User.update msg
-                |> mapPageModel PageUser userPageEmissionListToCmd
+                |> mapPageModel PageUser userPageEmissionToCmd
 
         ( ProductPageMsg msg, PageProduct model ) ->
             model
                 |> Page.Product.update msg
-                |> mapPageModel PageProduct productPageEmissionListToCmd
+                |> mapPageModel PageProduct productPageEmissionToCmd
 
         ( _, _ ) ->
-            \model -> ( model, Cmd.none )
-    )
-        (Model rec)
+            ( rec.page, Cmd.none )
 
 
 mapPageModel :
     (eachPageModel -> PageModel)
-    -> (eachPageEmissionList -> Cmd Msg)
-    -> ( eachPageModel, eachPageEmissionList )
-    -> Model
-    -> ( Model, Cmd Msg )
-mapPageModel modelFunc emissionListFunc ( eachPageMsg, eachPageEmissionList ) (Model rec) =
-    ( Model { rec | page = modelFunc eachPageMsg }
-    , emissionListFunc eachPageEmissionList
+    -> (eachPageEmission -> Cmd Msg)
+    -> ( eachPageModel, List eachPageEmission )
+    -> ( PageModel, Cmd Msg )
+mapPageModel modelFunc emissionListFunc ( eachPageMsg, eachPageEmissionList ) =
+    ( modelFunc eachPageMsg
+    , eachPageEmissionList |> List.map emissionListFunc |> Cmd.batch
     )
 
 
@@ -677,370 +669,310 @@ mapPageModel modelFunc emissionListFunc ( eachPageMsg, eachPageEmissionList ) (M
 {- ===================== Page Emission To Msg ======================== -}
 
 
-homePageEmissionListToCmd : List Page.Home.Emission -> Cmd Msg
-homePageEmissionListToCmd =
-    List.map
-        (\emission ->
-            case emission of
-                Page.Home.EmissionGetRecentProducts ->
-                    Api.getRecentProductList (\result -> PageMsg (HomePageMsg (Page.Home.GetRecentProductsResponse result)))
-
-                Page.Home.EmissionGetRecommendProducts ->
-                    Api.getRecommendProductList (\result -> PageMsg (HomePageMsg (Page.Home.GetRecommendProductsResponse result)))
-
-                Page.Home.EmissionGetFreeProducts ->
-                    Api.getFreeProductList (\result -> PageMsg (HomePageMsg (Page.Home.GetFreeProductsResponse result)))
-
-                Page.Home.EmissionProducts e ->
-                    productListEmissionToCmd e
-
-                Page.Home.EmissionAddLogMessage log ->
-                    Task.succeed ()
-                        |> Task.perform (always (AddLogMessage log))
-        )
-        >> Cmd.batch
-
-
-likedProductsEmissionListToCmd : List Page.LikedProducts.Emission -> Cmd Msg
-likedProductsEmissionListToCmd =
-    List.map
-        (\emission ->
-            case emission of
-                Page.LikedProducts.EmissionGetLikedProducts token ->
-                    Api.getLikedProducts token
-                        (\result ->
-                            PageMsg
-                                (LikedProductsPageMsg (Page.LikedProducts.GetProductsResponse result))
-                        )
-
-                Page.LikedProducts.EmissionByLogIn e ->
-                    logInEmissionToCmd e
-
-                Page.LikedProducts.EmissionByProductList e ->
-                    productListEmissionToCmd e
-
-                Page.LikedProducts.EmissionAddLogMessage log ->
-                    Task.succeed ()
-                        |> Task.perform (always (AddLogMessage log))
-        )
-        >> Cmd.batch
-
-
-historyEmissionListToCmd : List Page.History.Emission -> Cmd Msg
-historyEmissionListToCmd =
-    List.map
-        (\emission ->
-            case emission of
-                Page.History.EmissionGetHistoryProducts token ->
-                    Api.getHistoryViewProducts token (\result -> PageMsg (HistoryPageMsg (Page.History.GetProductsResponse result)))
-
-                Page.History.EmissionByLogIn e ->
-                    logInEmissionToCmd e
-
-                Page.History.EmissionByProductList e ->
-                    productListEmissionToCmd e
-
-                Page.History.EmissionAddLogMessage log ->
-                    Task.succeed ()
-                        |> Task.perform (always (AddLogMessage log))
-        )
-        >> Cmd.batch
-
-
-soldProductsPageEmissionListToCmd : List Page.SoldProducts.Emission -> Cmd Msg
-soldProductsPageEmissionListToCmd =
-    List.map
-        (\emission ->
-            case emission of
-                Page.SoldProducts.EmissionGetSoldProducts userId ->
-                    Api.getSoldProductList userId
-                        (\result ->
-                            PageMsg (SoldProductsPageMsg (Page.SoldProducts.GetSoldProductListResponse result))
-                        )
-
-                Page.SoldProducts.EmissionByProductList e ->
-                    productListEmissionToCmd e
-
-                Page.SoldProducts.EmissionAddLogMessage log ->
-                    Task.succeed ()
-                        |> Task.perform (always (AddLogMessage log))
-        )
-        >> Cmd.batch
-
-
-boughtProductsPageEmissionListToCmd : List Page.BoughtProducts.Emission -> Cmd Msg
-boughtProductsPageEmissionListToCmd =
-    List.map
-        (\emission ->
-            case emission of
-                Page.BoughtProducts.EmissionGetPurchaseProducts token ->
-                    Api.getBoughtProductList token
-                        (\result ->
-                            PageMsg
-                                (BoughtProductsPageMsg (Page.BoughtProducts.GetProductsResponse result))
-                        )
-
-                Page.BoughtProducts.EmissionByLogIn e ->
-                    logInEmissionToCmd e
-
-                Page.BoughtProducts.EmissionByProductList e ->
-                    productListEmissionToCmd e
-
-                Page.BoughtProducts.EmissionAddLogMessage log ->
-                    Task.succeed ()
-                        |> Task.perform (always (AddLogMessage log))
-        )
-        >> Cmd.batch
-
-
-tradingProductsEmissionListToCmd : List Page.TradingProducts.Emission -> Cmd Msg
-tradingProductsEmissionListToCmd =
-    List.map
-        (\emission ->
-            case emission of
-                Page.TradingProducts.EmissionGetTradingProducts token ->
-                    Api.getTradingProductList token
-                        (\result ->
-                            PageMsg
-                                (TradingProductsPageMsg (Page.TradingProducts.GetProductsResponse result))
-                        )
-
-                Page.TradingProducts.EmissionByLogIn e ->
-                    logInEmissionToCmd e
-
-                Page.TradingProducts.EmissionByProductList e ->
-                    productListEmissionToCmd e
-
-                Page.TradingProducts.EmissionAddLogMessage log ->
-                    Task.succeed ()
-                        |> Task.perform (always (AddLogMessage log))
-        )
-        >> Cmd.batch
-
-
-tradedProductsEmissionListToCmd : List Page.TradedProducts.Emission -> Cmd Msg
-tradedProductsEmissionListToCmd =
-    List.map
-        (\emission ->
-            case emission of
-                Page.TradedProducts.EmissionGetTradedProducts token ->
-                    Api.getTradedProductList token
-                        (\result ->
-                            PageMsg
-                                (TradedProductsPageMsg (Page.TradedProducts.GetTradesResponse result))
-                        )
-
-                Page.TradedProducts.EmissionByLogIn e ->
-                    logInEmissionToCmd e
-
-                Page.TradedProducts.EmissionByProductList e ->
-                    productListEmissionToCmd e
-
-                Page.TradedProducts.EmissionAddLogMessage log ->
-                    Task.succeed ()
-                        |> Task.perform (always (AddLogMessage log))
-        )
-        >> Cmd.batch
-
-
-commentedProductsEmissionListToCmd : List Page.CommentedProducts.Emission -> Cmd Msg
-commentedProductsEmissionListToCmd =
-    List.map
-        (\emission ->
-            case emission of
-                Page.CommentedProducts.EmissionGetCommentedProducts token ->
-                    Api.getCommentedProductList token
-                        (\result ->
-                            PageMsg
-                                (CommentedProductsPageMsg (Page.CommentedProducts.GetProductsResponse result))
-                        )
-
-                Page.CommentedProducts.EmissionByLogIn e ->
-                    logInEmissionToCmd e
-
-                Page.CommentedProducts.EmissionByProductList e ->
-                    productListEmissionToCmd e
-
-                Page.CommentedProducts.EmissionAddLogMessage log ->
-                    Task.succeed ()
-                        |> Task.perform (always (AddLogMessage log))
-        )
-        >> Cmd.batch
-
-
-logInPageEmissionListToCmd : Browser.Navigation.Key -> List Page.LogIn.Emission -> Cmd Msg
-logInPageEmissionListToCmd key =
-    List.map
-        (\emission ->
-            case emission of
-                Page.LogIn.LogInOrSignUpEmission e ->
-                    logInEmissionToCmd e
-
-                Page.LogIn.EmissionPageToHome ->
-                    Browser.Navigation.pushUrl key SiteMap.homeUrl
-        )
-        >> Cmd.batch
-
-
-exhibitionPageEmissionListToCmd : List Page.Exhibition.Emission -> Cmd Msg
-exhibitionPageEmissionListToCmd =
-    List.map
-        (\emission ->
-            case emission of
-                Page.Exhibition.EmissionLogInOrSignUp e ->
-                    logInEmissionToCmd e
-
-                Page.Exhibition.EmissionSellProducts ( token, request ) ->
-                    Api.sellProduct token request SellProductResponse
-
-                Page.Exhibition.EmissionByProductEditor e ->
-                    productEditorEmissionToCmd e
-        )
-        >> Cmd.batch
-
-
-signUpPageEmissionListToCmd : List Page.SignUp.Emission -> Cmd Msg
-signUpPageEmissionListToCmd =
-    List.map
-        (\emission ->
-            case emission of
-                Page.SignUp.EmissionAddEventListenerForUserImage idRecord ->
-                    addEventListenerForUserImage idRecord
-
-                Page.SignUp.EmissionReplaceElementText idAndText ->
-                    replaceText idAndText
-
-                Page.SignUp.EmissionSignUp signUpRequest ->
-                    Api.sendConfirmEmail signUpRequest (\response -> SignUpConfirmResponse response)
-
-                Page.SignUp.EmissionByUniversity e ->
-                    universityEmissionToCmd e
-
-                Page.SignUp.EmissionAddLogMessage log ->
-                    Task.succeed ()
-                        |> Task.perform (always (AddLogMessage log))
-        )
-        >> Cmd.batch
-
-
-searchPageEmissionListToCmd : List Page.Search.Emission -> Cmd Msg
-searchPageEmissionListToCmd =
-    List.map
-        (\emission ->
-            case emission of
-                Page.Search.EmissionReplaceElementText idAndText ->
-                    replaceText idAndText
-        )
-        >> Cmd.batch
-
-
-notificationEmissionListToCmd : List Page.Notification.Emission -> Cmd Msg
-notificationEmissionListToCmd =
-    List.map
-        (\emission ->
-            case emission of
-                Page.Notification.Emission ->
-                    Cmd.none
-        )
-        >> Cmd.batch
-
-
-userPageEmissionListToCmd : List Page.User.Emission -> Cmd Msg
-userPageEmissionListToCmd =
-    List.map
-        (\emission ->
-            case emission of
-                Page.User.EmissionChangeProfile token profile ->
-                    Api.updateProfile token profile ChangeProfileResponse
-
-                Page.User.EmissionReplaceElementText idAndText ->
-                    replaceText idAndText
-
-                Page.User.EmissionByUniversity e ->
-                    universityEmissionToCmd e
-
-                Page.User.EmissionLogOut ->
-                    Cmd.batch
-                        [ deleteRefreshTokenAndAllFromLocalStorage ()
-                        , Task.perform (always LogOut) (Task.succeed ())
-                        ]
-
-                Page.User.EmissionGetUserProfile userId ->
-                    Api.getUserProfile userId
-                        (\e -> PageMsg (UserPageMsg (Page.User.MsgUserProfileResponse e)))
-
-                Page.User.EmissionAddLogMessage log ->
-                    Task.succeed ()
-                        |> Task.perform (always (AddLogMessage log))
-        )
-        >> Cmd.batch
-
-
-productPageEmissionListToCmd : List Page.Product.Emission -> Cmd Msg
-productPageEmissionListToCmd =
-    List.map
-        (\emission ->
-            case emission of
-                Page.Product.EmissionGetProduct { productId } ->
-                    Api.getProduct productId
-                        (\result ->
-                            PageMsg
-                                (ProductPageMsg (Page.Product.GetProductResponse result))
-                        )
-
-                Page.Product.EmissionGetProductAndMarkHistory { productId, accessToken } ->
-                    Api.markProductInHistory accessToken
-                        productId
-                        (\result ->
-                            PageMsg
-                                (ProductPageMsg (Page.Product.GetProductResponse result))
-                        )
-
-                Page.Product.EmissionGetCommentList { productId } ->
-                    Api.getProductComments productId (\result -> PageMsg (ProductPageMsg (Page.Product.GetCommentListResponse result)))
-
-                Page.Product.EmissionPostComment token { productId } comment ->
-                    Api.postProductComment token
-                        productId
-                        comment
-                        (\result ->
-                            PageMsg
-                                (ProductPageMsg (Page.Product.GetCommentListResponse result))
-                        )
-
-                Page.Product.EmissionLike token id ->
-                    Api.likeProduct token id (LikeProductResponse id)
-
-                Page.Product.EmissionUnLike token id ->
-                    Api.unlikeProduct token id (UnlikeProductResponse id)
-
-                Page.Product.EmissionTradeStart token id ->
-                    Api.tradeStart token id (\result -> PageMsg (ProductPageMsg (Page.Product.TradeStartResponse result)))
-
-                Page.Product.EmissionAddLogMessage log ->
-                    Task.succeed ()
-                        |> Task.perform (always (AddLogMessage log))
-
-                Page.Product.EmissionUpdateNowTime ->
-                    Task.map2
-                        Tuple.pair
-                        Time.now
-                        Time.here
-                        |> Task.attempt GetNowTime
-
-                Page.Product.EmissionDelete token productId ->
-                    Api.deleteProduct token productId
-
-                Page.Product.EmissionByProductEditor e ->
-                    productEditorEmissionToCmd e
-
-                Page.Product.EmissionUpdateProductData token productId requestData ->
-                    Api.updateProduct token
-                        productId
-                        requestData
-                        (\m -> PageMsg (ProductPageMsg (Page.Product.UpdateProductDataResponse m)))
-        )
-        >> Cmd.batch
+homePageEmissionToCmd : Page.Home.Emission -> Cmd Msg
+homePageEmissionToCmd emission =
+    case emission of
+        Page.Home.EmissionGetRecentProducts ->
+            Api.getRecentProductList (\result -> PageMsg (HomePageMsg (Page.Home.GetRecentProductsResponse result)))
+
+        Page.Home.EmissionGetRecommendProducts ->
+            Api.getRecommendProductList (\result -> PageMsg (HomePageMsg (Page.Home.GetRecommendProductsResponse result)))
+
+        Page.Home.EmissionGetFreeProducts ->
+            Api.getFreeProductList (\result -> PageMsg (HomePageMsg (Page.Home.GetFreeProductsResponse result)))
+
+        Page.Home.EmissionProducts e ->
+            productListEmissionToCmd e
+
+        Page.Home.EmissionAddLogMessage log ->
+            Task.succeed ()
+                |> Task.perform (always (AddLogMessage log))
+
+
+likedProductsEmissionToCmd : Page.LikedProducts.Emission -> Cmd Msg
+likedProductsEmissionToCmd emission =
+    case emission of
+        Page.LikedProducts.EmissionGetLikedProducts token ->
+            Api.getLikedProducts token
+                (\result ->
+                    PageMsg
+                        (LikedProductsPageMsg (Page.LikedProducts.GetProductsResponse result))
+                )
+
+        Page.LikedProducts.EmissionByLogIn e ->
+            logInEmissionToCmd e
+
+        Page.LikedProducts.EmissionByProductList e ->
+            productListEmissionToCmd e
+
+        Page.LikedProducts.EmissionAddLogMessage log ->
+            Task.succeed ()
+                |> Task.perform (always (AddLogMessage log))
+
+
+historyEmissionToCmd : Page.History.Emission -> Cmd Msg
+historyEmissionToCmd emission =
+    case emission of
+        Page.History.EmissionGetHistoryProducts token ->
+            Api.getHistoryViewProducts token (\result -> PageMsg (HistoryPageMsg (Page.History.GetProductsResponse result)))
+
+        Page.History.EmissionByLogIn e ->
+            logInEmissionToCmd e
+
+        Page.History.EmissionByProductList e ->
+            productListEmissionToCmd e
+
+        Page.History.EmissionAddLogMessage log ->
+            Task.succeed ()
+                |> Task.perform (always (AddLogMessage log))
+
+
+soldProductsPageEmissionToCmd : Page.SoldProducts.Emission -> Cmd Msg
+soldProductsPageEmissionToCmd emission =
+    case emission of
+        Page.SoldProducts.EmissionGetSoldProducts userId ->
+            Api.getSoldProductList userId
+                (\result ->
+                    PageMsg (SoldProductsPageMsg (Page.SoldProducts.GetSoldProductListResponse result))
+                )
+
+        Page.SoldProducts.EmissionByProductList e ->
+            productListEmissionToCmd e
+
+        Page.SoldProducts.EmissionAddLogMessage log ->
+            Task.succeed ()
+                |> Task.perform (always (AddLogMessage log))
+
+
+boughtProductsPageEmissionToCmd : Page.BoughtProducts.Emission -> Cmd Msg
+boughtProductsPageEmissionToCmd emission =
+    case emission of
+        Page.BoughtProducts.EmissionGetPurchaseProducts token ->
+            Api.getBoughtProductList token
+                (\result ->
+                    PageMsg
+                        (BoughtProductsPageMsg (Page.BoughtProducts.GetProductsResponse result))
+                )
+
+        Page.BoughtProducts.EmissionByLogIn e ->
+            logInEmissionToCmd e
+
+        Page.BoughtProducts.EmissionByProductList e ->
+            productListEmissionToCmd e
+
+        Page.BoughtProducts.EmissionAddLogMessage log ->
+            Task.succeed ()
+                |> Task.perform (always (AddLogMessage log))
+
+
+tradingProductsEmissionToCmd : Page.TradingProducts.Emission -> Cmd Msg
+tradingProductsEmissionToCmd emission =
+    case emission of
+        Page.TradingProducts.EmissionGetTradingProducts token ->
+            Api.getTradingProductList token
+                (\result ->
+                    PageMsg
+                        (TradingProductsPageMsg (Page.TradingProducts.GetProductsResponse result))
+                )
+
+        Page.TradingProducts.EmissionByLogIn e ->
+            logInEmissionToCmd e
+
+        Page.TradingProducts.EmissionByProductList e ->
+            productListEmissionToCmd e
+
+        Page.TradingProducts.EmissionAddLogMessage log ->
+            Task.succeed ()
+                |> Task.perform (always (AddLogMessage log))
+
+
+tradedProductsEmissionToCmd : Page.TradedProducts.Emission -> Cmd Msg
+tradedProductsEmissionToCmd emission =
+    case emission of
+        Page.TradedProducts.EmissionGetTradedProducts token ->
+            Api.getTradedProductList token
+                (\result ->
+                    PageMsg
+                        (TradedProductsPageMsg (Page.TradedProducts.GetTradesResponse result))
+                )
+
+        Page.TradedProducts.EmissionByLogIn e ->
+            logInEmissionToCmd e
+
+        Page.TradedProducts.EmissionByProductList e ->
+            productListEmissionToCmd e
+
+        Page.TradedProducts.EmissionAddLogMessage log ->
+            Task.succeed ()
+                |> Task.perform (always (AddLogMessage log))
+
+
+commentedProductsEmissionToCmd : Page.CommentedProducts.Emission -> Cmd Msg
+commentedProductsEmissionToCmd emission =
+    case emission of
+        Page.CommentedProducts.EmissionGetCommentedProducts token ->
+            Api.getCommentedProductList token
+                (\result ->
+                    PageMsg
+                        (CommentedProductsPageMsg (Page.CommentedProducts.GetProductsResponse result))
+                )
+
+        Page.CommentedProducts.EmissionByLogIn e ->
+            logInEmissionToCmd e
+
+        Page.CommentedProducts.EmissionByProductList e ->
+            productListEmissionToCmd e
+
+        Page.CommentedProducts.EmissionAddLogMessage log ->
+            Task.succeed ()
+                |> Task.perform (always (AddLogMessage log))
+
+
+logInPageEmissionToCmd : Browser.Navigation.Key -> Page.LogIn.Emission -> Cmd Msg
+logInPageEmissionToCmd key emission =
+    case emission of
+        Page.LogIn.LogInOrSignUpEmission e ->
+            logInEmissionToCmd e
+
+        Page.LogIn.EmissionPageToHome ->
+            Browser.Navigation.pushUrl key SiteMap.homeUrl
+
+
+exhibitionPageEmissionToCmd : Page.Exhibition.Emission -> Cmd Msg
+exhibitionPageEmissionToCmd emission =
+    case emission of
+        Page.Exhibition.EmissionLogInOrSignUp e ->
+            logInEmissionToCmd e
+
+        Page.Exhibition.EmissionSellProducts ( token, request ) ->
+            Api.sellProduct token request SellProductResponse
+
+        Page.Exhibition.EmissionByProductEditor e ->
+            productEditorEmissionToCmd e
+
+
+signUpPageEmissionToCmd : Page.SignUp.Emission -> Cmd Msg
+signUpPageEmissionToCmd emission =
+    case emission of
+        Page.SignUp.EmissionAddEventListenerForUserImage idRecord ->
+            addEventListenerForUserImage idRecord
+
+        Page.SignUp.EmissionReplaceElementText idAndText ->
+            replaceText idAndText
+
+        Page.SignUp.EmissionSignUp signUpRequest ->
+            Api.sendConfirmEmail signUpRequest (\response -> SignUpConfirmResponse response)
+
+        Page.SignUp.EmissionByUniversity e ->
+            universityEmissionToCmd e
+
+        Page.SignUp.EmissionAddLogMessage log ->
+            Task.succeed ()
+                |> Task.perform (always (AddLogMessage log))
+
+
+searchPageEmissionToCmd : Page.Search.Emission -> Cmd Msg
+searchPageEmissionToCmd emission =
+    case emission of
+        Page.Search.EmissionReplaceElementText idAndText ->
+            replaceText idAndText
+
+
+notificationEmissionToCmd : Page.Notification.Emission -> Cmd Msg
+notificationEmissionToCmd emission =
+    case emission of
+        Page.Notification.Emission ->
+            Cmd.none
+
+
+userPageEmissionToCmd : Page.User.Emission -> Cmd Msg
+userPageEmissionToCmd emission =
+    case emission of
+        Page.User.EmissionChangeProfile token profile ->
+            Api.updateProfile token profile ChangeProfileResponse
+
+        Page.User.EmissionReplaceElementText idAndText ->
+            replaceText idAndText
+
+        Page.User.EmissionByUniversity e ->
+            universityEmissionToCmd e
+
+        Page.User.EmissionLogOut ->
+            Cmd.batch
+                [ deleteRefreshTokenAndAllFromLocalStorage ()
+                , Task.perform (always LogOut) (Task.succeed ())
+                ]
+
+        Page.User.EmissionGetUserProfile userId ->
+            Api.getUserProfile userId
+                (\e -> PageMsg (UserPageMsg (Page.User.MsgUserProfileResponse e)))
+
+        Page.User.EmissionAddLogMessage log ->
+            Task.succeed ()
+                |> Task.perform (always (AddLogMessage log))
+
+
+productPageEmissionToCmd : Page.Product.Emission -> Cmd Msg
+productPageEmissionToCmd emission =
+    case emission of
+        Page.Product.EmissionGetProduct { productId } ->
+            Api.getProduct productId
+                (\result ->
+                    PageMsg
+                        (ProductPageMsg (Page.Product.GetProductResponse result))
+                )
+
+        Page.Product.EmissionGetProductAndMarkHistory { productId, accessToken } ->
+            Api.markProductInHistory accessToken
+                productId
+                (\result ->
+                    PageMsg
+                        (ProductPageMsg (Page.Product.GetProductResponse result))
+                )
+
+        Page.Product.EmissionGetCommentList { productId } ->
+            Api.getProductComments productId (\result -> PageMsg (ProductPageMsg (Page.Product.GetCommentListResponse result)))
+
+        Page.Product.EmissionPostComment token { productId } comment ->
+            Api.postProductComment token
+                productId
+                comment
+                (\result ->
+                    PageMsg
+                        (ProductPageMsg (Page.Product.GetCommentListResponse result))
+                )
+
+        Page.Product.EmissionLike token id ->
+            Api.likeProduct token id (LikeProductResponse id)
+
+        Page.Product.EmissionUnLike token id ->
+            Api.unlikeProduct token id (UnlikeProductResponse id)
+
+        Page.Product.EmissionTradeStart token id ->
+            Api.tradeStart token id (\result -> PageMsg (ProductPageMsg (Page.Product.TradeStartResponse result)))
+
+        Page.Product.EmissionAddLogMessage log ->
+            Task.succeed ()
+                |> Task.perform (always (AddLogMessage log))
+
+        Page.Product.EmissionUpdateNowTime ->
+            Task.map2
+                Tuple.pair
+                Time.now
+                Time.here
+                |> Task.attempt GetNowTime
+
+        Page.Product.EmissionDelete token productId ->
+            Api.deleteProduct token productId
+
+        Page.Product.EmissionByProductEditor e ->
+            productEditorEmissionToCmd e
+
+        Page.Product.EmissionUpdateProductData token productId requestData ->
+            Api.updateProduct token
+                productId
+                requestData
+                (\m -> PageMsg (ProductPageMsg (Page.Product.UpdateProductDataResponse m)))
 
 
 
@@ -1087,32 +1019,34 @@ productEditorEmissionToCmd emission =
             changeSelectedIndex { id = id, index = index }
 
 
-urlParserResultToModel : Maybe ( PageModel, Cmd Msg ) -> ( PageModel, Cmd Msg )
-urlParserResultToModel parserResult =
-    case parserResult of
-        Just ( page, cmd ) ->
-            ( page
-            , cmd
+urlParser : Model -> Url.Url -> ( Model, Cmd Msg )
+urlParser (Model rec) url =
+    let
+        ( page, emissions ) =
+            case SiteMap.urlParser url of
+                Just urlParserResult ->
+                    urlParserResultToPageAndCmd (Model rec) urlParserResult
+
+                Nothing ->
+                    pageNotFound
+    in
+    ( Model { rec | page = page }, emissions )
+
+
+pageNotFound : ( PageModel, Cmd Msg )
+pageNotFound =
+    Page.Home.initModel Nothing
+        |> mapPageModel PageHome homePageEmissionToCmd
+        |> Tuple.mapSecond
+            (\c ->
+                Cmd.batch
+                    [ c
+                    , Task.perform identity
+                        (Task.succeed
+                            (AddLogMessage "指定したページが見つからないのでホームに移動しました")
+                        )
+                    ]
             )
-
-        Nothing ->
-            let
-                ( homeModel, emission ) =
-                    Page.Home.initModel Nothing
-            in
-            ( PageHome homeModel
-            , (Task.succeed ()
-                |> Task.perform (always (AddLogMessage "指定したページが見つからないのでホームに移動しました"))
-              )
-                :: [ homePageEmissionListToCmd emission ]
-                |> Cmd.batch
-            )
-
-
-urlParser : Model -> Url.Url -> Maybe ( PageModel, Cmd Msg )
-urlParser model url =
-    SiteMap.urlParser url
-        |> Maybe.map (urlParserResultToPageAndCmd model)
 
 
 urlParserResultToPageAndCmd : Model -> SiteMap.UrlParserResult -> ( PageModel, Cmd Msg )
@@ -1120,61 +1054,59 @@ urlParserResultToPageAndCmd (Model rec) result =
     case result of
         SiteMap.Home ->
             Page.Home.initModel (getProductId rec.page)
-                |> Tuple.mapBoth PageHome homePageEmissionListToCmd
+                |> mapPageModel PageHome homePageEmissionToCmd
 
         SiteMap.LogIn ->
-            ( PageLogIn Page.LogIn.initModel
-            , Cmd.none
-            )
+            Page.LogIn.initModel
+                |> mapPageModel PageLogIn (logInPageEmissionToCmd rec.key)
 
         SiteMap.LikedProducts ->
             Page.LikedProducts.initModel (getProductId rec.page) rec.logInState
-                |> Tuple.mapBoth PageLikedProducts likedProductsEmissionListToCmd
+                |> mapPageModel PageLikedProducts likedProductsEmissionToCmd
 
         SiteMap.History ->
             Page.History.initModel (getProductId rec.page) rec.logInState
-                |> Tuple.mapBoth PageHistory historyEmissionListToCmd
+                |> mapPageModel PageHistory historyEmissionToCmd
 
         SiteMap.SoldProducts userId ->
             Page.SoldProducts.initModel userId (getProductId rec.page)
-                |> Tuple.mapBoth PageSoldProducts soldProductsPageEmissionListToCmd
+                |> mapPageModel PageSoldProducts soldProductsPageEmissionToCmd
 
         SiteMap.BoughtProducts ->
             Page.BoughtProducts.initModel (getProductId rec.page) rec.logInState
-                |> Tuple.mapBoth PageBoughtProducts boughtProductsPageEmissionListToCmd
+                |> mapPageModel PageBoughtProducts boughtProductsPageEmissionToCmd
 
         SiteMap.TradingProducts ->
             Page.TradingProducts.initModel (getProductId rec.page) rec.logInState
-                |> Tuple.mapBoth PageTradingProducts tradingProductsEmissionListToCmd
+                |> mapPageModel PageTradingProducts tradingProductsEmissionToCmd
 
         SiteMap.TradedProducts ->
             Page.TradedProducts.initModel (getProductId rec.page) rec.logInState
-                |> Tuple.mapBoth PageTradedProducts tradedProductsEmissionListToCmd
+                |> mapPageModel PageTradedProducts tradedProductsEmissionToCmd
 
         SiteMap.CommentedProducts ->
             Page.CommentedProducts.initModel (getProductId rec.page) rec.logInState
-                |> Tuple.mapBoth PageCommentedProducts commentedProductsEmissionListToCmd
+                |> mapPageModel PageCommentedProducts commentedProductsEmissionToCmd
 
         SiteMap.Exhibition ->
             case rec.page of
                 PageExhibition exhibitionModel ->
                     exhibitionModel
                         |> Page.Exhibition.update rec.logInState Page.Exhibition.BackToEditPage
-                        |> Tuple.mapBoth PageExhibition exhibitionPageEmissionListToCmd
+                        |> mapPageModel PageExhibition exhibitionPageEmissionToCmd
 
                 _ ->
                     Page.Exhibition.initModel
-                        |> Tuple.mapBoth PageExhibition exhibitionPageEmissionListToCmd
+                        |> mapPageModel PageExhibition exhibitionPageEmissionToCmd
 
         SiteMap.ExhibitionConfirm ->
             case rec.page of
                 PageExhibition pageModel ->
                     case Page.Exhibition.toConfirmPageMsgFromModel rec.logInState pageModel of
                         Just msg ->
-                            (pageModel |> Page.Exhibition.update rec.logInState msg)
-                                |> Tuple.mapBoth
-                                    PageExhibition
-                                    exhibitionPageEmissionListToCmd
+                            pageModel
+                                |> Page.Exhibition.update rec.logInState msg
+                                |> mapPageModel PageExhibition exhibitionPageEmissionToCmd
 
                         Nothing ->
                             ( PageExhibition pageModel, Cmd.none )
@@ -1190,7 +1122,7 @@ urlParserResultToPageAndCmd (Model rec) result =
                 Nothing ->
                     Page.Product.initModel rec.logInState productId
             )
-                |> Tuple.mapBoth PageProduct productPageEmissionListToCmd
+                |> mapPageModel PageProduct productPageEmissionToCmd
 
         SiteMap.User userId ->
             (case getUserFromPage userId rec.page of
@@ -1200,21 +1132,15 @@ urlParserResultToPageAndCmd (Model rec) result =
                 Nothing ->
                     Page.User.initModelFromId rec.logInState userId
             )
-                |> Tuple.mapBoth
-                    PageUser
-                    userPageEmissionListToCmd
+                |> mapPageModel PageUser userPageEmissionToCmd
 
         SiteMap.Search condition ->
             Page.Search.initModel condition
-                |> Tuple.mapBoth
-                    PageSearch
-                    searchPageEmissionListToCmd
+                |> mapPageModel PageSearch searchPageEmissionToCmd
 
         SiteMap.Notification ->
             Page.Notification.initModel
-                |> Tuple.mapBoth
-                    PageNotification
-                    notificationEmissionListToCmd
+                |> mapPageModel PageNotification notificationEmissionToCmd
 
         SiteMap.About ->
             ( PageAbout Page.About.aboutModel, Cmd.none )
@@ -1307,52 +1233,29 @@ updateLikedCountInEachPageProduct productId result page =
     in
     case page of
         PageHome pageMsg ->
-            let
-                ( newModel, emissionList ) =
-                    pageMsg |> Page.Home.update (Page.Home.MsgByProductList productListMsg)
-            in
-            ( PageHome newModel
-            , homePageEmissionListToCmd emissionList
-            )
+            pageMsg
+                |> Page.Home.update (Page.Home.MsgByProductList productListMsg)
+                |> mapPageModel PageHome homePageEmissionToCmd
 
         PageHistory pageMsg ->
-            let
-                ( newModel, emissionList ) =
-                    pageMsg
-                        |> Page.History.update (Page.History.MsgByProductList productListMsg)
-            in
-            ( PageHistory newModel
-            , historyEmissionListToCmd emissionList
-            )
+            pageMsg
+                |> Page.History.update (Page.History.MsgByProductList productListMsg)
+                |> mapPageModel PageHistory historyEmissionToCmd
 
         PageSoldProducts pageMsg ->
-            let
-                ( newModel, emissionList ) =
-                    pageMsg
-                        |> Page.SoldProducts.update (Page.SoldProducts.MsgByProductList productListMsg)
-            in
-            ( PageSoldProducts newModel
-            , soldProductsPageEmissionListToCmd emissionList
-            )
+            pageMsg
+                |> Page.SoldProducts.update (Page.SoldProducts.MsgByProductList productListMsg)
+                |> mapPageModel PageSoldProducts soldProductsPageEmissionToCmd
 
         PageBoughtProducts pageMsg ->
-            let
-                ( newModel, emissionList ) =
-                    pageMsg
-                        |> Page.BoughtProducts.update (Page.BoughtProducts.MsgByProductList productListMsg)
-            in
-            ( PageBoughtProducts newModel
-            , boughtProductsPageEmissionListToCmd emissionList
-            )
+            pageMsg
+                |> Page.BoughtProducts.update (Page.BoughtProducts.MsgByProductList productListMsg)
+                |> mapPageModel PageBoughtProducts boughtProductsPageEmissionToCmd
 
         PageProduct pageMsg ->
-            let
-                ( newModel, emissionList ) =
-                    pageMsg |> Page.Product.update (Page.Product.LikeResponse result)
-            in
-            ( PageProduct newModel
-            , productPageEmissionListToCmd emissionList
-            )
+            pageMsg
+                |> Page.Product.update (Page.Product.LikeResponse result)
+                |> mapPageModel PageProduct productPageEmissionToCmd
 
         _ ->
             ( page

@@ -26,10 +26,11 @@ type Msg
     = Msg LogInOrSignUp.Msg
 
 
-initModel : Model
+initModel : ( Model, List Emission )
 initModel =
-    Model
-        LogInOrSignUp.initModel
+    ( Model LogInOrSignUp.initModel
+    , []
+    )
 
 
 update : Msg -> Model -> ( Model, List Emission )

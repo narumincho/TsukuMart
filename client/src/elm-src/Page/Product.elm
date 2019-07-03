@@ -235,7 +235,11 @@ update msg model =
         GetCommentListResponse commentListResult ->
             case ( model, commentListResult ) of
                 ( Normal rec, Ok commentList ) ->
-                    ( Normal { rec | product = rec.product |> Product.setCommentList commentList }
+                    ( Normal
+                        { rec
+                            | product = rec.product |> Product.setCommentList commentList
+                            , comment = ""
+                        }
                     , []
                     )
 
@@ -756,7 +760,8 @@ commentView nowMaybe sellerId myIdMaybe comment =
             ]
             [ Html.img
                 [ Html.Attributes.style "border-radius" "50%"
-                , Html.Attributes.style "width" "3rem"
+                , Html.Attributes.style "width" "48px"
+                , Html.Attributes.style "height" "48px"
                 , Html.Attributes.src (User.withNameGetImageUrl speaker)
                 ]
                 []
