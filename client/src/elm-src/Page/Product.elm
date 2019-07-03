@@ -70,7 +70,6 @@ type Emission
 type Msg
     = GetProductResponse (Result String Product.ProductDetail)
     | GetCommentListResponse (Result String (List Product.Comment))
-    | PostCommentResponse (Result String Product.Comment)
     | Like Api.Token Product.Id
     | UnLike Api.Token Product.Id
     | LikeResponse (Result String Int)
@@ -249,19 +248,6 @@ update msg model =
                     ( model
                     , [ EmissionAddLogMessage "画面がNormalでないときにコメントを受け取ってしまった" ]
                     )
-
-        PostCommentResponse result ->
-            case ( model, result ) of
-                ( Normal rec, Ok comment ) ->
-                    ( Normal { rec | product = rec.product |> Product.addComment comment }
-                    , []
-                    )
-
-                ( _, Err text ) ->
-                    ( model, [ EmissionAddLogMessage ("コメントの送信に失敗しました" ++ text) ] )
-
-                ( _, _ ) ->
-                    ( model, [] )
 
         Like token id ->
             ( case model of

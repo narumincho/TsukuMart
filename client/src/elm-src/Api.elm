@@ -22,6 +22,7 @@ module Api exposing
     , getUserProfile
     , likeProduct
     , logInOrSignUpUrlRequest
+    , markProductInHistory
     , postProductComment
     , sellProduct
     , sendConfirmEmail
@@ -33,7 +34,7 @@ module Api exposing
     , updateProduct
     , updateProfile
     , userWithNameDecoder
-    , markProductInHistory)
+    )
 
 import Data.Category as Category
 import Data.EmailAddress as EmailAddress
@@ -1059,13 +1060,51 @@ unlikeProduct accessToken productId callBack =
 
 
 getProductComments : Product.Id -> (Result String (List Product.Comment) -> msg) -> Cmd msg
-getProductComments productId msg =
-    Cmd.none
+getProductComments productId callBack =
+    graphQlApiRequest
+        (Query
+            [ Field
+                { name = "product"
+                , args = [ ( "productId", GraphQLString (Product.idToString productId) ) ]
+                , return =
+                    [ Field
+                        { name = "comments"
+                        , args = []
+                        , return = productCommentReturn
+                        }
+                    ]
+                }
+            ]
+        )
+        (Jd.field "product"
+            (Jd.field "comments"
+                (Jd.list productCommentDecoder)
+            )
+        )
+        callBack
 
 
-commentListDecoder : Jd.Decoder (List Product.Comment)
-commentListDecoder =
-    Jd.succeed []
+productCommentReturn : List Field
+productCommentReturn =
+    [ Field { name = "body", args = [], return = [] }
+    , Field { name = "speaker", args = [], return = userWithNameReturn }
+    , Field { name = "createdAt", args = [], return = [] }
+    ]
+
+
+productCommentDecoder : Jd.Decoder Product.Comment
+productCommentDecoder =
+    Jd.succeed
+        (\body speaker createdAt ->
+            Product.commentFromApi
+                { body = body
+                , speaker = speaker
+                , createdAt = createdAt
+                }
+        )
+        |> Jdp.required "body" Jd.string
+        |> Jdp.required "speaker" userWithNameDecoder
+        |> Jdp.required "createdAt" dateTimeDecoder
 
 
 
@@ -1075,24 +1114,38 @@ commentListDecoder =
 -}
 
 
-postProductComment : Token -> Product.Id -> String -> (Result String Product.Comment -> msg) -> Cmd msg
-postProductComment accessToken productId comment msg =
-    Cmd.none
-
-
-commentDecoder : Jd.Decoder Product.Comment
-commentDecoder =
-    Jd.succeed
-        (\body createdAt speaker ->
-            Product.commentFromApi
-                { body = body
-                , createdAt = createdAt
-                , speaker = speaker
+postProductComment :
+    Token
+    -> Product.Id
+    -> String
+    -> (Result String (List Product.Comment) -> msg)
+    -> Cmd msg
+postProductComment accessToken productId commentBody callBack =
+    graphQlApiRequest
+        (Mutation
+            [ Field
+                { name = "addCommentProduct"
+                , args =
+                    [ ( "accessToken", GraphQLString (tokenToString accessToken) )
+                    , ( "productId", GraphQLString (Product.idToString productId) )
+                    , ( "body", GraphQLString commentBody )
+                    ]
+                , return =
+                    [ Field
+                        { name = "comments"
+                        , args = []
+                        , return = productCommentReturn
+                        }
+                    ]
                 }
+            ]
         )
-        |> Jdp.required "body" Jd.string
-        |> Jdp.required "createdAt" dateTimeDecoder
-        |> Jdp.required "speaker" userWithNameDecoder
+        (Jd.field "addCommentProduct"
+            (Jd.field "comments"
+                (Jd.list productCommentDecoder)
+            )
+        )
+        callBack
 
 
 dateTimeDecoder : Jd.Decoder Time.Posix

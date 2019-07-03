@@ -73,10 +73,14 @@ export const updateUserData = async (
     await userCollectionRef.doc(id).set(userData, { merge: true });
 };
 
+/*
+        HistoryView Product
+*/
 type HistoryViewProductData = {
     createdAt: firestore.Timestamp;
 };
 
+const userHistoryViewProductCollectionName = "historyViewProduct";
 /**
  * ユーザーの商品の閲覧記録に商品を登録する。
  * @param userId
@@ -89,7 +93,7 @@ export const addHistoryViewProductData = async (
 ): Promise<void> => {
     await userCollectionRef
         .doc(userId)
-        .collection("historyViewProduct")
+        .collection(userHistoryViewProductCollectionName)
         .doc(productId)
         .set(data);
 };
@@ -104,29 +108,17 @@ export const getHistoryViewProductData = async (
     (await querySnapshotToIdAndDataArray(
         await userCollectionRef
             .doc(userId)
-            .collection("historyViewProduct")
+            .collection(userHistoryViewProductCollectionName)
             .orderBy("createdAt")
             .get()
     )) as Array<{ id: string; data: HistoryViewProductData }>;
+/*
+        Liked Product
+*/
 
 type LikedProductData = {
     createdAt: firestore.Timestamp;
 };
-
-type CommentedProductData = {
-    createdAt: firestore.Timestamp;
-};
-
-export const getCommentedProductData = async (
-    userId: string
-): Promise<Array<{ id: string; data: CommentedProductData }>> =>
-    (await querySnapshotToIdAndDataArray(
-        await userCollectionRef
-            .doc(userId)
-            .collection("commentedProduct")
-            .orderBy("createdAt")
-            .get()
-    )) as Array<{ id: string; data: CommentedProductData }>;
 
 export const addLikedProductData = async (
     userId: string,
@@ -164,6 +156,38 @@ export const getAllLikedProductsData = async (
             .orderBy("createdAt")
             .get()
     )) as Array<{ id: string; data: LikedProductData }>;
+
+/*
+        Commented Product
+*/
+type CommentedProductData = {
+    createdAt: firestore.Timestamp;
+};
+
+const userCommentedProductCollectionName = "commentedProduct";
+
+export const addCommentedProductData = async (
+    userId: string,
+    productId: string,
+    data: CommentedProductData
+): Promise<void> => {
+    await userCollectionRef
+        .doc(userId)
+        .collection(userCommentedProductCollectionName)
+        .doc(productId)
+        .set(data);
+};
+
+export const getCommentedProductData = async (
+    userId: string
+): Promise<Array<{ id: string; data: CommentedProductData }>> =>
+    (await querySnapshotToIdAndDataArray(
+        await userCollectionRef
+            .doc(userId)
+            .collection(userCommentedProductCollectionName)
+            .orderBy("createdAt")
+            .get()
+    )) as Array<{ id: string; data: CommentedProductData }>;
 
 type DraftProductData = {
     name: string;
@@ -535,25 +559,27 @@ type ProductComment = {
     createdAt: firestore.Timestamp;
 };
 
+const productCommentCollectionName = "comment";
+
+export const addProductComment = async (
+    id: string,
+    data: ProductComment
+): Promise<void> => {
+    await productCollectionRef
+        .doc(id)
+        .collection(productCommentCollectionName)
+        .add(data);
+};
+
 export const getProductComments = async (
     id: string
 ): Promise<Array<{ id: string; data: ProductComment }>> =>
     (await querySnapshotToIdAndDataArray(
         await productCollectionRef
             .doc(id)
-            .collection("comment")
+            .collection(productCommentCollectionName)
             .get()
     )) as Array<{ id: string; data: ProductComment }>;
-
-export const createProductComment = async (
-    id: string,
-    data: ProductComment
-): Promise<void> => {
-    await productCollectionRef
-        .doc(id)
-        .collection("comment")
-        .add(data);
-};
 /* ==========================================
                     Trade
    ==========================================
@@ -586,6 +612,13 @@ type TradeComment = {
     createdAt: firestore.Timestamp;
 };
 
+export const addTradeComment = async (id: string, data: TradeComment) => {
+    await tradeCollectionRef
+        .doc(id)
+        .collection("comment")
+        .add(data);
+};
+
 export const getTradeComments = async (
     id: string
 ): Promise<Array<{ id: string; data: TradeComment }>> =>
@@ -595,13 +628,6 @@ export const getTradeComments = async (
             .collection("comment")
             .get()
     )) as Array<{ id: string; data: TradeComment }>;
-
-export const createTradeComment = async (id: string, data: TradeComment) => {
-    await tradeCollectionRef
-        .doc(id)
-        .collection("comment")
-        .add(data);
-};
 /* ==========================================
    ==========================================
 */

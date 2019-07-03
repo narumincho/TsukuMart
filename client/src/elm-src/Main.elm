@@ -595,15 +595,30 @@ updatePageMsg pageMsg (Model rec) =
                 |> Page.History.update msg
                 |> mapPageModel PageHistory historyEmissionListToCmd
 
+        ( SoldProductsPageMsg msg, PageSoldProducts model ) ->
+            model
+                |> Page.SoldProducts.update msg
+                |> mapPageModel PageSoldProducts soldProductsPageEmissionListToCmd
+
         ( BoughtProductsPageMsg msg, PageBoughtProducts model ) ->
             model
                 |> Page.BoughtProducts.update msg
                 |> mapPageModel PageBoughtProducts boughtProductsPageEmissionListToCmd
 
-        ( SoldProductsPageMsg msg, PageSoldProducts model ) ->
+        ( TradingProductsPageMsg msg, PageTradingProducts model ) ->
             model
-                |> Page.SoldProducts.update msg
-                |> mapPageModel PageSoldProducts soldProductsPageEmissionListToCmd
+                |> Page.TradingProducts.update msg
+                |> mapPageModel PageTradingProducts tradingProductsEmissionListToCmd
+
+        ( TradedProductsPageMsg msg, PageTradedProducts model ) ->
+            model
+                |> Page.TradedProducts.update msg
+                |> mapPageModel PageTradedProducts tradedProductsEmissionListToCmd
+
+        ( CommentedProductsPageMsg msg, PageCommentedProducts model ) ->
+            model
+                |> Page.CommentedProducts.update msg
+                |> mapPageModel PageCommentedProducts commentedProductsEmissionListToCmd
 
         ( LogInPageMsg msg, PageLogIn model ) ->
             model
@@ -988,7 +1003,10 @@ productPageEmissionListToCmd =
                     Api.postProductComment token
                         productId
                         comment
-                        (\result -> PageMsg (ProductPageMsg (Page.Product.PostCommentResponse result)))
+                        (\result ->
+                            PageMsg
+                                (ProductPageMsg (Page.Product.GetCommentListResponse result))
+                        )
 
                 Page.Product.EmissionLike token id ->
                     Api.likeProduct token id (LikeProductResponse id)

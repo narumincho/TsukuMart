@@ -363,6 +363,29 @@ export const getHistoryViewProduct = async (
         id: value.id
     }));
 
+export const addCommentProduct = async (
+    userId: string,
+    productId: string,
+    data: Pick<type.ProductComment, "body">
+): Promise<ProductReturnLowCost> => {
+    const now = databaseLow.getNowTimestamp();
+    const userData = await databaseLow.getUserData(userId);
+    await databaseLow.addCommentedProductData(userId, productId, {
+        createdAt: now
+    });
+    await databaseLow.addProductComment(productId, {
+        body: data.body,
+        createdAt: now,
+        speakerId: userId,
+        speakerDisplayName: userData.displayName,
+        speakerImageId: userData.imageId
+    });
+    return productReturnLowCostFromDatabaseLow({
+        id: productId,
+        data: await databaseLow.getProduct(productId)
+    });
+};
+
 export const getCommentedProducts = async (
     userId: string
 ): Promise<Array<{ id: string }>> =>
@@ -789,7 +812,7 @@ export const createProductComment = async (
 > => {
     const userData = await databaseLow.getUserData(userId);
     const nowTimestamp = databaseLow.getNowTimestamp();
-    await databaseLow.createProductComment(productId, {
+    await databaseLow.addProductComment(productId, {
         body: data.body,
         createdAt: nowTimestamp,
         speakerId: userData.displayName,

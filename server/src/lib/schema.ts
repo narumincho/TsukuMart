@@ -883,7 +883,7 @@ const product = makeQueryOrMutationField<
     args: {
         productId: {
             type: g.GraphQLNonNull(g.GraphQLID),
-            description: productGraphQLType.getFields()["id"].description
+            description: productGraphQLType.getFields().id.description
         }
     },
     type: g.GraphQLNonNull(productGraphQLType),
@@ -1240,10 +1240,10 @@ const markProductInHistory = makeQueryOrMutationField<
         },
         productId: {
             type: g.GraphQLNonNull(g.GraphQLID),
-            description: productGraphQLType.getFields()["id"].description
+            description: productGraphQLType.getFields().id.description
         }
     },
-    type: g.GraphQLNonNull(type.unitGraphQLType),
+    type: g.GraphQLNonNull(productGraphQLType),
     resolve: async (source, args) => {
         const { id } = database.verifyAccessToken(args.accessToken);
         return await database.markProductInHistory(id, args.productId);
@@ -1262,7 +1262,7 @@ const likeProduct = makeQueryOrMutationField<
         },
         productId: {
             type: g.GraphQLNonNull(g.GraphQLID),
-            description: productGraphQLType.getFields()["id"].description
+            description: productGraphQLType.getFields().id.description
         }
     },
     type: g.GraphQLNonNull(productGraphQLType),
@@ -1284,7 +1284,7 @@ const unlikeProduct = makeQueryOrMutationField<
         },
         productId: {
             type: g.GraphQLNonNull(g.GraphQLID),
-            description: productGraphQLType.getFields()["id"].description
+            description: productGraphQLType.getFields().id.description
         }
     },
     type: g.GraphQLNonNull(productGraphQLType),
@@ -1293,6 +1293,37 @@ const unlikeProduct = makeQueryOrMutationField<
         return await database.unlikeProduct(id, args.productId);
     },
     description: "商品からいいねを外す"
+});
+
+const addCommentProduct = makeQueryOrMutationField<
+    { accessToken: string; productId: string } & Pick<
+        type.ProductCommentInternal,
+        "body"
+    >,
+    type.ProductInternal
+>({
+    args: {
+        accessToken: {
+            type: g.GraphQLNonNull(g.GraphQLString),
+            description: type.accessTokenDescription
+        },
+        productId: {
+            type: g.GraphQLNonNull(g.GraphQLID),
+            description: productGraphQLType.getFields().id.description
+        },
+        body: {
+            type: g.GraphQLNonNull(g.GraphQLString),
+            description: "本文"
+        }
+    },
+    type: g.GraphQLNonNull(productGraphQLType),
+    resolve: async (source, args, context, info) => {
+        const { id } = database.verifyAccessToken(args.accessToken);
+        return await database.addCommentProduct(id, args.productId, {
+            body: args.body
+        });
+    },
+    description: "商品にコメントを追加する"
 });
 
 const addDraftProduct = makeQueryOrMutationField<
@@ -1483,6 +1514,7 @@ export const schema = new g.GraphQLSchema({
             markProductInHistory,
             likeProduct,
             unlikeProduct,
+            addCommentProduct,
             addDraftProduct,
             updateDraftProduct,
             deleteDraftProduct
