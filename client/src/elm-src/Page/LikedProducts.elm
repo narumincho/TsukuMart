@@ -2,10 +2,11 @@ module Page.LikedProducts exposing
     ( Emission(..)
     , Model
     , Msg(..)
+    , getAllProducts
     , initModel
     , update
     , view
-    , getAllProducts)
+    )
 
 import Api
 import BasicParts
@@ -47,7 +48,7 @@ type Emission
 initModel : Maybe Product.Id -> LogInState.LogInState -> ( Model, List Emission )
 initModel goodIdMaybe logInState =
     let
-        ( productListModel, emissionList ) =
+        ( productListModel, productListEmissions ) =
             ProductList.initModel goodIdMaybe
     in
     ( Model
@@ -62,7 +63,7 @@ initModel goodIdMaybe logInState =
         Nothing ->
             []
       )
-        ++ (emissionList |> List.map EmissionByProductList)
+        ++ (productListEmissions |> List.map EmissionByProductList)
     )
 
 

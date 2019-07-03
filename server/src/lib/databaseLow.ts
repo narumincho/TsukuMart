@@ -140,6 +140,16 @@ export const addLikedProductData = async (
         .set(data);
 };
 
+export const deleteLikedProductData = async (
+    userId: string,
+    productId: string
+): Promise<void> => {
+    await userCollectionRef
+        .doc(userId)
+        .collection("likedProduct")
+        .doc(productId)
+        .delete();
+};
 /**
  * 最後にいいねした順にいいねした商品を取得する
  * @param userId

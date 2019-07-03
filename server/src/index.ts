@@ -51,14 +51,17 @@ export const api = functions
     })
     .https.onRequest(async (request, response) => {
         console.log("API called");
-        response.setHeader("Access-Control-Allow-Origin", "*");
+        response.setHeader(
+            "Access-Control-Allow-Origin",
+            "https://tsukumart-f0971.web.app"
+        );
+        response.setHeader("vary", "Origin");
         if (request.method === "OPTIONS") {
             response.setHeader(
                 "Access-Control-Allow-Methods",
                 "POST, GET, OPTIONS"
             );
             response.setHeader("Access-Control-Allow-Headers", "content-type");
-            response.setHeader("Access-Control-Max-Age", 3600);
             response.status(200).send("");
             return;
         }
@@ -91,14 +94,17 @@ export const logInReceiver = functions
 export const image = functions
     .region("asia-northeast1")
     .https.onRequest(async (request, response) => {
-        response.setHeader("Access-Control-Allow-Origin", "*");
+        response.setHeader(
+            "Access-Control-Allow-Origin",
+            "https://tsukumart-f0971.web.app"
+        );
+        response.setHeader("vary", "Origin");
         if (request.method === "OPTIONS") {
             response.setHeader(
                 "Access-Control-Allow-Methods",
                 "POST, GET, OPTIONS"
             );
             response.setHeader("Access-Control-Allow-Headers", "content-type");
-            response.setHeader("Access-Control-Max-Age", 3600);
             response.status(200).send("");
             return;
         }

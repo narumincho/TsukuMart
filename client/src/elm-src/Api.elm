@@ -907,9 +907,9 @@ getRecommendProductList callBack =
 
 
 
-{- =================================================================================
+{- ==============================================================
                         0円の商品を取得
-   =================================================================================
+   ==============================================================
 -}
 
 
@@ -972,8 +972,33 @@ deleteProduct token productId =
 
 
 likeProduct : Token -> Product.Id -> (Result String Int -> msg) -> Cmd msg
-likeProduct token productId msg =
-    Cmd.none
+likeProduct accessToken productId callBack =
+    graphQlApiRequest
+        (Mutation
+            [ Field
+                { name = "likeProduct"
+                , args =
+                    [ ( "accessToken", GraphQLString (tokenToString accessToken) )
+                    , ( "id", GraphQLString (Product.idToString productId) )
+                    ]
+                , return = productOnlyLikeCountReturn
+                }
+            ]
+        )
+        (Jd.field "likeProduct" productOnlyLikeCountDecoder)
+        callBack
+
+
+productOnlyLikeCountReturn : List Field
+productOnlyLikeCountReturn =
+    [ Field
+        { name = "likedCount", args = [], return = [] }
+    ]
+
+
+productOnlyLikeCountDecoder : Jd.Decoder Int
+productOnlyLikeCountDecoder =
+    Jd.field "likedCount" Jd.int
 
 
 
@@ -984,8 +1009,21 @@ likeProduct token productId msg =
 
 
 unlikeProduct : Token -> Product.Id -> (Result String Int -> msg) -> Cmd msg
-unlikeProduct token productId msg =
-    Cmd.none
+unlikeProduct accessToken productId callBack =
+    graphQlApiRequest
+        (Mutation
+            [ Field
+                { name = "unlikeProduct"
+                , args =
+                    [ ( "accessToken", GraphQLString (tokenToString accessToken) )
+                    , ( "id", GraphQLString (Product.idToString productId) )
+                    ]
+                , return = productOnlyLikeCountReturn
+                }
+            ]
+        )
+        (Jd.field "unlikeProduct" productOnlyLikeCountDecoder)
+        callBack
 
 
 

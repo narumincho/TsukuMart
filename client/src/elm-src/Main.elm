@@ -585,6 +585,11 @@ updatePageMsg pageMsg (Model rec) =
                 |> Page.Home.update msg
                 |> mapPageModel PageHome homePageEmissionListToCmd
 
+        ( LikedProductsPageMsg msg, PageLikedProducts model ) ->
+            model
+                |> Page.LikedProducts.update msg
+                |> mapPageModel PageLikedProducts likedProductsEmissionListToCmd
+
         ( HistoryPageMsg msg, PageHistory model ) ->
             model
                 |> Page.History.update msg
@@ -687,7 +692,11 @@ likedProductsEmissionListToCmd =
         (\emission ->
             case emission of
                 Page.LikedProducts.EmissionGetLikedProducts token ->
-                    Api.getLikedProducts token (\result -> PageMsg (LikedProductsPageMsg (Page.LikedProducts.GetProductsResponse result)))
+                    Api.getLikedProducts token
+                        (\result ->
+                            PageMsg
+                                (LikedProductsPageMsg (Page.LikedProducts.GetProductsResponse result))
+                        )
 
                 Page.LikedProducts.EmissionByLogIn e ->
                     logInEmissionToCmd e

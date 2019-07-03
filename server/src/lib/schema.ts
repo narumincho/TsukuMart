@@ -1255,6 +1255,50 @@ const markProductInHistory = makeQueryOrMutationField<
     description: "商品を閲覧したと記録する"
 });
 
+const likeProduct = makeQueryOrMutationField<
+    { accessToken: string; id: string },
+    type.ProductInternal
+>({
+    args: {
+        accessToken: {
+            type: g.GraphQLNonNull(g.GraphQLString),
+            description: "アクセストークン"
+        },
+        id: {
+            type: g.GraphQLNonNull(g.GraphQLString),
+            description: "商品を識別するためのID"
+        }
+    },
+    type: g.GraphQLNonNull(productGraphQLType),
+    resolve: async (source, args, context, info) => {
+        const { id } = database.verifyAccessToken(args.accessToken);
+        return await database.likeProduct(id, args.id);
+    },
+    description: "商品にいいねをする"
+});
+
+const unlikeProduct = makeQueryOrMutationField<
+    { accessToken: string; id: string },
+    type.ProductInternal
+>({
+    args: {
+        accessToken: {
+            type: g.GraphQLNonNull(g.GraphQLString),
+            description: "アクセストークン"
+        },
+        id: {
+            type: g.GraphQLNonNull(g.GraphQLString),
+            description: "商品を識別するためのID"
+        }
+    },
+    type: g.GraphQLNonNull(productGraphQLType),
+    resolve: async (source, args, context, info) => {
+        const { id } = database.verifyAccessToken(args.accessToken);
+        return await database.unlikeProduct(id, args.id);
+    },
+    description: "商品からいいねを外す"
+});
+
 const addDraftProduct = makeQueryOrMutationField<
     { accessToken: string; images: Array<type.DataURL> } & Pick<
         type.DraftProduct,
@@ -1441,6 +1485,8 @@ export const schema = new g.GraphQLSchema({
             updateProfile,
             sellProduct,
             markProductInHistory,
+            likeProduct,
+            unlikeProduct,
             addDraftProduct,
             updateDraftProduct,
             deleteDraftProduct

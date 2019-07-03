@@ -48,7 +48,7 @@ type Emission
 initModel : Maybe Product.Id -> LogInState.LogInState -> ( Model, List Emission )
 initModel productIdMaybe logInState =
     let
-        ( productListModel, productListEmissionList ) =
+        ( productListModel, productListEmissions ) =
             ProductList.initModel productIdMaybe
     in
     ( Model
@@ -63,7 +63,7 @@ initModel productIdMaybe logInState =
         Nothing ->
             []
       )
-        ++ (productListEmissionList |> List.map EmissionByProductList)
+        ++ (productListEmissions |> List.map EmissionByProductList)
     )
 
 
@@ -106,7 +106,7 @@ update msg (Model rec) =
 
         MsgByProductList productListMsg ->
             let
-                ( newModel, emissionList ) =
+                ( newModel, emissions ) =
                     rec.productList |> ProductList.update productListMsg
             in
             ( case productListMsg of
@@ -119,7 +119,7 @@ update msg (Model rec) =
 
                 _ ->
                     Model { rec | productList = newModel }
-            , emissionList |> List.map EmissionByProductList
+            , emissions |> List.map EmissionByProductList
             )
 
 

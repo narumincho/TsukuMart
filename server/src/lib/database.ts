@@ -665,12 +665,6 @@ export const getFreeProducts = async (): Promise<Array<ProductReturnLowCost>> =>
     (await databaseLow.getFreeProductData()).map(
         productReturnLowCostFromDatabaseLow
     );
-/**
- * 指定したIDの商品があるかどうか調べる
- * @param id
- */
-export const existsProduct = async (id: string): Promise<boolean> =>
-    databaseLow.existsProduct(id);
 
 /**
  * 商品のデータを取得する
@@ -805,4 +799,69 @@ export const createProductComment = async (
             }
         })
     );
+};
+
+export const likeProduct = async (
+    userId: string,
+    productId: string
+): Promise<ProductReturnLowCost> => {
+    console.log("database likeProduct");
+    const likedProducts = await databaseLow.getAllLikedProductsData(userId);
+    const productData = await databaseLow.getProduct(productId);
+    if (!isIncludeProductId(likedProducts, productId)) {
+        return productReturnLowCostFromDatabaseLow({
+            id: productId,
+            data: productData
+        });
+    }
+    console.log("現在のいいね数" + productData.likedCount);
+    await databaseLow.updateProductData(productId, {
+        likedCount: productData.likedCount + 1
+    });
+    await databaseLow.addLikedProductData(userId, productId, {
+        createdAt: databaseLow.getNowTimestamp()
+    });
+    console.log("現在返すいいね数" + productData.likedCount + 1);
+    console.log(
+        "現在返すいいね数(データベースから再読込)" +
+            (await databaseLow.getProduct(productId)).likedCount
+    );
+    return productReturnLowCostFromDatabaseLow({
+        id: productId,
+        data: { ...productData, likedCount: productData.likedCount + 1 }
+    });
+};
+
+export const unlikeProduct = async (
+    userId: string,
+    productId: string
+): Promise<ProductReturnLowCost> => {
+    const likedProducts = await databaseLow.getAllLikedProductsData(userId);
+    const productData = await databaseLow.getProduct(productId);
+    if (isIncludeProductId(likedProducts, productId)) {
+        return productReturnLowCostFromDatabaseLow({
+            id: productId,
+            data: productData
+        });
+    }
+    await databaseLow.updateProductData(productId, {
+        likedCount: productData.likedCount - 1
+    });
+    await databaseLow.deleteLikedProductData(userId, productId);
+    return productReturnLowCostFromDatabaseLow({
+        id: productId,
+        data: { ...productData, likedCount: productData.likedCount - 1 }
+    });
+};
+
+const isIncludeProductId = async (
+    productsList: Array<{ id: string }>,
+    productId: string
+) => {
+    for (let i = 0; i < productsList.length; i++) {
+        if (productsList[i].id == productId) {
+            return true;
+        }
+    }
+    return false;
 };
