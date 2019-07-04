@@ -65,6 +65,7 @@ type Emission
     | EmissionDelete Api.Token Product.Id
     | EmissionByProductEditor ProductEditor.Emission
     | EmissionUpdateProductData Api.Token Product.Id Api.UpdateProductRequest
+    | EmissionReplaceElementText { id : String, text : String }
 
 
 type Msg
@@ -240,7 +241,11 @@ update msg model =
                             | product = rec.product |> Product.setCommentList commentList
                             , comment = ""
                         }
-                    , []
+                    , [ EmissionReplaceElementText
+                            { id = commentTextAreaId
+                            , text = ""
+                            }
+                      ]
                     )
 
                 ( _, Err text ) ->
@@ -712,8 +717,8 @@ commentListView nowMaybe sellerId logInState commentListMaybe =
             Just commentList ->
                 case logInState of
                     LogInState.Ok { accessToken, userWithName } ->
-                        [ commentInputArea accessToken ]
-                            ++ (commentList
+                        commentInputArea accessToken
+                            :: (commentList
                                     |> List.reverse
                                     |> List.map
                                         (commentView nowMaybe
@@ -849,6 +854,7 @@ commentInputArea token =
         [ Html.textarea
             [ Html.Events.onInput InputComment
             , Html.Attributes.class "form-textarea"
+            , Html.Attributes.id commentTextAreaId
             ]
             []
         , Html.button
@@ -857,6 +863,11 @@ commentInputArea token =
             ]
             [ Html.text "コメントを送信" ]
         ]
+
+
+commentTextAreaId : String
+commentTextAreaId =
+    "comment-text-area"
 
 
 productsViewPriceAndBuyButton : Bool -> Int -> Html.Html Msg

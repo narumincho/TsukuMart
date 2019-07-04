@@ -107,11 +107,13 @@ initModelFromSellRequestData (Api.SellProductRequest rec) =
       , EmissionReplaceText
             { id = priceEditorId, text = String.fromInt rec.price }
       , EmissionChangeSelectedIndex
-            { id = conditionSelectId, index = rec.condition |> Product.conditionIndex }
+            { id = conditionSelectId, index = Product.conditionToIndex rec.condition + 1 }
       , EmissionChangeSelectedIndex
-            { id = categoryGroupSelectId, index = Category.groupToIndex (Category.groupFromCategory rec.category) }
+            { id = categoryGroupSelectId
+            , index = Category.groupToIndex (Category.groupFromCategory rec.category) + 1
+            }
       , EmissionChangeSelectedIndex
-            { id = categorySelectId, index = Category.toIndexInGroup rec.category }
+            { id = categorySelectId, index = Category.toIndexInGroup rec.category + 1 }
       ]
     )
 
@@ -145,11 +147,15 @@ initModel { name, description, price, condition, category, imageIds } =
       , EmissionReplaceText
             { id = priceEditorId, text = String.fromInt price }
       , EmissionChangeSelectedIndex
-            { id = conditionSelectId, index = condition |> Product.conditionIndex }
+            { id = conditionSelectId, index = Product.conditionToIndex condition + 1 }
       , EmissionChangeSelectedIndex
-            { id = categoryGroupSelectId, index = Category.groupToIndex (Category.groupFromCategory category) }
+            { id = categoryGroupSelectId
+            , index = Category.groupToIndex (Category.groupFromCategory category) + 1
+            }
       , EmissionChangeSelectedIndex
-            { id = categorySelectId, index = Category.toIndexInGroup category }
+            { id = categorySelectId
+            , index = Category.toIndexInGroup category + 1
+            }
       ]
     )
 

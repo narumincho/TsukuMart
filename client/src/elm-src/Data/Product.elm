@@ -13,7 +13,7 @@ module Data.Product exposing
     , conditionAll
     , conditionFromIdString
     , conditionFromIndex
-    , conditionIndex
+    , conditionToIndex
     , conditionToIdString
     , conditionToJapaneseString
     , createdAtToString
@@ -203,8 +203,8 @@ conditionAll =
     ]
 
 
-conditionIndex : Condition -> Int
-conditionIndex condition =
+conditionToIndex : Condition -> Int
+conditionToIndex condition =
     conditionAll
         |> Utility.getFirstIndex condition
         |> Maybe.withDefault 0

@@ -841,7 +841,7 @@ export const likeProduct = async (
     console.log(`いいね user=${userId} productId=${productId}`);
     const likedProducts = await databaseLow.getAllLikedProductsData(userId);
     const productData = await databaseLow.getProduct(productId);
-    if (!isIncludeProductId(likedProducts, productId)) {
+    if (isIncludeProductId(likedProducts, productId)) {
         return productReturnLowCostFromDatabaseLow({
             id: productId,
             data: productData
@@ -865,7 +865,7 @@ export const unlikeProduct = async (
 ): Promise<ProductReturnLowCost> => {
     const likedProducts = await databaseLow.getAllLikedProductsData(userId);
     const productData = await databaseLow.getProduct(productId);
-    if (isIncludeProductId(likedProducts, productId)) {
+    if (!isIncludeProductId(likedProducts, productId)) {
         return productReturnLowCostFromDatabaseLow({
             id: productId,
             data: productData

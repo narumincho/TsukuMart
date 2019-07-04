@@ -67,18 +67,18 @@ initModelFromUniversity university =
                 , school = SchoolSchoolAndDepartment schoolAndDepartment
                 }
             , [ EmissionChangeSelectedIndex
-                    { id = graduateSelectId, index = University.graduateToIndex graduate }
+                    { id = graduateSelectId, index = University.graduateToIndex graduate + 1 }
               , EmissionChangeSelectedIndex
-                    { id = schoolSelectId, index = University.schoolToIndex (University.schoolFromDepartment schoolAndDepartment) }
+                    { id = schoolSelectId, index = University.schoolToIndex (University.schoolFromDepartment schoolAndDepartment) + 1 }
               , EmissionChangeSelectedIndex
-                    { id = departmentSelectId, index = University.departmentToIndexInSchool schoolAndDepartment }
+                    { id = departmentSelectId, index = University.departmentToIndexInSchool schoolAndDepartment + 1 }
               ]
             )
 
         University.GraduateNoTsukuba graduate ->
             ( GraduateNoTsukuba (Just graduate)
             , [ EmissionChangeSelectedIndex
-                    { id = graduateSelectId, index = University.graduateToIndex graduate }
+                    { id = graduateSelectId, index = University.graduateToIndex graduate + 1 }
               ]
             )
 
@@ -86,9 +86,9 @@ initModelFromUniversity university =
             ( School
                 (SchoolSchoolAndDepartment schoolAndDepartment)
             , [ EmissionChangeSelectedIndex
-                    { id = schoolSelectId, index = University.schoolToIndex (University.schoolFromDepartment schoolAndDepartment) }
+                    { id = schoolSelectId, index = University.schoolToIndex (University.schoolFromDepartment schoolAndDepartment) + 1 }
               , EmissionChangeSelectedIndex
-                    { id = departmentSelectId, index = University.departmentToIndexInSchool schoolAndDepartment }
+                    { id = departmentSelectId, index = University.departmentToIndexInSchool schoolAndDepartment + 1 }
               ]
             )
 

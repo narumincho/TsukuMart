@@ -974,6 +974,9 @@ productPageEmissionToCmd emission =
                 requestData
                 (\m -> PageMsg (ProductPageMsg (Page.Product.UpdateProductDataResponse m)))
 
+        Page.Product.EmissionReplaceElementText idAndText ->
+            replaceText idAndText
+
 
 
 {- ===================== Page Component Emission To Msg ======================== -}
