@@ -54,7 +54,7 @@ type Model
 
 type Emission
     = EmissionGetProduct { productId : Product.Id }
-    | EmissionGetProductAndMarkHistory { productId : Product.Id, accessToken : Api.Token }
+    | EmissionGetProductAndMarkHistory { productId : Product.Id, token : Api.Token }
     | EmissionGetCommentList { productId : Product.Id }
     | EmissionPostComment Api.Token { productId : Product.Id } String
     | EmissionLike Api.Token Product.Id
@@ -97,7 +97,7 @@ initModel logInState id =
         Just accessToken ->
             [ EmissionGetProductAndMarkHistory
                 { productId = id
-                , accessToken = accessToken
+                , token = accessToken
                 }
             ]
 
@@ -115,7 +115,7 @@ initModelFromProduct logInState product =
         Just accessToken ->
             [ EmissionGetProductAndMarkHistory
                 { productId = Product.getId product
-                , accessToken = accessToken
+                , token = accessToken
                 }
             ]
 

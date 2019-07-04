@@ -22,17 +22,19 @@ module Api exposing
     , getUserProfile
     , likeProduct
     , logInOrSignUpUrlRequest
+    , makeToken
     , markProductInHistory
     , postProductComment
     , sellProduct
     , sendConfirmEmail
+    , tokenGetRefreshTokenAsString
     , tokenRefresh
     , tradeStart
     , unlikeProduct
     , updateProduct
     , updateProfile
     , userWithNameDecoder
-    , makeToken, tokenGetRefreshTokenAsString)
+    )
 
 import Data.Category as Category
 import Data.EmailAddress as EmailAddress
@@ -72,7 +74,7 @@ type alias SignUpRequest =
 
 sendConfirmEmail : SignUpRequest -> (Result String () -> msg) -> Cmd msg
 sendConfirmEmail { sendEmailToken, displayName, image, university, emailAddress } callBack =
-    graphQlApiRequestWithOutToken
+    graphQlApiRequestWithoutToken
         (Mutation
             [ Field
                 { name = "sendConformEmail"
@@ -139,20 +141,24 @@ type Token
         , access : String
         }
 
-makeToken : {accessToken : String, refreshToken : String} -> Token
-makeToken {accessToken, refreshToken } =
+
+makeToken : { accessToken : String, refreshToken : String } -> Token
+makeToken { accessToken, refreshToken } =
     Token
         { refresh = refreshToken
         , access = accessToken
         }
 
+
 tokenGetAccessTokenAdString : Token -> String
 tokenGetAccessTokenAdString (Token { access }) =
     access
 
+
 tokenGetRefreshTokenAsString : Token -> String
-tokenGetRefreshTokenAsString (Token {refresh }) =
+tokenGetRefreshTokenAsString (Token { refresh }) =
     refresh
+
 
 
 {- =================================================
@@ -167,31 +173,38 @@ tokenRefresh accessToken callBack =
         |> Task.attempt callBack
 
 
+
+{- =================================================
+          自分のプロフィールといいねした商品の取得
+   =================================================
+-}
+
+
 getMyNameAndLikedProductsId : Token -> (Result String ( User.WithName, List Product.Id ) -> msg) -> Cmd msg
-getMyNameAndLikedProductsId token callBack =
-    graphQlApiRequestWithOutToken
-        (Query
-            [ Field
-                { name = "userPrivate"
-                , args = [ ( "accessToken", GraphQLString (tokenGetAccessTokenAdString token) ) ]
-                , return =
-                    [ Field { name = "id", args = [], return = [] }
-                    , Field { name = "displayName", args = [], return = [] }
-                    , Field { name = "imageId", args = [], return = [] }
-                    , Field
-                        { name = "likedProductAll"
-                        , args = []
-                        , return =
-                            [ Field { name = "id", args = [], return = [] } ]
-                        }
-                    ]
-                }
-            ]
+getMyNameAndLikedProductsId =
+    graphQlApiRequestWithToken
+        (\t ->
+            Query
+                [ Field
+                    { name = "userPrivate"
+                    , args = [ ( "accessToken", GraphQLString (tokenGetAccessTokenAdString t) ) ]
+                    , return =
+                        [ Field { name = "id", args = [], return = [] }
+                        , Field { name = "displayName", args = [], return = [] }
+                        , Field { name = "imageId", args = [], return = [] }
+                        , Field
+                            { name = "likedProductAll"
+                            , args = []
+                            , return =
+                                [ Field { name = "id", args = [], return = [] } ]
+                            }
+                        ]
+                    }
+                ]
         )
         (Jd.field "userPrivate"
             profileAndLikedProductsIdDecoder
         )
-        callBack
 
 
 profileAndLikedProductsIdDecoder : Jd.Decoder ( User.WithName, List Product.Id )
@@ -314,27 +327,27 @@ type SellProductRequest
         }
 
 
-sellProduct : Token -> SellProductRequest -> (Result String Product.ProductDetail -> msg) -> Cmd msg
-sellProduct token (SellProductRequest request) callBack =
-    graphQlApiRequestWithOutToken
-        (Mutation
-            [ Field
-                { name = "sellProduct"
-                , args =
-                    [ ( "accessToken", GraphQLString (tokenGetAccessTokenAdString token) )
-                    , ( "name", GraphQLString request.name )
-                    , ( "price", GraphQLInt request.price )
-                    , ( "description", GraphQLString request.description )
-                    , ( "images", GraphQLList (request.images |> List.map GraphQLString) )
-                    , ( "condition", GraphQLEnum (Product.conditionToIdString request.condition) )
-                    , ( "category", GraphQLEnum (Category.toIdString request.category) )
-                    ]
-                , return = productDetailReturn
-                }
-            ]
+sellProduct : SellProductRequest -> Token -> (Result String Product.ProductDetail -> msg) -> Cmd msg
+sellProduct (SellProductRequest request) =
+    graphQlApiRequestWithToken
+        (\token ->
+            Mutation
+                [ Field
+                    { name = "sellProduct"
+                    , args =
+                        [ ( "accessToken", GraphQLString (tokenGetAccessTokenAdString token) )
+                        , ( "name", GraphQLString request.name )
+                        , ( "price", GraphQLInt request.price )
+                        , ( "description", GraphQLString request.description )
+                        , ( "images", GraphQLList (request.images |> List.map GraphQLString) )
+                        , ( "condition", GraphQLEnum (Product.conditionToIdString request.condition) )
+                        , ( "category", GraphQLEnum (Category.toIdString request.category) )
+                        ]
+                    , return = productDetailReturn
+                    }
+                ]
         )
         (Jd.field "sellProduct" productDetailDecoder)
-        callBack
 
 
 productReturn : List Field
@@ -547,27 +560,27 @@ type alias ProfileUpdateData =
     }
 
 
-updateProfile : Token -> ProfileUpdateData -> (Result String User.WithProfile -> msg) -> Cmd msg
-updateProfile accessToken { displayName, introduction, image, university } callBack =
-    graphQlApiRequestWithOutToken
-        (Mutation
-            [ Field
-                { name = "updateProfile"
-                , args =
-                    [ ( "accessToken", GraphQLString (tokenGetAccessTokenAdString accessToken) )
-                    , ( "displayName", GraphQLString displayName )
-                    , ( "image", nullableGraphQLValue GraphQLString image )
-                    , ( "introduction", GraphQLString introduction )
-                    , ( "university", universityToGraphQLValue university )
-                    ]
-                , return = userWithProfileReturn
-                }
-            ]
+updateProfile : ProfileUpdateData -> Token -> (Result String User.WithProfile -> msg) -> Cmd msg
+updateProfile { displayName, introduction, image, university } =
+    graphQlApiRequestWithToken
+        (\token ->
+            Mutation
+                [ Field
+                    { name = "updateProfile"
+                    , args =
+                        [ ( "accessToken", GraphQLString (tokenGetAccessTokenAdString token) )
+                        , ( "displayName", GraphQLString displayName )
+                        , ( "image", nullableGraphQLValue GraphQLString image )
+                        , ( "introduction", GraphQLString introduction )
+                        , ( "university", universityToGraphQLValue university )
+                        ]
+                    , return = userWithProfileReturn
+                    }
+                ]
         )
         (Jd.field "updateProfile"
             userWithProfileDecoder
         )
-        callBack
 
 
 
@@ -578,26 +591,26 @@ updateProfile accessToken { displayName, introduction, image, university } callB
 
 
 getLikedProducts : Token -> (Result String (List Product.Product) -> msg) -> Cmd msg
-getLikedProducts accessToken callBack =
-    graphQlApiRequestWithOutToken
-        (Query
-            [ Field
-                { name = "userPrivate"
-                , args = [ ( "accessToken", GraphQLString (tokenGetAccessTokenAdString accessToken) ) ]
-                , return =
-                    [ Field
-                        { name = "likedProductAll"
-                        , args = []
-                        , return = productReturn
-                        }
-                    ]
-                }
-            ]
+getLikedProducts  =
+    graphQlApiRequestWithToken
+        (\token ->
+            Query
+                [ Field
+                    { name = "userPrivate"
+                    , args = [ ( "accessToken", GraphQLString (tokenGetAccessTokenAdString token) ) ]
+                    , return =
+                        [ Field
+                            { name = "likedProductAll"
+                            , args = []
+                            , return = productReturn
+                            }
+                        ]
+                    }
+                ]
         )
         (Jd.field "userPrivate"
             (Jd.field "likedProductAll" (Jd.list productDecoder))
         )
-        callBack
 
 
 
@@ -608,26 +621,26 @@ getLikedProducts accessToken callBack =
 
 
 getHistoryViewProducts : Token -> (Result String (List Product.Product) -> msg) -> Cmd msg
-getHistoryViewProducts accessToken callBack =
-    graphQlApiRequestWithOutToken
-        (Query
-            [ Field
-                { name = "userPrivate"
-                , args = [ ( "accessToken", GraphQLString (tokenGetAccessTokenAdString accessToken) ) ]
-                , return =
-                    [ Field
-                        { name = "historyViewProductAll"
-                        , args = []
-                        , return = productReturn
-                        }
-                    ]
-                }
-            ]
+getHistoryViewProducts =
+    graphQlApiRequestWithToken
+        (\token ->
+            Query
+                [ Field
+                    { name = "userPrivate"
+                    , args = [ ( "accessToken", GraphQLString (tokenGetAccessTokenAdString token) ) ]
+                    , return =
+                        [ Field
+                            { name = "historyViewProductAll"
+                            , args = []
+                            , return = productReturn
+                            }
+                        ]
+                    }
+                ]
         )
         (Jd.field "userPrivate"
             (Jd.field "historyViewProductAll" (Jd.list productDecoder))
         )
-        callBack
 
 
 
@@ -639,7 +652,7 @@ getHistoryViewProducts accessToken callBack =
 
 getSoldProductList : User.Id -> (Result String (List Product.Product) -> msg) -> Cmd msg
 getSoldProductList userId callBack =
-    graphQlApiRequestWithOutToken
+    graphQlApiRequestWithoutToken
         (Query
             [ Field
                 { name = "user"
@@ -668,26 +681,26 @@ getSoldProductList userId callBack =
 
 
 getBoughtProductList : Token -> (Result String (List Product.Product) -> msg) -> Cmd msg
-getBoughtProductList accessToken callBack =
-    graphQlApiRequestWithOutToken
-        (Query
-            [ Field
-                { name = "userPrivate"
-                , args = [ ( "accessToken", GraphQLString (tokenGetAccessTokenAdString accessToken) ) ]
-                , return =
-                    [ Field
-                        { name = "boughtProductAll"
-                        , args = []
-                        , return = productReturn
-                        }
-                    ]
-                }
-            ]
+getBoughtProductList =
+    graphQlApiRequestWithToken
+        (\token ->
+            Query
+                [ Field
+                    { name = "userPrivate"
+                    , args = [ ( "accessToken", GraphQLString (tokenGetAccessTokenAdString token) ) ]
+                    , return =
+                        [ Field
+                            { name = "boughtProductAll"
+                            , args = []
+                            , return = productReturn
+                            }
+                        ]
+                    }
+                ]
         )
         (Jd.field "userPrivate"
             (Jd.field "boughtProductAll" (Jd.list productDecoder))
         )
-        callBack
 
 
 
@@ -698,26 +711,26 @@ getBoughtProductList accessToken callBack =
 
 
 getTradingProductList : Token -> (Result String (List Trade.Trade) -> msg) -> Cmd msg
-getTradingProductList accessToken callBack =
-    graphQlApiRequestWithOutToken
-        (Query
-            [ Field
-                { name = "userPrivate"
-                , args = [ ( "accessToken", GraphQLString (tokenGetAccessTokenAdString accessToken) ) ]
-                , return =
-                    [ Field
-                        { name = "tradingAll"
-                        , args = []
-                        , return = tradeReturn
-                        }
-                    ]
-                }
-            ]
+getTradingProductList =
+    graphQlApiRequestWithToken
+        (\token ->
+            Query
+                [ Field
+                    { name = "userPrivate"
+                    , args = [ ( "accessToken", GraphQLString (tokenGetAccessTokenAdString token) ) ]
+                    , return =
+                        [ Field
+                            { name = "tradingAll"
+                            , args = []
+                            , return = tradeReturn
+                            }
+                        ]
+                    }
+                ]
         )
         (Jd.field "userPrivate"
             (Jd.field "tradingAll" (Jd.list tradeDecoder))
         )
-        callBack
 
 
 tradeReturn : List Field
@@ -761,32 +774,32 @@ tradeDecoder =
 
 
 {- ============================================================
-                      取引したの取引の取得する
+                      取引した取引を取得する
    ============================================================
 -}
 
 
 getTradedProductList : Token -> (Result String (List Trade.Trade) -> msg) -> Cmd msg
-getTradedProductList accessToken callBack =
-    graphQlApiRequestWithOutToken
-        (Query
-            [ Field
-                { name = "userPrivate"
-                , args = [ ( "accessToken", GraphQLString (tokenGetAccessTokenAdString accessToken) ) ]
-                , return =
-                    [ Field
-                        { name = "tradedAll"
-                        , args = []
-                        , return = tradeReturn
-                        }
-                    ]
-                }
-            ]
+getTradedProductList =
+    graphQlApiRequestWithToken
+        (\token ->
+            Query
+                [ Field
+                    { name = "userPrivate"
+                    , args = [ ( "accessToken", GraphQLString (tokenGetAccessTokenAdString token) ) ]
+                    , return =
+                        [ Field
+                            { name = "tradedAll"
+                            , args = []
+                            , return = tradeReturn
+                            }
+                        ]
+                    }
+                ]
         )
         (Jd.field "userPrivate"
             (Jd.field "tradedAll" (Jd.list tradeDecoder))
         )
-        callBack
 
 
 
@@ -797,26 +810,26 @@ getTradedProductList accessToken callBack =
 
 
 getCommentedProductList : Token -> (Result String (List Product.Product) -> msg) -> Cmd msg
-getCommentedProductList accessToken callBack =
-    graphQlApiRequestWithOutToken
-        (Query
-            [ Field
-                { name = "userPrivate"
-                , args = [ ( "accessToken", GraphQLString (tokenGetAccessTokenAdString accessToken) ) ]
-                , return =
-                    [ Field
-                        { name = "commentedProductAll"
-                        , args = []
-                        , return = productReturn
-                        }
-                    ]
-                }
-            ]
+getCommentedProductList  =
+    graphQlApiRequestWithToken
+        (\token ->
+            Query
+                [ Field
+                    { name = "userPrivate"
+                    , args = [ ( "accessToken", GraphQLString (tokenGetAccessTokenAdString token) ) ]
+                    , return =
+                        [ Field
+                            { name = "commentedProductAll"
+                            , args = []
+                            , return = productReturn
+                            }
+                        ]
+                    }
+                ]
         )
         (Jd.field "userPrivate"
             (Jd.field "commentedProductAll" (Jd.list productDecoder))
         )
-        callBack
 
 
 
@@ -828,7 +841,7 @@ getCommentedProductList accessToken callBack =
 
 getUserProfile : User.Id -> (Result String User.WithProfile -> msg) -> Cmd msg
 getUserProfile userId callBack =
-    graphQlApiRequestWithOutToken
+    graphQlApiRequestWithoutToken
         (Query
             [ Field
                 { name = "user"
@@ -852,7 +865,7 @@ getUserProfile userId callBack =
 
 getRecentProductList : (Result String (List Product.Product) -> msg) -> Cmd msg
 getRecentProductList callBack =
-    graphQlApiRequestWithOutToken
+    graphQlApiRequestWithoutToken
         (Query
             [ Field
                 { name = "productRecentAll"
@@ -876,7 +889,7 @@ getRecentProductList callBack =
 
 getRecommendProductList : (Result String (List Product.Product) -> msg) -> Cmd msg
 getRecommendProductList callBack =
-    graphQlApiRequestWithOutToken
+    graphQlApiRequestWithoutToken
         (Query
             [ Field
                 { name = "productRecommendAll"
@@ -900,7 +913,7 @@ getRecommendProductList callBack =
 
 getFreeProductList : (Result String (List Product.Product) -> msg) -> Cmd msg
 getFreeProductList callBack =
-    graphQlApiRequestWithOutToken
+    graphQlApiRequestWithoutToken
         (Query
             [ Field
                 { name = "productFreeAll"
@@ -924,7 +937,7 @@ getFreeProductList callBack =
 
 getProduct : Product.Id -> (Result String Product.ProductDetail -> msg) -> Cmd msg
 getProduct id callBack =
-    graphQlApiRequestWithOutToken
+    graphQlApiRequestWithoutToken
         (Query
             [ Field
                 { name = "product"
@@ -956,22 +969,22 @@ deleteProduct token productId =
 -}
 
 
-markProductInHistory : Token -> Product.Id -> (Result String Product.ProductDetail -> msg) -> Cmd msg
-markProductInHistory accessToken productId callBack =
-    graphQlApiRequestWithOutToken
-        (Mutation
-            [ Field
-                { name = "markProductInHistory"
-                , args =
-                    [ ( "accessToken", GraphQLString (tokenGetAccessTokenAdString accessToken) )
-                    , ( "productId", GraphQLString (Product.idToString productId) )
-                    ]
-                , return = productDetailReturn
-                }
-            ]
+markProductInHistory : Product.Id -> Token -> (Result String Product.ProductDetail -> msg) -> Cmd msg
+markProductInHistory productId =
+    graphQlApiRequestWithToken
+        (\token ->
+            Mutation
+                [ Field
+                    { name = "markProductInHistory"
+                    , args =
+                        [ ( "accessToken", GraphQLString (tokenGetAccessTokenAdString token) )
+                        , ( "productId", GraphQLString (Product.idToString productId) )
+                        ]
+                    , return = productDetailReturn
+                    }
+                ]
         )
         (Jd.field "markProductInHistory" productDetailDecoder)
-        callBack
 
 
 
@@ -981,22 +994,22 @@ markProductInHistory accessToken productId callBack =
 -}
 
 
-likeProduct : Token -> Product.Id -> (Result String Int -> msg) -> Cmd msg
-likeProduct accessToken productId callBack =
-    graphQlApiRequestWithOutToken
-        (Mutation
-            [ Field
-                { name = "likeProduct"
-                , args =
-                    [ ( "accessToken", GraphQLString (tokenGetAccessTokenAdString accessToken) )
-                    , ( "productId", GraphQLString (Product.idToString productId) )
-                    ]
-                , return = productOnlyLikeCountReturn
-                }
-            ]
+likeProduct : Product.Id -> Token ->(Result String Int -> msg) -> Cmd msg
+likeProduct productId =
+    graphQlApiRequestWithToken
+        (\token ->
+            Mutation
+                [ Field
+                    { name = "likeProduct"
+                    , args =
+                        [ ( "accessToken", GraphQLString (tokenGetAccessTokenAdString token) )
+                        , ( "productId", GraphQLString (Product.idToString productId) )
+                        ]
+                    , return = productOnlyLikeCountReturn
+                    }
+                ]
         )
         (Jd.field "likeProduct" productOnlyLikeCountDecoder)
-        callBack
 
 
 productOnlyLikeCountReturn : List Field
@@ -1018,19 +1031,20 @@ productOnlyLikeCountDecoder =
 -}
 
 
-unlikeProduct : Token -> Product.Id -> (Result String Int -> msg) -> Cmd msg
-unlikeProduct accessToken productId callBack =
-    graphQlApiRequestWithOutToken
-        (Mutation
-            [ Field
-                { name = "unlikeProduct"
-                , args =
-                    [ ( "accessToken", GraphQLString (tokenGetAccessTokenAdString accessToken) )
-                    , ( "productId", GraphQLString (Product.idToString productId) )
-                    ]
-                , return = productOnlyLikeCountReturn
-                }
-            ]
+unlikeProduct : Product.Id -> Token -> (Result String Int -> msg) -> Cmd msg
+unlikeProduct productId callBack =
+    graphQlApiRequestWithToken
+        (\token ->
+            Mutation
+                [ Field
+                    { name = "unlikeProduct"
+                    , args =
+                        [ ( "accessToken", GraphQLString (tokenGetAccessTokenAdString token) )
+                        , ( "productId", GraphQLString (Product.idToString productId) )
+                        ]
+                    , return = productOnlyLikeCountReturn
+                    }
+                ]
         )
         (Jd.field "unlikeProduct" productOnlyLikeCountDecoder)
         callBack
@@ -1045,7 +1059,7 @@ unlikeProduct accessToken productId callBack =
 
 getProductComments : Product.Id -> (Result String (List Product.Comment) -> msg) -> Cmd msg
 getProductComments productId callBack =
-    graphQlApiRequestWithOutToken
+    graphQlApiRequestWithoutToken
         (Query
             [ Field
                 { name = "product"
@@ -1099,37 +1113,37 @@ productCommentDecoder =
 
 
 postProductComment :
-    Token
-    -> Product.Id
+    Product.Id
     -> String
+    -> Token
     -> (Result String (List Product.Comment) -> msg)
     -> Cmd msg
-postProductComment accessToken productId commentBody callBack =
-    graphQlApiRequestWithOutToken
-        (Mutation
-            [ Field
-                { name = "addCommentProduct"
-                , args =
-                    [ ( "accessToken", GraphQLString (tokenGetAccessTokenAdString accessToken) )
-                    , ( "productId", GraphQLString (Product.idToString productId) )
-                    , ( "body", GraphQLString commentBody )
-                    ]
-                , return =
-                    [ Field
-                        { name = "comments"
-                        , args = []
-                        , return = productCommentReturn
-                        }
-                    ]
-                }
-            ]
+postProductComment productId commentBody =
+    graphQlApiRequestWithToken
+        (\t ->
+            Mutation
+                [ Field
+                    { name = "addCommentProduct"
+                    , args =
+                        [ ( "accessToken", GraphQLString (tokenGetAccessTokenAdString t) )
+                        , ( "productId", GraphQLString (Product.idToString productId) )
+                        , ( "body", GraphQLString commentBody )
+                        ]
+                    , return =
+                        [ Field
+                            { name = "comments"
+                            , args = []
+                            , return = productCommentReturn
+                            }
+                        ]
+                    }
+                ]
         )
         (Jd.field "addCommentProduct"
             (Jd.field "comments"
                 (Jd.list productCommentDecoder)
             )
         )
-        callBack
 
 
 dateTimeDecoder : Jd.Decoder Time.Posix
@@ -1181,7 +1195,7 @@ getTradeComment token productId msg =
 
 logInOrSignUpUrlRequest : Data.SocialLoginService.SocialLoginService -> (Result String Url.Url -> msg) -> Cmd msg
 logInOrSignUpUrlRequest service callBack =
-    graphQlApiRequestWithOutToken
+    graphQlApiRequestWithoutToken
         (Mutation
             [ Field
                 { name = "getLogInUrl"
@@ -1255,14 +1269,14 @@ type GraphQLValue
     | GraphQLNull
 
 
-graphQlApiRequestWithOutToken : Query -> Jd.Decoder a -> (Result String a -> msg) -> Cmd msg
-graphQlApiRequestWithOutToken query responseDecoder callBack =
+graphQlApiRequestWithoutToken : Query -> Jd.Decoder a -> (Result String a -> msg) -> Cmd msg
+graphQlApiRequestWithoutToken query responseDecoder callBack =
     graphQlApiRequestTaskWithoutToken query responseDecoder
         |> Task.attempt callBack
 
 
-graphQlApiRequestWithToken : Token -> (Token -> Query) -> Jd.Decoder a -> (Result String a -> msg) -> Cmd msg
-graphQlApiRequestWithToken token query responseDecoder callBack =
+graphQlApiRequestWithToken : (Token -> Query) -> Jd.Decoder a -> Token -> (Result String a -> msg) -> Cmd msg
+graphQlApiRequestWithToken query responseDecoder token callBack =
     graphQlApiRequestTaskWithToken token query responseDecoder
         |> Task.andThen (graphQlResultToTask token query responseDecoder)
         |> Task.attempt callBack

@@ -666,13 +666,13 @@ homePageEmissionToCmd : Page.Home.Emission -> Cmd Msg
 homePageEmissionToCmd emission =
     case emission of
         Page.Home.EmissionGetRecentProducts ->
-            Api.getRecentProductList (\result -> PageMsg (HomePageMsg (Page.Home.GetRecentProductsResponse result)))
+            Api.getRecentProductList (Page.Home.GetRecentProductsResponse >> HomePageMsg >> PageMsg)
 
         Page.Home.EmissionGetRecommendProducts ->
-            Api.getRecommendProductList (\result -> PageMsg (HomePageMsg (Page.Home.GetRecommendProductsResponse result)))
+            Api.getRecommendProductList (Page.Home.GetRecommendProductsResponse >> HomePageMsg >> PageMsg)
 
         Page.Home.EmissionGetFreeProducts ->
-            Api.getFreeProductList (\result -> PageMsg (HomePageMsg (Page.Home.GetFreeProductsResponse result)))
+            Api.getFreeProductList (Page.Home.GetFreeProductsResponse >> HomePageMsg >> PageMsg)
 
         Page.Home.EmissionProducts e ->
             productListEmissionToCmd e
@@ -687,10 +687,7 @@ likedProductsEmissionToCmd emission =
     case emission of
         Page.LikedProducts.EmissionGetLikedProducts token ->
             Api.getLikedProducts token
-                (\result ->
-                    PageMsg
-                        (LikedProductsPageMsg (Page.LikedProducts.GetProductsResponse result))
-                )
+                (Page.LikedProducts.GetProductsResponse >> LikedProductsPageMsg >> PageMsg)
 
         Page.LikedProducts.EmissionByLogIn e ->
             logInEmissionToCmd e
@@ -707,7 +704,7 @@ historyEmissionToCmd : Page.History.Emission -> Cmd Msg
 historyEmissionToCmd emission =
     case emission of
         Page.History.EmissionGetHistoryProducts token ->
-            Api.getHistoryViewProducts token (\result -> PageMsg (HistoryPageMsg (Page.History.GetProductsResponse result)))
+            Api.getHistoryViewProducts token (Page.History.GetProductsResponse >> HistoryPageMsg >> PageMsg)
 
         Page.History.EmissionByLogIn e ->
             logInEmissionToCmd e
@@ -725,9 +722,7 @@ soldProductsPageEmissionToCmd emission =
     case emission of
         Page.SoldProducts.EmissionGetSoldProducts userId ->
             Api.getSoldProductList userId
-                (\result ->
-                    PageMsg (SoldProductsPageMsg (Page.SoldProducts.GetSoldProductListResponse result))
-                )
+                (Page.SoldProducts.GetSoldProductListResponse >> SoldProductsPageMsg >> PageMsg)
 
         Page.SoldProducts.EmissionByProductList e ->
             productListEmissionToCmd e
@@ -742,10 +737,7 @@ boughtProductsPageEmissionToCmd emission =
     case emission of
         Page.BoughtProducts.EmissionGetPurchaseProducts token ->
             Api.getBoughtProductList token
-                (\result ->
-                    PageMsg
-                        (BoughtProductsPageMsg (Page.BoughtProducts.GetProductsResponse result))
-                )
+                (Page.BoughtProducts.GetProductsResponse >> BoughtProductsPageMsg >> PageMsg)
 
         Page.BoughtProducts.EmissionByLogIn e ->
             logInEmissionToCmd e
@@ -763,10 +755,7 @@ tradingProductsEmissionToCmd emission =
     case emission of
         Page.TradingProducts.EmissionGetTradingProducts token ->
             Api.getTradingProductList token
-                (\result ->
-                    PageMsg
-                        (TradingProductsPageMsg (Page.TradingProducts.GetProductsResponse result))
-                )
+                (Page.TradingProducts.GetProductsResponse >> TradingProductsPageMsg >> PageMsg)
 
         Page.TradingProducts.EmissionByLogIn e ->
             logInEmissionToCmd e
@@ -784,10 +773,7 @@ tradedProductsEmissionToCmd emission =
     case emission of
         Page.TradedProducts.EmissionGetTradedProducts token ->
             Api.getTradedProductList token
-                (\result ->
-                    PageMsg
-                        (TradedProductsPageMsg (Page.TradedProducts.GetTradesResponse result))
-                )
+                (Page.TradedProducts.GetTradesResponse >> TradedProductsPageMsg >> PageMsg)
 
         Page.TradedProducts.EmissionByLogIn e ->
             logInEmissionToCmd e
@@ -805,10 +791,7 @@ commentedProductsEmissionToCmd emission =
     case emission of
         Page.CommentedProducts.EmissionGetCommentedProducts token ->
             Api.getCommentedProductList token
-                (\result ->
-                    PageMsg
-                        (CommentedProductsPageMsg (Page.CommentedProducts.GetProductsResponse result))
-                )
+                (Page.CommentedProducts.GetProductsResponse >> CommentedProductsPageMsg >> PageMsg)
 
         Page.CommentedProducts.EmissionByLogIn e ->
             logInEmissionToCmd e
@@ -838,7 +821,7 @@ exhibitionPageEmissionToCmd emission =
             logInEmissionToCmd e
 
         Page.Exhibition.EmissionSellProducts ( token, request ) ->
-            Api.sellProduct token request SellProductResponse
+            Api.sellProduct request token SellProductResponse
 
         Page.Exhibition.EmissionByProductEditor e ->
             productEditorEmissionToCmd e
@@ -854,7 +837,7 @@ signUpPageEmissionToCmd emission =
             replaceText idAndText
 
         Page.SignUp.EmissionSignUp signUpRequest ->
-            Api.sendConfirmEmail signUpRequest (\response -> SignUpConfirmResponse response)
+            Api.sendConfirmEmail signUpRequest SignUpConfirmResponse
 
         Page.SignUp.EmissionByUniversity e ->
             universityEmissionToCmd e
@@ -882,7 +865,7 @@ userPageEmissionToCmd : Page.User.Emission -> Cmd Msg
 userPageEmissionToCmd emission =
     case emission of
         Page.User.EmissionChangeProfile token profile ->
-            Api.updateProfile token profile ChangeProfileResponse
+            Api.updateProfile profile token ChangeProfileResponse
 
         Page.User.EmissionReplaceElementText idAndText ->
             replaceText idAndText
@@ -898,7 +881,7 @@ userPageEmissionToCmd emission =
 
         Page.User.EmissionGetUserProfile userId ->
             Api.getUserProfile userId
-                (\e -> PageMsg (UserPageMsg (Page.User.MsgUserProfileResponse e)))
+                (Page.User.MsgUserProfileResponse >> UserPageMsg >> PageMsg)
 
         Page.User.EmissionAddLogMessage log ->
             Task.succeed ()
@@ -910,39 +893,32 @@ productPageEmissionToCmd emission =
     case emission of
         Page.Product.EmissionGetProduct { productId } ->
             Api.getProduct productId
-                (\result ->
-                    PageMsg
-                        (ProductPageMsg (Page.Product.GetProductResponse result))
-                )
+                (Page.Product.GetProductResponse >> ProductPageMsg >> PageMsg)
 
-        Page.Product.EmissionGetProductAndMarkHistory { productId, accessToken } ->
-            Api.markProductInHistory accessToken
+        Page.Product.EmissionGetProductAndMarkHistory { productId, token } ->
+            Api.markProductInHistory
                 productId
-                (\result ->
-                    PageMsg
-                        (ProductPageMsg (Page.Product.GetProductResponse result))
-                )
+                token
+                (Page.Product.GetProductResponse >> ProductPageMsg >> PageMsg)
 
         Page.Product.EmissionGetCommentList { productId } ->
-            Api.getProductComments productId (\result -> PageMsg (ProductPageMsg (Page.Product.GetCommentListResponse result)))
+            Api.getProductComments productId (Page.Product.GetCommentListResponse >> ProductPageMsg >> PageMsg)
 
         Page.Product.EmissionPostComment token { productId } comment ->
-            Api.postProductComment token
+            Api.postProductComment
                 productId
                 comment
-                (\result ->
-                    PageMsg
-                        (ProductPageMsg (Page.Product.GetCommentListResponse result))
-                )
+                token
+                (Page.Product.GetCommentListResponse >> ProductPageMsg >> PageMsg)
 
         Page.Product.EmissionLike token id ->
-            Api.likeProduct token id (LikeProductResponse id)
+            Api.likeProduct id token (LikeProductResponse id)
 
         Page.Product.EmissionUnLike token id ->
-            Api.unlikeProduct token id (UnlikeProductResponse id)
+            Api.unlikeProduct id token (UnlikeProductResponse id)
 
         Page.Product.EmissionTradeStart token id ->
-            Api.tradeStart token id (\result -> PageMsg (ProductPageMsg (Page.Product.TradeStartResponse result)))
+            Api.tradeStart token id (Page.Product.TradeStartResponse >> ProductPageMsg >> PageMsg)
 
         Page.Product.EmissionAddLogMessage log ->
             Task.succeed ()
@@ -965,7 +941,7 @@ productPageEmissionToCmd emission =
             Api.updateProduct token
                 productId
                 requestData
-                (\m -> PageMsg (ProductPageMsg (Page.Product.UpdateProductDataResponse m)))
+                (Page.Product.UpdateProductDataResponse >> ProductPageMsg >> PageMsg)
 
         Page.Product.EmissionReplaceElementText idAndText ->
             replaceText idAndText
@@ -986,10 +962,10 @@ productListEmissionToCmd : Page.Component.ProductList.Emission -> Cmd Msg
 productListEmissionToCmd emission =
     case emission of
         Page.Component.ProductList.EmissionLike token id ->
-            Api.likeProduct token id (LikeProductResponse id)
+            Api.likeProduct id token (LikeProductResponse id)
 
         Page.Component.ProductList.EmissionUnlike token id ->
-            Api.unlikeProduct token id (UnlikeProductResponse id)
+            Api.unlikeProduct id token (UnlikeProductResponse id)
 
         Page.Component.ProductList.EmissionScrollIntoView idString ->
             elementScrollIntoView idString
