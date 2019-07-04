@@ -56,7 +56,7 @@ initModel productIdMaybe logInState =
         , logIn = LogIn.initModel
         , productList = productListModel
         }
-    , (case LogInState.getAccessToken logInState of
+    , (case LogInState.getToken logInState of
         Just accessToken ->
             [ EmissionGetPurchaseProducts accessToken ]
 

@@ -183,7 +183,7 @@ view logInState isWideScreen (Model rec) =
             )
             |> Html.map MsgByProductList
         ]
-            ++ (case LogInState.getAccessToken logInState of
+            ++ (case LogInState.getToken logInState of
                     Just _ ->
                         [ exhibitButton ]
 

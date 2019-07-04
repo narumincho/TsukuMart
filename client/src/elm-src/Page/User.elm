@@ -269,8 +269,8 @@ view logInState model =
                 ( _, LoadingWithUserIdAndName withName ) ->
                     loadingWithUserIdAndNameView withName
 
-                ( LogInState.Ok { accessToken }, Edit editModel ) ->
-                    editView accessToken editModel
+                ( LogInState.Ok { token }, Edit editModel ) ->
+                    editView token editModel
 
                 ( _, Edit _ ) ->
                     [ Html.text "自分以外のプロフィールは編集できない" ]

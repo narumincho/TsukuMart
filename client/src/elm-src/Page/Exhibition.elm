@@ -65,14 +65,10 @@ initModel =
 
 toConfirmPageMsgFromModel : Data.LogInState.LogInState -> Model -> Maybe Msg
 toConfirmPageMsgFromModel logInState (Model rec) =
-    case ( rec.page, logInState ) of
-        ( EditPage editModel, Data.LogInState.LoadingProfile { accessToken } ) ->
+    case ( rec.page, Data.LogInState.getToken logInState ) of
+        ( EditPage editModel, Just token ) ->
             ProductEditor.toSoldRequest editModel
-                |> Maybe.map (\request -> ToConfirmPage ( accessToken, request ))
-
-        ( EditPage editModel, Data.LogInState.Ok { accessToken } ) ->
-            ProductEditor.toSoldRequest editModel
-                |> Maybe.map (\request -> ToConfirmPage ( accessToken, request ))
+                |> Maybe.map (\request -> ToConfirmPage ( token, request ))
 
         ( _, _ ) ->
             Nothing
@@ -172,7 +168,7 @@ view :
 view logInState (Model { page, logInOrSignUpModel }) =
     let
         ( tabText, body ) =
-            case Data.LogInState.getAccessToken logInState of
+            case Data.LogInState.getToken logInState of
                 Just accessToken ->
                     case page of
                         EditPage editModel ->

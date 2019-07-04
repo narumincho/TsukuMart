@@ -168,12 +168,12 @@ itemLike logInState sending product =
 
     else
         case logInState of
-            Data.LogInState.Ok { likedProductIds, accessToken } ->
+            Data.LogInState.Ok { likedProductIds, token } ->
                 if List.member (Product.getId product) likedProductIds then
                     Html.button
                         [ Html.Events.custom "click"
                             (Json.Decode.succeed
-                                { message = UnLike accessToken (Product.getId product)
+                                { message = UnLike token (Product.getId product)
                                 , stopPropagation = True
                                 , preventDefault = True
                                 }
@@ -187,7 +187,7 @@ itemLike logInState sending product =
                     Html.button
                         [ Html.Events.custom "click"
                             (Json.Decode.succeed
-                                { message = Like accessToken (Product.getId product)
+                                { message = Like token (Product.getId product)
                                 , stopPropagation = True
                                 , preventDefault = True
                                 }

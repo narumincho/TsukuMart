@@ -1,7 +1,7 @@
 module Data.LogInState exposing
     ( LogInState(..)
     , addUserWithNameAndLikedProductIds
-    , getAccessToken
+    , getToken
     , likeProduct
     , unlikeProduct
     , updateWithName
@@ -14,13 +14,9 @@ import Data.User as User
 
 type LogInState
     = None
-    | LoadingProfile
-        { accessToken : Api.Token
-        , refreshToken : Api.Token
-        }
+    | LoadingProfile Api.Token
     | Ok
-        { accessToken : Api.Token
-        , refreshToken : Api.Token
+        { token : Api.Token
         , userWithName : User.WithName
         , likedProductIds : List Product.Id
         }
@@ -32,10 +28,9 @@ addUserWithNameAndLikedProductIds ( userWithName, likedProductIds ) logInState =
         None ->
             None
 
-        LoadingProfile rec ->
+        LoadingProfile token ->
             Ok
-                { accessToken = rec.accessToken
-                , refreshToken = rec.refreshToken
+                { token = token
                 , userWithName = userWithName
                 , likedProductIds = likedProductIds
                 }
@@ -98,14 +93,14 @@ unlikeProduct id logInState =
             logInState
 
 
-getAccessToken : LogInState -> Maybe Api.Token
-getAccessToken logInState =
+getToken : LogInState -> Maybe Api.Token
+getToken logInState =
     case logInState of
         None ->
             Nothing
 
-        LoadingProfile { accessToken } ->
-            Just accessToken
+        LoadingProfile token ->
+            Just token
 
-        Ok { accessToken } ->
-            Just accessToken
+        Ok { token } ->
+            Just token

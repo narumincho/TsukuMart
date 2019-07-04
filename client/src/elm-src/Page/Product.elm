@@ -93,7 +93,7 @@ type Msg
 initModel : LogInState.LogInState -> Product.Id -> ( Model, List Emission )
 initModel logInState id =
     ( Loading id
-    , case LogInState.getAccessToken logInState of
+    , case LogInState.getToken logInState of
         Just accessToken ->
             [ EmissionGetProductAndMarkHistory
                 { productId = id
@@ -111,7 +111,7 @@ initModel logInState id =
 initModelFromProduct : LogInState.LogInState -> Product.Product -> ( Model, List Emission )
 initModelFromProduct logInState product =
     ( WaitNewData product
-    , case LogInState.getAccessToken logInState of
+    , case LogInState.getToken logInState of
         Just accessToken ->
             [ EmissionGetProductAndMarkHistory
                 { productId = Product.getId product
@@ -472,7 +472,7 @@ view logInState isWideScreen nowMaybe model =
                     [ Html.Attributes.class "container" ]
                     [ Html.div
                         [ Html.Attributes.class "product" ]
-                        (case LogInState.getAccessToken logInState of
+                        (case LogInState.getToken logInState of
                             Just accessToken ->
                                 [ Html.text "編集画面"
                                 ]
@@ -543,13 +543,13 @@ normalView logInState isWideScreen nowMaybe sending product =
                     (Product.detailGetCommentList product)
                  ]
                     ++ (case logInState of
-                            LogInState.Ok { accessToken, userWithName } ->
+                            LogInState.Ok { token, userWithName } ->
                                 if
                                     User.withNameGetId userWithName
                                         == User.withNameGetId (Product.detailGetSeller product)
                                 then
                                     [ editButton
-                                    , deleteView (Product.detailGetId product) accessToken
+                                    , deleteView (Product.detailGetId product) token
                                     ]
 
                                 else
@@ -611,10 +611,10 @@ likeButton logInState sending likedCount id =
 
     else
         case logInState of
-            LogInState.Ok { likedProductIds, accessToken } ->
+            LogInState.Ok { likedProductIds, token } ->
                 if List.member id likedProductIds then
                     Html.button
-                        [ Html.Events.onClick (UnLike accessToken id)
+                        [ Html.Events.onClick (UnLike token id)
                         , Html.Attributes.class "product-liked"
                         , Html.Attributes.class "product-like"
                         ]
@@ -622,7 +622,7 @@ likeButton logInState sending likedCount id =
 
                 else
                     Html.button
-                        [ Html.Events.onClick (Like accessToken id)
+                        [ Html.Events.onClick (Like token id)
                         , Html.Attributes.class "product-like"
                         ]
                         (itemLikeBody likedCount)
@@ -716,8 +716,8 @@ commentListView nowMaybe sellerId logInState commentListMaybe =
         (case commentListMaybe of
             Just commentList ->
                 case logInState of
-                    LogInState.Ok { accessToken, userWithName } ->
-                        commentInputArea accessToken
+                    LogInState.Ok { token, userWithName } ->
+                        commentInputArea token
                             :: (commentList
                                     |> List.reverse
                                     |> List.map
@@ -891,7 +891,7 @@ tradeStartButton logInState productId =
         []
         [ Html.button
             ([ Html.Attributes.class "mainButton" ]
-                ++ (case LogInState.getAccessToken logInState of
+                ++ (case LogInState.getToken logInState of
                         Just accessToken ->
                             [ Html.Events.onClick (TradeStart accessToken productId) ]
 

@@ -108,7 +108,7 @@ type Msg
     | UrlChange Url.Url
     | UrlRequest Browser.UrlRequest
     | AddLogMessage String
-    | LogInResponse (Result String { accessToken : Api.Token, refreshToken : Api.Token })
+    | LogInResponse (Result String Api.Token)
     | LogOut
     | SignUpConfirmResponse (Result String ())
     | ReceiveProductImages (List String)
@@ -181,7 +181,7 @@ init { refreshToken } url key =
 
             ( Nothing, Just refreshTokenString ) ->
                 [ Api.tokenRefresh
-                    { refresh = Api.tokenFromString refreshTokenString }
+                    refreshTokenString
                     LogInResponse
                 , Task.succeed () |> Task.perform (always (AddLogMessage "ログイン中"))
                 ]
@@ -287,18 +287,12 @@ urlParserInitResultToPageAndCmd key logInState page =
             ( PageAbout Page.About.privacyPolicyModel, Cmd.none )
 
 
-logInResponseCmd : { accessToken : Api.Token, refreshToken : Api.Token } -> Browser.Navigation.Key -> Url.Url -> Cmd Msg
-logInResponseCmd { accessToken, refreshToken } key url =
+logInResponseCmd : Api.Token -> Browser.Navigation.Key -> Url.Url -> Cmd Msg
+logInResponseCmd token key url =
     Cmd.batch
         [ Task.perform
             (always
-                (LogInResponse
-                    (Ok
-                        { accessToken = accessToken
-                        , refreshToken = refreshToken
-                        }
-                    )
-                )
+                (LogInResponse (Ok token))
             )
             (Task.succeed ())
         , Browser.Navigation.replaceUrl key (Url.toString { url | query = Nothing })
@@ -350,17 +344,16 @@ update msg (Model rec) =
 
         LogInResponse result ->
             case result of
-                Ok accessTokenAndRefreshToken ->
+                Ok token ->
                     ( Model
                         { rec
                             | message = Just "ログインしました"
                             , logInState =
-                                Data.LogInState.LoadingProfile accessTokenAndRefreshToken
+                                Data.LogInState.LoadingProfile token
                         }
                     , Cmd.batch
-                        [ Api.getMyNameAndLikedProductsId accessTokenAndRefreshToken.accessToken GetMyProfileAndLikedProductIdsResponse
-                        , saveRefreshTokenToLocalStorage
-                            (Api.tokenToString accessTokenAndRefreshToken.refreshToken)
+                        [ Api.getMyNameAndLikedProductsId token GetMyProfileAndLikedProductIdsResponse
+                        , saveRefreshTokenToLocalStorage (Api.tokenGetRefreshTokenAsString token)
                         ]
                     )
 

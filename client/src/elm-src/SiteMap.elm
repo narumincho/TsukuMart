@@ -54,7 +54,7 @@ type UrlParserInitResult
     | InitAboutPrivacyPolicy
 
 
-urlParserInit : Url.Url -> ( Maybe { refreshToken : Api.Token, accessToken : Api.Token }, Maybe UrlParserInitResult )
+urlParserInit : Url.Url -> ( Maybe Api.Token, Maybe UrlParserInitResult )
 urlParserInit url =
     let
         { path, hash } =
@@ -69,9 +69,11 @@ urlParserInit url =
     ( case ( fragmentDict |> Dict.get "refreshToken", fragmentDict |> Dict.get "accessToken" ) of
         ( Just refreshToken, Just accessToken ) ->
             Just
-                { refreshToken = Api.tokenFromString refreshToken
-                , accessToken = Api.tokenFromString accessToken
-                }
+                (Api.makeToken
+                    { refreshToken = refreshToken
+                    , accessToken = accessToken
+                    }
+                )
 
         ( _, _ ) ->
             Nothing
