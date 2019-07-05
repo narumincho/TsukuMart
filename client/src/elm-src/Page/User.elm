@@ -337,8 +337,8 @@ imageAndDisplayNameView url displayName =
         ]
         [ Html.img
             [ Html.Attributes.style "border-radius" "50%"
-            , Html.Attributes.style "width" "50%"
-            , Html.Attributes.style "height" "auto"
+            , Html.Attributes.style "width" "200px"
+            , Html.Attributes.style "height" "200px"
             , Html.Attributes.src url
             ]
             []

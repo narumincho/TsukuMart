@@ -589,14 +589,8 @@ export type Trade = {
     buyerUserId: string;
     createdAt: firestore.Timestamp;
     updateAt: firestore.Timestamp;
+    state: type.TradeState;
 };
-
-export const getAllTradeData = async (
-    userId: string
-): Promise<Array<{ id: string; data: Trade }>> =>
-    (await querySnapshotToIdAndDataArray(
-        await tradeCollectionRef.get()
-    )) as Array<{ id: string; data: Trade }>;
 
 export const getTradeData = async (id: string): Promise<Trade> => {
     const data = (await tradeCollectionRef.doc(id).get()).data();
@@ -606,17 +600,31 @@ export const getTradeData = async (id: string): Promise<Trade> => {
     return data as Trade;
 };
 
+export const updateTradeData = async (
+    id: string,
+    data: Partial<Trade>
+): Promise<void> => {
+    await tradeCollectionRef.doc(id).set(data, { merge: true });
+};
+
+export const startTrade = async (data: Trade): Promise<string> => {
+    return (await tradeCollectionRef.add(data)).id;
+};
+
 type TradeComment = {
     body: string;
     speaker: type.SellerOrBuyer;
     createdAt: firestore.Timestamp;
 };
 
-export const addTradeComment = async (id: string, data: TradeComment) => {
-    await tradeCollectionRef
+export const addTradeComment = async (
+    id: string,
+    data: TradeComment
+): Promise<string> => {
+    return (await tradeCollectionRef
         .doc(id)
         .collection("comment")
-        .add(data);
+        .add(data)).id;
 };
 
 export const getTradeComments = async (

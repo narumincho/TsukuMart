@@ -523,51 +523,6 @@ export const deleteDraftProduct = async (
     await databaseLow.deleteDraftProduct(userId, draftId);
 };
 
-export const getTrades = async (
-    userId: string
-): Promise<
-    Array<
-        Pick<type.Trade, "id" | "comment" | "createdAt" | "updateAt"> & {
-            product: { id: string };
-            buyer: { id: string };
-        }
-    >
-> =>
-    (await databaseLow.getAllTradeData(userId)).map(({ id, data }) => ({
-        id: id,
-        product: {
-            id: data.productId
-        },
-        buyer: {
-            id: data.buyerUserId
-        },
-        comment: [],
-        createdAt: databaseLow.timestampToDate(data.createdAt),
-        updateAt: databaseLow.timestampToDate(data.updateAt)
-    }));
-
-export const getTrade = async (
-    id: string
-): Promise<
-    Pick<type.Trade, "id" | "comment" | "createdAt" | "updateAt"> & {
-        product: { id: string };
-        buyer: { id: string };
-    }
-> => {
-    const data = await databaseLow.getTradeData(id);
-    return {
-        id: id,
-        product: {
-            id: data.productId
-        },
-        buyer: {
-            id: data.buyerUserId
-        },
-        comment: [],
-        createdAt: databaseLow.timestampToDate(data.createdAt),
-        updateAt: databaseLow.timestampToDate(data.updateAt)
-    };
-};
 /**
  * プロフィールを設定する
  * @param id ユーザーID
@@ -891,4 +846,159 @@ const isIncludeProductId = async (
         }
     }
     return false;
+};
+/* ==========================================
+                    Trade
+   ==========================================
+*/
+type TradeLowCost = Pick<
+    type.Trade,
+    "id" | "createdAt" | "updateAt" | "state"
+> & {
+    product: { id: string };
+    buyer: { id: string };
+};
+
+export const getTrade = async (id: string): Promise<TradeLowCost> => {
+    const data = await databaseLow.getTradeData(id);
+    return {
+        id: id,
+        product: {
+            id: data.productId
+        },
+        buyer: {
+            id: data.buyerUserId
+        },
+        createdAt: databaseLow.timestampToDate(data.createdAt),
+        updateAt: databaseLow.timestampToDate(data.updateAt),
+        state: data.state
+    };
+};
+
+export const getTradeComments = async (
+    id: string
+): Promise<Array<type.TradeComment>> =>
+    (await databaseLow.getTradeComments(id)).map(({ id, data }) => ({
+        commentId: id,
+        body: data.body,
+        speaker: data.speaker,
+        createdAt: databaseLow.timestampToDate(data.createdAt)
+    }));
+
+const tradeReturnLowCostFromDatabaseLow = ({
+    id,
+    data
+}: {
+    id: string;
+    data: databaseLow.Trade;
+}): TradeLowCost => {
+    return {
+        id: id,
+        product: {
+            id: data.productId
+        },
+        buyer: {
+            id: data.buyerUserId
+        },
+        createdAt: databaseLow.timestampToDate(data.createdAt),
+        updateAt: databaseLow.timestampToDate(data.updateAt),
+        state: data.state
+    };
+};
+
+export const addTradeComment = async (
+    userId: string,
+    tradeId: string,
+    body: string
+): Promise<TradeLowCost> => {
+    const nowTime = databaseLow.getNowTimestamp();
+    const tradeData = await databaseLow.getTradeData(tradeId);
+    if (tradeData.buyerUserId === userId) {
+        await databaseLow.addTradeComment(tradeId, {
+            body: body,
+            createdAt: nowTime,
+            speaker: "buyer"
+        });
+        await databaseLow.updateTradeData(tradeId, {
+            updateAt: nowTime
+        });
+        return tradeReturnLowCostFromDatabaseLow({
+            id: tradeId,
+            data: tradeData
+        });
+    }
+    const productData = await databaseLow.getProduct(tradeData.productId);
+    if (productData.sellerId === userId) {
+        await databaseLow.addTradeComment(tradeId, {
+            body: body,
+            createdAt: nowTime,
+            speaker: "seller"
+        });
+        await databaseLow.updateTradeData(tradeId, {
+            updateAt: nowTime
+        });
+        return tradeReturnLowCostFromDatabaseLow({
+            id: tradeId,
+            data: tradeData
+        });
+    }
+    throw new Error("取引に出品者でも、購入者でもない人がコメントしようとした");
+};
+
+export const startTrade = async (
+    buyerUserId: string,
+    productId: string
+): Promise<TradeLowCost> => {
+    const nowTime = databaseLow.getNowTimestamp();
+    const tradeId = await databaseLow.startTrade({
+        buyerUserId: buyerUserId,
+        productId: productId,
+        state: "inProgress",
+        createdAt: nowTime,
+        updateAt: nowTime
+    });
+    return {
+        id: tradeId,
+        buyer: {
+            id: buyerUserId
+        },
+        product: {
+            id: productId
+        },
+        state: "inProgress",
+        createdAt: databaseLow.timestampToDate(nowTime),
+        updateAt: databaseLow.timestampToDate(nowTime)
+    };
+};
+
+export const cancelTrade = async (
+    userId: string,
+    tradeId: string
+): Promise<TradeLowCost> => {
+    const nowTime = databaseLow.getNowTimestamp();
+    const tradeData = await databaseLow.getTradeData(tradeId);
+    if (tradeData.buyerUserId === userId) {
+        await databaseLow.updateTradeData(tradeId, {
+            updateAt: nowTime,
+            state: "cancelByBuyer"
+        });
+        return tradeReturnLowCostFromDatabaseLow({
+            id: tradeId,
+            data: { ...tradeData, updateAt: nowTime, state: "cancelByBuyer" }
+        });
+    }
+    const productData = await databaseLow.getProduct(tradeData.productId);
+    if (productData.sellerId === userId) {
+        await databaseLow.updateTradeData(tradeId, {
+            updateAt: nowTime,
+            state: "cancelBySeller"
+        });
+        return tradeReturnLowCostFromDatabaseLow({
+            id: tradeId,
+            data: { ...tradeData, updateAt: nowTime, state: "cancelBySeller" }
+        });
+    }
+    throw new Error(
+        "取引に出品者でも、購入者でもない人が取引をキャンセルしようとした"
+    );
 };

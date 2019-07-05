@@ -107,14 +107,11 @@ requestAnimationFrame(() => {
     const prodcutImageFilesResizeAndConvertToDataUrl = async (
         fileList: FileList
     ): Promise<Array<string>> => {
-        window.alert("call prodcutImageFilesResizeAndConvertToDataUrl");
         return await Promise.all(
             new Array(Math.min(fileList.length, 10)).fill(0).map((_, index) => {
-                window.alert("call each");
                 return new Promise((resolve, reject) => {
                     const file = fileList.item(index) as File;
                     const image = new Image();
-                    window.alert("create image");
                     image.addEventListener("load", () => {
                         window.alert("image url" + image.src);
                         const canvas = document.createElement("canvas");
@@ -262,7 +259,6 @@ requestAnimationFrame(() => {
     /* 商品画像の入力イベントを設定する */
     app.ports.addEventListenerForProductImages.subscribe(
         ({ inputId, labelId }) => {
-            window.alert("アカウント画像受け取りプログラムの設定");
             const addEventListenerForProductImages = () => {
                 const inputElement = document.getElementById(
                     inputId
@@ -274,14 +270,11 @@ requestAnimationFrame(() => {
                     );
                     return;
                 }
-                window.alert("対象要素の確認!");
                 inputElement.addEventListener("input", async e => {
-                    window.alert("入力された!");
                     if (inputElement.files === null) {
                         console.warn(`id=${inputId}のfilesがnullです`);
                         return;
                     }
-                    window.alert("ファイルを特定");
                     app.ports.receiveProductImages.send(
                         await prodcutImageFilesResizeAndConvertToDataUrl(
                             inputElement.files

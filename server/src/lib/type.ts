@@ -665,7 +665,33 @@ export type Trade = {
     comment: Array<TradeComment>;
     createdAt: Date;
     updateAt: Date;
+    state: TradeState;
 };
+
+const tradeStateValues = {
+    inProgress: {
+        description: "進行中"
+    },
+    finish: {
+        description: "取引終了"
+    },
+    cancelBySeller: {
+        description: "出品者がキャンセルした"
+    },
+    cancelByBuyer: {
+        description: "購入者がキャンセルした"
+    }
+};
+
+export const tardeStateDescription = "取引の状態";
+
+export type TradeState = keyof typeof tradeStateValues;
+
+export const TradeStateGraphQLType = new g.GraphQLEnumType({
+    name: "TradeState",
+    values: tradeStateValues,
+    description: tardeStateDescription
+});
 
 /* ===============================
  *        Trade Comment

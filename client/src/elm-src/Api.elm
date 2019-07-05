@@ -1123,7 +1123,7 @@ postProductComment productId commentBody =
         (\t ->
             Mutation
                 [ Field
-                    { name = "addCommentProduct"
+                    { name = "addProductComment"
                     , args =
                         [ ( "accessToken", GraphQLString (tokenGetAccessTokenAdString t) )
                         , ( "productId", GraphQLString (Product.idToString productId) )
@@ -1139,7 +1139,7 @@ postProductComment productId commentBody =
                     }
                 ]
         )
-        (Jd.field "addCommentProduct"
+        (Jd.field "addProductComment"
             (Jd.field "comments"
                 (Jd.list productCommentDecoder)
             )

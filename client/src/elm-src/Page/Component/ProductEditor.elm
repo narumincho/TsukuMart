@@ -75,14 +75,7 @@ initModelBlank =
         , beforeImageIds = []
         , deleteImagesAt = Set.empty
         }
-    , [ EmissionAddEventListenerForProductImages { labelId = photoAddLabelId, inputId = photoAddInputId }
-      , EmissionReplaceText { id = nameEditorId, text = "" }
-      , EmissionReplaceText { id = descriptionEditorId, text = "" }
-      , EmissionReplaceText { id = priceEditorId, text = "" }
-      , EmissionChangeSelectedIndex { id = conditionSelectId, index = 0 }
-      , EmissionChangeSelectedIndex { id = categoryGroupSelectId, index = 0 }
-      , EmissionChangeSelectedIndex { id = categorySelectId, index = 0 }
-      ]
+    , [ EmissionAddEventListenerForProductImages { labelId = photoAddLabelId, inputId = photoAddInputId } ]
     )
 
 
@@ -476,7 +469,9 @@ photoAdd =
             ]
             [ photoAddIcon ]
         , Html.input
-            [ Html.Attributes.style "display" "none"
+            [ Html.Attributes.style "width" "0px"
+            , Html.Attributes.style "height" "0px"
+            , Html.Attributes.style "overflow" "hidden"
             , Html.Attributes.id photoAddInputId
             , Html.Attributes.type_ "file"
             , Html.Attributes.multiple True

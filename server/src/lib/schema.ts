@@ -702,7 +702,6 @@ const setTradeData = async (
     const data = await database.getTrade(source.id);
     source.product = data.product;
     source.buyer = data.buyer;
-    source.comment = data.comment;
     source.createdAt = data.createdAt;
     source.updateAt = data.updateAt;
     return data;
@@ -746,7 +745,11 @@ const tradeGraphQLType = new g.GraphQLObjectType({
                 description: "コメント",
                 resolve: async (source, args, context, info) => {
                     if (source.comment === undefined) {
-                        return (await setTradeData(source)).comment;
+                        const comments = await database.getTradeComments(
+                            source.id
+                        );
+                        source.comment = comments;
+                        return comments;
                     }
                     return source.comment;
                 }
@@ -771,6 +774,17 @@ const tradeGraphQLType = new g.GraphQLObjectType({
                         return (await setTradeData(source)).updateAt;
                     }
                     return source.updateAt;
+                }
+            }),
+            state: makeObjectField({
+                type: g.GraphQLNonNull(type.TradeStateGraphQLType),
+                args: {},
+                description: type.tardeStateDescription,
+                resolve: async (source, args, context, info) => {
+                    if (source.state === undefined) {
+                        return (await setTradeData(source)).state;
+                    }
+                    return source.state;
                 }
             })
         }),
@@ -1295,7 +1309,7 @@ const unlikeProduct = makeQueryOrMutationField<
     description: "商品からいいねを外す"
 });
 
-const addCommentProduct = makeQueryOrMutationField<
+const addProductComment = makeQueryOrMutationField<
     { accessToken: string; productId: string } & Pick<
         type.ProductCommentInternal,
         "body"
@@ -1480,6 +1494,75 @@ const deleteDraftProduct = makeQueryOrMutationField<
     description: "商品の下書きを削除する"
 });
 
+const startTrade = makeQueryOrMutationField<
+    { accessToken: string; productId: string },
+    type.Trade
+>({
+    args: {
+        accessToken: {
+            type: g.GraphQLNonNull(g.GraphQLString),
+            description: type.accessTokenDescription
+        },
+        productId: {
+            type: g.GraphQLNonNull(g.GraphQLID),
+            description: productGraphQLType.getFields().id.description
+        }
+    },
+    type: g.GraphQLNonNull(tradeGraphQLType),
+    resolve: async (source, args, context, info) => {
+        const { id } = database.verifyAccessToken(args.accessToken);
+        return await database.startTrade(id, args.productId);
+    },
+    description: "取引を開始する"
+});
+
+const addTradeComment = makeQueryOrMutationField<
+    { accessToken: string; tradeId: string } & Pick<type.TradeComment, "body">,
+    type.Trade
+>({
+    args: {
+        accessToken: {
+            type: g.GraphQLNonNull(g.GraphQLString),
+            description: type.accessTokenDescription
+        },
+        tradeId: {
+            type: g.GraphQLNonNull(g.GraphQLString),
+            description: tradeGraphQLType.getFields().id.description
+        },
+        body: {
+            type: g.GraphQLNonNull(g.GraphQLString),
+            description: "本文"
+        }
+    },
+    type: g.GraphQLNonNull(tradeGraphQLType),
+    resolve: async (source, args, context, info) => {
+        const { id } = database.verifyAccessToken(args.accessToken);
+        return await database.addTradeComment(id, args.tradeId, args.body);
+    },
+    description: "取引にコメントを追加する"
+});
+
+const cancelTrade = makeQueryOrMutationField<
+    { accessToken: string; tradeId: string },
+    type.Trade
+>({
+    args: {
+        accessToken: {
+            type: g.GraphQLNonNull(g.GraphQLString),
+            description: type.accessTokenDescription
+        },
+        tradeId: {
+            type: g.GraphQLNonNull(g.GraphQLString),
+            description: tradeGraphQLType.getFields().id.description
+        }
+    },
+    type: g.GraphQLNonNull(tradeGraphQLType),
+    resolve: async (source, args, context, info) => {
+        const { id } = database.verifyAccessToken(args.accessToken);
+        return await database.cancelTrade(id, args.tradeId);
+    },
+    description: "取引をキャンセルする"
+});
 /*  =============================================================
                             Schema
     =============================================================
@@ -1514,7 +1597,7 @@ export const schema = new g.GraphQLSchema({
             markProductInHistory,
             likeProduct,
             unlikeProduct,
-            addCommentProduct,
+            addCommentProduct: addProductComment,
             addDraftProduct,
             updateDraftProduct,
             deleteDraftProduct

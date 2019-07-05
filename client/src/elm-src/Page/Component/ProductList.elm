@@ -1,4 +1,11 @@
-module Page.Component.ProductList exposing (Emission(..), Model, Msg(..), initModel, update, view)
+module Page.Component.ProductList exposing
+    ( Emission(..)
+    , Model
+    , Msg(..)
+    , initModel
+    , update
+    , view
+    )
 
 {-| 商品の一覧表示
 -}
