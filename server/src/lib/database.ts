@@ -957,6 +957,20 @@ export const startTrade = async (
         createdAt: nowTime,
         updateAt: nowTime
     });
+    await databaseLow.updateUserData(buyerUserId, {
+        trading: (await databaseLow.getUserData(buyerUserId)).trading.concat([
+            tradeId
+        ])
+    });
+    const sellerId = (await databaseLow.getProduct(productId)).sellerId;
+    await databaseLow.updateUserData(sellerId, {
+        trading: (await databaseLow.getUserData(sellerId)).trading.concat([
+            tradeId
+        ])
+    });
+    await databaseLow.updateProductData(productId, {
+        status: "trading"
+    });
     return {
         id: tradeId,
         buyer: {
@@ -977,28 +991,72 @@ export const cancelTrade = async (
 ): Promise<TradeLowCost> => {
     const nowTime = databaseLow.getNowTimestamp();
     const tradeData = await databaseLow.getTradeData(tradeId);
-    if (tradeData.buyerUserId === userId) {
-        await databaseLow.updateTradeData(tradeId, {
-            updateAt: nowTime,
-            state: "cancelByBuyer"
-        });
-        return tradeReturnLowCostFromDatabaseLow({
-            id: tradeId,
-            data: { ...tradeData, updateAt: nowTime, state: "cancelByBuyer" }
-        });
-    }
+    let state: type.TradeState | undefined = undefined;
     const productData = await databaseLow.getProduct(tradeData.productId);
-    if (productData.sellerId === userId) {
-        await databaseLow.updateTradeData(tradeId, {
-            updateAt: nowTime,
-            state: "cancelBySeller"
-        });
-        return tradeReturnLowCostFromDatabaseLow({
-            id: tradeId,
-            data: { ...tradeData, updateAt: nowTime, state: "cancelBySeller" }
-        });
+    if (tradeData.buyerUserId === userId) {
+        state = "cancelByBuyer";
     }
-    throw new Error(
-        "取引に出品者でも、購入者でもない人が取引をキャンセルしようとした"
+    if (productData.sellerId === userId) {
+        state = "cancelBySeller";
+    }
+    if (state === undefined) {
+        throw new Error(
+            "取引に出品者でも、購入者でもない人が取引をキャンセルしようとした"
+        );
+    }
+    await databaseLow.updateTradeData(tradeId, {
+        updateAt: nowTime,
+        state: state
+    });
+    const buyerData = await databaseLow.getUserData(tradeData.buyerUserId);
+    await databaseLow.updateUserData(tradeData.buyerUserId, {
+        trading: buyerData.trading.filter(e => e !== tradeId),
+        traded: buyerData.traded.concat([tradeId])
+    });
+    const sellerData = await await databaseLow.getUserData(
+        productData.sellerId
     );
+    await databaseLow.updateUserData(productData.sellerId, {
+        trading: sellerData.trading.filter(e => e !== tradeId),
+        traded: sellerData.traded.concat([tradeId])
+    });
+    await databaseLow.updateProductData(tradeData.productId, {
+        status: "selling"
+    });
+    return tradeReturnLowCostFromDatabaseLow({
+        id: tradeId,
+        data: { ...tradeData, updateAt: nowTime, state: state }
+    });
+};
+
+export const finishTrade = async (userId: string, tradeId: string) => {
+    const nowTime = databaseLow.getNowTimestamp();
+    const tradeData = await databaseLow.getTradeData(tradeId);
+    const productData = await databaseLow.getProduct(tradeData.productId);
+    if (tradeData.buyerUserId !== userId) {
+        throw new Error("購入者じゃない人が、取引を完了させようとした");
+    }
+    await databaseLow.updateTradeData(tradeId, {
+        updateAt: nowTime,
+        state: "finish"
+    });
+    const buyerData = await databaseLow.getUserData(tradeData.buyerUserId);
+    await databaseLow.updateUserData(tradeData.buyerUserId, {
+        trading: buyerData.trading.filter(e => e !== tradeId),
+        traded: buyerData.traded.concat([tradeId])
+    });
+    const sellerData = await await databaseLow.getUserData(
+        productData.sellerId
+    );
+    await databaseLow.updateUserData(productData.sellerId, {
+        trading: sellerData.trading.filter(e => e !== tradeId),
+        traded: sellerData.traded.concat([tradeId])
+    });
+    await databaseLow.updateProductData(tradeData.productId, {
+        status: "soldOut"
+    });
+    return tradeReturnLowCostFromDatabaseLow({
+        id: tradeId,
+        data: { ...tradeData, updateAt: nowTime, state: "finish" }
+    });
 };

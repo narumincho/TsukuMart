@@ -683,14 +683,14 @@ const tradeStateValues = {
     }
 };
 
-export const tardeStateDescription = "取引の状態";
+export const tradeStateDescription = "取引の状態";
 
 export type TradeState = keyof typeof tradeStateValues;
 
 export const TradeStateGraphQLType = new g.GraphQLEnumType({
     name: "TradeState",
     values: tradeStateValues,
-    description: tardeStateDescription
+    description: tradeStateDescription
 });
 
 /* ===============================

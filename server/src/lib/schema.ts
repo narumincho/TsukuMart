@@ -779,7 +779,7 @@ const tradeGraphQLType = new g.GraphQLObjectType({
             state: makeObjectField({
                 type: g.GraphQLNonNull(type.TradeStateGraphQLType),
                 args: {},
-                description: type.tardeStateDescription,
+                description: type.tradeStateDescription,
                 resolve: async (source, args, context, info) => {
                     if (source.state === undefined) {
                         return (await setTradeData(source)).state;
@@ -1563,6 +1563,28 @@ const cancelTrade = makeQueryOrMutationField<
     },
     description: "取引をキャンセルする"
 });
+
+const tradeFinish = makeQueryOrMutationField<
+    { accessToken: string; tradeId: string },
+    type.Trade
+>({
+    args: {
+        accessToken: {
+            type: g.GraphQLNonNull(g.GraphQLString),
+            description: type.accessTokenDescription
+        },
+        tradeId: {
+            type: g.GraphQLNonNull(g.GraphQLString),
+            description: tradeGraphQLType.getFields().id.description
+        }
+    },
+    type: g.GraphQLNonNull(tradeGraphQLType),
+    resolve: async (source, args, context, info) => {
+        const { id } = database.verifyAccessToken(args.accessToken);
+        return await database.finishTrade(id, args.tradeId);
+    },
+    description: "取引を完了する"
+});
 /*  =============================================================
                             Schema
     =============================================================
@@ -1600,7 +1622,11 @@ export const schema = new g.GraphQLSchema({
             addCommentProduct: addProductComment,
             addDraftProduct,
             updateDraftProduct,
-            deleteDraftProduct
+            deleteDraftProduct,
+            startTrade,
+            addTradeComment,
+            cancelTrade,
+            tradeFinish
         }
     })
 });
