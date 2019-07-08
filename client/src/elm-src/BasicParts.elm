@@ -19,7 +19,7 @@ import Html
 import Html.Attributes
 import Html.Events
 import Icon
-import SiteMap
+import PageLocation
 import Svg
 import Svg.Attributes
 
@@ -39,7 +39,7 @@ header isWideScreen =
         [ backArrow
         , Html.a
             [ Html.Attributes.style "flex-grow" "1"
-            , Html.Attributes.href SiteMap.homeUrl
+            , Html.Attributes.href (PageLocation.toUrlAsString PageLocation.Home)
             ]
             [ Html.h1
                 [ Html.Attributes.class "h1"
@@ -319,28 +319,28 @@ menuLogInStateNone =
         [ Html.div [ Html.Attributes.class "menu-logInSignUpButtonContainer" ]
             [ Html.a
                 [ Html.Attributes.class "menu-logInButton"
-                , Html.Attributes.href SiteMap.logInUrl
+                , Html.Attributes.href (PageLocation.toUrlAsString PageLocation.LogIn)
                 ]
                 [ Html.text "ログイン / 新規登録" ]
             ]
         ]
     , Html.a
         [ Html.Attributes.class "menu-item"
-        , Html.Attributes.href SiteMap.homeUrl
+        , Html.Attributes.href (PageLocation.toUrlAsString  PageLocation.Home)
         ]
         [ Icon.home menuIconStyle
         , Html.text "ホーム"
         ]
     , Html.a
         [ Html.Attributes.class "menu-item"
-        , Html.Attributes.href (SiteMap.searchUrl Data.SearchCondition.None)
+        , Html.Attributes.href (PageLocation.toUrlAsString  (PageLocation.Search Data.SearchCondition.None))
         ]
         [ Icon.search menuIconStyle
         , Html.text "検索"
         ]
     , Html.a
         [ Html.Attributes.class "menu-item"
-        , Html.Attributes.href SiteMap.aboutUrl
+        , Html.Attributes.href (PageLocation.toUrlAsString PageLocation.About)
         ]
         [ Icon.information menuIconStyle
         , Html.text "つくマートについて"
@@ -352,36 +352,36 @@ menuLogInStateLoadingProfile : List (Html.Html msg)
 menuLogInStateLoadingProfile =
     [ Html.a
         [ Html.Attributes.class "menu-item"
-        , Html.Attributes.href SiteMap.homeUrl
+        , Html.Attributes.href (PageLocation.toUrlAsString PageLocation.Home)
         ]
         [ Icon.home menuIconStyle
         , Html.text "ホーム"
         ]
     , Html.a
         [ Html.Attributes.class "menu-item"
-        , Html.Attributes.href (SiteMap.searchUrl Data.SearchCondition.None)
+        , Html.Attributes.href (PageLocation.toUrlAsString (PageLocation.Search Data.SearchCondition.None))
         ]
         [ Icon.search menuIconStyle
         , Html.text "検索"
         ]
     , Html.a
         [ Html.Attributes.class "menu-item"
-        , Html.Attributes.href SiteMap.notificationUrl
+        , Html.Attributes.href (PageLocation.toUrlAsString (PageLocation.Notification))
         ]
         [ Icon.notifications menuIconStyle, Html.text "通知" ]
     , Html.a
         [ Html.Attributes.class "menu-item" ]
         [ Html.text "プロフィール情報を読み込み中" ]
-    , subMenuItem (Just SiteMap.likedProductsUrl) "いいねした商品"
-    , subMenuItem (Just SiteMap.historyUrl) "閲覧した商品"
-    , subMenuItem (Just SiteMap.boughtProductsUrl) "購入した商品"
+    , subMenuItem (Just PageLocation.LikedProducts) "いいねした商品"
+    , subMenuItem (Just PageLocation.History) "閲覧した商品"
+    , subMenuItem (Just PageLocation.BoughtProducts) "購入した商品"
     , subMenuItem Nothing "出品した商品"
-    , subMenuItem (Just SiteMap.tradingProductsUrl) "進行中の取引"
-    , subMenuItem (Just SiteMap.tradedProductsUrl) "過去にした取引"
-    , subMenuItem (Just SiteMap.commentedProductsUrl) "コメントをした商品"
+    , subMenuItem (Just PageLocation.TradingProducts) "進行中の取引"
+    , subMenuItem (Just PageLocation.TradedProducts) "過去にした取引"
+    , subMenuItem (Just PageLocation.CommentedProducts) "コメントをした商品"
     , Html.a
         [ Html.Attributes.class "menu-item"
-        , Html.Attributes.href SiteMap.aboutUrl
+        , Html.Attributes.href (PageLocation.toUrlAsString PageLocation.About)
         ]
         [ Icon.information menuIconStyle, Html.text "つくマートについて" ]
     ]
@@ -391,26 +391,26 @@ menuLogInStateOk : Data.User.WithName -> List (Html.Html msg)
 menuLogInStateOk userWithName =
     [ Html.a
         [ Html.Attributes.class "menu-item"
-        , Html.Attributes.href SiteMap.homeUrl
+        , Html.Attributes.href (PageLocation.toUrlAsString PageLocation.Home)
         ]
         [ Icon.home menuIconStyle
         , Html.text "ホーム"
         ]
     , Html.a
         [ Html.Attributes.class "menu-item"
-        , Html.Attributes.href (SiteMap.searchUrl Data.SearchCondition.None)
+        , Html.Attributes.href (PageLocation.toUrlAsString (PageLocation.Search Data.SearchCondition.None))
         ]
         [ Icon.search menuIconStyle, Html.text "検索" ]
     , Html.a
         [ Html.Attributes.class "menu-item"
-        , Html.Attributes.href SiteMap.notificationUrl
+        , Html.Attributes.href (PageLocation.toUrlAsString PageLocation.Notification)
         ]
         [ Icon.notifications menuIconStyle, Html.text "通知" ]
     , Html.a
         [ Html.Attributes.href
-            (SiteMap.userUrl
+            (PageLocation.toUrlAsString (PageLocation.User
                 (Data.User.withNameGetId userWithName)
-            )
+            ))
         , Html.Attributes.class "menu-item"
         ]
         [ Html.img
@@ -426,16 +426,16 @@ menuLogInStateOk userWithName =
             []
             [ Html.text (Data.User.withNameGetDisplayName userWithName) ]
         ]
-    , subMenuItem (Just SiteMap.likedProductsUrl) "いいねした商品"
-    , subMenuItem (Just SiteMap.historyUrl) "閲覧した商品"
-    , subMenuItem (Just SiteMap.boughtProductsUrl) "購入した商品"
-    , subMenuItem (Just (SiteMap.soldProductsUrl (Data.User.withNameGetId userWithName))) "出品した商品"
-    , subMenuItem (Just SiteMap.tradingProductsUrl) "進行中の取引"
-    , subMenuItem (Just SiteMap.tradedProductsUrl) "過去にした取引"
-    , subMenuItem (Just SiteMap.commentedProductsUrl) "コメントをした商品"
+    , subMenuItem (Just PageLocation.LikedProducts) "いいねした商品"
+    , subMenuItem (Just PageLocation.History) "閲覧した商品"
+    , subMenuItem (Just PageLocation.BoughtProducts) "購入した商品"
+    , subMenuItem (Just (PageLocation.SoldProducts (Data.User.withNameGetId userWithName))) "出品した商品"
+    , subMenuItem (Just PageLocation.TradingProducts) "進行中の取引"
+    , subMenuItem (Just PageLocation.TradedProducts) "過去にした取引"
+    , subMenuItem (Just PageLocation.CommentedProducts) "コメントをした商品"
     , Html.a
         [ Html.Attributes.class "menu-item"
-        , Html.Attributes.href SiteMap.aboutUrl
+        , Html.Attributes.href (PageLocation.toUrlAsString PageLocation.About)
         ]
         [ Icon.information menuIconStyle, Html.text "つくマートについて" ]
     ]
@@ -446,13 +446,13 @@ menuIconStyle =
     "width:32px;padding:8px;fill:black"
 
 
-subMenuItem : Maybe String -> String -> Html.Html msg
+subMenuItem : Maybe PageLocation.PageLocation -> String -> Html.Html msg
 subMenuItem linkMaybe text =
     (case linkMaybe of
         Just link ->
             Html.a
                 [ Html.Attributes.class "menu-item"
-                , Html.Attributes.href link
+                , Html.Attributes.href (PageLocation.toUrlAsString link)
                 , Html.Attributes.style "padding" "4px 0px 4px 52px"
                 , Html.Attributes.style "font-size" "1.3rem"
                 ]
@@ -627,14 +627,14 @@ bottomNavigation logInState =
                 , Html.Attributes.style "width" "100%"
                 , Html.Attributes.style "background-color" "#733fa7"
                 ]
-                [ bottomNavigationItem (Just SiteMap.homeUrl) (Just Icon.home) "ホーム"
+                [ bottomNavigationItem (Just PageLocation.Home) (Just Icon.home) "ホーム"
                 , bottomNavigationItem
                     (Just
-                        (SiteMap.searchUrl Data.SearchCondition.None)
+                        (PageLocation.Search Data.SearchCondition.None)
                     )
                     (Just Icon.search)
                     "検索"
-                , bottomNavigationItem (Just SiteMap.logInUrl) Nothing "ログイン"
+                , bottomNavigationItem (Just PageLocation.LogIn) Nothing "ログイン"
                 ]
 
         Data.LogInState.LoadingProfile _ ->
@@ -647,15 +647,15 @@ bottomNavigation logInState =
                 , Html.Attributes.style "width" "100%"
                 , Html.Attributes.style "background-color" "#733fa7"
                 ]
-                [ bottomNavigationItem (Just SiteMap.homeUrl) (Just Icon.home) "ホーム"
+                [ bottomNavigationItem (Just PageLocation.Home) (Just Icon.home) "ホーム"
                 , bottomNavigationItem
                     (Just
-                        (SiteMap.searchUrl Data.SearchCondition.None)
+                        (PageLocation.Search Data.SearchCondition.None)
                     )
                     (Just Icon.search)
                     "検索"
-                , bottomNavigationItem (Just SiteMap.notificationUrl) (Just Icon.notifications) "通知"
-                , bottomNavigationItem (Just SiteMap.logInUrl) Nothing "ユーザー"
+                , bottomNavigationItem (Just PageLocation.Notification) (Just Icon.notifications) "通知"
+                , bottomNavigationItem (Just PageLocation.LogIn) Nothing "ユーザー"
                 ]
 
         Data.LogInState.Ok { userWithName } ->
@@ -668,16 +668,16 @@ bottomNavigation logInState =
                 , Html.Attributes.style "width" "100%"
                 , Html.Attributes.style "background-color" "#733fa7"
                 ]
-                [ bottomNavigationItem (Just SiteMap.homeUrl) (Just Icon.home) "ホーム"
+                [ bottomNavigationItem (Just PageLocation.Home) (Just Icon.home) "ホーム"
                 , bottomNavigationItem
                     (Just
-                        (SiteMap.searchUrl Data.SearchCondition.None)
+                        (PageLocation.Search Data.SearchCondition.None)
                     )
                     (Just Icon.search)
                     "検索"
-                , bottomNavigationItem (Just SiteMap.notificationUrl) (Just Icon.notifications) "通知"
+                , bottomNavigationItem (Just PageLocation.Notification) (Just Icon.notifications) "通知"
                 , bottomNavigationItem
-                    (Just (SiteMap.userUrl (Data.User.withNameGetId userWithName)))
+                    (Just (PageLocation.User (Data.User.withNameGetId userWithName)))
                     (Just
                         (always
                             (Html.img
@@ -693,7 +693,7 @@ bottomNavigation logInState =
                 ]
 
 
-bottomNavigationItem : Maybe String -> Maybe (String -> Html.Html msg) -> String -> Html.Html msg
+bottomNavigationItem : Maybe PageLocation.PageLocation -> Maybe (String -> Html.Html msg) -> String -> Html.Html msg
 bottomNavigationItem linkMaybe iconMaybe text =
     (case linkMaybe of
         Just link ->
@@ -704,7 +704,7 @@ bottomNavigationItem linkMaybe iconMaybe text =
                 , Html.Attributes.style "flex-direction" "column"
                 , Html.Attributes.style "color" "white"
                 , Html.Attributes.style "text-decoration" "none"
-                , Html.Attributes.href link
+                , Html.Attributes.href (PageLocation.toUrlAsString link)
                 ]
 
         Nothing ->

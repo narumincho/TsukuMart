@@ -8,7 +8,7 @@ import * as logInWithTwitter from "./twitterLogIn";
 import * as type from "./type";
 import * as utilUrl from "./util/url";
 
-const domain = "tsukumart-f0971.web.app";
+const domain = "tsukumart.com";
 /**
  * アクセストークンとリフレッシュトークンが含まれたURLを作成
  * @param refreshToken リフレッシュトークン

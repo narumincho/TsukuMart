@@ -20,7 +20,7 @@ import Html.Events
 import Html.Keyed
 import Icon
 import Page.Component.University as UniversityComponent
-import SiteMap
+import PageLocation
 
 
 type Model
@@ -416,7 +416,7 @@ userDataLink userId =
         , Html.Attributes.style "gap" "8px"
         , Html.Attributes.style "padding" "0 0 48px 0"
         ]
-        [ userDataLinkItem (SiteMap.soldProductsUrl userId) "出品した商品"
+        [ userDataLinkItem (PageLocation.SoldProducts userId) "出品した商品"
         ]
 
 
@@ -427,20 +427,20 @@ userPrivateDataLink userId =
         , Html.Attributes.style "gap" "8px"
         , Html.Attributes.style "padding" "0 0 48px 0"
         ]
-        [ userDataLinkItem SiteMap.likedProductsUrl "いいねした商品"
-        , userDataLinkItem SiteMap.historyUrl "閲覧した商品"
-        , userDataLinkItem (SiteMap.soldProductsUrl userId) "出品した商品"
-        , userDataLinkItem SiteMap.boughtProductsUrl "購入した商品"
-        , userDataLinkItem SiteMap.tradingProductsUrl "進行中の取引"
-        , userDataLinkItem SiteMap.tradedProductsUrl "過去にした取引"
-        , userDataLinkItem SiteMap.commentedProductsUrl "コメントをした商品"
+        [ userDataLinkItem PageLocation.LikedProducts "いいねした商品"
+        , userDataLinkItem PageLocation.History "閲覧した商品"
+        , userDataLinkItem (PageLocation.SoldProducts userId) "出品した商品"
+        , userDataLinkItem PageLocation.BoughtProducts "購入した商品"
+        , userDataLinkItem PageLocation.TradingProducts "進行中の取引"
+        , userDataLinkItem PageLocation.TradedProducts "過去にした取引"
+        , userDataLinkItem PageLocation.CommentedProducts "コメントをした商品"
         ]
 
 
-userDataLinkItem : String -> String -> Html.Html msg
+userDataLinkItem : PageLocation.PageLocation -> String -> Html.Html msg
 userDataLinkItem link text =
     Html.a
-        [ Html.Attributes.href link
+        [ Html.Attributes.href (PageLocation.toUrlAsString link)
         , Html.Attributes.style "text-decoration" "none"
         , Html.Attributes.style "color" "black"
         , Html.Attributes.style "background-color" "#999"

@@ -796,7 +796,10 @@ export const likeProduct = async (
     console.log(`いいね user=${userId} productId=${productId}`);
     const likedProducts = await databaseLow.getAllLikedProductsData(userId);
     const productData = await databaseLow.getProduct(productId);
+    console.log("likedProducts", likedProducts);
+    console.log("if condition", isIncludeProductId(likedProducts, productId));
     if (isIncludeProductId(likedProducts, productId)) {
+        console.log("いいねをしなかった");
         return productReturnLowCostFromDatabaseLow({
             id: productId,
             data: productData
@@ -808,6 +811,7 @@ export const likeProduct = async (
     await databaseLow.addLikedProductData(userId, productId, {
         createdAt: databaseLow.getNowTimestamp()
     });
+    console.log("いいねつけた");
     return productReturnLowCostFromDatabaseLow({
         id: productId,
         data: { ...productData, likedCount: productData.likedCount + 1 }
@@ -818,9 +822,11 @@ export const unlikeProduct = async (
     userId: string,
     productId: string
 ): Promise<ProductReturnLowCost> => {
+    console.log(`いいねをはずす user=${userId} productId=${productId}`);
     const likedProducts = await databaseLow.getAllLikedProductsData(userId);
     const productData = await databaseLow.getProduct(productId);
     if (!isIncludeProductId(likedProducts, productId)) {
+        console.log("いいねをはずすをしなかった");
         return productReturnLowCostFromDatabaseLow({
             id: productId,
             data: productData
@@ -830,21 +836,24 @@ export const unlikeProduct = async (
         likedCount: productData.likedCount - 1
     });
     await databaseLow.deleteLikedProductData(userId, productId);
+    console.log("いいねをはずした");
     return productReturnLowCostFromDatabaseLow({
         id: productId,
         data: { ...productData, likedCount: productData.likedCount - 1 }
     });
 };
 
-const isIncludeProductId = async (
+const isIncludeProductId = (
     productsList: Array<{ id: string }>,
     productId: string
 ) => {
     for (let i = 0; i < productsList.length; i++) {
-        if (productsList[i].id == productId) {
+        if (productsList[i].id === productId) {
+            console.log("ユーザー情報に良いねしていると記録している");
             return true;
         }
     }
+    console.log("ユーザー情報にいいねされていない");
     return false;
 };
 /* ==========================================

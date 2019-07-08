@@ -10,6 +10,8 @@ console.log("run index.js 2019-05-27");
 export const indexHtml = functions
     .region("us-central1")
     .https.onRequest((request, response) => {
+        console.log("host=" + request.host);
+        console.log("hostname=" + request.hostname);
         response.setHeader("content-type", "text/html");
         response.send(`<!doctype html>
 <html lang="ja">

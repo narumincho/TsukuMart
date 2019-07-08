@@ -17,7 +17,7 @@ import Html.Attributes
 import Html.Events
 import Page.Component.LogIn as LogIn
 import Page.Component.ProductEditor as ProductEditor
-import SiteMap
+import PageLocation
 
 
 type Model
@@ -226,7 +226,7 @@ toConformPageButton : Bool -> Html.Html Msg
 toConformPageButton available =
     if available then
         Html.a
-            [ Html.Attributes.href SiteMap.exhibitionConfirmUrl
+            [ Html.Attributes.href (PageLocation.toUrlAsString PageLocation.ExhibitionConfirm)
             , Html.Attributes.class "mainButton"
             ]
             [ Html.text "出品確認画面へ" ]

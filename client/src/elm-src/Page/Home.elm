@@ -6,7 +6,7 @@ import Data.Product as Product
 import Html
 import Html.Attributes
 import Page.Component.ProductList as ProductList
-import SiteMap
+import PageLocation
 
 
 type Model
@@ -197,6 +197,6 @@ exhibitButton : Html.Html Msg
 exhibitButton =
     Html.a
         [ Html.Attributes.class "exhibitionButton"
-        , Html.Attributes.href SiteMap.exhibitionUrl
+        , Html.Attributes.href (PageLocation.toUrlAsString PageLocation.Exhibition)
         ]
         [ Html.text "出品" ]

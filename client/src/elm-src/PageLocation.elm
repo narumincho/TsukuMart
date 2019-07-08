@@ -1,27 +1,11 @@
-module SiteMap exposing
-    ( UrlParserInitResult(..)
-    , UrlParserResult(..)
+module PageLocation exposing
+    ( InitPageLocation(..)
+    , PageLocation(..)
     , aboutPrivacyPolicyUrl
-    , aboutUrl
-    , boughtProductsUrl
-    , commentedProductsUrl
-    , exhibitionConfirmUrl
-    , exhibitionUrl
-    , historyUrl
-    , homeUrl
-    , likedProductsUrl
-    , logInUrl
-    , notificationUrl
-    , productUrl
-    , searchUrl
-    , siteMapXml
-    , soldProductsUrl
-    , tradeUrl
-    , tradedProductsUrl
-    , tradingProductsUrl
-    , urlParser
-    , urlParserInit
-    , userUrl
+    , fromUrl
+    , initFromUrl
+    , initToUrlAsString
+    , toUrlAsString
     )
 
 import Api
@@ -35,7 +19,7 @@ import Url
 import Url.Builder
 
 
-type UrlParserInitResult
+type InitPageLocation
     = InitHome
     | InitSignUp { sendEmailToken : String, name : String, imageId : String }
     | InitLogIn
@@ -52,13 +36,12 @@ type UrlParserInitResult
     | InitUser Data.User.Id
     | InitSearch Data.SearchCondition.Condition
     | InitNotification
-    | InitSiteMap
     | InitAbout
     | InitAboutPrivacyPolicy
 
 
-urlParserInit : Url.Url -> ( Maybe Api.Token, Maybe UrlParserInitResult )
-urlParserInit url =
+initFromUrl : Url.Url -> ( Maybe Api.Token, Maybe InitPageLocation )
+initFromUrl url =
     let
         { path, hash } =
             url
@@ -96,7 +79,6 @@ urlParserInit url =
       , userParser |> parserMap InitUser
       , searchParser fragmentDict |> parserMap InitSearch
       , notificationParser |> parserMap (always InitNotification)
-      , siteMapParser |> parserMap (always InitSiteMap)
       , aboutParser |> parserMap (always InitAbout)
       , aboutPrivacyPolicyParser |> parserMap (always InitAboutPrivacyPolicy)
       ]
@@ -123,7 +105,67 @@ oneOf list =
             Nothing
 
 
-type UrlParserResult
+{-| ページの場所から、文字列で表現したURLに変換する。一方通行のページの場合、ホームのURLを返す
+-}
+initToUrlAsString : InitPageLocation -> String
+initToUrlAsString location =
+    case location of
+        InitHome ->
+            homeUrl
+
+        InitSignUp _ ->
+            homeUrl
+
+        InitLogIn ->
+            logInUrl
+
+        InitLikedProducts ->
+            likedProductsUrl
+
+        InitHistory ->
+            historyUrl
+
+        InitSoldProducts id ->
+            soldProductsUrl id
+
+        InitBoughtProducts ->
+            boughtProductsUrl
+
+        InitTradingProducts ->
+            tradingProductsUrl
+
+        InitTradedProducts ->
+            tradedProductsUrl
+
+        InitCommentedProducts ->
+            commentedProductsUrl
+
+        InitExhibition ->
+            exhibitionUrl
+
+        InitProduct id ->
+            productUrl id
+
+        InitTrade id ->
+            tradeUrl id
+
+        InitUser id ->
+            userUrl id
+
+        InitSearch condition ->
+            searchUrl condition
+
+        InitNotification ->
+            notificationUrl
+
+        InitAbout ->
+            aboutUrl
+
+        InitAboutPrivacyPolicy ->
+            aboutPrivacyPolicyUrl
+
+
+type PageLocation
     = Home
     | LogIn
     | LikedProducts
@@ -140,13 +182,12 @@ type UrlParserResult
     | User Data.User.Id
     | Search Data.SearchCondition.Condition
     | Notification
-    | SiteMap
     | About
     | AboutPrivacyPolicy
 
 
-urlParser : Url.Url -> Maybe UrlParserResult
-urlParser url =
+fromUrl : Url.Url -> Maybe PageLocation
+fromUrl url =
     let
         { path, hash } =
             url
@@ -173,12 +214,69 @@ urlParser url =
     , userParser |> parserMap User
     , searchParser fragmentDict |> parserMap Search
     , notificationParser |> parserMap (always Notification)
-    , siteMapParser |> parserMap (always SiteMap)
     , aboutParser |> parserMap (always About)
     , aboutPrivacyPolicyParser |> parserMap (always AboutPrivacyPolicy)
     ]
         |> List.map (\f -> f path)
         |> oneOf
+
+
+toUrlAsString : PageLocation -> String
+toUrlAsString location =
+    case location of
+        Home ->
+            homeUrl
+
+        LogIn ->
+            logInUrl
+
+        LikedProducts ->
+            likedProductsUrl
+
+        History ->
+            historyUrl
+
+        SoldProducts id ->
+            soldProductsUrl id
+
+        BoughtProducts ->
+            boughtProductsUrl
+
+        TradingProducts ->
+            tradingProductsUrl
+
+        TradedProducts ->
+            tradedProductsUrl
+
+        CommentedProducts ->
+            commentedProductsUrl
+
+        Exhibition ->
+            exhibitionUrl
+
+        ExhibitionConfirm ->
+            exhibitionConfirmUrl
+
+        Product id ->
+            productUrl id
+
+        Trade id ->
+            tradeUrl id
+
+        User id ->
+            userUrl id
+
+        Search condition ->
+            searchUrl condition
+
+        Notification ->
+            notificationUrl
+
+        About ->
+            aboutUrl
+
+        AboutPrivacyPolicy ->
+            aboutPrivacyPolicyUrl
 
 
 homeParser : List String -> Maybe ()
@@ -614,41 +712,3 @@ aboutPrivacyPolicyUrl =
 aboutPrivacyPolicyPath : String
 aboutPrivacyPolicyPath =
     "privacy-policy"
-
-
-
-{- siteMap -}
-
-
-siteMapParser : List String -> Maybe ()
-siteMapParser path =
-    if path == [ siteMapPath ] then
-        Just ()
-
-    else
-        Nothing
-
-
-siteMapPath : String
-siteMapPath =
-    "sitemap"
-
-
-siteMapXml : String
-siteMapXml =
-    ([ "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-     , "<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n"
-     ]
-        ++ ([ homeUrl ]
-                |> List.map urlNode
-           )
-        ++ [ "</urlset>\n" ]
-    )
-        |> String.concat
-
-
-urlNode : String -> String
-urlNode string =
-    "  <url>\n"
-        ++ ("    <loc>https://tsukumart.com" ++ string ++ "</loc>\n")
-        ++ "  </url>\n"

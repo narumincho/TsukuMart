@@ -17,7 +17,7 @@ import Html
 import Html.Attributes
 import Html.Events
 import Json.Decode
-import SiteMap
+import PageLocation
 
 
 type Model
@@ -132,7 +132,7 @@ item : Data.LogInState.LogInState -> Bool -> Product.Product -> Html.Html Msg
 item logInState sending product =
     Html.a
         [ Html.Attributes.class "productList-item"
-        , Html.Attributes.href (SiteMap.productUrl (Product.getId product))
+        , Html.Attributes.href (PageLocation.toUrlAsString (PageLocation.Product (Product.getId product)))
         , Html.Attributes.id (productIdString (Product.getId product))
         ]
         [ itemImage (Product.getName product) (Product.getThumbnailImageUrl product)

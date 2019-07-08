@@ -27,13 +27,12 @@ import Page.Notification
 import Page.Product
 import Page.Search
 import Page.SignUp
-import Page.SiteMap
 import Page.SoldProducts
 import Page.Trade
 import Page.TradedProducts
 import Page.TradingProducts
 import Page.User
-import SiteMap
+import PageLocation
 import Task
 import Time
 import Url
@@ -102,7 +101,6 @@ type PageModel
     | PageSearch Page.Search.Model
     | PageNotification Page.Notification.Model
     | PageAbout Page.About.Model
-    | PageSiteMapXml
 
 
 type Msg
@@ -162,7 +160,7 @@ init : { refreshToken : Maybe String } -> Url.Url -> Browser.Navigation.Key -> (
 init { refreshToken } url key =
     let
         ( accessTokenAndRefreshTokenByUrl, page ) =
-            SiteMap.urlParserInit url
+            PageLocation.initFromUrl url
 
         ( newPage, cmd ) =
             urlParserInit Data.LogInState.None key page
@@ -181,6 +179,11 @@ init { refreshToken } url key =
             ( Just accessTokenAndRefreshToken, _ ) ->
                 [ logInResponseCmd accessTokenAndRefreshToken key url
                 , Task.succeed () |> Task.perform (always (AddLogMessage "ログイン中"))
+                , Browser.Navigation.replaceUrl key
+                    (page
+                        |> Maybe.withDefault PageLocation.InitHome
+                        |> PageLocation.initToUrlAsString
+                    )
                 ]
 
             ( Nothing, Just refreshTokenString ) ->
@@ -204,7 +207,7 @@ init { refreshToken } url key =
     )
 
 
-urlParserInit : Data.LogInState.LogInState -> Browser.Navigation.Key -> Maybe SiteMap.UrlParserInitResult -> ( PageModel, Cmd Msg )
+urlParserInit : Data.LogInState.LogInState -> Browser.Navigation.Key -> Maybe PageLocation.InitPageLocation -> ( PageModel, Cmd Msg )
 urlParserInit logInState key page =
     case page of
         Just p ->
@@ -214,14 +217,14 @@ urlParserInit logInState key page =
             pageNotFound
 
 
-urlParserInitResultToPageAndCmd : Browser.Navigation.Key -> Data.LogInState.LogInState -> SiteMap.UrlParserInitResult -> ( PageModel, Cmd Msg )
+urlParserInitResultToPageAndCmd : Browser.Navigation.Key -> Data.LogInState.LogInState -> PageLocation.InitPageLocation -> ( PageModel, Cmd Msg )
 urlParserInitResultToPageAndCmd key logInState page =
     case page of
-        SiteMap.InitHome ->
+        PageLocation.InitHome ->
             Page.Home.initModel Nothing
                 |> mapPageModel PageHome homePageEmissionToCmd
 
-        SiteMap.InitSignUp { name, imageId, sendEmailToken } ->
+        PageLocation.InitSignUp { name, imageId, sendEmailToken } ->
             Page.SignUp.initModel
                 { name = name
                 , imageId = imageId
@@ -229,69 +232,66 @@ urlParserInitResultToPageAndCmd key logInState page =
                 }
                 |> mapPageModel PageSignUp signUpPageEmissionToCmd
 
-        SiteMap.InitLogIn ->
+        PageLocation.InitLogIn ->
             Page.LogIn.initModel
                 |> mapPageModel PageLogIn (logInPageEmissionToCmd key)
 
-        SiteMap.InitLikedProducts ->
+        PageLocation.InitLikedProducts ->
             Page.LikedProducts.initModel Nothing logInState
                 |> mapPageModel PageLikedProducts likedProductsEmissionToCmd
 
-        SiteMap.InitHistory ->
+        PageLocation.InitHistory ->
             Page.History.initModel Nothing logInState
                 |> mapPageModel PageHistory historyEmissionToCmd
 
-        SiteMap.InitSoldProducts userId ->
+        PageLocation.InitSoldProducts userId ->
             Page.SoldProducts.initModel userId Nothing
                 |> mapPageModel PageSoldProducts soldProductsPageEmissionToCmd
 
-        SiteMap.InitBoughtProducts ->
+        PageLocation.InitBoughtProducts ->
             Page.BoughtProducts.initModel Nothing logInState
                 |> mapPageModel PageBoughtProducts boughtProductsPageEmissionToCmd
 
-        SiteMap.InitTradingProducts ->
+        PageLocation.InitTradingProducts ->
             Page.TradingProducts.initModel Nothing logInState
                 |> mapPageModel PageTradingProducts tradingProductsEmissionToCmd
 
-        SiteMap.InitTradedProducts ->
+        PageLocation.InitTradedProducts ->
             Page.TradedProducts.initModel Nothing logInState
                 |> mapPageModel PageTradedProducts tradedProductsEmissionToCmd
 
-        SiteMap.InitCommentedProducts ->
+        PageLocation.InitCommentedProducts ->
             Page.CommentedProducts.initModel Nothing logInState
                 |> mapPageModel PageCommentedProducts commentedProductsEmissionToCmd
 
-        SiteMap.InitExhibition ->
+        PageLocation.InitExhibition ->
             Page.Exhibition.initModel
                 |> mapPageModel PageExhibition exhibitionPageEmissionToCmd
 
-        SiteMap.InitProduct productId ->
+        PageLocation.InitProduct productId ->
             Page.Product.initModel logInState productId
                 |> mapPageModel PageProduct (productPageEmissionToCmd key)
 
-        SiteMap.InitTrade tradeId ->
+        PageLocation.InitTrade tradeId ->
             Page.Trade.initModelFromId logInState tradeId
                 |> mapPageModel PageTrade tradePageEmissionToCmd
 
-        SiteMap.InitUser userId ->
+        PageLocation.InitUser userId ->
             Page.User.initModelFromId logInState userId
                 |> mapPageModel PageUser userPageEmissionToCmd
 
-        SiteMap.InitSearch condition ->
+        PageLocation.InitSearch condition ->
             Page.Search.initModel condition
                 |> mapPageModel PageSearch searchPageEmissionToCmd
 
-        SiteMap.InitNotification ->
+        PageLocation.InitNotification ->
             Page.Notification.initModel
                 |> mapPageModel PageNotification notificationEmissionToCmd
 
-        SiteMap.InitSiteMap ->
-            ( PageSiteMapXml, Cmd.none )
-
-        SiteMap.InitAbout ->
+        PageLocation.InitAbout ->
             ( PageAbout Page.About.aboutModel, Cmd.none )
 
-        SiteMap.InitAboutPrivacyPolicy ->
+        PageLocation.InitAboutPrivacyPolicy ->
             ( PageAbout Page.About.privacyPolicyModel, Cmd.none )
 
 
@@ -384,7 +384,7 @@ update msg (Model rec) =
                             , page = PageHome newModel
                         }
                     , Cmd.batch
-                        ([ Browser.Navigation.pushUrl rec.key SiteMap.homeUrl
+                        ([ Browser.Navigation.pushUrl rec.key (PageLocation.toUrlAsString PageLocation.Home)
                          ]
                             ++ List.map homePageEmissionToCmd emissions
                         )
@@ -818,7 +818,7 @@ logInPageEmissionToCmd key emission =
             logInEmissionToCmd e
 
         Page.LogIn.EmissionPageToHome ->
-            Browser.Navigation.pushUrl key SiteMap.homeUrl
+            Browser.Navigation.pushUrl key (PageLocation.toUrlAsString PageLocation.Home)
 
 
 exhibitionPageEmissionToCmd : Page.Exhibition.Emission -> Cmd Msg
@@ -942,7 +942,7 @@ productPageEmissionToCmd key emission =
             Api.deleteProduct token productId
 
         Page.Product.EmissionJumpToTradePage trade ->
-            Browser.Navigation.pushUrl key (SiteMap.tradeUrl (Data.Trade.getId trade))
+            Browser.Navigation.pushUrl key (PageLocation.toUrlAsString (PageLocation.Trade (Data.Trade.getId trade)))
 
         Page.Product.EmissionByProductEditor e ->
             productEditorEmissionToCmd e
@@ -1012,7 +1012,7 @@ urlParser : Model -> Url.Url -> ( Model, Cmd Msg )
 urlParser (Model rec) url =
     let
         ( page, emissions ) =
-            case SiteMap.urlParser url of
+            case PageLocation.fromUrl url of
                 Just urlParserResult ->
                     urlParserResultToPageAndCmd (Model rec) urlParserResult
 
@@ -1038,46 +1038,46 @@ pageNotFound =
             )
 
 
-urlParserResultToPageAndCmd : Model -> SiteMap.UrlParserResult -> ( PageModel, Cmd Msg )
+urlParserResultToPageAndCmd : Model -> PageLocation.PageLocation -> ( PageModel, Cmd Msg )
 urlParserResultToPageAndCmd (Model rec) result =
     case result of
-        SiteMap.Home ->
+        PageLocation.Home ->
             Page.Home.initModel (getProductId rec.page)
                 |> mapPageModel PageHome homePageEmissionToCmd
 
-        SiteMap.LogIn ->
+        PageLocation.LogIn ->
             Page.LogIn.initModel
                 |> mapPageModel PageLogIn (logInPageEmissionToCmd rec.key)
 
-        SiteMap.LikedProducts ->
+        PageLocation.LikedProducts ->
             Page.LikedProducts.initModel (getProductId rec.page) rec.logInState
                 |> mapPageModel PageLikedProducts likedProductsEmissionToCmd
 
-        SiteMap.History ->
+        PageLocation.History ->
             Page.History.initModel (getProductId rec.page) rec.logInState
                 |> mapPageModel PageHistory historyEmissionToCmd
 
-        SiteMap.SoldProducts userId ->
+        PageLocation.SoldProducts userId ->
             Page.SoldProducts.initModel userId (getProductId rec.page)
                 |> mapPageModel PageSoldProducts soldProductsPageEmissionToCmd
 
-        SiteMap.BoughtProducts ->
+        PageLocation.BoughtProducts ->
             Page.BoughtProducts.initModel (getProductId rec.page) rec.logInState
                 |> mapPageModel PageBoughtProducts boughtProductsPageEmissionToCmd
 
-        SiteMap.TradingProducts ->
+        PageLocation.TradingProducts ->
             Page.TradingProducts.initModel (getProductId rec.page) rec.logInState
                 |> mapPageModel PageTradingProducts tradingProductsEmissionToCmd
 
-        SiteMap.TradedProducts ->
+        PageLocation.TradedProducts ->
             Page.TradedProducts.initModel (getProductId rec.page) rec.logInState
                 |> mapPageModel PageTradedProducts tradedProductsEmissionToCmd
 
-        SiteMap.CommentedProducts ->
+        PageLocation.CommentedProducts ->
             Page.CommentedProducts.initModel (getProductId rec.page) rec.logInState
                 |> mapPageModel PageCommentedProducts commentedProductsEmissionToCmd
 
-        SiteMap.Exhibition ->
+        PageLocation.Exhibition ->
             case rec.page of
                 PageExhibition exhibitionModel ->
                     exhibitionModel
@@ -1088,7 +1088,7 @@ urlParserResultToPageAndCmd (Model rec) result =
                     Page.Exhibition.initModel
                         |> mapPageModel PageExhibition exhibitionPageEmissionToCmd
 
-        SiteMap.ExhibitionConfirm ->
+        PageLocation.ExhibitionConfirm ->
             case rec.page of
                 PageExhibition pageModel ->
                     case Page.Exhibition.toConfirmPageMsgFromModel rec.logInState pageModel of
@@ -1103,7 +1103,7 @@ urlParserResultToPageAndCmd (Model rec) result =
                 _ ->
                     ( rec.page, Cmd.none )
 
-        SiteMap.Product productId ->
+        PageLocation.Product productId ->
             (case getProductFromPage productId rec.page of
                 Just product ->
                     Page.Product.initModelFromProduct rec.logInState product
@@ -1113,7 +1113,7 @@ urlParserResultToPageAndCmd (Model rec) result =
             )
                 |> mapPageModel PageProduct (productPageEmissionToCmd rec.key)
 
-        SiteMap.Trade tradeId ->
+        PageLocation.Trade tradeId ->
             (case getTradeFromPage tradeId rec.page of
                 Just trade ->
                     Page.Trade.initModelFromTrade rec.logInState trade
@@ -1123,7 +1123,7 @@ urlParserResultToPageAndCmd (Model rec) result =
             )
                 |> mapPageModel PageTrade tradePageEmissionToCmd
 
-        SiteMap.User userId ->
+        PageLocation.User userId ->
             (case getUserFromPage userId rec.page of
                 Just userWithName ->
                     Page.User.initModelWithName userWithName
@@ -1133,24 +1133,19 @@ urlParserResultToPageAndCmd (Model rec) result =
             )
                 |> mapPageModel PageUser userPageEmissionToCmd
 
-        SiteMap.Search condition ->
+        PageLocation.Search condition ->
             Page.Search.initModel condition
                 |> mapPageModel PageSearch searchPageEmissionToCmd
 
-        SiteMap.Notification ->
+        PageLocation.Notification ->
             Page.Notification.initModel
                 |> mapPageModel PageNotification notificationEmissionToCmd
 
-        SiteMap.About ->
+        PageLocation.About ->
             ( PageAbout Page.About.aboutModel, Cmd.none )
 
-        SiteMap.AboutPrivacyPolicy ->
+        PageLocation.AboutPrivacyPolicy ->
             ( PageAbout Page.About.privacyPolicyModel, Cmd.none )
-
-        SiteMap.SiteMap ->
-            ( PageSiteMapXml
-            , Cmd.none
-            )
 
 
 {-| 指定したページにあるメインの商品ID
@@ -1435,10 +1430,6 @@ titleAndTabDataAndMainView logInState isWideScreen nowMaybe page =
         PageAbout model ->
             model
                 |> Page.About.view
-
-        PageSiteMapXml ->
-            Page.SiteMap.view
-
 
 mapPageData :
     (eachPageMsg -> PageMsg)

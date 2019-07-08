@@ -26,7 +26,7 @@ import Html.Attributes
 import Html.Events
 import Icon
 import Page.Component.ProductEditor as ProductEditor
-import SiteMap
+import PageLocation
 import Svg
 import Svg.Attributes
 import Time
@@ -652,7 +652,7 @@ sellerNameView user =
         []
         [ Html.div [ Html.Attributes.class "product-label" ] [ Html.text "出品者" ]
         , Html.a
-            [ Html.Attributes.href (SiteMap.userUrl (User.withNameGetId user)) ]
+            [ Html.Attributes.href (PageLocation.toUrlAsString (PageLocation.User (User.withNameGetId user))) ]
             [ Html.img
                 [ Html.Attributes.style "border-radius" "50%"
                 , Html.Attributes.style "width" "3rem"
@@ -765,7 +765,7 @@ commentView nowMaybe sellerId myIdMaybe comment =
                  else
                     "product-comment-name"
                 )
-            , Html.Attributes.href (SiteMap.userUrl (User.withNameGetId speaker))
+            , Html.Attributes.href (PageLocation.toUrlAsString (PageLocation.User (User.withNameGetId speaker)))
             ]
             [ Html.img
                 [ Html.Attributes.style "border-radius" "50%"

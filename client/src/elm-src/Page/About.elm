@@ -2,7 +2,7 @@ module Page.About exposing (Model, aboutModel, privacyPolicyModel, view)
 
 import Html
 import Html.Attributes
-import SiteMap
+import PageLocation
 import BasicParts
 
 
@@ -33,7 +33,7 @@ view model =
                     [ Html.div []
                         [ Html.text "つくマートについて"
                         , Html.a
-                            [ Html.Attributes.href SiteMap.aboutPrivacyPolicyUrl
+                            [ Html.Attributes.href PageLocation.aboutPrivacyPolicyUrl
                             , Html.Attributes.class "mainButton"
                             ]
                             [ Html.text "プライバシーポリシー" ]
