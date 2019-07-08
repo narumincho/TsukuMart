@@ -16,6 +16,7 @@ module SiteMap exposing
     , searchUrl
     , siteMapXml
     , soldProductsUrl
+    , tradeUrl
     , tradedProductsUrl
     , tradingProductsUrl
     , urlParser
@@ -26,6 +27,7 @@ module SiteMap exposing
 import Api
 import Data.Product
 import Data.SearchCondition
+import Data.Trade
 import Data.User
 import Dict
 import Erl
@@ -46,6 +48,7 @@ type UrlParserInitResult
     | InitCommentedProducts
     | InitExhibition
     | InitProduct Data.Product.Id
+    | InitTrade Data.Trade.Id
     | InitUser Data.User.Id
     | InitSearch Data.SearchCondition.Condition
     | InitNotification
@@ -89,6 +92,7 @@ urlParserInit url =
       , commentedProductsParser |> parserMap (always InitCommentedProducts)
       , exhibitionParser |> parserMap (always InitExhibition)
       , productParser |> parserMap InitProduct
+      , tradeParser |> parserMap InitTrade
       , userParser |> parserMap InitUser
       , searchParser fragmentDict |> parserMap InitSearch
       , notificationParser |> parserMap (always InitNotification)
@@ -132,6 +136,7 @@ type UrlParserResult
     | Exhibition
     | ExhibitionConfirm
     | Product Data.Product.Id
+    | Trade Data.Trade.Id
     | User Data.User.Id
     | Search Data.SearchCondition.Condition
     | Notification
@@ -164,6 +169,7 @@ urlParser url =
     , exhibitionParser |> parserMap (always Exhibition)
     , exhibitionConfirmParser |> parserMap (always ExhibitionConfirm)
     , productParser |> parserMap Product
+    , tradeParser |> parserMap Trade
     , userParser |> parserMap User
     , searchParser fragmentDict |> parserMap Search
     , notificationParser |> parserMap (always Notification)
@@ -470,7 +476,26 @@ productUrl productId =
 
 
 
-{- user -}
+{- Trade -}
+
+
+tradeParser : List String -> Maybe Data.Trade.Id
+tradeParser path =
+    case path of
+        [ "trade", idString ] ->
+            idString |> Data.Trade.idFromString |> Just
+
+        _ ->
+            Nothing
+
+
+tradeUrl : Data.Trade.Id -> String
+tradeUrl id =
+    Url.Builder.absolute [ "trade", Data.Trade.idToString id ] []
+
+
+
+{- User -}
 
 
 userParser : List String -> Maybe Data.User.Id

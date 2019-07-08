@@ -6,6 +6,7 @@ import Browser
 import Browser.Navigation
 import Data.LogInState
 import Data.Product
+import Data.Trade
 import Data.User
 import Html
 import Html.Attributes
@@ -28,6 +29,7 @@ import Page.Search
 import Page.SignUp
 import Page.SiteMap
 import Page.SoldProducts
+import Page.Trade
 import Page.TradedProducts
 import Page.TradingProducts
 import Page.User
@@ -95,6 +97,7 @@ type PageModel
     | PageCommentedProducts Page.CommentedProducts.Model
     | PageExhibition Page.Exhibition.Model
     | PageProduct Page.Product.Model
+    | PageTrade Page.Trade.Model
     | PageUser Page.User.Model
     | PageSearch Page.Search.Model
     | PageNotification Page.Notification.Model
@@ -125,21 +128,22 @@ type Msg
 
 
 type PageMsg
-    = HomePageMsg Page.Home.Msg
-    | LikedProductsPageMsg Page.LikedProducts.Msg
-    | HistoryPageMsg Page.History.Msg
-    | SoldProductsPageMsg Page.SoldProducts.Msg
-    | BoughtProductsPageMsg Page.BoughtProducts.Msg
-    | TradingProductsPageMsg Page.TradingProducts.Msg
-    | TradedProductsPageMsg Page.TradedProducts.Msg
-    | CommentedProductsPageMsg Page.CommentedProducts.Msg
-    | LogInPageMsg Page.LogIn.Msg
-    | ExhibitionPageMsg Page.Exhibition.Msg
-    | SignUpMsg Page.SignUp.Msg
-    | SearchPageMsg Page.Search.Msg
-    | NotificationMsg Page.Notification.Msg
-    | UserPageMsg Page.User.Msg
-    | ProductPageMsg Page.Product.Msg
+    = PageMsgHome Page.Home.Msg
+    | PageMsgLikedProducts Page.LikedProducts.Msg
+    | PageMsgHistory Page.History.Msg
+    | PageMsgSoldProducts Page.SoldProducts.Msg
+    | PageMsgBoughtProducts Page.BoughtProducts.Msg
+    | PageMsgTradingProducts Page.TradingProducts.Msg
+    | PageMsgTradedProducts Page.TradedProducts.Msg
+    | PageMsgCommentedProducts Page.CommentedProducts.Msg
+    | PageMsgLogIn Page.LogIn.Msg
+    | PageMsgExhibition Page.Exhibition.Msg
+    | PageMsgSignUp Page.SignUp.Msg
+    | PageMsgSearch Page.Search.Msg
+    | PageMsgNotification Page.Notification.Msg
+    | PageMsgProduct Page.Product.Msg
+    | PageMsgUser Page.User.Msg
+    | PageMsgTrade Page.Trade.Msg
 
 
 main : Program { refreshToken : Maybe String } Model Msg
@@ -263,7 +267,11 @@ urlParserInitResultToPageAndCmd key logInState page =
 
         SiteMap.InitProduct productId ->
             Page.Product.initModel logInState productId
-                |> mapPageModel PageProduct productPageEmissionToCmd
+                |> mapPageModel PageProduct (productPageEmissionToCmd key)
+
+        SiteMap.InitTrade tradeId ->
+            Page.Trade.initModelFromId logInState tradeId
+                |> mapPageModel PageTrade tradePageEmissionToCmd
 
         SiteMap.InitUser userId ->
             Page.User.initModelFromId logInState userId
@@ -413,7 +421,7 @@ update msg (Model rec) =
                                 productPageModel
                     in
                     ( Model { rec | page = PageProduct newModel }
-                    , emissions |> List.map productPageEmissionToCmd |> Cmd.batch
+                    , emissions |> List.map (productPageEmissionToCmd rec.key) |> Cmd.batch
                     )
 
                 _ ->
@@ -477,7 +485,7 @@ update msg (Model rec) =
         LikeProductResponse id response ->
             let
                 ( page, cmd ) =
-                    updateLikedCountInEachPageProduct id response rec.page
+                    updateLikedCountInEachPageProduct rec.key id response rec.page
             in
             ( Model
                 { rec
@@ -490,7 +498,7 @@ update msg (Model rec) =
         UnlikeProductResponse id response ->
             let
                 ( page, cmd ) =
-                    updateLikedCountInEachPageProduct id response rec.page
+                    updateLikedCountInEachPageProduct rec.key id response rec.page
             in
             ( Model
                 { rec
@@ -568,80 +576,85 @@ update msg (Model rec) =
 updatePageMsg : PageMsg -> Model -> ( PageModel, Cmd Msg )
 updatePageMsg pageMsg (Model rec) =
     case ( pageMsg, rec.page ) of
-        ( HomePageMsg msg, PageHome model ) ->
+        ( PageMsgHome msg, PageHome model ) ->
             model
                 |> Page.Home.update msg
                 |> mapPageModel PageHome homePageEmissionToCmd
 
-        ( LikedProductsPageMsg msg, PageLikedProducts model ) ->
+        ( PageMsgLikedProducts msg, PageLikedProducts model ) ->
             model
                 |> Page.LikedProducts.update msg
                 |> mapPageModel PageLikedProducts likedProductsEmissionToCmd
 
-        ( HistoryPageMsg msg, PageHistory model ) ->
+        ( PageMsgHistory msg, PageHistory model ) ->
             model
                 |> Page.History.update msg
                 |> mapPageModel PageHistory historyEmissionToCmd
 
-        ( SoldProductsPageMsg msg, PageSoldProducts model ) ->
+        ( PageMsgSoldProducts msg, PageSoldProducts model ) ->
             model
                 |> Page.SoldProducts.update msg
                 |> mapPageModel PageSoldProducts soldProductsPageEmissionToCmd
 
-        ( BoughtProductsPageMsg msg, PageBoughtProducts model ) ->
+        ( PageMsgBoughtProducts msg, PageBoughtProducts model ) ->
             model
                 |> Page.BoughtProducts.update msg
                 |> mapPageModel PageBoughtProducts boughtProductsPageEmissionToCmd
 
-        ( TradingProductsPageMsg msg, PageTradingProducts model ) ->
+        ( PageMsgTradingProducts msg, PageTradingProducts model ) ->
             model
                 |> Page.TradingProducts.update msg
                 |> mapPageModel PageTradingProducts tradingProductsEmissionToCmd
 
-        ( TradedProductsPageMsg msg, PageTradedProducts model ) ->
+        ( PageMsgTradedProducts msg, PageTradedProducts model ) ->
             model
                 |> Page.TradedProducts.update msg
                 |> mapPageModel PageTradedProducts tradedProductsEmissionToCmd
 
-        ( CommentedProductsPageMsg msg, PageCommentedProducts model ) ->
+        ( PageMsgCommentedProducts msg, PageCommentedProducts model ) ->
             model
                 |> Page.CommentedProducts.update msg
                 |> mapPageModel PageCommentedProducts commentedProductsEmissionToCmd
 
-        ( LogInPageMsg msg, PageLogIn model ) ->
+        ( PageMsgLogIn msg, PageLogIn model ) ->
             model
                 |> Page.LogIn.update msg
                 |> mapPageModel PageLogIn (logInPageEmissionToCmd rec.key)
 
-        ( ExhibitionPageMsg msg, PageExhibition model ) ->
+        ( PageMsgExhibition msg, PageExhibition model ) ->
             model
                 |> Page.Exhibition.update rec.logInState msg
                 |> mapPageModel PageExhibition exhibitionPageEmissionToCmd
 
-        ( SignUpMsg msg, PageSignUp model ) ->
+        ( PageMsgSignUp msg, PageSignUp model ) ->
             model
                 |> Page.SignUp.update msg
                 |> mapPageModel PageSignUp signUpPageEmissionToCmd
 
-        ( SearchPageMsg msg, PageSearch model ) ->
+        ( PageMsgSearch msg, PageSearch model ) ->
             model
                 |> Page.Search.update msg
                 |> mapPageModel PageSearch searchPageEmissionToCmd
 
-        ( NotificationMsg msg, PageNotification model ) ->
+        ( PageMsgNotification msg, PageNotification model ) ->
             model
                 |> Page.Notification.update msg
                 |> mapPageModel PageNotification notificationEmissionToCmd
 
-        ( UserPageMsg msg, PageUser model ) ->
+        ( PageMsgUser msg, PageUser model ) ->
             model
                 |> Page.User.update msg
                 |> mapPageModel PageUser userPageEmissionToCmd
 
-        ( ProductPageMsg msg, PageProduct model ) ->
+        ( PageMsgProduct msg, PageProduct model ) ->
             model
                 |> Page.Product.update msg
-                |> mapPageModel PageProduct productPageEmissionToCmd
+                |> mapPageModel PageProduct (productPageEmissionToCmd rec.key)
+
+        ( PageMsgTrade msg, PageTrade model ) ->
+            model
+                |> Page.Trade.update msg
+                |> mapPageModel PageTrade tradePageEmissionToCmd
 
         ( _, _ ) ->
             ( rec.page, Cmd.none )
@@ -666,13 +679,13 @@ homePageEmissionToCmd : Page.Home.Emission -> Cmd Msg
 homePageEmissionToCmd emission =
     case emission of
         Page.Home.EmissionGetRecentProducts ->
-            Api.getRecentProductList (Page.Home.GetRecentProductsResponse >> HomePageMsg >> PageMsg)
+            Api.getRecentProductList (Page.Home.GetRecentProductsResponse >> PageMsgHome >> PageMsg)
 
         Page.Home.EmissionGetRecommendProducts ->
-            Api.getRecommendProductList (Page.Home.GetRecommendProductsResponse >> HomePageMsg >> PageMsg)
+            Api.getRecommendProductList (Page.Home.GetRecommendProductsResponse >> PageMsgHome >> PageMsg)
 
         Page.Home.EmissionGetFreeProducts ->
-            Api.getFreeProductList (Page.Home.GetFreeProductsResponse >> HomePageMsg >> PageMsg)
+            Api.getFreeProductList (Page.Home.GetFreeProductsResponse >> PageMsgHome >> PageMsg)
 
         Page.Home.EmissionProducts e ->
             productListEmissionToCmd e
@@ -687,7 +700,7 @@ likedProductsEmissionToCmd emission =
     case emission of
         Page.LikedProducts.EmissionGetLikedProducts token ->
             Api.getLikedProducts token
-                (Page.LikedProducts.GetProductsResponse >> LikedProductsPageMsg >> PageMsg)
+                (Page.LikedProducts.GetProductsResponse >> PageMsgLikedProducts >> PageMsg)
 
         Page.LikedProducts.EmissionByLogIn e ->
             logInEmissionToCmd e
@@ -704,7 +717,7 @@ historyEmissionToCmd : Page.History.Emission -> Cmd Msg
 historyEmissionToCmd emission =
     case emission of
         Page.History.EmissionGetHistoryProducts token ->
-            Api.getHistoryViewProducts token (Page.History.GetProductsResponse >> HistoryPageMsg >> PageMsg)
+            Api.getHistoryViewProducts token (Page.History.GetProductsResponse >> PageMsgHistory >> PageMsg)
 
         Page.History.EmissionByLogIn e ->
             logInEmissionToCmd e
@@ -722,7 +735,7 @@ soldProductsPageEmissionToCmd emission =
     case emission of
         Page.SoldProducts.EmissionGetSoldProducts userId ->
             Api.getSoldProductList userId
-                (Page.SoldProducts.GetSoldProductListResponse >> SoldProductsPageMsg >> PageMsg)
+                (Page.SoldProducts.GetSoldProductListResponse >> PageMsgSoldProducts >> PageMsg)
 
         Page.SoldProducts.EmissionByProductList e ->
             productListEmissionToCmd e
@@ -737,7 +750,7 @@ boughtProductsPageEmissionToCmd emission =
     case emission of
         Page.BoughtProducts.EmissionGetPurchaseProducts token ->
             Api.getBoughtProductList token
-                (Page.BoughtProducts.GetProductsResponse >> BoughtProductsPageMsg >> PageMsg)
+                (Page.BoughtProducts.GetProductsResponse >> PageMsgBoughtProducts >> PageMsg)
 
         Page.BoughtProducts.EmissionByLogIn e ->
             logInEmissionToCmd e
@@ -755,13 +768,10 @@ tradingProductsEmissionToCmd emission =
     case emission of
         Page.TradingProducts.EmissionGetTradingProducts token ->
             Api.getTradingProductList token
-                (Page.TradingProducts.GetProductsResponse >> TradingProductsPageMsg >> PageMsg)
+                (Page.TradingProducts.GetProductsResponse >> PageMsgTradingProducts >> PageMsg)
 
         Page.TradingProducts.EmissionByLogIn e ->
             logInEmissionToCmd e
-
-        Page.TradingProducts.EmissionByProductList e ->
-            productListEmissionToCmd e
 
         Page.TradingProducts.EmissionAddLogMessage log ->
             Task.succeed ()
@@ -773,13 +783,10 @@ tradedProductsEmissionToCmd emission =
     case emission of
         Page.TradedProducts.EmissionGetTradedProducts token ->
             Api.getTradedProductList token
-                (Page.TradedProducts.GetTradesResponse >> TradedProductsPageMsg >> PageMsg)
+                (Page.TradedProducts.GetTradesResponse >> PageMsgTradedProducts >> PageMsg)
 
         Page.TradedProducts.EmissionByLogIn e ->
             logInEmissionToCmd e
-
-        Page.TradedProducts.EmissionByProductList e ->
-            productListEmissionToCmd e
 
         Page.TradedProducts.EmissionAddLogMessage log ->
             Task.succeed ()
@@ -791,7 +798,7 @@ commentedProductsEmissionToCmd emission =
     case emission of
         Page.CommentedProducts.EmissionGetCommentedProducts token ->
             Api.getCommentedProductList token
-                (Page.CommentedProducts.GetProductsResponse >> CommentedProductsPageMsg >> PageMsg)
+                (Page.CommentedProducts.GetProductsResponse >> PageMsgCommentedProducts >> PageMsg)
 
         Page.CommentedProducts.EmissionByLogIn e ->
             logInEmissionToCmd e
@@ -881,35 +888,35 @@ userPageEmissionToCmd emission =
 
         Page.User.EmissionGetUserProfile userId ->
             Api.getUserProfile userId
-                (Page.User.MsgUserProfileResponse >> UserPageMsg >> PageMsg)
+                (Page.User.MsgUserProfileResponse >> PageMsgUser >> PageMsg)
 
         Page.User.EmissionAddLogMessage log ->
             Task.succeed ()
                 |> Task.perform (always (AddLogMessage log))
 
 
-productPageEmissionToCmd : Page.Product.Emission -> Cmd Msg
-productPageEmissionToCmd emission =
+productPageEmissionToCmd : Browser.Navigation.Key -> Page.Product.Emission -> Cmd Msg
+productPageEmissionToCmd key emission =
     case emission of
         Page.Product.EmissionGetProduct { productId } ->
             Api.getProduct productId
-                (Page.Product.GetProductResponse >> ProductPageMsg >> PageMsg)
+                (Page.Product.GetProductResponse >> PageMsgProduct >> PageMsg)
 
         Page.Product.EmissionGetProductAndMarkHistory { productId, token } ->
             Api.markProductInHistory
                 productId
                 token
-                (Page.Product.GetProductResponse >> ProductPageMsg >> PageMsg)
+                (Page.Product.GetProductResponse >> PageMsgProduct >> PageMsg)
 
         Page.Product.EmissionGetCommentList { productId } ->
-            Api.getProductComments productId (Page.Product.GetCommentListResponse >> ProductPageMsg >> PageMsg)
+            Api.getProductComments productId (Page.Product.GetCommentListResponse >> PageMsgProduct >> PageMsg)
 
         Page.Product.EmissionPostComment token { productId } comment ->
             Api.postProductComment
                 productId
                 comment
                 token
-                (Page.Product.GetCommentListResponse >> ProductPageMsg >> PageMsg)
+                (Page.Product.GetCommentListResponse >> PageMsgProduct >> PageMsg)
 
         Page.Product.EmissionLike token id ->
             Api.likeProduct id token (LikeProductResponse id)
@@ -918,7 +925,7 @@ productPageEmissionToCmd emission =
             Api.unlikeProduct id token (UnlikeProductResponse id)
 
         Page.Product.EmissionTradeStart token id ->
-            Api.tradeStart token id (Page.Product.TradeStartResponse >> ProductPageMsg >> PageMsg)
+            Api.startTrade id token (Page.Product.TradeStartResponse >> PageMsgProduct >> PageMsg)
 
         Page.Product.EmissionAddLogMessage log ->
             Task.succeed ()
@@ -934,6 +941,9 @@ productPageEmissionToCmd emission =
         Page.Product.EmissionDelete token productId ->
             Api.deleteProduct token productId
 
+        Page.Product.EmissionJumpToTradePage trade ->
+            Browser.Navigation.pushUrl key (SiteMap.tradeUrl (Data.Trade.getId trade))
+
         Page.Product.EmissionByProductEditor e ->
             productEditorEmissionToCmd e
 
@@ -941,10 +951,17 @@ productPageEmissionToCmd emission =
             Api.updateProduct token
                 productId
                 requestData
-                (Page.Product.UpdateProductDataResponse >> ProductPageMsg >> PageMsg)
+                (Page.Product.UpdateProductDataResponse >> PageMsgProduct >> PageMsg)
 
         Page.Product.EmissionReplaceElementText idAndText ->
             replaceText idAndText
+
+
+tradePageEmissionToCmd : Page.Trade.Emission -> Cmd Msg
+tradePageEmissionToCmd emission =
+    case emission of
+        Page.Trade.Emission ->
+            Cmd.none
 
 
 
@@ -1094,7 +1111,17 @@ urlParserResultToPageAndCmd (Model rec) result =
                 Nothing ->
                     Page.Product.initModel rec.logInState productId
             )
-                |> mapPageModel PageProduct productPageEmissionToCmd
+                |> mapPageModel PageProduct (productPageEmissionToCmd rec.key)
+
+        SiteMap.Trade tradeId ->
+            (case getTradeFromPage tradeId rec.page of
+                Just trade ->
+                    Page.Trade.initModelFromTrade rec.logInState trade
+
+                Nothing ->
+                    Page.Trade.initModelFromId rec.logInState tradeId
+            )
+                |> mapPageModel PageTrade tradePageEmissionToCmd
 
         SiteMap.User userId ->
             (case getUserFromPage userId rec.page of
@@ -1180,6 +1207,21 @@ getProductFromPage productId pageModel =
         |> Data.Product.searchFromId productId
 
 
+getTradeFromPage : Data.Trade.Id -> PageModel -> Maybe Data.Trade.Trade
+getTradeFromPage tradeId pageModel =
+    (case pageModel of
+        PageTradingProducts model ->
+            Page.TradingProducts.getAllTrades model
+
+        PageTradedProducts model ->
+            Page.TradedProducts.getAllTrades model
+
+        _ ->
+            []
+    )
+        |> Data.Trade.searchFromId tradeId
+
+
 getUserFromPage : Data.User.Id -> PageModel -> Maybe Data.User.WithName
 getUserFromPage userId pageModel =
     (case pageModel of
@@ -1197,8 +1239,8 @@ getUserFromPage userId pageModel =
 
 {-| 各ページにいいねを押した結果を反映するように通知する
 -}
-updateLikedCountInEachPageProduct : Data.Product.Id -> Result String Int -> PageModel -> ( PageModel, Cmd Msg )
-updateLikedCountInEachPageProduct productId result page =
+updateLikedCountInEachPageProduct : Browser.Navigation.Key -> Data.Product.Id -> Result String Int -> PageModel -> ( PageModel, Cmd Msg )
+updateLikedCountInEachPageProduct key productId result page =
     let
         productListMsg =
             Page.Component.ProductList.UpdateLikedCountResponse productId result
@@ -1227,7 +1269,7 @@ updateLikedCountInEachPageProduct productId result page =
         PageProduct pageMsg ->
             pageMsg
                 |> Page.Product.update (Page.Product.LikeResponse result)
-                |> mapPageModel PageProduct productPageEmissionToCmd
+                |> mapPageModel PageProduct (productPageEmissionToCmd key)
 
         _ ->
             ( page
@@ -1313,77 +1355,82 @@ titleAndTabDataAndMainView logInState isWideScreen nowMaybe page =
         PageHome model ->
             model
                 |> Page.Home.view logInState isWideScreen
-                |> mapPageData HomePageMsg
+                |> mapPageData PageMsgHome
 
         PageLikedProducts model ->
             model
                 |> Page.LikedProducts.view logInState isWideScreen
-                |> mapPageData LikedProductsPageMsg
+                |> mapPageData PageMsgLikedProducts
 
         PageHistory model ->
             model
                 |> Page.History.view logInState isWideScreen
-                |> mapPageData HistoryPageMsg
+                |> mapPageData PageMsgHistory
 
         PageBoughtProducts model ->
             model
                 |> Page.BoughtProducts.view logInState isWideScreen
-                |> mapPageData BoughtProductsPageMsg
+                |> mapPageData PageMsgBoughtProducts
 
         PageSoldProducts model ->
             model
                 |> Page.SoldProducts.view logInState isWideScreen
-                |> mapPageData SoldProductsPageMsg
+                |> mapPageData PageMsgSoldProducts
 
         PageTradingProducts model ->
             model
                 |> Page.TradingProducts.view logInState isWideScreen
-                |> mapPageData TradingProductsPageMsg
+                |> mapPageData PageMsgTradingProducts
 
         PageTradedProducts model ->
             model
                 |> Page.TradedProducts.view logInState isWideScreen
-                |> mapPageData TradedProductsPageMsg
+                |> mapPageData PageMsgTradedProducts
 
         PageCommentedProducts model ->
             model
                 |> Page.CommentedProducts.view logInState isWideScreen
-                |> mapPageData CommentedProductsPageMsg
+                |> mapPageData PageMsgCommentedProducts
 
         PageExhibition model ->
             model
                 |> Page.Exhibition.view logInState
-                |> mapPageData ExhibitionPageMsg
+                |> mapPageData PageMsgExhibition
 
         PageSignUp model ->
             model
                 |> Page.SignUp.view
-                |> mapPageData SignUpMsg
+                |> mapPageData PageMsgSignUp
 
         PageLogIn model ->
             model
                 |> Page.LogIn.view
-                |> mapPageData LogInPageMsg
+                |> mapPageData PageMsgLogIn
 
         PageProduct model ->
             model
                 |> Page.Product.view logInState isWideScreen nowMaybe
-                |> mapPageData ProductPageMsg
+                |> mapPageData PageMsgProduct
+
+        PageTrade model ->
+            model
+                |> Page.Trade.view
+                |> mapPageData PageMsgTrade
 
         PageUser model ->
             model
                 |> Page.User.view logInState
-                |> mapPageData UserPageMsg
+                |> mapPageData PageMsgUser
 
         PageSearch model ->
             model
                 |> Page.Search.view
-                |> mapPageData SearchPageMsg
+                |> mapPageData PageMsgSearch
 
         PageNotification model ->
             model
                 |> Page.Notification.view
-                |> mapPageData NotificationMsg
+                |> mapPageData PageMsgNotification
 
         PageAbout model ->
             model

@@ -121,7 +121,7 @@ fromApi rec =
         , status = rec.status
         , category = rec.category
         , thumbnailImageId = rec.thumbnailImageId
-        , likedCount = max 0 rec.likedCount
+        , likedCount = rec.likedCount
         }
 
 

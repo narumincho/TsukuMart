@@ -24,12 +24,10 @@ export const indexHtml = functions
     <link rel="icon" href="/assets/logo_bird.png">
     <link rel="manifest" href="/manifest.json">
     <meta name="twitter:card" content="summary_large_image">
-    <meta property="og:url" content="https://tsukumart-f0971.web.app${
-        request.url
-    }">
+    <meta property="og:url" content="https://tsukumart.com${request.url}">
     <meta property="og:title" content="つくマート">
     <meta property="og:description" content="記事の要約 デバッグ=${Math.random()}">
-    <meta property="og:image" content="https://tsukumart-f0971.web.app/assets/logo_bird.png">
+    <meta property="og:image" content="https://tsukumart.com/assets/logo_bird.png">
     <script src="/main.js" defer></script>
     <script src="/call.js" type="module"></script>
 </head>
@@ -53,7 +51,7 @@ export const api = functions
         console.log("API called");
         response.setHeader(
             "Access-Control-Allow-Origin",
-            "https://tsukumart-f0971.web.app"
+            "https://tsukumart.com"
         );
         response.setHeader("vary", "Origin");
         if (request.method === "OPTIONS") {
@@ -96,7 +94,7 @@ export const image = functions
     .https.onRequest(async (request, response) => {
         response.setHeader(
             "Access-Control-Allow-Origin",
-            "https://tsukumart-f0971.web.app"
+            "https://tsukumart.com"
         );
         response.setHeader("vary", "Origin");
         if (request.method === "OPTIONS") {

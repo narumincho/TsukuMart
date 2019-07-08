@@ -19,6 +19,7 @@ import Api
 import BasicParts
 import Data.LogInState as LogInState
 import Data.Product as Product
+import Data.Trade as Trade
 import Data.User as User
 import Html
 import Html.Attributes
@@ -63,6 +64,7 @@ type Emission
     | EmissionAddLogMessage String
     | EmissionUpdateNowTime
     | EmissionDelete Api.Token Product.Id
+    | EmissionJumpToTradePage Trade.Trade
     | EmissionByProductEditor ProductEditor.Emission
     | EmissionUpdateProductData Api.Token Product.Id Api.UpdateProductRequest
     | EmissionReplaceElementText { id : String, text : String }
@@ -76,7 +78,7 @@ type Msg
     | LikeResponse (Result String Int)
     | UnlikeResponse (Result String Int)
     | TradeStart Api.Token Product.Id
-    | TradeStartResponse (Result String ())
+    | TradeStartResponse (Result String Trade.Trade)
     | ToConfirmPage
     | InputComment String
     | SendComment Api.Token
@@ -328,8 +330,10 @@ update msg model =
         TradeStartResponse result ->
             ( model
             , case result of
-                Ok () ->
-                    [ EmissionAddLogMessage "取引開始" ]
+                Ok trade ->
+                    [ EmissionAddLogMessage "取引開始"
+                    , EmissionJumpToTradePage trade
+                    ]
 
                 Err text ->
                     [ EmissionAddLogMessage ("取引開始を失敗しました " ++ text) ]

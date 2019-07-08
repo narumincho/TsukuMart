@@ -3,6 +3,7 @@ module Page.TradingProducts exposing
     , Model
     , Msg(..)
     , getAllProducts
+    , getAllTrades
     , initModel
     , update
     , view
@@ -16,69 +17,65 @@ import Data.Trade as Trade
 import Html
 import Html.Attributes
 import Page.Component.LogIn as LogIn
-import Page.Component.ProductList as ProductList
+import Page.Component.TradeList as TradeList
 
 
 type Model
     = Model
         { normal : NormalModel
         , logIn : LogIn.Model
-        , productList : ProductList.Model
         }
 
 
 type NormalModel
     = Loading
-    | Normal (List Product.Product)
+    | Normal (List Trade.Trade)
     | Error
 
 
 type Msg
     = GetProductsResponse (Result String (List Trade.Trade))
     | MsgByLogIn LogIn.Msg
-    | MsgByProductList ProductList.Msg
 
 
 type Emission
     = EmissionGetTradingProducts Api.Token
     | EmissionByLogIn LogIn.Emission
-    | EmissionByProductList ProductList.Emission
     | EmissionAddLogMessage String
 
 
 initModel : Maybe Product.Id -> LogInState.LogInState -> ( Model, List Emission )
 initModel goodIdMaybe logInState =
-    let
-        ( productListModel, emissionList ) =
-            ProductList.initModel goodIdMaybe
-    in
     ( Model
         { normal = Loading
         , logIn = LogIn.initModel
-        , productList = productListModel
         }
-    , (case LogInState.getToken logInState of
+    , case LogInState.getToken logInState of
         Just accessToken ->
             [ EmissionGetTradingProducts accessToken
             ]
 
         Nothing ->
             []
-      )
-        ++ (emissionList |> List.map EmissionByProductList)
     )
 
 
 {-| この画面から取得できる商品のデータを集める
 -}
-getAllProducts : Model -> List Product.Product
-getAllProducts (Model { normal }) =
+getAllTrades : Model -> List Trade.Trade
+getAllTrades (Model { normal }) =
     case normal of
-        Normal products ->
-            products
+        Normal trades ->
+            trades
 
         _ ->
             []
+
+
+getAllProducts : Model -> List Product.Product
+getAllProducts =
+    getAllTrades
+        >> List.map Trade.getProduct
 
 
 update : Msg -> Model -> ( Model, List Emission )
@@ -88,7 +85,7 @@ update msg (Model rec) =
             case result of
                 Ok products ->
                     ( Model rec
-                    , [ EmissionAddLogMessage "取引データの表示幅を調整中" ]
+                    , [ EmissionAddLogMessage "取引データの表示は調整中" ]
                       -- TODO
                     )
 
@@ -107,40 +104,6 @@ update msg (Model rec) =
                 { rec | logIn = newModel }
             , emissionList |> List.map EmissionByLogIn
             )
-
-        MsgByProductList productListMsg ->
-            let
-                ( newModel, emissionList ) =
-                    rec.productList |> ProductList.update productListMsg
-            in
-            ( case productListMsg of
-                ProductList.UpdateLikedCountResponse id (Ok likedCount) ->
-                    Model
-                        { rec
-                            | normal = updateLikedCount likedCount id rec.normal
-                            , productList = newModel
-                        }
-
-                _ ->
-                    Model { rec | productList = newModel }
-            , emissionList |> List.map EmissionByProductList
-            )
-
-
-updateLikedCount : Int -> Product.Id -> NormalModel -> NormalModel
-updateLikedCount likedCount id normalModel =
-    case normalModel of
-        Loading ->
-            Loading
-
-        Normal products ->
-            Normal
-                (products
-                    |> Product.updateById id (Product.updateLikedCount likedCount)
-                )
-
-        Error ->
-            Error
 
 
 view :
@@ -166,20 +129,17 @@ view logInState isWideScreen (Model rec) =
                 ]
 
             _ ->
-                [ ProductList.view
-                    rec.productList
-                    logInState
+                [ TradeList.view
                     isWideScreen
                     (case rec.normal of
                         Loading ->
                             Nothing
 
-                        Normal products ->
-                            Just products
+                        Normal trades ->
+                            Just trades
 
                         Error ->
                             Just []
                     )
-                    |> Html.map MsgByProductList
                 ]
     }

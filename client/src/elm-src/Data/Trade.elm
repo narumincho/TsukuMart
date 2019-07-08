@@ -16,12 +16,14 @@ module Data.Trade exposing
     , fromApi
     , getBuyer
     , getCreatedAt
+    , getId
     , getProduct
     , getProductId
     , getSeller
-    , getTradeId
     , getUpdateAt
-    )
+    , idFromString
+    , idToString
+    , searchFromId)
 
 import Data.Product as Product
 import Data.User as User
@@ -41,6 +43,16 @@ type Trade
 
 type Id
     = Id String
+
+
+idFromString : String -> Id
+idFromString =
+    Id
+
+
+idToString : Id -> String
+idToString (Id string) =
+    string
 
 
 fromApi :
@@ -63,38 +75,38 @@ fromApi rec =
         }
 
 
-getTradeId : TradeDetail -> Id
-getTradeId (TradeDetail { id }) =
+getId : Trade -> Id
+getId (Trade { id }) =
     id
 
 
-getProductId : TradeDetail -> Id
-getProductId (TradeDetail { id }) =
+getProductId : Trade -> Id
+getProductId (Trade { id }) =
     id
 
 
-getProduct : TradeDetail -> Product.Product
-getProduct (TradeDetail { product }) =
+getProduct : Trade -> Product.Product
+getProduct (Trade { product }) =
     product
 
 
-getSeller : TradeDetail -> User.WithName
-getSeller (TradeDetail { seller }) =
+getSeller : Trade -> User.WithName
+getSeller (Trade { seller }) =
     seller
 
 
-getBuyer : TradeDetail -> User.WithName
-getBuyer (TradeDetail { buyer }) =
+getBuyer : Trade -> User.WithName
+getBuyer (Trade { buyer }) =
     buyer
 
 
-getCreatedAt : TradeDetail -> Time.Posix
-getCreatedAt (TradeDetail { createdAt }) =
+getCreatedAt : Trade -> Time.Posix
+getCreatedAt (Trade { createdAt }) =
     createdAt
 
 
-getUpdateAt : TradeDetail -> Time.Posix
-getUpdateAt (TradeDetail { updateAt }) =
+getUpdateAt : Trade -> Time.Posix
+getUpdateAt (Trade { updateAt }) =
     updateAt
 
 
@@ -183,3 +195,17 @@ detailGetUpdateAt (TradeDetail { updateAt }) =
 detailGetComment : TradeDetail -> List Comment
 detailGetComment (TradeDetail { comments }) =
     comments
+
+
+searchFromId : Id -> List Trade -> Maybe Trade
+searchFromId id list =
+    case list of
+        x :: xs ->
+            if getId x == id then
+                Just x
+
+            else
+                searchFromId id xs
+
+        [] ->
+            Nothing

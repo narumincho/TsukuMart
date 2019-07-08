@@ -1,4 +1,10 @@
-module Page.Component.TradeList exposing (Model)
+module Page.Component.TradeList exposing (view)
 
-type Model
-    = Trade
+import Data.Trade as Trade
+import Html
+
+view : Bool -> Maybe (List Trade.Trade) -> Html.Html msg
+view isWideScreen tradesMaybe =
+    Html.div
+        []
+        []

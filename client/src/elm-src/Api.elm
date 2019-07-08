@@ -27,9 +27,9 @@ module Api exposing
     , postProductComment
     , sellProduct
     , sendConfirmEmail
+    , startTrade
     , tokenGetRefreshTokenAsString
     , tokenRefresh
-    , tradeStart
     , unlikeProduct
     , updateProduct
     , updateProfile
@@ -150,8 +150,8 @@ makeToken { accessToken, refreshToken } =
         }
 
 
-tokenGetAccessTokenAdString : Token -> String
-tokenGetAccessTokenAdString (Token { access }) =
+tokenGetAccessTokenAsString : Token -> String
+tokenGetAccessTokenAsString (Token { access }) =
     access
 
 
@@ -187,7 +187,7 @@ getMyNameAndLikedProductsId =
             Query
                 [ Field
                     { name = "userPrivate"
-                    , args = [ ( "accessToken", GraphQLString (tokenGetAccessTokenAdString t) ) ]
+                    , args = [ ( "accessToken", GraphQLString (tokenGetAccessTokenAsString t) ) ]
                     , return =
                         [ Field { name = "id", args = [], return = [] }
                         , Field { name = "displayName", args = [], return = [] }
@@ -335,7 +335,7 @@ sellProduct (SellProductRequest request) =
                 [ Field
                     { name = "sellProduct"
                     , args =
-                        [ ( "accessToken", GraphQLString (tokenGetAccessTokenAdString token) )
+                        [ ( "accessToken", GraphQLString (tokenGetAccessTokenAsString token) )
                         , ( "name", GraphQLString request.name )
                         , ( "price", GraphQLInt request.price )
                         , ( "description", GraphQLString request.description )
@@ -568,7 +568,7 @@ updateProfile { displayName, introduction, image, university } =
                 [ Field
                     { name = "updateProfile"
                     , args =
-                        [ ( "accessToken", GraphQLString (tokenGetAccessTokenAdString token) )
+                        [ ( "accessToken", GraphQLString (tokenGetAccessTokenAsString token) )
                         , ( "displayName", GraphQLString displayName )
                         , ( "image", nullableGraphQLValue GraphQLString image )
                         , ( "introduction", GraphQLString introduction )
@@ -591,13 +591,13 @@ updateProfile { displayName, introduction, image, university } =
 
 
 getLikedProducts : Token -> (Result String (List Product.Product) -> msg) -> Cmd msg
-getLikedProducts  =
+getLikedProducts =
     graphQlApiRequestWithToken
         (\token ->
             Query
                 [ Field
                     { name = "userPrivate"
-                    , args = [ ( "accessToken", GraphQLString (tokenGetAccessTokenAdString token) ) ]
+                    , args = [ ( "accessToken", GraphQLString (tokenGetAccessTokenAsString token) ) ]
                     , return =
                         [ Field
                             { name = "likedProductAll"
@@ -627,7 +627,7 @@ getHistoryViewProducts =
             Query
                 [ Field
                     { name = "userPrivate"
-                    , args = [ ( "accessToken", GraphQLString (tokenGetAccessTokenAdString token) ) ]
+                    , args = [ ( "accessToken", GraphQLString (tokenGetAccessTokenAsString token) ) ]
                     , return =
                         [ Field
                             { name = "historyViewProductAll"
@@ -687,7 +687,7 @@ getBoughtProductList =
             Query
                 [ Field
                     { name = "userPrivate"
-                    , args = [ ( "accessToken", GraphQLString (tokenGetAccessTokenAdString token) ) ]
+                    , args = [ ( "accessToken", GraphQLString (tokenGetAccessTokenAsString token) ) ]
                     , return =
                         [ Field
                             { name = "boughtProductAll"
@@ -717,7 +717,7 @@ getTradingProductList =
             Query
                 [ Field
                     { name = "userPrivate"
-                    , args = [ ( "accessToken", GraphQLString (tokenGetAccessTokenAdString token) ) ]
+                    , args = [ ( "accessToken", GraphQLString (tokenGetAccessTokenAsString token) ) ]
                     , return =
                         [ Field
                             { name = "tradingAll"
@@ -731,45 +731,6 @@ getTradingProductList =
         (Jd.field "userPrivate"
             (Jd.field "tradingAll" (Jd.list tradeDecoder))
         )
-
-
-tradeReturn : List Field
-tradeReturn =
-    [ Field { name = "id", args = [], return = [] }
-    , Field
-        { name = "product"
-        , args = []
-        , return =
-            productReturn
-                ++ [ Field
-                        { name = "seller", args = [], return = userWithNameReturn }
-                   ]
-        }
-    , Field { name = "buyer", args = [], return = userWithNameReturn }
-    , Field { name = "createdAt", args = [], return = [] }
-    , Field { name = "updateAt", args = [], return = [] }
-    ]
-
-
-tradeDecoder : Jd.Decoder Trade.Trade
-tradeDecoder =
-    Jd.succeed
-        (\id product seller buyer createdAt updateAt ->
-            Trade.fromApi
-                { id = id
-                , product = product
-                , seller = seller
-                , buyer = buyer
-                , createdAt = createdAt
-                , updateAt = updateAt
-                }
-        )
-        |> Jdp.required "id" Jd.string
-        |> Jdp.required "product" productDecoder
-        |> Jdp.requiredAt [ "product", "seller" ] userWithNameDecoder
-        |> Jdp.required "buyer" userWithNameDecoder
-        |> Jdp.required "createdAt" dateTimeDecoder
-        |> Jdp.required "updateAt" dateTimeDecoder
 
 
 
@@ -786,7 +747,7 @@ getTradedProductList =
             Query
                 [ Field
                     { name = "userPrivate"
-                    , args = [ ( "accessToken", GraphQLString (tokenGetAccessTokenAdString token) ) ]
+                    , args = [ ( "accessToken", GraphQLString (tokenGetAccessTokenAsString token) ) ]
                     , return =
                         [ Field
                             { name = "tradedAll"
@@ -810,13 +771,13 @@ getTradedProductList =
 
 
 getCommentedProductList : Token -> (Result String (List Product.Product) -> msg) -> Cmd msg
-getCommentedProductList  =
+getCommentedProductList =
     graphQlApiRequestWithToken
         (\token ->
             Query
                 [ Field
                     { name = "userPrivate"
-                    , args = [ ( "accessToken", GraphQLString (tokenGetAccessTokenAdString token) ) ]
+                    , args = [ ( "accessToken", GraphQLString (tokenGetAccessTokenAsString token) ) ]
                     , return =
                         [ Field
                             { name = "commentedProductAll"
@@ -977,7 +938,7 @@ markProductInHistory productId =
                 [ Field
                     { name = "markProductInHistory"
                     , args =
-                        [ ( "accessToken", GraphQLString (tokenGetAccessTokenAdString token) )
+                        [ ( "accessToken", GraphQLString (tokenGetAccessTokenAsString token) )
                         , ( "productId", GraphQLString (Product.idToString productId) )
                         ]
                     , return = productDetailReturn
@@ -994,7 +955,7 @@ markProductInHistory productId =
 -}
 
 
-likeProduct : Product.Id -> Token ->(Result String Int -> msg) -> Cmd msg
+likeProduct : Product.Id -> Token -> (Result String Int -> msg) -> Cmd msg
 likeProduct productId =
     graphQlApiRequestWithToken
         (\token ->
@@ -1002,7 +963,7 @@ likeProduct productId =
                 [ Field
                     { name = "likeProduct"
                     , args =
-                        [ ( "accessToken", GraphQLString (tokenGetAccessTokenAdString token) )
+                        [ ( "accessToken", GraphQLString (tokenGetAccessTokenAsString token) )
                         , ( "productId", GraphQLString (Product.idToString productId) )
                         ]
                     , return = productOnlyLikeCountReturn
@@ -1039,7 +1000,7 @@ unlikeProduct productId callBack =
                 [ Field
                     { name = "unlikeProduct"
                     , args =
-                        [ ( "accessToken", GraphQLString (tokenGetAccessTokenAdString token) )
+                        [ ( "accessToken", GraphQLString (tokenGetAccessTokenAsString token) )
                         , ( "productId", GraphQLString (Product.idToString productId) )
                         ]
                     , return = productOnlyLikeCountReturn
@@ -1125,7 +1086,7 @@ postProductComment productId commentBody =
                 [ Field
                     { name = "addProductComment"
                     , args =
-                        [ ( "accessToken", GraphQLString (tokenGetAccessTokenAdString t) )
+                        [ ( "accessToken", GraphQLString (tokenGetAccessTokenAsString t) )
                         , ( "productId", GraphQLString (Product.idToString productId) )
                         , ( "body", GraphQLString commentBody )
                         ]
@@ -1159,19 +1120,141 @@ dateTimeDecoder =
 -}
 
 
-tradeStart : Token -> Product.Id -> (Result String () -> msg) -> Cmd msg
-tradeStart token productId msg =
-    Cmd.none
+startTrade : Product.Id -> Token -> (Result String Trade.Trade -> msg) -> Cmd msg
+startTrade productId =
+    graphQlApiRequestWithToken
+        (\token ->
+            Mutation
+                [ Field
+                    { name = "startTrade"
+                    , args =
+                        [ ( "accessToken", GraphQLString (tokenGetAccessTokenAsString token) )
+                        , ( "productId", GraphQLString (Product.idToString productId) )
+                        ]
+                    , return = tradeReturn
+                    }
+                ]
+        )
+        (Jd.field "startTrade" tradeDecoder)
 
 
-tradeStartResponseToResult : Http.Response String -> Result () ()
-tradeStartResponseToResult response =
-    case response of
-        Http.GoodStatus_ _ _ ->
-            Ok ()
+tradeDetailReturn : List Field
+tradeDetailReturn =
+    [ Field { name = "id", args = [], return = [] }
+    , Field
+        { name = "product"
+        , args = []
+        , return =
+            productReturn ++ [ Field { name = "seller", args = [], return = userWithNameReturn } ]
+        }
+    , Field { name = "buyer", args = [], return = userWithNameReturn }
+    , Field { name = "createdAt", args = [], return = [] }
+    , Field { name = "updateAt", args = [], return = [] }
+    , Field
+        { name = "comment"
+        , args = []
+        , return = tradeCommentReturn
+        }
+    ]
 
-        _ ->
-            Err ()
+
+tradeDetailDecoder : Jd.Decoder Trade.TradeDetail
+tradeDetailDecoder =
+    Jd.succeed
+        (\id product seller buyer createdAt updateAt comments ->
+            Trade.detailFromApi
+                { id = id
+                , product = product
+                , seller = seller
+                , buyer = buyer
+                , createdAt = createdAt
+                , updateAt = updateAt
+                , comments = comments
+                }
+        )
+        |> Jdp.required "id" Jd.string
+        |> Jdp.required "product" productDecoder
+        |> Jdp.requiredAt [ "product", "seller" ] userWithNameDecoder
+        |> Jdp.required "buyer" userWithNameDecoder
+        |> Jdp.required "createdAt" dateTimeDecoder
+        |> Jdp.required "updateAt" dateTimeDecoder
+        |> Jdp.required "comment" (Jd.list tradeCommentDecoder)
+
+
+tradeReturn : List Field
+tradeReturn =
+    [ Field { name = "id", args = [], return = [] }
+    , Field
+        { name = "product"
+        , args = []
+        , return =
+            productReturn ++ [ Field { name = "seller", args = [], return = userWithNameReturn } ]
+        }
+    , Field { name = "buyer", args = [], return = userWithNameReturn }
+    , Field { name = "createdAt", args = [], return = [] }
+    , Field { name = "updateAt", args = [], return = [] }
+    ]
+
+
+tradeDecoder : Jd.Decoder Trade.Trade
+tradeDecoder =
+    Jd.succeed
+        (\id product seller buyer createdAt updateAt ->
+            Trade.fromApi
+                { id = id
+                , product = product
+                , seller = seller
+                , buyer = buyer
+                , createdAt = createdAt
+                , updateAt = updateAt
+                }
+        )
+        |> Jdp.required "id" Jd.string
+        |> Jdp.required "product" productDecoder
+        |> Jdp.requiredAt [ "product", "seller" ] userWithNameDecoder
+        |> Jdp.required "buyer" userWithNameDecoder
+        |> Jdp.required "createdAt" dateTimeDecoder
+        |> Jdp.required "updateAt" dateTimeDecoder
+
+
+tradeCommentReturn : List Field
+tradeCommentReturn =
+    [ Field { name = "body", args = [], return = [] }
+    , Field { name = "speaker", args = [], return = [] }
+    , Field { name = "createdAt", args = [], return = [] }
+    ]
+
+
+tradeCommentDecoder : Jd.Decoder Trade.Comment
+tradeCommentDecoder =
+    Jd.succeed
+        (\body speaker createdAt ->
+            Trade.Comment
+                { body = body
+                , speaker = speaker
+                , createdAt = createdAt
+                }
+        )
+        |> Jdp.required "body" Jd.string
+        |> Jdp.required "speaker" tradeSpeakerDecoder
+        |> Jdp.required "createdAt" dateTimeDecoder
+
+
+tradeSpeakerDecoder : Jd.Decoder Trade.Speaker
+tradeSpeakerDecoder =
+    Jd.string
+        |> Jd.andThen
+            (\id ->
+                case id of
+                    "seller" ->
+                        Jd.succeed Trade.Seller
+
+                    "buyer" ->
+                        Jd.succeed Trade.Buyer
+
+                    _ ->
+                        Jd.fail "sellerかbuyer以外のspeakerを受け取ってしまった"
+            )
 
 
 
