@@ -16,12 +16,14 @@ import Data.Product as Product
 import Html
 import Html.Attributes
 import Html.Events
+import Icon
 import Json.Decode
 import PageLocation
+import Set
 
 
 type Model
-    = Model { sending : Bool }
+    = Model { likeUpdating : Set.Set String }
 
 
 type Msg
@@ -38,7 +40,7 @@ type Emission
 
 initModel : Maybe Product.Id -> ( Model, List Emission )
 initModel productIdMaybe =
-    ( Model { sending = False }
+    ( Model { likeUpdating = Set.empty }
     , case productIdMaybe of
         Just id ->
             [ EmissionScrollIntoView (productIdString id) ]
@@ -49,20 +51,20 @@ initModel productIdMaybe =
 
 
 update : Msg -> Model -> ( Model, List Emission )
-update msg _ =
+update msg (Model rec) =
     case msg of
         Like token productId ->
-            ( Model { sending = True }
+            ( Model { rec | likeUpdating = rec.likeUpdating |> Set.insert (Product.idToString productId) }
             , [ EmissionLike token productId ]
             )
 
         UnLike token productId ->
-            ( Model { sending = True }
+            ( Model { rec | likeUpdating = rec.likeUpdating |> Set.insert (Product.idToString productId) }
             , [ EmissionUnlike token productId ]
             )
 
-        UpdateLikedCountResponse _ _ ->
-            ( Model { sending = False }
+        UpdateLikedCountResponse productId _ ->
+            ( Model { rec | likeUpdating = rec.likeUpdating |> Set.remove (Product.idToString productId) }
             , []
             )
 
@@ -77,20 +79,22 @@ update msg _ =
 {-| 商品の一覧表示
 -}
 view : Model -> Data.LogInState.LogInState -> Bool -> Maybe (List Product.Product) -> Html.Html Msg
-view (Model { sending }) logInState isWideMode productList =
+view (Model { likeUpdating }) logInState isWideMode productList =
     case productList of
         Just [] ->
             emptyView
 
         Just (x :: xs) ->
-            listView sending logInState isWideMode x xs
+            listView likeUpdating logInState isWideMode ( x, xs )
 
         Nothing ->
             Html.div
                 [ Html.Attributes.class "container" ]
                 [ Html.div
                     []
-                    [ Html.text "読み込み中" ]
+                    [ Html.text "読み込み中"
+                    , Icon.loading { size = 48, color = "black" }
+                    ]
                 ]
 
 
@@ -111,8 +115,13 @@ emptyView =
         ]
 
 
-listView : Bool -> Data.LogInState.LogInState -> Bool -> Product.Product -> List Product.Product -> Html.Html Msg
-listView sending logInState isWideMode product productList =
+listView :
+    Set.Set String
+    -> Data.LogInState.LogInState
+    -> Bool
+    -> ( Product.Product, List Product.Product )
+    -> Html.Html Msg
+listView sending logInState isWideMode ( product, productList ) =
     Html.div
         [ Html.Attributes.style "display" "grid"
         , Html.Attributes.style "grid-template-columns"
@@ -124,7 +133,12 @@ listView sending logInState isWideMode product productList =
             )
         ]
         ((product :: productList)
-            |> List.map (item logInState sending)
+            |> List.map
+                (\p ->
+                    item logInState
+                        (sending |> Set.member (Product.idToString (Product.getId p)))
+                        p
+                )
         )
 
 
@@ -168,10 +182,11 @@ itemLike logInState sending product =
     if sending then
         Html.button
             [ Html.Attributes.class "productList-like"
-            , Html.Attributes.class "productList-like-sending"
             , Html.Attributes.disabled True
+            , Html.Attributes.style "padding" "8px 24px"
             ]
-            (itemLikeBody (Product.getLikedCount product))
+            [ Icon.loading { size = 20, color = "white" }
+            ]
 
     else
         case logInState of
@@ -205,7 +220,7 @@ itemLike logInState sending product =
 
             _ ->
                 Html.div
-                    [ Html.Attributes.class "productList-like-label" ]
+                    [ Html.Attributes.class "productList-like-noLogIn" ]
                     (itemLikeBody (Product.getLikedCount product))
 
 

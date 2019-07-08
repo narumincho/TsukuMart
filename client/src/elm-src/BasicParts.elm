@@ -326,14 +326,14 @@ menuLogInStateNone =
         ]
     , Html.a
         [ Html.Attributes.class "menu-item"
-        , Html.Attributes.href (PageLocation.toUrlAsString  PageLocation.Home)
+        , Html.Attributes.href (PageLocation.toUrlAsString PageLocation.Home)
         ]
         [ Icon.home menuIconStyle
         , Html.text "ホーム"
         ]
     , Html.a
         [ Html.Attributes.class "menu-item"
-        , Html.Attributes.href (PageLocation.toUrlAsString  (PageLocation.Search Data.SearchCondition.None))
+        , Html.Attributes.href (PageLocation.toUrlAsString (PageLocation.Search Data.SearchCondition.None))
         ]
         [ Icon.search menuIconStyle
         , Html.text "検索"
@@ -366,12 +366,14 @@ menuLogInStateLoadingProfile =
         ]
     , Html.a
         [ Html.Attributes.class "menu-item"
-        , Html.Attributes.href (PageLocation.toUrlAsString (PageLocation.Notification))
+        , Html.Attributes.href (PageLocation.toUrlAsString PageLocation.Notification)
         ]
         [ Icon.notifications menuIconStyle, Html.text "通知" ]
     , Html.a
         [ Html.Attributes.class "menu-item" ]
-        [ Html.text "プロフィール情報を読み込み中" ]
+        [ Html.text "プロフィール情報を読み込み中"
+        , Icon.loading { size = 48, color = "black" }
+        ]
     , subMenuItem (Just PageLocation.LikedProducts) "いいねした商品"
     , subMenuItem (Just PageLocation.History) "閲覧した商品"
     , subMenuItem (Just PageLocation.BoughtProducts) "購入した商品"
@@ -408,9 +410,11 @@ menuLogInStateOk userWithName =
         [ Icon.notifications menuIconStyle, Html.text "通知" ]
     , Html.a
         [ Html.Attributes.href
-            (PageLocation.toUrlAsString (PageLocation.User
-                (Data.User.withNameGetId userWithName)
-            ))
+            (PageLocation.toUrlAsString
+                (PageLocation.User
+                    (Data.User.withNameGetId userWithName)
+                )
+            )
         , Html.Attributes.class "menu-item"
         ]
         [ Html.img

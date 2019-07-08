@@ -38,7 +38,6 @@ requestAnimationFrame(() => {
                 const file = fileList.item(index);
                 const image = new Image();
                 image.addEventListener("load", () => {
-                    window.alert("image url" + image.src);
                     const canvas = document.createElement("canvas");
                     const size = insideSize(image.width, image.height);
                     canvas.width = size.width;

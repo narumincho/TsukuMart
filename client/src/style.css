@@ -398,10 +398,10 @@ header {
 
 .product-like {
     background-color: #aaa;
-    border-radius: 0.4rem;
+    border-radius: 8px;
     user-select: none;
     cursor: pointer;
-    padding: 0.5rem;
+    padding: 8px;
     border: none;
 }
 
@@ -743,19 +743,19 @@ header {
     object-fit: contain;
 }
 
-.productList-like-label {
-    border-radius: 0.4rem;
+.productList-like-noLogIn {
+    border-radius: 8px;
     user-select: none;
-    padding: 0.5rem;
+    padding: 8px;
     border: solid 1px #aaa;
 }
 
 .productList-like {
     background-color: #aaa;
-    border-radius: 0.4rem;
+    border-radius: 8px;
     user-select: none;
     cursor: pointer;
-    padding: 0.5rem;
+    padding: 8px;
     border: none;
 }
 
@@ -774,10 +774,6 @@ header {
 
 .productList-liked:hover {
     background-color: var(--primaryColorLight);
-}
-
-.productList-like-sending {
-    background-color: #7f2591;
 }
 
 .productList-zero {
@@ -995,4 +991,15 @@ header {
     border-radius: 0.4rem;
     font-size: 1.5rem;
     border: solid 1px #ccc;
+}
+
+.loading {
+    border-radius: 50%;
+    animation: 600ms linear 0ms infinite normal none running loading-keyframes;
+}
+
+@keyframes loading-keyframes {
+    to {
+        transform: rotate(360deg);
+    }
 }

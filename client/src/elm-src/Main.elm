@@ -1241,28 +1241,33 @@ updateLikedCountInEachPageProduct key productId result page =
             Page.Component.ProductList.UpdateLikedCountResponse productId result
     in
     case page of
-        PageHome pageMsg ->
-            pageMsg
+        PageHome msg ->
+            msg
                 |> Page.Home.update (Page.Home.MsgByProductList productListMsg)
                 |> mapPageModel PageHome homePageEmissionToCmd
 
-        PageHistory pageMsg ->
-            pageMsg
+        PageLikedProducts msg ->
+            msg
+                |> Page.LikedProducts.update (Page.LikedProducts.MsgByProductList productListMsg)
+                |> mapPageModel PageLikedProducts likedProductsEmissionToCmd
+
+        PageHistory msg ->
+            msg
                 |> Page.History.update (Page.History.MsgByProductList productListMsg)
                 |> mapPageModel PageHistory historyEmissionToCmd
 
-        PageSoldProducts pageMsg ->
-            pageMsg
+        PageSoldProducts msg ->
+            msg
                 |> Page.SoldProducts.update (Page.SoldProducts.MsgByProductList productListMsg)
                 |> mapPageModel PageSoldProducts soldProductsPageEmissionToCmd
 
-        PageBoughtProducts pageMsg ->
-            pageMsg
+        PageBoughtProducts msg ->
+            msg
                 |> Page.BoughtProducts.update (Page.BoughtProducts.MsgByProductList productListMsg)
                 |> mapPageModel PageBoughtProducts boughtProductsPageEmissionToCmd
 
-        PageProduct pageMsg ->
-            pageMsg
+        PageProduct msg ->
+            msg
                 |> Page.Product.update (Page.Product.LikeResponse result)
                 |> mapPageModel PageProduct (productPageEmissionToCmd key)
 
@@ -1430,6 +1435,7 @@ titleAndTabDataAndMainView logInState isWideScreen nowMaybe page =
         PageAbout model ->
             model
                 |> Page.About.view
+
 
 mapPageData :
     (eachPageMsg -> PageMsg)

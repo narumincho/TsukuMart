@@ -282,6 +282,7 @@ view logInState model =
 loadingWithUserIdView : User.Id -> List (Html.Html msg)
 loadingWithUserIdView userId =
     [ Html.text ("ユーザーID" ++ User.idToString userId ++ "のプロフィールを読み込み中")
+    , Icon.loading { size = 48, color = "black" }
     ]
 
 
@@ -291,6 +292,7 @@ loadingWithUserIdAndNameView userWithName =
         (User.withNameGetImageUrl userWithName)
         (User.withNameGetDisplayName userWithName)
     , Html.text (User.withNameGetDisplayName userWithName ++ "さんの紹介文、学群学類を読み込み中")
+    , Icon.loading { size = 48, color = "black" }
     ]
 
 

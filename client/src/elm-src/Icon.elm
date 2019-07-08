@@ -1,6 +1,7 @@
-module Icon exposing (delete, edit, home, information, notifications, search)
+module Icon exposing (delete, edit, home, information, loading, notifications, search)
 
 import Html
+import Html.Attributes
 import Svg as S
 import Svg.Attributes as A
 
@@ -80,3 +81,15 @@ information style =
             ]
             []
         ]
+
+
+loading : { size : Int, color : String } -> Html.Html msg
+loading { size, color } =
+    Html.div
+        [ Html.Attributes.class "loading"
+        , Html.Attributes.style "width" (String.fromInt size ++ "px")
+        , Html.Attributes.style "height" (String.fromInt size ++ "px")
+        , Html.Attributes.style "border" ("3px solid " ++ color)
+        , Html.Attributes.style "border-right-color" "transparent"
+        ]
+        []

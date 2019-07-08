@@ -441,7 +441,10 @@ view logInState isWideScreen nowMaybe model =
         Loading _ ->
             { title = Just "商品詳細ページ 読み込み中"
             , tab = BasicParts.tabNone
-            , html = [ Html.text "読み込み中" ]
+            , html =
+                [ Html.text "読み込み中"
+                , Icon.loading { size = 48, color = "black" }
+                ]
             }
 
         WaitNewData product ->
@@ -453,6 +456,7 @@ view logInState isWideScreen nowMaybe model =
                     [ Html.div
                         [ Html.Attributes.class "product" ]
                         [ Html.text "最新の情報を取得中…"
+                        , Icon.loading { size = 32, color = "black" }
                         , productsViewImage [ Product.getThumbnailImageUrl product ]
                         , productsViewName (Product.getName product)
                         , productsViewLike
@@ -739,7 +743,9 @@ commentListView nowMaybe sellerId logInState commentListMaybe =
                             |> List.map (commentView nowMaybe sellerId Nothing)
 
             Nothing ->
-                [ Html.text "読み込み中" ]
+                [ Html.text "読み込み中"
+                , Icon.loading { size = 48, color = "black" }
+                ]
         )
 
 
