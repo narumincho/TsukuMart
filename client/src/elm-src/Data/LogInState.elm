@@ -1,6 +1,7 @@
 module Data.LogInState exposing
     ( LogInState(..)
     , addUserWithNameAndLikedProductIds
+    , getMyUserId
     , getToken
     , likeProduct
     , unlikeProduct
@@ -104,3 +105,16 @@ getToken logInState =
 
         Ok { token } ->
             Just token
+
+
+getMyUserId : LogInState -> Maybe User.Id
+getMyUserId logInState =
+    case logInState of
+        None ->
+            Nothing
+
+        LoadingProfile _ ->
+            Nothing
+
+        Ok { userWithName } ->
+            Just (User.withNameGetId userWithName)

@@ -25,6 +25,7 @@ import Html
 import Html.Attributes
 import Html.Events
 import Icon
+import Page.Component.Comment
 import Page.Component.ProductEditor as ProductEditor
 import PageLocation
 import Svg
@@ -612,10 +613,10 @@ likeButton : LogInState.LogInState -> Bool -> Int -> Product.Id -> Html.Html Msg
 likeButton logInState sending likedCount id =
     if sending then
         Html.button
-            [ Html.Attributes.class "product-like-sending"
-            , Html.Attributes.class "product-like"
+            [ Html.Attributes.class "product-like"
+            , Html.Attributes.disabled True
             ]
-            (itemLikeBody likedCount)
+            [ Icon.loading { size = 20, color = "white" } ]
 
     else
         case logInState of
@@ -712,149 +713,45 @@ deleteView productId token =
         ]
 
 
-{-|
-
-    コメントの表示
-
--}
 commentListView : Maybe ( Time.Posix, Time.Zone ) -> User.Id -> LogInState.LogInState -> Maybe (List Product.Comment) -> Html.Html Msg
 commentListView nowMaybe sellerId logInState commentListMaybe =
     Html.div
-        [ Html.Attributes.class "product-commentList" ]
-        (case commentListMaybe of
-            Just commentList ->
-                case logInState of
-                    LogInState.Ok { token, userWithName } ->
-                        commentInputArea token
-                            :: (commentList
-                                    |> List.reverse
-                                    |> List.map
-                                        (commentView nowMaybe
-                                            sellerId
-                                            (Just
-                                                (User.withNameGetId userWithName)
-                                            )
-                                        )
-                               )
-
-                    _ ->
-                        commentList
-                            |> List.reverse
-                            |> List.map (commentView nowMaybe sellerId Nothing)
+        []
+        ((case LogInState.getToken logInState of
+            Just token ->
+                [ commentInputArea token ]
 
             Nothing ->
-                [ Html.text "読み込み中"
-                , Icon.loading { size = 48, color = "black" }
-                ]
-        )
-
-
-commentView : Maybe ( Time.Posix, Time.Zone ) -> User.Id -> Maybe User.Id -> Product.Comment -> Html.Html msg
-commentView nowMaybe sellerId myIdMaybe comment =
-    let
-        speaker =
-            comment |> Product.commentGetSpeaker
-
-        isSellerComment =
-            sellerId == User.withNameGetId speaker
-
-        isMyComment =
-            myIdMaybe == Just (User.withNameGetId speaker)
-    in
-    Html.div
-        [ Html.Attributes.class "product-comment" ]
-        [ Html.a
-            [ Html.Attributes.class
-                (if isSellerComment then
-                    "product-comment-sellerName"
-
-                 else
-                    "product-comment-name"
-                )
-            , Html.Attributes.href (PageLocation.toUrlAsString (PageLocation.User (User.withNameGetId speaker)))
-            ]
-            [ Html.img
-                [ Html.Attributes.style "border-radius" "50%"
-                , Html.Attributes.style "width" "48px"
-                , Html.Attributes.style "height" "48px"
-                , Html.Attributes.src (User.withNameGetImageUrl speaker)
-                ]
                 []
-            , Html.text (User.withNameGetDisplayName speaker)
-            ]
-        , Html.div
-            [ Html.Attributes.class
-                (if isSellerComment then
-                    "product-comment-sellerBox"
-
-                 else
-                    "product-comment-box"
-                )
-            ]
-            ((if isSellerComment then
-                [ commentTriangleLeft isMyComment ]
-
-              else
-                []
-             )
-                ++ [ Html.div
-                        [ Html.Attributes.classList
-                            [ ( "product-comment-text", True )
-                            , ( "product-comment-text-mine", isMyComment )
-                            , ( "product-comment-text-seller", isSellerComment )
-                            ]
-                        ]
-                        [ Html.text (Product.commentGetBody comment) ]
-                   ]
-                ++ (if isSellerComment then
-                        []
-
-                    else
-                        [ commentTriangleRight isMyComment ]
-                   )
-            )
-        , Html.div
-            [ Html.Attributes.class "product-comment-time" ]
-            [ Html.text (Product.createdAtToString nowMaybe (Product.commentGetCreatedAt comment)) ]
-        ]
-
-
-commentTriangleLeft : Bool -> Html.Html msg
-commentTriangleLeft isMine =
-    Svg.svg
-        ([ Svg.Attributes.viewBox "0 0 10 10"
-         , Svg.Attributes.class "product-comment-text-triangle"
-         ]
-            ++ (if isMine then
-                    [ Svg.Attributes.class "product-comment-text-triangle-mine" ]
-
-                else
-                    []
-               )
+         )
+            ++ [ Page.Component.Comment.view
+                    nowMaybe
+                    (commentListMaybe
+                        |> Maybe.map
+                            (List.map
+                                (\comment ->
+                                    { isMine =
+                                        (comment
+                                            |> Product.commentGetSpeaker
+                                            |> User.withNameGetId
+                                            |> Just
+                                        )
+                                            == LogInState.getMyUserId logInState
+                                    , isSeller =
+                                        (comment
+                                            |> Product.commentGetSpeaker
+                                            |> User.withNameGetId
+                                        )
+                                            == sellerId
+                                    , user = Product.commentGetSpeaker comment
+                                    , body = Product.commentGetBody comment
+                                    , createdAt = Product.commentGetCreatedAt comment
+                                    }
+                                )
+                            )
+                    )
+               ]
         )
-        [ Svg.polygon
-            [ Svg.Attributes.points "10 0 0 0 10 10" ]
-            []
-        ]
-
-
-commentTriangleRight : Bool -> Html.Html msg
-commentTriangleRight isMine =
-    Svg.svg
-        ([ Svg.Attributes.viewBox "0 0 10 10"
-         , Svg.Attributes.class "product-comment-text-triangle"
-         ]
-            ++ (if isMine then
-                    [ Svg.Attributes.class "product-comment-text-triangle-mine" ]
-
-                else
-                    []
-               )
-        )
-        [ Svg.polygon
-            [ Svg.Attributes.points "0 0 10 0 0 10" ]
-            []
-        ]
 
 
 commentInputArea : Api.Token -> Html.Html Msg

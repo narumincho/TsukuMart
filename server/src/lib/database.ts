@@ -793,13 +793,9 @@ export const likeProduct = async (
     userId: string,
     productId: string
 ): Promise<ProductReturnLowCost> => {
-    console.log(`いいね user=${userId} productId=${productId}`);
     const likedProducts = await databaseLow.getAllLikedProductsData(userId);
     const productData = await databaseLow.getProduct(productId);
-    console.log("likedProducts", likedProducts);
-    console.log("if condition", isIncludeProductId(likedProducts, productId));
     if (isIncludeProductId(likedProducts, productId)) {
-        console.log("いいねをしなかった");
         return productReturnLowCostFromDatabaseLow({
             id: productId,
             data: productData
@@ -811,7 +807,7 @@ export const likeProduct = async (
     await databaseLow.addLikedProductData(userId, productId, {
         createdAt: databaseLow.getNowTimestamp()
     });
-    console.log("いいねつけた");
+    console.log(`いいねproductId=${productId}, userId=${userId}`);
     return productReturnLowCostFromDatabaseLow({
         id: productId,
         data: { ...productData, likedCount: productData.likedCount + 1 }
@@ -822,11 +818,9 @@ export const unlikeProduct = async (
     userId: string,
     productId: string
 ): Promise<ProductReturnLowCost> => {
-    console.log(`いいねをはずす user=${userId} productId=${productId}`);
     const likedProducts = await databaseLow.getAllLikedProductsData(userId);
     const productData = await databaseLow.getProduct(productId);
     if (!isIncludeProductId(likedProducts, productId)) {
-        console.log("いいねをはずすをしなかった");
         return productReturnLowCostFromDatabaseLow({
             id: productId,
             data: productData
@@ -836,7 +830,6 @@ export const unlikeProduct = async (
         likedCount: productData.likedCount - 1
     });
     await databaseLow.deleteLikedProductData(userId, productId);
-    console.log("いいねをはずした");
     return productReturnLowCostFromDatabaseLow({
         id: productId,
         data: { ...productData, likedCount: productData.likedCount - 1 }

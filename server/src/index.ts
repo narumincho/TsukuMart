@@ -1,6 +1,5 @@
 import * as functions from "firebase-functions";
 import * as graphqlExpress from "express-graphql";
-import * as graphql from "graphql";
 import * as databaseLow from "./lib/databaseLow";
 import * as signUpCallback from "./lib/signUpCallback";
 import * as libSchema from "./lib/schema";

@@ -946,6 +946,46 @@ const productFreeAll = makeQueryOrMutationField<
     description: "すべての0円の商品(売れたものも含まれる)を取得する"
 });
 
+const trade = makeQueryOrMutationField<
+    { accessToken: string; tradeId: string },
+    type.Trade
+>({
+    args: {
+        accessToken: {
+            type: g.GraphQLNonNull(g.GraphQLString),
+            description: type.accessTokenDescription
+        },
+        tradeId: {
+            type: g.GraphQLNonNull(g.GraphQLID),
+            description: tradeGraphQLType.getFields().id.description
+        }
+    },
+    type: g.GraphQLNonNull(tradeGraphQLType),
+    resolve: async (source, args, context, info) => {
+        const { id } = database.verifyAccessToken(args.accessToken);
+        const userData = await database.getUserData(id);
+        if (
+            includeTradeData(args.tradeId, userData.tradingAll) ||
+            includeTradeData(args.tradeId, userData.tradedAll)
+        ) {
+            return database.getTrade(args.tradeId);
+        }
+        throw new Error("取引していない取引データにアクセスした");
+    },
+    description: "取引データを取得する"
+});
+
+const includeTradeData = (
+    id: string,
+    trades: Array<{ id: string }>
+): boolean => {
+    for (let i = 0; i < trades.length; i++) {
+        if (trades[i].id === id) {
+            return true;
+        }
+    }
+    return false;
+};
 /*  =============================================================
                             Mutation
     =============================================================
@@ -1604,7 +1644,8 @@ export const schema = new g.GraphQLSchema({
             productRecentAll,
             productRecommendAll,
             productFreeAll,
-            productAll
+            productAll,
+            trade
         }
     }),
     mutation: new g.GraphQLObjectType({
@@ -1619,7 +1660,7 @@ export const schema = new g.GraphQLSchema({
             markProductInHistory,
             likeProduct,
             unlikeProduct,
-            addCommentProduct: addProductComment,
+            addProductComment,
             addDraftProduct,
             updateDraftProduct,
             deleteDraftProduct,

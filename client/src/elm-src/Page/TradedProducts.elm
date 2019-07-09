@@ -84,9 +84,8 @@ update msg (Model rec) =
         GetTradesResponse result ->
             case result of
                 Ok products ->
-                    ( Model rec
-                    , [ EmissionAddLogMessage "取引データの表示は調整中" ]
-                      -- TODO
+                    ( Model { rec | normal = Normal products }
+                    , []
                     )
 
                 Err errorMessage ->
@@ -108,10 +107,9 @@ update msg (Model rec) =
 
 view :
     LogInState.LogInState
-    -> Bool
     -> Model
     -> { title : Maybe String, tab : BasicParts.Tab Msg, html : List (Html.Html Msg) }
-view logInState isWideScreen (Model rec) =
+view logInState (Model rec) =
     { title = Just "取引した商品"
     , tab = BasicParts.tabSingle "取引した商品"
     , html =
@@ -130,7 +128,6 @@ view logInState isWideScreen (Model rec) =
 
             _ ->
                 [ TradeList.view
-                    isWideScreen
                     (case rec.normal of
                         Loading ->
                             Nothing

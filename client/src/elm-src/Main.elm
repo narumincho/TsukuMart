@@ -960,8 +960,14 @@ productPageEmissionToCmd key emission =
 tradePageEmissionToCmd : Page.Trade.Emission -> Cmd Msg
 tradePageEmissionToCmd emission =
     case emission of
-        Page.Trade.Emission ->
-            Cmd.none
+        Page.Trade.EmissionGetTradeDetail token id ->
+                Api.getTradeDetail id token (Page.Trade.TradeDetailResponse >> PageMsgTrade >> PageMsg)
+        Page.Trade.EmissionAddLogMessage log ->
+            Task.succeed ()
+                |> Task.perform (always (AddLogMessage log))
+
+        Page.Trade.EmissionReplaceElementText idAndText ->
+            replaceText idAndText
 
 
 
@@ -1379,12 +1385,12 @@ titleAndTabDataAndMainView logInState isWideScreen nowMaybe page =
 
         PageTradingProducts model ->
             model
-                |> Page.TradingProducts.view logInState isWideScreen
+                |> Page.TradingProducts.view logInState
                 |> mapPageData PageMsgTradingProducts
 
         PageTradedProducts model ->
             model
-                |> Page.TradedProducts.view logInState isWideScreen
+                |> Page.TradedProducts.view logInState
                 |> mapPageData PageMsgTradedProducts
 
         PageCommentedProducts model ->
@@ -1414,7 +1420,7 @@ titleAndTabDataAndMainView logInState isWideScreen nowMaybe page =
 
         PageTrade model ->
             model
-                |> Page.Trade.view
+                |> Page.Trade.view logInState nowMaybe
                 |> mapPageData PageMsgTrade
 
         PageUser model ->

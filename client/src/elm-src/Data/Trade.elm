@@ -1,7 +1,7 @@
 module Data.Trade exposing
     ( Comment(..)
     , Id
-    , Speaker(..)
+    , SellerOrBuyer(..)
     , Trade
     , TradeDetail
     , detailFromApi
@@ -10,7 +10,6 @@ module Data.Trade exposing
     , detailGetCreatedAt
     , detailGetProduct
     , detailGetProductId
-    , detailGetSeller
     , detailGetTradeId
     , detailGetUpdateAt
     , fromApi
@@ -23,7 +22,8 @@ module Data.Trade exposing
     , getUpdateAt
     , idFromString
     , idToString
-    , searchFromId)
+    , searchFromId
+    )
 
 import Data.Product as Product
 import Data.User as User
@@ -113,8 +113,7 @@ getUpdateAt (Trade { updateAt }) =
 type TradeDetail
     = TradeDetail
         { id : Id
-        , product : Product.Product
-        , seller : User.WithName
+        , product : Product.ProductDetail
         , buyer : User.WithName
         , createdAt : Time.Posix
         , updateAt : Time.Posix
@@ -125,20 +124,19 @@ type TradeDetail
 type Comment
     = Comment
         { body : String
-        , speaker : Speaker
+        , speaker : SellerOrBuyer
         , createdAt : Time.Posix
         }
 
 
-type Speaker
+type SellerOrBuyer
     = Seller
     | Buyer
 
 
 detailFromApi :
     { id : String
-    , product : Product.Product
-    , seller : User.WithName
+    , product : Product.ProductDetail
     , buyer : User.WithName
     , createdAt : Time.Posix
     , updateAt : Time.Posix
@@ -149,7 +147,6 @@ detailFromApi rec =
     TradeDetail
         { id = Id rec.id
         , product = rec.product
-        , seller = rec.seller
         , buyer = rec.buyer
         , createdAt = rec.createdAt
         , updateAt = rec.updateAt
@@ -167,14 +164,9 @@ detailGetProductId (TradeDetail { id }) =
     id
 
 
-detailGetProduct : TradeDetail -> Product.Product
+detailGetProduct : TradeDetail -> Product.ProductDetail
 detailGetProduct (TradeDetail { product }) =
     product
-
-
-detailGetSeller : TradeDetail -> User.WithName
-detailGetSeller (TradeDetail { seller }) =
-    seller
 
 
 detailGetBuyer : TradeDetail -> User.WithName

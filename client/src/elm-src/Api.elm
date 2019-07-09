@@ -34,7 +34,7 @@ module Api exposing
     , updateProduct
     , updateProfile
     , userWithNameDecoder
-    )
+    , getTradeDetail)
 
 import Data.Category as Category
 import Data.EmailAddress as EmailAddress
@@ -1145,7 +1145,7 @@ tradeDetailReturn =
         { name = "product"
         , args = []
         , return =
-            productReturn ++ [ Field { name = "seller", args = [], return = userWithNameReturn } ]
+            productDetailReturn
         }
     , Field { name = "buyer", args = [], return = userWithNameReturn }
     , Field { name = "createdAt", args = [], return = [] }
@@ -1161,11 +1161,10 @@ tradeDetailReturn =
 tradeDetailDecoder : Jd.Decoder Trade.TradeDetail
 tradeDetailDecoder =
     Jd.succeed
-        (\id product seller buyer createdAt updateAt comments ->
+        (\id product buyer createdAt updateAt comments ->
             Trade.detailFromApi
                 { id = id
                 , product = product
-                , seller = seller
                 , buyer = buyer
                 , createdAt = createdAt
                 , updateAt = updateAt
@@ -1173,8 +1172,7 @@ tradeDetailDecoder =
                 }
         )
         |> Jdp.required "id" Jd.string
-        |> Jdp.required "product" productDecoder
-        |> Jdp.requiredAt [ "product", "seller" ] userWithNameDecoder
+        |> Jdp.required "product" productDetailDecoder
         |> Jdp.required "buyer" userWithNameDecoder
         |> Jdp.required "createdAt" dateTimeDecoder
         |> Jdp.required "updateAt" dateTimeDecoder
@@ -1240,7 +1238,7 @@ tradeCommentDecoder =
         |> Jdp.required "createdAt" dateTimeDecoder
 
 
-tradeSpeakerDecoder : Jd.Decoder Trade.Speaker
+tradeSpeakerDecoder : Jd.Decoder Trade.SellerOrBuyer
 tradeSpeakerDecoder =
     Jd.string
         |> Jd.andThen
@@ -1257,6 +1255,26 @@ tradeSpeakerDecoder =
             )
 
 
+{- ==============================================================================
+                            取引の詳細を取得する
+   ==============================================================================
+-}
+getTradeDetail : Trade.Id -> Token-> (Result String (Trade.TradeDetail) -> msg) -> Cmd msg
+getTradeDetail id =
+    graphQlApiRequestWithToken
+        (\token ->
+            Query
+                [ Field
+                    { name = "trade"
+                    , args =
+                        [ ( "accessToken", GraphQLString (tokenGetAccessTokenAsString token) )
+                        , ( "tradeId", GraphQLString (Trade.idToString id) )
+                        ]
+                    , return = tradeDetailReturn
+                    }
+                ]
+        )
+        (Jd.field "trade" tradeDetailDecoder)
 
 {- ==============================================================================
                       商品の取引のコメントを取得する
