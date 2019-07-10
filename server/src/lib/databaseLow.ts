@@ -70,7 +70,7 @@ export const updateUserData = async (
     id: string,
     userData: Partial<UserData>
 ): Promise<void> => {
-    await userCollectionRef.doc(id).set(userData, { merge: true });
+    await userCollectionRef.doc(id).update(userData);
 };
 
 /*
@@ -256,7 +256,7 @@ export const updateDraftProduct = async (
         .doc(userId)
         .collection("draftProduct")
         .doc(draftId)
-        .set(data, { merge: true });
+        .update(data);
 };
 
 export const deleteDraftProduct = async (
@@ -276,7 +276,9 @@ export const deleteDraftProduct = async (
 export const addUserData = async (
     data: UserData & { email: string }
 ): Promise<string> => {
-    return (await userCollectionRef.add(data)).id;
+    const id = createRandomFileId();
+    await userCollectionRef.doc(id).set(data);
+    return id;
 };
 
 /**
@@ -450,9 +452,7 @@ export const updateProductData = async (
     id: string,
     data: Partial<ProductData>
 ): Promise<void> => {
-    await productCollectionRef.doc(id).set(data, {
-        merge: true
-    });
+    await productCollectionRef.doc(id).update(data);
 };
 
 /**
@@ -460,7 +460,9 @@ export const updateProductData = async (
  * @param userData
  */
 export const addProductData = async (data: ProductData): Promise<string> => {
-    return (await productCollectionRef.add(data)).id;
+    const id = createRandomFileId();
+    await productCollectionRef.doc(id).set(data);
+    return id;
 };
 
 /**
@@ -608,7 +610,9 @@ export const updateTradeData = async (
 };
 
 export const startTrade = async (data: Trade): Promise<string> => {
-    return (await tradeCollectionRef.add(data)).id;
+    const id = createRandomFileId();
+    await tradeCollectionRef.doc(id).set(data);
+    return id;
 };
 
 type TradeComment = {
@@ -683,7 +687,7 @@ const createRandomPassword = (): string => {
     const charTable: string =
         "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     for (let i = 0; i < 32; i++) {
-        id += charTable[(Math.random() * charTable.length) | 0];
+        id += charTable[Math.floor(Math.random() * charTable.length)];
     }
     return id;
 };
@@ -780,9 +784,9 @@ export const saveThumbnailImageFromCloudStorageToCloudStorage = async (
  */
 const createRandomFileId = (): string => {
     let id = "";
-    const charTable = "0123456789abcdefghijklmnopqrstuvwxyz";
+    const chars = "0123456789abcdefghijklmnopqrstuvwxyz";
     for (let i = 0; i < 22; i++) {
-        id += charTable[(Math.random() * charTable.length) | 0];
+        id += chars[Math.floor(Math.random() * chars.length)];
     }
     return id;
 };

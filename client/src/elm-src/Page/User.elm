@@ -20,6 +20,7 @@ import Html.Events
 import Html.Keyed
 import Icon
 import Page.Component.University as UniversityComponent
+import Page.Style
 import PageLocation
 
 
@@ -244,9 +245,10 @@ toEditMode userWithProfile =
 
 view :
     LogInState.LogInState
+    -> Bool
     -> Model
     -> { title : Maybe String, tab : BasicParts.Tab Msg, html : List (Html.Html Msg) }
-view logInState model =
+view logInState isWideScreen model =
     { title = Just "プロフィール"
     , tab = BasicParts.tabSingle "プロフィール"
     , html =
@@ -255,19 +257,19 @@ view logInState model =
             (case ( logInState, model ) of
                 ( LogInState.Ok { userWithName }, Normal normalUser ) ->
                     if User.withNameGetId userWithName == User.withProfileGetId normalUser then
-                        normalMyProfileView normalUser
+                        normalMyProfileView isWideScreen normalUser
 
                     else
-                        normalView normalUser
+                        normalView isWideScreen normalUser
 
                 ( _, Normal user ) ->
-                    normalView user
+                    normalView isWideScreen user
 
                 ( _, LoadingWithUserId userId ) ->
                     loadingWithUserIdView userId
 
                 ( _, LoadingWithUserIdAndName withName ) ->
-                    loadingWithUserIdAndNameView withName
+                    loadingWithUserIdAndNameView isWideScreen withName
 
                 ( LogInState.Ok { token }, Edit editModel ) ->
                     editView token editModel
@@ -286,31 +288,43 @@ loadingWithUserIdView userId =
     ]
 
 
-loadingWithUserIdAndNameView : User.WithName -> List (Html.Html msg)
-loadingWithUserIdAndNameView userWithName =
-    [ imageAndDisplayNameView
+loadingWithUserIdAndNameView : Bool -> User.WithName -> List (Html.Html msg)
+loadingWithUserIdAndNameView isWideScreen userWithName =
+    imageAndDisplayNameView
+        isWideScreen
         (User.withNameGetImageUrl userWithName)
         (User.withNameGetDisplayName userWithName)
-    , Html.text (User.withNameGetDisplayName userWithName ++ "さんの紹介文、学群学類を読み込み中")
-    , Icon.loading { size = 48, color = "black" }
+        ++ [ Html.text (User.withNameGetDisplayName userWithName ++ "さんの紹介文、学群学類を読み込み中")
+           , Icon.loading { size = 48, color = "black" }
+           ]
+
+
+profileContainerStyle : List (Html.Attribute a)
+profileContainerStyle =
+    [ Html.Attributes.style "display" "grid"
+    , Html.Attributes.style "max-width" "40rem"
+    , Html.Attributes.style "gap" "16px"
+    , Html.Attributes.style "padding" "16px"
+    , Html.Attributes.style "box-sizing" "border-box"
+    , Html.Attributes.style "width" "100%"
     ]
 
 
-normalView : User.WithProfile -> List (Html.Html Msg)
-normalView user =
+normalView : Bool -> User.WithProfile -> List (Html.Html Msg)
+normalView isWideScreen user =
     [ Html.div
-        [ Html.Attributes.class "profile" ]
-        (userView user
+        profileContainerStyle
+        (userView isWideScreen user
             ++ [ userDataLink (User.withProfileGetId user) ]
         )
     ]
 
 
-normalMyProfileView : User.WithProfile -> List (Html.Html Msg)
-normalMyProfileView user =
+normalMyProfileView : Bool -> User.WithProfile -> List (Html.Html Msg)
+normalMyProfileView isWideScreen user =
     [ Html.div
-        [ Html.Attributes.class "profile" ]
-        (userView user
+        profileContainerStyle
+        (userView isWideScreen user
             ++ [ userPrivateDataLink (User.withProfileGetId user) ]
             ++ [ toEditButton, logOutButton ]
         )
@@ -319,31 +333,56 @@ normalMyProfileView user =
 
 {-| ユーザーの情報表示
 -}
-userView : User.WithProfile -> List (Html.Html msg)
-userView userWithProfile =
-    [ imageAndDisplayNameView
+userView : Bool -> User.WithProfile -> List (Html.Html msg)
+userView isWideScreen userWithProfile =
+    imageAndDisplayNameView
+        isWideScreen
         (User.withProfileGetImageUrl userWithProfile)
         (User.withProfileGetDisplayName userWithProfile)
-    , introductionView (User.withProfileGetIntroduction userWithProfile)
-    ]
+        ++ [ introductionView (User.withProfileGetIntroduction userWithProfile)
+           ]
         ++ universityView (User.withProfileGetUniversity userWithProfile)
         ++ [ Html.text ("ユーザーID " ++ (userWithProfile |> User.withProfileGetId |> User.idToString))
            ]
 
 
-imageAndDisplayNameView : String -> String -> Html.Html msg
-imageAndDisplayNameView url displayName =
-    Html.div
-        [ Html.Attributes.style "display" "flex"
-        , Html.Attributes.style "justify-content" "center"
-        ]
-        [ Html.img
-            [ Html.Attributes.style "border-radius" "50%"
-            , Html.Attributes.style "width" "200px"
-            , Html.Attributes.style "height" "200px"
-            , Html.Attributes.src url
+imageAndDisplayNameView : Bool -> String -> String -> List (Html.Html msg)
+imageAndDisplayNameView isWideScreen url displayName =
+    if isWideScreen then
+        [ Html.div
+            [ Html.Attributes.style "display" "flex"
+            , Html.Attributes.style "justify-content" "center"
             ]
-            []
+            [ Html.img
+                [ Html.Attributes.style "border-radius" "50%"
+                , Html.Attributes.style "width" "200px"
+                , Html.Attributes.style "height" "200px"
+                , Html.Attributes.style "flex-shrink" "0"
+                , Html.Attributes.src url
+                ]
+                []
+            , Html.div
+                [ Html.Attributes.style "flex-grow" "1"
+                , Html.Attributes.style "font-size" "1.5rem"
+                ]
+                [ Html.text displayName ]
+            ]
+        ]
+
+    else
+        [ Html.div
+            [ Html.Attributes.style "display" "flex"
+            , Html.Attributes.style "justify-content" "center"
+            ]
+            [ Html.img
+                [ Html.Attributes.style "border-radius" "50%"
+                , Html.Attributes.style "width" "200px"
+                , Html.Attributes.style "height" "200px"
+                , Html.Attributes.style "flex-shrink" "0"
+                , Html.Attributes.src url
+                ]
+                []
+            ]
         , Html.div
             [ Html.Attributes.style "flex-grow" "1"
             , Html.Attributes.style "font-size" "1.5rem"
@@ -354,14 +393,14 @@ imageAndDisplayNameView url displayName =
 
 introductionView : String -> Html.Html msg
 introductionView introduction =
-    Html.div
-        []
-        [ Html.div
-            [ Html.Attributes.class "profile-title" ]
-            [ Html.text "紹介文" ]
-        , Html.div []
-            (introduction |> String.lines |> List.map Html.text |> List.intersperse (Html.br [] []))
-        ]
+    Page.Style.titleAndContent "紹介文"
+        (Html.div []
+            (introduction
+                |> String.lines
+                |> List.map Html.text
+                |> List.intersperse (Html.br [] [])
+            )
+        )
 
 
 universityView : Data.University.University -> List (Html.Html msg)
@@ -372,12 +411,12 @@ universityView university =
     in
     (case graduate of
         Just g ->
-            [ Html.div
-                [ Html.Attributes.class "profile-title" ]
-                [ Html.text "研究科" ]
-            , Html.div
-                []
-                [ Html.text g ]
+            [ Page.Style.titleAndContent
+                "研究科"
+                (Html.div
+                    []
+                    [ Html.text g ]
+                )
             ]
 
         Nothing ->
@@ -385,12 +424,11 @@ universityView university =
     )
         ++ (case school of
                 Just s ->
-                    [ Html.div
-                        [ Html.Attributes.class "profile-title" ]
-                        [ Html.text "学群" ]
-                    , Html.div
-                        []
-                        [ Html.text s ]
+                    [ Page.Style.titleAndContent "学群"
+                        (Html.div
+                            []
+                            [ Html.text s ]
+                        )
                     ]
 
                 Nothing ->
@@ -398,12 +436,11 @@ universityView university =
            )
         ++ (case department of
                 Just d ->
-                    [ Html.div
-                        [ Html.Attributes.class "profile-title" ]
-                        [ Html.text "学類" ]
-                    , Html.div
-                        []
-                        [ Html.text d ]
+                    [ Page.Style.titleAndContent "学類"
+                        (Html.div
+                            []
+                            [ Html.text d ]
+                        )
                     ]
 
                 Nothing ->

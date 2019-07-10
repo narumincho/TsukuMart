@@ -17,6 +17,7 @@ module Page.Product exposing
 
 import Api
 import BasicParts
+import Data.DateTime
 import Data.LogInState as LogInState
 import Data.Product as Product
 import Data.Trade as Trade
@@ -27,9 +28,8 @@ import Html.Events
 import Icon
 import Page.Component.Comment
 import Page.Component.ProductEditor as ProductEditor
+import Page.Style
 import PageLocation
-import Svg
-import Svg.Attributes
 import Time
 
 
@@ -513,7 +513,7 @@ view logInState isWideScreen nowMaybe model =
                         , productsViewImage (Product.detailGetImageUrls product)
                         , productsViewName (Product.detailGetName product)
                         , descriptionView (Product.detailGetDescription product)
-                        , productsViewCondition (Product.detailGetCondition product)
+                        , conditionView (Product.detailGetCondition product)
                         , tradeStartButton logInState (Product.detailGetId product)
                         ]
                     ]
@@ -543,9 +543,11 @@ normalView logInState isWideScreen nowMaybe sending product =
                     sending
                     (Product.detailGetLikedCount product)
                     (Product.detailGetId product)
+                 , statusView (Product.detailGetStatus product)
                  , sellerNameView (Product.detailGetSeller product)
                  , descriptionView (Product.detailGetDescription product)
-                 , productsViewCondition (Product.detailGetCondition product)
+                 , conditionView (Product.detailGetCondition product)
+                 , createdAtView nowMaybe (Product.detailGetCreatedAt product)
                  , commentListView nowMaybe
                     (product |> Product.detailGetSeller |> User.withNameGetId)
                     logInState
@@ -651,12 +653,19 @@ itemLikeBody count =
     ]
 
 
+statusView : Product.Status -> Html.Html msg
+statusView status =
+    Page.Style.titleAndContent "取引状態"
+        (Html.div
+            []
+            [ Html.text (Product.statusToJapaneseString status) ]
+        )
+
+
 sellerNameView : User.WithName -> Html.Html msg
 sellerNameView user =
-    Html.div
-        []
-        [ Html.div [ Html.Attributes.class "product-label" ] [ Html.text "出品者" ]
-        , Html.a
+    Page.Style.titleAndContent "出品者"
+        (Html.a
             [ Html.Attributes.href (PageLocation.toUrlAsString (PageLocation.User (User.withNameGetId user))) ]
             [ Html.img
                 [ Html.Attributes.style "border-radius" "50%"
@@ -666,29 +675,37 @@ sellerNameView user =
                 []
             , Html.text (User.withNameGetDisplayName user)
             ]
-        ]
+        )
 
 
 descriptionView : String -> Html.Html msg
 descriptionView description =
-    Html.div
-        [ Html.Attributes.class "product-description" ]
-        [ Html.div [ Html.Attributes.class "product-label" ] [ Html.text "商品の説明" ]
-        , Html.div [] [ Html.text description ]
-        ]
+    Page.Style.titleAndContent
+        "商品の説明"
+        (Html.div [] [ Html.text description ])
 
 
-productsViewCondition : Product.Condition -> Html.Html msg
-productsViewCondition condition =
-    Html.div []
-        [ Html.div
-            [ Html.Attributes.class "product-label" ]
-            [ Html.text "商品の状態" ]
-        , Html.div
+conditionView : Product.Condition -> Html.Html msg
+conditionView condition =
+    Page.Style.titleAndContent
+        "商品の状態"
+        (Html.div
             [ Html.Attributes.class "product-condition" ]
             [ Html.text (Product.conditionToJapaneseString condition)
             ]
-        ]
+        )
+
+
+createdAtView : Maybe ( Time.Posix, Time.Zone ) -> Time.Posix -> Html.Html msg
+createdAtView nowMaybe createdAt =
+    Page.Style.titleAndContent
+        "出品日時"
+        (Html.div
+            []
+            [ Html.text
+                (Data.DateTime.toDiffString nowMaybe createdAt)
+            ]
+        )
 
 
 editButton : Html.Html Msg

@@ -469,10 +469,7 @@ photoAdd =
             ]
             [ photoAddIcon ]
         , Html.input
-            [ Html.Attributes.style "width" "0px"
-            , Html.Attributes.style "height" "0px"
-            , Html.Attributes.style "overflow" "hidden"
-            , Html.Attributes.id photoAddInputId
+            [ Html.Attributes.id photoAddInputId
             , Html.Attributes.type_ "file"
             , Html.Attributes.multiple True
             , Html.Attributes.accept "image/*"

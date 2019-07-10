@@ -13,8 +13,8 @@ module Data.Product exposing
     , conditionAll
     , conditionFromIdString
     , conditionFromIndex
-    , conditionToIndex
     , conditionToIdString
+    , conditionToIndex
     , conditionToJapaneseString
     , detailFromApi
     , detailGetCommentList
@@ -27,6 +27,7 @@ module Data.Product exposing
     , detailGetName
     , detailGetPrice
     , detailGetSeller
+    , detailGetStatus
     , detailUpdateLikedCount
     , fromApi
     , fromDetail
@@ -44,6 +45,7 @@ module Data.Product exposing
     , statusAll
     , statusFromIdString
     , statusToIdString
+    , statusToJapaneseString
     , updateById
     , updateLikedCount
     )
@@ -328,6 +330,19 @@ statusFromIdStringLoop idString statusList =
             Nothing
 
 
+statusToJapaneseString : Status -> String
+statusToJapaneseString status =
+    case status of
+        Selling ->
+            "出品中"
+
+        Trading ->
+            "取引中"
+
+        SoldOut ->
+            "売却済み"
+
+
 
 {- ============================================================
                         Condition
@@ -473,6 +488,11 @@ detailGetSeller (ProductDetail { seller }) =
     seller
 
 
+detailGetStatus : ProductDetail -> Status
+detailGetStatus (ProductDetail { status }) =
+    status
+
+
 detailGetCreatedAt : ProductDetail -> Time.Posix
 detailGetCreatedAt (ProductDetail { createdAt }) =
     createdAt
@@ -483,6 +503,7 @@ detailGetCreatedAt (ProductDetail { createdAt }) =
 detailGetCommentList : ProductDetail -> Maybe (List Comment)
 detailGetCommentList (ProductDetail { commentList }) =
     commentList
+
 
 {-| 価格(整数)を3桁ごとに,をつけ、円を末尾に追加。例 5120 → 5,120円
 -}

@@ -100,27 +100,31 @@ view logInState timeData model =
     { title = Just "取引"
     , tab = BasicParts.tabNone
     , html =
-        case logInState of
-            LogInState.Ok { token, userWithName } ->
-                case model of
-                    CheckTrader id ->
-                        [ Html.text "取引データを読み込み中"
-                        , Icon.loading { size = 64, color = "black" }
-                        ]
+        [ Html.div
+            [ Html.Attributes.class "container" ]
+            (case logInState of
+                LogInState.Ok { token, userWithName } ->
+                    case model of
+                        CheckTrader id ->
+                            [ Html.text "取引データを読み込み中"
+                            , Icon.loading { size = 64, color = "black" }
+                            ]
 
-                    Loading trade ->
-                        loadingView trade
+                        Loading trade ->
+                            loadingView trade
 
-                    Main { trade } ->
-                        mainView timeData userWithName trade
+                        Main { trade } ->
+                            mainView timeData userWithName trade
 
-            LogInState.LoadingProfile _ ->
-                [ Html.text "読み込み中"
-                , Icon.loading { size = 64, color = "black" }
-                ]
+                LogInState.LoadingProfile _ ->
+                    [ Html.text "読み込み中"
+                    , Icon.loading { size = 64, color = "black" }
+                    ]
 
-            LogInState.None ->
-                [ Html.text "取引するにはログインが必要です" ]
+                LogInState.None ->
+                    [ Html.text "取引するにはログインが必要です" ]
+            )
+        ]
     }
 
 

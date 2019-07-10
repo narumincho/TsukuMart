@@ -1425,7 +1425,7 @@ titleAndTabDataAndMainView logInState isWideScreen nowMaybe page =
 
         PageUser model ->
             model
-                |> Page.User.view logInState
+                |> Page.User.view logInState isWideScreen
                 |> mapPageData PageMsgUser
 
         PageSearch model ->

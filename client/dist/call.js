@@ -33,8 +33,11 @@ requestAnimationFrame(() => {
         };
     };
     const prodcutImageFilesResizeAndConvertToDataUrl = async (fileList) => {
+        window.alert("call prodcutImageFilesResizeAndConvertToDataUrl");
         return await Promise.all(new Array(Math.min(fileList.length, 10)).fill(0).map((_, index) => {
+            window.alert("input");
             return new Promise((resolve, reject) => {
+                window.alert("call promise");
                 const file = fileList.item(index);
                 const image = new Image();
                 image.addEventListener("load", () => {
