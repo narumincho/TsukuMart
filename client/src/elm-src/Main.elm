@@ -963,8 +963,8 @@ tradePageEmissionToCmd emission =
         Page.Trade.EmissionGetTradeDetail token id ->
             Api.getTradeDetail id token (Page.Trade.TradeDetailResponse >> PageMsgTrade >> PageMsg)
 
-        Page.Trade.EmissionSendComment token id string ->
-            Api.addTradeComment id string token (Page.Trade.TradeDetailResponse >> PageMsgTrade >> PageMsg)
+        Page.Trade.EmissionAddComment token id string ->
+            Api.addTradeComment id string token (Page.Trade.AddCommentResponse >> PageMsgTrade >> PageMsg)
 
         Page.Trade.EmissionAddLogMessage log ->
             Task.succeed ()
@@ -972,6 +972,12 @@ tradePageEmissionToCmd emission =
 
         Page.Trade.EmissionReplaceElementText idAndText ->
             replaceText idAndText
+
+        Page.Trade.EmissionFinishTrade token id ->
+            Api.finishTrade id token (Page.Trade.FinishTradeResponse >> PageMsgTrade >> PageMsg)
+
+        Page.Trade.EmissionCancelTrade token id ->
+            Api.cancelTrade id token (Page.Trade.CancelTradeResponse >> PageMsgTrade >> PageMsg)
 
 
 

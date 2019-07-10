@@ -4,8 +4,7 @@ module Data.Product exposing
     , Id
     , Product
     , ProductDetail
-    , Status
-    , addComment
+    , Status(..)
     , commentFromApi
     , commentGetBody
     , commentGetCreatedAt
@@ -35,6 +34,7 @@ module Data.Product exposing
     , getLikedCount
     , getName
     , getPrice
+    , getStatus
     , getThumbnailImageUrl
     , idFromString
     , idToString
@@ -57,7 +57,6 @@ import Data.Category as Category
 import Data.ImageId as ImageId
 import Data.User as User
 import Time
-import Time.Extra
 import Utility
 
 
@@ -160,21 +159,6 @@ detailFromApi rec =
 setCommentList : List Comment -> ProductDetail -> ProductDetail
 setCommentList commentList (ProductDetail rec) =
     ProductDetail { rec | commentList = Just commentList }
-
-
-addComment : Comment -> ProductDetail -> ProductDetail
-addComment comment (ProductDetail rec) =
-    case rec.commentList of
-        Just commentList ->
-            ProductDetail
-                { rec
-                    | commentList =
-                        Just
-                            (commentList ++ [ comment ])
-                }
-
-        _ ->
-            ProductDetail rec
 
 
 
@@ -486,6 +470,11 @@ detailGetImageUrls (ProductDetail { imageIds }) =
 detailGetSeller : ProductDetail -> User.WithName
 detailGetSeller (ProductDetail { seller }) =
     seller
+
+
+getStatus : Product -> Status
+getStatus (Product { status }) =
+    status
 
 
 detailGetStatus : ProductDetail -> Status

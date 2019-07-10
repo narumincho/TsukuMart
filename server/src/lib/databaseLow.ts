@@ -592,7 +592,7 @@ export type Trade = {
     buyerUserId: string;
     createdAt: firestore.Timestamp;
     updateAt: firestore.Timestamp;
-    state: type.TradeState;
+    status: type.TradeStatus;
 };
 
 export const getTradeData = async (id: string): Promise<Trade> => {

@@ -2,6 +2,7 @@ module Data.Trade exposing
     ( Comment(..)
     , Id
     , SellerOrBuyer(..)
+    , Status
     , Trade
     , TradeDetail
     , detailFromApi
@@ -10,6 +11,7 @@ module Data.Trade exposing
     , detailGetCreatedAt
     , detailGetId
     , detailGetProduct
+    , detailGetStatus
     , detailGetUpdateAt
     , fromApi
     , getBuyer
@@ -21,6 +23,8 @@ module Data.Trade exposing
     , idFromString
     , idToString
     , searchFromId
+    , statusFromIdString
+    , statusToJapaneseString
     )
 
 import Data.Product as Product
@@ -111,7 +115,50 @@ type TradeDetail
         , createdAt : Time.Posix
         , updateAt : Time.Posix
         , comments : List Comment
+        , status : Status
         }
+
+
+type Status
+    = InProgress
+    | Finish
+    | CancelBySeller
+    | CancelByBuyer
+
+
+statusFromIdString : String -> Maybe Status
+statusFromIdString string =
+    case string of
+        "inProgress" ->
+            Just InProgress
+
+        "finish" ->
+            Just Finish
+
+        "cancelBySeller" ->
+            Just CancelBySeller
+
+        "cancelByBuyer" ->
+            Just CancelByBuyer
+
+        _ ->
+            Nothing
+
+
+statusToJapaneseString : Status -> String
+statusToJapaneseString status =
+    case status of
+        InProgress ->
+            "進行中"
+
+        Finish ->
+            "取引終了"
+
+        CancelBySeller ->
+            "出品者がキャンセルした"
+
+        CancelByBuyer ->
+            "購入者がキャンセルした"
 
 
 type Comment
@@ -134,6 +181,7 @@ detailFromApi :
     , createdAt : Time.Posix
     , updateAt : Time.Posix
     , comments : List Comment
+    , status : Status
     }
     -> TradeDetail
 detailFromApi rec =
@@ -144,6 +192,7 @@ detailFromApi rec =
         , createdAt = rec.createdAt
         , updateAt = rec.updateAt
         , comments = rec.comments
+        , status = rec.status
         }
 
 
@@ -170,6 +219,11 @@ detailGetCreatedAt (TradeDetail { createdAt }) =
 detailGetUpdateAt : TradeDetail -> Time.Posix
 detailGetUpdateAt (TradeDetail { updateAt }) =
     updateAt
+
+
+detailGetStatus : TradeDetail -> Status
+detailGetStatus (TradeDetail { status }) =
+    status
 
 
 detailGetComment : TradeDetail -> List Comment

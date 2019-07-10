@@ -665,10 +665,10 @@ export type Trade = {
     comment: Array<TradeComment>;
     createdAt: Date;
     updateAt: Date;
-    state: TradeState;
+    status: TradeStatus;
 };
 
-const tradeStateValues = {
+const tradeStatusValues = {
     inProgress: {
         description: "進行中"
     },
@@ -683,14 +683,14 @@ const tradeStateValues = {
     }
 };
 
-export const tradeStateDescription = "取引の状態";
+export const tradeStatusDescription = "取引の状態";
 
-export type TradeState = keyof typeof tradeStateValues;
+export type TradeStatus = keyof typeof tradeStatusValues;
 
-export const TradeStateGraphQLType = new g.GraphQLEnumType({
-    name: "TradeState",
-    values: tradeStateValues,
-    description: tradeStateDescription
+export const TradeStatusGraphQLType = new g.GraphQLEnumType({
+    name: "TradeStatus",
+    values: tradeStatusValues,
+    description: tradeStatusDescription
 });
 
 /* ===============================

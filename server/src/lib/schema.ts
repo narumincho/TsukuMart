@@ -776,15 +776,15 @@ const tradeGraphQLType = new g.GraphQLObjectType({
                     return source.updateAt;
                 }
             }),
-            state: makeObjectField({
-                type: g.GraphQLNonNull(type.TradeStateGraphQLType),
+            status: makeObjectField({
+                type: g.GraphQLNonNull(type.TradeStatusGraphQLType),
                 args: {},
-                description: type.tradeStateDescription,
+                description: type.tradeStatusDescription,
                 resolve: async (source, args, context, info) => {
-                    if (source.state === undefined) {
-                        return (await setTradeData(source)).state;
+                    if (source.status === undefined) {
+                        return (await setTradeData(source)).status;
                     }
-                    return source.state;
+                    return source.status;
                 }
             })
         }),
@@ -1551,6 +1551,13 @@ const startTrade = makeQueryOrMutationField<
     type: g.GraphQLNonNull(tradeGraphQLType),
     resolve: async (source, args, context, info) => {
         const { id } = database.verifyAccessToken(args.accessToken);
+        const product = await database.getProduct(args.productId);
+        if (product.seller.id === id) {
+            throw new Error("自分が出品した商品を買うことはできません");
+        }
+        if (product.status !== "selling") {
+            throw new Error("売出し中以外の商品を買うことはできません");
+        }
         return await database.startTrade(id, args.productId);
     },
     description: "取引を開始する"
@@ -1604,7 +1611,7 @@ const cancelTrade = makeQueryOrMutationField<
     description: "取引をキャンセルする"
 });
 
-const tradeFinish = makeQueryOrMutationField<
+const finishTrade = makeQueryOrMutationField<
     { accessToken: string; tradeId: string },
     type.Trade
 >({
@@ -1667,7 +1674,7 @@ export const schema = new g.GraphQLSchema({
             startTrade,
             addTradeComment,
             cancelTrade,
-            tradeFinish
+            finishTrade
         }
     })
 });

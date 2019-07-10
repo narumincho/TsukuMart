@@ -11,6 +11,7 @@ import Data.SocialLoginService
 import Html
 import Html.Attributes as A
 import Html.Events
+import Icon
 import Svg
 import Svg.Attributes
 
@@ -117,6 +118,7 @@ view (Model { mouseState, waitLogInUrl }) =
                                         ++ "のログイン画面へのURLを取得中"
                                     )
                                 ]
+                            , Icon.loading { size = 64, color = "black" }
                             ]
 
                         Nothing ->

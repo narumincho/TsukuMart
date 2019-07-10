@@ -697,9 +697,7 @@ header {
 ===============================================*/
 
 .productList-item {
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
+    display: grid;
     border: solid 1px rgba(0, 0, 0, 0.4);
     text-decoration: none;
     color: black;

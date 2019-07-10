@@ -6,7 +6,9 @@ module Api exposing
     , UpdateProductRequest(..)
     , addProductComment
     , addTradeComment
+    , cancelTrade
     , deleteProduct
+    , finishTrade
     , getBoughtProductList
     , getCommentedProductList
     , getFreeProductList
@@ -381,7 +383,7 @@ productDecoder =
         |> Jdp.required "name" Jd.string
         |> Jdp.required "price" Jd.int
         |> Jdp.required "category" categoryDecoder
-        |> Jdp.required "status" statusDecoder
+        |> Jdp.required "status" productStatusDecoder
         |> Jdp.required "thumbnailImageId" imageIdDecoder
         |> Jdp.required "likedCount" Jd.int
 
@@ -430,7 +432,7 @@ productDetailDecoder =
         |> Jdp.required "price" Jd.int
         |> Jdp.required "condition" conditionDecoder
         |> Jdp.required "category" categoryDecoder
-        |> Jdp.required "status" statusDecoder
+        |> Jdp.required "status" productStatusDecoder
         |> Jdp.required "imageIds" imageIdsDecoder
         |> Jdp.required "likedCount" Jd.int
         |> Jdp.required "seller" userWithNameDecoder
@@ -477,8 +479,8 @@ categoryDecoder =
             )
 
 
-statusDecoder : Jd.Decoder Product.Status
-statusDecoder =
+productStatusDecoder : Jd.Decoder Product.Status
+productStatusDecoder =
     Jd.string
         |> Jd.andThen
             (\idString ->
@@ -1151,6 +1153,7 @@ tradeDetailReturn =
     , Field { name = "buyer", args = [], return = userWithNameReturn }
     , Field { name = "createdAt", args = [], return = [] }
     , Field { name = "updateAt", args = [], return = [] }
+    , Field { name = "status", args = [], return = [] }
     , Field
         { name = "comment"
         , args = []
@@ -1162,7 +1165,7 @@ tradeDetailReturn =
 tradeDetailDecoder : Jd.Decoder Trade.TradeDetail
 tradeDetailDecoder =
     Jd.succeed
-        (\id product buyer createdAt updateAt comments ->
+        (\id product buyer createdAt updateAt comments status ->
             Trade.detailFromApi
                 { id = id
                 , product = product
@@ -1170,6 +1173,7 @@ tradeDetailDecoder =
                 , createdAt = createdAt
                 , updateAt = updateAt
                 , comments = comments
+                , status = status
                 }
         )
         |> Jdp.required "id" Jd.string
@@ -1178,6 +1182,7 @@ tradeDetailDecoder =
         |> Jdp.required "createdAt" dateTimeDecoder
         |> Jdp.required "updateAt" dateTimeDecoder
         |> Jdp.required "comment" (Jd.list tradeCommentDecoder)
+        |> Jdp.required "status" tradeStatusDecoder
 
 
 tradeReturn : List Field
@@ -1256,6 +1261,20 @@ tradeSpeakerDecoder =
             )
 
 
+tradeStatusDecoder : Jd.Decoder Trade.Status
+tradeStatusDecoder =
+    Jd.string
+        |> Jd.andThen
+            (\id ->
+                case Trade.statusFromIdString id of
+                    Just status ->
+                        Jd.succeed status
+
+                    Nothing ->
+                        Jd.fail ("取引の状態(" ++ id ++ ")を理解できなかった")
+            )
+
+
 
 {- ==============================================================================
                             取引の詳細を取得する
@@ -1305,6 +1324,58 @@ addTradeComment tradeId body =
                 ]
         )
         (Jd.field "addTradeComment" tradeDetailDecoder)
+
+
+
+{- ==============================================================================
+                              取引をキャンセルする
+   ==============================================================================
+-}
+
+
+cancelTrade : Trade.Id -> Token -> (Result String Trade.TradeDetail -> msg) -> Cmd msg
+cancelTrade tradeId =
+    graphQlApiRequestWithToken
+        (\token ->
+            Mutation
+                [ Field
+                    { name = "cancelTrade"
+                    , args =
+                        [ ( "accessToken", GraphQLString (tokenGetAccessTokenAsString token) )
+                        , ( "tradeId", GraphQLString (Trade.idToString tradeId) )
+                        ]
+                    , return =
+                        tradeDetailReturn
+                    }
+                ]
+        )
+        (Jd.field "cancelTrade" tradeDetailDecoder)
+
+
+
+{- ==============================================================================
+                              取引を終了する
+   ==============================================================================
+-}
+
+
+finishTrade : Trade.Id -> Token -> (Result String Trade.TradeDetail -> msg) -> Cmd msg
+finishTrade tradeId =
+    graphQlApiRequestWithToken
+        (\token ->
+            Mutation
+                [ Field
+                    { name = "finishTrade"
+                    , args =
+                        [ ( "accessToken", GraphQLString (tokenGetAccessTokenAsString token) )
+                        , ( "tradeId", GraphQLString (Trade.idToString tradeId) )
+                        ]
+                    , return =
+                        tradeDetailReturn
+                    }
+                ]
+        )
+        (Jd.field "finishTrade" tradeDetailDecoder)
 
 
 

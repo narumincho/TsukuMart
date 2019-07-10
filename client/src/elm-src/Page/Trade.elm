@@ -10,6 +10,7 @@ module Page.Trade exposing
 
 import Api
 import BasicParts
+import Data.DateTime
 import Data.LogInState as LogInState
 import Data.Product as Product
 import Data.Trade as Trade
@@ -30,19 +31,32 @@ type Model
     | Main
         { trade : Trade.TradeDetail
         , commentInput : String
-        , commentSending : Bool
+        , sending : Maybe Sending
         }
+
+
+type Sending
+    = Comment
+    | Finish
+    | Cancel
 
 
 type Msg
     = InputComment String
-    | SendComment Api.Token
+    | AddComment Api.Token
+    | FinishTrade Api.Token
+    | CancelTrade Api.Token
+    | FinishTradeResponse (Result String Trade.TradeDetail)
+    | CancelTradeResponse (Result String Trade.TradeDetail)
+    | AddCommentResponse (Result String Trade.TradeDetail)
     | TradeDetailResponse (Result String Trade.TradeDetail)
 
 
 type Emission
     = EmissionGetTradeDetail Api.Token Trade.Id
-    | EmissionSendComment Api.Token Trade.Id String
+    | EmissionAddComment Api.Token Trade.Id String
+    | EmissionFinishTrade Api.Token Trade.Id
+    | EmissionCancelTrade Api.Token Trade.Id
     | EmissionAddLogMessage String
     | EmissionReplaceElementText { id : String, text : String }
 
@@ -84,31 +98,127 @@ update msg model =
                 _ ->
                     ( model, [] )
 
-        SendComment token ->
+        AddComment token ->
             case model of
                 Main rec ->
-                    ( Main { rec | commentSending = True }
-                    , [ EmissionSendComment token (Trade.detailGetId rec.trade) rec.commentInput ]
-                    )
+                    case rec.sending of
+                        Just _ ->
+                            ( model
+                            , [ EmissionAddLogMessage "同時に複数のリクエストをすることはできません" ]
+                            )
+
+                        Nothing ->
+                            ( Main { rec | sending = Just Comment }
+                            , [ EmissionAddComment token (Trade.detailGetId rec.trade) rec.commentInput ]
+                            )
 
                 _ ->
                     ( model, [] )
 
-        TradeDetailResponse result ->
+        FinishTrade token ->
+            case model of
+                Main rec ->
+                    case rec.sending of
+                        Just _ ->
+                            ( model
+                            , [ EmissionAddLogMessage "同時に複数のリクエストをすることはできません" ]
+                            )
+
+                        Nothing ->
+                            ( Main { rec | sending = Just Finish }
+                            , [ EmissionFinishTrade token (Trade.detailGetId rec.trade) ]
+                            )
+
+                _ ->
+                    ( model, [] )
+
+        CancelTrade token ->
+            case model of
+                Main rec ->
+                    case rec.sending of
+                        Just _ ->
+                            ( model
+                            , [ EmissionAddLogMessage "同時に複数のリクエストをすることはできません" ]
+                            )
+
+                        Nothing ->
+                            ( Main { rec | sending = Just Cancel }
+                            , [ EmissionCancelTrade token (Trade.detailGetId rec.trade) ]
+                            )
+
+                _ ->
+                    ( model, [] )
+
+        FinishTradeResponse result ->
             case result of
                 Ok trade ->
-                    ( Main { trade = trade, commentInput = "", commentSending = False }
+                    ( Main { trade = trade, commentInput = "", sending = Nothing }
+                    , [ EmissionReplaceElementText { id = commentTextAreaId, text = "" }
+                      , EmissionAddLogMessage "取引を完了しました"
+                      ]
+                    )
+
+                Err errMsg ->
+                    ( case model of
+                        Main rec ->
+                            Main { rec | sending = Nothing }
+
+                        _ ->
+                            model
+                    , [ EmissionAddLogMessage ("取引の完了に失敗 " ++ errMsg) ]
+                    )
+
+        CancelTradeResponse result ->
+            case result of
+                Ok trade ->
+                    ( Main { trade = trade, commentInput = "", sending = Nothing }
+                    , [ EmissionReplaceElementText { id = commentTextAreaId, text = "" }
+                      , EmissionAddLogMessage "取引をキャンセルしました"
+                      ]
+                    )
+
+                Err errMsg ->
+                    ( case model of
+                        Main rec ->
+                            Main { rec | sending = Nothing }
+
+                        _ ->
+                            model
+                    , [ EmissionAddLogMessage ("取引のキャンセルに失敗 " ++ errMsg) ]
+                    )
+
+        AddCommentResponse result ->
+            case result of
+                Ok trade ->
+                    ( Main { trade = trade, commentInput = "", sending = Nothing }
                     , [ EmissionReplaceElementText { id = commentTextAreaId, text = "" } ]
                     )
 
                 Err errMsg ->
                     ( case model of
                         Main rec ->
-                            Main { rec | commentSending = False }
+                            Main { rec | sending = Nothing }
 
                         _ ->
                             model
-                    , [ EmissionAddLogMessage ("取引の情報取得に失敗 " ++ errMsg) ]
+                    , [ EmissionAddLogMessage ("コメントの追加に失敗 " ++ errMsg) ]
+                    )
+
+        TradeDetailResponse result ->
+            case result of
+                Ok trade ->
+                    ( Main { trade = trade, commentInput = "", sending = Nothing }
+                    , [ EmissionReplaceElementText { id = commentTextAreaId, text = "" } ]
+                    )
+
+                Err errMsg ->
+                    ( case model of
+                        Main rec ->
+                            Main { rec | sending = Nothing }
+
+                        _ ->
+                            model
+                    , [ EmissionAddLogMessage ("取引の情報の取得に失敗 " ++ errMsg) ]
                     )
 
 
@@ -141,8 +251,8 @@ view logInState timeData model =
                             Loading trade ->
                                 loadingView trade
 
-                            Main { trade, commentSending } ->
-                                mainView commentSending token timeData userWithName trade
+                            Main { trade, sending } ->
+                                mainView sending token timeData userWithName trade
 
                     LogInState.LoadingProfile _ ->
                         [ Html.text "読み込み中"
@@ -172,8 +282,8 @@ loadingView trade =
     ]
 
 
-mainView : Bool -> Api.Token -> Maybe ( Time.Posix, Time.Zone ) -> User.WithName -> Trade.TradeDetail -> List (Html.Html Msg)
-mainView commentSending token timeData user trade =
+mainView : Maybe Sending -> Api.Token -> Maybe ( Time.Posix, Time.Zone ) -> User.WithName -> Trade.TradeDetail -> List (Html.Html Msg)
+mainView sending token timeData user trade =
     let
         product =
             Trade.detailGetProduct trade
@@ -181,10 +291,19 @@ mainView commentSending token timeData user trade =
     [ productImageView (Product.detailGetImageUrls product)
     , Page.Style.titleAndContent
         "商品名"
-        (Html.text (Product.detailGetName product))
+        (Html.div [] [ Html.text (Product.detailGetName product) ])
     , Page.Style.titleAndContent
         "値段"
-        (Html.text (Product.priceToString (Product.detailGetPrice product)))
+        (Html.div [] [ Html.text (Product.priceToString (Product.detailGetPrice product)) ])
+    , Page.Style.titleAndContent
+        "取引状態"
+        (Html.text (Trade.statusToJapaneseString (Trade.detailGetStatus trade)))
+    , Page.Style.titleAndContent
+        "更新日時"
+        (Html.text (Data.DateTime.toDiffString timeData (Trade.detailGetUpdateAt trade)))
+    , Page.Style.titleAndContent
+        "開始日時"
+        (Html.text (Data.DateTime.toDiffString timeData (Trade.detailGetCreatedAt trade)))
     , Html.a
         [ Html.Attributes.style "display" "block"
         , Html.Attributes.href
@@ -196,8 +315,10 @@ mainView commentSending token timeData user trade =
         ]
         [ Html.text "商品詳細ページ" ]
     , sellerAndBuyerView (Product.detailGetSeller product) (Trade.detailGetBuyer trade)
-    , commentInputArea commentSending token
+    , commentInputArea sending token
     , commentView timeData user trade
+    , finishButton sending token
+    , cancelButton sending token
     ]
 
 
@@ -251,7 +372,7 @@ userView userWithName =
         ]
 
 
-commentInputArea : Bool -> Api.Token -> Html.Html Msg
+commentInputArea : Maybe Sending -> Api.Token -> Html.Html Msg
 commentInputArea sending token =
     Html.div
         []
@@ -262,21 +383,30 @@ commentInputArea sending token =
             ]
             []
          ]
-            ++ (if sending then
-                    [ Html.button
-                        [ Html.Attributes.class "product-comment-sendButton"
-                        , Html.Attributes.disabled True
+            ++ (case sending of
+                    Just Comment ->
+                        [ Html.button
+                            [ Html.Attributes.class "product-comment-sendButton"
+                            , Html.Attributes.disabled True
+                            ]
+                            [ Icon.loading { size = 24, color = "black" } ]
                         ]
-                        [ Icon.loading { size = 24, color = "black" } ]
-                    ]
 
-                else
-                    [ Html.button
-                        [ Html.Events.onClick (SendComment token)
-                        , Html.Attributes.class "product-comment-sendButton"
+                    Just _ ->
+                        [ Html.button
+                            [ Html.Attributes.class "product-comment-sendButton"
+                            , Html.Attributes.disabled True
+                            ]
+                            [ Html.text "コメントを送信" ]
                         ]
-                        [ Html.text "コメントを送信" ]
-                    ]
+
+                    Nothing ->
+                        [ Html.button
+                            [ Html.Events.onClick (AddComment token)
+                            , Html.Attributes.class "product-comment-sendButton"
+                            ]
+                            [ Html.text "コメントを送信" ]
+                        ]
                )
         )
 
@@ -335,3 +465,53 @@ tradeCommentToCommentData trade myId (Trade.Comment { body, speaker, createdAt }
             , body = body
             , createdAt = createdAt
             }
+
+
+finishButton : Maybe Sending -> Api.Token -> Html.Html Msg
+finishButton sending token =
+    case sending of
+        Just Finish ->
+            Html.button
+                [ Html.Attributes.class "mainButton"
+                , Html.Attributes.disabled True
+                ]
+                [ Icon.loading { size = 24, color = "black" } ]
+
+        Just _ ->
+            Html.button
+                [ Html.Attributes.class "mainButton"
+                , Html.Attributes.disabled True
+                ]
+                [ Html.text "取引を完了する" ]
+
+        Nothing ->
+            Html.button
+                [ Html.Attributes.class "mainButton"
+                , Html.Events.onClick (FinishTrade token)
+                ]
+                [ Html.text "取引を完了する" ]
+
+
+cancelButton : Maybe Sending -> Api.Token -> Html.Html Msg
+cancelButton sending token =
+    case sending of
+        Just Cancel ->
+            Html.button
+                [ Html.Attributes.class "product-deleteButton"
+                , Html.Attributes.disabled True
+                ]
+                [ Icon.loading { size = 24, color = "black" } ]
+
+        Just _ ->
+            Html.button
+                [ Html.Attributes.class "product-deleteButton"
+                , Html.Attributes.disabled True
+                ]
+                [ Html.text "取引をキャンセルする" ]
+
+        Nothing ->
+            Html.button
+                [ Html.Attributes.class "product-deleteButton"
+                , Html.Events.onClick (CancelTrade token)
+                ]
+                [ Html.text "取引をキャンセルする" ]

@@ -149,16 +149,25 @@ item logInState sending product =
         , Html.Attributes.href (PageLocation.toUrlAsString (PageLocation.Product (Product.getId product)))
         , Html.Attributes.id (productIdString (Product.getId product))
         ]
-        [ itemImage (Product.getName product) (Product.getThumbnailImageUrl product)
-        , Html.div
-            [ Html.Attributes.class "productList-name" ]
-            [ Html.text (Product.getName product) ]
-        , Html.div
-            [ Html.Attributes.class "productList-priceAndLike" ]
-            [ itemLike logInState sending product
-            , itemPrice (Product.getPrice product)
-            ]
-        ]
+        ([ itemImage (Product.getName product) (Product.getThumbnailImageUrl product)
+         ]
+            ++ (case Product.getStatus product of
+                    Product.SoldOut ->
+                        [ soldOutBar ]
+
+                    _ ->
+                        []
+               )
+            ++ [ Html.div
+                    [ Html.Attributes.class "productList-name" ]
+                    [ Html.text (Product.getName product) ]
+               , Html.div
+                    [ Html.Attributes.class "productList-priceAndLike" ]
+                    [ itemLike logInState sending product
+                    , itemPrice (Product.getPrice product)
+                    ]
+               ]
+        )
 
 
 productIdString : Product.Id -> String
@@ -237,7 +246,28 @@ itemImage : String -> String -> Html.Html msg
 itemImage name url =
     Html.img
         [ Html.Attributes.class "productList-image"
+        , Html.Attributes.style "grid-column" "1 / 2"
+        , Html.Attributes.style "grid-row" "1 / 2"
         , Html.Attributes.src url
         , Html.Attributes.alt (name ++ "の画像")
         ]
         []
+
+
+soldOutBar : Html.Html msg
+soldOutBar =
+    Html.div
+        [ Html.Attributes.style "grid-column" "1 / 2"
+        , Html.Attributes.style "grid-row" "1 / 2"
+        , Html.Attributes.style "overflow" "hidden"
+        ]
+        [ Html.div
+            [ Html.Attributes.style "background-color" "red"
+            , Html.Attributes.style "color" "#fff"
+            , Html.Attributes.style "transform" "translate(-48px, 48px) rotate(322deg)"
+            , Html.Attributes.style "width" "256px"
+            , Html.Attributes.style "font-size" "1.5rem"
+            , Html.Attributes.style "text-align" "center"
+            ]
+            [ Html.text "SOLD OUT" ]
+        ]

@@ -48,6 +48,7 @@ item trade =
         , Html.Attributes.style "grid-template-rows" "max-content max-content max-content"
         , Html.Attributes.style "border" "solid 1px rgba(0,0,0,.4)"
         , Html.Attributes.style "text-decoration" "none"
+        , Html.Attributes.style "color" "black"
         ]
         [ Html.img
             [ Html.Attributes.src (Product.getThumbnailImageUrl product)
