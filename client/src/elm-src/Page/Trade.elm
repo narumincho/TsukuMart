@@ -16,8 +16,11 @@ import Data.Trade as Trade
 import Data.User as User
 import Html
 import Html.Attributes
+import Html.Events
 import Icon
 import Page.Component.Comment
+import Page.Style
+import PageLocation
 import Time
 
 
@@ -27,16 +30,19 @@ type Model
     | Main
         { trade : Trade.TradeDetail
         , commentInput : String
+        , commentSending : Bool
         }
 
 
 type Msg
     = InputComment String
+    | SendComment Api.Token
     | TradeDetailResponse (Result String Trade.TradeDetail)
 
 
 type Emission
     = EmissionGetTradeDetail Api.Token Trade.Id
+    | EmissionSendComment Api.Token Trade.Id String
     | EmissionAddLogMessage String
     | EmissionReplaceElementText { id : String, text : String }
 
@@ -78,16 +84,31 @@ update msg model =
                 _ ->
                     ( model, [] )
 
+        SendComment token ->
+            case model of
+                Main rec ->
+                    ( Main { rec | commentSending = True }
+                    , [ EmissionSendComment token (Trade.detailGetId rec.trade) rec.commentInput ]
+                    )
+
+                _ ->
+                    ( model, [] )
+
         TradeDetailResponse result ->
             case result of
                 Ok trade ->
-                    ( Main { trade = trade, commentInput = "" }
-                    , []
+                    ( Main { trade = trade, commentInput = "", commentSending = False }
+                    , [ EmissionReplaceElementText { id = commentTextAreaId, text = "" } ]
                     )
 
                 Err errMsg ->
-                    ( model
-                    , [ EmissionAddLogMessage errMsg ]
+                    ( case model of
+                        Main rec ->
+                            Main { rec | commentSending = False }
+
+                        _ ->
+                            model
+                    , [ EmissionAddLogMessage ("取引の情報取得に失敗 " ++ errMsg) ]
                     )
 
 
@@ -102,28 +123,31 @@ view logInState timeData model =
     , html =
         [ Html.div
             [ Html.Attributes.class "container" ]
-            (case logInState of
-                LogInState.Ok { token, userWithName } ->
-                    case model of
-                        CheckTrader id ->
-                            [ Html.text "取引データを読み込み中"
-                            , Icon.loading { size = 64, color = "black" }
-                            ]
+            [ Html.div
+                [ Html.Attributes.class "product" ]
+                (case logInState of
+                    LogInState.Ok { token, userWithName } ->
+                        case model of
+                            CheckTrader id ->
+                                [ Html.text ("id=" ++ Trade.idToString id ++ "の取引データを読み込み中")
+                                , Icon.loading { size = 64, color = "black" }
+                                ]
 
-                        Loading trade ->
-                            loadingView trade
+                            Loading trade ->
+                                loadingView trade
 
-                        Main { trade } ->
-                            mainView timeData userWithName trade
+                            Main { trade, commentSending } ->
+                                mainView commentSending token timeData userWithName trade
 
-                LogInState.LoadingProfile _ ->
-                    [ Html.text "読み込み中"
-                    , Icon.loading { size = 64, color = "black" }
-                    ]
+                    LogInState.LoadingProfile _ ->
+                        [ Html.text "読み込み中"
+                        , Icon.loading { size = 64, color = "black" }
+                        ]
 
-                LogInState.None ->
-                    [ Html.text "取引するにはログインが必要です" ]
-            )
+                    LogInState.None ->
+                        [ Html.text "取引するにはログインが必要です" ]
+                )
+            ]
         ]
     }
 
@@ -136,23 +160,27 @@ loadingView trade =
     in
     [ Html.div
         []
-        []
+        [ Html.text "読み込み中"
+        , Icon.loading { size = 64, color = "black" }
+        ]
     ]
 
 
-mainView : Maybe ( Time.Posix, Time.Zone ) -> User.WithName -> Trade.TradeDetail -> List (Html.Html Msg)
-mainView timeData user trade =
+mainView : Bool -> Api.Token -> Maybe ( Time.Posix, Time.Zone ) -> User.WithName -> Trade.TradeDetail -> List (Html.Html Msg)
+mainView commentSending token timeData user trade =
     let
         product =
             Trade.detailGetProduct trade
     in
     [ productImageView (Product.detailGetImageUrls product)
-    , Html.div
-        []
-        [ Html.text (Product.detailGetName product) ]
-    , Html.div
-        []
-        [ Html.text (String.fromInt (Product.detailGetPrice product)) ]
+    , Page.Style.titleAndContent
+        "商品名"
+        (Html.text (Product.detailGetName product))
+    , Page.Style.titleAndContent
+        "値段"
+        (Html.text (Product.priceToString (Product.detailGetPrice product)))
+    , sellerAndBuyerView (Product.detailGetSeller product) (Trade.detailGetBuyer trade)
+    , commentInputArea commentSending token
     , commentView timeData user trade
     ]
 
@@ -175,6 +203,71 @@ imageView url =
         , Html.Attributes.src url
         ]
         []
+
+
+sellerAndBuyerView : User.WithName -> User.WithName -> Html.Html msg
+sellerAndBuyerView seller buyer =
+    Html.div
+        [ Html.Attributes.style "display" "flex"
+        ]
+        [ userView seller
+        , Html.div [ Html.Attributes.style "font-size" "32px" ] [ Html.text "→" ]
+        , userView buyer
+        ]
+
+
+userView : User.WithName -> Html.Html msg
+userView userWithName =
+    Html.a
+        [ Html.Attributes.href
+            (PageLocation.toUrlAsString
+                (PageLocation.User (User.withNameGetId userWithName))
+            )
+        ]
+        [ Html.img
+            [ Html.Attributes.src (User.withNameGetImageUrl userWithName)
+            , Html.Attributes.style "border-radius" "50%"
+            , Html.Attributes.style "width" "48px"
+            , Html.Attributes.style "height" "48px"
+            ]
+            []
+        , Html.text (User.withNameGetDisplayName userWithName)
+        ]
+
+
+commentInputArea : Bool -> Api.Token -> Html.Html Msg
+commentInputArea sending token =
+    Html.div
+        []
+        ([ Html.textarea
+            [ Html.Events.onInput InputComment
+            , Html.Attributes.class "form-textarea"
+            , Html.Attributes.id commentTextAreaId
+            ]
+            []
+         ]
+            ++ (if sending then
+                    [ Html.button
+                        [ Html.Attributes.class "product-comment-sendButton"
+                        , Html.Attributes.disabled True
+                        ]
+                        [ Icon.loading { size = 24, color = "black" } ]
+                    ]
+
+                else
+                    [ Html.button
+                        [ Html.Events.onClick (SendComment token)
+                        , Html.Attributes.class "product-comment-sendButton"
+                        ]
+                        [ Html.text "コメントを送信" ]
+                    ]
+               )
+        )
+
+
+commentTextAreaId : String
+commentTextAreaId =
+    "comment-text-area"
 
 
 commentView : Maybe ( Time.Posix, Time.Zone ) -> User.WithName -> Trade.TradeDetail -> Html.Html msg

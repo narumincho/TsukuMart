@@ -912,7 +912,7 @@ productPageEmissionToCmd key emission =
             Api.getProductComments productId (Page.Product.GetCommentListResponse >> PageMsgProduct >> PageMsg)
 
         Page.Product.EmissionPostComment token { productId } comment ->
-            Api.postProductComment
+            Api.addProductComment
                 productId
                 comment
                 token
@@ -961,7 +961,11 @@ tradePageEmissionToCmd : Page.Trade.Emission -> Cmd Msg
 tradePageEmissionToCmd emission =
     case emission of
         Page.Trade.EmissionGetTradeDetail token id ->
-                Api.getTradeDetail id token (Page.Trade.TradeDetailResponse >> PageMsgTrade >> PageMsg)
+            Api.getTradeDetail id token (Page.Trade.TradeDetailResponse >> PageMsgTrade >> PageMsg)
+
+        Page.Trade.EmissionSendComment token id string ->
+            Api.addTradeComment id string token (Page.Trade.TradeDetailResponse >> PageMsgTrade >> PageMsg)
+
         Page.Trade.EmissionAddLogMessage log ->
             Task.succeed ()
                 |> Task.perform (always (AddLogMessage log))

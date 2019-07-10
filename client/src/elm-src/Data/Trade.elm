@@ -8,16 +8,14 @@ module Data.Trade exposing
     , detailGetBuyer
     , detailGetComment
     , detailGetCreatedAt
+    , detailGetId
     , detailGetProduct
-    , detailGetProductId
-    , detailGetTradeId
     , detailGetUpdateAt
     , fromApi
     , getBuyer
     , getCreatedAt
     , getId
     , getProduct
-    , getProductId
     , getSeller
     , getUpdateAt
     , idFromString
@@ -77,11 +75,6 @@ fromApi rec =
 
 getId : Trade -> Id
 getId (Trade { id }) =
-    id
-
-
-getProductId : Trade -> Id
-getProductId (Trade { id }) =
     id
 
 
@@ -154,13 +147,8 @@ detailFromApi rec =
         }
 
 
-detailGetTradeId : TradeDetail -> Id
-detailGetTradeId (TradeDetail { id }) =
-    id
-
-
-detailGetProductId : TradeDetail -> Id
-detailGetProductId (TradeDetail { id }) =
+detailGetId : TradeDetail -> Id
+detailGetId (TradeDetail { id }) =
     id
 
 

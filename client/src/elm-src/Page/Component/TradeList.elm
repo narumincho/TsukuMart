@@ -76,7 +76,7 @@ item trade =
             , Html.Attributes.style "display" "flex"
             ]
             [ userView (Trade.getSeller trade)
-            , Html.text "→"
+            , Html.div [ Html.Attributes.style "font-size" "32px" ] [ Html.text "→" ]
             , userView (Trade.getBuyer trade)
             ]
         ]

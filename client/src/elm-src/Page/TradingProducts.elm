@@ -110,8 +110,8 @@ view :
     -> Model
     -> { title : Maybe String, tab : BasicParts.Tab Msg, html : List (Html.Html Msg) }
 view logInState (Model rec) =
-    { title = Just "取引中の商品"
-    , tab = BasicParts.tabSingle "取引中の商品"
+    { title = Just "進行中の取引"
+    , tab = BasicParts.tabSingle "進行中の取引"
     , html =
         case logInState of
             LogInState.None ->

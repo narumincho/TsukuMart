@@ -4,6 +4,8 @@ module Api exposing
     , SignUpRequest
     , Token
     , UpdateProductRequest(..)
+    , addProductComment
+    , addTradeComment
     , deleteProduct
     , getBoughtProductList
     , getCommentedProductList
@@ -16,7 +18,7 @@ module Api exposing
     , getRecentProductList
     , getRecommendProductList
     , getSoldProductList
-    , getTradeComment
+    , getTradeDetail
     , getTradedProductList
     , getTradingProductList
     , getUserProfile
@@ -24,7 +26,6 @@ module Api exposing
     , logInOrSignUpUrlRequest
     , makeToken
     , markProductInHistory
-    , postProductComment
     , sellProduct
     , sendConfirmEmail
     , startTrade
@@ -34,7 +35,7 @@ module Api exposing
     , updateProduct
     , updateProfile
     , userWithNameDecoder
-    , getTradeDetail)
+    )
 
 import Data.Category as Category
 import Data.EmailAddress as EmailAddress
@@ -1073,13 +1074,13 @@ productCommentDecoder =
 -}
 
 
-postProductComment :
+addProductComment :
     Product.Id
     -> String
     -> Token
     -> (Result String (List Product.Comment) -> msg)
     -> Cmd msg
-postProductComment productId commentBody =
+addProductComment productId commentBody =
     graphQlApiRequestWithToken
         (\t ->
             Mutation
@@ -1255,11 +1256,14 @@ tradeSpeakerDecoder =
             )
 
 
+
 {- ==============================================================================
                             取引の詳細を取得する
    ==============================================================================
 -}
-getTradeDetail : Trade.Id -> Token-> (Result String (Trade.TradeDetail) -> msg) -> Cmd msg
+
+
+getTradeDetail : Trade.Id -> Token -> (Result String Trade.TradeDetail -> msg) -> Cmd msg
 getTradeDetail id =
     graphQlApiRequestWithToken
         (\token ->
@@ -1276,15 +1280,31 @@ getTradeDetail id =
         )
         (Jd.field "trade" tradeDetailDecoder)
 
+
+
 {- ==============================================================================
-                      商品の取引のコメントを取得する
+                              取引のコメントを追加する
    ==============================================================================
 -}
 
 
-getTradeComment : Token -> Product.Id -> (Result () (List Product.Comment) -> msg) -> Cmd msg
-getTradeComment token productId msg =
-    Cmd.none
+addTradeComment : Trade.Id -> String -> Token -> (Result String Trade.TradeDetail -> msg) -> Cmd msg
+addTradeComment tradeId body =
+    graphQlApiRequestWithToken
+        (\token ->
+            Mutation
+                [ Field
+                    { name = "addTradeComment"
+                    , args =
+                        [ ( "accessToken", GraphQLString (tokenGetAccessTokenAsString token) )
+                        , ( "tradeId", GraphQLString (Trade.idToString tradeId) )
+                        , ( "body", GraphQLString body )
+                        ]
+                    , return = tradeDetailReturn
+                    }
+                ]
+        )
+        (Jd.field "addTradeComment" tradeDetailDecoder)
 
 
 

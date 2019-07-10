@@ -42,7 +42,8 @@ type Model
     | WaitNewData Product.Product
     | Normal
         { product : Product.ProductDetail
-        , sending : Bool -- いいねを送信中か送信中じゃないか
+        , likeSending : Bool
+        , commentSending : Bool
         , comment : String
         }
     | Edit
@@ -206,14 +207,19 @@ update msg model =
         GetProductResponse productsResult ->
             case ( model, productsResult ) of
                 ( Loading _, Ok product ) ->
-                    ( Normal { product = product, sending = False, comment = "" }
+                    ( Normal
+                        { product = product
+                        , likeSending = False
+                        , commentSending = False
+                        , comment = ""
+                        }
                     , [ EmissionGetCommentList { productId = Product.detailGetId product }
                       , EmissionUpdateNowTime
                       ]
                     )
 
                 ( WaitNewData _, Ok product ) ->
-                    ( Normal { product = product, sending = False, comment = "" }
+                    ( Normal { product = product, likeSending = False, commentSending = False, comment = "" }
                     , [ EmissionGetCommentList { productId = Product.detailGetId product }
                       , EmissionUpdateNowTime
                       ]
@@ -243,6 +249,7 @@ update msg model =
                         { rec
                             | product = rec.product |> Product.setCommentList commentList
                             , comment = ""
+                            , commentSending = False
                         }
                     , [ EmissionReplaceElementText
                             { id = commentTextAreaId
@@ -264,7 +271,7 @@ update msg model =
         Like token id ->
             ( case model of
                 Normal rec ->
-                    Normal { rec | sending = True }
+                    Normal { rec | likeSending = True }
 
                 _ ->
                     model
@@ -274,7 +281,7 @@ update msg model =
         UnLike token id ->
             ( case model of
                 Normal rec ->
-                    Normal { rec | sending = True }
+                    Normal { rec | likeSending = True }
 
                 _ ->
                     model
@@ -287,7 +294,7 @@ update msg model =
                     ( Normal
                         { rec
                             | product = rec.product |> Product.detailUpdateLikedCount likedCount
-                            , sending = False
+                            , likeSending = False
                         }
                     , []
                     )
@@ -308,7 +315,7 @@ update msg model =
                     ( Normal
                         { rec
                             | product = rec.product |> Product.detailUpdateLikedCount likedCount
-                            , sending = False
+                            , likeSending = False
                         }
                     , []
                     )
@@ -364,9 +371,9 @@ update msg model =
 
         SendComment token ->
             case model of
-                Normal { comment, product } ->
-                    ( model
-                    , [ EmissionPostComment token { productId = Product.detailGetId product } comment ]
+                Normal rec ->
+                    ( Normal { rec | commentSending = True }
+                    , [ EmissionPostComment token { productId = Product.detailGetId rec.product } rec.comment ]
                     )
 
                 _ ->
@@ -394,7 +401,8 @@ update msg model =
                 Edit { beforeProduct } ->
                     ( Normal
                         { product = beforeProduct
-                        , sending = False
+                        , likeSending = False
+                        , commentSending = False
                         , comment = ""
                         }
                     , [ EmissionGetProduct { productId = Product.detailGetId beforeProduct } ]
@@ -470,8 +478,14 @@ view logInState isWideScreen nowMaybe model =
                 ]
             }
 
-        Normal { product, sending } ->
-            normalView logInState isWideScreen nowMaybe sending product
+        Normal rec ->
+            normalView logInState
+                isWideScreen
+                nowMaybe
+                { likeSending = rec.likeSending
+                , commentSending = rec.commentSending
+                , product = rec.product
+                }
 
         Edit { productEditor, beforeProduct } ->
             { title = Just (Product.detailGetName beforeProduct)
@@ -525,10 +539,13 @@ normalView :
     LogInState.LogInState
     -> Bool
     -> Maybe ( Time.Posix, Time.Zone )
-    -> Bool
-    -> Product.ProductDetail
+    ->
+        { product : Product.ProductDetail
+        , likeSending : Bool
+        , commentSending : Bool
+        }
     -> { title : Maybe String, tab : BasicParts.Tab Msg, html : List (Html.Html Msg) }
-normalView logInState isWideScreen nowMaybe sending product =
+normalView logInState isWideScreen nowMaybe { product, likeSending, commentSending } =
     { title = Just (Product.detailGetName product)
     , tab = BasicParts.tabNone
     , html =
@@ -540,7 +557,7 @@ normalView logInState isWideScreen nowMaybe sending product =
                  , productsViewName (Product.detailGetName product)
                  , productsViewLike
                     logInState
-                    sending
+                    likeSending
                     (Product.detailGetLikedCount product)
                     (Product.detailGetId product)
                  , statusView (Product.detailGetStatus product)
@@ -548,7 +565,8 @@ normalView logInState isWideScreen nowMaybe sending product =
                  , descriptionView (Product.detailGetDescription product)
                  , conditionView (Product.detailGetCondition product)
                  , createdAtView nowMaybe (Product.detailGetCreatedAt product)
-                 , commentListView nowMaybe
+                 , commentListView commentSending
+                    nowMaybe
                     (product |> Product.detailGetSeller |> User.withNameGetId)
                     logInState
                     (Product.detailGetCommentList product)
@@ -730,13 +748,19 @@ deleteView productId token =
         ]
 
 
-commentListView : Maybe ( Time.Posix, Time.Zone ) -> User.Id -> LogInState.LogInState -> Maybe (List Product.Comment) -> Html.Html Msg
-commentListView nowMaybe sellerId logInState commentListMaybe =
+commentListView :
+    Bool
+    -> Maybe ( Time.Posix, Time.Zone )
+    -> User.Id
+    -> LogInState.LogInState
+    -> Maybe (List Product.Comment)
+    -> Html.Html Msg
+commentListView commentSending nowMaybe sellerId logInState commentListMaybe =
     Html.div
         []
         ((case LogInState.getToken logInState of
             Just token ->
-                [ commentInputArea token ]
+                [ commentInputArea commentSending token ]
 
             Nothing ->
                 []
@@ -771,22 +795,34 @@ commentListView nowMaybe sellerId logInState commentListMaybe =
         )
 
 
-commentInputArea : Api.Token -> Html.Html Msg
-commentInputArea token =
+commentInputArea : Bool -> Api.Token -> Html.Html Msg
+commentInputArea sending token =
     Html.div
         []
-        [ Html.textarea
+        ([ Html.textarea
             [ Html.Events.onInput InputComment
             , Html.Attributes.class "form-textarea"
             , Html.Attributes.id commentTextAreaId
             ]
             []
-        , Html.button
-            [ Html.Events.onClick (SendComment token)
-            , Html.Attributes.class "product-comment-sendButton"
-            ]
-            [ Html.text "コメントを送信" ]
-        ]
+         ]
+            ++ (if sending then
+                    [ Html.button
+                        [ Html.Attributes.class "product-comment-sendButton"
+                        , Html.Attributes.disabled True
+                        ]
+                        [ Icon.loading { size = 24, color = "black" } ]
+                    ]
+
+                else
+                    [ Html.button
+                        [ Html.Events.onClick (SendComment token)
+                        , Html.Attributes.class "product-comment-sendButton"
+                        ]
+                        [ Html.text "コメントを送信" ]
+                    ]
+               )
+        )
 
 
 commentTextAreaId : String

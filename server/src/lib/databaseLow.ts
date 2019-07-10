@@ -580,6 +580,7 @@ export const getProductComments = async (
         await productCollectionRef
             .doc(id)
             .collection(productCommentCollectionName)
+            .orderBy("createdAt")
             .get()
     )) as Array<{ id: string; data: ProductComment }>;
 /* ==========================================
