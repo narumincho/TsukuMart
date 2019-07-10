@@ -47,7 +47,14 @@ update msg (Model logInOrSignUpModel) =
 
 {-| ログイン画面
 -}
-view : Model -> { title : Maybe String, tab : BasicParts.Tab Msg, html : List (Html.Html Msg) }
+view :
+    Model
+    ->
+        { title : Maybe String
+        , tab : BasicParts.Tab Msg
+        , html : List (Html.Html Msg)
+        , bottomNavigation : Maybe BasicParts.BottomNavigationSelect
+        }
 view (Model logInOrSignUpModel) =
     { title = Just "ログイン"
     , tab = BasicParts.tabSingle "ログイン"
@@ -58,4 +65,5 @@ view (Model logInOrSignUpModel) =
                 |> Html.map Msg
             ]
         ]
+    , bottomNavigation = Just BasicParts.User
     }

@@ -247,7 +247,12 @@ view :
     LogInState.LogInState
     -> Bool
     -> Model
-    -> { title : Maybe String, tab : BasicParts.Tab Msg, html : List (Html.Html Msg) }
+    ->
+        { title : Maybe String
+        , tab : BasicParts.Tab Msg
+        , html : List (Html.Html Msg)
+        , bottomNavigation : Maybe BasicParts.BottomNavigationSelect
+        }
 view logInState isWideScreen model =
     { title = Just "プロフィール"
     , tab = BasicParts.tabSingle "プロフィール"
@@ -278,6 +283,7 @@ view logInState isWideScreen model =
                     [ Html.text "自分以外のプロフィールは編集できない" ]
             )
         ]
+    , bottomNavigation = Just BasicParts.User
     }
 
 

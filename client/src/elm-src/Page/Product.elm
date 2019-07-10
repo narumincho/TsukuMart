@@ -444,7 +444,12 @@ view :
     -> Bool
     -> Maybe ( Time.Posix, Time.Zone )
     -> Model
-    -> { title : Maybe String, tab : BasicParts.Tab Msg, html : List (Html.Html Msg) }
+    ->
+        { title : Maybe String
+        , tab : BasicParts.Tab Msg
+        , html : List (Html.Html Msg)
+        , bottomNavigation : Maybe BasicParts.BottomNavigationSelect
+        }
 view logInState isWideScreen nowMaybe model =
     case model of
         Loading _ ->
@@ -454,6 +459,7 @@ view logInState isWideScreen nowMaybe model =
                 [ Html.text "読み込み中"
                 , Icon.loading { size = 48, color = "black" }
                 ]
+            , bottomNavigation = Nothing
             }
 
         WaitNewData product ->
@@ -476,6 +482,7 @@ view logInState isWideScreen nowMaybe model =
                         ]
                     ]
                 ]
+            , bottomNavigation = Nothing
             }
 
         Normal rec ->
@@ -513,6 +520,7 @@ view logInState isWideScreen nowMaybe model =
                         )
                     ]
                 ]
+            , bottomNavigation = Nothing
             }
 
         Confirm { product } ->
@@ -532,6 +540,7 @@ view logInState isWideScreen nowMaybe model =
                         ]
                     ]
                 ]
+            , bottomNavigation = Nothing
             }
 
 
@@ -544,7 +553,12 @@ normalView :
         , likeSending : Bool
         , commentSending : Bool
         }
-    -> { title : Maybe String, tab : BasicParts.Tab Msg, html : List (Html.Html Msg) }
+    ->
+        { title : Maybe String
+        , tab : BasicParts.Tab Msg
+        , html : List (Html.Html Msg)
+        , bottomNavigation : Maybe BasicParts.BottomNavigationSelect
+        }
 normalView logInState isWideScreen nowMaybe { product, likeSending, commentSending } =
     { title = Just (Product.detailGetName product)
     , tab = BasicParts.tabNone
@@ -591,6 +605,7 @@ normalView logInState isWideScreen nowMaybe { product, likeSending, commentSendi
             , productsViewPriceAndBuyButton isWideScreen (Product.detailGetPrice product)
             ]
         ]
+    , bottomNavigation = Nothing
     }
 
 

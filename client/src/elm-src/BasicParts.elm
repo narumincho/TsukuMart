@@ -1,5 +1,6 @@
 module BasicParts exposing
-    ( Msg(..)
+    ( BottomNavigationSelect(..)
+    , Msg(..)
     , Tab
     , bottomNavigation
     , header
@@ -618,69 +619,84 @@ selectLineView index count =
 {- ================= menu ================ -}
 
 
-bottomNavigation : Data.LogInState.LogInState -> Html.Html msg
-bottomNavigation logInState =
+type BottomNavigationSelect
+    = Home
+    | Search
+    | Notification
+    | User
+
+
+bottomNavigation : Data.LogInState.LogInState -> BottomNavigationSelect -> Html.Html msg
+bottomNavigation logInState select =
     case logInState of
         Data.LogInState.None ->
-            Html.div
-                [ Html.Attributes.style "display" "grid"
-                , Html.Attributes.style "grid-template-columns" "1fr 1fr 1fr"
-                , Html.Attributes.style "height" "64px"
-                , Html.Attributes.style "position" "fixed"
-                , Html.Attributes.style "bottom" "0"
-                , Html.Attributes.style "width" "100%"
-                , Html.Attributes.style "background-color" "#733fa7"
-                ]
-                [ bottomNavigationItem (Just PageLocation.Home) (Just Icon.home) "ホーム"
+            bottomNavigationContainer
+                [ bottomNavigationItem
+                    (select == Home)
+                    (Just PageLocation.Home)
+                    (Just Icon.home)
+                    "ホーム"
                 , bottomNavigationItem
+                    (select == Search)
                     (Just
                         (PageLocation.Search Data.SearchCondition.None)
                     )
                     (Just Icon.search)
                     "検索"
-                , bottomNavigationItem (Just PageLocation.LogIn) Nothing "ログイン"
+                , bottomNavigationItem
+                    (select == User)
+                    (Just PageLocation.LogIn)
+                    Nothing
+                    "ログイン"
                 ]
 
         Data.LogInState.LoadingProfile _ ->
-            Html.div
-                [ Html.Attributes.style "display" "grid"
-                , Html.Attributes.style "grid-template-columns" "1fr 1fr 1fr 1fr"
-                , Html.Attributes.style "height" "64px"
-                , Html.Attributes.style "position" "fixed"
-                , Html.Attributes.style "bottom" "0"
-                , Html.Attributes.style "width" "100%"
-                , Html.Attributes.style "background-color" "#733fa7"
-                ]
-                [ bottomNavigationItem (Just PageLocation.Home) (Just Icon.home) "ホーム"
+            bottomNavigationContainer
+                [ bottomNavigationItem
+                    (select == Home)
+                    (Just PageLocation.Home)
+                    (Just Icon.home)
+                    "ホーム"
                 , bottomNavigationItem
+                    (select == Search)
                     (Just
                         (PageLocation.Search Data.SearchCondition.None)
                     )
                     (Just Icon.search)
                     "検索"
-                , bottomNavigationItem (Just PageLocation.Notification) (Just Icon.notifications) "通知"
-                , bottomNavigationItem (Just PageLocation.LogIn) Nothing "ユーザー"
+                , bottomNavigationItem
+                    (select == Notification)
+                    (Just PageLocation.Notification)
+                    (Just Icon.notifications)
+                    "通知"
+                , bottomNavigationItem
+                    (select == User)
+                    (Just PageLocation.LogIn)
+                    Nothing
+                    "ユーザー"
                 ]
 
         Data.LogInState.Ok { userWithName } ->
-            Html.div
-                [ Html.Attributes.style "display" "grid"
-                , Html.Attributes.style "grid-template-columns" "1fr 1fr 1fr 1fr"
-                , Html.Attributes.style "height" "64px"
-                , Html.Attributes.style "position" "fixed"
-                , Html.Attributes.style "bottom" "0"
-                , Html.Attributes.style "width" "100%"
-                , Html.Attributes.style "background-color" "#733fa7"
-                ]
-                [ bottomNavigationItem (Just PageLocation.Home) (Just Icon.home) "ホーム"
+            bottomNavigationContainer
+                [ bottomNavigationItem
+                    (select == Home)
+                    (Just PageLocation.Home)
+                    (Just Icon.home)
+                    "ホーム"
                 , bottomNavigationItem
+                    (select == Search)
                     (Just
                         (PageLocation.Search Data.SearchCondition.None)
                     )
                     (Just Icon.search)
                     "検索"
-                , bottomNavigationItem (Just PageLocation.Notification) (Just Icon.notifications) "通知"
                 , bottomNavigationItem
+                    (select == Notification)
+                    (Just PageLocation.Notification)
+                    (Just Icon.notifications)
+                    "通知"
+                , bottomNavigationItem
+                    (select == User)
                     (Just (PageLocation.User (Data.User.withNameGetId userWithName)))
                     (Just
                         (always
@@ -697,8 +713,26 @@ bottomNavigation logInState =
                 ]
 
 
-bottomNavigationItem : Maybe PageLocation.PageLocation -> Maybe (String -> Html.Html msg) -> String -> Html.Html msg
-bottomNavigationItem linkMaybe iconMaybe text =
+bottomNavigationContainer : List (Html.Html msg) -> Html.Html msg
+bottomNavigationContainer item =
+    Html.div
+        [ Html.Attributes.style "display" "grid"
+        , Html.Attributes.style "grid-template-columns"
+            ("1fr"
+                |> List.repeat (List.length item)
+                |> String.join " "
+            )
+        , Html.Attributes.style "height" "64px"
+        , Html.Attributes.style "position" "fixed"
+        , Html.Attributes.style "bottom" "0"
+        , Html.Attributes.style "width" "100%"
+        , Html.Attributes.style "background-color" "#512182"
+        ]
+        item
+
+
+bottomNavigationItem : Bool -> Maybe PageLocation.PageLocation -> Maybe (String -> Html.Html msg) -> String -> Html.Html msg
+bottomNavigationItem select linkMaybe iconMaybe text =
     (case linkMaybe of
         Just link ->
             Html.a
@@ -706,7 +740,13 @@ bottomNavigationItem linkMaybe iconMaybe text =
                 , Html.Attributes.style "justify-content" "center"
                 , Html.Attributes.style "align-items" "center"
                 , Html.Attributes.style "flex-direction" "column"
-                , Html.Attributes.style "color" "white"
+                , Html.Attributes.style "color"
+                    (if select then
+                        "white"
+
+                     else
+                        "#aaa"
+                    )
                 , Html.Attributes.style "text-decoration" "none"
                 , Html.Attributes.href (PageLocation.toUrlAsString link)
                 ]
@@ -717,12 +757,26 @@ bottomNavigationItem linkMaybe iconMaybe text =
                 , Html.Attributes.style "justify-content" "center"
                 , Html.Attributes.style "align-items" "center"
                 , Html.Attributes.style "flex-direction" "column"
-                , Html.Attributes.style "color" "white"
+                , Html.Attributes.style "color"
+                    (if select then
+                        "white"
+
+                     else
+                        "#aaa"
+                    )
                 ]
     )
         (case iconMaybe of
             Just icon ->
-                [ icon "width:32px;fill:white"
+                [ icon
+                    ("width:32px;"
+                        ++ (if select then
+                                "fill:white"
+
+                            else
+                                "fill:#aaa"
+                           )
+                    )
                 , Html.text text
                 ]
 

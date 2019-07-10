@@ -150,7 +150,12 @@ view :
     LogInState.LogInState
     -> Bool
     -> Model
-    -> { title : Maybe String, tab : BasicParts.Tab Msg, html : List (Html.Html Msg) }
+    ->
+        { title : Maybe String
+        , tab : BasicParts.Tab Msg
+        , html : List (Html.Html Msg)
+        , bottomNavigation : Maybe BasicParts.BottomNavigationSelect
+        }
 view logInState isWideScreen (Model rec) =
     { title = Nothing
     , tab =
@@ -190,6 +195,7 @@ view logInState isWideScreen (Model rec) =
                     Nothing ->
                         []
                )
+    , bottomNavigation = Just BasicParts.Home
     }
 
 

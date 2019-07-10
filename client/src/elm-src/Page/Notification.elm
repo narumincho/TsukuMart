@@ -42,7 +42,14 @@ update msg model =
     ( model, [] )
 
 
-view : Model -> { title : Maybe String, tab : BasicParts.Tab Msg, html : List (Html.Html Msg) }
+view :
+    Model
+    ->
+        { title : Maybe String
+        , tab : BasicParts.Tab Msg
+        , html : List (Html.Html Msg)
+        , bottomNavigation : Maybe BasicParts.BottomNavigationSelect
+        }
 view model =
     { title = Just "通知"
     , tab = BasicParts.tabSingle "通知"
@@ -51,4 +58,5 @@ view model =
             [ Html.Attributes.class "notification" ]
             [ Html.text "通知。まだ作り途中" ]
         ]
+    , bottomNavigation = Just BasicParts.Notification
     }

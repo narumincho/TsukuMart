@@ -145,7 +145,12 @@ view :
     LogInState.LogInState
     -> Bool
     -> Model
-    -> { title : Maybe String, tab : BasicParts.Tab Msg, html : List (Html.Html Msg) }
+    ->
+        { title : Maybe String
+        , tab : BasicParts.Tab Msg
+        , html : List (Html.Html Msg)
+        , bottomNavigation : Maybe BasicParts.BottomNavigationSelect
+        }
 view logInState isWideScreen (Model rec) =
     { title = Just "いいね・閲覧した商品"
     , tab = BasicParts.tabSingle "閲覧履歴"
@@ -180,4 +185,5 @@ view logInState isWideScreen (Model rec) =
                     )
                     |> Html.map MsgByProductList
                 ]
+    , bottomNavigation = Nothing
     }

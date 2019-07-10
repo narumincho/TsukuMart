@@ -1,4 +1,4 @@
-module Page.Search exposing (Model, Msg, view, update, initModel, Emission(..))
+module Page.Search exposing (Emission(..), Model, Msg, initModel, update, view)
 
 import BasicParts
 import Data.SearchCondition as SearchCondition
@@ -35,7 +35,14 @@ update msg model =
     ( model, [] )
 
 
-view : Model -> { title : Maybe String, tab : BasicParts.Tab Msg, html : List (Html.Html Msg) }
+view :
+    Model
+    ->
+        { title : Maybe String
+        , tab : BasicParts.Tab Msg
+        , html : List (Html.Html Msg)
+        , bottomNavigation : Maybe BasicParts.BottomNavigationSelect
+        }
 view model =
     { title = Just "検索"
     , tab = BasicParts.tabNone
@@ -44,6 +51,7 @@ view model =
             [ Html.Attributes.class "container" ]
             [ Html.text "検索" ]
         ]
+    , bottomNavigation = Just BasicParts.Search
     }
 
 

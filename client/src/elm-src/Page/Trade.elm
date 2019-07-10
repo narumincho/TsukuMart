@@ -116,7 +116,12 @@ view :
     LogInState.LogInState
     -> Maybe ( Time.Posix, Time.Zone )
     -> Model
-    -> { title : Maybe String, tab : BasicParts.Tab Msg, html : List (Html.Html Msg) }
+    ->
+        { title : Maybe String
+        , tab : BasicParts.Tab Msg
+        , html : List (Html.Html Msg)
+        , bottomNavigation : Maybe BasicParts.BottomNavigationSelect
+        }
 view logInState timeData model =
     { title = Just "取引"
     , tab = BasicParts.tabNone
@@ -149,6 +154,7 @@ view logInState timeData model =
                 )
             ]
         ]
+    , bottomNavigation = Nothing
     }
 
 
@@ -179,6 +185,16 @@ mainView commentSending token timeData user trade =
     , Page.Style.titleAndContent
         "値段"
         (Html.text (Product.priceToString (Product.detailGetPrice product)))
+    , Html.a
+        [ Html.Attributes.style "display" "block"
+        , Html.Attributes.href
+            (PageLocation.toUrlAsString
+                (PageLocation.Product
+                    (Product.detailGetId product)
+                )
+            )
+        ]
+        [ Html.text "商品詳細ページ" ]
     , sellerAndBuyerView (Product.detailGetSeller product) (Trade.detailGetBuyer trade)
     , commentInputArea commentSending token
     , commentView timeData user trade

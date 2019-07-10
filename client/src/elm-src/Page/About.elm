@@ -1,9 +1,9 @@
 module Page.About exposing (Model, aboutModel, privacyPolicyModel, view)
 
+import BasicParts
 import Html
 import Html.Attributes
 import PageLocation
-import BasicParts
 
 
 type Model
@@ -21,7 +21,14 @@ privacyPolicyModel =
     PrivacyPolicy
 
 
-view : Model -> { title : String, tab : BasicParts.Tab msg, html : List (Html.Html msg) }
+view :
+    Model
+    ->
+        { title : String
+        , tab : BasicParts.Tab msg
+        , html : List (Html.Html msg)
+        , bottomNavigation : Maybe BasicParts.BottomNavigationSelect
+        }
 view model =
     case model of
         About ->
@@ -40,6 +47,7 @@ view model =
                         ]
                     ]
                 ]
+            , bottomNavigation = Nothing
             }
 
         PrivacyPolicy ->
@@ -50,4 +58,5 @@ view model =
                     [ Html.Attributes.class "container" ]
                     [ Html.text "プライバシーポリシー" ]
                 ]
+            , bottomNavigation = Nothing
             }

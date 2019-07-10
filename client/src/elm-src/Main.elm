@@ -1296,7 +1296,7 @@ updateLikedCountInEachPageProduct key productId result page =
 view : Model -> { title : String, body : List (Html.Html Msg) }
 view (Model { page, wideScreen, message, logInState, now }) =
     let
-        { title, tab, html } =
+        { title, tab, html, bottomNavigation } =
             titleAndTabDataAndMainView logInState wideScreen now page
     in
     { title = title
@@ -1341,11 +1341,12 @@ view (Model { page, wideScreen, message, logInState, now }) =
                     Nothing ->
                         []
                )
-            ++ (if wideScreen then
-                    []
+            ++ (case ( wideScreen, bottomNavigation ) of
+                    ( False, Just select ) ->
+                        [ BasicParts.bottomNavigation logInState select ]
 
-                else
-                    [ BasicParts.bottomNavigation logInState ]
+                    ( _, _ ) ->
+                        []
                )
     }
 
@@ -1358,6 +1359,7 @@ titleAndTabDataAndMainView :
     ->
         { title : String
         , tab : BasicParts.Tab PageMsg
+        , bottomNavigation : Maybe BasicParts.BottomNavigationSelect
         , html : List (Html.Html PageMsg)
         }
 titleAndTabDataAndMainView logInState isWideScreen nowMaybe page =
@@ -1449,9 +1451,19 @@ titleAndTabDataAndMainView logInState isWideScreen nowMaybe page =
 
 mapPageData :
     (eachPageMsg -> PageMsg)
-    -> { title : Maybe String, tab : BasicParts.Tab eachPageMsg, html : List (Html.Html eachPageMsg) }
-    -> { title : String, tab : BasicParts.Tab PageMsg, html : List (Html.Html PageMsg) }
-mapPageData f { title, tab, html } =
+    ->
+        { title : Maybe String
+        , tab : BasicParts.Tab eachPageMsg
+        , html : List (Html.Html eachPageMsg)
+        , bottomNavigation : Maybe BasicParts.BottomNavigationSelect
+        }
+    ->
+        { title : String
+        , tab : BasicParts.Tab PageMsg
+        , html : List (Html.Html PageMsg)
+        , bottomNavigation : Maybe BasicParts.BottomNavigationSelect
+        }
+mapPageData f { title, tab, html, bottomNavigation } =
     { title =
         case title of
             Just titleText ->
@@ -1461,6 +1473,7 @@ mapPageData f { title, tab, html } =
                 "つくマート"
     , tab = tab |> BasicParts.tabMap f
     , html = html |> List.map (Html.map f)
+    , bottomNavigation = bottomNavigation
     }
 
 

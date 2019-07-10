@@ -181,7 +181,14 @@ update msg model =
 
 {-| 新規登録画面の表示
 -}
-view : Model -> { title : Maybe String, tab : BasicParts.Tab Msg, html : List (Html.Html Msg) }
+view :
+    Model
+    ->
+        { title : Maybe String
+        , tab : BasicParts.Tab Msg
+        , html : List (Html.Html Msg)
+        , bottomNavigation : Maybe BasicParts.BottomNavigationSelect
+        }
 view userSignUpPage =
     let
         ( tabText, mainView ) =
@@ -202,6 +209,7 @@ view userSignUpPage =
             [ Html.Attributes.class "container" ]
             [ mainView ]
         ]
+    , bottomNavigation = Nothing
     }
 
 

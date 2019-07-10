@@ -164,7 +164,12 @@ updateWhenNoLogIn msg (Model rec) =
 view :
     Data.LogInState.LogInState
     -> Model
-    -> { title : Maybe String, tab : BasicParts.Tab Msg, html : List (Html.Html Msg) }
+    ->
+        { title : Maybe String
+        , tab : BasicParts.Tab Msg
+        , html : List (Html.Html Msg)
+        , bottomNavigation : Maybe BasicParts.BottomNavigationSelect
+        }
 view logInState (Model { page, logInOrSignUpModel }) =
     let
         ( tabText, body ) =
@@ -190,6 +195,7 @@ view logInState (Model { page, logInOrSignUpModel }) =
                 body
             ]
         ]
+    , bottomNavigation = Nothing
     }
 
 
