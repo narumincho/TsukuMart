@@ -29,8 +29,8 @@ import Page.Search
 import Page.SignUp
 import Page.SoldProducts
 import Page.Trade
-import Page.TradedProducts
-import Page.TradingProducts
+import Page.TradesInPast
+import Page.TradesInProgress
 import Page.User
 import PageLocation
 import Task
@@ -91,8 +91,8 @@ type PageModel
     | PageHistory Page.History.Model
     | PageSoldProducts Page.SoldProducts.Model
     | PageBoughtProducts Page.BoughtProducts.Model
-    | PageTradingProducts Page.TradingProducts.Model
-    | PageTradedProducts Page.TradedProducts.Model
+    | PageTradesInProgress Page.TradesInProgress.Model
+    | PageTradesInPast Page.TradesInPast.Model
     | PageCommentedProducts Page.CommentedProducts.Model
     | PageExhibition Page.Exhibition.Model
     | PageProduct Page.Product.Model
@@ -131,8 +131,8 @@ type PageMsg
     | PageMsgHistory Page.History.Msg
     | PageMsgSoldProducts Page.SoldProducts.Msg
     | PageMsgBoughtProducts Page.BoughtProducts.Msg
-    | PageMsgTradingProducts Page.TradingProducts.Msg
-    | PageMsgTradedProducts Page.TradedProducts.Msg
+    | PageMsgTradesInProgress Page.TradesInProgress.Msg
+    | PageMsgTradesInPast Page.TradesInPast.Msg
     | PageMsgCommentedProducts Page.CommentedProducts.Msg
     | PageMsgLogIn Page.LogIn.Msg
     | PageMsgExhibition Page.Exhibition.Msg
@@ -253,12 +253,12 @@ urlParserInitResultToPageAndCmd key logInState page =
                 |> mapPageModel PageBoughtProducts boughtProductsPageEmissionToCmd
 
         PageLocation.InitTradingProducts ->
-            Page.TradingProducts.initModel Nothing logInState
-                |> mapPageModel PageTradingProducts tradingProductsEmissionToCmd
+            Page.TradesInProgress.initModel Nothing logInState
+                |> mapPageModel PageTradesInProgress tradingProductsEmissionToCmd
 
         PageLocation.InitTradedProducts ->
-            Page.TradedProducts.initModel Nothing logInState
-                |> mapPageModel PageTradedProducts tradedProductsEmissionToCmd
+            Page.TradesInPast.initModel Nothing logInState
+                |> mapPageModel PageTradesInPast tradedProductsEmissionToCmd
 
         PageLocation.InitCommentedProducts ->
             Page.CommentedProducts.initModel Nothing logInState
@@ -601,15 +601,15 @@ updatePageMsg pageMsg (Model rec) =
                 |> Page.BoughtProducts.update msg
                 |> mapPageModel PageBoughtProducts boughtProductsPageEmissionToCmd
 
-        ( PageMsgTradingProducts msg, PageTradingProducts model ) ->
+        ( PageMsgTradesInProgress msg, PageTradesInProgress model ) ->
             model
-                |> Page.TradingProducts.update msg
-                |> mapPageModel PageTradingProducts tradingProductsEmissionToCmd
+                |> Page.TradesInProgress.update msg
+                |> mapPageModel PageTradesInProgress tradingProductsEmissionToCmd
 
-        ( PageMsgTradedProducts msg, PageTradedProducts model ) ->
+        ( PageMsgTradesInPast msg, PageTradesInPast model ) ->
             model
-                |> Page.TradedProducts.update msg
-                |> mapPageModel PageTradedProducts tradedProductsEmissionToCmd
+                |> Page.TradesInPast.update msg
+                |> mapPageModel PageTradesInPast tradedProductsEmissionToCmd
 
         ( PageMsgCommentedProducts msg, PageCommentedProducts model ) ->
             model
@@ -763,32 +763,32 @@ boughtProductsPageEmissionToCmd emission =
                 |> Task.perform (always (AddLogMessage log))
 
 
-tradingProductsEmissionToCmd : Page.TradingProducts.Emission -> Cmd Msg
+tradingProductsEmissionToCmd : Page.TradesInProgress.Emission -> Cmd Msg
 tradingProductsEmissionToCmd emission =
     case emission of
-        Page.TradingProducts.EmissionGetTradingProducts token ->
+        Page.TradesInProgress.EmissionGetTradingProducts token ->
             Api.getTradingProductList token
-                (Page.TradingProducts.GetProductsResponse >> PageMsgTradingProducts >> PageMsg)
+                (Page.TradesInProgress.GetProductsResponse >> PageMsgTradesInProgress >> PageMsg)
 
-        Page.TradingProducts.EmissionByLogIn e ->
+        Page.TradesInProgress.EmissionByLogIn e ->
             logInEmissionToCmd e
 
-        Page.TradingProducts.EmissionAddLogMessage log ->
+        Page.TradesInProgress.EmissionAddLogMessage log ->
             Task.succeed ()
                 |> Task.perform (always (AddLogMessage log))
 
 
-tradedProductsEmissionToCmd : Page.TradedProducts.Emission -> Cmd Msg
+tradedProductsEmissionToCmd : Page.TradesInPast.Emission -> Cmd Msg
 tradedProductsEmissionToCmd emission =
     case emission of
-        Page.TradedProducts.EmissionGetTradedProducts token ->
+        Page.TradesInPast.EmissionGetTradedProducts token ->
             Api.getTradedProductList token
-                (Page.TradedProducts.GetTradesResponse >> PageMsgTradedProducts >> PageMsg)
+                (Page.TradesInPast.GetTradesResponse >> PageMsgTradesInPast >> PageMsg)
 
-        Page.TradedProducts.EmissionByLogIn e ->
+        Page.TradesInPast.EmissionByLogIn e ->
             logInEmissionToCmd e
 
-        Page.TradedProducts.EmissionAddLogMessage log ->
+        Page.TradesInPast.EmissionAddLogMessage log ->
             Task.succeed ()
                 |> Task.perform (always (AddLogMessage log))
 
@@ -1076,12 +1076,12 @@ urlParserResultToPageAndCmd (Model rec) result =
                 |> mapPageModel PageBoughtProducts boughtProductsPageEmissionToCmd
 
         PageLocation.TradingProducts ->
-            Page.TradingProducts.initModel (getProductId rec.page) rec.logInState
-                |> mapPageModel PageTradingProducts tradingProductsEmissionToCmd
+            Page.TradesInProgress.initModel (getProductId rec.page) rec.logInState
+                |> mapPageModel PageTradesInProgress tradingProductsEmissionToCmd
 
         PageLocation.TradedProducts ->
-            Page.TradedProducts.initModel (getProductId rec.page) rec.logInState
-                |> mapPageModel PageTradedProducts tradedProductsEmissionToCmd
+            Page.TradesInPast.initModel (getProductId rec.page) rec.logInState
+                |> mapPageModel PageTradesInPast tradedProductsEmissionToCmd
 
         PageLocation.CommentedProducts ->
             Page.CommentedProducts.initModel (getProductId rec.page) rec.logInState
@@ -1189,11 +1189,11 @@ getProductFromPage productId pageModel =
         PageBoughtProducts model ->
             Page.BoughtProducts.getAllProducts model
 
-        PageTradingProducts model ->
-            Page.TradingProducts.getAllProducts model
+        PageTradesInProgress model ->
+            Page.TradesInProgress.getAllProducts model
 
-        PageTradedProducts model ->
-            Page.TradedProducts.getAllProducts model
+        PageTradesInPast model ->
+            Page.TradesInPast.getAllProducts model
 
         PageCommentedProducts model ->
             Page.CommentedProducts.getAllProducts model
@@ -1215,11 +1215,11 @@ getProductFromPage productId pageModel =
 getTradeFromPage : Data.Trade.Id -> PageModel -> Maybe Data.Trade.Trade
 getTradeFromPage tradeId pageModel =
     (case pageModel of
-        PageTradingProducts model ->
-            Page.TradingProducts.getAllTrades model
+        PageTradesInProgress model ->
+            Page.TradesInProgress.getAllTrades model
 
-        PageTradedProducts model ->
-            Page.TradedProducts.getAllTrades model
+        PageTradesInPast model ->
+            Page.TradesInPast.getAllTrades model
 
         _ ->
             []
@@ -1389,15 +1389,15 @@ titleAndTabDataAndMainView logInState isWideScreen nowMaybe page =
                 |> Page.SoldProducts.view logInState isWideScreen
                 |> mapPageData PageMsgSoldProducts
 
-        PageTradingProducts model ->
+        PageTradesInProgress model ->
             model
-                |> Page.TradingProducts.view logInState
-                |> mapPageData PageMsgTradingProducts
+                |> Page.TradesInProgress.view logInState
+                |> mapPageData PageMsgTradesInProgress
 
-        PageTradedProducts model ->
+        PageTradesInPast model ->
             model
-                |> Page.TradedProducts.view logInState
-                |> mapPageData PageMsgTradedProducts
+                |> Page.TradesInPast.view logInState
+                |> mapPageData PageMsgTradesInPast
 
         PageCommentedProducts model ->
             model

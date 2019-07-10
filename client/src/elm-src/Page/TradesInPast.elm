@@ -1,4 +1,4 @@
-module Page.TradingProducts exposing
+module Page.TradesInPast exposing
     ( Emission(..)
     , Model
     , Msg(..)
@@ -34,12 +34,12 @@ type NormalModel
 
 
 type Msg
-    = GetProductsResponse (Result String (List Trade.Trade))
+    = GetTradesResponse (Result String (List Trade.Trade))
     | MsgByLogIn LogIn.Msg
 
 
 type Emission
-    = EmissionGetTradingProducts Api.Token
+    = EmissionGetTradedProducts Api.Token
     | EmissionByLogIn LogIn.Emission
     | EmissionAddLogMessage String
 
@@ -52,7 +52,7 @@ initModel goodIdMaybe logInState =
         }
     , case LogInState.getToken logInState of
         Just accessToken ->
-            [ EmissionGetTradingProducts accessToken
+            [ EmissionGetTradedProducts accessToken
             ]
 
         Nothing ->
@@ -81,7 +81,7 @@ getAllProducts =
 update : Msg -> Model -> ( Model, List Emission )
 update msg (Model rec) =
     case msg of
-        GetProductsResponse result ->
+        GetTradesResponse result ->
             case result of
                 Ok products ->
                     ( Model { rec | normal = Normal products }
@@ -91,7 +91,7 @@ update msg (Model rec) =
                 Err errorMessage ->
                     ( Model
                         { rec | normal = Error }
-                    , [ EmissionAddLogMessage ("取引中の商品の取得に失敗 " ++ errorMessage) ]
+                    , [ EmissionAddLogMessage ("取引した商品の取得に失敗 " ++ errorMessage) ]
                     )
 
         MsgByLogIn logInOrSignUpMsg ->
@@ -108,10 +108,15 @@ update msg (Model rec) =
 view :
     LogInState.LogInState
     -> Model
-    -> { title : Maybe String, tab : BasicParts.Tab Msg, html : List (Html.Html Msg), bottomNavigation : Maybe BasicParts.BottomNavigationSelect }
+    ->
+        { title : Maybe String
+        , tab : BasicParts.Tab Msg
+        , html : List (Html.Html Msg)
+        , bottomNavigation : Maybe BasicParts.BottomNavigationSelect
+        }
 view logInState (Model rec) =
-    { title = Just "進行中の取引"
-    , tab = BasicParts.tabSingle "進行中の取引"
+    { title = Just "過去にした取引"
+    , tab = BasicParts.tabSingle "過去にした取引"
     , html =
         case logInState of
             LogInState.None ->
@@ -132,8 +137,8 @@ view logInState (Model rec) =
                         Loading ->
                             Nothing
 
-                        Normal trades ->
-                            Just trades
+                        Normal products ->
+                            Just products
 
                         Error ->
                             Just []
