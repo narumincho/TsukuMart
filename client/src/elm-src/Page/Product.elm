@@ -60,7 +60,7 @@ type Emission
     = EmissionGetProduct { productId : Product.Id }
     | EmissionGetProductAndMarkHistory { productId : Product.Id, token : Api.Token }
     | EmissionGetCommentList { productId : Product.Id }
-    | EmissionPostComment Api.Token { productId : Product.Id } String
+    | EmissionAddComment Api.Token { productId : Product.Id } String
     | EmissionLike Api.Token Product.Id
     | EmissionUnLike Api.Token Product.Id
     | EmissionTradeStart Api.Token Product.Id
@@ -256,6 +256,7 @@ update msg model =
                             { id = commentTextAreaId
                             , text = ""
                             }
+                      , EmissionUpdateNowTime
                       ]
                     )
 
@@ -374,7 +375,7 @@ update msg model =
             case model of
                 Normal rec ->
                     ( Normal { rec | commentSending = True }
-                    , [ EmissionPostComment token { productId = Product.detailGetId rec.product } rec.comment ]
+                    , [ EmissionAddComment token { productId = Product.detailGetId rec.product } rec.comment ]
                     )
 
                 _ ->

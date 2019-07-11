@@ -911,7 +911,7 @@ productPageEmissionToCmd key emission =
         Page.Product.EmissionGetCommentList { productId } ->
             Api.getProductComments productId (Page.Product.GetCommentListResponse >> PageMsgProduct >> PageMsg)
 
-        Page.Product.EmissionPostComment token { productId } comment ->
+        Page.Product.EmissionAddComment token { productId } comment ->
             Api.addProductComment
                 productId
                 comment
