@@ -17,6 +17,7 @@ module Page.Product exposing
 
 import Api
 import BasicParts
+import Data.Category as Category
 import Data.DateTime
 import Data.LogInState as LogInState
 import Data.Product as Product
@@ -579,6 +580,7 @@ normalView logInState isWideScreen nowMaybe { product, likeSending, commentSendi
                  , statusView (Product.detailGetStatus product)
                  , sellerNameView (Product.detailGetSeller product)
                  , descriptionView (Product.detailGetDescription product)
+                 , categoryView (Product.detailGetCategory product)
                  , conditionView (Product.detailGetCondition product)
                  , createdAtView nowMaybe (Product.detailGetCreatedAt product)
                  , commentListView commentSending
@@ -701,7 +703,11 @@ sellerNameView : User.WithName -> Html.Html msg
 sellerNameView user =
     Page.Style.titleAndContent "出品者"
         (Html.a
-            [ Html.Attributes.href (PageLocation.toUrlAsString (PageLocation.User (User.withNameGetId user))) ]
+            [ Html.Attributes.href (PageLocation.toUrlAsString (PageLocation.User (User.withNameGetId user)))
+            , Html.Attributes.style "display" "flex"
+            , Html.Attributes.style "align-items" "center"
+            , Html.Attributes.style "text-decoration" "none"
+            ]
             [ Html.img
                 [ Html.Attributes.style "border-radius" "50%"
                 , Html.Attributes.style "width" "3rem"
@@ -718,6 +724,13 @@ descriptionView description =
     Page.Style.titleAndContent
         "商品の説明"
         (Html.div [] [ Html.text description ])
+
+
+categoryView : Category.Category -> Html.Html msg
+categoryView category =
+    Page.Style.titleAndContent
+        "カテゴリー"
+        (Html.div [] [ Html.text (Category.toJapaneseString category) ])
 
 
 conditionView : Product.Condition -> Html.Html msg

@@ -10,14 +10,17 @@ module Page.Exhibition exposing
 
 import Api
 import BasicParts
+import Data.Category
 import Data.LogInState
 import Data.Product as Product
 import Html
 import Html.Attributes
 import Html.Events
 import Html.Keyed
+import Icon
 import Page.Component.LogIn as LogIn
 import Page.Component.ProductEditor as ProductEditor
+import Page.Style
 import PageLocation
 
 
@@ -264,47 +267,38 @@ toConformPageButton available =
 confirmView : Api.Token -> Api.SellProductRequest -> Bool -> ( String, List ( String, Html.Html Msg ) )
 confirmView accessToken (Api.SellProductRequest requestData) sending =
     ( "出品 確認"
-    , [ confirmViewImage requestData.images
-      , Html.div [ Html.Attributes.class "exhibition-confirm-item" ]
-            [ Html.span [] [ Html.text "商品名" ]
-            , Html.span [ Html.Attributes.class "exhibition-confirm-item-value" ] [ Html.text requestData.name ]
-            ]
-      , Html.div [ Html.Attributes.class "exhibition-confirm-item" ]
-            [ Html.span [] [ Html.text "説明文" ]
-            , Html.span [ Html.Attributes.class "exhibition-confirm-item-value" ] [ Html.text requestData.description ]
-            ]
-      , Html.div [ Html.Attributes.class "exhibition-confirm-item" ]
-            [ Html.span [] [ Html.text "値段" ]
-            , Html.span [ Html.Attributes.class "exhibition-confirm-item-value" ] [ Html.text (Product.priceToString requestData.price) ]
-            ]
-      , Html.div [ Html.Attributes.class "exhibition-confirm-item" ]
-            [ Html.span [] [ Html.text "状態" ]
-            , Html.span [ Html.Attributes.class "exhibition-confirm-item-value" ] [ Html.text (Product.conditionToJapaneseString requestData.condition) ]
-            ]
-      , Html.div [ Html.Attributes.class "exhibition-confirm-msg" ]
-            [ Html.text
-                (if sending then
-                    "送信中……"
-
-                 else
-                    "この商品を出品します。よろしいですか?"
-                )
-            ]
-      , Html.button
-            (if sending then
-                [ Html.Attributes.class "mainButton"
-                , Html.Attributes.class "mainButton-disabled"
-                , Html.Attributes.disabled True
+    , ([ confirmViewImage requestData.images
+       , Page.Style.titleAndContent "商品名"
+            (Html.span [] [ Html.text requestData.name ])
+       , Page.Style.titleAndContent "説明文"
+            (Html.div [] [ Html.text requestData.description ])
+       , Page.Style.titleAndContent "値段"
+            (Html.div [] [ Html.text (Product.priceToString requestData.price) ])
+       , Page.Style.titleAndContent "カテゴリー"
+            (Html.div [] [ Html.text (Data.Category.toJapaneseString requestData.category) ])
+       , Page.Style.titleAndContent "状態"
+            (Html.div [] [ Html.text (Product.conditionToJapaneseString requestData.condition) ])
+       ]
+        ++ (if sending then
+                [ Html.div [ Html.Attributes.class "exhibition-confirm-msg" ]
+                    [ Html.text "この商品を出品します。よろしいですか?" ]
+                , Html.button
+                    [ Html.Events.onClick (SellProduct ( accessToken, Api.SellProductRequest requestData ))
+                    , Html.Attributes.class "mainButton"
+                    ]
+                    [ Html.text "出品する" ]
                 ]
 
-             else
-                [ Html.Events.onClick (SellProduct ( accessToken, Api.SellProductRequest requestData ))
-                , Html.Attributes.class "mainButton"
-                , Html.Attributes.disabled False
+            else
+                [ Html.button
+                    [ Html.Attributes.class "mainButton"
+                    , Html.Attributes.class "mainButton-disabled"
+                    , Html.Attributes.disabled True
+                    ]
+                    [ Icon.loading { size = 24, color = "white" } ]
                 ]
-            )
-            [ Html.text "出品する" ]
-      ]
+           )
+      )
         |> List.indexedMap (\index a -> ( String.fromInt index, a ))
     )
 

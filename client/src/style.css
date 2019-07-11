@@ -315,33 +315,25 @@ header {
 }
 
 .exhibition-itemPrice-input-input {
-    flex-grow: 1;
-    text-align: right;
     font-size: 2rem;
-    border: none;
-    border-bottom: #aaa 2px solid;
-}
-
-.exhibition-itemPrice-input-input:focus {
-    border-bottom: var(--primaryColor) 2px solid;
+    flex-grow: 1;
+    padding: 0.4rem;
+    text-align: right;
+    border: solid 1px #ccc;
+    box-sizing: border-box;
+    border-radius: 0.4rem;
+    box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
+    transition: border-color ease-in-out 0.15s, box-shadow ease-in-out 0.15s;
     outline: none;
 }
 
+.exhibition-itemPrice-input-input:focus {
+    box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075),
+        0 0 8px rgba(102, 175, 233, 0.6);
+    border: solid 1px #66afe9;
+}
+
 .exhibition-priceView {
-    text-align: right;
-}
-
-.exhibition-itemPrice-yen {
-    font-size: 1.5rem;
-}
-
-.exhibition-confirm-item {
-    border-bottom: solid 1px #000;
-    display: flex;
-}
-
-.exhibition-confirm-item-value {
-    flex-grow: 1;
     text-align: right;
 }
 
@@ -468,11 +460,15 @@ header {
 .product-comment-name {
     display: flex;
     justify-content: flex-end;
+    align-items: center;
+    text-decoration: none;
 }
 
 .product-comment-sellerName {
     display: flex;
     justify-content: flex-start;
+    align-items: center;
+    text-decoration: none;
 }
 
 .product-comment-box {
@@ -944,7 +940,7 @@ header {
 
 .form-textarea {
     font-size: 1.2rem;
-    height: 6rem;
+    height: 128px;
     padding: 0.4rem;
     width: 100%;
     border: solid 1px #ccc;

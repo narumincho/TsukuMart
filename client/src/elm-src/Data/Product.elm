@@ -16,6 +16,7 @@ module Data.Product exposing
     , conditionToIndex
     , conditionToJapaneseString
     , detailFromApi
+    , detailGetCategory
     , detailGetCommentList
     , detailGetCondition
     , detailGetCreatedAt
@@ -430,6 +431,13 @@ detailUpdateLikedCount likedCount (ProductDetail rec) =
 detailGetDescription : ProductDetail -> String
 detailGetDescription (ProductDetail { description }) =
     description
+
+
+{-| 商品のカテゴリー
+-}
+detailGetCategory : ProductDetail -> Category.Category
+detailGetCategory (ProductDetail { category }) =
+    category
 
 
 {-| 商品の価格

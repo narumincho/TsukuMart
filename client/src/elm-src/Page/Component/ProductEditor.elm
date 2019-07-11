@@ -670,7 +670,7 @@ priceView priceMaybe =
                 ]
                 []
             , Html.span
-                [ Html.Attributes.class "exhibition-itemPrice-yen" ]
+                [ Html.Attributes.style "font-size" "1.5rem" ]
                 [ Html.text "円" ]
             ]
         , Html.div
