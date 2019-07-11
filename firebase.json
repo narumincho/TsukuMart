@@ -1,31 +1,14 @@
 {
     "hosting": {
+        "headers": {
+            "source": "**",
+            "headers": {
+                "key": "Cache-Control",
+                "value": "no-cache"
+            }
+        },
         "public": "client/dist",
         "rewrites": [
-            {
-                "source": "/main.js",
-                "destination": "/main.js"
-            },
-            {
-                "source": "/call.js",
-                "destination": "/call.js"
-            },
-            {
-                "source": "/style.css",
-                "destination": "/style.css"
-            },
-            {
-                "source": "/assets/**",
-                "destination": "/assets/**"
-            },
-            {
-                "source": "/robots.txt",
-                "destination": "/robots.txt"
-            },
-            {
-                "source": "/",
-                "function": "indexHtml"
-            },
             {
                 "source": "**",
                 "function": "indexHtml"
