@@ -9,8 +9,9 @@ console.log("run index.js 2019-05-27");
 export const indexHtml = functions
     .region("us-central1")
     .https.onRequest((request, response) => {
-        console.log("host=" + request.host);
-        console.log("hostname=" + request.hostname);
+        if (request.host !== "tsukumart.com") {
+            response.redirect("https://tsukumart.com");
+        }
         response.setHeader("content-type", "text/html");
         response.send(`<!doctype html>
 <html lang="ja">
@@ -110,7 +111,7 @@ export const image = functions
         try {
             response.setHeader("Cache-Control", "public max-age=3600");
             databaseLow
-                .getImageReadStream(request.path.substring(1))
+                .getImageReadStream(request.path.substring(1)) // /imageId -> imageId
                 .pipe(response);
         } catch (e) {
             console.log(

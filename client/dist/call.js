@@ -50,6 +50,21 @@ requestAnimationFrame(() => {
             });
         }));
     };
+    const checkFileInput = (id) => async () => {
+        const inputElement = document.getElementById(id);
+        if (inputElement === null) {
+            return;
+        }
+        if (inputElement.files === null || inputElement.files.length <= 0) {
+            window.requestAnimationFrame(checkFileInput(id));
+            return;
+        }
+        const dataUrls = await prodcutImageFilesResizeAndConvertToDataUrl(inputElement.files);
+        console.log(dataUrls);
+        app.ports.receiveProductImages.send(dataUrls);
+        inputElement.value = "";
+        window.requestAnimationFrame(checkFileInput(id));
+    };
     const app = window.Elm.Main.init({
         flags: {
             refreshToken: localStorage.getItem("refreshToken")
@@ -120,7 +135,6 @@ requestAnimationFrame(() => {
                     console.warn(`id=${inputId}のfilesがnullです`);
                     return;
                 }
-                app.ports.receiveUserImage.send(await userImageFileResizeAndConvertToDataUrl(inputElement.files[0]));
             });
             const labelElement = document.getElementById(labelId);
             if (labelElement === null) {
@@ -148,23 +162,10 @@ requestAnimationFrame(() => {
         window.requestAnimationFrame(addEventListenerForUserImage);
     });
     app.ports.addEventListenerForProductImages.subscribe(({ inputId, labelId }) => {
-        const addEventListenerForProductImages = () => {
-            const inputElement = document.getElementById(inputId);
-            if (inputElement === null) {
-                console.warn(`id=${inputId}の要素が存在しません`);
-                window.requestAnimationFrame(addEventListenerForProductImages);
-                return;
-            }
-            inputElement.addEventListener("input", async (e) => {
-                if (inputElement.files === null) {
-                    console.warn(`id=${inputId}のfilesがnullです`);
-                    return;
-                }
-                app.ports.receiveProductImages.send(await prodcutImageFilesResizeAndConvertToDataUrl(inputElement.files));
-            });
+        const addEventListenerForProductImages = async () => {
+            (await checkFileInput(inputId))();
             const labelElement = document.getElementById(labelId);
             if (labelElement === null) {
-                console.warn(`id=${labelId}の要素が存在しません`);
                 window.requestAnimationFrame(addEventListenerForProductImages);
                 return;
             }
@@ -174,7 +175,6 @@ requestAnimationFrame(() => {
             labelElement.addEventListener("drop", async (e) => {
                 e.preventDefault();
                 if (e.dataTransfer === null) {
-                    console.warn("ドロップしたものを読み込めませんでした");
                     return;
                 }
                 app.ports.receiveProductImages.send(await prodcutImageFilesResizeAndConvertToDataUrl(e.dataTransfer.files));

@@ -138,6 +138,25 @@ requestAnimationFrame(() => {
             })
         );
     };
+    const checkFileInput = (id: string) => async () => {
+        const inputElement = document.getElementById(
+            id
+        ) as HTMLInputElement | null;
+        if (inputElement === null) {
+            return;
+        }
+        if (inputElement.files === null || inputElement.files.length <= 0) {
+            window.requestAnimationFrame(checkFileInput(id));
+            return;
+        }
+        const dataUrls = await prodcutImageFilesResizeAndConvertToDataUrl(
+            inputElement.files
+        );
+        console.log(dataUrls);
+        app.ports.receiveProductImages.send(dataUrls);
+        inputElement.value = "";
+        window.requestAnimationFrame(checkFileInput(id));
+    };
     /* Elmを起動!! */
     const app = window.Elm.Main.init({
         flags: {
@@ -220,11 +239,6 @@ requestAnimationFrame(() => {
                     console.warn(`id=${inputId}のfilesがnullです`);
                     return;
                 }
-                app.ports.receiveUserImage.send(
-                    await userImageFileResizeAndConvertToDataUrl(
-                        inputElement.files[0]
-                    )
-                );
             });
 
             const labelElement = document.getElementById(labelId);
@@ -258,32 +272,11 @@ requestAnimationFrame(() => {
     /* 商品画像の入力イベントを設定する */
     app.ports.addEventListenerForProductImages.subscribe(
         ({ inputId, labelId }) => {
-            const addEventListenerForProductImages = () => {
-                const inputElement = document.getElementById(
-                    inputId
-                ) as HTMLInputElement;
-                if (inputElement === null) {
-                    console.warn(`id=${inputId}の要素が存在しません`);
-                    window.requestAnimationFrame(
-                        addEventListenerForProductImages
-                    );
-                    return;
-                }
-                inputElement.addEventListener("input", async e => {
-                    if (inputElement.files === null) {
-                        console.warn(`id=${inputId}のfilesがnullです`);
-                        return;
-                    }
-                    app.ports.receiveProductImages.send(
-                        await prodcutImageFilesResizeAndConvertToDataUrl(
-                            inputElement.files
-                        )
-                    );
-                });
+            const addEventListenerForProductImages = async () => {
+                (await checkFileInput(inputId))();
 
                 const labelElement = document.getElementById(labelId);
                 if (labelElement === null) {
-                    console.warn(`id=${labelId}の要素が存在しません`);
                     window.requestAnimationFrame(
                         addEventListenerForProductImages
                     );
@@ -295,7 +288,6 @@ requestAnimationFrame(() => {
                 labelElement.addEventListener("drop", async e => {
                     e.preventDefault();
                     if (e.dataTransfer === null) {
-                        console.warn("ドロップしたものを読み込めませんでした");
                         return;
                     }
                     app.ports.receiveProductImages.send(

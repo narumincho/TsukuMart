@@ -3,8 +3,8 @@
         "headers": {
             "source": "**",
             "headers": {
-                "key": "Cache-Control",
-                "value": "no-cache"
+                "key": "cache-control",
+                "value": "max-age=0"
             }
         },
         "public": "client/dist",
