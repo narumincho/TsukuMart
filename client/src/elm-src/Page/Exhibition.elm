@@ -280,6 +280,15 @@ confirmView accessToken (Api.SellProductRequest requestData) sending =
             (Html.div [] [ Html.text (Product.conditionToJapaneseString requestData.condition) ])
        ]
         ++ (if sending then
+                [ Html.button
+                    [ Html.Attributes.class "mainButton"
+                    , Html.Attributes.class "mainButton-disabled"
+                    , Html.Attributes.disabled True
+                    ]
+                    [ Icon.loading { size = 24, color = "white" } ]
+                ]
+
+            else
                 [ Html.div [ Html.Attributes.class "exhibition-confirm-msg" ]
                     [ Html.text "この商品を出品します。よろしいですか?" ]
                 , Html.button
@@ -287,15 +296,6 @@ confirmView accessToken (Api.SellProductRequest requestData) sending =
                     , Html.Attributes.class "mainButton"
                     ]
                     [ Html.text "出品する" ]
-                ]
-
-            else
-                [ Html.button
-                    [ Html.Attributes.class "mainButton"
-                    , Html.Attributes.class "mainButton-disabled"
-                    , Html.Attributes.disabled True
-                    ]
-                    [ Icon.loading { size = 24, color = "white" } ]
                 ]
            )
       )
