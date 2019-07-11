@@ -1,5 +1,6 @@
 import * as functions from "firebase-functions";
 import * as graphqlExpress from "express-graphql";
+import * as database from "./lib/database";
 import * as databaseLow from "./lib/databaseLow";
 import * as signUpCallback from "./lib/signUpCallback";
 import * as libSchema from "./lib/schema";
@@ -120,3 +121,30 @@ export const image = functions
             response.status(404).send("not found");
         }
     });
+
+/* =====================================================================
+ *                  Google Search Console 用サイトマップ
+ * =====================================================================
+ */
+export const sitemap = functions
+    .region("us-central1")
+    .https.onRequest(async (request, response) => {
+        console.log("sitemap called");
+        const productData = await database.getAllProducts();
+        const userData = await database.getAllUser();
+
+        response.setHeader("content-type", "application/xml");
+        response.send(`<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${pathToXml("")}
+${productData.map(product => pathToXml("product/" + product.id)).join("\n")}
+${userData.map(user => pathToXml("user/" + user.id)).join("\n")}
+</urlset>`);
+    });
+
+const pathToXml = (path: string): string => `
+    <url>
+        <loc>https://tsukumart.com/${path}</loc>
+        <lastmod>2019-07-12</lastmod>
+    </url>
+`;

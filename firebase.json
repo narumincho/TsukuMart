@@ -10,6 +10,10 @@
         "public": "client/dist",
         "rewrites": [
             {
+                "source": "sitemap",
+                "function": "sitemap"
+            },
+            {
                 "source": "**",
                 "function": "indexHtml"
             }
