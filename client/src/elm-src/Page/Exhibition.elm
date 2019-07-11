@@ -15,6 +15,7 @@ import Data.Product as Product
 import Html
 import Html.Attributes
 import Html.Events
+import Html.Keyed
 import Page.Component.LogIn as LogIn
 import Page.Component.ProductEditor as ProductEditor
 import PageLocation
@@ -190,7 +191,7 @@ view logInState (Model { page, logInOrSignUpModel }) =
     , html =
         [ Html.div
             [ Html.Attributes.class "container" ]
-            [ Html.div
+            [ Html.Keyed.node "div"
                 [ Html.Attributes.class "exhibition" ]
                 body
             ]
@@ -199,14 +200,18 @@ view logInState (Model { page, logInOrSignUpModel }) =
     }
 
 
-logInStateNoneView : LogIn.Model -> ( String, List (Html.Html Msg) )
+logInStateNoneView : LogIn.Model -> ( String, List ( String, Html.Html Msg ) )
 logInStateNoneView model =
     ( "出品画面"
-    , [ Html.div
+    , [ ( "logIn"
+        , Html.div
             []
             [ Html.text "ログインして商品を出品しよう" ]
-      , LogIn.view model
+        )
+      , ( "logInComp"
+        , LogIn.view model
             |> Html.map LogInOrSignUpMsg
+        )
       ]
     )
 
@@ -218,13 +223,16 @@ logInStateNoneView model =
 -}
 
 
-editView : ProductEditor.Model -> ( String, List (Html.Html Msg) )
+editView : ProductEditor.Model -> ( String, List ( String, Html.Html Msg ) )
 editView productEditorModel =
     ( "商品の情報を入力"
     , (ProductEditor.view productEditorModel
-        |> List.map (Html.map MsgByProductEditor)
+        |> List.map (Tuple.mapSecond (Html.map MsgByProductEditor))
       )
-        ++ [ toConformPageButton (ProductEditor.toSoldRequest productEditorModel /= Nothing) ]
+        ++ [ ( "conform"
+             , toConformPageButton (ProductEditor.toSoldRequest productEditorModel /= Nothing)
+             )
+           ]
     )
 
 
@@ -253,7 +261,7 @@ toConformPageButton available =
 -}
 
 
-confirmView : Api.Token -> Api.SellProductRequest -> Bool -> ( String, List (Html.Html Msg) )
+confirmView : Api.Token -> Api.SellProductRequest -> Bool -> ( String, List ( String, Html.Html Msg ) )
 confirmView accessToken (Api.SellProductRequest requestData) sending =
     ( "出品 確認"
     , [ confirmViewImage requestData.images
@@ -297,6 +305,7 @@ confirmView accessToken (Api.SellProductRequest requestData) sending =
             )
             [ Html.text "出品する" ]
       ]
+        |> List.indexedMap (\index a -> ( String.fromInt index, a ))
     )
 
 

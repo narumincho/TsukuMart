@@ -254,7 +254,21 @@ view :
         , bottomNavigation : Maybe BasicParts.BottomNavigationSelect
         }
 view logInState isWideScreen model =
-    { title = Just "プロフィール"
+    { title =
+        Just
+            (case model of
+                LoadingWithUserId id ->
+                    "ID=" ++ User.idToString id ++ "のユーザーページ"
+
+                LoadingWithUserIdAndName withName ->
+                    User.withNameGetDisplayName withName ++ "さんのユーザーページ"
+
+                Normal withProfile ->
+                    User.withProfileGetDisplayName withProfile ++ "さんのユーザーページ"
+
+                Edit _ ->
+                    "プロフィール編集"
+            )
     , tab = BasicParts.tabSingle "プロフィール"
     , html =
         [ Html.div

@@ -25,6 +25,7 @@ import Data.User as User
 import Html
 import Html.Attributes
 import Html.Events
+import Html.Keyed
 import Icon
 import Page.Component.Comment
 import Page.Component.ProductEditor as ProductEditor
@@ -500,23 +501,23 @@ view logInState isWideScreen nowMaybe model =
             , html =
                 [ Html.div
                     [ Html.Attributes.class "container" ]
-                    [ Html.div
+                    [ Html.Keyed.node "div"
                         [ Html.Attributes.class "product" ]
                         (case LogInState.getToken logInState of
                             Just accessToken ->
-                                [ Html.text "編集画面"
-                                ]
-                                    ++ (ProductEditor.view productEditor
-                                            |> List.map (Html.map MsgByProductEditor)
-                                       )
-                                    ++ [ editOkCancelButton
+                                (ProductEditor.view productEditor
+                                    |> List.map (Tuple.mapSecond (Html.map MsgByProductEditor))
+                                )
+                                    ++ [ ( "okButton"
+                                         , editOkCancelButton
                                             accessToken
                                             (Product.detailGetId beforeProduct)
                                             (ProductEditor.toUpdateRequest productEditor)
+                                         )
                                        ]
 
                             Nothing ->
-                                [ Html.text "ログインしていないときに商品の編集はできません" ]
+                                [ ( "needLogIn", Html.text "ログインしていないときに商品の編集はできません" ) ]
                         )
                     ]
                 ]

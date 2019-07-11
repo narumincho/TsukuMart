@@ -418,7 +418,7 @@ imagesCheck images =
         Nothing
 
 
-view : Model -> List (Html.Html Msg)
+view : Model -> List ( String, Html.Html Msg )
 view (Model rec) =
     (if
         4
@@ -431,18 +431,20 @@ view (Model rec) =
         []
 
      else
-        [ photoAdd ]
+        [ ( "photoAdd", photoAdd ) ]
     )
-        ++ [ photoCardList
+        ++ [ ( "photoCardList"
+             , photoCardList
                 { addImages = rec.addImages
                 , deleteAt = rec.deleteImagesAt
                 , beforeImageIds = rec.beforeImageIds
                 }
-           , nameView rec.name
-           , descriptionView
-           , priceView rec.price
-           , conditionView rec.condition
-           , categoryView rec.category
+             )
+           , ( "name", nameView rec.name )
+           , ( "description", descriptionView )
+           , ( "price", priceView rec.price )
+           , ( "condition", conditionView rec.condition )
+           , ( "category", categoryView rec.category )
            ]
 
 

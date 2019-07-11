@@ -264,10 +264,10 @@ soldOutBar =
         [ Html.div
             [ Html.Attributes.style "background-color" "red"
             , Html.Attributes.style "color" "#fff"
-            , Html.Attributes.style "transform" "translate(-48px, 48px) rotate(322deg)"
+            , Html.Attributes.style "transform" "translate(-73px, 42px) rotate(315deg)"
             , Html.Attributes.style "width" "256px"
             , Html.Attributes.style "font-size" "1.5rem"
             , Html.Attributes.style "text-align" "center"
             ]
-            [ Html.text "SOLD OUT" ]
+            [ Html.text "うりきれ" ]
         ]
