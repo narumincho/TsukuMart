@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="ja">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>つくマート | 新規登録</title>
+    <script src="https://www.gstatic.com/firebasejs/6.3.0/firebase-app.js" defer></script>
+    <script src="https://www.gstatic.com/firebasejs/6.3.0/firebase-auth.js" defer></script>
+    <script src="https://tsukumart.com/signup.js" type="module"></script>
+</head>
+
+<body>
+    SIGN UP!!!
+</body>
+
+</html>

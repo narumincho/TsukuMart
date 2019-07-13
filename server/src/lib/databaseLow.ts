@@ -1,14 +1,8 @@
 import * as type from "./type";
-import * as firebase from "firebase";
 import * as firestore from "@google-cloud/firestore";
 import * as admin from "firebase-admin";
 import * as sharp from "sharp";
 import * as stream from "stream";
-
-firebase.initializeApp({
-    apiKey: "AIzaSyDmKHgxpyKvnq-zxdj0tYSG6QIMotHKRBU",
-    projectId: "tsukumart-f0971"
-});
 
 const initializedAdmin = admin.initializeApp();
 const dataBase = initializedAdmin.firestore();
@@ -704,28 +698,8 @@ export const getFirebaseAuthUserEmailVerified = async (
 export const sendEmailVerification = async (
     email: string,
     password: string
-) => {
-    console.log(
-        `email=${email} password=${password}でクライアントアプリでログイン`
-    );
-    try {
-        const a = firebase.auth();
-        console.log("get firebase client auth is ok");
-        const userCredential = await a.signInWithEmailAndPassword(
-            email,
-            password
-        );
-        console.log("get user credential is ok");
-
-        if (userCredential.user === null) {
-            throw new Error("userCredential.user is null");
-        }
-        console.log("認証メールを送信する");
-        await userCredential.user.sendEmailVerification();
-    } catch (e) {
-        console.log(e.stack);
-        throw e;
-    }
+): Promise<void> => {
+    console.log("ユーザー認証メールの送信はクライアントですることにする");
 };
 /* ==========================================
             Firebase Cloud Storage

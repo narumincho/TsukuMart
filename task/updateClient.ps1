@@ -35,6 +35,13 @@ tsc;
 $Host.UI.RawUI.ForegroundColor = "Yellow";
 Write-Output "ServiceWoker Compile OK"
 
+Write-Output "Sign Up Compile ..."
+$Host.UI.RawUI.ForegroundColor = "Gray";
+Set-Location -Path ../signup_src;
+Copy-Item -Path ./signup.html -Destination ../../dist/signup
+tsc;
+$Host.UI.RawUI.ForegroundColor = "Yellow";
+Write-Output "ServiceWoker Compile OK"
 
 Write-Output "Upload to Firebase ...";
 $Host.UI.RawUI.ForegroundColor = "Gray";

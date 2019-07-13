@@ -1,12 +1,33 @@
 {
     "hosting": {
-        "headers": {
-            "source": "**",
-            "headers": {
-                "key": "cache-control",
-                "value": "max-age=0"
+        "headers": [
+            {
+                "source": "signup",
+                "headers": [
+                    {
+                        "key": "content-type",
+                        "value": "text/html"
+                    },
+                    {
+                        "key": "cache-control",
+                        "value": "max-age=0"
+                    }
+                ]
+            },
+            {
+                "source": "**!(signup|signup.js)",
+                "headers": [
+                    {
+                        "key": "content-security-policy-report-only",
+                        "value": "default-src https://tsukumart.com/ ; img-src https://us-central1-tsukumart-f0971.cloudfunctions.net/ ; connect-src https://us-central1-tsukumart-f0971.cloudfunctions.net/"
+                    },
+                    {
+                        "key": "cache-control",
+                        "value": "max-age=0"
+                    }
+                ]
             }
-        },
+        ],
         "public": "client/dist",
         "rewrites": [
             {
