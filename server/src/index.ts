@@ -23,16 +23,16 @@ export const indexHtml = functions
     <meta name="description" content="筑波大生専用手渡しフリーマーケットサービス">
     <meta name="theme-color" content="#733fa7">
     <title>つくマート</title>
-    <link rel="stylesheet" href="/style.css">
-    <link rel="icon" href="/assets/logo_bird.png">
-    <link rel="manifest" href="/manifest.json">
+    <link rel="stylesheet" href="https://tsukumart.com/style.css">
+    <link rel="icon" href="https://tsukumart.com/assets/logo_bird.png">
+    <link rel="manifest" href="https://tsukumart.com/manifest.json">
     <meta name="twitter:card" content="summary_large_image">
     <meta property="og:url" content="https://tsukumart.com${request.url}">
     <meta property="og:title" content="つくマート">
     <meta property="og:description" content="記事の要約 デバッグ=${Math.random()}">
     <meta property="og:image" content="https://tsukumart.com/assets/logo_bird.png">
-    <script src="/main.js" defer></script>
-    <script src="/call.js" type="module"></script>
+    <script src="https://tsukumart.com/main.js" defer></script>
+    <script src="https://tsukumart.com/call.js" type="module"></script>
 </head>
 
 <body>
@@ -148,3 +148,12 @@ const pathToXml = (path: string): string => `
         <lastmod>2019-07-12</lastmod>
     </url>
 `;
+/* =====================================================================
+ *                  content-security-policy の 報告先
+ * =====================================================================
+ */
+export const contentSecurityPolicyReport = functions.https.onRequest(
+    async (request, response) => {
+        await databaseLow.contentSecurityPolicyReport(request.body.toString());
+    }
+);

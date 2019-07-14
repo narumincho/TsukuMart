@@ -23,7 +23,9 @@ const twitterLogInTokenSecretDocumentRef: FirebaseFirestore.DocumentReference = 
 const lineLogInStateCollection = dataBase.collection("lineState");
 const productCollectionRef = dataBase.collection("product");
 const tradeCollectionRef = dataBase.collection("trade");
-
+const contentSecurityPolicyReportRef = dataBase.collection(
+    "contentSecurityPolicyReport"
+);
 /* ==========================================
                     User
    ==========================================
@@ -870,4 +872,13 @@ export const getTwitterLastTokenSecret = async (): Promise<string> => {
         throw new Error("Twitterの最後に保存したtokenSecretがない");
     }
     return lastData.tokenSecret;
+};
+
+/**
+ * content-security-policy の 報告先
+ */
+export const contentSecurityPolicyReport = async (
+    report: string
+): Promise<void> => {
+    await contentSecurityPolicyReportRef.add({ raw: report });
 };
