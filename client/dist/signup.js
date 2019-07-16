@@ -21,31 +21,97 @@ const createGraduateSelect = () => {
     const graduateSelect = document.createElement("select");
     graduateSelect.classList.add("select");
     graduateSelect.append(...[emptyOption, ...Object.entries(graduate)].map(optionDataToOptionElement));
-    graduateSelect.addEventListener("change", e => {
-        if (graduateSelect.value === "") {
-            graduateSelect.setCustomValidity("空のまま送信することはできません");
-        }
-        else {
-            graduateSelect.setCustomValidity("");
-        }
-    });
     return graduateSelect;
 };
 const createSchoolSelect = () => {
     const school = {
-        humcul: "人文・文化学群",
-        socint: "社会・国際学群",
-        human: "人間学群",
-        life: "生命環境学群",
-        sse: "理工学群",
-        info: "情報学群",
-        med: "医学群",
-        aandd: "芸術専門学群",
-        sport: "体育専門学群"
+        humcul: {
+            label: "人文・文化学群",
+            department: {
+                humanity: "人文学類",
+                culture: "比較文化学類",
+                japanese: "日本語・日本文化学類"
+            }
+        },
+        socint: {
+            label: "社会・国際学群",
+            department: {
+                social: "社会学類",
+                cis: "国際総合学類"
+            }
+        },
+        human: {
+            label: "人間学群",
+            department: {
+                education: "教育学類",
+                psyche: "心理学類",
+                disability: "障害科学類"
+            }
+        },
+        life: {
+            label: "生命環境学群",
+            department: {
+                biol: "生物学類",
+                bres: "生物資源学類",
+                earth: "地球学類"
+            }
+        },
+        sse: {
+            label: "理工学群",
+            department: {
+                math: "数学類",
+                phys: "物理学類",
+                chem: "化学類",
+                coens: "応用理工学類",
+                esys: "工学システム学類",
+                pandps: "社会工学類"
+            }
+        },
+        info: {
+            label: "情報学群",
+            department: {
+                coins: "情報科学類",
+                mast: "情報メディア創成学類",
+                klis: "知識情報・図書館科学類"
+            }
+        },
+        med: {
+            label: "医学群",
+            department: {
+                med: "医学類",
+                nurse: "看護学類",
+                ms: "医療科学類"
+            }
+        },
+        aandd: {
+            label: "芸術専門学群"
+        },
+        sport: {
+            label: "体育専門学群"
+        }
     };
     const schoolSelect = document.createElement("select");
     schoolSelect.classList.add("select");
-    schoolSelect.append(...[emptyOption, ...Object.entries(school)].map(optionDataToOptionElement));
+    schoolSelect.append(...[
+        emptyOption,
+        ...Object.entries(school).map(([k, v]) => [k, v.label])
+    ].map(optionDataToOptionElement));
+    let departmentSelect = document.createElement("select");
+    schoolSelect.addEventListener("change", () => {
+        const s = school[schoolSelect.value];
+        if (departmentSelect !== undefined) {
+            departmentSelect.remove();
+        }
+        if ("department" in s) {
+            departmentSelect = document.createElement("select");
+            departmentSelect.classList.add("select");
+            departmentSelect.append(...[emptyOption, ...Object.entries(s.department)].map(optionDataToOptionElement));
+            schoolSelect.after(departmentSelect);
+            s.department;
+        }
+        else {
+        }
+    });
     return schoolSelect;
 };
 const createGraduateFromTsukubaOrNot = () => {
@@ -195,6 +261,7 @@ const createGraduateFromTsukubaOrNot = () => {
     schoolElement.addEventListener("input", e => {
         console.log("input school", e);
         formElement.insertBefore(schoolSelect, submitButtonElement);
+        graduateFromTsukubaOrNot.remove();
         graduateSelect.remove();
     });
     graduateElement.addEventListener("input", e => {
