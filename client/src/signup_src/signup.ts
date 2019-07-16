@@ -35,7 +35,7 @@ const createGraduateSelect = (): HTMLSelectElement => {
     return graduateSelect;
 };
 
-const createSchoolSelect = (): HTMLSelectElement => {
+const createDepartmentSelect = (): HTMLDivElement => {
     const school = {
         humcul: {
             label: "人文・文化学群",
@@ -102,6 +102,10 @@ const createSchoolSelect = (): HTMLSelectElement => {
             label: "体育専門学群"
         }
     };
+    const departmentSelectDiv = document.createElement("div");
+    const label = document.createElement("label");
+    label.innerText = "学群 / 学類";
+
     const schoolSelect = document.createElement("select");
     schoolSelect.classList.add("select");
     schoolSelect.append(
@@ -113,11 +117,18 @@ const createSchoolSelect = (): HTMLSelectElement => {
         ].map(optionDataToOptionElement)
     );
     let departmentSelect: HTMLSelectElement = document.createElement("select");
-    schoolSelect.addEventListener("change", () => {
-        const s = school[schoolSelect.value as (keyof typeof school)];
-        if (departmentSelect !== undefined) {
-            departmentSelect.remove();
+    const schoolSelectUpdate = () => {
+        if (departmentSelect.isConnected) {
+            departmentSelectDiv.removeChild(departmentSelect);
         }
+        if (schoolSelect.value === "") {
+            departmentSelect = document.createElement("select");
+            departmentSelect.classList.add("select");
+            departmentSelect.append(optionDataToOptionElement(emptyOption));
+            departmentSelectDiv.append(departmentSelect);
+            return;
+        }
+        const s = school[schoolSelect.value as (keyof typeof school)];
         if ("department" in s) {
             departmentSelect = document.createElement("select");
             departmentSelect.classList.add("select");
@@ -127,15 +138,17 @@ const createSchoolSelect = (): HTMLSelectElement => {
                     optionDataToOptionElement
                 )
             );
-            schoolSelect.after(departmentSelect);
+            departmentSelectDiv.append(departmentSelect);
             s.department;
-        } else {
         }
-    });
-    return schoolSelect;
+    };
+    schoolSelectUpdate();
+    schoolSelect.addEventListener("change", schoolSelectUpdate);
+    departmentSelectDiv.append(label, schoolSelect, departmentSelect);
+    return departmentSelectDiv;
 };
 
-const createGraduateFromTsukubaOrNot = () => {
+const createGraduateFromTsukubaOrNot = (): HTMLDivElement => {
     const element = document.createElement("div");
     const label = document.createElement("label");
     label.innerText = "院進前の所属";
@@ -174,6 +187,13 @@ const createGraduateFromTsukubaOrNot = () => {
         inputNoTsukuba,
         inputLabelFromNoTsukuba
     );
+    const inputTsukubaUpdate = () => {
+        console.log("筑波大学から入ってきたと選択した");
+    };
+    inputTsukuba.addEventListener("input", inputTsukubaUpdate);
+    inputNoTsukuba.addEventListener("input", () => {});
+
+    inputTsukubaUpdate();
     element.append(label, radio);
     return element;
 };
@@ -184,7 +204,7 @@ const createGraduateFromTsukubaOrNot = () => {
     }
 
     const graduateSelect = createGraduateSelect();
-    const schoolSelect = createSchoolSelect();
+    const schoolSelect = createDepartmentSelect();
     const graduateFromTsukubaOrNot = createGraduateFromTsukubaOrNot();
 
     const studentIdInputElement = document.getElementById("studentId");
@@ -314,18 +334,22 @@ const createGraduateFromTsukubaOrNot = () => {
     if (!(submitButtonElement instanceof HTMLButtonElement)) {
         throw new Error("送信ボタンがHTMLButtonElementでない");
     }
-
-    schoolElement.addEventListener("input", e => {
-        console.log("input school", e);
+    const schoolSelectUpdate = () => {
+        if (graduateFromTsukubaOrNot.isConnected) {
+            formElement.removeChild(graduateFromTsukubaOrNot);
+        }
+        if (graduateSelect.isConnected) {
+            formElement.removeChild(graduateSelect);
+        }
         formElement.insertBefore(schoolSelect, submitButtonElement);
-        graduateFromTsukubaOrNot.remove();
-        graduateSelect.remove();
-    });
+    };
+    schoolSelectUpdate();
+
+    schoolElement.addEventListener("input", schoolSelectUpdate);
     graduateElement.addEventListener("input", e => {
         console.log("input graduate", e);
         formElement.insertBefore(graduateSelect, submitButtonElement);
         formElement.insertBefore(graduateFromTsukubaOrNot, submitButtonElement);
-        formElement.insertBefore(schoolSelect, submitButtonElement);
     });
 
     submitButtonElement.addEventListener("click", e => {
