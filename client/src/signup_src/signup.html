@@ -26,7 +26,7 @@
             z-index: 2;
         }
 
-        form {
+        .form {
             padding: 64px 8px 8px 8px;
             width: 100%;
             max-width: 512px;
@@ -235,12 +235,12 @@
                 transform="translate(-40.84 -16.87)" fill="#ffe2a6"></path>
         </svg>
     </header>
-    <form id="form">
+    <form id="form" class="form">
         <h1>新規登録</h1>
         <div>
             <label for="studentId" class="label">学籍番号</label>
             <input id="studentId" class="input-text" type="text" required>
-            20から始まる9桁の数字
+            <div id="studentId-hint">20から始まる9桁の数字</div>
         </div>
         <div>
             <label for="image" class="label label-image">

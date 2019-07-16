@@ -1,7 +1,18 @@
 interface Window {
     firebase: any;
 }
-(() => {
+const emptyOption: [string, string] = ["", "-- 選択してください --"];
+const optionDataToOptionElement = ([key, value]: [
+    string,
+    string
+]): HTMLOptionElement => {
+    const option = document.createElement("option");
+    option.value = key;
+    option.innerText = value;
+    return option;
+};
+
+const createGraduateSelect = (): HTMLSelectElement => {
     const graduate = {
         education: "教育研究科",
         hass: "人文社会科学研究科",
@@ -14,6 +25,26 @@ interface Window {
         global: "グローバル研究院"
     } as const;
 
+    const graduateSelect = document.createElement("select");
+    graduateSelect.classList.add("select");
+    graduateSelect.append(
+        ...[emptyOption, ...Object.entries(graduate)].map(
+            optionDataToOptionElement
+        )
+    );
+    graduateSelect.addEventListener("change", e => {
+        if (graduateSelect.value === "") {
+            graduateSelect.setCustomValidity(
+                "空のまま送信することはできません"
+            );
+        } else {
+            graduateSelect.setCustomValidity("");
+        }
+    });
+    return graduateSelect;
+};
+
+const createSchoolSelect = (): HTMLSelectElement => {
     const school = {
         humcul: "人文・文化学群",
         socint: "社会・国際学群",
@@ -25,35 +56,6 @@ interface Window {
         aandd: "芸術専門学群",
         sport: "体育専門学群"
     };
-
-    const formElement = document.getElementById("form");
-    if (!(formElement instanceof HTMLFormElement)) {
-        console.error("formの要素がありません");
-        return;
-    }
-    const emptyOption: [string, string] = ["", "-- 選択してください --"];
-    const optionDataToOptionElement = ([key, value]: [
-        string,
-        string
-    ]): HTMLOptionElement => {
-        const option = document.createElement("option");
-        option.value = key;
-        option.innerText = value;
-        return option;
-    };
-
-    const graduateSelect = document.createElement("select");
-    graduateSelect.classList.add("select");
-    graduateSelect.append(
-        ...[emptyOption, ...Object.entries(graduate)].map(
-            optionDataToOptionElement
-        )
-    );
-    const graduateFormTsukubaOrNot = document.createElement("div");
-    const graduateFormTsukubaOrNotLabel = document.createElement("label");
-    graduateFormTsukubaOrNotLabel.innerText = "院進前の所属";
-    graduateFormTsukubaOrNot.append();
-
     const schoolSelect = document.createElement("select");
     schoolSelect.classList.add("select");
     schoolSelect.append(
@@ -61,6 +63,104 @@ interface Window {
             optionDataToOptionElement
         )
     );
+    return schoolSelect;
+};
+
+const createGraduateFromTsukubaOrNot = () => {
+    const element = document.createElement("div");
+    const label = document.createElement("label");
+    label.innerText = "院進前の所属";
+    label.classList.add("label");
+
+    const radio = document.createElement("div");
+    radio.classList.add("radio");
+
+    const inputName = "graduateFromTsukubaOrNot";
+    const inputTsukuba = document.createElement("input");
+    inputTsukuba.type = "radio";
+    const graduateFromTsukubaId = "graduateFromTsukuba";
+    inputTsukuba.id = graduateFromTsukubaId;
+    inputTsukuba.classList.add("radio-input");
+    inputTsukuba.name = inputName;
+    inputTsukuba.checked = true;
+    const inputLabelFromTsukuba = document.createElement("label");
+    inputLabelFromTsukuba.innerText = "筑波大学に所属していた";
+    inputLabelFromTsukuba.htmlFor = graduateFromTsukubaId;
+    inputLabelFromTsukuba.classList.add("radio-label", "radio-left");
+
+    const inputNoTsukuba = document.createElement("input");
+    inputNoTsukuba.type = "radio";
+    const graduateFromNoTsukuba = "graduateFromNoTsukuba";
+    inputNoTsukuba.id = graduateFromNoTsukuba;
+    inputNoTsukuba.classList.add("radio-input");
+    inputNoTsukuba.name = inputName;
+    const inputLabelFromNoTsukuba = document.createElement("label");
+    inputLabelFromNoTsukuba.innerText = "筑波大学に所属していなかった";
+    inputLabelFromNoTsukuba.htmlFor = graduateFromNoTsukuba;
+    inputLabelFromNoTsukuba.classList.add("radio-label", "radio-right");
+
+    radio.append(
+        inputTsukuba,
+        inputLabelFromTsukuba,
+        inputNoTsukuba,
+        inputLabelFromNoTsukuba
+    );
+    element.append(label, radio);
+    return element;
+};
+{
+    const formElement = document.getElementById("form");
+    if (!(formElement instanceof HTMLFormElement)) {
+        throw new Error("formの要素がありません");
+    }
+
+    const graduateSelect = createGraduateSelect();
+    const schoolSelect = createSchoolSelect();
+    const graduateFromTsukubaOrNot = createGraduateFromTsukubaOrNot();
+
+    const studentIdInputElement = document.getElementById("studentId");
+    if (!(studentIdInputElement instanceof HTMLInputElement)) {
+        throw new Error("学籍番号の入力欄がない");
+    }
+    const studentIdHintElement = document.getElementById("studentId-hint");
+    if (!(studentIdHintElement instanceof HTMLDivElement)) {
+        throw new Error("学籍番号のヒント表示欄がない");
+    }
+    const isAllDigit = (text: string): boolean => {
+        for (const char of text) {
+            if (!"0123456789".includes(char)) {
+                return false;
+            }
+        }
+        return true;
+    };
+
+    studentIdInputElement.addEventListener("input", () => {
+        const text = studentIdInputElement.value
+            .trim()
+            .replace("０", "0")
+            .replace("１", "1")
+            .replace("２", "2")
+            .replace("３", "3")
+            .replace("４", "4")
+            .replace("５", "5")
+            .replace("６", "6")
+            .replace("７", "7")
+            .replace("８", "8")
+            .replace("９", "9");
+        if (!isAllDigit(text)) {
+            studentIdHintElement.innerText = "20から始まる9桁の数字";
+        }
+        if (text.startsWith("20")) {
+            if (text.length === 9) {
+                studentIdHintElement.innerText = text + " ✔";
+                return;
+            }
+            studentIdHintElement.innerText = (text + "???????").slice(0, 9);
+            return;
+        }
+        studentIdHintElement.innerText = "学籍番号は20から始まる";
+    });
 
     const userImageFileResizeAndConvertToDataUrl = (
         file: File
@@ -97,23 +197,19 @@ interface Window {
     const nameValue = fragmentParameter.get("name");
     const nameElement = document.getElementById("name");
     if (nameValue === null) {
-        console.error("URLのフラグメントにnameが必要です");
-        return;
+        throw new Error("URLのフラグメントにnameが必要です");
     }
     if (!(nameElement instanceof HTMLInputElement)) {
-        console.error("名前の入力欄が無いか、HTMLInputElementではないです");
-        return;
+        throw new Error("名前の入力欄が無いか、HTMLInputElementではないです");
     }
     nameElement.value = nameValue;
     const imageId = fragmentParameter.get("imageId");
     const imageElement = document.getElementById("image-view");
     if (imageId === null) {
-        console.error("URLのフラグメントにimageIdが必要です");
-        return;
+        throw new Error("URLのフラグメントにimageIdが必要です");
     }
     if (!(imageElement instanceof HTMLImageElement)) {
-        console.error("画像のプレビュー欄がありません");
-        return;
+        throw new Error("画像のプレビュー欄がありません");
     }
     imageElement.src =
         "https://asia-northeast1-tsukumart-f0971.cloudfunctions.net/image/" +
@@ -121,8 +217,7 @@ interface Window {
 
     const imageInputElement = document.getElementById("image");
     if (!(imageInputElement instanceof HTMLInputElement)) {
-        console.error("画像の入力要素がありません");
-        return;
+        throw new Error("画像の入力要素がありません");
     }
     imageInputElement.addEventListener("input", async e => {
         const files = imageInputElement.files;
@@ -142,15 +237,13 @@ interface Window {
         !(schoolElement instanceof HTMLInputElement) ||
         !(graduateElement instanceof HTMLInputElement)
     ) {
-        console.error(
+        throw new Error(
             "学群生か院生かのラジオボタンがないか、HTMLInputElementでない"
         );
-        return;
     }
     const submitButtonElement = document.getElementById("submit-button");
     if (!(submitButtonElement instanceof HTMLButtonElement)) {
-        console.error("送信ボタンがHTMLButtonElementでない");
-        return;
+        throw new Error("送信ボタンがHTMLButtonElementでない");
     }
 
     schoolElement.addEventListener("input", e => {
@@ -161,10 +254,15 @@ interface Window {
     graduateElement.addEventListener("input", e => {
         console.log("input graduate", e);
         formElement.insertBefore(graduateSelect, submitButtonElement);
+        formElement.insertBefore(graduateFromTsukubaOrNot, submitButtonElement);
         formElement.insertBefore(schoolSelect, submitButtonElement);
     });
 
-    submitButtonElement.addEventListener("submit", e => {
-        console.log(e);
+    submitButtonElement.addEventListener("click", e => {
+        e.preventDefault();
+        console.log(
+            "apiに登録内容の送信とfirebaseクライアントアプリを使ってメールの送信を行う",
+            e
+        );
     });
-})();
+}
