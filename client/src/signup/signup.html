@@ -8,7 +8,10 @@
     <script src="https://www.gstatic.com/firebasejs/6.3.0/firebase-app.js" defer></script>
     <script src="https://www.gstatic.com/firebasejs/6.3.0/firebase-auth.js" defer></script>
     <!-- <script src="https://tsukumart.com/signup.js" type="module"></script> -->
-    <script src="../../dist/signup.js" type="module"></script>
+    <script src="../../dist/signup.js" defer></script>
+    <script type="module">
+        console.log(window.Elm.SignUp.init({ flags: "", node: document.body }))
+    </script>
     <style>
         body {
             margin: 0;
