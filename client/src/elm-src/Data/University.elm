@@ -89,6 +89,136 @@ universityFromIdString { graduateMaybe, departmentMaybe } =
 
 
 {- ======================================
+                  研究科
+   ======================================
+-}
+
+
+{-| 研究科
+-}
+type Graduate
+    = GEducation -- 教育研究科
+    | GHass -- 人文社会科学研究科
+    | GGabs -- ビジネス科学研究科
+    | GPas -- 数理物質科学研究科
+    | GSie -- システム情報工学研究科
+    | GLife -- 生命環境科学研究科
+    | GChs -- 人間総合科学研究科
+    | GSlis -- 図書館情報メディア研究科
+    | GGlobal -- グローバル研究院
+
+
+{-| すべての研究科
+-}
+graduateAllValue : List Graduate
+graduateAllValue =
+    [ GEducation
+    , GHass
+    , GGabs
+    , GPas
+    , GSie
+    , GLife
+    , GChs
+    , GSlis
+    , GGlobal
+    ]
+
+
+graduateToIndex : Graduate -> Int
+graduateToIndex graduate =
+    Utility.getFirstIndex graduate graduateAllValue
+        |> Maybe.withDefault 0
+
+
+graduateFromIndex : Int -> Maybe Graduate
+graduateFromIndex index =
+    graduateAllValue
+        |> Utility.getAt index
+
+
+graduateToJapaneseString : Graduate -> String
+graduateToJapaneseString gradate =
+    case gradate of
+        GEducation ->
+            "教育研究科"
+
+        GHass ->
+            "人文社会科学研究科"
+
+        GGabs ->
+            "ビジネス科学研究科"
+
+        GPas ->
+            "数理物質科学研究科"
+
+        GSie ->
+            "システム情報工学研究科"
+
+        GLife ->
+            "生命環境科学研究科"
+
+        GChs ->
+            "人間総合科学研究科"
+
+        GSlis ->
+            "図書館情報メディア研究科"
+
+        GGlobal ->
+            "グローバル研究院"
+
+
+graduateToIdString : Graduate -> String
+graduateToIdString graduate =
+    case graduate of
+        GEducation ->
+            "education"
+
+        GHass ->
+            "hass"
+
+        GGabs ->
+            "gabs"
+
+        GPas ->
+            "pas"
+
+        GSie ->
+            "sie"
+
+        GLife ->
+            "life"
+
+        GChs ->
+            "chs"
+
+        GSlis ->
+            "slis"
+
+        GGlobal ->
+            "global"
+
+
+graduateFromIdString : String -> Maybe Graduate
+graduateFromIdString idString =
+    graduateFromIdStringLoop idString graduateAllValue
+
+
+graduateFromIdStringLoop : String -> List Graduate -> Maybe Graduate
+graduateFromIdStringLoop idString graduateList =
+    case graduateList of
+        x :: xs ->
+            if graduateToIdString x == idString then
+                Just x
+
+            else
+                graduateFromIdStringLoop idString xs
+
+        [] ->
+            Nothing
+
+
+
+{- ======================================
                   学群
    ======================================
 -}
@@ -610,134 +740,4 @@ departmentToJapaneseString schoolAndDepartment =
             Nothing
 
         DSport ->
-            Nothing
-
-
-
-{- ======================================
-                  研究科
-   ======================================
--}
-
-
-{-| 研究科
--}
-type Graduate
-    = GEducation -- 教育研究科
-    | GHass -- 人文社会科学研究科
-    | GGabs -- ビジネス科学研究科
-    | GPas -- 数理物質科学研究科
-    | GSie -- システム情報工学研究科
-    | GLife -- 生命環境科学研究科
-    | GChs -- 人間総合科学研究科
-    | GSlis -- 図書館情報メディア研究科
-    | GGlobal -- グローバル研究院
-
-
-{-| すべての研究科
--}
-graduateAllValue : List Graduate
-graduateAllValue =
-    [ GEducation
-    , GHass
-    , GGabs
-    , GPas
-    , GSie
-    , GLife
-    , GChs
-    , GSlis
-    , GGlobal
-    ]
-
-
-graduateToIndex : Graduate -> Int
-graduateToIndex graduate =
-    Utility.getFirstIndex graduate graduateAllValue
-        |> Maybe.withDefault 0
-
-
-graduateFromIndex : Int -> Maybe Graduate
-graduateFromIndex index =
-    graduateAllValue
-        |> Utility.getAt index
-
-
-graduateToJapaneseString : Graduate -> String
-graduateToJapaneseString gradate =
-    case gradate of
-        GEducation ->
-            "教育研究科"
-
-        GHass ->
-            "人文社会科学研究科"
-
-        GGabs ->
-            "ビジネス科学研究科"
-
-        GPas ->
-            "数理物質科学研究科"
-
-        GSie ->
-            "システム情報工学研究科"
-
-        GLife ->
-            "生命環境科学研究科"
-
-        GChs ->
-            "人間総合科学研究科"
-
-        GSlis ->
-            "図書館情報メディア研究科"
-
-        GGlobal ->
-            "グローバル研究院"
-
-
-graduateToIdString : Graduate -> String
-graduateToIdString graduate =
-    case graduate of
-        GEducation ->
-            "education"
-
-        GHass ->
-            "hass"
-
-        GGabs ->
-            "gabs"
-
-        GPas ->
-            "pas"
-
-        GSie ->
-            "sie"
-
-        GLife ->
-            "life"
-
-        GChs ->
-            "chs"
-
-        GSlis ->
-            "slis"
-
-        GGlobal ->
-            "global"
-
-
-graduateFromIdString : String -> Maybe Graduate
-graduateFromIdString idString =
-    graduateFromIdStringLoop idString graduateAllValue
-
-
-graduateFromIdStringLoop : String -> List Graduate -> Maybe Graduate
-graduateFromIdStringLoop idString graduateList =
-    case graduateList of
-        x :: xs ->
-            if graduateToIdString x == idString then
-                Just x
-
-            else
-                graduateFromIdStringLoop idString xs
-
-        [] ->
             Nothing

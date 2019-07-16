@@ -370,7 +370,7 @@ imageForm image =
                 [ Html.Attributes.style "display" "none"
                 , Html.Attributes.id imageInputId
                 , Html.Attributes.type_ "file"
-                , Html.Attributes.multiple True
+                , Html.Attributes.multiple False
                 , Html.Attributes.accept "image/*"
                 ]
                 []

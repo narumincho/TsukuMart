@@ -558,7 +558,7 @@ displayNameEditor displayName =
             ]
             [ Html.text "表示名" ]
          , Html.input
-            [ Html.Attributes.attribute "autocomplete" "nickname"
+            [ Html.Attributes.attribute "autocomplete" "username"
             , Html.Attributes.id nickNameEditorId
             , Html.Attributes.class "form-input"
             , Html.Events.onInput MsgInputDisplayName
@@ -592,8 +592,7 @@ introductionEditor introduction =
             ]
             [ Html.text "紹介文" ]
         , Html.textarea
-            [ Html.Attributes.attribute "autocomplete" "nickname"
-            , Html.Attributes.id introductionEditorId
+            [ Html.Attributes.id introductionEditorId
             , Html.Attributes.class "form-textarea"
             , Html.Events.onInput MsgInputIntroduction
             ]
