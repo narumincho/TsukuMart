@@ -6,6 +6,7 @@ $Host.UI.RawUI.ForegroundColor = "Gray";
 Set-Location -Path ./client/src/main/;
 elm make ./src/Main.elm --output ./mainBeforeMinifiy.js --optimize;
 elm make ./src/SignUp.elm --output ./signUpBeforeMinifiy.js --optimize;
+Copy-Item ./signup.html -Destination ../../dist/signup
 $Host.UI.RawUI.ForegroundColor = "Yellow";
 Write-Output "Compile Elm OK";
 
