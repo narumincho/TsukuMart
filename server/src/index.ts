@@ -53,16 +53,16 @@ export const api = functions
     .https.onRequest(async (request, response) => {
         console.log("API called");
         response.setHeader(
-            "Access-Control-Allow-Origin",
+            "access-control-allow-origin",
             "https://tsukumart.com"
         );
         response.setHeader("vary", "Origin");
         if (request.method === "OPTIONS") {
             response.setHeader(
-                "Access-Control-Allow-Methods",
+                "access-control-allow-methods",
                 "POST, GET, OPTIONS"
             );
-            response.setHeader("Access-Control-Allow-Headers", "content-type");
+            response.setHeader("access-control-allow-headers", "content-type");
             response.status(200).send("");
             return;
         }
@@ -96,7 +96,7 @@ export const image = functions
     .region("asia-northeast1")
     .https.onRequest(async (request, response) => {
         response.setHeader(
-            "Access-Control-Allow-Origin",
+            "access-control-allow-origin",
             "https://tsukumart.com"
         );
         response.setHeader("vary", "Origin");
@@ -105,12 +105,12 @@ export const image = functions
                 "Access-Control-Allow-Methods",
                 "POST, GET, OPTIONS"
             );
-            response.setHeader("Access-Control-Allow-Headers", "content-type");
+            response.setHeader("access-control-allow-headers", "content-type");
             response.status(200).send("");
             return;
         }
         try {
-            response.setHeader("Cache-Control", "public max-age=3600");
+            response.setHeader("cache-control", "public, max-age=31536000");
             databaseLow
                 .getImageReadStream(request.path.substring(1)) // /imageId -> imageId
                 .pipe(response);
