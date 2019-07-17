@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="ja">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>つくマート | 新規登録</title>
+    <script src="https://www.gstatic.com/firebasejs/6.3.0/firebase-app.js" defer></script>
+    <script src="https://www.gstatic.com/firebasejs/6.3.0/firebase-auth.js" defer></script>
+    <script src="https://tsukumart.com/signup.js" type="module"></script>
+    <!-- <script src="../../dist/signup.js" defer></script> -->
+    <script type="module">
+        const app = window.Elm.SignUp.init({ flags: "", node: document.body });
+        app.ports.load.subscribe(imageInputElementId => {
+            const userImageFileResizeAndConvertToDataUrl = (
+                file
+            ) =>
+                new Promise((resolve, reject) => {
+                    const image = new Image();
+                    image.addEventListener("load", e => {
+                        const canvas = document.createElement("canvas");
+                        const sourceSize = Math.min(image.width, image.height);
+                        const outputSize = Math.min(sourceSize, 400);
+                        canvas.width = outputSize;
+                        canvas.height = outputSize;
+                        const context = canvas.getContext("2d");
+                        context.drawImage(
+                            image,
+                            (image.width - sourceSize) / 2,
+                            (image.height - sourceSize) / 2,
+                            sourceSize,
+                            sourceSize,
+                            0,
+                            0,
+                            outputSize,
+                            outputSize
+                        );
+                        resolve(canvas.toDataURL("image/png"));
+                    });
+                    image.src = window.URL.createObjectURL(file);
+                });
+
+            requestAnimationFrame(() => {
+                const imageInputElement = document.getElementById(imageInputElementId);
+                imageInputElement.addEventListener("input", () => {
+                    app.ports.imageInput.send(
+                        await userImageFileResizeAndConvertToDataUrl(imageInputElement.files.item(0))
+                    )
+                })
+            })
+        })
+    </script>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+        }
+
+        .logo {
+            height: 48px;
+            padding: 8px 0 8px 16px;
+        }
+
+        .label {
+            display: block;
+            font-size: 1.5rem;
+        }
+
+        .label-image {
+            display: flex;
+            justify-content: center;
+        }
+
+        .image-view {
+            width: 256px;
+            height: 256px;
+            border-radius: 50%;
+        }
+
+        .input-text {
+            font-size: 1.2rem;
+            padding: .4rem;
+            width: 100%;
+            border: solid 1px #ccc;
+            box-sizing: border-box;
+            border-radius: .4rem;
+            box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075);
+            transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
+            outline: 0;
+        }
+
+        .input-text:focus {
+            box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075),
+                0 0 8px rgba(102, 175, 233, 0.6);
+            border: solid 1px #66afe9;
+        }
+
+        .input-text:invalid {
+            border: solid 1px red;
+        }
+
+        .radio {
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            box-sizing: border-box;
+        }
+
+        .radio-label {
+            background-color: #999;
+            text-align: center;
+            user-select: none;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.18);
+            padding: 8px;
+        }
+
+        .radio-label:hover {
+            background-color: #bbb;
+            color: #111;
+        }
+
+        .radio-input {
+            width: 0;
+            height: 0;
+        }
+
+        .radio-input:checked+.radio-label {
+            background-color: #733fa7;
+            color: white;
+        }
+
+        .radio-left {
+            border-radius: .4rem 0 0 .4rem;
+            grid-column: 1 / 2;
+            grid-row: 1 / 2;
+        }
+
+        .radio-right {
+            border-radius: 0 .4rem .4rem 0;
+            grid-column: 2 / 3;
+            grid-row: 1 / 2;
+        }
+
+        .select {
+            display: block;
+            width: 100%;
+            height: 64px;
+            box-sizing: border-box;
+            border-radius: 8px;
+            font-size: 1.5rem;
+            border: solid 1px #ccc;
+        }
+
+        .submit-button {
+            background-color: #733fa7;
+            color: #ddd;
+            fill: #ddd;
+            padding: 1rem;
+            width: 100%;
+            font-size: 1.5rem;
+            border-radius: 0.4rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.18);
+            border: none;
+            user-select: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+
+<body>
+    <form id="form" class="form">
+        <div>
+            <label for="studentId" class="label">学籍番号</label>
+            <input id="studentId" class="input-text" type="text" required>
+            <div id="studentId-hint">20から始まる9桁の数字</div>
+        </div>
+        <div>
+            <label for="image" class="label label-image">
+                <img id="image-view" class="image-view" alt="ユーザ画像">
+            </label>
+            <input id="image" type="file" accept="image/*">
+        </div>
+        <div>
+            <label for="name" class="label">ユーザー名</label>
+            <input id="name" class="input-text" type="text" autocomplete="username" required>
+        </div>
+        <div>
+            <div class="label">所属</div>
+            <div class="radio">
+                <input id="school" class="radio-input" name="schoolOrGraduate" type="radio" value="学群生" checked>
+                <label for="school" class="radio-label radio-left">学群生</label>
+                <input id="graduate" class="radio-input" name="schoolOrGraduate" type="radio" value="院生">
+                <label for="graduate" class="radio-label radio-right">院生</label>
+            </div>
+        </div>
+        <div>
+            <div class="label"></div>
+        </div>
+        <button id="submit-button" class="submit-button">新規登録する</button>
+    </form>
+</body>
+
+</html>

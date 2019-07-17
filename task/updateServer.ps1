@@ -17,7 +17,7 @@ Write-Output "Copy package.json OK";
 
 Write-Output "Upload to Firebase ...";
 $Host.UI.RawUI.ForegroundColor = "Gray";
-firebase deploy --project tsukumart-demo --only functions;
+firebase deploy --project tsukumart-f0971 --only functions;
 $Host.UI.RawUI.ForegroundColor = "Yellow";
 Write-Output "Upload to Firebase OK";
 Write-Output "Complete!";

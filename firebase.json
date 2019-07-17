@@ -1,38 +1,42 @@
 {
     "hosting": {
+        "headers": [
+            {
+                "source": "signup",
+                "headers": [
+                    {
+                        "key": "content-type",
+                        "value": "text/html"
+                    },
+                    {
+                        "key": "cache-control",
+                        "value": "max-age=0"
+                    }
+                ]
+            },
+            {
+                "source": "**!(signup|signup.js)",
+                "headers": [
+                    {
+                        "key": "content-security-policy",
+                        "value": "script-src https://tsukumart.com 'unsafe-inline'; worker-src https://tsukumart.com; img-src https://tsukumart.com https://asia-northeast1-tsukumart-f0971.cloudfunctions.net; connect-src https://asia-northeast1-tsukumart-f0971.cloudfunctions.net/api; report-uri https://us-central1-tsukumart-f0971.cloudfunctions.net/contentSecurityPolicyReport"
+                    },
+                    {
+                        "key": "cache-control",
+                        "value": "max-age=0"
+                    }
+                ]
+            }
+        ],
         "public": "client/dist",
         "rewrites": [
             {
-                "source": "/main.js",
-                "destination": "/main.js"
-            },
-            {
-                "source": "/style.css",
-                "destination": "/style.css"
-            },
-            {
-                "source": "/assets/**",
-                "destination": "/assets/**"
-            },
-            {
-                "source": "/redoc",
-                "destination": "/redoc.html"
-            },
-            {
-                "source": "/robots.txt",
-                "destination": "/robots.txt"
-            },
-            {
-                "source": "/api/sign-up",
-                "function": "signUp"
-            },
-            {
-                "source": "/api/token",
-                "function": "getToken"
+                "source": "sitemap",
+                "function": "sitemap"
             },
             {
                 "source": "**",
-                "destination": "/index.html"
+                "function": "indexHtml"
             }
         ]
     },

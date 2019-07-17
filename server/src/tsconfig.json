@@ -1,10 +1,13 @@
 {
     "compilerOptions": {
-        "target": "es6",
+        "target": "es2018",
         "module": "commonjs",
+        "lib": ["es2018"],
         "strict": true,
         "moduleResolution": "node",
+        "noErrorTruncation": true,
         "removeComments": true,
+        "newLine": "LF",
         "outDir": "../dist"
     },
     "files": ["./index.ts"]

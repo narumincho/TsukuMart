@@ -1,17 +1,25 @@
-"use strict";
-((self) => {
+// Tsukumart Service Worker
+((self: ServiceWorkerGlobalScope) => {
     self.addEventListener("install", e => {
-        e.waitUntil((() => {
-            console.log("Service Worker内でブラウザにインストールされたことを検知した!");
-            self.skipWaiting();
-        })());
+        e.waitUntil(
+            (() => {
+                console.log(
+                    "Service Worker内でブラウザにインストールされたことを検知した!"
+                );
+                self.skipWaiting();
+            })()
+        );
     });
+
     self.addEventListener("activate", e => {
-        e.waitUntil((() => {
-            console.log("Service Workerがアクティブな状態になった");
-            self.clients.claim();
-        })());
+        e.waitUntil(
+            (() => {
+                console.log("Service Workerがアクティブな状態になった");
+                self.clients.claim();
+            })()
+        );
     });
+
     self.addEventListener("fetch", e => {
         e.waitUntil(() => {
             const accept = e.request.headers.get("accept");
@@ -38,15 +46,20 @@
             }
         });
     });
+
     self.addEventListener("sync", e => {
         console.log("syncを受け取った", e);
     });
+
     self.addEventListener("push", e => {
         console.log("プッシュ通知をサーバーから受け取った", e);
-        e.waitUntil(self.registration.showNotification("プッシュ通知です!", {
-            body: "プッシュ通知はこのようにして送られるのです",
-            icon: "assets/icon.png",
-            tag: "push-notification-tag"
-        }));
+
+        e.waitUntil(
+            self.registration.showNotification("プッシュ通知です!", {
+                body: "プッシュ通知はこのようにして送られるのです",
+                icon: "assets/icon.png",
+                tag: "push-notification-tag"
+            })
+        );
     });
-})(self);
+})(self as ServiceWorkerGlobalScope);
