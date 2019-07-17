@@ -13,6 +13,7 @@ module Page.SignUp exposing
 import Api
 import BasicParts
 import Data.EmailAddress
+import Data.ImageId
 import Data.SAddress
 import Data.StudentId
 import Html
@@ -36,7 +37,7 @@ type Model
 
 
 type Image
-    = ServiceImage String
+    = ServiceImage Data.ImageId.ImageId
     | CustomizeImage String
 
 
@@ -62,7 +63,7 @@ type Msg
 
 {-| すべて空白の新規登録画面を表示するためのModel
 -}
-initModel : { name : String, imageId : String, sendEmailToken : String } -> ( Model, List Emission )
+initModel : { name : String, imageId : Data.ImageId.ImageId, sendEmailToken : String } -> ( Model, List Emission )
 initModel { name, imageId, sendEmailToken } =
     let
         ( universityModel, universityEmissions ) =
@@ -357,8 +358,7 @@ imageForm image =
                     , Html.Attributes.src
                         (case image of
                             ServiceImage url ->
-                                "https://asia-northeast1-tsukumart-f0971.cloudfunctions.net/image/"
-                                    ++ url
+                                Data.ImageId.toUrlString url
 
                             CustomizeImage dataUrl ->
                                 dataUrl

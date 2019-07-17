@@ -3,7 +3,7 @@ module BasicParts exposing
     , Msg(..)
     , Tab
     , bottomNavigation
-    , header
+    , headerWithBackArrow
     , isTabNone
     , menu
     , tabMap
@@ -11,7 +11,7 @@ module BasicParts exposing
     , tabNone
     , tabSingle
     , tabView
-    )
+    , headerWithoutBackArrow)
 
 import Data.LogInState
 import Data.SearchCondition
@@ -33,8 +33,8 @@ type Msg
 {- ================= header ================ -}
 
 
-header : Bool -> Html.Html Msg
-header isWideScreen =
+headerWithBackArrow : Bool -> Html.Html Msg
+headerWithBackArrow isWideScreen =
     Html.header
         []
         [ backArrow
@@ -55,6 +55,21 @@ header isWideScreen =
                 ]
                 [ logo ]
             ]
+        ]
+
+
+headerWithoutBackArrow : Html.Html msg
+headerWithoutBackArrow =
+    Html.header
+        [ Html.Attributes.style "background-color" "#733fa7"
+        , Html.Attributes.style "box-shadow" "0 2px 4px rgba(0, 0, 0, 0.18)"
+        , Html.Attributes.style "position" "fixed"
+        , Html.Attributes.style "width" "100%"
+        , Html.Attributes.style "box-sizing" "border-box"
+        , Html.Attributes.style "padding" "0"
+        , Html.Attributes.style "z-index" "2"
+        ]
+        [ logo
         ]
 
 

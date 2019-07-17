@@ -4,15 +4,18 @@ Write-Output "Compile Client Code And Upload Firebase Server";
 Write-Output "Compile Elm ...";
 $Host.UI.RawUI.ForegroundColor = "Gray";
 Set-Location -Path ./client/src/main/;
-elm make ./src/Main.elm --output ./beforeMinifiy.js --optimize;
+elm make ./src/Main.elm --output ./mainBeforeMinifiy.js --optimize;
+elm make ./src/SignUp.elm --output ./signUpBeforeMinifiy.js --optimize;
 $Host.UI.RawUI.ForegroundColor = "Yellow";
 Write-Output "Compile Elm OK";
 
 $Host.UI.RawUI.ForegroundColor = "Yellow";
 Write-Output "Minify JavaScript ...";
 $Host.UI.RawUI.ForegroundColor = "Gray";
-uglifyjs ./beforeMinifiy.js -o ../../dist/main.js;
-Remove-Item ./beforeMinifiy.js;
+uglifyjs ./mainBeforeMinifiy.js -o ../../dist/main.js;
+uglifyjs ./signUpBeforeMinifiy.js -o ../../dist/signup.js;
+Remove-Item ./mainBeforeMinifiy.js;
+Remove-Item ./signUpBeforeMinifiy.js;
 $Host.UI.RawUI.ForegroundColor = "Yellow";
 Write-Output "Minify JavaScript OK";
 
@@ -33,14 +36,6 @@ Write-Output "Call Compile OK"
 Write-Output "ServiceWoker Compile ...";
 $Host.UI.RawUI.ForegroundColor = "Gray";
 Set-Location -Path ../servicewoker;
-tsc;
-$Host.UI.RawUI.ForegroundColor = "Yellow";
-Write-Output "ServiceWoker Compile OK"
-
-Write-Output "Sign Up Compile ..."
-$Host.UI.RawUI.ForegroundColor = "Gray";
-Set-Location -Path ../signup;
-Copy-Item -Path ./signup.html -Destination ../../dist/signup
 tsc;
 $Host.UI.RawUI.ForegroundColor = "Yellow";
 Write-Output "ServiceWoker Compile OK"

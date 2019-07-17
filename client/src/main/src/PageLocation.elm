@@ -9,6 +9,7 @@ module PageLocation exposing
     )
 
 import Api
+import Data.ImageId
 import Data.Product
 import Data.SearchCondition
 import Data.Trade
@@ -21,7 +22,7 @@ import Url.Builder
 
 type InitPageLocation
     = InitHome
-    | InitSignUp { sendEmailToken : String, name : String, imageId : String }
+    | InitSignUp { sendEmailToken : String, name : String, imageId : Data.ImageId.ImageId }
     | InitLogIn
     | InitLikedProducts
     | InitHistory
@@ -305,14 +306,14 @@ homePath =
 signUpParser :
     Dict.Dict String String
     -> List String
-    -> Maybe { sendEmailToken : String, name : String, imageId : String }
+    -> Maybe { sendEmailToken : String, name : String, imageId : Data.ImageId.ImageId }
 signUpParser fragment path =
     case ( path, ( fragment |> Dict.get "sendEmailToken", fragment |> Dict.get "name", fragment |> Dict.get "imageId" ) ) of
         ( [ "signup" ], ( Just sendEmailToken, Just name, Just imageId ) ) ->
             Just
                 { sendEmailToken = sendEmailToken
                 , name = name
-                , imageId = imageId
+                , imageId = Data.ImageId.fromString imageId
                 }
 
         ( _, ( _, _, _ ) ) ->
