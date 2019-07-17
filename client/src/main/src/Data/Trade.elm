@@ -2,7 +2,7 @@ module Data.Trade exposing
     ( Comment(..)
     , Id
     , SellerOrBuyer(..)
-    , Status
+    , Status(..)
     , Trade
     , TradeDetail
     , detailFromApi
@@ -121,9 +121,11 @@ type TradeDetail
 
 type Status
     = InProgress
-    | Finish
+    | WaitSellerFinish
+    | WaitBuyerFinish
     | CancelBySeller
     | CancelByBuyer
+    | Finish
 
 
 statusFromIdString : String -> Maybe Status
@@ -132,14 +134,20 @@ statusFromIdString string =
         "inProgress" ->
             Just InProgress
 
-        "finish" ->
-            Just Finish
+        "waitSellerFinish" ->
+            Just WaitSellerFinish
+
+        "waitBuyerFinish" ->
+            Just WaitBuyerFinish
 
         "cancelBySeller" ->
             Just CancelBySeller
 
         "cancelByBuyer" ->
             Just CancelByBuyer
+
+        "finish" ->
+            Just Finish
 
         _ ->
             Nothing
@@ -151,14 +159,20 @@ statusToJapaneseString status =
         InProgress ->
             "進行中"
 
-        Finish ->
-            "取引終了"
+        WaitSellerFinish ->
+            "出品者の終了待ち"
+
+        WaitBuyerFinish ->
+            "購入者の終了待ち"
 
         CancelBySeller ->
             "出品者がキャンセルした"
 
         CancelByBuyer ->
             "購入者がキャンセルした"
+
+        Finish ->
+            "取引終了"
 
 
 type Comment

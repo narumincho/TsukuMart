@@ -606,7 +606,15 @@ normalView logInState isWideScreen nowMaybe { product, likeSending, commentSendi
                                 []
                        )
                 )
-            , productsViewPriceAndBuyButton isWideScreen (Product.detailGetPrice product)
+            , productsViewPriceAndBuyButton isWideScreen
+                product
+                (case logInState of
+                    LogInState.Ok { userWithName } ->
+                        Just userWithName
+
+                    _ ->
+                        Nothing
+                )
             ]
         ]
     , bottomNavigation = Nothing
@@ -860,19 +868,46 @@ commentTextAreaId =
     "comment-text-area"
 
 
-productsViewPriceAndBuyButton : Bool -> Int -> Html.Html Msg
-productsViewPriceAndBuyButton isWideScreen price =
+productsViewPriceAndBuyButton : Bool -> Product.ProductDetail -> Maybe User.WithName -> Html.Html Msg
+productsViewPriceAndBuyButton isWideScreen product userWithNameMaybe =
     Html.div
         [ Html.Attributes.classList
             [ ( "product-priceAndBuyButton", True )
             , ( "product-priceAndBuyButton-wide", isWideScreen )
             ]
         ]
-        [ Html.div [ Html.Attributes.class "product-price" ] [ Html.text (Product.priceToString price) ]
-        , Html.button
-            [ Html.Events.onClick ToConfirmPage ]
-            [ Html.text "購入手続きへ" ]
-        ]
+        ([ Html.div [ Html.Attributes.class "product-price" ]
+            [ Html.text (Product.priceToString (Product.detailGetPrice product)) ]
+         ]
+            ++ (case buyButton product userWithNameMaybe of
+                    Just button ->
+                        [ button ]
+
+                    Nothing ->
+                        []
+               )
+        )
+
+
+buyButton : Product.ProductDetail -> Maybe User.WithName -> Maybe (Html.Html Msg)
+buyButton product userWithNameMaybe =
+    case ( Product.detailGetStatus product, userWithNameMaybe ) of
+        ( Product.Selling, Just user ) ->
+            if
+                User.withNameGetId (Product.detailGetSeller product)
+                    == User.withNameGetId user
+            then
+                Nothing
+
+            else
+                Just
+                    (Html.button
+                        [ Html.Events.onClick ToConfirmPage ]
+                        [ Html.text "購入手続きへ" ]
+                    )
+
+        _ ->
+            Nothing
 
 
 tradeStartButton : LogInState.LogInState -> Product.Id -> Html.Html Msg

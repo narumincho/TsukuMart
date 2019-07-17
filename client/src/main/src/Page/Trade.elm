@@ -53,7 +53,8 @@ type Msg
 
 
 type Emission
-    = EmissionGetTradeDetail Api.Token Trade.Id
+    = EmissionUpdateNowTime
+    | EmissionGetTradeDetail Api.Token Trade.Id
     | EmissionAddComment Api.Token Trade.Id String
     | EmissionFinishTrade Api.Token Trade.Id
     | EmissionCancelTrade Api.Token Trade.Id
@@ -154,7 +155,14 @@ update msg model =
                 Ok trade ->
                     ( Main { trade = trade, commentInput = "", sending = Nothing }
                     , [ EmissionReplaceElementText { id = commentTextAreaId, text = "" }
-                      , EmissionAddLogMessage "取引を完了しました"
+                      , EmissionAddLogMessage
+                            (case Trade.detailGetStatus trade of
+                                Trade.Finish ->
+                                    "取引を完了しました"
+
+                                _ ->
+                                    "相手の回答を待ちます"
+                            )
                       ]
                     )
 
@@ -174,6 +182,7 @@ update msg model =
                     ( Main { trade = trade, commentInput = "", sending = Nothing }
                     , [ EmissionReplaceElementText { id = commentTextAreaId, text = "" }
                       , EmissionAddLogMessage "取引をキャンセルしました"
+                      , EmissionUpdateNowTime
                       ]
                     )
 
@@ -191,7 +200,9 @@ update msg model =
             case result of
                 Ok trade ->
                     ( Main { trade = trade, commentInput = "", sending = Nothing }
-                    , [ EmissionReplaceElementText { id = commentTextAreaId, text = "" } ]
+                    , [ EmissionReplaceElementText { id = commentTextAreaId, text = "" }
+                      , EmissionUpdateNowTime
+                      ]
                     )
 
                 Err errMsg ->
@@ -208,7 +219,9 @@ update msg model =
             case result of
                 Ok trade ->
                     ( Main { trade = trade, commentInput = "", sending = Nothing }
-                    , [ EmissionReplaceElementText { id = commentTextAreaId, text = "" } ]
+                    , [ EmissionReplaceElementText { id = commentTextAreaId, text = "" }
+                      , EmissionUpdateNowTime
+                      ]
                     )
 
                 Err errMsg ->
@@ -282,11 +295,30 @@ loadingView trade =
     ]
 
 
-mainView : Maybe Sending -> Api.Token -> Maybe ( Time.Posix, Time.Zone ) -> User.WithName -> Trade.TradeDetail -> List (Html.Html Msg)
+mainView :
+    Maybe Sending
+    -> Api.Token
+    -> Maybe ( Time.Posix, Time.Zone )
+    -> User.WithName
+    -> Trade.TradeDetail
+    -> List (Html.Html Msg)
 mainView sending token timeData user trade =
     let
         product =
             Trade.detailGetProduct trade
+
+        tradeStatus =
+            Trade.detailGetStatus trade
+
+        position =
+            if
+                User.withNameGetId (Trade.detailGetBuyer trade)
+                    == User.withNameGetId user
+            then
+                Trade.Buyer
+
+            else
+                Trade.Seller
     in
     [ productImageView (Product.detailGetImageUrls product)
     , Page.Style.titleAndContent
@@ -315,11 +347,69 @@ mainView sending token timeData user trade =
         ]
         [ Html.text "商品詳細ページ" ]
     , sellerAndBuyerView (Product.detailGetSeller product) (Trade.detailGetBuyer trade)
-    , commentInputArea sending token
-    , commentView timeData user trade
-    , finishButton sending token
-    , cancelButton sending token
     ]
+        ++ (case tradeStatus of
+                Trade.InProgress ->
+                    [ commentInputArea sending token ]
+
+                Trade.WaitSellerFinish ->
+                    [ commentInputArea sending token ]
+
+                Trade.WaitBuyerFinish ->
+                    [ commentInputArea sending token ]
+
+                Trade.CancelBySeller ->
+                    []
+
+                Trade.CancelByBuyer ->
+                    []
+
+                Trade.Finish ->
+                    []
+           )
+        ++ [ commentView timeData user trade ]
+        ++ (case tradeStatus of
+                Trade.InProgress ->
+                    [ finishButton sending position token ]
+
+                Trade.WaitSellerFinish ->
+                    case position of
+                        Trade.Buyer ->
+                            []
+
+                        Trade.Seller ->
+                            [ finishButton sending position token ]
+
+                Trade.WaitBuyerFinish ->
+                    case position of
+                        Trade.Buyer ->
+                            [ finishButton sending position token ]
+
+                        Trade.Seller ->
+                            []
+
+                _ ->
+                    []
+           )
+        ++ (case tradeStatus of
+                Trade.InProgress ->
+                    [ cancelButton sending token ]
+
+                Trade.WaitSellerFinish ->
+                    [ cancelButton sending token ]
+
+                Trade.WaitBuyerFinish ->
+                    [ cancelButton sending token ]
+
+                Trade.CancelBySeller ->
+                    []
+
+                Trade.CancelByBuyer ->
+                    []
+
+                Trade.Finish ->
+                    []
+           )
 
 
 productImageView : List String -> Html.Html Msg
@@ -467,8 +557,8 @@ tradeCommentToCommentData trade myId (Trade.Comment { body, speaker, createdAt }
             }
 
 
-finishButton : Maybe Sending -> Api.Token -> Html.Html Msg
-finishButton sending token =
+finishButton : Maybe Sending -> Trade.SellerOrBuyer -> Api.Token -> Html.Html Msg
+finishButton sending position token =
     case sending of
         Just Finish ->
             Html.button
@@ -482,14 +572,24 @@ finishButton sending token =
                 [ Html.Attributes.class "mainButton"
                 , Html.Attributes.disabled True
                 ]
-                [ Html.text "取引を完了する" ]
+                [ Html.text (finishText position) ]
 
         Nothing ->
             Html.button
                 [ Html.Attributes.class "mainButton"
                 , Html.Events.onClick (FinishTrade token)
                 ]
-                [ Html.text "取引を完了する" ]
+                [ Html.text (finishText position) ]
+
+
+finishText : Trade.SellerOrBuyer -> String
+finishText position =
+    case position of
+        Trade.Seller ->
+            "商品を渡した"
+
+        Trade.Buyer ->
+            "商品を受け取った"
 
 
 cancelButton : Maybe Sending -> Api.Token -> Html.Html Msg

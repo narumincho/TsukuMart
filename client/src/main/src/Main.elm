@@ -960,6 +960,13 @@ productPageEmissionToCmd key emission =
 tradePageEmissionToCmd : Page.Trade.Emission -> Cmd Msg
 tradePageEmissionToCmd emission =
     case emission of
+        Page.Trade.EmissionUpdateNowTime ->
+            Task.map2
+                Tuple.pair
+                Time.now
+                Time.here
+                |> Task.attempt GetNowTime
+
         Page.Trade.EmissionGetTradeDetail token id ->
             Api.getTradeDetail id token (Page.Trade.TradeDetailResponse >> PageMsgTrade >> PageMsg)
 

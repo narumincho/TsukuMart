@@ -672,6 +672,12 @@ const tradeStatusValues = {
     inProgress: {
         description: "進行中"
     },
+    waitSellerFinish: {
+        description: "出品者の終了待ち"
+    },
+    waitBuyerFinish: {
+        description: "購入者の終了待ち"
+    },
     finish: {
         description: "取引終了"
     },
