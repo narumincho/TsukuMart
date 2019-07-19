@@ -24,7 +24,7 @@ header {
     grid-row: 1 / 2;
     background-color: var(--primaryColor);
     display: flex;
-    height: 4rem;
+    height: 64px;
     align-items: center;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.18);
     position: fixed;
