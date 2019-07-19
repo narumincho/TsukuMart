@@ -1314,7 +1314,7 @@ view (Model { page, wideScreen, message, logInState, now }) =
     in
     { title = title
     , body =
-        [ BasicParts.headerWithBackArrow wideScreen
+        [ BasicParts.headerWithBackArrow
             |> Html.map (always HistoryBack)
         ]
             ++ (if wideScreen then

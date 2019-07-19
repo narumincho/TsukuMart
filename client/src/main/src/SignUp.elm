@@ -12,16 +12,21 @@ import Page.Component.University as University
 import Page.Style
 
 
-port imageInput : (String -> msg) -> Sub msg
-
-
 port load : String -> Cmd msg
+
+
+port setTextAreaValue : { id : String, text : String } -> Cmd msg
+
+
+port imageInput : (String -> msg) -> Sub msg
 
 
 type Model
     = Model
         { image : Image
         , university : University.Model
+        , sendEmailToken : String
+        , name : String
         }
 
 
@@ -32,11 +37,12 @@ type Image
 
 type Msg
     = InputImage String
+    | InputName String
     | MsgByUniversity University.Msg
     | Submit
 
 
-main : Program String Model Msg
+main : Program { sendEmailToken : String, imageId : String, name : String } Model Msg
 main =
     Browser.element
         { init = init
@@ -46,17 +52,19 @@ main =
         }
 
 
-init : String -> ( Model, Cmd Msg )
-init urlFragment =
+init : { sendEmailToken : String, imageId : String, name : String } -> ( Model, Cmd Msg )
+init { sendEmailToken, imageId, name } =
     let
         ( universityModel, universityEmission ) =
             University.initModelNone
     in
     ( Model
-        { image = ServiceImage (Data.ImageId.fromString "")
+        { image = ServiceImage (Data.ImageId.fromString imageId)
+        , name = name
+        , sendEmailToken = sendEmailToken
         , university = universityModel
         }
-    , load imageInputId
+    , Cmd.batch [ load imageInputId, setTextAreaValue { id = nameInputId, text = name } ]
     )
 
 
@@ -66,6 +74,12 @@ update msg (Model rec) =
         InputImage imageDataUrl ->
             ( Model
                 { rec | image = CustomizeImage imageDataUrl }
+            , Cmd.none
+            )
+
+        InputName name ->
+            ( Model
+                { rec | name = name }
             , Cmd.none
             )
 
@@ -100,6 +114,7 @@ view (Model { image, university }) =
                )
              , ( "studentIdView", studentIdView )
              , ( "imageView", imageView image )
+             , ( "nameView", nameView )
              ]
                 ++ (University.view university
                         |> List.map (Tuple.mapSecond (Html.map MsgByUniversity))
@@ -123,7 +138,7 @@ studentIdView =
 
 studentInputId : String
 studentInputId =
-    "studentId"
+    "studentInput"
 
 
 imageView : Image -> Html.Html Msg
@@ -151,6 +166,24 @@ imageView image =
             ]
             []
         ]
+
+
+nameView : Html.Html Msg
+nameView =
+    Page.Style.formItem "名前"
+        studentInputId
+        (inputTextHtml
+            [ Html.Attributes.id nameInputId
+            , Html.Attributes.type_ "text"
+            , Html.Attributes.required True
+            , Html.Events.onInput InputName
+            ]
+        )
+
+
+nameInputId : String
+nameInputId =
+    "nameInput"
 
 
 submitButtonView : Html.Html Msg

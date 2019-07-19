@@ -38,11 +38,6 @@ header {
     background-color: rgba(0, 0, 0, 0.4);
 }
 
-.logo {
-    height: 3rem;
-    display: block;
-}
-
 .headerButton {
     width: 4rem;
     height: 4rem;

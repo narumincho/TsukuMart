@@ -10,7 +10,16 @@
     <script src="https://tsukumart.com/signup.js" defer></script>
     <script type="module">
         ///@ts-check
-        const app = window.Elm.SignUp.init({ flags: "", node: document.getElementById("app") });
+        const fragment = new URLSearchParams(location.hash.substring(1));
+        console.log("fragment", fragment)
+        const app = window.Elm.SignUp.init({
+            flags: {
+                sendEmailToken: fragment.get("sendEmailToken"),
+                name: fragment.get("name"),
+                imageId: fragment.get("imageId")
+            },
+            node: document.getElementById("app")
+        });
         app.ports.load.subscribe(imageInputElementId => {
             const userImageFileResizeAndConvertToDataUrl = (
                 file
@@ -47,6 +56,11 @@
                         await userImageFileResizeAndConvertToDataUrl(imageInputElement.files.item(0))
                     )
                 })
+            })
+        })
+        app.ports.setTextAreaValue.subscribe(({ id, text }) => {
+            requestAnimationFrame(() => {
+                document.getElementById(id).value = text;
             })
         })
     </script>

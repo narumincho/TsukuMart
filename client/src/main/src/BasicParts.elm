@@ -4,6 +4,7 @@ module BasicParts exposing
     , Tab
     , bottomNavigation
     , headerWithBackArrow
+    , headerWithoutBackArrow
     , isTabNone
     , menu
     , tabMap
@@ -11,7 +12,7 @@ module BasicParts exposing
     , tabNone
     , tabSingle
     , tabView
-    , headerWithoutBackArrow)
+    )
 
 import Data.LogInState
 import Data.SearchCondition
@@ -33,8 +34,8 @@ type Msg
 {- ================= header ================ -}
 
 
-headerWithBackArrow : Bool -> Html.Html Msg
-headerWithBackArrow isWideScreen =
+headerWithBackArrow : Html.Html Msg
+headerWithBackArrow =
     Html.header
         []
         [ backArrow
@@ -44,13 +45,7 @@ headerWithBackArrow isWideScreen =
             ]
             [ Html.h1
                 [ Html.Attributes.class "h1"
-                , Html.Attributes.style "padding"
-                    (if isWideScreen then
-                        "0.5rem 0.5rem 0.5rem 2rem"
-
-                     else
-                        "0.5rem"
-                    )
+                , Html.Attributes.style "padding" "8px"
                 , Html.Attributes.style "margin" "0"
                 ]
                 [ logo ]
@@ -65,6 +60,7 @@ headerWithoutBackArrow =
         , Html.Attributes.style "box-shadow" "0 2px 4px rgba(0, 0, 0, 0.18)"
         , Html.Attributes.style "position" "fixed"
         , Html.Attributes.style "width" "100%"
+        , Html.Attributes.style "padding" "8px"
         , Html.Attributes.style "box-sizing" "border-box"
         , Html.Attributes.style "padding" "0"
         , Html.Attributes.style "z-index" "2"
@@ -96,7 +92,7 @@ backArrow =
 logo : Html.Html msg
 logo =
     Svg.svg
-        [ Svg.Attributes.class "logo"
+        [ Svg.Attributes.style "height:48px;display:block"
         , Svg.Attributes.viewBox "0 0 440.08 114.67"
         ]
         ([ Svg.title [] [ Svg.text "つくマートのロゴ クリックしてホームに戻る" ] ]
