@@ -102,7 +102,7 @@ export const image = functions
         response.setHeader("vary", "Origin");
         if (request.method === "OPTIONS") {
             response.setHeader(
-                "Access-Control-Allow-Methods",
+                "access-control-allow-methods",
                 "POST, GET, OPTIONS"
             );
             response.setHeader("access-control-allow-headers", "content-type");
