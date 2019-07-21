@@ -1,5 +1,6 @@
 module Page.Component.Comment exposing (view)
 
+import Css
 import Data.DateTime
 import Data.User as User
 import Html
@@ -28,7 +29,7 @@ view nowMaybe commentListMaybe =
 
             Nothing ->
                 [ Html.text "コメント読み込み中"
-                , Icon.loading { size = 48, color = "black" }
+                , Icon.loading { size = 48, color = Css.rgb 0 0 0 }
                 ]
         )
 

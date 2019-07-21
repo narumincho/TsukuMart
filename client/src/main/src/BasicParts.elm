@@ -14,6 +14,7 @@ module BasicParts exposing
     , tabView
     )
 
+import Css
 import Data.LogInState
 import Data.SearchCondition
 import Data.User
@@ -384,7 +385,7 @@ menuLogInStateLoadingProfile =
     , Html.a
         [ Html.Attributes.class "menu-item" ]
         [ Html.text "プロフィール情報を読み込み中"
-        , Icon.loading { size = 48, color = "black" }
+        , Icon.loading { size = 48, color = Css.rgb 0 0 0 }
         ]
     , subMenuItem (Just PageLocation.LikedProducts) "いいねした商品"
     , subMenuItem (Just PageLocation.History) "閲覧した商品"

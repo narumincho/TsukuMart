@@ -1,5 +1,6 @@
 module Page.Component.TradeList exposing (view)
 
+import Css
 import Data.Product as Product
 import Data.Trade as Trade
 import Data.User as User
@@ -22,7 +23,7 @@ view tradesMaybe =
 
             Nothing ->
                 [ Html.text "読み込み中"
-                , Icon.loading { size = 64, color = "black" }
+                , Icon.loading { size = 64, color = Css.rgb 0 0 0 }
                 ]
         )
 

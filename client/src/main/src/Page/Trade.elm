@@ -10,6 +10,7 @@ module Page.Trade exposing
 
 import Api
 import BasicParts
+import Css
 import Data.DateTime
 import Data.LogInState as LogInState
 import Data.Product as Product
@@ -258,7 +259,7 @@ view logInState timeData model =
                         case model of
                             CheckTrader id ->
                                 [ Html.text ("id=" ++ Trade.idToString id ++ "の取引データを読み込み中")
-                                , Icon.loading { size = 64, color = "black" }
+                                , Icon.loading { size = 64, color = Css.rgb 0 0 0 }
                                 ]
 
                             Loading trade ->
@@ -269,7 +270,7 @@ view logInState timeData model =
 
                     LogInState.LoadingProfile _ ->
                         [ Html.text "読み込み中"
-                        , Icon.loading { size = 64, color = "black" }
+                        , Icon.loading { size = 64, color = Css.rgb 0 0 0 }
                         ]
 
                     LogInState.None ->
@@ -290,7 +291,7 @@ loadingView trade =
     [ Html.div
         []
         [ Html.text "読み込み中"
-        , Icon.loading { size = 64, color = "black" }
+        , Icon.loading { size = 64, color = Css.rgb 0 0 0 }
         ]
     ]
 
@@ -479,7 +480,7 @@ commentInputArea sending token =
                             [ Html.Attributes.class "product-comment-sendButton"
                             , Html.Attributes.disabled True
                             ]
-                            [ Icon.loading { size = 24, color = "black" } ]
+                            [ Icon.loading { size = 24, color = Css.rgb 0 0 0 } ]
                         ]
 
                     Just _ ->
@@ -565,7 +566,7 @@ finishButton sending position token =
                 [ Html.Attributes.class "mainButton"
                 , Html.Attributes.disabled True
                 ]
-                [ Icon.loading { size = 24, color = "black" } ]
+                [ Icon.loading { size = 24, color = Css.rgb 0 0 0 } ]
 
         Just _ ->
             Html.button
@@ -600,7 +601,7 @@ cancelButton sending token =
                 [ Html.Attributes.class "product-deleteButton"
                 , Html.Attributes.disabled True
                 ]
-                [ Icon.loading { size = 24, color = "black" } ]
+                [ Icon.loading { size = 24, color = Css.rgb 0 0 0 } ]
 
         Just _ ->
             Html.button

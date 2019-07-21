@@ -7,6 +7,7 @@ module Page.Component.LogIn exposing
     , view
     )
 
+import Css
 import Data.SocialLoginService
 import Html
 import Html.Attributes as A
@@ -118,7 +119,7 @@ view (Model { mouseState, waitLogInUrl }) =
                                         ++ "のログイン画面へのURLを取得中"
                                     )
                                 ]
-                            , Icon.loading { size = 64, color = "black" }
+                            , Icon.loading { size = 64, color = Css.rgb 0 0 0 }
                             ]
 
                         Nothing ->

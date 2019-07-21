@@ -1,7 +1,10 @@
 module Icon exposing (delete, edit, home, information, loading, notifications, search)
 
+import Css
+import Css.Animations
 import Html
-import Html.Attributes
+import Html.Styled
+import Html.Styled.Attributes
 import Svg as S
 import Svg.Attributes as A
 
@@ -83,13 +86,31 @@ information style =
         ]
 
 
-loading : { size : Int, color : String } -> Html.Html msg
+loading : { size : Int, color : Css.ColorValue c } -> Html.Html msg
 loading { size, color } =
-    Html.div
-        [ Html.Attributes.class "loading"
-        , Html.Attributes.style "width" (String.fromInt size ++ "px")
-        , Html.Attributes.style "height" (String.fromInt size ++ "px")
-        , Html.Attributes.style "border" ("3px solid " ++ color)
-        , Html.Attributes.style "border-right-color" "transparent"
+    Html.Styled.div
+        [ Html.Styled.Attributes.css
+            [ Css.borderRadius (Css.pct 50)
+            , Css.width (Css.px (toFloat size))
+            , Css.height (Css.px (toFloat size))
+            , Css.border3 (Css.px 3) Css.solid color
+            , Css.borderRightColor Css.transparent
+            , Css.animationName
+                (Css.Animations.keyframes
+                    [ ( 100, [ Css.Animations.transform [ Css.rotate (Css.turn 1) ] ] ) ]
+                )
+            , Css.animationIterationCount infinite
+            , Css.animationDuration (Css.sec 0.6)
+            , Css.property "animation-timing-function" "linear"
+            ]
         ]
         []
+        |> Html.Styled.toUnstyled
+
+
+infinite =
+    let
+        a =
+            Css.int 0
+    in
+    { a | value = "infinite" }

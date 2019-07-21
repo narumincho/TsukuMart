@@ -971,14 +971,3 @@ header {
     font-size: 1.5rem;
     border: solid 1px #ccc;
 }
-
-.loading {
-    border-radius: 50%;
-    animation: 600ms linear 0ms infinite normal none running loading-keyframes;
-}
-
-@keyframes loading-keyframes {
-    to {
-        transform: rotate(360deg);
-    }
-}

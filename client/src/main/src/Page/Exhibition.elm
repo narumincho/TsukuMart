@@ -10,6 +10,7 @@ module Page.Exhibition exposing
 
 import Api
 import BasicParts
+import Css
 import Data.Category
 import Data.LogInState
 import Data.Product as Product
@@ -285,7 +286,7 @@ confirmView accessToken (Api.SellProductRequest requestData) sending =
                     , Html.Attributes.class "mainButton-disabled"
                     , Html.Attributes.disabled True
                     ]
-                    [ Icon.loading { size = 24, color = "white" } ]
+                    [ Icon.loading { size = 24, color = Css.rgb 255 255 255 } ]
                 ]
 
             else

@@ -11,6 +11,7 @@ module Page.Component.ProductList exposing
 -}
 
 import Api
+import Css
 import Data.LogInState
 import Data.Product as Product
 import Html
@@ -93,7 +94,7 @@ view (Model { likeUpdating }) logInState isWideMode productList =
                 [ Html.div
                     []
                     [ Html.text "読み込み中"
-                    , Icon.loading { size = 48, color = "black" }
+                    , Icon.loading { size = 48, color = Css.rgb 0 0 0 }
                     ]
                 ]
 
@@ -194,7 +195,7 @@ itemLike logInState sending product =
             , Html.Attributes.disabled True
             , Html.Attributes.style "padding" "8px 24px"
             ]
-            [ Icon.loading { size = 20, color = "white" }
+            [ Icon.loading { size = 20, color = Css.rgb 255 255 255 }
             ]
 
     else
