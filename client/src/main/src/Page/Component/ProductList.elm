@@ -17,6 +17,7 @@ import Data.Product as Product
 import Html
 import Html.Attributes
 import Html.Events
+import Html.Styled
 import Icon
 import Json.Decode
 import PageLocation
@@ -95,6 +96,7 @@ view (Model { likeUpdating }) logInState isWideMode productList =
                     []
                     [ Html.text "読み込み中"
                     , Icon.loading { size = 48, color = Css.rgb 0 0 0 }
+                    |> Html.Styled.toUnstyled
                     ]
                 ]
 
@@ -196,6 +198,7 @@ itemLike logInState sending product =
             , Html.Attributes.style "padding" "8px 24px"
             ]
             [ Icon.loading { size = 20, color = Css.rgb 255 255 255 }
+            |> Html.Styled.toUnstyled
             ]
 
     else

@@ -46,7 +46,7 @@ headerWithBackArrow =
             , Html.Styled.Attributes.href (PageLocation.toUrlAsString PageLocation.Home)
             ]
             [ Html.Styled.h1
-                [ Html.Styled.Attributes.css [ Css.margin (Css.px 0) ] ]
+                [ Html.Styled.Attributes.css [ Css.margin Css.zero ] ]
                 [ logo ]
             ]
         ]
@@ -63,10 +63,10 @@ header =
         [ Html.Styled.Attributes.css
             [ Css.displayFlex
             , Css.backgroundColor Page.Style.primaryColor
-            , Css.boxShadow4 (Css.px 0) (Css.px 2) (Css.px 4) (Css.rgba 0 0 0 0.18)
+            , Css.boxShadow4 Css.zero (Css.px 2) (Css.px 4) (Css.rgba 0 0 0 0.18)
             , Css.position Css.fixed
             , Css.width (Css.pct 100)
-            , Css.padding (Css.px 0)
+            , Css.padding Css.zero
             , Css.boxSizing Css.borderBox
             , Css.zIndex (Css.int 2)
             ]
@@ -403,6 +403,7 @@ menuLogInStateLoadingProfile =
         [ Html.Attributes.class "menu-item" ]
         [ Html.text "プロフィール情報を読み込み中"
         , Icon.loading { size = 48, color = Css.rgb 0 0 0 }
+            |> Html.Styled.toUnstyled
         ]
     , subMenuItem (Just PageLocation.LikedProducts) "いいねした商品"
     , subMenuItem (Just PageLocation.History) "閲覧した商品"
@@ -748,7 +749,7 @@ bottomNavigationContainer item =
                 )
             , Css.height (Css.px 64)
             , Css.position Css.fixed
-            , Css.bottom (Css.px 0)
+            , Css.bottom Css.zero
             , Css.width (Css.pct 100)
             , Css.backgroundColor (Css.rgb 81 33 130)
             ]

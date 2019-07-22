@@ -10,9 +10,13 @@ module Page.Component.LogIn exposing
 import Css
 import Data.SocialLoginService
 import Html
-import Html.Attributes as A
+import Html.Attributes
 import Html.Events
+import Html.Styled
+import Html.Styled.Attributes
+import Html.Styled.Events
 import Icon
+import Page.Style
 
 
 type Model
@@ -102,17 +106,21 @@ update msg (Model r) =
 view : Model -> Html.Html Msg
 view (Model { mouseState, waitLogInUrl }) =
     Html.div
-        [ A.class "logIn" ]
-        [ Html.div
-            [ A.class "logIn-group" ]
-            ([ Html.div
+        [ Html.Attributes.class "logIn" ]
+        [ Html.Styled.div
+            [ Html.Styled.Attributes.css
+                [ Page.Style.displayGridAndGap 24
+                , Css.padding (Css.px 24)
+                ]
+            ]
+            ([ Html.Styled.div
                 []
-                [ Html.text "ログイン/新規登録するためには以下のどれかのアカウントが必要です" ]
+                [ Html.Styled.text "ログイン/新規登録するためには以下のどれかのアカウントが必要です" ]
              ]
                 ++ (case waitLogInUrl of
                         Just service ->
-                            [ Html.div []
-                                [ Html.text
+                            [ Html.Styled.div []
+                                [ Html.Styled.text
                                     (Data.SocialLoginService.serviceName service
                                         ++ "のログイン画面へのURLを取得中"
                                     )
@@ -124,108 +132,122 @@ view (Model { mouseState, waitLogInUrl }) =
                             serviceLogInButtonListView mouseState
                    )
             )
+            |> Html.Styled.toUnstyled
         ]
 
 
-serviceLogInButtonListView : MouseState -> List (Html.Html Msg)
+serviceLogInButtonListView : MouseState -> List (Html.Styled.Html Msg)
 serviceLogInButtonListView mouseState =
     [ logInButtonNoLine mouseState Icon.google Data.SocialLoginService.Google
     , logInButtonNoLine mouseState Icon.gitHub Data.SocialLoginService.GitHub
     , logInButtonNoLine mouseState Icon.twitter Data.SocialLoginService.Twitter
-    , Html.button
-        [ Html.Events.onClick (LogInOrSignUpRequest Data.SocialLoginService.Line)
-        , Html.Events.onMouseEnter (MouseEnterLogInButton Data.SocialLoginService.Line)
-        , Html.Events.onMouseLeave MouseLeave
-        , Html.Events.onMouseDown (MouseDownLogInButton Data.SocialLoginService.Line)
-        , Html.Events.onMouseUp MouseUp
-        , A.style "background-color"
-            (case mouseState of
-                MouseStateEnter Data.SocialLoginService.Line ->
-                    "#00e000"
+    , logInButtonLine mouseState
+    ]
 
-                MouseStateDown Data.SocialLoginService.Line ->
-                    "#00b300"
 
-                _ ->
-                    "#00c300"
-            )
-        , A.style "border-radius" "4px"
-        , A.style "border" "none"
-        , A.style "color" "#FFF"
-        , A.style "display" "flex"
-        , A.style "align-items" "center"
-        , A.style "padding" "0"
-        , A.style "cursor" "pointer"
-        ]
-        [ Html.img
-            [ A.src "/assets/line_icon120.png"
-            , A.style "width" "44px"
-            , A.style "height" "44px"
-            , A.style "border-right"
-                ("solid 1px "
-                    ++ (case mouseState of
-                            MouseStateEnter Data.SocialLoginService.Line ->
-                                "#00c900"
+logInButtonLine : MouseState -> Html.Styled.Html Msg
+logInButtonLine mouseState =
+    Html.Styled.button
+        [ Html.Styled.Events.onClick (LogInOrSignUpRequest Data.SocialLoginService.Line)
+        , Html.Styled.Events.onMouseEnter (MouseEnterLogInButton Data.SocialLoginService.Line)
+        , Html.Styled.Events.onMouseLeave MouseLeave
+        , Html.Styled.Events.onMouseDown (MouseDownLogInButton Data.SocialLoginService.Line)
+        , Html.Styled.Events.onMouseUp MouseUp
+        , Html.Styled.Attributes.css
+            [ Css.backgroundColor
+                (case mouseState of
+                    MouseStateEnter Data.SocialLoginService.Line ->
+                        Css.hex "#00e000"
 
-                            MouseStateDown Data.SocialLoginService.Line ->
-                                "#009800"
+                    MouseStateDown Data.SocialLoginService.Line ->
+                        Css.hex "#00b300"
 
-                            _ ->
-                                "#00b300"
-                       )
+                    _ ->
+                        Css.hex "#00c300"
                 )
-            , A.style "padding" "4px"
+            , Css.borderRadius (Css.px 4)
+            , Css.border2 Css.zero Css.none
+            , Css.color (Css.rgb 255 255 255)
+            , Css.displayFlex
+            , Css.alignItems Css.center
+            , Css.padding Css.zero
+            , Css.cursor Css.pointer
+            ]
+        ]
+        [ Html.Styled.img
+            [ Html.Styled.Attributes.src "/assets/line_icon120.png"
+            , Html.Styled.Attributes.css
+                [ Css.width (Css.px 44)
+                , Css.height (Css.px 44)
+                , Css.borderRight3
+                    (Css.px 1)
+                    Css.solid
+                    (case mouseState of
+                        MouseStateEnter Data.SocialLoginService.Line ->
+                            Css.hex "#00c900"
+
+                        MouseStateDown Data.SocialLoginService.Line ->
+                            Css.hex "#009800"
+
+                        _ ->
+                            Css.hex "#00b300"
+                    )
+                , Css.padding (Css.px 4)
+                ]
             ]
             []
         , logInButtonText "LINEでログイン"
         ]
-    ]
 
 
-logInButtonNoLine : MouseState -> Html.Html Msg -> Data.SocialLoginService.SocialLoginService -> Html.Html Msg
+logInButtonNoLine : MouseState -> Html.Styled.Html Msg -> Data.SocialLoginService.SocialLoginService -> Html.Styled.Html Msg
 logInButtonNoLine mouseSate icon service =
-    Html.button
-        [ Html.Events.onClick (LogInOrSignUpRequest service)
-        , Html.Events.onMouseEnter (MouseEnterLogInButton service)
-        , Html.Events.onMouseLeave MouseLeave
-        , Html.Events.onMouseDown (MouseDownLogInButton service)
-        , Html.Events.onMouseUp MouseUp
-        , A.style "background-color"
-            (case mouseSate of
-                MouseStateDown s ->
-                    if s == service then
-                        "#ccc"
+    Html.Styled.button
+        [ Html.Styled.Events.onClick (LogInOrSignUpRequest service)
+        , Html.Styled.Events.onMouseEnter (MouseEnterLogInButton service)
+        , Html.Styled.Events.onMouseLeave MouseLeave
+        , Html.Styled.Events.onMouseDown (MouseDownLogInButton service)
+        , Html.Styled.Events.onMouseUp MouseUp
+        , Html.Styled.Attributes.css
+            [ Css.backgroundColor
+                (case mouseSate of
+                    MouseStateDown s ->
+                        if s == service then
+                            Css.rgb 204 204 204
 
-                    else
-                        "#ddd"
+                        else
+                            Css.rgb 221 221 221
 
-                MouseStateEnter s ->
-                    if s == service then
-                        "#eee"
+                    MouseStateEnter s ->
+                        if s == service then
+                            Css.rgb 238 238 238
 
-                    else
-                        "#ddd"
+                        else
+                            Css.rgb 221 221 221
 
-                MouseStateNone ->
-                    "#ddd"
-            )
-        , A.style "border-radius" "4px"
-        , A.style "border" "none"
-        , A.style "color" "#111"
-        , A.style "display" "flex"
-        , A.style "align-items" "center"
-        , A.style "padding" "0"
-        , A.style "cursor" "pointer"
+                    MouseStateNone ->
+                        Css.rgb 221 221 221
+                )
+            , Css.borderRadius (Css.px 4)
+            , Css.border2 Css.zero Css.none
+            , Css.color (Css.rgb 17 17 17)
+            , Css.displayFlex
+            , Css.alignItems Css.center
+            , Css.padding Css.zero
+            , Css.cursor Css.pointer
+            ]
         ]
         [ icon
         , logInButtonText (Data.SocialLoginService.serviceName service ++ "でログイン")
         ]
 
 
-logInButtonText : String -> Html.Html msg
+logInButtonText : String -> Html.Styled.Html msg
 logInButtonText text =
-    Html.div
-        [ A.style "flex-grow" "1"
-        , A.style "font-weight" "bold"
+    Html.Styled.div
+        [ Html.Styled.Attributes.css
+            [ Css.flexGrow (Css.int 1)
+            , Css.fontWeight Css.bold
+            ]
         ]
-        [ Html.text text ]
+        [ Html.Styled.text text ]

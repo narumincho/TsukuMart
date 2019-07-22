@@ -515,12 +515,6 @@ img {
     gap: 1rem;
 }
 
-.logIn-group {
-    display: grid;
-    gap: 1.5rem;
-    padding: 1.5rem;
-}
-
 .logIn-item {
     width: 100%;
 }

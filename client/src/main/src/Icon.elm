@@ -103,7 +103,7 @@ information styleList =
         |> Html.Styled.toUnstyled
 
 
-loading : { size : Int, color : Css.ColorValue c } -> Html.Html msg
+loading : { size : Int, color : Css.ColorValue c } -> Html.Styled.Html msg
 loading { size, color } =
     Html.Styled.div
         [ Html.Styled.Attributes.css
@@ -122,7 +122,6 @@ loading { size, color } =
             ]
         ]
         []
-        |> Html.Styled.toUnstyled
 
 
 infinite =
@@ -187,7 +186,7 @@ delete =
         |> Html.Styled.toUnstyled
 
 
-gitHub : Html.Html msg
+gitHub : Html.Styled.Html msg
 gitHub =
     S.svg
         serviceAttributes
@@ -199,10 +198,9 @@ gitHub =
             ]
             []
         ]
-        |> Html.Styled.toUnstyled
 
 
-google : Html.Html msg
+google : Html.Styled.Html msg
 google =
     S.svg
         serviceAttributes
@@ -234,10 +232,9 @@ google =
             ]
             []
         ]
-        |> S.toUnstyled
 
 
-twitter : Html.Html msg
+twitter : Html.Styled.Html msg
 twitter =
     S.svg
         serviceAttributes
@@ -248,7 +245,6 @@ twitter =
             ]
             []
         ]
-        |> S.toUnstyled
 
 
 serviceAttributes : List (S.Attribute msg)

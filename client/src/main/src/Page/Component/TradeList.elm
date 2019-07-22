@@ -6,6 +6,7 @@ import Data.Trade as Trade
 import Data.User as User
 import Html
 import Html.Attributes
+import Html.Styled
 import Icon
 import Page.Style
 import PageLocation
@@ -25,6 +26,7 @@ view tradesMaybe =
             Nothing ->
                 [ Html.text "読み込み中"
                 , Icon.loading { size = 64, color = Css.rgb 0 0 0 }
+                    |> Html.Styled.toUnstyled
                 ]
         )
 

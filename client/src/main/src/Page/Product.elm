@@ -28,6 +28,7 @@ import Html
 import Html.Attributes
 import Html.Events
 import Html.Keyed
+import Html.Styled
 import Icon
 import Page.Component.Comment
 import Page.Component.ProductEditor as ProductEditor
@@ -462,6 +463,7 @@ view logInState isWideScreen nowMaybe model =
             , html =
                 [ Html.text "読み込み中"
                 , Icon.loading { size = 48, color = Css.rgb 0 0 0 }
+                    |> Html.Styled.toUnstyled
                 ]
             , bottomNavigation = Nothing
             }
@@ -476,6 +478,7 @@ view logInState isWideScreen nowMaybe model =
                         [ Html.Attributes.class "product" ]
                         [ Html.text "最新の情報を取得中…"
                         , Icon.loading { size = 32, color = Css.rgb 0 0 0 }
+                            |> Html.Styled.toUnstyled
                         , productsViewImage [ Product.getThumbnailImageUrl product ]
                         , productsViewName (Product.getName product)
                         , productsViewLike
@@ -664,7 +667,9 @@ likeButton logInState sending likedCount id =
             [ Html.Attributes.class "product-like"
             , Html.Attributes.disabled True
             ]
-            [ Icon.loading { size = 20, color = Css.rgb 255 255 255 } ]
+            [ Icon.loading { size = 20, color = Css.rgb 255 255 255 }
+                |> Html.Styled.toUnstyled
+            ]
 
     else
         case logInState of
@@ -852,7 +857,9 @@ commentInputArea sending token =
                         [ Html.Attributes.class "product-comment-sendButton"
                         , Html.Attributes.disabled True
                         ]
-                        [ Icon.loading { size = 24, color = Css.rgb 0 0 0 } ]
+                        [ Icon.loading { size = 24, color = Css.rgb 0 0 0 }
+                            |> Html.Styled.toUnstyled
+                        ]
                     ]
 
                 else

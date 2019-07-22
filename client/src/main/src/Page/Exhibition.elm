@@ -18,6 +18,7 @@ import Html
 import Html.Attributes
 import Html.Events
 import Html.Keyed
+import Html.Styled
 import Icon
 import Page.Component.LogIn as LogIn
 import Page.Component.ProductEditor as ProductEditor
@@ -286,7 +287,9 @@ confirmView accessToken (Api.SellProductRequest requestData) sending =
                     , Html.Attributes.class "mainButton-disabled"
                     , Html.Attributes.disabled True
                     ]
-                    [ Icon.loading { size = 24, color = Css.rgb 255 255 255 } ]
+                    [ Icon.loading { size = 24, color = Css.rgb 255 255 255 }
+                        |> Html.Styled.toUnstyled
+                    ]
                 ]
 
             else
