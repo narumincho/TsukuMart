@@ -517,7 +517,7 @@ toEditButton =
         [ Html.Attributes.class "mainButton"
         , Html.Events.onClick MsgToEditMode
         ]
-        [ Icon.edit "width:32px;height:32px"
+        [ Icon.edit [ Css.width (Css.px 32), Css.height (Css.px 32) ]
         , Html.text "編集する"
         ]
 

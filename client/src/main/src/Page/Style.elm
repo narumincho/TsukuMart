@@ -1,15 +1,24 @@
-module Page.Style exposing (formItem, label, titleAndContent)
+module Page.Style exposing
+    ( formItem
+    , label
+    , primaryColor
+    , primaryColorLight
+    , titleAndContent
+    )
 
+import Css
 import Html
 import Html.Attributes
 
 
+primaryColor : Css.Color
 primaryColor =
-    "#733fa7"
+    Css.rgb 115 63 167
 
 
+primaryColorLight : Css.Color
 primaryColorLight =
-    "#9a6cc9"
+    Css.rgb 154 108 201
 
 
 titleAndContent : String -> Html.Html msg -> Html.Html msg

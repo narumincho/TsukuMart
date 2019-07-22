@@ -771,7 +771,10 @@ editButton =
         [ Html.Attributes.class "subButton"
         , Html.Events.onClick EditProduct
         ]
-        [ Icon.edit "width:32px;height:32px"
+        [ Icon.edit
+            [ Css.width (Css.px 32)
+            , Css.height (Css.px 32)
+            ]
         , Html.text "編集する"
         ]
 
@@ -782,7 +785,11 @@ deleteView productId token =
         [ Html.Attributes.class "product-deleteButton"
         , Html.Events.onClick (Delete token productId)
         ]
-        [ Icon.delete "width:32px;height:32px;fill:#eee"
+        [ Icon.deleteGarbageCan
+            [ Css.width (Css.px 32)
+            , Css.height (Css.px 32)
+            , Css.fill (Css.rgb 238 238 238)
+            ]
         , Html.text "削除する"
         ]
 

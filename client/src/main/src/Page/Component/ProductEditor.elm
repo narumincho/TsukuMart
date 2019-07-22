@@ -19,11 +19,9 @@ import Html
 import Html.Attributes
 import Html.Events
 import Html.Keyed
+import Icon
 import Json.Decode
 import Set
-import Svg
-import Svg.Attributes
-import Svg.Events
 import Utility
 
 
@@ -469,7 +467,7 @@ photoAdd =
             , Html.Attributes.id photoAddLabelId
             , Html.Attributes.for photoAddInputId
             ]
-            [ photoAddIcon ]
+            [ Icon.photo ]
         , Html.input
             [ Html.Attributes.id photoAddInputId
             , Html.Attributes.type_ "file"
@@ -488,27 +486,6 @@ photoAddLabelId =
 photoAddInputId : String
 photoAddInputId =
     "exhibition-photo-input"
-
-
-photoAddIcon : Html.Html msg
-photoAddIcon =
-    Svg.svg
-        [ Svg.Attributes.style "width:7rem"
-        , Svg.Attributes.style "height:7rem"
-        , Svg.Attributes.viewBox "0 0 24 24"
-        ]
-        [ Svg.path
-            [ Svg.Attributes.d "M3 8c0 .55.45 1 1 1s1-.45 1-1V6h2c.55 0 1-.45 1-1s-.45-1-1-1H5V2c0-.55-.45-1-1-1s-1 .45-1 1v2H1c-.55 0-1 .45-1 1s.45 1 1 1h2v2z" ]
-            []
-        , Svg.circle
-            [ Svg.Attributes.cx "13", Svg.Attributes.cy "14", Svg.Attributes.r "3" ]
-            []
-        , Svg.path
-            [ Svg.Attributes.d
-                "M21 6h-3.17l-1.24-1.35c-.37-.41-.91-.65-1.47-.65h-6.4c.17.3.28.63.28 1 0 1.1-.9 2-2 2H6v1c0 1.1-.9 2-2 2-.37 0-.7-.11-1-.28V20c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-8 13c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"
-            ]
-            []
-        ]
 
 
 photoCardList : { addImages : List String, deleteAt : Set.Set Int, beforeImageIds : List ImageId.ImageId } -> Html.Html Msg
@@ -541,31 +518,12 @@ photoImage : Int -> String -> Html.Html Msg
 photoImage index dataUrl =
     Html.div
         [ Html.Attributes.class "exhibition-photo-card" ]
-        [ photoDeleteButton
+        [ Icon.delete
             |> Html.map (always (DeleteImage index))
         , Html.img
             [ Html.Attributes.src dataUrl
             , Html.Attributes.class "exhibition-photo-card-image"
             ]
-            []
-        ]
-
-
-photoDeleteButton : Html.Html ()
-photoDeleteButton =
-    Svg.svg
-        [ Svg.Attributes.class "exhibition-photo-card-deleteButton"
-        , Svg.Attributes.viewBox "0 0 10 10"
-        , Svg.Events.onClick ()
-        ]
-        [ Svg.circle
-            [ Svg.Attributes.cx "5", Svg.Attributes.cy "5", Svg.Attributes.r "5", Svg.Attributes.stroke "none" ]
-            []
-        , Svg.line
-            [ Svg.Attributes.x1 "3", Svg.Attributes.y1 "3", Svg.Attributes.x2 "7", Svg.Attributes.y2 "7" ]
-            []
-        , Svg.line
-            [ Svg.Attributes.x1 "7", Svg.Attributes.y1 "3", Svg.Attributes.x2 "3", Svg.Attributes.y2 "7" ]
             []
         ]
 

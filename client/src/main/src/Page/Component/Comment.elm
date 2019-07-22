@@ -7,10 +7,9 @@ import Html
 import Html.Attributes
 import Icon
 import PageLocation
-import Svg
-import Svg.Attributes
+import Svg.Styled as S
+import Svg.Styled.Attributes as A
 import Time
-import Time.Extra
 
 
 view :
@@ -99,37 +98,39 @@ commentView nowMaybe comment =
 
 commentTriangleLeft : Bool -> Html.Html msg
 commentTriangleLeft isMine =
-    Svg.svg
-        ([ Svg.Attributes.viewBox "0 0 10 10"
-         , Svg.Attributes.class "product-comment-text-triangle"
+    S.svg
+        ([ A.viewBox "0 0 10 10"
+         , A.class "product-comment-text-triangle"
          ]
             ++ (if isMine then
-                    [ Svg.Attributes.class "product-comment-text-triangle-mine" ]
+                    [ A.class "product-comment-text-triangle-mine" ]
 
                 else
                     []
                )
         )
-        [ Svg.polygon
-            [ Svg.Attributes.points "10 0 0 0 10 10" ]
+        [ S.polygon
+            [ A.points "10 0 0 0 10 10" ]
             []
         ]
+        |> S.toUnstyled
 
 
 commentTriangleRight : Bool -> Html.Html msg
 commentTriangleRight isMine =
-    Svg.svg
-        ([ Svg.Attributes.viewBox "0 0 10 10"
-         , Svg.Attributes.class "product-comment-text-triangle"
+    S.svg
+        ([ A.viewBox "0 0 10 10"
+         , A.class "product-comment-text-triangle"
          ]
             ++ (if isMine then
-                    [ Svg.Attributes.class "product-comment-text-triangle-mine" ]
+                    [ A.class "product-comment-text-triangle-mine" ]
 
                 else
                     []
                )
         )
-        [ Svg.polygon
-            [ Svg.Attributes.points "0 0 10 0 0 10" ]
+        [ S.polygon
+            [ A.points "0 0 10 0 0 10" ]
             []
         ]
+        |> S.toUnstyled

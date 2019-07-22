@@ -19,25 +19,6 @@ img {
             Header
 ===========================*/
 
-header {
-    grid-column: 2 / 3;
-    grid-row: 1 / 2;
-    background-color: var(--primaryColor);
-    display: flex;
-    height: 64px;
-    align-items: center;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.18);
-    position: fixed;
-    width: 100%;
-    box-sizing: border-box;
-    padding: 0;
-    z-index: 2;
-}
-
-.h1:hover {
-    background-color: rgba(0, 0, 0, 0.4);
-}
-
 .headerButton {
     width: 4rem;
     height: 4rem;
@@ -274,21 +255,6 @@ header {
     width: 15rem;
     height: 15rem;
     padding: 1rem;
-}
-
-.exhibition-photo-card-deleteButton {
-    width: 2rem;
-    height: 2rem;
-    position: absolute;
-    right: 0.5rem;
-    top: 0.5rem;
-    fill: black;
-    stroke: white;
-    cursor: pointer;
-}
-
-.exhibition-photo-card-deleteButton:hover {
-    fill: #444;
 }
 
 .exhibition-photo-card-image {
