@@ -137,8 +137,8 @@ view logInState (Model rec) =
                         Loading ->
                             Nothing
 
-                        Normal products ->
-                            Just products
+                        Normal trades ->
+                            Just (trades |> List.reverse)
 
                         Error ->
                             Just []

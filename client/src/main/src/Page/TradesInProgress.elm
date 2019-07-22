@@ -133,7 +133,7 @@ view logInState (Model rec) =
                             Nothing
 
                         Normal trades ->
-                            Just trades
+                            Just (trades |> List.reverse)
 
                         Error ->
                             Just []
