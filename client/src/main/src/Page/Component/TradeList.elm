@@ -7,6 +7,7 @@ import Data.User as User
 import Html
 import Html.Attributes
 import Icon
+import Page.Style
 import PageLocation
 
 
@@ -88,13 +89,7 @@ userView : User.WithName -> Html.Html msg
 userView userWithName =
     Html.div
         []
-        [ Html.img
-            [ Html.Attributes.src (User.withNameGetImageUrl userWithName)
-            , Html.Attributes.style "border-radius" "50%"
-            , Html.Attributes.style "width" "48px"
-            , Html.Attributes.style "height" "48px"
-            ]
-            []
+        [ Page.Style.userImage 48 (User.withNameGetImageId userWithName)
         , Html.text (User.withNameGetDisplayName userWithName)
         ]
 

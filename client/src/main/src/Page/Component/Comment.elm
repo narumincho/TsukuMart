@@ -6,6 +6,7 @@ import Data.User as User
 import Html
 import Html.Attributes
 import Icon
+import Page.Style
 import PageLocation
 import Svg.Styled as S
 import Svg.Styled.Attributes as A
@@ -50,13 +51,7 @@ commentView nowMaybe comment =
                 )
             , Html.Attributes.href (PageLocation.toUrlAsString (PageLocation.User (User.withNameGetId comment.user)))
             ]
-            [ Html.img
-                [ Html.Attributes.style "border-radius" "50%"
-                , Html.Attributes.style "width" "48px"
-                , Html.Attributes.style "height" "48px"
-                , Html.Attributes.src (User.withNameGetImageUrl comment.user)
-                ]
-                []
+            [ Page.Style.userImage 48 (User.withNameGetImageId comment.user)
             , Html.text (User.withNameGetDisplayName comment.user)
             ]
         , Html.div

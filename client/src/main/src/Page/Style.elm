@@ -1,14 +1,18 @@
 module Page.Style exposing
-    ( formItem
+    ( displayGridAndGap
+    , formItem
     , label
     , primaryColor
     , primaryColorLight
     , titleAndContent
+    , userImage
     )
 
 import Css
+import Data.ImageId
 import Html
-import Html.Attributes
+import Html.Styled as H
+import Html.Styled.Attributes as A
 
 
 primaryColor : Css.Color
@@ -23,30 +27,66 @@ primaryColorLight =
 
 titleAndContent : String -> Html.Html msg -> Html.Html msg
 titleAndContent title content =
-    Html.div
-        [ Html.Attributes.style "display" "grid"
-        , Html.Attributes.style "gap" "4px"
+    H.div
+        [ A.css [ displayGridAndGap 4 ]
         ]
-        [ Html.div
+        [ H.div
             label
-            [ Html.text title ]
-        , content
+            [ H.text title ]
+        , content |> H.fromUnstyled
         ]
+        |> H.toUnstyled
 
 
 formItem : String -> String -> Html.Html msg -> Html.Html msg
 formItem title idString content =
-    Html.div
-        [ Html.Attributes.style "display" "grid"
-        , Html.Attributes.style "gap" "4px"
+    H.div
+        [ A.css
+            [ displayGridAndGap 4 ]
         ]
-        [ Html.label
-            (label ++ [ Html.Attributes.for idString ])
-            [ Html.text title ]
-        , content
+        [ H.label
+            (label ++ [ A.for idString ])
+            [ H.text title ]
+        , content |> H.fromUnstyled
         ]
+        |> H.toUnstyled
 
 
-label : List (Html.Attribute a)
+label : List (H.Attribute a)
 label =
-    [ Html.Attributes.style "background-color" "#ddd" ]
+    [ A.css [ Css.backgroundColor (Css.rgb 221 221 221) ] ]
+
+
+displayGridAndGap : Int -> Css.Style
+displayGridAndGap gap =
+    let
+        block =
+            Css.block
+    in
+    ([ Css.display { block | value = "grid" }
+     ]
+        ++ (if gap == 0 then
+                []
+
+            else
+                [ Css.property "gap" (String.fromInt gap) ]
+           )
+    )
+        |> Css.batch
+
+
+userImage : Int -> Data.ImageId.ImageId -> Html.Html msg
+userImage size imageId =
+    H.img
+        [ A.css
+            [ Css.display Css.block
+            , Css.width (Css.px (toFloat size))
+            , Css.height (Css.px (toFloat size))
+            , Css.borderRadius (Css.pct 50)
+            , Css.flexShrink (Css.int 0)
+            , Css.padding (Css.px 4)
+            ]
+        , A.src (Data.ImageId.toUrlString imageId)
+        ]
+        []
+        |> H.toUnstyled

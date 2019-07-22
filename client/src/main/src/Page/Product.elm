@@ -717,12 +717,7 @@ sellerNameView user =
             , Html.Attributes.style "align-items" "center"
             , Html.Attributes.style "text-decoration" "none"
             ]
-            [ Html.img
-                [ Html.Attributes.style "border-radius" "50%"
-                , Html.Attributes.style "width" "3rem"
-                , Html.Attributes.src (User.withNameGetImageUrl user)
-                ]
-                []
+            [ Page.Style.userImage 48 (User.withNameGetImageId user)
             , Html.text (User.withNameGetDisplayName user)
             ]
         )

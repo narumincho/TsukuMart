@@ -8,11 +8,11 @@ module Data.User exposing
     , withNameFromApi
     , withNameGetDisplayName
     , withNameGetId
-    , withNameGetImageUrl
+    , withNameGetImageId
     , withProfileFromApi
     , withProfileGetDisplayName
     , withProfileGetId
-    , withProfileGetImageUrl
+    , withProfileGetImageId
     , withProfileGetIntroduction
     , withProfileGetUniversity
     , withProfileToWithName
@@ -110,9 +110,9 @@ withNameGetDisplayName (WithName { displayName }) =
     displayName
 
 
-withNameGetImageUrl : WithName -> String
-withNameGetImageUrl (WithName { imageId }) =
-    ImageId.toUrlString imageId
+withNameGetImageId : WithName -> ImageId.ImageId
+withNameGetImageId (WithName { imageId }) =
+    imageId
 
 
 withProfileGetId : WithProfile -> Id
@@ -125,9 +125,9 @@ withProfileGetDisplayName (WithProfile { displayName }) =
     displayName
 
 
-withProfileGetImageUrl : WithProfile -> String
-withProfileGetImageUrl (WithProfile { imageId }) =
-    ImageId.toUrlString imageId
+withProfileGetImageId : WithProfile -> ImageId.ImageId
+withProfileGetImageId (WithProfile { imageId }) =
+    imageId
 
 
 withProfileGetIntroduction : WithProfile -> String

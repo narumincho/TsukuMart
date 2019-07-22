@@ -358,14 +358,14 @@ menuLogInStateNone =
         [ Html.Attributes.class "menu-item"
         , Html.Attributes.href (PageLocation.toUrlAsString PageLocation.Home)
         ]
-        [ Icon.home menuIconStyle
+        [ Icon.home menuIconStyle |> Html.Styled.toUnstyled
         , Html.text "ホーム"
         ]
     , Html.a
         [ Html.Attributes.class "menu-item"
         , Html.Attributes.href (PageLocation.toUrlAsString (PageLocation.Search Data.SearchCondition.None))
         ]
-        [ Icon.search menuIconStyle
+        [ Icon.search menuIconStyle |> Html.Styled.toUnstyled
         , Html.text "検索"
         ]
     , Html.a
@@ -384,21 +384,21 @@ menuLogInStateLoadingProfile =
         [ Html.Attributes.class "menu-item"
         , Html.Attributes.href (PageLocation.toUrlAsString PageLocation.Home)
         ]
-        [ Icon.home menuIconStyle
+        [ Icon.home menuIconStyle |> Html.Styled.toUnstyled
         , Html.text "ホーム"
         ]
     , Html.a
         [ Html.Attributes.class "menu-item"
         , Html.Attributes.href (PageLocation.toUrlAsString (PageLocation.Search Data.SearchCondition.None))
         ]
-        [ Icon.search menuIconStyle
+        [ Icon.search menuIconStyle |> Html.Styled.toUnstyled
         , Html.text "検索"
         ]
     , Html.a
         [ Html.Attributes.class "menu-item"
         , Html.Attributes.href (PageLocation.toUrlAsString PageLocation.Notification)
         ]
-        [ Icon.notifications menuIconStyle, Html.text "通知" ]
+        [ Icon.notifications menuIconStyle |> Html.Styled.toUnstyled, Html.text "通知" ]
     , Html.a
         [ Html.Attributes.class "menu-item" ]
         [ Html.text "プロフィール情報を読み込み中"
@@ -425,19 +425,19 @@ menuLogInStateOk userWithName =
         [ Html.Attributes.class "menu-item"
         , Html.Attributes.href (PageLocation.toUrlAsString PageLocation.Home)
         ]
-        [ Icon.home menuIconStyle
+        [ Icon.home menuIconStyle |> Html.Styled.toUnstyled
         , Html.text "ホーム"
         ]
     , Html.a
         [ Html.Attributes.class "menu-item"
         , Html.Attributes.href (PageLocation.toUrlAsString (PageLocation.Search Data.SearchCondition.None))
         ]
-        [ Icon.search menuIconStyle, Html.text "検索" ]
+        [ Icon.search menuIconStyle |> Html.Styled.toUnstyled, Html.text "検索" ]
     , Html.a
         [ Html.Attributes.class "menu-item"
         , Html.Attributes.href (PageLocation.toUrlAsString PageLocation.Notification)
         ]
-        [ Icon.notifications menuIconStyle, Html.text "通知" ]
+        [ Icon.notifications menuIconStyle |> Html.Styled.toUnstyled, Html.text "通知" ]
     , Html.a
         [ Html.Attributes.href
             (PageLocation.toUrlAsString
@@ -447,15 +447,7 @@ menuLogInStateOk userWithName =
             )
         , Html.Attributes.class "menu-item"
         ]
-        [ Html.img
-            [ Html.Attributes.style "width" "40px"
-            , Html.Attributes.style "height" "40px"
-            , Html.Attributes.style "border-radius" "50%"
-            , Html.Attributes.style "flex-shrink" "0"
-            , Html.Attributes.style "padding" "4px"
-            , Html.Attributes.src (Data.User.withNameGetImageUrl userWithName)
-            ]
-            []
+        [ Page.Style.userImage 40 (Data.User.withNameGetImageId userWithName)
         , Html.div
             []
             [ Html.text (Data.User.withNameGetDisplayName userWithName) ]
@@ -661,7 +653,7 @@ type BottomNavigationSelect
 
 bottomNavigation : Data.LogInState.LogInState -> BottomNavigationSelect -> Html.Html msg
 bottomNavigation logInState select =
-    case logInState of
+    (case logInState of
         Data.LogInState.None ->
             bottomNavigationContainer
                 [ bottomNavigationItem
@@ -733,33 +725,33 @@ bottomNavigation logInState select =
                     (Just (PageLocation.User (Data.User.withNameGetId userWithName)))
                     (Just
                         (always
-                            (Html.img
-                                [ Html.Attributes.src (Data.User.withNameGetImageUrl userWithName)
-                                , Html.Attributes.style "width" "32px"
-                                , Html.Attributes.style "border-radius" "50%"
-                                ]
-                                []
+                            (Page.Style.userImage 32 (Data.User.withNameGetImageId userWithName)
+                                |> Html.Styled.fromUnstyled
                             )
                         )
                     )
                     "ユーザー"
                 ]
+    )
+        |> Html.Styled.toUnstyled
 
 
-bottomNavigationContainer : List (Html.Html msg) -> Html.Html msg
+bottomNavigationContainer : List (Html.Styled.Html msg) -> Html.Styled.Html msg
 bottomNavigationContainer item =
-    Html.div
-        [ Html.Attributes.style "display" "grid"
-        , Html.Attributes.style "grid-template-columns"
-            ("1fr"
-                |> List.repeat (List.length item)
-                |> String.join " "
-            )
-        , Html.Attributes.style "height" "64px"
-        , Html.Attributes.style "position" "fixed"
-        , Html.Attributes.style "bottom" "0"
-        , Html.Attributes.style "width" "100%"
-        , Html.Attributes.style "background-color" "#512182"
+    Html.Styled.div
+        [ Html.Styled.Attributes.css
+            [ Page.Style.displayGridAndGap 0
+            , Css.property "grid-template-columns"
+                ("1fr"
+                    |> List.repeat (List.length item)
+                    |> String.join " "
+                )
+            , Css.height (Css.px 64)
+            , Css.position Css.fixed
+            , Css.bottom (Css.px 0)
+            , Css.width (Css.pct 100)
+            , Css.backgroundColor (Css.rgb 81 33 130)
+            ]
         ]
         item
 
@@ -767,41 +759,20 @@ bottomNavigationContainer item =
 bottomNavigationItem :
     Bool
     -> Maybe PageLocation.PageLocation
-    -> Maybe (List Css.Style -> Html.Html msg)
+    -> Maybe (List Css.Style -> Html.Styled.Html msg)
     -> String
-    -> Html.Html msg
+    -> Html.Styled.Html msg
 bottomNavigationItem select linkMaybe iconMaybe text =
     (case linkMaybe of
         Just link ->
-            Html.a
-                [ Html.Attributes.style "display" "flex"
-                , Html.Attributes.style "justify-content" "center"
-                , Html.Attributes.style "align-items" "center"
-                , Html.Attributes.style "flex-direction" "column"
-                , Html.Attributes.style "color"
-                    (if select then
-                        "white"
-
-                     else
-                        "#aaa"
-                    )
-                , Html.Attributes.style "text-decoration" "none"
-                , Html.Attributes.href (PageLocation.toUrlAsString link)
+            Html.Styled.a
+                [ Html.Styled.Attributes.css (bottomNavigationStyle select)
+                , Html.Styled.Attributes.href (PageLocation.toUrlAsString link)
                 ]
 
         Nothing ->
-            Html.div
-                [ Html.Attributes.style "display" "flex"
-                , Html.Attributes.style "justify-content" "center"
-                , Html.Attributes.style "align-items" "center"
-                , Html.Attributes.style "flex-direction" "column"
-                , Html.Attributes.style "color"
-                    (if select then
-                        "white"
-
-                     else
-                        "#aaa"
-                    )
+            Html.Styled.div
+                [ Html.Styled.Attributes.css (bottomNavigationStyle select)
                 ]
     )
         (case iconMaybe of
@@ -817,9 +788,26 @@ bottomNavigationItem select linkMaybe iconMaybe text =
                             Css.rgb 170 170 170
                         )
                     ]
-                , Html.text text
+                , Html.Styled.text text
                 ]
 
             Nothing ->
-                [ Html.text text ]
+                [ Html.Styled.text text ]
         )
+
+
+bottomNavigationStyle : Bool -> List Css.Style
+bottomNavigationStyle select =
+    [ Css.displayFlex
+    , Css.justifyContent Css.center
+    , Css.alignItems Css.center
+    , Css.flexDirection Css.column
+    , Css.color
+        (if select then
+            Css.rgb 255 255 255
+
+         else
+            Css.rgb 170 170 170
+        )
+    , Css.textDecoration Css.none
+    ]

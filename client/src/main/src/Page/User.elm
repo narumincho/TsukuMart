@@ -12,6 +12,7 @@ module Page.User exposing
 import Api
 import BasicParts
 import Css
+import Data.ImageId
 import Data.LogInState as LogInState
 import Data.University
 import Data.User as User
@@ -313,7 +314,7 @@ loadingWithUserIdAndNameView : Bool -> User.WithName -> List (Html.Html msg)
 loadingWithUserIdAndNameView isWideScreen userWithName =
     imageAndDisplayNameView
         isWideScreen
-        (User.withNameGetImageUrl userWithName)
+        (User.withNameGetImageId userWithName)
         (User.withNameGetDisplayName userWithName)
         ++ [ Html.text (User.withNameGetDisplayName userWithName ++ "さんの紹介文、学群学類を読み込み中")
            , Icon.loading { size = 48, color = Css.rgb 0 0 0 }
@@ -358,7 +359,7 @@ userView : Bool -> User.WithProfile -> List (Html.Html msg)
 userView isWideScreen userWithProfile =
     imageAndDisplayNameView
         isWideScreen
-        (User.withProfileGetImageUrl userWithProfile)
+        (User.withProfileGetImageId userWithProfile)
         (User.withProfileGetDisplayName userWithProfile)
         ++ [ introductionView (User.withProfileGetIntroduction userWithProfile)
            ]
@@ -367,21 +368,14 @@ userView isWideScreen userWithProfile =
            ]
 
 
-imageAndDisplayNameView : Bool -> String -> String -> List (Html.Html msg)
-imageAndDisplayNameView isWideScreen url displayName =
+imageAndDisplayNameView : Bool -> Data.ImageId.ImageId -> String -> List (Html.Html msg)
+imageAndDisplayNameView isWideScreen imageId displayName =
     if isWideScreen then
         [ Html.div
             [ Html.Attributes.style "display" "flex"
             , Html.Attributes.style "justify-content" "center"
             ]
-            [ Html.img
-                [ Html.Attributes.style "border-radius" "50%"
-                , Html.Attributes.style "width" "200px"
-                , Html.Attributes.style "height" "200px"
-                , Html.Attributes.style "flex-shrink" "0"
-                , Html.Attributes.src url
-                ]
-                []
+            [ Page.Style.userImage 200 imageId
             , Html.div
                 [ Html.Attributes.style "flex-grow" "1"
                 , Html.Attributes.style "font-size" "1.5rem"
@@ -395,14 +389,7 @@ imageAndDisplayNameView isWideScreen url displayName =
             [ Html.Attributes.style "display" "flex"
             , Html.Attributes.style "justify-content" "center"
             ]
-            [ Html.img
-                [ Html.Attributes.style "border-radius" "50%"
-                , Html.Attributes.style "width" "200px"
-                , Html.Attributes.style "height" "200px"
-                , Html.Attributes.style "flex-shrink" "0"
-                , Html.Attributes.src url
-                ]
-                []
+            [ Page.Style.userImage 200 imageId
             ]
         , Html.div
             [ Html.Attributes.style "flex-grow" "1"

@@ -452,13 +452,7 @@ userView userWithName =
                 (PageLocation.User (User.withNameGetId userWithName))
             )
         ]
-        [ Html.img
-            [ Html.Attributes.src (User.withNameGetImageUrl userWithName)
-            , Html.Attributes.style "border-radius" "50%"
-            , Html.Attributes.style "width" "48px"
-            , Html.Attributes.style "height" "48px"
-            ]
-            []
+        [ Page.Style.userImage 48 (User.withNameGetImageId userWithName)
         , Html.text (User.withNameGetDisplayName userWithName)
         ]
 
