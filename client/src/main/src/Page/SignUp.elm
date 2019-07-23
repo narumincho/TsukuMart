@@ -20,6 +20,7 @@ import Html
 import Html.Attributes
 import Html.Events
 import Html.Keyed
+import Html.Styled
 import Json.Decode
 import Page.Component.University as UniversityComponent
 
@@ -222,7 +223,7 @@ normalView studentIdOrTsukubaEmailAddress university nickName image sendEmailTok
             ++ imageForm image
             ++ displayNameForm nickName
             ++ (UniversityComponent.view university
-                    |> List.map (Tuple.mapSecond (Html.map MsgByUniversity))
+                    |> List.map (Tuple.mapSecond (Html.Styled.toUnstyled >> Html.map MsgByUniversity))
                )
             ++ [ ( "submit"
                  , signUpSubmitButton

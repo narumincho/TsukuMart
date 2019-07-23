@@ -9,11 +9,16 @@ module Page.Component.University exposing
     , view
     )
 
+import Css
 import Data.University as University
 import Html
 import Html.Attributes
 import Html.Events
+import Html.Styled
+import Html.Styled.Attributes
+import Html.Styled.Events
 import Json.Decode
+import Page.Style
 
 
 type Model
@@ -234,72 +239,51 @@ selectDepartment index schoolSelect =
 
 {-| 研究科学群学類入力フォーム
 -}
-view : Model -> List ( String, Html.Html Msg )
+view : Model -> List ( String, Html.Styled.Html Msg )
 view model =
     case model of
         School schoolSelect ->
-            schoolOrGraduateView True
+            schoolOrGraduateView Left
                 :: schoolView schoolSelect
 
         GraduateTsukuba { graduate, school } ->
-            schoolOrGraduateView False
+            schoolOrGraduateView Right
                 :: graduateTsukubaView graduate school
 
         GraduateNoTsukuba graduate ->
-            schoolOrGraduateView False
+            schoolOrGraduateView Right
                 :: graduateNoTsukubaView graduate
 
 
 {-| 研究科に所属しているかしていないか?
 -}
-schoolOrGraduateView : Bool -> ( String, Html.Html Msg )
-schoolOrGraduateView leftSelect =
+schoolOrGraduateView : RadioSelect -> ( String, Html.Styled.Html Msg )
+schoolOrGraduateView select =
     ( "schoolOrGraduate"
-    , Html.div
-        []
-        [ Html.label
-            [ Html.Attributes.class "form-label" ]
-            [ Html.text "所属" ]
-        , Html.div
-            [ Html.Attributes.class "form-select" ]
-            [ Html.div
-                ([ Html.Attributes.classList
-                    [ ( "form-select-item", not leftSelect )
-                    , ( "form-select-itemSelect", leftSelect )
-                    ]
-                 , Html.Attributes.style "border-radius" ".4rem 0 0 .4rem"
-                 ]
-                    ++ (if leftSelect then
-                            []
+    , Page.Style.titleAndContentStyle
+        "所属"
+        (radioForm
+            { select = select
+            , leftText = "学群生"
+            , rightText = "院生"
+            , name = "schoolOrGraduate"
+            }
+            |> Html.Styled.map
+                (\msg ->
+                    case msg of
+                        Left ->
+                            SwitchSchool
 
-                        else
-                            [ Html.Events.onClick SwitchSchool ]
-                       )
+                        Right ->
+                            SwitchGraduate
                 )
-                [ Html.text "学群生" ]
-            , Html.div
-                ([ Html.Attributes.classList
-                    [ ( "form-select-item", leftSelect )
-                    , ( "form-select-itemSelect", not leftSelect )
-                    ]
-                 , Html.Attributes.style "border-radius" "0 .4rem .4rem 0"
-                 ]
-                    ++ (if leftSelect then
-                            [ Html.Events.onClick SwitchGraduate ]
-
-                        else
-                            []
-                       )
-                )
-                [ Html.text "院生" ]
-            ]
-        ]
+        )
     )
 
 
 {-| 研究科に所属していない人のフォーム
 -}
-schoolView : SchoolSelect -> List ( String, Html.Html Msg )
+schoolView : SchoolSelect -> List ( String, Html.Styled.Html Msg )
 schoolView schoolSelect =
     case schoolSelect of
         SchoolNone ->
@@ -316,45 +300,47 @@ schoolView schoolSelect =
             ]
 
 
-graduateTsukubaView : Maybe University.Graduate -> SchoolSelect -> List ( String, Html.Html Msg )
+graduateTsukubaView : Maybe University.Graduate -> SchoolSelect -> List ( String, Html.Styled.Html Msg )
 graduateTsukubaView graduateSelect schoolSelect =
     [ graduateSelectView graduateSelect
-    , graduateYesNoTsukubaView True
+    , graduateYesNoTsukubaView Left
     ]
         ++ schoolView schoolSelect
 
 
-graduateNoTsukubaView : Maybe University.Graduate -> List ( String, Html.Html Msg )
+graduateNoTsukubaView : Maybe University.Graduate -> List ( String, Html.Styled.Html Msg )
 graduateNoTsukubaView graduateSelect =
     [ graduateSelectView graduateSelect
-    , graduateYesNoTsukubaView False
+    , graduateYesNoTsukubaView Right
     ]
 
 
-graduateSelectView : Maybe University.Graduate -> ( String, Html.Html Msg )
+graduateSelectView : Maybe University.Graduate -> ( String, Html.Styled.Html Msg )
 graduateSelectView graduateMaybe =
     ( "selectGraduate"
-    , Html.div
-        []
-        [ Html.label
-            [ Html.Attributes.class "form-label"
-            , Html.Attributes.for graduateSelectId
-            ]
-            [ Html.text "研究科" ]
-        , Html.select
-            [ Html.Attributes.class "form-menu"
-            , Html.Attributes.id graduateSelectId
-            , Html.Events.on "change" (selectDecoder |> Json.Decode.map SelectGraduate)
+    , Page.Style.titleAndContentStyle "研究科"
+        (Html.Styled.select
+            [ Html.Styled.Attributes.css
+                [ Css.display Css.block
+                , Css.width (Css.pct 100)
+                , Css.height (Css.px 64)
+                , Css.border3 (Css.px 1) Css.solid (Css.rgb 204 204 204)
+                , Css.boxSizing Css.borderBox
+                , Css.borderRadius (Css.px 8)
+                , Css.fontSize (Css.px 24)
+                ]
+            , Html.Styled.Attributes.id graduateSelectId
+            , Html.Styled.Events.on "change" (selectDecoder |> Json.Decode.map SelectGraduate)
             ]
             (blankOption
                 :: (University.graduateAllValue
                         |> List.map
                             (\s ->
-                                Html.option [] [ Html.text (University.graduateToJapaneseString s) ]
+                                Html.Styled.option [] [ Html.Styled.text (University.graduateToJapaneseString s) ]
                             )
                    )
             )
-        ]
+        )
     )
 
 
@@ -366,73 +352,53 @@ graduateSelectId =
 {-| 筑波大学に所属していたかしていなかったか
 Boolは左(筑波大学所属していた)を選択しているか
 -}
-graduateYesNoTsukubaView : Bool -> ( String, Html.Html Msg )
-graduateYesNoTsukubaView leftSelect =
+graduateYesNoTsukubaView : RadioSelect -> ( String, Html.Styled.Html Msg )
+graduateYesNoTsukubaView select =
     ( "tsukubaUniversitySchoolOrNo"
-    , Html.div
-        []
-        [ Html.label
-            [ Html.Attributes.class "form-label" ]
-            [ Html.text "院進前の所属" ]
-        , Html.div
-            [ Html.Attributes.class "form-select" ]
-            [ Html.div
-                ([ Html.Attributes.classList
-                    [ ( "form-select-item", not leftSelect )
-                    , ( "form-select-itemSelect", leftSelect )
-                    ]
-                 , Html.Attributes.style "border-radius" ".4rem 0 0 .4rem"
-                 ]
-                    ++ (if leftSelect then
-                            []
+    , Page.Style.titleAndContentStyle
+        "院進前の所属"
+        (radioForm
+            { select = select
+            , leftText = "筑波大学に所属していた"
+            , rightText = "筑波大学に所属していなかった"
+            , name = "graduateYesNoTsukuba"
+            }
+            |> Html.Styled.map
+                (\msg ->
+                    case msg of
+                        Left ->
+                            SwitchGraduateTsukuba
 
-                        else
-                            [ Html.Events.onClick SwitchGraduateTsukuba ]
-                       )
+                        Right ->
+                            SwitchGraduateNoTsukuba
                 )
-                [ Html.text "筑波大学に所属していた" ]
-            , Html.div
-                ([ Html.Attributes.classList
-                    [ ( "form-select-item", leftSelect )
-                    , ( "form-select-itemSelect", not leftSelect )
-                    ]
-                 , Html.Attributes.style "border-radius" "0 .4rem .4rem 0"
-                 ]
-                    ++ (if leftSelect then
-                            [ Html.Events.onClick SwitchGraduateNoTsukuba ]
-
-                        else
-                            []
-                       )
-                )
-                [ Html.text "筑波大学に所属していなかった" ]
-            ]
-        ]
+        )
     )
 
 
 {-| 学群の選択
 -}
-selectSchoolView : Maybe University.School -> ( String, Html.Html Msg )
+selectSchoolView : Maybe University.School -> ( String, Html.Styled.Html Msg )
 selectSchoolView schoolMaybe =
     ( "schoolSelect"
-    , Html.div
+    , Html.Styled.div
         []
-        [ Html.label
-            [ Html.Attributes.class "form-label"
-            , Html.Attributes.for schoolSelectId
+        [ Html.Styled.label
+            [ Html.Styled.Attributes.class "form-label"
+            , Html.Styled.Attributes.for schoolSelectId
             ]
-            [ Html.text "学群" ]
-        , Html.select
-            [ Html.Attributes.class "form-menu"
-            , Html.Attributes.id schoolSelectId
-            , Html.Events.on "change" (selectDecoder |> Json.Decode.map SelectSchool)
+            [ Html.Styled.text "学群" ]
+        , Html.Styled.select
+            [ Html.Styled.Attributes.class "form-menu"
+            , Html.Styled.Attributes.id schoolSelectId
+            , Html.Styled.Events.on "change" (selectDecoder |> Json.Decode.map SelectSchool)
             ]
             (blankOption
                 :: (University.schoolAll
                         |> List.map
                             (\s ->
-                                Html.option [] [ Html.text (University.schoolToJapaneseString s) ]
+                                Html.Styled.option []
+                                    [ Html.Styled.text (University.schoolToJapaneseString s) ]
                             )
                    )
             )
@@ -447,36 +413,36 @@ schoolSelectId =
 
 {-| 学類の選択
 -}
-selectDepartmentView : University.School -> Maybe University.SchoolAndDepartment -> ( String, Html.Html Msg )
+selectDepartmentView : University.School -> Maybe University.SchoolAndDepartment -> ( String, Html.Styled.Html Msg )
 selectDepartmentView school departmentMaybe =
     ( "selectDepartment-" ++ University.schoolToIdString school
-    , Html.div
-        []
-        [ Html.label
-            [ Html.Attributes.class "form-label"
-            , Html.Attributes.for departmentSelectId
-            ]
-            [ Html.text "学類" ]
-        , Html.select
-            [ Html.Attributes.class "form-menu"
-            , Html.Attributes.id departmentSelectId
-            , Html.Events.on "change" (selectDecoder |> Json.Decode.map SelectDepartment)
+    , Page.Style.titleAndContentStyle
+        "学類"
+        (Html.Styled.select
+            [ Html.Styled.Attributes.class "form-menu"
+            , Html.Styled.Attributes.id departmentSelectId
+            , Html.Styled.Events.on "change" (selectDecoder |> Json.Decode.map SelectDepartment)
             ]
             (blankOption
                 :: (University.schoolToDepartmentList school
                         |> List.map
                             (\s ->
-                                Html.option [] [ Html.text (University.departmentToJapaneseString s |> Maybe.withDefault "?") ]
+                                Html.Styled.option []
+                                    [ Html.Styled.text
+                                        (University.departmentToJapaneseString s
+                                            |> Maybe.withDefault "?"
+                                        )
+                                    ]
                             )
                    )
             )
-        ]
+        )
     )
 
 
-blankOption : Html.Html msg
+blankOption : Html.Styled.Html msg
 blankOption =
-    Html.option [] [ Html.text "--選択してください--" ]
+    Html.Styled.option [] [ Html.Styled.text "--選択してください--" ]
 
 
 departmentSelectId : String
@@ -489,3 +455,113 @@ selectDecoder =
     Json.Decode.at
         [ "target", "selectedIndex" ]
         Json.Decode.int
+
+
+type RadioSelect
+    = Left
+    | Right
+
+
+radioForm :
+    { select : RadioSelect
+    , leftText : String
+    , rightText : String
+    , name : String
+    }
+    -> Html.Styled.Html RadioSelect
+radioForm { select, leftText, rightText, name } =
+    Html.Styled.div
+        [ Html.Styled.Attributes.css
+            [ Css.width (Css.pct 100)
+            , Css.padding (Css.px 8)
+            , Page.Style.displayGridAndGap 0
+            , Css.property "grid-template-columns" "1fr 1fr"
+            , Css.boxSizing Css.borderBox
+            ]
+        ]
+        [ Html.Styled.input
+            [ Html.Styled.Attributes.type_ "radio"
+            , Html.Styled.Attributes.name name
+            , Html.Styled.Attributes.id (name ++ "Left")
+            , Html.Styled.Attributes.css
+                [ radioInputStyle
+                ]
+            , Html.Styled.Events.on "change" (Json.Decode.succeed Left)
+            , Html.Styled.Attributes.checked (select == Left)
+            ]
+            []
+        , Html.Styled.label
+            [ Html.Styled.Attributes.for (name ++ "Left")
+            , Html.Styled.Attributes.css
+                [ radioLabelStyle (select == Left)
+                , Css.borderRadius4 (Css.px 8) Css.zero Css.zero (Css.px 8)
+                , Css.property "grid-column" "1 / 2"
+                , Css.property "grid-row" "1 / 2"
+                ]
+            ]
+            [ Html.Styled.text leftText ]
+        , Html.Styled.input
+            [ Html.Styled.Attributes.type_ "radio"
+            , Html.Styled.Attributes.name name
+            , Html.Styled.Attributes.id (name ++ "Right")
+            , Html.Styled.Attributes.css
+                [ radioInputStyle
+                ]
+            , Html.Styled.Events.on "change" (Json.Decode.succeed Right)
+            , Html.Styled.Attributes.checked (select == Right)
+            ]
+            []
+        , Html.Styled.label
+            [ Html.Styled.Attributes.for (name ++ "Right")
+            , Html.Styled.Attributes.css
+                [ radioLabelStyle (select == Right)
+                , Css.borderRadius4 Css.zero (Css.px 8) (Css.px 8) Css.zero
+                , Css.property "grid-column" "2 / 3"
+                , Css.property "grid-row" "1 / 2"
+                ]
+            ]
+            [ Html.Styled.text rightText ]
+        ]
+
+
+radioInputStyle : Css.Style
+radioInputStyle =
+    [ Css.width Css.zero
+    , Css.height Css.zero
+    ]
+        |> Css.batch
+
+
+radioLabelStyle : Bool -> Css.Style
+radioLabelStyle select =
+    ([ Css.backgroundColor
+        (if select then
+            Page.Style.primaryColor
+
+         else
+            Css.rgb 153 153 153
+        )
+     , Css.padding (Css.px 8)
+     , Css.textAlign Css.center
+     , Css.cursor Css.pointer
+     , Css.border2 Css.zero Css.none
+     , Css.boxShadow4 Css.zero (Css.px 2) (Css.px 4) (Css.rgba 0 0 0 0.18)
+     , Css.color
+        (if select then
+            Css.rgb 255 255 255
+
+         else
+            Css.rgb 0 0 0
+        )
+     ]
+        ++ (if select then
+                []
+
+            else
+                [ Css.hover
+                    [ Css.backgroundColor (Css.rgb 187 187 187)
+                    ]
+                ]
+           )
+    )
+        |> Css.batch

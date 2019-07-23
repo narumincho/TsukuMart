@@ -529,7 +529,7 @@ editView access editModel =
          , ( "introductionEditor", introductionEditor editModel.introduction )
          ]
             ++ (UniversityComponent.view editModel.university
-                    |> List.map (Tuple.mapSecond (Html.map MsgByUniversity))
+                    |> List.map (Tuple.mapSecond (Html.Styled.toUnstyled >> Html.map MsgByUniversity))
                )
             ++ [ ( "button", editButton access editModel )
                ]

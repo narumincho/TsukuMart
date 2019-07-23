@@ -1,10 +1,10 @@
 module Page.Style exposing
     ( displayGridAndGap
     , formItem
-    , label
     , primaryColor
     , primaryColorLight
     , titleAndContent
+    , titleAndContentStyle
     , userImage
     )
 
@@ -31,30 +31,42 @@ titleAndContent title content =
         [ A.css [ displayGridAndGap 4 ]
         ]
         [ H.div
-            label
+            [ A.css [ labelStyle ] ]
             [ H.text title ]
         , content |> H.fromUnstyled
         ]
         |> H.toUnstyled
 
 
-formItem : String -> String -> Html.Html msg -> Html.Html msg
+titleAndContentStyle : String -> H.Html msg -> H.Html msg
+titleAndContentStyle title content =
+    H.div
+        [ A.css [ displayGridAndGap 4 ]
+        ]
+        [ H.div
+            [ A.css [ labelStyle ] ]
+            [ H.text title ]
+        , content
+        ]
+
+
+formItem : String -> String -> Html.Html msg -> H.Html msg
 formItem title idString content =
     H.div
         [ A.css
             [ displayGridAndGap 4 ]
         ]
         [ H.label
-            (label ++ [ A.for idString ])
+            [ A.css [ labelStyle ], A.for idString ]
             [ H.text title ]
         , content |> H.fromUnstyled
         ]
-        |> H.toUnstyled
 
 
-label : List (H.Attribute a)
-label =
-    [ A.css [ Css.backgroundColor (Css.rgb 221 221 221) ] ]
+labelStyle : Css.Style
+labelStyle =
+    [ Css.backgroundColor (Css.rgb 221 221 221) ]
+        |> Css.batch
 
 
 displayGridAndGap : Int -> Css.Style
@@ -69,7 +81,7 @@ displayGridAndGap gap =
                 []
 
             else
-                [ Css.property "gap" (String.fromInt gap) ]
+                [ Css.property "gap" (String.fromInt gap ++ "px") ]
            )
     )
         |> Css.batch

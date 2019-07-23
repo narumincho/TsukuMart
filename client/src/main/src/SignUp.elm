@@ -2,11 +2,15 @@ port module SignUp exposing (main)
 
 import BasicParts
 import Browser
+import Css
 import Data.ImageId
 import Html
 import Html.Attributes
 import Html.Events
 import Html.Keyed
+import Html.Styled
+import Html.Styled.Attributes
+import Html.Styled.Keyed
 import Json.Decode
 import Page.Component.University as University
 import Page.Style
@@ -100,31 +104,33 @@ view (Model { image, university }) =
     Html.div
         [ Html.Attributes.id "app" ]
         [ BasicParts.headerWithoutBackArrow
-        , Html.Keyed.node "form"
-            [ Html.Attributes.style "padding" "64px 8px 8px 8px"
-            , Html.Attributes.style "width" "100%"
-            , Html.Attributes.style "max-width" "512px"
-            , Html.Attributes.style "display" "grid"
-            , Html.Attributes.style "gap" "16px"
+        , Html.Styled.Keyed.node "form"
+            [ Html.Styled.Attributes.css
+                [ Css.padding4 (Css.px 64) (Css.px 8) (Css.px 8) (Css.px 8)
+                , Css.width (Css.pct 100)
+                , Css.maxWidth (Css.px 512)
+                , Page.Style.displayGridAndGap 16
+                ]
             ]
             ([ ( "title"
-               , Html.h1
+               , Html.Styled.h1
                     []
-                    [ Html.text "新規登録!" ]
+                    [ Html.Styled.text "新規登録!" ]
                )
              , ( "studentIdView", studentIdView )
              , ( "imageView", imageView image )
              , ( "nameView", nameView )
              ]
                 ++ (University.view university
-                        |> List.map (Tuple.mapSecond (Html.map MsgByUniversity))
+                        |> List.map (Tuple.mapSecond (Html.Styled.map MsgByUniversity))
                    )
                 ++ [ ( "submitButton", submitButtonView ) ]
             )
+            |> Html.Styled.toUnstyled
         ]
 
 
-studentIdView : Html.Html Msg
+studentIdView : Html.Styled.Html Msg
 studentIdView =
     Page.Style.formItem "学籍番号"
         studentInputId
@@ -141,14 +147,14 @@ studentInputId =
     "studentInput"
 
 
-imageView : Image -> Html.Html Msg
+imageView : Image -> Html.Styled.Html Msg
 imageView image =
-    Html.div
+    Html.Styled.div
         []
-        [ Html.label
-            [ Html.Attributes.for imageInputId ]
-            [ Html.img
-                [ Html.Attributes.src
+        [ Html.Styled.label
+            [ Html.Styled.Attributes.for imageInputId ]
+            [ Html.Styled.img
+                [ Html.Styled.Attributes.src
                     (case image of
                         ServiceImage imageId ->
                             Data.ImageId.toUrlString imageId
@@ -159,16 +165,16 @@ imageView image =
                 ]
                 []
             ]
-        , Html.input
-            [ Html.Attributes.id imageInputId
-            , Html.Attributes.type_ "file"
-            , Html.Attributes.accept "image/*"
+        , Html.Styled.input
+            [ Html.Styled.Attributes.id imageInputId
+            , Html.Styled.Attributes.type_ "file"
+            , Html.Styled.Attributes.accept "image/*"
             ]
             []
         ]
 
 
-nameView : Html.Html Msg
+nameView : Html.Styled.Html Msg
 nameView =
     Page.Style.formItem "名前"
         studentInputId
@@ -186,7 +192,7 @@ nameInputId =
     "nameInput"
 
 
-submitButtonView : Html.Html Msg
+submitButtonView : Html.Styled.Html Msg
 submitButtonView =
     Html.button
         [ Html.Events.custom
@@ -199,6 +205,7 @@ submitButtonView =
             )
         ]
         [ Html.text "新規登録する" ]
+        |> Html.Styled.fromUnstyled
 
 
 inputTextHtml : List (Html.Attribute Msg) -> Html.Html Msg
