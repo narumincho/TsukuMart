@@ -8,6 +8,7 @@ module Data.Category exposing
     , groupFromCategory
     , groupFromIndex
     , groupToCategoryList
+    , groupToIdString
     , groupToIndex
     , groupToJapaneseString
     , toIdString
@@ -56,8 +57,8 @@ groupFromIndex index =
 
 
 groupToJapaneseString : Group -> String
-groupToJapaneseString category =
-    case category of
+groupToJapaneseString group =
+    case group of
         Furniture ->
             "家具"
 
@@ -78,6 +79,31 @@ groupToJapaneseString category =
 
         Hobby ->
             "ホビー・雑貨"
+
+
+groupToIdString : Group -> String
+groupToIdString group =
+    case group of
+        Furniture ->
+            "furniture"
+
+        Appliance ->
+            "appliance"
+
+        Fashion ->
+            "fashion"
+
+        Book ->
+            "book"
+
+        Vehicle ->
+            "vehicle"
+
+        Food ->
+            "food"
+
+        Hobby ->
+            "hobby"
 
 
 groupToCategoryList : Group -> List Category

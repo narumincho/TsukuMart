@@ -41,9 +41,9 @@ type Msg
     | SwitchSchool
     | SwitchGraduateTsukuba
     | SwitchGraduateNoTsukuba
-    | SelectGraduate Int
-    | SelectSchool Int
-    | SelectDepartment Int
+    | SelectGraduate (Maybe Int)
+    | SelectSchool (Maybe Int)
+    | SelectDepartment (Maybe Int)
 
 
 type Emission
@@ -147,20 +147,15 @@ update msg model =
                 graduate
 
         ( SelectGraduate index, GraduateTsukuba rec ) ->
-            case University.graduateFromIndex (index - 1) of
-                Just graduate ->
-                    GraduateTsukuba { rec | graduate = Just graduate }
-
-                Nothing ->
-                    model
+            GraduateTsukuba
+                { rec
+                    | graduate =
+                        index
+                            |> Maybe.andThen University.graduateFromIndex
+                }
 
         ( SelectGraduate index, GraduateNoTsukuba _ ) ->
-            case University.graduateFromIndex (index - 1) of
-                Just graduate ->
-                    GraduateNoTsukuba (Just graduate)
-
-                Nothing ->
-                    model
+            GraduateNoTsukuba (index |> Maybe.andThen University.graduateFromIndex)
 
         ( SelectSchool index, School school ) ->
             School (selectSchool index school)
@@ -183,51 +178,55 @@ update msg model =
     )
 
 
-selectSchool : Int -> SchoolSelect -> SchoolSelect
+selectSchool : Maybe Int -> SchoolSelect -> SchoolSelect
 selectSchool index schoolSelect =
-    case ( University.schoolFromIndex (index - 1), schoolSelect ) of
-        ( Just school, SchoolNone ) ->
-            SchoolSchool school
+    case index |> Maybe.andThen University.schoolFromIndex of
+        Just school ->
+            case schoolSelect of
+                SchoolNone ->
+                    SchoolSchool school
 
-        ( Just school, SchoolSchool _ ) ->
-            SchoolSchool school
+                SchoolSchool _ ->
+                    SchoolSchool school
 
-        ( Just school, SchoolSchoolAndDepartment schoolAndDepartment ) ->
-            if University.schoolFromDepartment schoolAndDepartment == school then
-                schoolSelect
+                SchoolSchoolAndDepartment schoolAndDepartment ->
+                    if University.schoolFromDepartment schoolAndDepartment == school then
+                        schoolSelect
 
-            else
-                SchoolSchool school
+                    else
+                        SchoolSchool school
 
-        ( _, _ ) ->
-            schoolSelect
+        Nothing ->
+            SchoolNone
 
 
-selectDepartment : Int -> SchoolSelect -> SchoolSelect
+selectDepartment : Maybe Int -> SchoolSelect -> SchoolSelect
 selectDepartment index schoolSelect =
     case schoolSelect of
         SchoolNone ->
             SchoolNone
 
         SchoolSchool school ->
-            case University.departmentFromIndexInSchool school (index - 1) of
+            case index |> Maybe.andThen (University.departmentFromIndexInSchool school) of
                 Just department ->
                     SchoolSchoolAndDepartment department
 
                 Nothing ->
-                    schoolSelect
+                    SchoolSchool school
 
         SchoolSchoolAndDepartment schoolAndDepartment ->
             case
-                University.departmentFromIndexInSchool
-                    (University.schoolFromDepartment schoolAndDepartment)
-                    index
+                index
+                    |> Maybe.andThen
+                        (University.departmentFromIndexInSchool
+                            (University.schoolFromDepartment schoolAndDepartment)
+                        )
             of
                 Just department ->
                     SchoolSchoolAndDepartment department
 
                 Nothing ->
-                    schoolSelect
+                    SchoolSchool (schoolAndDepartment |> University.schoolFromDepartment)
 
 
 
@@ -318,29 +317,16 @@ graduateNoTsukubaView graduateSelect =
 graduateSelectView : Maybe University.Graduate -> ( String, Html.Styled.Html Msg )
 graduateSelectView graduateMaybe =
     ( "selectGraduate"
-    , Page.Style.titleAndContentStyle "研究科"
-        (Html.Styled.select
-            [ Html.Styled.Attributes.css
-                [ Css.display Css.block
-                , Css.width (Css.pct 100)
-                , Css.height (Css.px 64)
-                , Css.border3 (Css.px 1) Css.solid (Css.rgb 204 204 204)
-                , Css.boxSizing Css.borderBox
-                , Css.borderRadius (Css.px 8)
-                , Css.fontSize (Css.px 24)
-                ]
-            , Html.Styled.Attributes.id graduateSelectId
-            , Html.Styled.Events.on "change" (selectDecoder |> Json.Decode.map SelectGraduate)
-            ]
-            (blankOption
-                :: (University.graduateAllValue
-                        |> List.map
-                            (\s ->
-                                Html.Styled.option [] [ Html.Styled.text (University.graduateToJapaneseString s) ]
-                            )
-                   )
+    , Page.Style.formItem
+        "研究科"
+        graduateSelectId
+        [ Page.Style.select
+            graduateSelectId
+            (University.graduateAllValue
+                |> List.map University.graduateToJapaneseString
             )
-        )
+        ]
+        |> Html.Styled.map SelectGraduate
     )
 
 
@@ -381,28 +367,16 @@ graduateYesNoTsukubaView select =
 selectSchoolView : Maybe University.School -> ( String, Html.Styled.Html Msg )
 selectSchoolView schoolMaybe =
     ( "schoolSelect"
-    , Html.Styled.div
-        []
-        [ Html.Styled.label
-            [ Html.Styled.Attributes.class "form-label"
-            , Html.Styled.Attributes.for schoolSelectId
-            ]
-            [ Html.Styled.text "学群" ]
-        , Html.Styled.select
-            [ Html.Styled.Attributes.class "form-menu"
-            , Html.Styled.Attributes.id schoolSelectId
-            , Html.Styled.Events.on "change" (selectDecoder |> Json.Decode.map SelectSchool)
-            ]
-            (blankOption
-                :: (University.schoolAll
-                        |> List.map
-                            (\s ->
-                                Html.Styled.option []
-                                    [ Html.Styled.text (University.schoolToJapaneseString s) ]
-                            )
-                   )
+    , Page.Style.formItem
+        "学群"
+        schoolSelectId
+        [ Page.Style.select
+            schoolSelectId
+            (University.schoolAll
+                |> List.map University.schoolToJapaneseString
             )
         ]
+        |> Html.Styled.map SelectSchool
     )
 
 
@@ -416,45 +390,25 @@ schoolSelectId =
 selectDepartmentView : University.School -> Maybe University.SchoolAndDepartment -> ( String, Html.Styled.Html Msg )
 selectDepartmentView school departmentMaybe =
     ( "selectDepartment-" ++ University.schoolToIdString school
-    , Page.Style.titleAndContentStyle
+    , Page.Style.formItem
         "学類"
-        (Html.Styled.select
-            [ Html.Styled.Attributes.class "form-menu"
-            , Html.Styled.Attributes.id departmentSelectId
-            , Html.Styled.Events.on "change" (selectDecoder |> Json.Decode.map SelectDepartment)
-            ]
-            (blankOption
-                :: (University.schoolToDepartmentList school
-                        |> List.map
-                            (\s ->
-                                Html.Styled.option []
-                                    [ Html.Styled.text
-                                        (University.departmentToJapaneseString s
-                                            |> Maybe.withDefault "?"
-                                        )
-                                    ]
-                            )
-                   )
+        departmentSelectId
+        [ Page.Style.select
+            departmentSelectId
+            (University.schoolToDepartmentList school
+                |> List.map
+                    (University.departmentToJapaneseString
+                        >> Maybe.withDefault "?"
+                    )
             )
-        )
+        ]
+        |> Html.Styled.map SelectDepartment
     )
-
-
-blankOption : Html.Styled.Html msg
-blankOption =
-    Html.Styled.option [] [ Html.Styled.text "--選択してください--" ]
 
 
 departmentSelectId : String
 departmentSelectId =
     "signUp-selectDepartment"
-
-
-selectDecoder : Json.Decode.Decoder Int
-selectDecoder =
-    Json.Decode.at
-        [ "target", "selectedIndex" ]
-        Json.Decode.int
 
 
 type RadioSelect

@@ -132,7 +132,7 @@ infinite =
     { a | value = "infinite" }
 
 
-photo : Html.Html msg
+photo : Html.Styled.Html msg
 photo =
     S.svg
         [ A.css
@@ -153,10 +153,9 @@ photo =
             ]
             []
         ]
-        |> Html.Styled.toUnstyled
 
 
-delete : Html.Html ()
+delete : Html.Styled.Html ()
 delete =
     S.svg
         [ A.css
@@ -183,7 +182,6 @@ delete =
             [ A.x1 "7", A.y1 "3", A.x2 "3", A.y2 "7", A.stroke "white" ]
             []
         ]
-        |> Html.Styled.toUnstyled
 
 
 gitHub : Html.Styled.Html msg

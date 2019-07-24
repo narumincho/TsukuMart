@@ -7,7 +7,6 @@ import Data.ImageId
 import Html
 import Html.Attributes
 import Html.Events
-import Html.Keyed
 import Html.Styled
 import Html.Styled.Attributes
 import Html.Styled.Keyed
@@ -42,6 +41,7 @@ type Image
 type Msg
     = InputImage String
     | InputName String
+    | InputStudentId String
     | MsgByUniversity University.Msg
     | Submit
 
@@ -84,6 +84,11 @@ update msg (Model rec) =
         InputName name ->
             ( Model
                 { rec | name = name }
+            , Cmd.none
+            )
+
+        InputStudentId studentId ->
+            ( Model rec
             , Cmd.none
             )
 
@@ -134,12 +139,13 @@ studentIdView : Html.Styled.Html Msg
 studentIdView =
     Page.Style.formItem "学籍番号"
         studentInputId
-        (inputTextHtml
-            [ Html.Attributes.id studentInputId
-            , Html.Attributes.type_ "text"
-            , Html.Attributes.required True
-            ]
-        )
+        [ Page.Style.inputText
+            { id = studentInputId
+            , type_ = "text"
+            , required = True
+            }
+        ]
+        |> Html.Styled.map InputStudentId
 
 
 studentInputId : String
@@ -178,13 +184,13 @@ nameView : Html.Styled.Html Msg
 nameView =
     Page.Style.formItem "名前"
         studentInputId
-        (inputTextHtml
-            [ Html.Attributes.id nameInputId
-            , Html.Attributes.type_ "text"
-            , Html.Attributes.required True
-            , Html.Events.onInput InputName
-            ]
-        )
+        [ Page.Style.inputText
+            { id = nameInputId
+            , type_ = "text"
+            , required = True
+            }
+        ]
+        |> Html.Styled.map InputName
 
 
 nameInputId : String
@@ -206,24 +212,6 @@ submitButtonView =
         ]
         [ Html.text "新規登録する" ]
         |> Html.Styled.fromUnstyled
-
-
-inputTextHtml : List (Html.Attribute Msg) -> Html.Html Msg
-inputTextHtml attributes =
-    Html.input
-        ([ Html.Attributes.style "font-size" "1.2rem"
-         , Html.Attributes.style "padding" ".4rem"
-         , Html.Attributes.style "width" "100%"
-         , Html.Attributes.style "border" "solid 1px #ccc"
-         , Html.Attributes.style "box-sizing" "border-box"
-         , Html.Attributes.style "border-radius" ".4rem"
-         , Html.Attributes.style "box-shadow" "inset 0 1px 1px rgba(0, 0, 0, .075)"
-         , Html.Attributes.style "transition" "border-color ease-in-out .15s, box-shadow ease-in-out .15s"
-         , Html.Attributes.style "outline" "0"
-         ]
-            ++ attributes
-        )
-        []
 
 
 subscription : Sub Msg

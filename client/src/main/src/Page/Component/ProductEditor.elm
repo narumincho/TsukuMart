@@ -19,8 +19,13 @@ import Html
 import Html.Attributes
 import Html.Events
 import Html.Keyed
+import Html.Styled
+import Html.Styled.Attributes
+import Html.Styled.Events
+import Html.Styled.Keyed
 import Icon
 import Json.Decode
+import Page.Style
 import Set
 import Utility
 
@@ -54,9 +59,9 @@ type Msg
     = InputName String
     | InputDescription String
     | InputPrice String
-    | SelectCondition Int
-    | SelectCategoryGroup Int
-    | SelectCategory Int
+    | SelectCondition (Maybe Int)
+    | SelectCategoryGroup (Maybe Int)
+    | SelectCategory (Maybe Int)
     | DeleteImage Int
     | InputImageList (List String)
 
@@ -176,15 +181,10 @@ update msg (Model rec) =
                 }
 
         SelectCondition index ->
-            case Product.conditionFromIndex index of
-                Just condition ->
-                    Model
-                        { rec
-                            | condition = Just condition
-                        }
-
-                Nothing ->
-                    Model rec
+            Model
+                { rec
+                    | condition = index |> Maybe.andThen Product.conditionFromIndex
+                }
 
         SelectCategoryGroup index ->
             Model
@@ -222,47 +222,56 @@ update msg (Model rec) =
     )
 
 
-selectCategoryGroup : Int -> CategorySelect -> CategorySelect
+selectCategoryGroup : Maybe Int -> CategorySelect -> CategorySelect
 selectCategoryGroup index categorySelect =
-    case ( Category.groupFromIndex (index - 1), categorySelect ) of
-        ( Just group, CategoryNone ) ->
-            CategoryGroupSelect group
+    case index |> Maybe.andThen Category.groupFromIndex of
+        Just group ->
+            case categorySelect of
+                CategoryNone ->
+                    CategoryGroupSelect group
 
-        ( Just group, CategoryGroupSelect _ ) ->
-            CategoryGroupSelect group
+                CategoryGroupSelect _ ->
+                    CategoryGroupSelect group
 
-        ( Just group, CategorySelect category ) ->
-            if Category.groupFromCategory category == group then
-                categorySelect
+                CategorySelect category ->
+                    if Category.groupFromCategory category == group then
+                        categorySelect
 
-            else
-                CategoryGroupSelect group
+                    else
+                        CategoryGroupSelect group
 
-        ( _, _ ) ->
-            categorySelect
+        Nothing ->
+            CategoryNone
 
 
-selectCategory : Int -> CategorySelect -> CategorySelect
+selectCategory : Maybe Int -> CategorySelect -> CategorySelect
 selectCategory index categorySelect =
     case categorySelect of
         CategoryNone ->
             CategoryNone
 
         CategoryGroupSelect group ->
-            case Category.fromIndexInGroup group (index - 1) of
+            case
+                index
+                    |> Maybe.andThen
+                        (Category.fromIndexInGroup group)
+            of
                 Just category ->
                     CategorySelect category
 
                 Nothing ->
-                    categorySelect
+                    CategoryGroupSelect group
 
         CategorySelect category ->
-            case Category.fromIndexInGroup (Category.groupFromCategory category) (index - 1) of
+            case
+                index
+                    |> Maybe.andThen (Category.fromIndexInGroup (Category.groupFromCategory category))
+            of
                 Just newCategory ->
                     CategorySelect newCategory
 
                 Nothing ->
-                    categorySelect
+                    CategoryGroupSelect (Category.groupFromCategory category)
 
 
 imageDeleteAt :
@@ -444,6 +453,7 @@ view (Model rec) =
            , ( "condition", conditionView rec.condition )
            , ( "category", categoryView rec.category )
            ]
+        |> List.map (Tuple.mapSecond Html.Styled.toUnstyled)
 
 
 imageCount : { addImagesLength : Int, deleteIndexSize : Int, beforeImageIdsLength : Int } -> Int
@@ -458,21 +468,21 @@ imageCount { addImagesLength, deleteIndexSize, beforeImageIdsLength } =
 -}
 
 
-photoAdd : Html.Html Msg
+photoAdd : Html.Styled.Html Msg
 photoAdd =
-    Html.div
+    Html.Styled.div
         []
-        [ Html.label
-            [ Html.Attributes.class "exhibition-photo-add"
-            , Html.Attributes.id photoAddLabelId
-            , Html.Attributes.for photoAddInputId
+        [ Html.Styled.label
+            [ Html.Styled.Attributes.class "exhibition-photo-add"
+            , Html.Styled.Attributes.id photoAddLabelId
+            , Html.Styled.Attributes.for photoAddInputId
             ]
             [ Icon.photo ]
-        , Html.input
-            [ Html.Attributes.id photoAddInputId
-            , Html.Attributes.type_ "file"
-            , Html.Attributes.multiple True
-            , Html.Attributes.accept "image/*"
+        , Html.Styled.input
+            [ Html.Styled.Attributes.id photoAddInputId
+            , Html.Styled.Attributes.type_ "file"
+            , Html.Styled.Attributes.multiple True
+            , Html.Styled.Attributes.accept "image/*"
             ]
             []
         ]
@@ -488,12 +498,12 @@ photoAddInputId =
     "exhibition-photo-input"
 
 
-photoCardList : { addImages : List String, deleteAt : Set.Set Int, beforeImageIds : List ImageId.ImageId } -> Html.Html Msg
+photoCardList : { addImages : List String, deleteAt : Set.Set Int, beforeImageIds : List ImageId.ImageId } -> Html.Styled.Html Msg
 photoCardList rec =
-    Html.div
-        [ Html.Attributes.class "exhibition-photo-cardList-container" ]
-        [ Html.div
-            [ Html.Attributes.class "exhibition-photo-cardList" ]
+    Html.Styled.div
+        [ Html.Styled.Attributes.class "exhibition-photo-cardList-container" ]
+        [ Html.Styled.div
+            [ Html.Styled.Attributes.class "exhibition-photo-cardList" ]
             (rec |> toImageUrlList |> List.indexedMap photoImage)
         ]
 
@@ -514,15 +524,15 @@ toImageUrlList { addImages, deleteAt, beforeImageIds } =
         ++ (beforeImageIds |> List.map ImageId.toUrlString)
 
 
-photoImage : Int -> String -> Html.Html Msg
+photoImage : Int -> String -> Html.Styled.Html Msg
 photoImage index dataUrl =
-    Html.div
-        [ Html.Attributes.class "exhibition-photo-card" ]
+    Html.Styled.div
+        [ Html.Styled.Attributes.class "exhibition-photo-card" ]
         [ Icon.delete
-            |> Html.map (always (DeleteImage index))
-        , Html.img
-            [ Html.Attributes.src dataUrl
-            , Html.Attributes.class "exhibition-photo-card-image"
+            |> Html.Styled.map (always (DeleteImage index))
+        , Html.Styled.img
+            [ Html.Styled.Attributes.src dataUrl
+            , Html.Styled.Attributes.class "exhibition-photo-card-image"
             ]
             []
         ]
@@ -535,27 +545,23 @@ photoImage index dataUrl =
 -}
 
 
-nameView : String -> Html.Html Msg
+nameView : String -> Html.Styled.Html Msg
 nameView name =
-    Html.div
-        []
-        ([ Html.label
-            [ Html.Attributes.for nameEditorId
-            , Html.Attributes.class "form-label"
-            ]
-            [ Html.text "商品名" ]
-         , Html.input
-            [ Html.Attributes.placeholder "40文字まで"
-            , Html.Attributes.class "form-input"
-            , Html.Attributes.id nameEditorId
-            , Html.Attributes.maxlength 40
-            , Html.Events.onInput InputName
+    Page.Style.formItem
+        "商品名"
+        nameEditorId
+        ([ Html.Styled.input
+            [ Html.Styled.Attributes.placeholder "40文字まで"
+            , Html.Styled.Attributes.class "form-input"
+            , Html.Styled.Attributes.id nameEditorId
+            , Html.Styled.Attributes.maxlength 40
+            , Html.Styled.Events.onInput InputName
             ]
             []
          ]
             ++ (case nameCheck name of
                     Just errorMsg ->
-                        [ Html.text errorMsg ]
+                        [ Html.Styled.text errorMsg ]
 
                     Nothing ->
                         []
@@ -575,19 +581,15 @@ nameEditorId =
 -}
 
 
-descriptionView : Html.Html Msg
+descriptionView : Html.Styled.Html Msg
 descriptionView =
-    Html.div
-        []
-        [ Html.label
-            [ Html.Attributes.for descriptionEditorId
-            , Html.Attributes.class "form-label"
-            ]
-            [ Html.text "商品の説明" ]
-        , Html.textarea
-            [ Html.Attributes.class "form-textarea"
-            , Html.Attributes.id descriptionEditorId
-            , Html.Events.onInput InputDescription
+    Page.Style.formItem
+        "商品の説明"
+        descriptionEditorId
+        [ Html.Styled.textarea
+            [ Html.Styled.Attributes.class "form-textarea"
+            , Html.Styled.Attributes.id descriptionEditorId
+            , Html.Styled.Events.onInput InputDescription
             ]
             []
         ]
@@ -605,35 +607,31 @@ descriptionEditorId =
 -}
 
 
-priceView : Maybe Int -> Html.Html Msg
+priceView : Maybe Int -> Html.Styled.Html Msg
 priceView priceMaybe =
-    Html.div
-        []
-        [ Html.label
-            [ Html.Attributes.for priceEditorId
-            , Html.Attributes.class "form-label"
+    Page.Style.formItem
+        "販売価格"
+        priceEditorId
+        [ Html.Styled.div
+            [ Html.Styled.Attributes.class "exhibition-itemPrice-input"
             ]
-            [ Html.text "販売価格" ]
-        , Html.div
-            [ Html.Attributes.class "exhibition-itemPrice-input"
-            ]
-            [ Html.input
-                [ Html.Attributes.type_ "number"
-                , Html.Attributes.class "exhibition-itemPrice-input-input"
-                , Html.Attributes.id priceEditorId
-                , Html.Attributes.placeholder "0 ～ 1000000"
-                , Html.Attributes.min "0"
-                , Html.Attributes.max "1000000"
-                , Html.Events.onInput InputPrice
+            [ Html.Styled.input
+                [ Html.Styled.Attributes.type_ "number"
+                , Html.Styled.Attributes.class "exhibition-itemPrice-input-input"
+                , Html.Styled.Attributes.id priceEditorId
+                , Html.Styled.Attributes.placeholder "0 ～ 1000000"
+                , Html.Styled.Attributes.min "0"
+                , Html.Styled.Attributes.max "1000000"
+                , Html.Styled.Events.onInput InputPrice
                 ]
                 []
-            , Html.span
-                [ Html.Attributes.style "font-size" "1.5rem" ]
-                [ Html.text "円" ]
+            , Html.Styled.span
+                [ Html.Styled.Attributes.style "font-size" "1.5rem" ]
+                [ Html.Styled.text "円" ]
             ]
-        , Html.div
-            [ Html.Attributes.class "exhibition-priceView" ]
-            [ Html.text
+        , Html.Styled.div
+            [ Html.Styled.Attributes.class "exhibition-priceView" ]
+            [ Html.Styled.text
                 (case priceMaybe of
                     Just price ->
                         Product.priceToString price
@@ -657,29 +655,18 @@ priceEditorId =
 -}
 
 
-conditionView : Maybe Product.Condition -> Html.Html Msg
+conditionView : Maybe Product.Condition -> Html.Styled.Html Msg
 conditionView condition =
-    Html.div
-        []
-        [ Html.label
-            [ Html.Attributes.for conditionSelectId
-            , Html.Attributes.class "form-label"
-            ]
-            [ Html.text "商品の状態" ]
-        , Html.select
-            [ Html.Attributes.id conditionSelectId
-            , Html.Attributes.class "form-menu"
-            , Html.Events.on "change" (selectDecoder |> Json.Decode.map SelectCondition)
-            ]
-            (blankOption
-                :: (Product.conditionAll
-                        |> List.map
-                            (\s ->
-                                Html.option [] [ Html.text (Product.conditionToJapaneseString s) ]
-                            )
-                   )
+    Page.Style.formItem
+        "商品の状態"
+        conditionSelectId
+        [ Page.Style.select
+            conditionSelectId
+            (Product.conditionAll
+                |> List.map Product.conditionToJapaneseString
             )
         ]
+        |> Html.Styled.map SelectCondition
 
 
 conditionSelectId : String
@@ -706,9 +693,9 @@ selectDecoder =
 -}
 
 
-categoryView : CategorySelect -> Html.Html Msg
+categoryView : CategorySelect -> Html.Styled.Html Msg
 categoryView categorySelect =
-    Html.Keyed.node "div"
+    Html.Styled.Keyed.node "div"
         []
         (case categorySelect of
             CategoryNone ->
@@ -732,30 +719,17 @@ categoryView categorySelect =
         )
 
 
-selectCategoryGroupView : Maybe Category.Group -> ( String, Html.Html Msg )
+selectCategoryGroupView : Maybe Category.Group -> ( String, Html.Styled.Html Msg )
 selectCategoryGroupView categoryGroup =
     ( "selectCategoryGroup"
-    , Html.div
-        []
-        [ Html.label
-            [ Html.Attributes.for conditionSelectId
-            , Html.Attributes.class "form-label"
-            ]
-            [ Html.text "カテゴリ グループ" ]
-        , Html.select
-            [ Html.Attributes.id categoryGroupSelectId
-            , Html.Attributes.class "form-menu"
-            , Html.Events.on "change" (selectDecoder |> Json.Decode.map SelectCategoryGroup)
-            ]
-            (blankOption
-                :: (Category.groupAll
-                        |> List.map
-                            (\g ->
-                                Html.option [] [ Html.text (Category.groupToJapaneseString g) ]
-                            )
-                   )
-            )
+    , Page.Style.formItem
+        "カテゴリ グループ"
+        categoryGroupSelectId
+        [ Page.Style.select
+            categoryGroupSelectId
+            (Category.groupAll |> List.map Category.groupToJapaneseString)
         ]
+        |> Html.Styled.map SelectCategoryGroup
     )
 
 
@@ -764,31 +738,19 @@ categoryGroupSelectId =
     "select-category-group"
 
 
-selectCategoryView : Category.Group -> Maybe Category.Category -> ( String, Html.Html Msg )
+selectCategoryView : Category.Group -> Maybe Category.Category -> ( String, Html.Styled.Html Msg )
 selectCategoryView group category =
-    ( "selectCategory" ++ Category.groupToJapaneseString group
-      -- TODO ascii以外は避けたい
-    , Html.div
-        []
-        [ Html.label
-            [ Html.Attributes.for conditionSelectId
-            , Html.Attributes.class "form-label"
-            ]
-            [ Html.text "カテゴリ" ]
-        , Html.select
-            [ Html.Attributes.id categorySelectId
-            , Html.Attributes.class "form-menu"
-            , Html.Events.on "change" (selectDecoder |> Json.Decode.map SelectCategory)
-            ]
-            (blankOption
-                :: (Category.groupToCategoryList group
-                        |> List.map
-                            (\c ->
-                                Html.option [] [ Html.text (Category.toJapaneseString c) ]
-                            )
-                   )
+    ( "selectCategory" ++ Category.groupToIdString group
+    , Page.Style.formItem
+        "カテゴリ"
+        categorySelectId
+        [ Page.Style.select
+            categorySelectId
+            (Category.groupToCategoryList group
+                |> List.map Category.toJapaneseString
             )
         ]
+        |> Html.Styled.map SelectCategory
     )
 
 
