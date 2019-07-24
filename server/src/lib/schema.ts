@@ -1069,17 +1069,17 @@ const getLogInUrl = makeQueryOrMutationField<
 });
 
 /**
- * ユーザー情報を登録して認証メールを送信する
+ * ユーザー情報を登録する
  */
-const sendConformEmail = makeQueryOrMutationField<
+const registerSignUpData = makeQueryOrMutationField<
     {
         sendEmailToken: string;
         image: Maybe<type.DataURL>;
         email: string;
     } & Pick<type.UserPrivateInternal, "displayName" | "university">,
-    type.Unit
+    string
 >({
-    type: g.GraphQLNonNull(type.unitGraphQLType),
+    type: g.GraphQLNonNull(g.GraphQLString),
     args: {
         sendEmailToken: {
             type: g.GraphQLNonNull(g.GraphQLString),
@@ -1103,7 +1103,7 @@ const sendConformEmail = makeQueryOrMutationField<
             description: "メールアドレス"
         }
     },
-    resolve: async (source, args): Promise<type.Unit> => {
+    resolve: async (source, args): Promise<string> => {
         console.log("schemaのsendConformEmailのリゾルバが呼ばれた");
         const universityUnsafe = args.university;
         const logInAccountServiceId = verifySendEmailToken(args.sendEmailToken);
@@ -1128,17 +1128,16 @@ const sendConformEmail = makeQueryOrMutationField<
 
         console.log(`画像のURLを取得 ${imageId}`);
         const university = type.universityFromInternal(universityUnsafe);
-        await database.addUserBeforeEmailVerificationAndSendEmail(
+        return await database.addUserBeforeEmailVerification(
             logInAccountServiceId,
             args.displayName,
             imageId,
             args.email,
             university
         );
-        console.log("okを返す");
-        return "ok";
     },
-    description: "ユーザー情報を登録して認証メールを送信する"
+    description:
+        "ユーザー情報を登録して、クライアントSDKでログインするためのカスタムトークンを得る"
 });
 
 const verifySendEmailToken = (
@@ -1660,7 +1659,7 @@ export const schema = new g.GraphQLSchema({
         description: "データを作成、更新ができる",
         fields: {
             getLogInUrl,
-            sendConformEmail,
+            registerSignUpData,
             getAccessTokenAndUpdateRefreshToken,
             updateProfile,
             sellProduct,

@@ -697,12 +697,8 @@ export const getFirebaseAuthUserEmailVerified = async (
             Firebase Client Auth 
    ==========================================
 */
-export const sendEmailVerification = async (
-    email: string,
-    password: string
-): Promise<void> => {
-    console.log("ユーザー認証メールの送信はクライアントですることにする");
-};
+export const createCustomToken = async (uid: string): Promise<string> =>
+    await initializedAdmin.auth().createCustomToken(uid);
 /* ==========================================
             Firebase Cloud Storage
    ==========================================

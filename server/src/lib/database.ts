@@ -95,13 +95,13 @@ export const getUserInUserBeforeInputData = async (
     };
 };
 
-export const addUserBeforeEmailVerificationAndSendEmail = async (
+export const addUserBeforeEmailVerification = async (
     logInAccountServiceId: type.LogInServiceAndId,
     name: string,
     imageId: string,
     email: string,
     university: type.University
-): Promise<void> => {
+): Promise<string> => {
     const authUser = await databaseLow.createFirebaseAuthUserByRandomPassword(
         email
     );
@@ -114,7 +114,7 @@ export const addUserBeforeEmailVerificationAndSendEmail = async (
         graduate: flatUniversity.graduate,
         email: email
     });
-    await databaseLow.sendEmailVerification(email, authUser.password);
+    return await databaseLow.createCustomToken(authUser.id);
 };
 
 /**

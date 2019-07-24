@@ -10,5 +10,5 @@
         "newLine": "LF",
         "outDir": "../dist"
     },
-    "files": ["./index.ts"]
+    "include": ["index.ts"]
 }

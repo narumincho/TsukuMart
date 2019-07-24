@@ -106,23 +106,6 @@ export const checkAccountServiceValues = (
     return null;
 };
 /** ===================================
- *               Unit
- * ====================================
- */
-
-const unitValues = {
-    ok: {
-        description: "成功した"
-    }
-};
-export type Unit = keyof (typeof unitValues);
-
-export const unitGraphQLType = new g.GraphQLEnumType({
-    name: "Unit",
-    values: unitValues,
-    description: "Mutationで無事処理が成功したことを表現する型"
-});
-/** ===================================
  *            University
  * ====================================
  */
