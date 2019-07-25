@@ -906,6 +906,34 @@ const product = makeQueryOrMutationField<
     description: "商品の情報を取得する"
 });
 
+const productSearch = makeQueryOrMutationField<
+    {
+        query: string;
+        category: Maybe<type.Category>;
+        condition: Maybe<type.Condition>;
+    },
+    Array<type.ProductInternal>
+>({
+    args: {
+        query: {
+            type: g.GraphQLNonNull(g.GraphQLString),
+            description: "検索語句"
+        },
+        category: {
+            type: type.categoryGraphQLType,
+            description: "カテゴリーの指定。nullで指定なし"
+        },
+        condition: {
+            type: type.conditionGraphQLType,
+            description: "商品の品質状態。nullで指定なし"
+        }
+    },
+    type: g.GraphQLNonNull(g.GraphQLList(g.GraphQLNonNull(productGraphQLType))),
+    resolve: async (source, args, context, info) =>
+        await database.productSearch(args.query, args.category, args.condition),
+    description: "商品を検索で探す"
+});
+
 const productAll = makeQueryOrMutationField<{}, Array<type.ProductInternal>>({
     args: {},
     type: g.GraphQLNonNull(g.GraphQLList(g.GraphQLNonNull(productGraphQLType))),
@@ -1647,6 +1675,7 @@ export const schema = new g.GraphQLSchema({
             userAll,
             userPrivate,
             product,
+            productSearch,
             productRecentAll,
             productRecommendAll,
             productFreeAll,

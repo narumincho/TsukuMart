@@ -668,6 +668,35 @@ export const getProduct = async (id: string): Promise<ProductReturnLowCost> =>
         data: await databaseLow.getProduct(id)
     });
 
+export const productSearch = async (
+    query: string,
+    category: Maybe<type.Category>,
+    condition: Maybe<type.Condition>
+): Promise<Array<ProductReturnLowCost>> =>
+    (await databaseLow.getAllProductData())
+        .filter(
+            ({ id, data }) =>
+                (typeof category === "string"
+                    ? data.category === category
+                    : true) &&
+                (typeof condition === "string"
+                    ? data.condition === condition
+                    : true) &&
+                (normalization(data.name).includes(normalization(query)) ||
+                    normalization(data.description).includes(
+                        normalization(query)
+                    ))
+        )
+        .map(productReturnLowCostFromDatabaseLow);
+
+/**
+ * 検索用に正規化する。カタカナをひらがなに、アルファベットの大文字を小文字に
+ * @param text
+ */
+const normalization = (text: string): string =>
+    text
+        .replace(/[ァ-ン]/g, s => String.fromCharCode(s.charCodeAt(0) - 0x60))
+        .toLowerCase();
 /**
  * 商品を出品する
  */
