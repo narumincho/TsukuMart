@@ -33,6 +33,9 @@ port imageInput : (String -> msg) -> Sub msg
 port sendConfirmEmail : String -> Cmd msg
 
 
+port sentConfirmEmail : (() -> msg) -> Sub msg
+
+
 port alert : String -> Cmd msg
 
 
@@ -69,7 +72,7 @@ type Msg
     | MsgByUniversity University.Msg
     | Submit Api.SignUpRequest
     | SendingUserDataResponse (Result String String)
-    | SendingConfirmEmailResponse (Result () ())
+    | SendingConfirmEmailResponse
 
 
 main : Program { sendEmailToken : String, imageId : String, name : String } Model Msg
@@ -153,7 +156,7 @@ update msg model =
                     , alert errorMessage
                     )
 
-        ( SendingConfirmEmailResponse result, SendingConfirmEmail emailAddress ) ->
+        ( SendingConfirmEmailResponse, SendingConfirmEmail emailAddress ) ->
             ( Sent emailAddress
             , Cmd.none
             )
@@ -367,6 +370,11 @@ imageView image =
                         CustomizeImage dataUrl ->
                             dataUrl
                     )
+                , Html.Styled.Attributes.css
+                    [ Css.maxWidth (Css.px 128)
+                    , Css.maxHeight (Css.px 128)
+                    , Css.borderRadius (Css.pct 50)
+                    ]
                 ]
                 []
             ]
@@ -433,7 +441,10 @@ submitButtonView signUpRequestMaybe =
 
 subscription : Sub Msg
 subscription =
-    imageInput InputImage
+    Sub.batch
+        [ imageInput InputImage
+        , sentConfirmEmail (always SendingConfirmEmailResponse)
+        ]
 
 
 imageInputId : String
@@ -444,15 +455,16 @@ imageInputId =
 sendingUserDataView : Data.EmailAddress.EmailAddress -> Html.Styled.Html msg
 sendingUserDataView emailAddress =
     Html.Styled.div
-        []
+        [ Html.Styled.Attributes.css [ loadingStyle ] ]
         [ Html.Styled.text "新規登録データを送信中"
+        , Icon.loading { size = 64, color = Css.rgb 0 0 0 }
         ]
 
 
 sendingConfirmEmailView : Data.EmailAddress.EmailAddress -> Html.Styled.Html msg
 sendingConfirmEmailView emailAddress =
     Html.Styled.div
-        []
+        [ Html.Styled.Attributes.css [ loadingStyle ] ]
         [ Html.Styled.text (Data.EmailAddress.toString emailAddress ++ "に認証メールを送信中…")
         , Icon.loading { size = 64, color = Css.rgb 0 0 0 }
         ]
@@ -461,9 +473,16 @@ sendingConfirmEmailView emailAddress =
 sentView : Data.EmailAddress.EmailAddress -> Html.Styled.Html msg
 sentView emailAddress =
     Html.Styled.div
-        []
-        [ Html.Styled.text (Data.EmailAddress.toString emailAddress ++ "に認証メールを送信しました")
-        , Html.Styled.a
-            [ Html.Styled.Attributes.href "mailto:" ]
-            [ Html.Styled.text "メールアプリを開く" ]
-        ]
+        [ Html.Styled.Attributes.css [ loadingStyle ] ]
+        [ Html.Styled.text (Data.EmailAddress.toString emailAddress ++ "に認証メールを送信しました") ]
+
+
+loadingStyle : Css.Style
+loadingStyle =
+    [ Css.padding4 (Css.px 128) (Css.px 8) (Css.px 8) (Css.px 8)
+    , Css.width (Css.pct 100)
+    , Css.maxWidth (Css.px 512)
+    , Page.Style.displayGridAndGap 16
+    , Css.fontSize (Css.rem 1.5)
+    ]
+        |> Css.batch

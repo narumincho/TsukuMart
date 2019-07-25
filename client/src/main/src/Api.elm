@@ -98,7 +98,7 @@ registerSignUpData sendEmailToken { displayName, image, university, emailAddress
                 }
             ]
         )
-        Jd.string
+        (Jd.field "registerSignUpData" Jd.string)
         callBack
 
 

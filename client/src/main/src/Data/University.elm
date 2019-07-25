@@ -1,7 +1,7 @@
 module Data.University exposing
     ( Graduate
     , School
-    , SchoolAndDepartment
+    , Department
     , University(..)
     , departmentFromIdString
     , departmentFromIndexInSchool
@@ -21,7 +21,7 @@ module Data.University exposing
     , schoolToIdString
     , schoolToIndex
     , schoolToJapaneseString
-    , schoolToOnlyOneDepartment
+    , departmentFromOneSchool
     , universityFromIdString
     , universityToJapaneseString
     )
@@ -42,9 +42,9 @@ import Utility
 {-| 研究科、学群、学類
 -}
 type University
-    = GraduateTsukuba Graduate SchoolAndDepartment
+    = GraduateTsukuba Graduate Department
     | GraduateNoTsukuba Graduate
-    | NotGraduate SchoolAndDepartment
+    | NotGraduate Department
 
 
 {-| 研究科、学群、学類を日本語の文字列にする
@@ -333,7 +333,7 @@ schoolToJapaneseString school =
             "体育専門学群"
 
 
-schoolToDepartmentList : School -> List SchoolAndDepartment
+schoolToDepartmentList : School -> List Department
 schoolToDepartmentList school =
     case school of
         SHumcul ->
@@ -387,20 +387,7 @@ schoolToDepartmentList school =
             []
 
 
-schoolToOnlyOneDepartment : School -> Maybe SchoolAndDepartment
-schoolToOnlyOneDepartment school =
-    case school of
-        SAandd ->
-            Just DAandd
-
-        SSport ->
-            Just DSport
-
-        _ ->
-            Nothing
-
-
-schoolFromDepartment : SchoolAndDepartment -> School
+schoolFromDepartment : Department -> School
 schoolFromDepartment schoolAndDepartment =
     case schoolAndDepartment of
         DHumanity ->
@@ -486,9 +473,9 @@ schoolFromDepartment schoolAndDepartment =
 -}
 
 
-{-| 学類(学群の情報も含む)
+{-| 学類
 -}
-type SchoolAndDepartment
+type Department
     = DHumanity -- 人文・文化学群 / 人文学類
     | DCulture -- 人文・文化学群 / 比較文化学類
     | DJapanese -- 人文・文化学群 / 日本語・日本文化学類
@@ -518,7 +505,7 @@ type SchoolAndDepartment
 
 {-| すべての学類
 -}
-departmentAll : List SchoolAndDepartment
+departmentAll : List Department
 departmentAll =
     [ DHumanity
     , DCulture
@@ -548,7 +535,7 @@ departmentAll =
     ]
 
 
-departmentToIndexInSchool : SchoolAndDepartment -> Int
+departmentToIndexInSchool : Department -> Int
 departmentToIndexInSchool department =
     department
         |> schoolFromDepartment
@@ -557,14 +544,14 @@ departmentToIndexInSchool department =
         |> Maybe.withDefault 0
 
 
-departmentFromIndexInSchool : School -> Int -> Maybe SchoolAndDepartment
+departmentFromIndexInSchool : School -> Int -> Maybe Department
 departmentFromIndexInSchool school index =
     school
         |> schoolToDepartmentList
         |> Utility.getAt index
 
 
-departmentToIdString : SchoolAndDepartment -> String
+departmentToIdString : Department -> String
 departmentToIdString department =
     case department of
         DHumanity ->
@@ -645,12 +632,12 @@ departmentToIdString department =
 
 {-| 学類のないもの(芸術専門学群,体育専門学群)は学群IDから判断する
 -}
-departmentFromIdString : String -> Maybe SchoolAndDepartment
+departmentFromIdString : String -> Maybe Department
 departmentFromIdString idString =
     departmentFromIdStringLoop idString departmentAll
 
 
-departmentFromIdStringLoop : String -> List SchoolAndDepartment -> Maybe SchoolAndDepartment
+departmentFromIdStringLoop : String -> List Department -> Maybe Department
 departmentFromIdStringLoop idString departmentList =
     case departmentList of
         x :: xs ->
@@ -664,7 +651,7 @@ departmentFromIdStringLoop idString departmentList =
             Nothing
 
 
-departmentToJapaneseString : SchoolAndDepartment -> Maybe String
+departmentToJapaneseString : Department -> Maybe String
 departmentToJapaneseString schoolAndDepartment =
     case schoolAndDepartment of
         DHumanity ->
@@ -740,4 +727,16 @@ departmentToJapaneseString schoolAndDepartment =
             Nothing
 
         DSport ->
+            Nothing
+
+departmentFromOneSchool : School -> Maybe Department
+departmentFromOneSchool school =
+    case school of
+        SAandd ->
+            Just DAandd
+
+        SSport ->
+            Just DSport
+
+        _ ->
             Nothing

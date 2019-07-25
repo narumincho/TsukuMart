@@ -11,9 +11,6 @@ module Page.Component.University exposing
 
 import Css
 import Data.University as University
-import Html
-import Html.Attributes
-import Html.Events
 import Html.Styled
 import Html.Styled.Attributes
 import Html.Styled.Events
@@ -33,7 +30,7 @@ type Model
 type SchoolSelect
     = SchoolNone
     | SchoolSchool University.School
-    | SchoolSchoolAndDepartment University.SchoolAndDepartment
+    | SchoolSchoolAndDepartment University.Department
 
 
 type Msg
@@ -103,13 +100,14 @@ initModelFromUniversity university =
 getUniversity : Model -> Maybe University.University
 getUniversity universitySelect =
     case universitySelect of
-        School (SchoolSchoolAndDepartment schoolAndDepartment) ->
-            Just (University.NotGraduate schoolAndDepartment)
+        School schoolSelect ->
+            getDepartment schoolSelect
+                |> Maybe.map University.NotGraduate
 
         GraduateTsukuba { graduate, school } ->
-            case ( graduate, school ) of
-                ( Just g, SchoolSchoolAndDepartment s ) ->
-                    Just (University.GraduateTsukuba g s)
+            case ( graduate, getDepartment school ) of
+                ( Just g, Just department ) ->
+                    Just (University.GraduateTsukuba g department)
 
                 ( _, _ ) ->
                     Nothing
@@ -117,8 +115,21 @@ getUniversity universitySelect =
         GraduateNoTsukuba (Just graduate) ->
             Just (University.GraduateNoTsukuba graduate)
 
-        _ ->
+        GraduateNoTsukuba Nothing ->
             Nothing
+
+
+getDepartment : SchoolSelect -> Maybe University.Department
+getDepartment select =
+    case select of
+        SchoolNone ->
+            Nothing
+
+        SchoolSchoolAndDepartment department ->
+            Just department
+
+        SchoolSchool school ->
+            University.departmentFromOneSchool school
 
 
 update : Msg -> Model -> ( Model, List Emission )
@@ -290,13 +301,25 @@ schoolView schoolSelect =
 
         SchoolSchool school ->
             [ selectSchoolView (Just school)
-            , selectDepartmentView school Nothing
             ]
+                ++ (case selectDepartmentView school Nothing of
+                        Just v ->
+                            [ v ]
+
+                        Nothing ->
+                            []
+                   )
 
         SchoolSchoolAndDepartment department ->
             [ selectSchoolView (Just (University.schoolFromDepartment department))
-            , selectDepartmentView (University.schoolFromDepartment department) (Just department)
             ]
+                ++ (case selectDepartmentView (University.schoolFromDepartment department) (Just department) of
+                        Just v ->
+                            [ v ]
+
+                        Nothing ->
+                            []
+                   )
 
 
 graduateTsukubaView : Maybe University.Graduate -> SchoolSelect -> List ( String, Html.Styled.Html Msg )
@@ -387,20 +410,33 @@ schoolSelectId =
 
 {-| 学類の選択
 -}
-selectDepartmentView : University.School -> Maybe University.SchoolAndDepartment -> ( String, Html.Styled.Html Msg )
+selectDepartmentView :
+    University.School
+    -> Maybe University.Department
+    -> Maybe ( String, Html.Styled.Html Msg )
 selectDepartmentView school departmentMaybe =
+    case University.schoolToDepartmentList school of
+        x :: xs ->
+            selectDepartmentViewFromLabelString school
+                (x
+                    :: xs
+                    |> List.filterMap University.departmentToJapaneseString
+                )
+                |> Just
+
+        [] ->
+            Nothing
+
+
+selectDepartmentViewFromLabelString : University.School -> List String -> ( String, Html.Styled.Html Msg )
+selectDepartmentViewFromLabelString school labelList =
     ( "selectDepartment-" ++ University.schoolToIdString school
     , Page.Style.formItem
         "学類"
         departmentSelectId
         [ Page.Style.select
             departmentSelectId
-            (University.schoolToDepartmentList school
-                |> List.map
-                    (University.departmentToJapaneseString
-                        >> Maybe.withDefault "?"
-                    )
-            )
+            labelList
         ]
         |> Html.Styled.map SelectDepartment
     )

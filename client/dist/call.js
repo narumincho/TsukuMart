@@ -121,45 +121,6 @@ app.ports.changeSelectedIndex.subscribe(({ id, index }) => {
     };
     window.requestAnimationFrame(changeSelectedIndex);
 });
-app.ports.addEventListenerForUserImage.subscribe(({ inputId, labelId }) => {
-    const addEventListenerForUserImage = () => {
-        const inputElement = document.getElementById(inputId);
-        if (inputElement === null) {
-            console.warn(`id=${inputId}の要素が存在しません`);
-            window.requestAnimationFrame(addEventListenerForUserImage);
-            return;
-        }
-        inputElement.addEventListener("input", async (e) => {
-            if (inputElement.files === null) {
-                console.warn(`id=${inputId}のfilesがnullです`);
-                return;
-            }
-        });
-        const labelElement = document.getElementById(labelId);
-        if (labelElement === null) {
-            console.warn(`id=${labelId}の要素が存在しません`);
-            window.requestAnimationFrame(addEventListenerForUserImage);
-            return;
-        }
-        labelElement.addEventListener("dragover", e => {
-            e.preventDefault();
-        });
-        labelElement.addEventListener("drop", async (e) => {
-            e.preventDefault();
-            if (e.dataTransfer === null) {
-                console.warn("drop event dataTransfer is null");
-                return;
-            }
-            const file = e.dataTransfer.files.item(0);
-            if (file === null) {
-                console.warn("drop file is empty");
-                return;
-            }
-            app.ports.receiveUserImage.send(await userImageFileResizeAndConvertToDataUrl(file));
-        });
-    };
-    window.requestAnimationFrame(addEventListenerForUserImage);
-});
 app.ports.addEventListenerForProductImages.subscribe(({ inputId, labelId }) => {
     const addEventListenerForProductImages = async () => {
         (await checkFileInput(inputId))();
@@ -181,4 +142,30 @@ app.ports.addEventListenerForProductImages.subscribe(({ inputId, labelId }) => {
     };
     window.requestAnimationFrame(addEventListenerForProductImages);
 });
-navigator.serviceWorker.register("/serviceworker.js", { scope: "/" });
+const urlBase64ToUint8Array = (base64String) => {
+    const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+    const base64 = (base64String + padding)
+        .replace(/\-/g, "+")
+        .replace(/_/g, "/");
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; i++) {
+        outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+};
+(async () => {
+    const getSubscription = async (registration) => {
+        registration.pushManager.getSubscription();
+        if (subscription !== null) {
+            return subscription;
+        }
+        return await registration.pushManager.subscribe({
+            applicationServerKey: urlBase64ToUint8Array("BMo4G5KJhOggWuUwFxZasez9zXlk-oeCAyVYOy-WiqfuVCx1G6uyAdLTww_2bNBx3fW8-C_a726ddCax7XaoW6Q"),
+            userVisibleOnly: true
+        });
+    };
+    const registration = await navigator.serviceWorker.register("/serviceworker.js", { scope: "/" });
+    const subscription = await getSubscription(registration);
+    console.log(subscription);
+})();

@@ -1,13 +1,5 @@
 "use strict";
-async () => {
-    const user = (await firebase.auth().signInWithCustomToken("token")).user;
-    if (user === null) {
-        throw new Error("userがnullだった");
-    }
-    user.sendEmailVerification({ url: "https://tsukumart.com" });
-};
 const fragment = new URLSearchParams(location.hash.substring(1));
-console.log("fragment", fragment);
 const app = Elm.SignUp.init({
     flags: {
         sendEmailToken: fragment.get("sendEmailToken"),
@@ -47,8 +39,21 @@ app.ports.load.subscribe(({ imageInputElementId, imageUrl, nameElementId, name }
         document.getElementById(nameElementId).value = name;
     });
 });
-app.ports.sendConfirmEmail.subscribe(token => {
+app.ports.sendConfirmEmail.subscribe(async (token) => {
+    firebase.initializeApp({
+        apiKey: "AIzaSyCqdk8wwbQdoosZ34e8z_M4UASU0s1bDXs",
+        authDomain: "tsukumart-f0971.firebaseapp.com",
+        messagingSenderId: "244512762605",
+        projectId: "tsukumart-f0971"
+    });
+    console.log("custom token", token);
     console.log("SDK VERSION", firebase.SDK_VERSION);
+    const user = (await firebase.auth().signInWithCustomToken(token)).user;
+    if (user === null) {
+        throw new Error("userがnullだった");
+    }
+    await user.sendEmailVerification();
+    app.ports.sentConfirmEmail.send(null);
 });
 app.ports.alert.subscribe(message => {
     window.alert(message);

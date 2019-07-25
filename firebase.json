@@ -15,6 +15,19 @@
                 ]
             },
             {
+                "source": "signup-call.js",
+                "headers": [
+                    {
+                        "key": "content-type",
+                        "value": "text/javascript"
+                    },
+                    {
+                        "key": "cache-control",
+                        "value": "max-age=0"
+                    }
+                ]
+            },
+            {
                 "source": "**!(signup|signup.js|signup-call.js)",
                 "headers": [
                     {
