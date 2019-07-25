@@ -28,8 +28,8 @@ module Api exposing
     , logInOrSignUpUrlRequest
     , makeToken
     , markProductInHistory
+    , registerSignUpData
     , sellProduct
-    , sendConfirmEmail
     , startTrade
     , tokenGetRefreshTokenAsString
     , tokenRefresh
@@ -67,20 +67,19 @@ import Url
 {-| 新規登録に必要な情報。この内容をサーバーに送信する
 -}
 type alias SignUpRequest =
-    { sendEmailToken : String
-    , emailAddress : EmailAddress.EmailAddress
+    { emailAddress : EmailAddress.EmailAddress
     , image : Maybe String
     , university : University.University
     , displayName : String
     }
 
 
-sendConfirmEmail : SignUpRequest -> (Result String () -> msg) -> Cmd msg
-sendConfirmEmail { sendEmailToken, displayName, image, university, emailAddress } callBack =
+registerSignUpData : String -> SignUpRequest -> (Result String String -> msg) -> Cmd msg
+registerSignUpData sendEmailToken { displayName, image, university, emailAddress } callBack =
     graphQlApiRequestWithoutToken
         (Mutation
             [ Field
-                { name = "sendConformEmail"
+                { name = "registerSignUpData"
                 , args =
                     [ ( "sendEmailToken", GraphQLString sendEmailToken )
                     , ( "displayName", GraphQLString displayName )
@@ -99,7 +98,7 @@ sendConfirmEmail { sendEmailToken, displayName, image, university, emailAddress 
                 }
             ]
         )
-        sendConfirmEmailRequestBody
+        Jd.string
         callBack
 
 
@@ -118,22 +117,6 @@ universityToGraphQLValue university =
             University.NotGraduate schoolAndDepartment ->
                 [ ( "schoolAndDepartment", GraphQLEnum (University.departmentToIdString schoolAndDepartment) ) ]
         )
-
-
-{-| 新規登録のJSONを生成
--}
-sendConfirmEmailRequestBody : Jd.Decoder ()
-sendConfirmEmailRequestBody =
-    Jd.field "sendConformEmail"
-        Jd.string
-        |> Jd.andThen
-            (\result ->
-                if result == "ok" then
-                    Jd.succeed ()
-
-                else
-                    Jd.fail "okでなかった"
-            )
 
 
 {-| アクセストークンとリフレッシュトークン

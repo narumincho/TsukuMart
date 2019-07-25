@@ -26,7 +26,6 @@ import Page.LogIn
 import Page.Notification
 import Page.Product
 import Page.Search
-import Page.SignUp
 import Page.SoldProducts
 import Page.Trade
 import Page.TradesInPast
@@ -85,7 +84,6 @@ type Model
 
 type PageModel
     = PageHome Page.Home.Model
-    | PageSignUp Page.SignUp.Model
     | PageLogIn Page.LogIn.Model
     | PageLikedProducts Page.LikedProducts.Model
     | PageHistory Page.History.Model
@@ -136,7 +134,6 @@ type PageMsg
     | PageMsgCommentedProducts Page.CommentedProducts.Msg
     | PageMsgLogIn Page.LogIn.Msg
     | PageMsgExhibition Page.Exhibition.Msg
-    | PageMsgSignUp Page.SignUp.Msg
     | PageMsgSearch Page.Search.Msg
     | PageMsgNotification Page.Notification.Msg
     | PageMsgProduct Page.Product.Msg
@@ -223,14 +220,6 @@ urlParserInitResultToPageAndCmd key logInState page =
         PageLocation.InitHome ->
             Page.Home.initModel Nothing
                 |> mapPageModel PageHome homePageEmissionToCmd
-
-        PageLocation.InitSignUp { name, imageId, sendEmailToken } ->
-            Page.SignUp.initModel
-                { name = name
-                , imageId = imageId
-                , sendEmailToken = sendEmailToken
-                }
-                |> mapPageModel PageSignUp signUpPageEmissionToCmd
 
         PageLocation.InitLogIn ->
             Page.LogIn.initModel
@@ -431,17 +420,6 @@ update msg (Model rec) =
 
         ReceiveUserImage image ->
             case rec.page of
-                PageSignUp pageModel ->
-                    let
-                        ( newModel, emissionList ) =
-                            Page.SignUp.update
-                                (Page.SignUp.ReceiveUserImage image)
-                                pageModel
-                    in
-                    ( Model { rec | page = PageSignUp newModel }
-                    , emissionList |> List.map signUpPageEmissionToCmd |> Cmd.batch
-                    )
-
                 _ ->
                     ( Model rec
                     , Cmd.none
@@ -625,11 +603,6 @@ updatePageMsg pageMsg (Model rec) =
             model
                 |> Page.Exhibition.update rec.logInState msg
                 |> mapPageModel PageExhibition exhibitionPageEmissionToCmd
-
-        ( PageMsgSignUp msg, PageSignUp model ) ->
-            model
-                |> Page.SignUp.update msg
-                |> mapPageModel PageSignUp signUpPageEmissionToCmd
 
         ( PageMsgSearch msg, PageSearch model ) ->
             model
@@ -832,26 +805,6 @@ exhibitionPageEmissionToCmd emission =
 
         Page.Exhibition.EmissionByProductEditor e ->
             productEditorEmissionToCmd e
-
-
-signUpPageEmissionToCmd : Page.SignUp.Emission -> Cmd Msg
-signUpPageEmissionToCmd emission =
-    case emission of
-        Page.SignUp.EmissionAddEventListenerForUserImage idRecord ->
-            addEventListenerForUserImage idRecord
-
-        Page.SignUp.EmissionReplaceElementText idAndText ->
-            replaceText idAndText
-
-        Page.SignUp.EmissionSignUp signUpRequest ->
-            Api.sendConfirmEmail signUpRequest SignUpConfirmResponse
-
-        Page.SignUp.EmissionByUniversity e ->
-            universityEmissionToCmd e
-
-        Page.SignUp.EmissionAddLogMessage log ->
-            Task.succeed ()
-                |> Task.perform (always (AddLogMessage log))
 
 
 searchPageEmissionToCmd : Page.Search.Emission -> Cmd Msg
@@ -1421,11 +1374,6 @@ titleAndTabDataAndMainView logInState isWideScreen nowMaybe page =
             model
                 |> Page.Exhibition.view logInState
                 |> mapPageData PageMsgExhibition
-
-        PageSignUp model ->
-            model
-                |> Page.SignUp.view
-                |> mapPageData PageMsgSignUp
 
         PageLogIn model ->
             model

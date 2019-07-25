@@ -27,12 +27,20 @@ cleancss ./style.css -o ../dist/style.css;
 $Host.UI.RawUI.ForegroundColor = "Yellow";
 Write-Output "Minify CSS OK"
 
-Write-Output "Call Compile ...";
+Write-Output "Call (Main) Compile ...";
 $Host.UI.RawUI.ForegroundColor = "Gray";
 Set-Location -Path ./call/;
 tsc;
 $Host.UI.RawUI.ForegroundColor = "Yellow";
-Write-Output "Call Compile OK"
+Write-Output "Call (Main) Compile OK"
+
+Write-Output "Call (SignUp) Compile ...";
+$Host.UI.RawUI.ForegroundColor = "Gray";
+Set-Location -Path ../signUpCall/;
+tsc;
+$Host.UI.RawUI.ForegroundColor = "Yellow";
+Write-Output "Call (SignUp) Compile OK"
+
 
 Write-Output "ServiceWoker Compile ...";
 $Host.UI.RawUI.ForegroundColor = "Gray";

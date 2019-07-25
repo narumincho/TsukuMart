@@ -2,6 +2,7 @@ module Page.Style exposing
     ( displayGridAndGap
     , formItem
     , inputText
+    , mainButton
     , primaryColor
     , primaryColorLight
     , select
@@ -156,8 +157,8 @@ blankOption =
     H.option [] [ H.text "--選択してください--" ]
 
 
-inputText : { id : String, type_ : String, required : Bool } -> H.Html String
-inputText { id, type_, required } =
+inputText : { id : String, type_ : String, autoComplete : String, required : Bool } -> H.Html String
+inputText { id, type_, autoComplete, required } =
     H.input
         [ A.css
             [ Css.fontSize (Css.rem 1.2)
@@ -180,6 +181,7 @@ inputText { id, type_, required } =
         , A.id id
         , Html.Styled.Events.onInput identity
         , A.type_ type_
+        , A.attribute "autocomplete" autoComplete
         , A.required required
         ]
         []
@@ -191,3 +193,46 @@ inputTextFocusBoxShadow =
             Css.none
     in
     { none | value = "inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px rgba(102, 175, 233, 0.6)" }
+
+
+mainButton : List (H.Html Never) -> Maybe msg -> H.Html msg
+mainButton children msgMaybe =
+    H.button
+        ([ A.css
+            [ Css.backgroundColor primaryColor
+            , Css.color (Css.rgb 221 221 221)
+            , Css.fill (Css.rgb 221 221 221)
+            , Css.padding (Css.px 16)
+            , Css.width (Css.pct 100)
+            , Css.fontSize (Css.rem 1.5)
+            , Css.borderRadius (Css.px 8)
+            , Css.boxShadow4 Css.zero (Css.px 2) (Css.px 4) (Css.rgba 0 0 0 0.18)
+            , Css.border2 Css.zero Css.none
+            , Css.displayFlex
+            , Css.alignItems Css.center
+            , Css.justifyContent Css.center
+            , Css.boxSizing Css.borderBox
+            , Css.disabled
+                [ Css.backgroundColor (Css.rgb 170 170 170)
+                , Css.color (Css.rgb 221 221 221)
+                , Css.fill (Css.rgb 221 221 221)
+                ]
+            ]
+         ]
+            ++ (case msgMaybe of
+                    Just msg ->
+                        [ Html.Styled.Events.custom
+                            "click"
+                            (Json.Decode.succeed
+                                { message = msg
+                                , stopPropagation = True
+                                , preventDefault = True
+                                }
+                            )
+                        ]
+
+                    Nothing ->
+                        [ A.disabled True ]
+               )
+        )
+        (children |> List.map (H.map never))

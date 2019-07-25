@@ -15,7 +15,7 @@
                 ]
             },
             {
-                "source": "**!(signup|signup.js)",
+                "source": "**!(signup|signup.js|signup-call.js)",
                 "headers": [
                     {
                         "key": "content-security-policy",

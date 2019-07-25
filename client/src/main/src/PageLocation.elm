@@ -22,7 +22,6 @@ import Url.Builder
 
 type InitPageLocation
     = InitHome
-    | InitSignUp { sendEmailToken : String, name : String, imageId : Data.ImageId.ImageId }
     | InitLogIn
     | InitLikedProducts
     | InitHistory
@@ -65,7 +64,6 @@ initFromUrl url =
         ( _, _ ) ->
             Nothing
     , [ homeParser |> parserMap (always InitHome)
-      , signUpParser fragmentDict |> parserMap InitSignUp
       , logInParser |> parserMap (always InitLogIn)
       , likedProductsParser |> parserMap (always InitLikedProducts)
       , historyParser |> parserMap (always InitHistory)
@@ -112,9 +110,6 @@ initToUrlAsString : InitPageLocation -> String
 initToUrlAsString location =
     case location of
         InitHome ->
-            homeUrl
-
-        InitSignUp _ ->
             homeUrl
 
         InitLogIn ->
@@ -297,27 +292,6 @@ homeUrl =
 homePath : List String
 homePath =
     []
-
-
-
-{- Sign Up -}
-
-
-signUpParser :
-    Dict.Dict String String
-    -> List String
-    -> Maybe { sendEmailToken : String, name : String, imageId : Data.ImageId.ImageId }
-signUpParser fragment path =
-    case ( path, ( fragment |> Dict.get "sendEmailToken", fragment |> Dict.get "name", fragment |> Dict.get "imageId" ) ) of
-        ( [ "signup" ], ( Just sendEmailToken, Just name, Just imageId ) ) ->
-            Just
-                { sendEmailToken = sendEmailToken
-                , name = name
-                , imageId = Data.ImageId.fromString imageId
-                }
-
-        ( _, ( _, _, _ ) ) ->
-            Nothing
 
 
 
