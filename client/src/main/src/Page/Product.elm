@@ -417,15 +417,18 @@ update msg model =
                     ( model, [] )
 
         MsgByProductEditor productEditorMsg ->
-            case model of
+            ( case model of
                 Edit r ->
-                    ProductEditor.update productEditorMsg r.productEditor
-                        |> Tuple.mapBoth
-                            (\editorModel -> Edit { r | productEditor = editorModel })
-                            (List.map EmissionByProductEditor)
+                    Edit
+                        { r
+                            | productEditor =
+                                ProductEditor.update productEditorMsg r.productEditor
+                        }
 
                 _ ->
-                    ( model, [] )
+                    model
+            , []
+            )
 
         UpdateProductData token productId requestData ->
             ( model

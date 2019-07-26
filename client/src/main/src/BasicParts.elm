@@ -363,7 +363,7 @@ menuLogInStateNone =
         ]
     , Html.a
         [ Html.Attributes.class "menu-item"
-        , Html.Attributes.href (PageLocation.toUrlAsString (PageLocation.Search Data.SearchCondition.None))
+        , Html.Attributes.href (PageLocation.toUrlAsString (PageLocation.Search Nothing))
         ]
         [ Icon.search menuIconStyle |> Html.Styled.toUnstyled
         , Html.text "検索"
@@ -389,7 +389,7 @@ menuLogInStateLoadingProfile =
         ]
     , Html.a
         [ Html.Attributes.class "menu-item"
-        , Html.Attributes.href (PageLocation.toUrlAsString (PageLocation.Search Data.SearchCondition.None))
+        , Html.Attributes.href (PageLocation.toUrlAsString (PageLocation.Search Nothing))
         ]
         [ Icon.search menuIconStyle |> Html.Styled.toUnstyled
         , Html.text "検索"
@@ -431,7 +431,7 @@ menuLogInStateOk userWithName =
         ]
     , Html.a
         [ Html.Attributes.class "menu-item"
-        , Html.Attributes.href (PageLocation.toUrlAsString (PageLocation.Search Data.SearchCondition.None))
+        , Html.Attributes.href (PageLocation.toUrlAsString (PageLocation.Search Nothing))
         ]
         [ Icon.search menuIconStyle |> Html.Styled.toUnstyled, Html.text "検索" ]
     , Html.a
@@ -665,7 +665,7 @@ bottomNavigation logInState select =
                 , bottomNavigationItem
                     (select == Search)
                     (Just
-                        (PageLocation.Search Data.SearchCondition.None)
+                        (PageLocation.Search Nothing)
                     )
                     (Just Icon.search)
                     "検索"
@@ -686,7 +686,7 @@ bottomNavigation logInState select =
                 , bottomNavigationItem
                     (select == Search)
                     (Just
-                        (PageLocation.Search Data.SearchCondition.None)
+                        (PageLocation.Search Nothing)
                     )
                     (Just Icon.search)
                     "検索"
@@ -712,7 +712,7 @@ bottomNavigation logInState select =
                 , bottomNavigationItem
                     (select == Search)
                     (Just
-                        (PageLocation.Search Data.SearchCondition.None)
+                        (PageLocation.Search Nothing)
                     )
                     (Just Icon.search)
                     "検索"

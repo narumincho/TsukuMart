@@ -1,10 +1,11 @@
 module Data.University exposing
-    ( Graduate
+    ( Department
+    , Graduate
     , School
-    , Department
     , University(..)
     , departmentFromIdString
     , departmentFromIndexInSchool
+    , departmentFromOneSchool
     , departmentToIdString
     , departmentToIndexInSchool
     , departmentToJapaneseString
@@ -21,10 +22,9 @@ module Data.University exposing
     , schoolToIdString
     , schoolToIndex
     , schoolToJapaneseString
-    , departmentFromOneSchool
     , universityFromIdString
     , universityToJapaneseString
-    )
+    , schoolFromIdString)
 
 {-| 研究科、学群、学類
 -}
@@ -298,6 +298,40 @@ schoolToIdString school =
 
         SSport ->
             "sport"
+
+
+schoolFromIdString : String -> Maybe School
+schoolFromIdString id =
+    case id of
+        "humcul" ->
+            Just SHumcul
+
+        "socint" ->
+            Just SSocint
+
+        "human" ->
+            Just SHuman
+
+        "life" ->
+            Just SLife
+
+        "sse" ->
+            Just SSse
+
+        "info" ->
+            Just SInfo
+
+        "med" ->
+            Just SMed
+
+        "aandd" ->
+            Just SAandd
+
+        "sport" ->
+            Just SSport
+
+        _ ->
+            Nothing
 
 
 {-| 学群の名前を取得する
@@ -728,6 +762,7 @@ departmentToJapaneseString schoolAndDepartment =
 
         DSport ->
             Nothing
+
 
 departmentFromOneSchool : School -> Maybe Department
 departmentFromOneSchool school =

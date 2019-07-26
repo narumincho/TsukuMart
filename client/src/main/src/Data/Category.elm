@@ -6,6 +6,7 @@ module Data.Category exposing
     , fromIndexInGroup
     , groupAll
     , groupFromCategory
+    , groupFromIdString
     , groupFromIndex
     , groupToCategoryList
     , groupToIdString
@@ -104,6 +105,34 @@ groupToIdString group =
 
         Hobby ->
             "hobby"
+
+
+groupFromIdString : String -> Maybe Group
+groupFromIdString id =
+    case id of
+        "furniture" ->
+            Just Furniture
+
+        "appliance" ->
+            Just Appliance
+
+        "fashion" ->
+            Just Fashion
+
+        "book" ->
+            Just Book
+
+        "vehicle" ->
+            Just Vehicle
+
+        "food" ->
+            Just Food
+
+        "hobby" ->
+            Just Hobby
+
+        _ ->
+            Nothing
 
 
 groupToCategoryList : Group -> List Category

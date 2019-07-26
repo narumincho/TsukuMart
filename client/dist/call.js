@@ -59,7 +59,6 @@ const checkFileInput = (id) => async () => {
         return;
     }
     const dataUrls = await prodcutImageFilesResizeAndConvertToDataUrl(inputElement.files);
-    console.log(dataUrls);
     app.ports.receiveProductImages.send(dataUrls);
     inputElement.value = "";
     window.requestAnimationFrame(checkFileInput(id));
@@ -89,7 +88,6 @@ app.ports.replaceText.subscribe(({ id, text }) => {
     const replaceText = () => {
         const element = document.getElementById(id);
         if (element === null) {
-            console.warn(`id=${id}の要素が存在しません`);
             window.requestAnimationFrame(replaceText);
             return;
         }
@@ -101,7 +99,6 @@ app.ports.elementScrollIntoView.subscribe(id => {
     const scrollIntoView = () => {
         const element = document.getElementById(id);
         if (element === null) {
-            console.warn(`id=${id}の要素が存在しません`);
             window.requestAnimationFrame(scrollIntoView);
             return;
         }
@@ -113,7 +110,6 @@ app.ports.changeSelectedIndex.subscribe(({ id, index }) => {
     const changeSelectedIndex = () => {
         const element = document.getElementById(id);
         if (element === null) {
-            console.warn(`id=${id}の要素が存在しません`);
             window.requestAnimationFrame(changeSelectedIndex);
             return;
         }
@@ -156,7 +152,7 @@ const urlBase64ToUint8Array = (base64String) => {
 };
 (async () => {
     const getSubscription = async (registration) => {
-        registration.pushManager.getSubscription();
+        const subscription = await registration.pushManager.getSubscription();
         if (subscription !== null) {
             return subscription;
         }

@@ -112,10 +112,9 @@ updateWhenLogIn msg page =
                     )
 
                 MsgByProductEditor m ->
-                    ProductEditor.update m productEditorModel
-                        |> Tuple.mapBoth
-                            EditPage
-                            (List.map EmissionByProductEditor)
+                    ( EditPage (ProductEditor.update m productEditorModel)
+                    , []
+                    )
 
                 _ ->
                     ( EditPage productEditorModel

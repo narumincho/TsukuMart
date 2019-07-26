@@ -14,6 +14,7 @@ import Html.Keyed
 import Page.About
 import Page.BoughtProducts
 import Page.CommentedProducts
+import Page.Component.Category
 import Page.Component.LogIn
 import Page.Component.ProductEditor
 import Page.Component.ProductList
@@ -813,6 +814,9 @@ searchPageEmissionToCmd emission =
         Page.Search.EmissionReplaceElementText idAndText ->
             replaceText idAndText
 
+        Page.Search.EmissionByCategory e ->
+            categoryEmissionToCmd e
+
 
 notificationEmissionToCmd : Page.Notification.Emission -> Cmd Msg
 notificationEmissionToCmd emission =
@@ -981,6 +985,16 @@ productEditorEmissionToCmd emission =
             replaceText { id = id, text = text }
 
         Page.Component.ProductEditor.EmissionChangeSelectedIndex { id, index } ->
+            changeSelectedIndex { id = id, index = index }
+
+        Page.Component.ProductEditor.EmissionByCategory e ->
+            categoryEmissionToCmd e
+
+
+categoryEmissionToCmd : Page.Component.Category.Emission -> Cmd Msg
+categoryEmissionToCmd emission =
+    case emission of
+        Page.Component.Category.EmissionChangeSelectedIndex { id, index } ->
             changeSelectedIndex { id = id, index = index }
 
 

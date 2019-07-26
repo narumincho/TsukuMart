@@ -16,15 +16,12 @@ import Data.Category as Category
 import Data.ImageId as ImageId
 import Data.Product as Product
 import Html
-import Html.Attributes
-import Html.Events
-import Html.Keyed
 import Html.Styled
 import Html.Styled.Attributes
 import Html.Styled.Events
-import Html.Styled.Keyed
 import Icon
 import Json.Decode
+import Page.Component.Category as CateogryComp
 import Page.Style
 import Set
 import Utility
@@ -36,23 +33,18 @@ type Model
         , description : String
         , price : Maybe Int
         , condition : Maybe Product.Condition
-        , category : CategorySelect
+        , category : CateogryComp.Model
         , addImages : List String
         , beforeImageIds : List ImageId.ImageId
         , deleteImagesAt : Set.Set Int
         }
 
 
-type CategorySelect
-    = CategoryNone
-    | CategoryGroupSelect Category.Group
-    | CategorySelect Category.Category
-
-
 type Emission
     = EmissionAddEventListenerForProductImages { labelId : String, inputId : String }
     | EmissionReplaceText { id : String, text : String }
     | EmissionChangeSelectedIndex { id : String, index : Int }
+    | EmissionByCategory CateogryComp.Emission
 
 
 type Msg
@@ -60,36 +52,44 @@ type Msg
     | InputDescription String
     | InputPrice String
     | SelectCondition (Maybe Int)
-    | SelectCategoryGroup (Maybe Int)
-    | SelectCategory (Maybe Int)
     | DeleteImage Int
     | InputImageList (List String)
+    | MsgByCategory CateogryComp.Msg
 
 
 initModelBlank : ( Model, List Emission )
 initModelBlank =
+    let
+        ( categoryModel, categoryEmission ) =
+            CateogryComp.initModel
+    in
     ( Model
         { name = ""
         , description = ""
         , price = Nothing
         , condition = Nothing
-        , category = CategoryNone
+        , category = categoryModel
         , addImages = []
         , beforeImageIds = []
         , deleteImagesAt = Set.empty
         }
     , [ EmissionAddEventListenerForProductImages { labelId = photoAddLabelId, inputId = photoAddInputId } ]
+        ++ (categoryEmission |> List.map EmissionByCategory)
     )
 
 
 initModelFromSellRequestData : Api.SellProductRequest -> ( Model, List Emission )
 initModelFromSellRequestData (Api.SellProductRequest rec) =
+    let
+        ( categoryModel, categoryEmission ) =
+            CateogryComp.initModelWithCategorySelect rec.category
+    in
     ( Model
         { name = rec.name
         , description = rec.description
         , price = Just rec.price
         , condition = Just rec.condition
-        , category = CategorySelect rec.category
+        , category = categoryModel
         , addImages = rec.images
         , beforeImageIds = []
         , deleteImagesAt = Set.empty
@@ -104,13 +104,8 @@ initModelFromSellRequestData (Api.SellProductRequest rec) =
             { id = priceEditorId, text = String.fromInt rec.price }
       , EmissionChangeSelectedIndex
             { id = conditionSelectId, index = Product.conditionToIndex rec.condition + 1 }
-      , EmissionChangeSelectedIndex
-            { id = categoryGroupSelectId
-            , index = Category.groupToIndex (Category.groupFromCategory rec.category) + 1
-            }
-      , EmissionChangeSelectedIndex
-            { id = categorySelectId, index = Category.toIndexInGroup rec.category + 1 }
       ]
+        ++ (categoryEmission |> List.map EmissionByCategory)
     )
 
 
@@ -124,12 +119,16 @@ initModel :
     }
     -> ( Model, List Emission )
 initModel { name, description, price, condition, category, imageIds } =
+    let
+        ( categoryModel, categoryEmission ) =
+            CateogryComp.initModelWithCategorySelect category
+    in
     ( Model
         { name = name
         , description = description
         , price = Just price
         , condition = Just condition
-        , category = CategorySelect category
+        , category = categoryModel
         , addImages = []
         , beforeImageIds = imageIds
         , deleteImagesAt = Set.empty
@@ -144,21 +143,14 @@ initModel { name, description, price, condition, category, imageIds } =
             { id = priceEditorId, text = String.fromInt price }
       , EmissionChangeSelectedIndex
             { id = conditionSelectId, index = Product.conditionToIndex condition + 1 }
-      , EmissionChangeSelectedIndex
-            { id = categoryGroupSelectId
-            , index = Category.groupToIndex (Category.groupFromCategory category) + 1
-            }
-      , EmissionChangeSelectedIndex
-            { id = categorySelectId
-            , index = Category.toIndexInGroup category + 1
-            }
       ]
+        ++ (categoryEmission |> List.map EmissionByCategory)
     )
 
 
-update : Msg -> Model -> ( Model, List Emission )
+update : Msg -> Model -> Model
 update msg (Model rec) =
-    ( case msg of
+    case msg of
         InputName nameString ->
             Model { rec | name = nameString }
 
@@ -186,19 +178,6 @@ update msg (Model rec) =
                     | condition = index |> Maybe.andThen Product.conditionFromIndex
                 }
 
-        SelectCategoryGroup index ->
-            Model
-                { rec
-                    | category =
-                        selectCategoryGroup index rec.category
-                }
-
-        SelectCategory index ->
-            Model
-                { rec
-                    | category = selectCategory index rec.category
-                }
-
         DeleteImage index ->
             let
                 { addImages, deleteIndex } =
@@ -218,60 +197,14 @@ update msg (Model rec) =
         InputImageList dataUrlList ->
             Model
                 { rec | addImages = rec.addImages ++ dataUrlList }
-    , []
-    )
 
-
-selectCategoryGroup : Maybe Int -> CategorySelect -> CategorySelect
-selectCategoryGroup index categorySelect =
-    case index |> Maybe.andThen Category.groupFromIndex of
-        Just group ->
-            case categorySelect of
-                CategoryNone ->
-                    CategoryGroupSelect group
-
-                CategoryGroupSelect _ ->
-                    CategoryGroupSelect group
-
-                CategorySelect category ->
-                    if Category.groupFromCategory category == group then
-                        categorySelect
-
-                    else
-                        CategoryGroupSelect group
-
-        Nothing ->
-            CategoryNone
-
-
-selectCategory : Maybe Int -> CategorySelect -> CategorySelect
-selectCategory index categorySelect =
-    case categorySelect of
-        CategoryNone ->
-            CategoryNone
-
-        CategoryGroupSelect group ->
-            case
-                index
-                    |> Maybe.andThen
-                        (Category.fromIndexInGroup group)
-            of
-                Just category ->
-                    CategorySelect category
-
-                Nothing ->
-                    CategoryGroupSelect group
-
-        CategorySelect category ->
-            case
-                index
-                    |> Maybe.andThen (Category.fromIndexInGroup (Category.groupFromCategory category))
-            of
-                Just newCategory ->
-                    CategorySelect newCategory
-
-                Nothing ->
-                    CategoryGroupSelect (Category.groupFromCategory category)
+        MsgByCategory categoryMsg ->
+            Model
+                { rec
+                    | category =
+                        rec.category
+                            |> CateogryComp.update categoryMsg
+                }
 
 
 imageDeleteAt :
@@ -320,8 +253,8 @@ beforeImageAddDeleteIndex index beforeImageIdLength deleteAt offset =
 
 toSoldRequest : Model -> Maybe Api.SellProductRequest
 toSoldRequest (Model rec) =
-    case ( priceCheck rec.price, rec.condition, rec.category ) of
-        ( Ok price, Just condition, CategorySelect category ) ->
+    case ( priceCheck rec.price, rec.condition, CateogryComp.getSelect rec.category ) of
+        ( Ok price, Just condition, CateogryComp.CategorySelect category ) ->
             if
                 nameCheck rec.name
                     == Nothing
@@ -347,8 +280,8 @@ toSoldRequest (Model rec) =
 
 toUpdateRequest : Model -> Maybe Api.UpdateProductRequest
 toUpdateRequest (Model rec) =
-    case ( rec.price, rec.condition, rec.category ) of
-        ( Just price, Just condition, CategorySelect category ) ->
+    case ( rec.price, rec.condition, CateogryComp.getSelect rec.category ) of
+        ( Just price, Just condition, CateogryComp.CategorySelect category ) ->
             if
                 nameCheck rec.name
                     == Nothing
@@ -451,7 +384,10 @@ view (Model rec) =
            , ( "description", descriptionView )
            , ( "price", priceView rec.price )
            , ( "condition", conditionView rec.condition )
-           , ( "category", categoryView rec.category )
+           , ( "category"
+             , CateogryComp.view rec.category
+                |> Html.Styled.map MsgByCategory
+             )
            ]
         |> List.map (Tuple.mapSecond Html.Styled.toUnstyled)
 
@@ -684,76 +620,3 @@ selectDecoder =
     Json.Decode.at
         [ "target", "selectedIndex" ]
         Json.Decode.int
-
-
-
-{- =======================================================
-                       Category
-   =======================================================
--}
-
-
-categoryView : CategorySelect -> Html.Styled.Html Msg
-categoryView categorySelect =
-    Html.Styled.Keyed.node "div"
-        []
-        (case categorySelect of
-            CategoryNone ->
-                [ selectCategoryGroupView Nothing ]
-
-            CategoryGroupSelect group ->
-                [ selectCategoryGroupView
-                    (Just group)
-                , selectCategoryView
-                    group
-                    Nothing
-                ]
-
-            CategorySelect category ->
-                [ selectCategoryGroupView
-                    (Just (Category.groupFromCategory category))
-                , selectCategoryView
-                    (Category.groupFromCategory category)
-                    (Just category)
-                ]
-        )
-
-
-selectCategoryGroupView : Maybe Category.Group -> ( String, Html.Styled.Html Msg )
-selectCategoryGroupView categoryGroup =
-    ( "selectCategoryGroup"
-    , Page.Style.formItem
-        "カテゴリ グループ"
-        categoryGroupSelectId
-        [ Page.Style.select
-            categoryGroupSelectId
-            (Category.groupAll |> List.map Category.groupToJapaneseString)
-        ]
-        |> Html.Styled.map SelectCategoryGroup
-    )
-
-
-categoryGroupSelectId : String
-categoryGroupSelectId =
-    "select-category-group"
-
-
-selectCategoryView : Category.Group -> Maybe Category.Category -> ( String, Html.Styled.Html Msg )
-selectCategoryView group category =
-    ( "selectCategory" ++ Category.groupToIdString group
-    , Page.Style.formItem
-        "カテゴリ"
-        categorySelectId
-        [ Page.Style.select
-            categorySelectId
-            (Category.groupToCategoryList group
-                |> List.map Category.toJapaneseString
-            )
-        ]
-        |> Html.Styled.map SelectCategory
-    )
-
-
-categorySelectId : String
-categorySelectId =
-    "select-category"
