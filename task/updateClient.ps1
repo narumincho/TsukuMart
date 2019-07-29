@@ -30,14 +30,14 @@ Write-Output "Minify CSS OK"
 Write-Output "Call (Main) Compile ...";
 $Host.UI.RawUI.ForegroundColor = "Gray";
 Set-Location -Path ./call/;
-npx tsc;
+tsc;
 $Host.UI.RawUI.ForegroundColor = "Yellow";
 Write-Output "Call (Main) Compile OK"
 
 Write-Output "Call (SignUp) Compile ...";
 $Host.UI.RawUI.ForegroundColor = "Gray";
 Set-Location -Path ../signUpCall/;
-npx tsc;
+tsc;
 $Host.UI.RawUI.ForegroundColor = "Yellow";
 Write-Output "Call (SignUp) Compile OK"
 

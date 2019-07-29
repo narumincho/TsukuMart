@@ -666,12 +666,14 @@ export const timestampToDate = (timeStamp: firestore.Timestamp): Date =>
  * Firebase Authenticationのユーザーをランダムなパスワードで作成する
  */
 export const createFirebaseAuthUserByRandomPassword = async (
-    email: string
+    email: string,
+    displayName: string
 ): Promise<{ id: string; password: string }> => {
     const password: string = createRandomPassword();
     const userRecord = await initializedAdmin.auth().createUser({
         email: email,
-        password: password
+        password: password,
+        displayName: displayName
     });
     return {
         id: userRecord.uid,

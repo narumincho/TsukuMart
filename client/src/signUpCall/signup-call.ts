@@ -1,5 +1,12 @@
 /// <reference path="node_modules/firebase/index.d.ts" />
 
+firebase.initializeApp({
+    apiKey: "AIzaSyCqdk8wwbQdoosZ34e8z_M4UASU0s1bDXs",
+    authDomain: "tsukumart-f0971.firebaseapp.com",
+    messagingSenderId: "244512762605",
+    projectId: "tsukumart-f0971"
+});
+
 declare const Elm: {
     SignUp: { init: (arg: { flags: {}; node: HTMLElement }) => ElmApp };
 };
@@ -97,22 +104,28 @@ app.ports.load.subscribe(
     }
 );
 
-app.ports.sendConfirmEmail.subscribe(async token => {
-    firebase.initializeApp({
-        apiKey: "AIzaSyCqdk8wwbQdoosZ34e8z_M4UASU0s1bDXs",
-        authDomain: "tsukumart-f0971.firebaseapp.com",
-        messagingSenderId: "244512762605",
-        projectId: "tsukumart-f0971"
-    });
-    console.log("custom token", token);
-    console.log("SDK VERSION", firebase.SDK_VERSION);
-    const user = (await firebase.auth().signInWithCustomToken(token)).user;
-    if (user === null) {
-        throw new Error("userがnullだった");
+const sendConfirmEmail = async (token: string) => {
+    try {
+        console.log("custom token", token);
+        console.log("SDK VERSION", firebase.SDK_VERSION);
+        const user = (await firebase.auth().signInWithCustomToken(token)).user;
+        if (user === null) {
+            throw new Error("userがnullだった");
+        }
+        console.log("ユーザー名", user.displayName);
+        await user.sendEmailVerification({
+            url: "https://tsukumart.com/"
+        });
+        app.ports.sentConfirmEmail.send(null);
+    } catch (e) {
+        console.log("エラーが発生したので再送する", e);
+        setTimeout(async () => {
+            await sendConfirmEmail(token);
+        }, 100);
     }
-    await user.sendEmailVerification();
-    app.ports.sentConfirmEmail.send(null);
-});
+};
+
+app.ports.sendConfirmEmail.subscribe(sendConfirmEmail);
 
 app.ports.alert.subscribe(message => {
     window.alert(message);

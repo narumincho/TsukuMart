@@ -103,7 +103,8 @@ export const addUserBeforeEmailVerification = async (
     university: type.University
 ): Promise<string> => {
     const authUser = await databaseLow.createFirebaseAuthUserByRandomPassword(
-        email
+        email,
+        name
     );
     const flatUniversity = type.universityToInternal(university);
     await databaseLow.addUserBeforeEmailVerification(logInAccountServiceId, {

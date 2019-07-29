@@ -12,6 +12,7 @@ import Html
 import Html.Attributes
 import Html.Styled
 import Html.Styled.Attributes
+import Html.Styled.Events
 import Html.Styled.Keyed
 import Icon
 import Page.Component.University as University
@@ -48,8 +49,14 @@ type Model
         , name : String
         }
     | SendingUserData Data.EmailAddress.EmailAddress
-    | SendingConfirmEmail Data.EmailAddress.EmailAddress
-    | Sent Data.EmailAddress.EmailAddress
+    | SendingConfirmEmail
+        { emailAddress : Data.EmailAddress.EmailAddress
+        , token : String
+        }
+    | Sent
+        { emailAddress : Data.EmailAddress.EmailAddress
+        , token : String
+        }
 
 
 type AnalysisStudentIdOrSAddressResult
@@ -71,6 +78,7 @@ type Msg
     | InputName String
     | MsgByUniversity University.Msg
     | Submit Api.SignUpRequest
+    | Resend
     | SendingUserDataResponse (Result String String)
     | SendingConfirmEmailResponse
 
@@ -147,7 +155,10 @@ update msg model =
         ( SendingUserDataResponse result, SendingUserData emailAddress ) ->
             case result of
                 Ok customToken ->
-                    ( SendingConfirmEmail emailAddress
+                    ( SendingConfirmEmail
+                        { emailAddress = emailAddress
+                        , token = customToken
+                        }
                     , sendConfirmEmail customToken
                     )
 
@@ -156,9 +167,19 @@ update msg model =
                     , alert errorMessage
                     )
 
-        ( SendingConfirmEmailResponse, SendingConfirmEmail emailAddress ) ->
-            ( Sent emailAddress
+        ( SendingConfirmEmailResponse, SendingConfirmEmail rec ) ->
+            ( Sent rec
             , Cmd.none
+            )
+
+        ( Resend, SendingConfirmEmail { token } ) ->
+            ( model
+            , sendConfirmEmail token
+            )
+
+        ( Resend, Sent { token } ) ->
+            ( model
+            , sendConfirmEmail token
             )
 
         _ ->
@@ -261,10 +282,10 @@ view model =
             SendingUserData emailAddress ->
                 sendingUserDataView emailAddress
 
-            SendingConfirmEmail emailAddress ->
+            SendingConfirmEmail { emailAddress } ->
                 sendingConfirmEmailView emailAddress
 
-            Sent emailAddress ->
+            Sent { emailAddress } ->
                 sentView emailAddress
           )
             |> Html.Styled.toUnstyled
@@ -461,20 +482,30 @@ sendingUserDataView emailAddress =
         ]
 
 
-sendingConfirmEmailView : Data.EmailAddress.EmailAddress -> Html.Styled.Html msg
+sendingConfirmEmailView : Data.EmailAddress.EmailAddress -> Html.Styled.Html Msg
 sendingConfirmEmailView emailAddress =
     Html.Styled.div
         [ Html.Styled.Attributes.css [ loadingStyle ] ]
         [ Html.Styled.text (Data.EmailAddress.toString emailAddress ++ "に認証メールを送信中…")
+        , resendButton
         , Icon.loading { size = 64, color = Css.rgb 0 0 0 }
         ]
 
 
-sentView : Data.EmailAddress.EmailAddress -> Html.Styled.Html msg
+sentView : Data.EmailAddress.EmailAddress -> Html.Styled.Html Msg
 sentView emailAddress =
     Html.Styled.div
         [ Html.Styled.Attributes.css [ loadingStyle ] ]
-        [ Html.Styled.text (Data.EmailAddress.toString emailAddress ++ "に認証メールを送信しました") ]
+        [ Html.Styled.text (Data.EmailAddress.toString emailAddress ++ "に認証メールを送信しました")
+        , resendButton
+        ]
+
+
+resendButton : Html.Styled.Html Msg
+resendButton =
+    Html.Styled.button
+        [ Html.Styled.Events.onClick Resend ]
+        [ Html.Styled.text "再送" ]
 
 
 loadingStyle : Css.Style
