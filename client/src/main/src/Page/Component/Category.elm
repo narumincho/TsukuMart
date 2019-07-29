@@ -185,7 +185,7 @@ groupView categoryGroup =
     , Page.Style.formItem
         "カテゴリ グループ"
         groupSelectId
-        [ Page.Style.select
+        [ Page.Style.selectMenu
             groupSelectId
             (Category.groupAll |> List.map Category.groupToJapaneseString)
         ]
@@ -204,7 +204,7 @@ categoryView group category =
     , Page.Style.formItem
         "カテゴリ"
         categorySelectId
-        [ Page.Style.select
+        [ Page.Style.selectMenu
             categorySelectId
             (Category.groupToCategoryList group
                 |> List.map Category.toJapaneseString

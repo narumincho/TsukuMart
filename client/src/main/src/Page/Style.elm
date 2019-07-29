@@ -1,18 +1,19 @@
 module Page.Style exposing
-    ( displayGridAndGap
+    ( RadioSelect(..)
+    , displayGridAndGap
     , formItem
     , inputText
     , mainButton
     , primaryColor
     , primaryColorLight
-    , select
+    , radioForm
+    , selectMenu
     , titleAndContent
     , titleAndContentStyle
     , userImage
     )
 
 import Css
-import Css.Animations
 import Css.Transitions
 import Data.ImageId
 import Html
@@ -111,8 +112,8 @@ userImage size imageId =
         |> H.toUnstyled
 
 
-select : String -> List String -> H.Html (Maybe Int)
-select id labelList =
+selectMenu : String -> List String -> H.Html (Maybe Int)
+selectMenu id labelList =
     H.select
         [ A.css
             [ Css.display Css.block
@@ -236,3 +237,113 @@ mainButton children msgMaybe =
                )
         )
         (children |> List.map (H.map never))
+
+
+type RadioSelect
+    = Left
+    | Right
+
+
+radioForm :
+    { select : RadioSelect
+    , leftText : String
+    , rightText : String
+    , name : String
+    }
+    -> H.Html RadioSelect
+radioForm { select, leftText, rightText, name } =
+    H.div
+        [ A.css
+            [ Css.width (Css.pct 100)
+            , Css.padding (Css.px 8)
+            , displayGridAndGap 0
+            , Css.property "grid-template-columns" "1fr 1fr"
+            , Css.boxSizing Css.borderBox
+            ]
+        ]
+        [ H.input
+            [ A.type_ "radio"
+            , A.name name
+            , A.id (name ++ "Left")
+            , A.css
+                [ radioInputStyle
+                ]
+            , Html.Styled.Events.on "change" (Json.Decode.succeed Left)
+            , A.checked (select == Left)
+            ]
+            []
+        , H.label
+            [ A.for (name ++ "Left")
+            , A.css
+                [ radioLabelStyle (select == Left)
+                , Css.borderRadius4 (Css.px 8) Css.zero Css.zero (Css.px 8)
+                , Css.property "grid-column" "1 / 2"
+                , Css.property "grid-row" "1 / 2"
+                ]
+            ]
+            [ H.text leftText ]
+        , H.input
+            [ A.type_ "radio"
+            , A.name name
+            , A.id (name ++ "Right")
+            , A.css
+                [ radioInputStyle
+                ]
+            , Html.Styled.Events.on "change" (Json.Decode.succeed Right)
+            , A.checked (select == Right)
+            ]
+            []
+        , H.label
+            [ A.for (name ++ "Right")
+            , A.css
+                [ radioLabelStyle (select == Right)
+                , Css.borderRadius4 Css.zero (Css.px 8) (Css.px 8) Css.zero
+                , Css.property "grid-column" "2 / 3"
+                , Css.property "grid-row" "1 / 2"
+                ]
+            ]
+            [ H.text rightText ]
+        ]
+
+
+radioInputStyle : Css.Style
+radioInputStyle =
+    [ Css.width Css.zero
+    , Css.height Css.zero
+    ]
+        |> Css.batch
+
+
+radioLabelStyle : Bool -> Css.Style
+radioLabelStyle select =
+    ([ Css.backgroundColor
+        (if select then
+            primaryColor
+
+         else
+            Css.rgb 153 153 153
+        )
+     , Css.padding (Css.px 8)
+     , Css.textAlign Css.center
+     , Css.cursor Css.pointer
+     , Css.border2 Css.zero Css.none
+     , Css.boxShadow4 Css.zero (Css.px 2) (Css.px 4) (Css.rgba 0 0 0 0.18)
+     , Css.color
+        (if select then
+            Css.rgb 255 255 255
+
+         else
+            Css.rgb 0 0 0
+        )
+     ]
+        ++ (if select then
+                []
+
+            else
+                [ Css.hover
+                    [ Css.backgroundColor (Css.rgb 187 187 187)
+                    ]
+                ]
+           )
+    )
+        |> Css.batch

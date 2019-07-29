@@ -596,7 +596,7 @@ conditionView condition =
     Page.Style.formItem
         "商品の状態"
         conditionSelectId
-        [ Page.Style.select
+        [ Page.Style.selectMenu
             conditionSelectId
             (Product.conditionAll
                 |> List.map Product.conditionToJapaneseString

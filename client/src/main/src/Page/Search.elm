@@ -10,15 +10,18 @@ import Page.Style
 
 
 type Model
-    = InputPage
+    = Model
         { query : String
         , categorySelect : Page.Component.Category.Model
+        , universitySelect : SearchCondition.UniversitySelect
         }
 
 
 type Msg
     = InputQuery String
     | MsgByCategory Page.Component.Category.Msg
+    | SelectSchoolOrDepartment
+    | SelectGraduate
 
 
 type Emission
@@ -26,51 +29,44 @@ type Emission
     | EmissionByCategory Page.Component.Category.Emission
 
 
-
-{- TODO 検索条件があるかないかで検索条件画面か、検索結果画面か 切り替える -}
-
-
-initModel : Maybe SearchCondition.Condition -> ( Model, List Emission )
-initModel conditionMaybe =
-    case conditionMaybe of
-        Just condition ->
-            let
-                ( categoryModel, categoryEmissions ) =
-                    Page.Component.Category.initModelWithSearchCondition (SearchCondition.getCategory condition)
-            in
-            ( InputPage
-                { query = SearchCondition.getQuery condition
-                , categorySelect = categoryModel
-                }
-            , categoryEmissions |> List.map EmissionByCategory
-            )
-
-        Nothing ->
-            let
-                ( categoryModel, categoryEmissions ) =
-                    Page.Component.Category.initModelWithSearchCondition SearchCondition.CategorySelectNone
-            in
-            ( InputPage
-                { query = ""
-                , categorySelect = categoryModel
-                }
-            , categoryEmissions |> List.map EmissionByCategory
-            )
+initModel : ( Model, List Emission )
+initModel =
+    let
+        ( categoryModel, categoryEmissions ) =
+            Page.Component.Category.initModelWithSearchCondition SearchCondition.CategorySelectNone
+    in
+    ( Model
+        { query = ""
+        , categorySelect = categoryModel
+        , universitySelect = SearchCondition.UniversitySelectNone
+        }
+    , categoryEmissions |> List.map EmissionByCategory
+    )
 
 
 update : Msg -> Model -> ( Model, List Emission )
-update msg (InputPage rec) =
+update msg (Model rec) =
     case msg of
         InputQuery string ->
-            ( InputPage
+            ( Model
                 { rec
                     | query = string
                 }
             , []
             )
 
+        SelectSchoolOrDepartment ->
+            ( Model rec
+            , []
+            )
+
+        SelectGraduate ->
+            ( Model rec
+            , []
+            )
+
         MsgByCategory categoryMsg ->
-            ( InputPage
+            ( Model
                 { rec
                     | categorySelect =
                         rec.categorySelect
@@ -88,7 +84,7 @@ view :
         , html : List (Html.Html Msg)
         , bottomNavigation : Maybe BasicParts.BottomNavigationSelect
         }
-view (InputPage rec) =
+view (Model rec) =
     { title = Just "検索"
     , tab = BasicParts.tabNone
     , html =
@@ -120,6 +116,21 @@ viewBody categoryModel =
             (Page.Component.Category.view categoryModel
                 |> Html.Styled.map MsgByCategory
             )
+        , Page.Style.radioForm
+            { select = Page.Style.Left
+            , leftText = "学群/学類"
+            , rightText = "研究科"
+            , name = "searchUniversityType"
+            }
+            |> Html.Styled.map
+                (\m ->
+                    case m of
+                        Page.Style.Left ->
+                            SelectSchoolOrDepartment
+
+                        Page.Style.Right ->
+                            SelectGraduate
+                )
         ]
 
 

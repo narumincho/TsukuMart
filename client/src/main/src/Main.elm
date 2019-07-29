@@ -27,6 +27,7 @@ import Page.LogIn
 import Page.Notification
 import Page.Product
 import Page.Search
+import Page.SearchResult
 import Page.SoldProducts
 import Page.Trade
 import Page.TradesInPast
@@ -98,6 +99,7 @@ type PageModel
     | PageTrade Page.Trade.Model
     | PageUser Page.User.Model
     | PageSearch Page.Search.Model
+    | PageSearchResult Page.SearchResult.Model
     | PageNotification Page.Notification.Model
     | PageAbout Page.About.Model
 
@@ -136,6 +138,7 @@ type PageMsg
     | PageMsgLogIn Page.LogIn.Msg
     | PageMsgExhibition Page.Exhibition.Msg
     | PageMsgSearch Page.Search.Msg
+    | PageMsgSearchResult Page.SearchResult.Msg
     | PageMsgNotification Page.Notification.Msg
     | PageMsgProduct Page.Product.Msg
     | PageMsgUser Page.User.Msg
@@ -270,9 +273,15 @@ urlParserInitResultToPageAndCmd key logInState page =
             Page.User.initModelFromId logInState userId
                 |> mapPageModel PageUser userPageEmissionToCmd
 
-        PageLocation.InitSearch condition ->
-            Page.Search.initModel condition
-                |> mapPageModel PageSearch searchPageEmissionToCmd
+        PageLocation.InitSearch conditionMaybe ->
+            case conditionMaybe of
+                Just condition ->
+                    Page.SearchResult.initModel condition
+                        |> mapPageModel PageSearchResult searchResultPageEmissionToCmd
+
+                Nothing ->
+                    Page.Search.initModel
+                        |> mapPageModel PageSearch searchPageEmissionToCmd
 
         PageLocation.InitNotification ->
             Page.Notification.initModel
@@ -610,6 +619,11 @@ updatePageMsg pageMsg (Model rec) =
                 |> Page.Search.update msg
                 |> mapPageModel PageSearch searchPageEmissionToCmd
 
+        ( PageMsgSearchResult msg, PageSearchResult model ) ->
+            model
+                |> Page.SearchResult.update msg
+                |> mapPageModel PageSearchResult searchResultPageEmissionToCmd
+
         ( PageMsgNotification msg, PageNotification model ) ->
             model
                 |> Page.Notification.update msg
@@ -816,6 +830,11 @@ searchPageEmissionToCmd emission =
 
         Page.Search.EmissionByCategory e ->
             categoryEmissionToCmd e
+
+
+searchResultPageEmissionToCmd : Page.SearchResult.Command -> Cmd Msg
+searchResultPageEmissionToCmd command =
+    Cmd.none
 
 
 notificationEmissionToCmd : Page.Notification.Emission -> Cmd Msg
@@ -1123,9 +1142,15 @@ urlParserResultToPageAndCmd (Model rec) result =
             )
                 |> mapPageModel PageUser userPageEmissionToCmd
 
-        PageLocation.Search condition ->
-            Page.Search.initModel condition
-                |> mapPageModel PageSearch searchPageEmissionToCmd
+        PageLocation.Search conditionMaybe ->
+            case conditionMaybe of
+                Just condition ->
+                    Page.SearchResult.initModel condition
+                        |> mapPageModel PageSearchResult searchResultPageEmissionToCmd
+
+                Nothing ->
+                    Page.Search.initModel
+                        |> mapPageModel PageSearch searchPageEmissionToCmd
 
         PageLocation.Notification ->
             Page.Notification.initModel
@@ -1347,84 +1372,89 @@ titleAndTabDataAndMainView logInState isWideScreen nowMaybe page =
         PageHome model ->
             model
                 |> Page.Home.view logInState isWideScreen
-                |> mapPageData PageMsgHome
+                |> mapPageMsg PageMsgHome
 
         PageLikedProducts model ->
             model
                 |> Page.LikedProducts.view logInState isWideScreen
-                |> mapPageData PageMsgLikedProducts
+                |> mapPageMsg PageMsgLikedProducts
 
         PageHistory model ->
             model
                 |> Page.History.view logInState isWideScreen
-                |> mapPageData PageMsgHistory
+                |> mapPageMsg PageMsgHistory
 
         PageBoughtProducts model ->
             model
                 |> Page.BoughtProducts.view logInState isWideScreen
-                |> mapPageData PageMsgBoughtProducts
+                |> mapPageMsg PageMsgBoughtProducts
 
         PageSoldProducts model ->
             model
                 |> Page.SoldProducts.view logInState isWideScreen
-                |> mapPageData PageMsgSoldProducts
+                |> mapPageMsg PageMsgSoldProducts
 
         PageTradesInProgress model ->
             model
                 |> Page.TradesInProgress.view logInState
-                |> mapPageData PageMsgTradesInProgress
+                |> mapPageMsg PageMsgTradesInProgress
 
         PageTradesInPast model ->
             model
                 |> Page.TradesInPast.view logInState
-                |> mapPageData PageMsgTradesInPast
+                |> mapPageMsg PageMsgTradesInPast
 
         PageCommentedProducts model ->
             model
                 |> Page.CommentedProducts.view logInState isWideScreen
-                |> mapPageData PageMsgCommentedProducts
+                |> mapPageMsg PageMsgCommentedProducts
 
         PageExhibition model ->
             model
                 |> Page.Exhibition.view logInState
-                |> mapPageData PageMsgExhibition
+                |> mapPageMsg PageMsgExhibition
 
         PageLogIn model ->
             model
                 |> Page.LogIn.view
-                |> mapPageData PageMsgLogIn
+                |> mapPageMsg PageMsgLogIn
 
         PageProduct model ->
             model
                 |> Page.Product.view logInState isWideScreen nowMaybe
-                |> mapPageData PageMsgProduct
+                |> mapPageMsg PageMsgProduct
 
         PageTrade model ->
             model
                 |> Page.Trade.view logInState nowMaybe
-                |> mapPageData PageMsgTrade
+                |> mapPageMsg PageMsgTrade
 
         PageUser model ->
             model
                 |> Page.User.view logInState isWideScreen
-                |> mapPageData PageMsgUser
+                |> mapPageMsg PageMsgUser
 
         PageSearch model ->
             model
                 |> Page.Search.view
-                |> mapPageData PageMsgSearch
+                |> mapPageMsg PageMsgSearch
+
+        PageSearchResult model ->
+            model
+                |> Page.SearchResult.view
+                |> mapPageMsg PageMsgSearchResult
 
         PageNotification model ->
             model
                 |> Page.Notification.view
-                |> mapPageData PageMsgNotification
+                |> mapPageMsg PageMsgNotification
 
         PageAbout model ->
             model
                 |> Page.About.view
 
 
-mapPageData :
+mapPageMsg :
     (eachPageMsg -> PageMsg)
     ->
         { title : Maybe String
@@ -1438,7 +1468,7 @@ mapPageData :
         , html : List (Html.Html PageMsg)
         , bottomNavigation : Maybe BasicParts.BottomNavigationSelect
         }
-mapPageData f { title, tab, html, bottomNavigation } =
+mapPageMsg f { title, tab, html, bottomNavigation } =
     { title =
         case title of
             Just titleText ->
