@@ -911,6 +911,9 @@ const productSearch = makeQueryOrMutationField<
         query: string;
         category: Maybe<type.Category>;
         condition: Maybe<type.Condition>;
+        school: Maybe<type.School>;
+        department: Maybe<type.SchoolAndDepartment>;
+        graduate: Maybe<type.Graduate>;
     },
     Array<type.ProductInternal>
 >({
@@ -925,7 +928,21 @@ const productSearch = makeQueryOrMutationField<
         },
         condition: {
             type: type.conditionGraphQLType,
-            description: "商品の品質状態。nullで指定なし"
+            description: "商品の品質状態の指定。nullで指定なし"
+        },
+        school: {
+            type: type.schoolAndDepartmentGraphQLType,
+            description:
+                "出品者の学群の指定。nullで指定なし。departmentも指定していたらエラー"
+        },
+        department: {
+            type: type.schoolAndDepartmentGraphQLType,
+            description:
+                "出品者の学群学類の指定。nullで指定なし。schoolも指定していたらエラー"
+        },
+        graduate: {
+            type: type.graduateGraphQLType,
+            description: "出品者の研究科の指定。nullで指定なし"
         }
     },
     type: g.GraphQLNonNull(g.GraphQLList(g.GraphQLNonNull(productGraphQLType))),

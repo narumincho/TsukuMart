@@ -109,6 +109,25 @@ export const checkAccountServiceValues = (
  *            University
  * ====================================
  */
+const schoolValues = {
+    humcul: { description: "人文・文化学群" },
+    socint: { description: "社会・国際学群" },
+    human: { description: "人間学群" },
+    life: { description: "生命環境学群" },
+    sse: { description: "理工学群" },
+    info: { description: "情報学群" },
+    med: { description: "医学群" },
+    aandd: { description: "芸術専門学群" },
+    sport: { description: "体育専門学群" }
+};
+
+export type School = keyof (typeof schoolValues);
+
+const schoolGraphQLType = new g.GraphQLEnumType({
+    name: "School",
+    values: schoolValues,
+    description: "学群ID"
+});
 
 const schoolAndDepartmentValues = {
     humanity: { description: "人文・文化学群 / 人文学類" },
@@ -142,8 +161,8 @@ const schoolAndDepartmentValues = {
 
 export type SchoolAndDepartment = keyof (typeof schoolAndDepartmentValues);
 
-const schoolAndDepartmentGraphQLType = new g.GraphQLEnumType({
-    name: "schoolAndDepartment",
+export const schoolAndDepartmentGraphQLType = new g.GraphQLEnumType({
+    name: "SchoolAndDepartment",
     values: schoolAndDepartmentValues,
     description: "学群学類ID"
 });
@@ -161,8 +180,8 @@ const graduateValues = {
 };
 export type Graduate = keyof (typeof graduateValues);
 
-const graduateGraphQLType = new g.GraphQLEnumType({
-    name: "graduate",
+export const graduateGraphQLType = new g.GraphQLEnumType({
+    name: "Graduate",
     values: graduateValues,
     description: "研究科ID"
 });
