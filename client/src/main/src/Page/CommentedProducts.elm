@@ -12,8 +12,6 @@ import Api
 import BasicParts
 import Data.LogInState as LogInState
 import Data.Product as Product
-import Html
-import Html.Attributes
 import Html.Styled
 import Page.Component.LogIn as LogIn
 import Page.Component.ProductList as ProductList
@@ -48,10 +46,10 @@ type Emission
 
 
 initModel : Maybe Product.Id -> LogInState.LogInState -> ( Model, List Emission )
-initModel goodIdMaybe logInState =
+initModel productIdMaybe logInState =
     let
         ( productListModel, emissionList ) =
-            ProductList.initModel goodIdMaybe
+            ProductList.initModel productIdMaybe
     in
     ( Model
         { normal = Loading

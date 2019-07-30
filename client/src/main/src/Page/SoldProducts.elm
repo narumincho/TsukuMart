@@ -12,7 +12,6 @@ import BasicParts
 import Data.LogInState as LogInState
 import Data.Product as Product
 import Data.User as User
-import Html
 import Html.Styled
 import Page.Component.ProductList as ProductList
 

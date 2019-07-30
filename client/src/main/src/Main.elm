@@ -10,9 +10,6 @@ import Data.LogInState
 import Data.Product
 import Data.Trade
 import Data.User
-import Html
-import Html.Attributes
-import Html.Keyed
 import Html.Styled
 import Html.Styled.Attributes
 import Html.Styled.Keyed
@@ -285,7 +282,7 @@ urlParserInitResultToPageAndCmd key logInState page =
         PageLocation.InitSearch conditionMaybe ->
             case conditionMaybe of
                 Just condition ->
-                    Page.SearchResult.initModel condition
+                    Page.SearchResult.initModel Nothing condition
                         |> mapPageModel PageSearchResult searchResultPageEmissionToCmd
 
                 Nothing ->
@@ -843,7 +840,12 @@ searchPageEmissionToCmd emission =
 
 searchResultPageEmissionToCmd : Page.SearchResult.Command -> Cmd Msg
 searchResultPageEmissionToCmd command =
-    Cmd.none
+    case command of
+        Page.SearchResult.SearchProducts condition ->
+            Api.searchProducts condition (Page.SearchResult.SearchProductsResponse >> PageMsgSearchResult >> PageMsg)
+
+        Page.SearchResult.CommandByProductList emission ->
+            productListEmissionToCmd emission
 
 
 notificationEmissionToCmd : Page.Notification.Emission -> Cmd Msg
@@ -1154,7 +1156,7 @@ urlParserResultToPageAndCmd (Model rec) result =
         PageLocation.Search conditionMaybe ->
             case conditionMaybe of
                 Just condition ->
-                    Page.SearchResult.initModel condition
+                    Page.SearchResult.initModel (getProductId rec.page) condition
                         |> mapPageModel PageSearchResult searchResultPageEmissionToCmd
 
                 Nothing ->
@@ -1465,7 +1467,7 @@ titleAndTabDataAndMainView logInState isWideScreen nowMaybe page =
 
         PageSearchResult model ->
             model
-                |> Page.SearchResult.view
+                |> Page.SearchResult.view logInState isWideScreen
                 |> mapPageMsg PageMsgSearchResult
 
         PageNotification model ->
@@ -1529,9 +1531,10 @@ messageView message =
                     , ( 100, [ Css.Animations.opacity (Css.num 0) ] )
                     ]
                 )
-            , Css.animationDuration (Css.sec 10)
-            , Css.animationDelay (Css.sec 3)
+            , Css.animationDuration (Css.sec 2)
+            , Css.animationDelay (Css.sec 4)
             , Css.animationIterationCount (Css.int 1)
+            , Css.property "animation-fill-mode" "forwards"
             , Css.maxWidth (Css.pct 100)
             , Css.boxSizing Css.borderBox
             , Css.property "word-break" "break-word"

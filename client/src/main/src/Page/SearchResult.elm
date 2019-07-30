@@ -1,55 +1,116 @@
 module Page.SearchResult exposing
-    ( Command
+    ( Command(..)
     , Model
-    , Msg
+    , Msg(..)
     , initModel
     , update
     , view
     )
 
 import BasicParts
+import Data.LogInState
+import Data.Product
 import Data.SearchCondition as SearchCondition
-import Html
 import Html.Styled
+import Page.Component.ProductList as ProductList
 
 
 type Model
     = Model
+        { productList : ProductList.Model
+        , condition : SearchCondition.Condition
+        , result : Maybe (List Data.Product.Product)
+        }
 
 
 type Msg
-    = Msg
+    = SearchProductsResponse (Result String (List Data.Product.Product))
+    | MessageFromProductList ProductList.Msg
 
 
 type Command
-    = Command
+    = SearchProducts SearchCondition.Condition
+    | CommandByProductList ProductList.Emission
 
 
-initModel : SearchCondition.Condition -> ( Model, List Command )
-initModel condition =
+initModel : Maybe Data.Product.Id -> SearchCondition.Condition -> ( Model, List Command )
+initModel productIdMaybe condition =
+    let
+        ( productListModel, emissionList ) =
+            ProductList.initModel productIdMaybe
+    in
     ( Model
-    , []
+        { productList = productListModel
+        , condition = condition
+        , result = Nothing
+        }
+    , [ SearchProducts condition ] ++ (emissionList |> List.map CommandByProductList)
     )
 
 
 update : Msg -> Model -> ( Model, List Command )
-update msg model =
-    ( model, [] )
+update msg (Model rec) =
+    case msg of
+        SearchProductsResponse result ->
+            case result of
+                Ok products ->
+                    ( Model
+                        { rec
+                            | result = Just products
+                        }
+                    , []
+                    )
+
+                Err errorMessage ->
+                    ( Model rec
+                    , []
+                    )
+
+        MessageFromProductList productListMsg ->
+            let
+                ( newModel, emissionList ) =
+                    rec.productList |> ProductList.update productListMsg
+            in
+            ( case productListMsg of
+                ProductList.UpdateLikedCountResponse id (Ok likedCount) ->
+                    Model
+                        { rec
+                            | result = updateLikedCount likedCount id rec.result
+                            , productList = newModel
+                        }
+
+                _ ->
+                    Model { rec | productList = newModel }
+            , emissionList |> List.map CommandByProductList
+            )
+
+
+updateLikedCount : Int -> Data.Product.Id -> Maybe (List Data.Product.Product) -> Maybe (List Data.Product.Product)
+updateLikedCount likedCount id result =
+    result
+        |> Maybe.map (Data.Product.updateById id (Data.Product.updateLikedCount likedCount))
 
 
 view :
-    Model
+    Data.LogInState.LogInState
+    -> Bool
+    -> Model
     ->
         { title : Maybe String
         , tab : BasicParts.Tab Msg
         , html : List (Html.Styled.Html Msg)
         , bottomNavigation : Maybe BasicParts.BottomNavigationSelect
         }
-view model =
+view logInState isWideScreen (Model rec) =
     { title = Just "検索結果"
-    , tab = BasicParts.tabNone
+    , tab = BasicParts.tabSingle ""
     , html =
-        [ Html.Styled.text "検索結果"
+        [ ProductList.view
+            rec.productList
+            logInState
+            isWideScreen
+            rec.result
+            |> Html.Styled.map MessageFromProductList
         ]
     , bottomNavigation = Nothing
     }

@@ -29,6 +29,7 @@ module Api exposing
     , makeToken
     , markProductInHistory
     , registerSignUpData
+    , searchProducts
     , sellProduct
     , startTrade
     , tokenGetRefreshTokenAsString
@@ -43,6 +44,7 @@ import Data.Category as Category
 import Data.EmailAddress as EmailAddress
 import Data.ImageId as ImageId
 import Data.Product as Product
+import Data.SearchCondition as SearchCondition
 import Data.SocialLoginService
 import Data.Trade as Trade
 import Data.University as University
@@ -1359,6 +1361,43 @@ finishTrade tradeId =
                 ]
         )
         (Jd.field "finishTrade" tradeDetailDecoder)
+
+
+
+{- ==============================================================================
+                            商品の検索
+   ==============================================================================
+-}
+
+
+searchProducts : SearchCondition.Condition -> (Result String (List Product.Product) -> msg) -> Cmd msg
+searchProducts condition callBack =
+    graphQlApiRequestWithoutToken
+        (Query
+            [ Field
+                { name = "productSearch"
+                , args =
+                    [ ( "query", GraphQLString (SearchCondition.getQuery condition) )
+                    ]
+                        ++ (case SearchCondition.getCategory condition of
+                                SearchCondition.CategorySelectNone ->
+                                    []
+
+                                SearchCondition.CategorySelectGroup group ->
+                                    []
+
+                                SearchCondition.CategorySelectCategory category ->
+                                    [ ( "category", GraphQLEnum (Category.toIdString category) )
+                                    ]
+                           )
+                , return = productReturn
+                }
+            ]
+        )
+        (Jd.field "productSearch"
+            (Jd.list productDecoder)
+        )
+        callBack
 
 
 
