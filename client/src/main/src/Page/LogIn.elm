@@ -54,7 +54,7 @@ view :
     ->
         { title : Maybe String
         , tab : BasicParts.Tab Msg
-        , html : List (Html.Html Msg)
+        , html : List (Html.Styled.Html Msg)
         , bottomNavigation : Maybe BasicParts.BottomNavigationSelect
         }
 view (Model logInOrSignUpModel) =

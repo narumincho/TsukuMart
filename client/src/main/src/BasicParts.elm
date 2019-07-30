@@ -63,7 +63,7 @@ header =
         [ Html.Styled.Attributes.css
             [ Css.displayFlex
             , Css.backgroundColor Page.Style.primaryColor
-            , Css.boxShadow4 Css.zero (Css.px 2) (Css.px 4) (Css.rgba 0 0 0 0.18)
+            , Page.Style.normalShadow
             , Css.position Css.fixed
             , Css.width (Css.pct 100)
             , Css.padding Css.zero

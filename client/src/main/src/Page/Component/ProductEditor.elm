@@ -253,8 +253,8 @@ beforeImageAddDeleteIndex index beforeImageIdLength deleteAt offset =
 
 toSoldRequest : Model -> Maybe Api.SellProductRequest
 toSoldRequest (Model rec) =
-    case ( priceCheck rec.price, rec.condition, CateogryComp.getSelect rec.category ) of
-        ( Ok price, Just condition, CateogryComp.CategorySelect category ) ->
+    case ( priceCheck rec.price, rec.condition, CateogryComp.getCategory rec.category ) of
+        ( Ok price, Just condition, Just category ) ->
             if
                 nameCheck rec.name
                     == Nothing
@@ -280,8 +280,8 @@ toSoldRequest (Model rec) =
 
 toUpdateRequest : Model -> Maybe Api.UpdateProductRequest
 toUpdateRequest (Model rec) =
-    case ( rec.price, rec.condition, CateogryComp.getSelect rec.category ) of
-        ( Just price, Just condition, CateogryComp.CategorySelect category ) ->
+    case ( rec.price, rec.condition, CateogryComp.getCategory rec.category ) of
+        ( Just price, Just condition, Just category ) ->
             if
                 nameCheck rec.name
                     == Nothing

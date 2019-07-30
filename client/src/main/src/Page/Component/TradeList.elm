@@ -4,109 +4,105 @@ import Css
 import Data.Product as Product
 import Data.Trade as Trade
 import Data.User as User
-import Html
-import Html.Attributes
 import Html.Styled
+import Html.Styled.Attributes
 import Icon
 import Page.Style
 import PageLocation
 
 
-view : Maybe (List Trade.Trade) -> Html.Html msg
+view : Maybe (List Trade.Trade) -> Html.Styled.Html msg
 view tradesMaybe =
-    Html.div
+    Html.Styled.div
         []
         (case tradesMaybe of
             Just (x :: xs) ->
                 mainView ( x, xs )
 
             Just [] ->
-                emptyView
+                [ Page.Style.emptyList "ここに表示する取引がありません" ]
 
             Nothing ->
-                [ Html.text "読み込み中"
+                [ Html.Styled.text "読み込み中"
                 , Icon.loading { size = 64, color = Css.rgb 0 0 0 }
-                    |> Html.Styled.toUnstyled
                 ]
         )
 
 
-mainView : ( Trade.Trade, List Trade.Trade ) -> List (Html.Html msg)
+mainView : ( Trade.Trade, List Trade.Trade ) -> List (Html.Styled.Html msg)
 mainView ( x, xs ) =
-    List.map item (x :: xs)
+    List.map itemView (x :: xs)
 
 
-item : Trade.Trade -> Html.Html msg
-item trade =
+itemView : Trade.Trade -> Html.Styled.Html msg
+itemView trade =
     let
         product =
             Trade.getProduct trade
     in
-    Html.a
-        [ Html.Attributes.href
+    Html.Styled.a
+        [ Html.Styled.Attributes.href
             (PageLocation.toUrlAsString
                 (PageLocation.Trade (Trade.getId trade))
             )
-        , Html.Attributes.style "display" "grid"
-        , Html.Attributes.style "grid-template-columns" "194px 1fr"
-        , Html.Attributes.style "grid-template-rows" "max-content max-content max-content"
-        , Html.Attributes.style "border" "solid 1px rgba(0,0,0,.4)"
-        , Html.Attributes.style "text-decoration" "none"
-        , Html.Attributes.style "color" "black"
+        , Html.Styled.Attributes.css
+            [ Page.Style.displayGridAndGap 0
+            , Css.property "grid-template-columns" "194px 1fr"
+            , Css.property "grid-template-rows" "max-content max-content max-content"
+            , Css.border3 (Css.px 1) Css.solid (Css.rgba 0 0 0 0.4)
+            , Css.textDecoration Css.none
+            , Css.color (Css.rgb 0 0 0)
+            ]
         ]
-        [ Html.img
-            [ Html.Attributes.src (Product.getThumbnailImageUrl product)
-            , Html.Attributes.style "grid-column" "1 / 2"
-            , Html.Attributes.style "grid-row" "1 / 4"
-            , Html.Attributes.style "width" "192px"
-            , Html.Attributes.style "height" "192px"
-            , Html.Attributes.style "object-fit" "contain"
+        [ Html.Styled.img
+            [ Html.Styled.Attributes.src (Product.getThumbnailImageUrl product)
+            , Html.Styled.Attributes.css
+                [ Css.property "grid-column" "1 / 2"
+                , Css.property "grid-row" "1 / 4"
+                , Css.width (Css.px 192)
+                , Css.height (Css.px 192)
+                , Css.property "object-fit" "contain"
+                ]
             ]
             []
-        , Html.div
-            [ Html.Attributes.style "grid-column" "2 / 3"
-            , Html.Attributes.style "grid-row" "1 / 2"
-            , Html.Attributes.style "color" "black"
-            , Html.Attributes.style "font-size" "32px"
+        , Html.Styled.div
+            [ Html.Styled.Attributes.css
+                [ Css.property "grid-column" "2 / 3"
+                , Css.property "grid-row" "1 / 2"
+                , Css.color (Css.rgb 0 0 0)
+                , Css.fontSize (Css.px 32)
+                ]
             ]
-            [ Html.text (Product.getName product) ]
-        , Html.div
-            [ Html.Attributes.style "grid-column" "2 / 3"
-            , Html.Attributes.style "grid-row" "2 / 3"
+            [ Html.Styled.text (Product.getName product) ]
+        , Html.Styled.div
+            [ Html.Styled.Attributes.css
+                [ Css.property "grid-column" "2 / 3"
+                , Css.property "grid-row" "2 / 3"
+                ]
             ]
-            [ Html.text (Product.priceToString (Product.getPrice product)) ]
-        , Html.div
-            [ Html.Attributes.style "grid-column" "2 / 3"
-            , Html.Attributes.style "grid-row" "3 / 4"
-            , Html.Attributes.style "display" "flex"
+            [ Html.Styled.text (Product.priceToString (Product.getPrice product)) ]
+        , Html.Styled.div
+            [ Html.Styled.Attributes.css
+                [ Css.property "grid-column" "2 / 3"
+                , Css.property "grid-row" "3 / 4"
+                , Css.displayFlex
+                ]
             ]
             [ userView (Trade.getSeller trade)
-            , Html.div [ Html.Attributes.style "font-size" "32px" ] [ Html.text "→" ]
+            , Html.Styled.div
+                [ Html.Styled.Attributes.css
+                    [ Css.fontSize (Css.rem 2) ]
+                ]
+                [ Html.Styled.text "→" ]
             , userView (Trade.getBuyer trade)
             ]
         ]
 
 
-userView : User.WithName -> Html.Html msg
+userView : User.WithName -> Html.Styled.Html msg
 userView userWithName =
-    Html.div
+    Html.Styled.div
         []
         [ Page.Style.userImage 48 (User.withNameGetImageId userWithName)
-            |> Html.Styled.toUnstyled
-        , Html.text (User.withNameGetDisplayName userWithName)
+        , Html.Styled.text (User.withNameGetDisplayName userWithName)
         ]
-
-
-emptyView : List (Html.Html msg)
-emptyView =
-    [ Html.div
-        [ Html.Attributes.class "productList-zero" ]
-        [ Html.img
-            [ Html.Attributes.src "/assets/logo_bird.png"
-            , Html.Attributes.class "productList-zeroImage"
-            , Html.Attributes.alt "ざんねん。取引がありません"
-            ]
-            []
-        , Html.text "ここに表示する取引がありません"
-        ]
-    ]

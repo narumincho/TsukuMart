@@ -54,33 +54,30 @@ update msg _ =
 view : Model -> Html.Styled.Html Msg
 view (Model waitLogInUrl) =
     Html.Styled.div
-        [ Html.Styled.Attributes.class "logIn" ]
-        [ Html.Styled.div
-            [ Html.Styled.Attributes.css
-                [ Page.Style.displayGridAndGap 24
-                , Css.padding (Css.px 24)
-                ]
+        [ Html.Styled.Attributes.css
+            [ Page.Style.displayGridAndGap 24
+            , Css.padding (Css.px 24)
             ]
-            ([ Html.Styled.div
-                []
-                [ Html.Styled.text "ログイン/新規登録するためには以下のどれかのアカウントが必要です" ]
-             ]
-                ++ (case waitLogInUrl of
-                        Just service ->
-                            [ Html.Styled.div []
-                                [ Html.Styled.text
-                                    (Data.SocialLoginService.serviceName service
-                                        ++ "のログイン画面へのURLを取得中"
-                                    )
-                                ]
-                            , Icon.loading { size = 64, color = Css.rgb 0 0 0 }
-                            ]
-
-                        Nothing ->
-                            serviceLogInButtonListView
-                   )
-            )
         ]
+        ([ Html.Styled.div
+            []
+            [ Html.Styled.text "ログイン/新規登録するためには以下のどれかのアカウントが必要です" ]
+         ]
+            ++ (case waitLogInUrl of
+                    Just service ->
+                        [ Html.Styled.div []
+                            [ Html.Styled.text
+                                (Data.SocialLoginService.serviceName service
+                                    ++ "のログイン画面へのURLを取得中"
+                                )
+                            ]
+                        , Icon.loading { size = 64, color = Css.rgb 0 0 0 }
+                        ]
+
+                    Nothing ->
+                        serviceLogInButtonListView
+               )
+        )
 
 
 serviceLogInButtonListView : List (Html.Styled.Html Msg)

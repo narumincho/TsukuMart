@@ -1483,7 +1483,7 @@ mapPageMsg :
     ->
         { title : Maybe String
         , tab : BasicParts.Tab eachPageMsg
-        , html : List (Html.Html eachPageMsg)
+        , html : List (Html.Styled.Html eachPageMsg)
         , bottomNavigation : Maybe BasicParts.BottomNavigationSelect
         }
     ->
@@ -1501,7 +1501,7 @@ mapPageMsg f { title, tab, html, bottomNavigation } =
             Nothing ->
                 "つくマート"
     , tab = tab |> BasicParts.tabMap f
-    , html = html |> List.map (Html.map f >> Html.Styled.fromUnstyled)
+    , html = html |> List.map (Html.Styled.map f)
     , bottomNavigation = bottomNavigation
     }
 

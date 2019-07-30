@@ -114,19 +114,6 @@ img {
 }
 
 /*===========================
-    Notification 通知
-===========================*/
-
-.notification {
-    position: fixed;
-    top: 4rem;
-    right: 1rem;
-    width: 80%;
-    height: calc(100% - 4rem);
-    background-color: #fff;
-}
-
-/*===========================
             Main Tab
 ===========================*/
 
@@ -192,15 +179,6 @@ img {
 /*===============================
         Exhibition 出品画面
 ===============================*/
-
-.exhibition {
-    display: grid;
-    max-width: 40rem;
-    gap: 32px;
-    padding: 16px;
-    box-sizing: border-box;
-    width: 100%;
-}
 
 .exhibition-photo-add {
     width: 100%;
@@ -277,16 +255,6 @@ img {
 /*===============================================
                 product 商品詳細画面
 ===============================================*/
-
-.product {
-    display: grid;
-    max-width: 40rem;
-    gap: 1rem;
-    padding: 1rem 1rem 5rem 1rem;
-    box-sizing: border-box;
-    width: 100%;
-}
-
 .product-imageListContainer {
     background-color: gray;
     overflow-x: auto;
@@ -603,11 +571,6 @@ img {
     padding: 4px 8px;
 }
 
-.productList-price {
-    font-size: 1.5rem;
-    color: #da7000;
-}
-
 .productList-image {
     width: 100%;
     height: 192px;
@@ -630,10 +593,6 @@ img {
     border: none;
 }
 
-.productList-like-number {
-    font-size: 1.3rem;
-}
-
 .productList-like:hover {
     background-color: #888;
 }
@@ -646,39 +605,6 @@ img {
 .productList-liked:hover {
     background-color: var(--primaryColorLight);
 }
-
-.productList-zero {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 2rem;
-}
-
-.productList-zeroImage {
-    filter: grayscale(100%);
-    width: 8rem;
-}
-
-.exhibitionButton {
-    position: fixed;
-    bottom: 5rem;
-    right: 1rem;
-    border-radius: 50%;
-    background-color: orange;
-    color: #000;
-    width: 6rem;
-    height: 6rem;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
-    text-decoration: none;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.exhibitionButton:hover {
-    background-color: rgb(200, 145, 0);
-}
-
 /*===============================================
            Main View 画面に主に表示する場所
 ===============================================*/

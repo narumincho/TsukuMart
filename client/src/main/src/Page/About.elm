@@ -39,16 +39,13 @@ view model =
             , tab = BasicParts.tabNone
             , html =
                 [ Page.Style.container
-                    [ Html.Styled.div []
-                        [ Html.Styled.text "つくマートについて"
-                        , Html.Styled.a
-                            [ Html.Styled.Attributes.href PageLocation.aboutPrivacyPolicyUrl
-                            , Html.Styled.Attributes.class "mainButton"
-                            ]
-                            [ Html.Styled.text "プライバシーポリシー" ]
+                    [ Html.Styled.text "つくマートについて"
+                    , Html.Styled.a
+                        [ Html.Styled.Attributes.href PageLocation.aboutPrivacyPolicyUrl
+                        , Html.Styled.Attributes.class "mainButton"
                         ]
+                        [ Html.Styled.text "プライバシーポリシー" ]
                     ]
-                    |> Html.Styled.fromUnstyled
                 ]
             , bottomNavigation = Nothing
             }
@@ -59,7 +56,6 @@ view model =
             , html =
                 [ Page.Style.container
                     [ Html.Styled.text "プライバシーポリシー" ]
-                    |> Html.Styled.fromUnstyled
                 ]
             , bottomNavigation = Nothing
             }

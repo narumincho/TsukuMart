@@ -1,11 +1,13 @@
 module Page.Home exposing (Emission(..), Model, Msg(..), getAllProducts, initModel, update, view)
 
 import BasicParts
+import Css
 import Data.LogInState as LogInState
 import Data.Product as Product
-import Html
-import Html.Attributes
+import Html.Styled
+import Html.Styled.Attributes
 import Page.Component.ProductList as ProductList
+import Page.Style
 import PageLocation
 
 
@@ -153,7 +155,7 @@ view :
     ->
         { title : Maybe String
         , tab : BasicParts.Tab Msg
-        , html : List (Html.Html Msg)
+        , html : List (Html.Styled.Html Msg)
         , bottomNavigation : Maybe BasicParts.BottomNavigationSelect
         }
 view logInState isWideScreen (Model rec) =
@@ -186,7 +188,7 @@ view logInState isWideScreen (Model rec) =
                 TabFree ->
                     rec.free
             )
-            |> Html.map MsgByProductList
+            |> Html.Styled.map MsgByProductList
         ]
             ++ (case LogInState.getToken logInState of
                     Just _ ->
@@ -199,10 +201,26 @@ view logInState isWideScreen (Model rec) =
     }
 
 
-exhibitButton : Html.Html Msg
+exhibitButton : Html.Styled.Html Msg
 exhibitButton =
-    Html.a
-        [ Html.Attributes.class "exhibitionButton"
-        , Html.Attributes.href (PageLocation.toUrlAsString PageLocation.Exhibition)
+    Html.Styled.a
+        [ Html.Styled.Attributes.css
+            [ Css.position Css.fixed
+            , Css.bottom (Css.px 80)
+            , Css.right (Css.px 16)
+            , Css.borderRadius (Css.pct 50)
+            , Css.backgroundColor (Css.rgb 255 165 0)
+            , Css.color (Css.rgb 0 0 0)
+            , Css.width (Css.px 96)
+            , Css.height (Css.px 96)
+            , Page.Style.normalShadow
+            , Css.textDecoration Css.none
+            , Css.displayFlex
+            , Css.justifyContent Css.center
+            , Css.alignItems Css.center
+            , Css.hover
+                [ Css.backgroundColor (Css.rgb 200 145 0) ]
+            ]
+        , Html.Styled.Attributes.href (PageLocation.toUrlAsString PageLocation.Exhibition)
         ]
-        [ Html.text "出品" ]
+        [ Html.Styled.text "出品" ]

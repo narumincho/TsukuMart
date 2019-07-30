@@ -147,7 +147,12 @@ view :
     LogInState.LogInState
     -> Bool
     -> Model
-    -> { title : Maybe String, tab : BasicParts.Tab Msg, html : List (Html.Html Msg), bottomNavigation : Maybe BasicParts.BottomNavigationSelect }
+    ->
+        { title : Maybe String
+        , tab : BasicParts.Tab Msg
+        , html : List (Html.Styled.Html Msg)
+        , bottomNavigation : Maybe BasicParts.BottomNavigationSelect
+        }
 view logInState isWideScreen (Model rec) =
     { title = Just "いいねした商品"
     , tab = BasicParts.tabSingle "いいねした商品"
@@ -155,9 +160,7 @@ view logInState isWideScreen (Model rec) =
         case logInState of
             LogInState.None ->
                 [ Page.Style.container
-                    [ Html.Styled.div
-                        []
-                        [ Html.Styled.text "ログインか新規登録をして、いいねと閲覧履歴を使えるようにしよう!" ]
+                    [ Html.Styled.text "ログインか新規登録をして、いいねと閲覧履歴を使えるようにしよう!"
                     , LogIn.view
                         rec.logIn
                         |> Html.Styled.map MsgByLogIn
@@ -179,7 +182,7 @@ view logInState isWideScreen (Model rec) =
                         Error ->
                             Just []
                     )
-                    |> Html.map MsgByProductList
+                    |> Html.Styled.map MsgByProductList
                 ]
     , bottomNavigation = Nothing
     }

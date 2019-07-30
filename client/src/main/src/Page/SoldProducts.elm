@@ -13,6 +13,7 @@ import Data.LogInState as LogInState
 import Data.Product as Product
 import Data.User as User
 import Html
+import Html.Styled
 import Page.Component.ProductList as ProductList
 
 
@@ -127,7 +128,7 @@ view :
     ->
         { title : Maybe String
         , tab : BasicParts.Tab Msg
-        , html : List (Html.Html Msg)
+        , html : List (Html.Styled.Html Msg)
         , bottomNavigation : Maybe BasicParts.BottomNavigationSelect
         }
 view logInState isWideScreen (Model rec) =
@@ -148,7 +149,7 @@ view logInState isWideScreen (Model rec) =
                 Error ->
                     Just []
             )
-            |> Html.map MsgByProductList
+            |> Html.Styled.map MsgByProductList
         ]
     , bottomNavigation = Nothing
     }

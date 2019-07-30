@@ -246,7 +246,7 @@ view :
     ->
         { title : Maybe String
         , tab : BasicParts.Tab Msg
-        , html : List (Html.Html Msg)
+        , html : List (Html.Styled.Html Msg)
         , bottomNavigation : Maybe BasicParts.BottomNavigationSelect
         }
 view logInState timeData model =
@@ -254,52 +254,48 @@ view logInState timeData model =
     , tab = BasicParts.tabNone
     , html =
         [ Page.Style.container
-            [ Html.div
-                [ Html.Attributes.class "product" ]
-                (case logInState of
-                    LogInState.Ok { token, userWithName } ->
-                        case model of
-                            CheckTrader id ->
-                                [ Html.text ("id=" ++ Trade.idToString id ++ "の取引データを読み込み中")
-                                , Icon.loading { size = 64, color = Css.rgb 0 0 0 }
-                                    |> Html.Styled.toUnstyled
-                                ]
+            (case logInState of
+                LogInState.Ok { token, userWithName } ->
+                    case model of
+                        CheckTrader id ->
+                            [ Html.Styled.text ("id=" ++ Trade.idToString id ++ "の取引データを読み込み中")
+                            , Icon.loading { size = 64, color = Css.rgb 0 0 0 }
+                            ]
 
-                            Loading trade ->
-                                loadingView trade
+                        Loading trade ->
+                            loadingView trade
 
-                            Main { trade, sending } ->
-                                mainView sending token timeData userWithName trade
-                                    |> List.map Html.Styled.toUnstyled
+                        Main { trade, sending } ->
+                            mainView sending token timeData userWithName trade
 
-                    LogInState.LoadingProfile _ ->
-                        [ Html.text "読み込み中"
-                        , Icon.loading { size = 64, color = Css.rgb 0 0 0 }
-                            |> Html.Styled.toUnstyled
-                        ]
+                LogInState.LoadingProfile _ ->
+                    [ Html.Styled.text "読み込み中"
+                    , Icon.loading { size = 64, color = Css.rgb 0 0 0 }
+                    ]
 
-                    LogInState.None ->
-                        [ Html.text "取引するにはログインが必要です" ]
-                )
-                |> Html.Styled.fromUnstyled
-            ]
+                LogInState.None ->
+                    [ Html.Styled.text "取引するにはログインが必要です" ]
+            )
         ]
     , bottomNavigation = Nothing
     }
 
 
-loadingView : Trade.Trade -> List (Html.Html Msg)
+loadingView : Trade.Trade -> List (Html.Styled.Html Msg)
 loadingView trade =
     let
         product =
             Trade.getProduct trade
     in
-    [ Html.div
-        []
-        [ Html.text "読み込み中"
-        , Icon.loading { size = 64, color = Css.rgb 0 0 0 }
-            |> Html.Styled.toUnstyled
-        ]
+    [ productImageView [ Product.getThumbnailImageUrl product ]
+    , Page.Style.titleAndContent
+        "商品名"
+        (Html.div [] [ Html.text (Product.getName product) ])
+    , Page.Style.titleAndContent
+        "値段"
+        (Html.div [] [ Html.text (Product.priceToString (Product.getPrice product)) ])
+    , Html.Styled.text "読み込み中"
+    , Icon.loading { size = 64, color = Css.rgb 0 0 0 }
     ]
 
 

@@ -5,6 +5,7 @@ module Page.Component.Category exposing
     , Select(..)
     , categorySelectId
     , categoryView
+    , getCategory
     , getSelect
     , groupSelectId
     , groupView
@@ -86,9 +87,30 @@ initModelWithSearchCondition categorySelect =
             initModelWithCategorySelect category
 
 
-getSelect : Model -> Select
+getSelect : Model -> Data.SearchCondition.CategorySelect
 getSelect (Model select) =
-    select
+    case select of
+        None ->
+            Data.SearchCondition.CategorySelectNone
+
+        GroupSelect group ->
+            Data.SearchCondition.CategorySelectGroup group
+
+        CategorySelect category ->
+            Data.SearchCondition.CategorySelectCategory category
+
+
+getCategory : Model -> Maybe Category.Category
+getCategory (Model select) =
+    case select of
+        None ->
+            Nothing
+
+        GroupSelect _ ->
+            Nothing
+
+        CategorySelect category ->
+            Just category
 
 
 update : Msg -> Model -> Model

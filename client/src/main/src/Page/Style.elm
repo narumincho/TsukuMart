@@ -1,10 +1,13 @@
 module Page.Style exposing
     ( RadioSelect(..)
     , container
+    , containerKeyed
     , displayGridAndGap
+    , emptyList
     , formItem
     , inputText
     , mainButton
+    , normalShadow
     , primaryColor
     , primaryColorLight
     , radioForm
@@ -12,7 +15,7 @@ module Page.Style exposing
     , titleAndContent
     , titleAndContentStyle
     , userImage
-    )
+    , mainButtonLink)
 
 import Css
 import Css.Transitions
@@ -21,7 +24,9 @@ import Html
 import Html.Styled as H
 import Html.Styled.Attributes as A
 import Html.Styled.Events
+import Html.Styled.Keyed
 import Json.Decode
+import PageLocation
 
 
 primaryColor : Css.Color
@@ -34,18 +39,48 @@ primaryColorLight =
     Css.rgb 154 108 201
 
 
-container : List (H.Html msg) -> Html.Html msg
+container : List (H.Html msg) -> H.Html msg
 container children =
     H.div
-        [ A.css
-            [ Css.displayFlex
-            , Css.alignItems Css.center
-            , Css.width (Css.pct 100)
-            , Css.flexDirection Css.column
-            ]
+        [ A.css [ containerStyle ]
         ]
-        children
-        |> H.toUnstyled
+        [ H.div
+            [ A.css [ containerInnerStyle ]
+            ]
+            children
+        ]
+
+
+containerKeyed : List ( String, H.Html msg ) -> H.Html msg
+containerKeyed children =
+    H.div
+        [ A.css [ containerStyle ]
+        ]
+        [ Html.Styled.Keyed.node "div"
+            [ A.css [ containerInnerStyle ] ]
+            children
+        ]
+
+
+containerStyle : Css.Style
+containerStyle =
+    Css.batch
+        [ Css.displayFlex
+        , Css.alignItems Css.center
+        , Css.width (Css.pct 100)
+        , Css.flexDirection Css.column
+        ]
+
+
+containerInnerStyle : Css.Style
+containerInnerStyle =
+    Css.batch
+        [ displayGridAndGap 16
+        , Css.maxWidth (Css.px 640)
+        , Css.padding (Css.px 16)
+        , Css.boxSizing Css.borderBox
+        , Css.width (Css.pct 100)
+        ]
 
 
 titleAndContent : String -> Html.Html msg -> H.Html msg
@@ -212,44 +247,80 @@ inputTextFocusBoxShadow =
 mainButton : List (H.Html Never) -> Maybe msg -> H.Html msg
 mainButton children msgMaybe =
     H.button
-        ([ A.css
-            [ Css.backgroundColor primaryColor
-            , Css.color (Css.rgb 221 221 221)
-            , Css.fill (Css.rgb 221 221 221)
-            , Css.padding (Css.px 16)
-            , Css.width (Css.pct 100)
-            , Css.fontSize (Css.rem 1.5)
-            , Css.borderRadius (Css.px 8)
-            , Css.boxShadow4 Css.zero (Css.px 2) (Css.px 4) (Css.rgba 0 0 0 0.18)
-            , Css.border2 Css.zero Css.none
-            , Css.displayFlex
-            , Css.alignItems Css.center
-            , Css.justifyContent Css.center
-            , Css.boxSizing Css.borderBox
-            , Css.disabled
-                [ Css.backgroundColor (Css.rgb 170 170 170)
-                , Css.color (Css.rgb 221 221 221)
-                , Css.fill (Css.rgb 221 221 221)
+        (case msgMaybe of
+            Just msg ->
+                [ Html.Styled.Events.custom
+                    "click"
+                    (Json.Decode.succeed
+                        { message = msg
+                        , stopPropagation = True
+                        , preventDefault = True
+                        }
+                    )
+                , A.css [ mainButtonStyle ]
                 ]
-            ]
-         ]
-            ++ (case msgMaybe of
-                    Just msg ->
-                        [ Html.Styled.Events.custom
-                            "click"
-                            (Json.Decode.succeed
-                                { message = msg
-                                , stopPropagation = True
-                                , preventDefault = True
-                                }
-                            )
-                        ]
 
-                    Nothing ->
-                        [ A.disabled True ]
-               )
+            Nothing ->
+                [ A.disabled True
+                , A.css [ mainButtonDisabledStyle ]
+                ]
         )
         (children |> List.map (H.map never))
+
+
+mainButtonLink : List (H.Html Never) -> Maybe PageLocation.PageLocation -> H.Html msg
+mainButtonLink children locationMaybe =
+    case locationMaybe of
+        Just location ->
+            H.a
+                [ A.href (PageLocation.toUrlAsString location)
+                , A.css [ mainButtonStyle ]
+                ]
+                (children |> List.map (H.map never))
+
+        Nothing ->
+            H.div
+                [ A.css [ mainButtonDisabledStyle ]
+                ]
+                (children |> List.map (H.map never))
+
+
+mainButtonStyle : Css.Style
+mainButtonStyle =
+    Css.batch
+        [ Css.backgroundColor primaryColor
+        , Css.color (Css.rgb 221 221 221)
+        , Css.fill (Css.rgb 221 221 221)
+        , Css.padding (Css.px 16)
+        , Css.width (Css.pct 100)
+        , Css.fontSize (Css.rem 1.5)
+        , Css.borderRadius (Css.px 8)
+        , normalShadow
+        , Css.border2 Css.zero Css.none
+        , Css.displayFlex
+        , Css.alignItems Css.center
+        , Css.justifyContent Css.center
+        , Css.boxSizing Css.borderBox
+        ]
+
+
+mainButtonDisabledStyle : Css.Style
+mainButtonDisabledStyle =
+    Css.batch
+        [ Css.backgroundColor (Css.rgb 170 170 170)
+        , Css.color (Css.rgb 221 221 221)
+        , Css.fill (Css.rgb 221 221 221)
+        , Css.padding (Css.px 16)
+        , Css.width (Css.pct 100)
+        , Css.fontSize (Css.rem 1.5)
+        , Css.borderRadius (Css.px 8)
+        , normalShadow
+        , Css.border2 Css.zero Css.none
+        , Css.displayFlex
+        , Css.alignItems Css.center
+        , Css.justifyContent Css.center
+        , Css.boxSizing Css.borderBox
+        ]
 
 
 type RadioSelect
@@ -340,7 +411,7 @@ radioLabelStyle select =
      , Css.textAlign Css.center
      , Css.cursor Css.pointer
      , Css.border2 Css.zero Css.none
-     , Css.boxShadow4 Css.zero (Css.px 2) (Css.px 4) (Css.rgba 0 0 0 0.18)
+     , normalShadow
      , Css.color
         (if select then
             Css.rgb 255 255 255
@@ -360,3 +431,31 @@ radioLabelStyle select =
            )
     )
         |> Css.batch
+
+
+normalShadow : Css.Style
+normalShadow =
+    Css.boxShadow4 Css.zero (Css.px 2) (Css.px 4) (Css.rgba 0 0 0 0.18)
+
+
+emptyList : String -> H.Html msg
+emptyList text =
+    H.div
+        [ A.css
+            [ Css.displayFlex
+            , Css.flexDirection Css.column
+            , Css.alignItems Css.center
+            , Css.padding (Css.px 32)
+            ]
+        ]
+        [ H.img
+            [ A.src "/assets/logo_bird.png"
+            , A.css
+                [ Css.property "filter" "grayscale(100%)"
+                , Css.width (Css.px 128)
+                ]
+            , A.alt "無いことを悲しむつくバード"
+            ]
+            []
+        , H.text text
+        ]

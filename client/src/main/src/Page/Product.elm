@@ -457,7 +457,7 @@ view :
     ->
         { title : Maybe String
         , tab : BasicParts.Tab Msg
-        , html : List (Html.Html Msg)
+        , html : List (Html.Styled.Html Msg)
         , bottomNavigation : Maybe BasicParts.BottomNavigationSelect
         }
 view logInState isWideScreen nowMaybe model =
@@ -466,9 +466,10 @@ view logInState isWideScreen nowMaybe model =
             { title = Just "商品詳細ページ 読み込み中"
             , tab = BasicParts.tabNone
             , html =
-                [ Html.text "読み込み中"
-                , Icon.loading { size = 48, color = Css.rgb 0 0 0 }
-                    |> Html.Styled.toUnstyled
+                [ Page.Style.container
+                    [ Html.Styled.text "読み込み中"
+                    , Icon.loading { size = 48, color = Css.rgb 0 0 0 }
+                    ]
                 ]
             , bottomNavigation = Nothing
             }
@@ -478,18 +479,15 @@ view logInState isWideScreen nowMaybe model =
             , tab = BasicParts.tabNone
             , html =
                 [ Page.Style.container
-                    [ Html.Styled.div
-                        [ Html.Styled.Attributes.class "product" ]
-                        [ Html.Styled.text "最新の情報を取得中…"
-                        , Icon.loading { size = 32, color = Css.rgb 0 0 0 }
-                        , productsViewImage [ Product.getThumbnailImageUrl product ]
-                        , productsViewName (Product.getName product)
-                        , productsViewLike
-                            LogInState.None
-                            False
-                            (Product.getLikedCount product)
-                            (Product.getId product)
-                        ]
+                    [ Html.Styled.text "最新の情報を取得中…"
+                    , Icon.loading { size = 32, color = Css.rgb 0 0 0 }
+                    , productsViewImage [ Product.getThumbnailImageUrl product ]
+                    , productsViewName (Product.getName product)
+                    , productsViewLike
+                        LogInState.None
+                        False
+                        (Product.getLikedCount product)
+                        (Product.getId product)
                     ]
                 ]
             , bottomNavigation = Nothing
@@ -508,27 +506,23 @@ view logInState isWideScreen nowMaybe model =
             { title = Just (Product.detailGetName beforeProduct)
             , tab = BasicParts.tabNone
             , html =
-                [ Page.Style.container
-                    [ Html.Keyed.node "div"
-                        [ Html.Attributes.class "product" ]
-                        (case LogInState.getToken logInState of
-                            Just accessToken ->
-                                (ProductEditor.view productEditor
-                                    |> List.map (Tuple.mapSecond (Html.map MsgByProductEditor))
-                                )
-                                    ++ [ ( "okButton"
-                                         , editOkCancelButton
-                                            accessToken
-                                            (Product.detailGetId beforeProduct)
-                                            (ProductEditor.toUpdateRequest productEditor)
-                                         )
-                                       ]
+                [ Page.Style.containerKeyed
+                    (case LogInState.getToken logInState of
+                        Just accessToken ->
+                            (ProductEditor.view productEditor
+                                |> List.map (Tuple.mapSecond (Html.Styled.fromUnstyled >> Html.Styled.map MsgByProductEditor))
+                            )
+                                ++ [ ( "okButton"
+                                     , editOkCancelButton
+                                        accessToken
+                                        (Product.detailGetId beforeProduct)
+                                        (ProductEditor.toUpdateRequest productEditor)
+                                     )
+                                   ]
 
-                            Nothing ->
-                                [ ( "needLogIn", Html.text "ログインしていないときに商品の編集はできません" ) ]
-                        )
-                        |> Html.Styled.fromUnstyled
-                    ]
+                        Nothing ->
+                            [ ( "needLogIn", Html.Styled.text "ログインしていないときに商品の編集はできません" ) ]
+                    )
                 ]
             , bottomNavigation = Nothing
             }
@@ -538,15 +532,12 @@ view logInState isWideScreen nowMaybe model =
             , tab = BasicParts.tabNone
             , html =
                 [ Page.Style.container
-                    [ Html.Styled.div
-                        [ Html.Styled.Attributes.class "product" ]
-                        [ Html.Styled.text "購入確認画面。この商品の取引を開始しますか?"
-                        , productsViewImage (Product.detailGetImageUrls product)
-                        , productsViewName (Product.detailGetName product)
-                        , descriptionView (Product.detailGetDescription product)
-                        , conditionView (Product.detailGetCondition product)
-                        , tradeStartButton logInState (Product.detailGetId product)
-                        ]
+                    [ Html.Styled.text "購入確認画面。この商品の取引を開始しますか?"
+                    , productsViewImage (Product.detailGetImageUrls product)
+                    , productsViewName (Product.detailGetName product)
+                    , descriptionView (Product.detailGetDescription product)
+                    , conditionView (Product.detailGetCondition product)
+                    , tradeStartButton logInState (Product.detailGetId product)
                     ]
                 ]
             , bottomNavigation = Nothing
@@ -565,7 +556,7 @@ normalView :
     ->
         { title : Maybe String
         , tab : BasicParts.Tab Msg
-        , html : List (Html.Html Msg)
+        , html : List (Html.Styled.Html Msg)
         , bottomNavigation : Maybe BasicParts.BottomNavigationSelect
         }
 normalView logInState isWideScreen nowMaybe { product, likeSending, commentSending } =
@@ -573,54 +564,51 @@ normalView logInState isWideScreen nowMaybe { product, likeSending, commentSendi
     , tab = BasicParts.tabNone
     , html =
         [ Page.Style.container
-            [ Html.Styled.div
-                [ Html.Styled.Attributes.class "product" ]
-                ([ productsViewImage (Product.detailGetImageUrls product)
-                 , productsViewName (Product.detailGetName product)
-                 , productsViewLike
-                    logInState
-                    likeSending
-                    (Product.detailGetLikedCount product)
-                    (Product.detailGetId product)
-                 , statusView (Product.detailGetStatus product)
-                 , sellerNameView (Product.detailGetSeller product)
-                 , descriptionView (Product.detailGetDescription product)
-                 , categoryView (Product.detailGetCategory product)
-                 , conditionView (Product.detailGetCondition product)
-                 , createdAtView nowMaybe (Product.detailGetCreatedAt product)
-                 , commentListView commentSending
-                    nowMaybe
-                    (product |> Product.detailGetSeller |> User.withNameGetId)
-                    logInState
-                    (Product.detailGetCommentList product)
-                 ]
-                    ++ (case logInState of
-                            LogInState.Ok { token, userWithName } ->
-                                if
-                                    User.withNameGetId userWithName
-                                        == User.withNameGetId (Product.detailGetSeller product)
-                                then
-                                    [ editButton
-                                    , deleteView (Product.detailGetId product) token
-                                    ]
+            ([ productsViewImage (Product.detailGetImageUrls product)
+             , productsViewName (Product.detailGetName product)
+             , productsViewLike
+                logInState
+                likeSending
+                (Product.detailGetLikedCount product)
+                (Product.detailGetId product)
+             , statusView (Product.detailGetStatus product)
+             , sellerNameView (Product.detailGetSeller product)
+             , descriptionView (Product.detailGetDescription product)
+             , categoryView (Product.detailGetCategory product)
+             , conditionView (Product.detailGetCondition product)
+             , createdAtView nowMaybe (Product.detailGetCreatedAt product)
+             , commentListView commentSending
+                nowMaybe
+                (product |> Product.detailGetSeller |> User.withNameGetId)
+                logInState
+                (Product.detailGetCommentList product)
+             ]
+                ++ (case logInState of
+                        LogInState.Ok { token, userWithName } ->
+                            if
+                                User.withNameGetId userWithName
+                                    == User.withNameGetId (Product.detailGetSeller product)
+                            then
+                                [ editButton
+                                , deleteView (Product.detailGetId product) token
+                                ]
 
-                                else
-                                    []
-
-                            _ ->
+                            else
                                 []
-                       )
-                )
-            , productsViewPriceAndBuyButton isWideScreen
-                product
-                (case logInState of
-                    LogInState.Ok { userWithName } ->
-                        Just userWithName
 
-                    _ ->
-                        Nothing
-                )
-            ]
+                        _ ->
+                            []
+                   )
+            )
+        , productsViewPriceAndBuyButton isWideScreen
+            product
+            (case logInState of
+                LogInState.Ok { userWithName } ->
+                    Just userWithName
+
+                _ ->
+                    Nothing
+            )
         ]
     , bottomNavigation = Nothing
     }
@@ -941,26 +929,26 @@ tradeStartButton logInState productId =
         ]
 
 
-editOkCancelButton : Api.Token -> Product.Id -> Maybe Api.UpdateProductRequest -> Html.Html Msg
+editOkCancelButton : Api.Token -> Product.Id -> Maybe Api.UpdateProductRequest -> Html.Styled.Html Msg
 editOkCancelButton token productId requestDataMaybe =
-    Html.div
-        [ Html.Attributes.class "profile-editButtonArea" ]
-        [ Html.button
-            [ Html.Attributes.class "profile-editCancelButton"
-            , Html.Events.onClick MsgBackToViewMode
+    Html.Styled.div
+        [ Html.Styled.Attributes.class "profile-editButtonArea" ]
+        [ Html.Styled.button
+            [ Html.Styled.Attributes.class "profile-editCancelButton"
+            , Html.Styled.Events.onClick MsgBackToViewMode
             ]
-            [ Html.text "キャンセル" ]
-        , Html.button
-            ([ Html.Attributes.class "profile-editOkButton" ]
+            [ Html.Styled.text "キャンセル" ]
+        , Html.Styled.button
+            ([ Html.Styled.Attributes.class "profile-editOkButton" ]
                 ++ (case requestDataMaybe of
                         Just requestDate ->
-                            [ Html.Events.onClick (UpdateProductData token productId requestDate)
-                            , Html.Attributes.disabled False
+                            [ Html.Styled.Events.onClick (UpdateProductData token productId requestDate)
+                            , Html.Styled.Attributes.disabled False
                             ]
 
                         Nothing ->
-                            [ Html.Attributes.disabled True ]
+                            [ Html.Styled.Attributes.disabled True ]
                    )
             )
-            [ Html.text "変更する" ]
+            [ Html.Styled.text "変更する" ]
         ]

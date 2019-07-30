@@ -19,6 +19,7 @@ import Html.Attributes
 import Html.Events
 import Html.Styled
 import Html.Styled.Attributes
+import Html.Styled.Events
 import Icon
 import Json.Decode
 import Page.Style
@@ -82,11 +83,11 @@ update msg (Model rec) =
 
 {-| 商品の一覧表示
 -}
-view : Model -> Data.LogInState.LogInState -> Bool -> Maybe (List Product.Product) -> Html.Html Msg
+view : Model -> Data.LogInState.LogInState -> Bool -> Maybe (List Product.Product) -> Html.Styled.Html Msg
 view (Model { likeUpdating }) logInState isWideMode productList =
     case productList of
         Just [] ->
-            emptyView
+            Page.Style.emptyList "ここに表示する商品がありません"
 
         Just (x :: xs) ->
             listView likeUpdating logInState isWideMode ( x, xs )
@@ -101,55 +102,41 @@ view (Model { likeUpdating }) logInState isWideMode productList =
                 ]
 
 
-emptyView : Html.Html Msg
-emptyView =
-    Page.Style.container
-        [ Html.Styled.div
-            [ Html.Styled.Attributes.class "productList-zero" ]
-            [ Html.Styled.img
-                [ Html.Styled.Attributes.src "/assets/logo_bird.png"
-                , Html.Styled.Attributes.class "productList-zeroImage"
-                , Html.Styled.Attributes.alt "ざんねん。商品がありません"
-                ]
-                []
-            , Html.Styled.text "ここに表示する商品がありません"
-            ]
-        ]
-
-
 listView :
     Set.Set String
     -> Data.LogInState.LogInState
     -> Bool
     -> ( Product.Product, List Product.Product )
-    -> Html.Html Msg
+    -> Html.Styled.Html Msg
 listView sending logInState isWideMode ( product, productList ) =
-    Html.div
-        [ Html.Attributes.style "display" "grid"
-        , Html.Attributes.style "grid-template-columns"
-            (if isWideMode then
-                "33.3% 33.4% 33.3%"
+    Html.Styled.div
+        [ Html.Styled.Attributes.css
+            [ Page.Style.displayGridAndGap 0
+            , Css.property "grid-template-columns"
+                (if isWideMode then
+                    "33.3% 33.4% 33.3%"
 
-             else
-                "50% 50%"
-            )
+                 else
+                    "50% 50%"
+                )
+            ]
         ]
         ((product :: productList)
             |> List.map
                 (\p ->
-                    item logInState
+                    itemView logInState
                         (sending |> Set.member (Product.idToString (Product.getId p)))
                         p
                 )
         )
 
 
-item : Data.LogInState.LogInState -> Bool -> Product.Product -> Html.Html Msg
-item logInState sending product =
-    Html.a
-        [ Html.Attributes.class "productList-item"
-        , Html.Attributes.href (PageLocation.toUrlAsString (PageLocation.Product (Product.getId product)))
-        , Html.Attributes.id (productIdString (Product.getId product))
+itemView : Data.LogInState.LogInState -> Bool -> Product.Product -> Html.Styled.Html Msg
+itemView logInState sending product =
+    Html.Styled.a
+        [ Html.Styled.Attributes.class "productList-item"
+        , Html.Styled.Attributes.href (PageLocation.toUrlAsString (PageLocation.Product (Product.getId product)))
+        , Html.Styled.Attributes.id (productIdString (Product.getId product))
         ]
         ([ itemImage (Product.getName product) (Product.getThumbnailImageUrl product)
          ]
@@ -160,11 +147,11 @@ item logInState sending product =
                     _ ->
                         []
                )
-            ++ [ Html.div
-                    [ Html.Attributes.class "productList-name" ]
-                    [ Html.text (Product.getName product) ]
-               , Html.div
-                    [ Html.Attributes.class "productList-priceAndLike" ]
+            ++ [ Html.Styled.div
+                    [ Html.Styled.Attributes.class "productList-name" ]
+                    [ Html.Styled.text (Product.getName product) ]
+               , Html.Styled.div
+                    [ Html.Styled.Attributes.class "productList-priceAndLike" ]
                     [ itemLike logInState sending product
                     , itemPrice (Product.getPrice product)
                     ]
@@ -177,100 +164,116 @@ productIdString productId =
     "product-" ++ Product.idToString productId
 
 
-itemPrice : Int -> Html.Html msg
+itemPrice : Int -> Html.Styled.Html msg
 itemPrice price =
-    Html.div
+    Html.Styled.div
         []
-        [ Html.span
-            [ Html.Attributes.class "productList-price" ]
-            [ Html.text (Product.priceToStringWithoutYen price) ]
-        , Html.text "円"
+        [ Html.Styled.span
+            [ Html.Styled.Attributes.css
+                [ Css.fontSize (Css.rem 1.5)
+                , Css.color (Css.rgb 218 112 0)
+                ]
+            ]
+            [ Html.Styled.text (Product.priceToStringWithoutYen price) ]
+        , Html.Styled.text "円"
         ]
 
 
-itemLike : Data.LogInState.LogInState -> Bool -> Product.Product -> Html.Html Msg
+itemLike : Data.LogInState.LogInState -> Bool -> Product.Product -> Html.Styled.Html Msg
 itemLike logInState sending product =
     if sending then
-        Html.button
-            [ Html.Attributes.class "productList-like"
-            , Html.Attributes.disabled True
-            , Html.Attributes.style "padding" "8px 24px"
+        Html.Styled.button
+            [ Html.Styled.Attributes.class "productList-like"
+            , Html.Styled.Attributes.disabled True
+            , Html.Styled.Attributes.css [ Css.padding2 (Css.px 8) (Css.px 24) ]
             ]
             [ Icon.loading { size = 20, color = Css.rgb 255 255 255 }
-                |> Html.Styled.toUnstyled
             ]
 
     else
         case logInState of
             Data.LogInState.Ok { likedProductIds, token } ->
                 if List.member (Product.getId product) likedProductIds then
-                    Html.button
-                        [ Html.Events.custom "click"
+                    Html.Styled.button
+                        [ Html.Styled.Events.custom "click"
                             (Json.Decode.succeed
                                 { message = UnLike token (Product.getId product)
                                 , stopPropagation = True
                                 , preventDefault = True
                                 }
                             )
-                        , Html.Attributes.class "productList-liked"
-                        , Html.Attributes.class "productList-like"
+                        , Html.Styled.Attributes.class "productList-liked"
+                        , Html.Styled.Attributes.class "productList-like"
                         ]
                         (itemLikeBody (Product.getLikedCount product))
 
                 else
-                    Html.button
-                        [ Html.Events.custom "click"
+                    Html.Styled.button
+                        [ Html.Styled.Events.custom "click"
                             (Json.Decode.succeed
                                 { message = Like token (Product.getId product)
                                 , stopPropagation = True
                                 , preventDefault = True
                                 }
                             )
-                        , Html.Attributes.class "productList-like"
+                        , Html.Styled.Attributes.class "productList-like"
                         ]
                         (itemLikeBody (Product.getLikedCount product))
 
             _ ->
-                Html.div
-                    [ Html.Attributes.class "productList-like-noLogIn" ]
+                Html.Styled.div
+                    [ Html.Styled.Attributes.class "productList-like-noLogIn" ]
                     (itemLikeBody (Product.getLikedCount product))
 
 
-itemLikeBody : Int -> List (Html.Html msg)
+itemLikeBody : Int -> List (Html.Styled.Html msg)
 itemLikeBody count =
-    [ Html.text "いいね"
-    , Html.span
-        [ Html.Attributes.class "productList-like-number" ]
-        [ Html.text (String.fromInt count) ]
+    [ Html.Styled.text "いいね"
+    , Html.Styled.span
+        [ Html.Styled.Attributes.css
+            [ Css.fontSize (Css.rem 1.3) ]
+        ]
+        [ Html.Styled.text (String.fromInt count) ]
     ]
 
 
-itemImage : String -> String -> Html.Html msg
+itemImage : String -> String -> Html.Styled.Html msg
 itemImage name url =
-    Html.img
-        [ Html.Attributes.class "productList-image"
-        , Html.Attributes.style "grid-column" "1 / 2"
-        , Html.Attributes.style "grid-row" "1 / 2"
-        , Html.Attributes.src url
-        , Html.Attributes.alt (name ++ "の画像")
+    Html.Styled.img
+        [ Html.Styled.Attributes.css
+            [ Css.width (Css.pct 100)
+            , Css.height (Css.px 192)
+            , Css.property "object-fit" "contain"
+            , Css.property "grid-column" "1 / 2"
+            , Css.property "grid-row" "1 / 2"
+            ]
+        , Html.Styled.Attributes.src url
+        , Html.Styled.Attributes.alt (name ++ "の画像")
         ]
         []
 
 
-soldOutBar : Html.Html msg
+soldOutBar : Html.Styled.Html msg
 soldOutBar =
-    Html.div
-        [ Html.Attributes.style "grid-column" "1 / 2"
-        , Html.Attributes.style "grid-row" "1 / 2"
-        , Html.Attributes.style "overflow" "hidden"
-        ]
-        [ Html.div
-            [ Html.Attributes.style "background-color" "red"
-            , Html.Attributes.style "color" "#fff"
-            , Html.Attributes.style "transform" "translate(-73px, 42px) rotate(315deg)"
-            , Html.Attributes.style "width" "256px"
-            , Html.Attributes.style "font-size" "1.5rem"
-            , Html.Attributes.style "text-align" "center"
+    Html.Styled.div
+        [ Html.Styled.Attributes.css
+            [ Css.property "grid-column" "1 / 2"
+            , Css.property "grid-row" "1 / 2"
+            , Css.overflow Css.hidden
             ]
-            [ Html.text "うりきれ" ]
+        ]
+        [ Html.Styled.div
+            [ Html.Styled.Attributes.css
+                [ Css.backgroundColor (Css.rgb 240 16 16)
+                , Css.color (Css.rgb 255 255 255)
+                , Css.transforms
+                    [ Css.translate2 (Css.px -73) (Css.px 42)
+                    , Css.rotate (Css.deg 315)
+                    ]
+                , Css.width (Css.px 256)
+                , Css.fontSize (Css.rem 1.5)
+                , Css.textAlign Css.center
+                ]
+            ]
+            [ Html.Styled.text "うりきれ" ]
         ]

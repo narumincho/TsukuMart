@@ -175,7 +175,7 @@ view :
     ->
         { title : Maybe String
         , tab : BasicParts.Tab Msg
-        , html : List (Html.Html Msg)
+        , html : List (Html.Styled.Html Msg)
         , bottomNavigation : Maybe BasicParts.BottomNavigationSelect
         }
 view logInState (Model { page, logInOrSignUpModel }) =
@@ -196,11 +196,7 @@ view logInState (Model { page, logInOrSignUpModel }) =
     { title = Just "出品"
     , tab = BasicParts.tabSingle tabText
     , html =
-        [ Page.Style.container
-            [ Html.Styled.Keyed.node "div"
-                [ Html.Styled.Attributes.class "exhibition" ]
-                body
-            ]
+        [ Page.Style.containerKeyed body
         ]
     , bottomNavigation = Nothing
     }

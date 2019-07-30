@@ -255,7 +255,7 @@ view :
     ->
         { title : Maybe String
         , tab : BasicParts.Tab Msg
-        , html : List (Html.Html Msg)
+        , html : List (Html.Styled.Html Msg)
         , bottomNavigation : Maybe BasicParts.BottomNavigationSelect
         }
 view logInState isWideScreen model =
@@ -323,36 +323,17 @@ loadingWithUserIdAndNameView isWideScreen userWithName =
            ]
 
 
-profileContainerStyle : Css.Style
-profileContainerStyle =
-    [ Page.Style.displayGridAndGap 16
-    , Css.maxWidth (Css.px 640)
-    , Css.padding (Css.px 16)
-    , Css.boxSizing Css.borderBox
-    , Css.width (Css.pct 100)
-    ]
-        |> Css.batch
-
-
 normalView : Bool -> User.WithProfile -> List (Html.Styled.Html Msg)
 normalView isWideScreen user =
-    [ Html.Styled.div
-        [ Html.Styled.Attributes.css [ profileContainerStyle ] ]
-        (userView isWideScreen user
-            ++ [ userDataLink (User.withProfileGetId user) ]
-        )
-    ]
+    userView isWideScreen user
+        ++ [ userDataLink (User.withProfileGetId user) ]
 
 
 normalMyProfileView : Bool -> User.WithProfile -> List (Html.Styled.Html Msg)
 normalMyProfileView isWideScreen user =
-    [ Html.Styled.div
-        [ Html.Styled.Attributes.css [ profileContainerStyle ] ]
-        (userView isWideScreen user
-            ++ [ userPrivateDataLink (User.withProfileGetId user) ]
-            ++ [ toEditButton, logOutButton ]
-        )
-    ]
+    userView isWideScreen user
+        ++ [ userPrivateDataLink (User.withProfileGetId user) ]
+        ++ [ toEditButton, logOutButton ]
 
 
 {-| ユーザーの情報表示

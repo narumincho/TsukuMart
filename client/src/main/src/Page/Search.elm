@@ -2,11 +2,10 @@ module Page.Search exposing (Emission(..), Model, Msg, initModel, update, view)
 
 import BasicParts
 import Data.SearchCondition as SearchCondition
-import Html
-import Html.Attributes
 import Html.Styled
 import Page.Component.Category
 import Page.Style
+import PageLocation
 
 
 type Model
@@ -81,22 +80,22 @@ view :
     ->
         { title : Maybe String
         , tab : BasicParts.Tab Msg
-        , html : List (Html.Html Msg)
+        , html : List (Html.Styled.Html Msg)
         , bottomNavigation : Maybe BasicParts.BottomNavigationSelect
         }
-view (Model rec) =
+view model =
     { title = Just "検索"
     , tab = BasicParts.tabNone
     , html =
         [ Page.Style.container
-            [ viewBody rec.categorySelect ]
+            [ viewBody model ]
         ]
     , bottomNavigation = Just BasicParts.Search
     }
 
 
-viewBody : Page.Component.Category.Model -> Html.Styled.Html Msg
-viewBody categoryModel =
+viewBody : Model -> Html.Styled.Html Msg
+viewBody (Model rec) =
     Html.Styled.div
         []
         [ Page.Style.formItem
@@ -112,7 +111,7 @@ viewBody categoryModel =
             ]
         , Page.Style.titleAndContentStyle
             "カテゴリ"
-            (Page.Component.Category.view categoryModel
+            (Page.Component.Category.view rec.categorySelect
                 |> Html.Styled.map MsgByCategory
             )
         , Page.Style.radioForm
@@ -130,6 +129,19 @@ viewBody categoryModel =
                         Page.Style.Right ->
                             SelectGraduate
                 )
+        , Page.Style.mainButtonLink
+            [ Html.Styled.text "検索する" ]
+            (Just
+                (PageLocation.Search
+                    (Just
+                        (SearchCondition.init
+                            rec.query
+                            (Page.Component.Category.getSelect rec.categorySelect)
+                            SearchCondition.UniversitySelectNone
+                        )
+                    )
+                )
+            )
         ]
 
 

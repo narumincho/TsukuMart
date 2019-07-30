@@ -10,6 +10,7 @@ module Page.SearchResult exposing
 import BasicParts
 import Data.SearchCondition as SearchCondition
 import Html
+import Html.Styled
 
 
 type Model
@@ -41,12 +42,14 @@ view :
     ->
         { title : Maybe String
         , tab : BasicParts.Tab Msg
-        , html : List (Html.Html Msg)
+        , html : List (Html.Styled.Html Msg)
         , bottomNavigation : Maybe BasicParts.BottomNavigationSelect
         }
 view model =
     { title = Just "検索結果"
     , tab = BasicParts.tabNone
-    , html = []
+    , html =
+        [ Html.Styled.text "検索結果"
+        ]
     , bottomNavigation = Nothing
     }

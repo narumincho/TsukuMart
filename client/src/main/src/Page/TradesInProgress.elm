@@ -110,7 +110,12 @@ update msg (Model rec) =
 view :
     LogInState.LogInState
     -> Model
-    -> { title : Maybe String, tab : BasicParts.Tab Msg, html : List (Html.Html Msg), bottomNavigation : Maybe BasicParts.BottomNavigationSelect }
+    ->
+        { title : Maybe String
+        , tab : BasicParts.Tab Msg
+        , html : List (Html.Styled.Html Msg)
+        , bottomNavigation : Maybe BasicParts.BottomNavigationSelect
+        }
 view logInState (Model rec) =
     { title = Just "進行中の取引"
     , tab = BasicParts.tabSingle "進行中の取引"
@@ -118,9 +123,7 @@ view logInState (Model rec) =
         case logInState of
             LogInState.None ->
                 [ Page.Style.container
-                    [ Html.Styled.div
-                        []
-                        [ Html.Styled.text "ログインか新規登録をして、いいねと閲覧履歴を使えるようにしよう!" ]
+                    [ Html.Styled.text "ログインか新規登録をして、いいねと閲覧履歴を使えるようにしよう!"
                     , LogIn.view
                         rec.logIn
                         |> Html.Styled.map MsgByLogIn
