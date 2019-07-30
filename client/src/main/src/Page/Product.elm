@@ -29,6 +29,8 @@ import Html.Attributes
 import Html.Events
 import Html.Keyed
 import Html.Styled
+import Html.Styled.Attributes
+import Html.Styled.Events
 import Icon
 import Page.Component.Comment
 import Page.Component.ProductEditor as ProductEditor
@@ -475,13 +477,11 @@ view logInState isWideScreen nowMaybe model =
             { title = Just (Product.getName product)
             , tab = BasicParts.tabNone
             , html =
-                [ Html.div
-                    [ Html.Attributes.class "container" ]
-                    [ Html.div
-                        [ Html.Attributes.class "product" ]
-                        [ Html.text "最新の情報を取得中…"
+                [ Page.Style.container
+                    [ Html.Styled.div
+                        [ Html.Styled.Attributes.class "product" ]
+                        [ Html.Styled.text "最新の情報を取得中…"
                         , Icon.loading { size = 32, color = Css.rgb 0 0 0 }
-                            |> Html.Styled.toUnstyled
                         , productsViewImage [ Product.getThumbnailImageUrl product ]
                         , productsViewName (Product.getName product)
                         , productsViewLike
@@ -508,8 +508,7 @@ view logInState isWideScreen nowMaybe model =
             { title = Just (Product.detailGetName beforeProduct)
             , tab = BasicParts.tabNone
             , html =
-                [ Html.div
-                    [ Html.Attributes.class "container" ]
+                [ Page.Style.container
                     [ Html.Keyed.node "div"
                         [ Html.Attributes.class "product" ]
                         (case LogInState.getToken logInState of
@@ -528,6 +527,7 @@ view logInState isWideScreen nowMaybe model =
                             Nothing ->
                                 [ ( "needLogIn", Html.text "ログインしていないときに商品の編集はできません" ) ]
                         )
+                        |> Html.Styled.fromUnstyled
                     ]
                 ]
             , bottomNavigation = Nothing
@@ -537,11 +537,10 @@ view logInState isWideScreen nowMaybe model =
             { title = Just (Product.detailGetName product)
             , tab = BasicParts.tabNone
             , html =
-                [ Html.div
-                    [ Html.Attributes.class "container" ]
-                    [ Html.div
-                        [ Html.Attributes.class "product" ]
-                        [ Html.text "購入確認画面。この商品の取引を開始しますか?"
+                [ Page.Style.container
+                    [ Html.Styled.div
+                        [ Html.Styled.Attributes.class "product" ]
+                        [ Html.Styled.text "購入確認画面。この商品の取引を開始しますか?"
                         , productsViewImage (Product.detailGetImageUrls product)
                         , productsViewName (Product.detailGetName product)
                         , descriptionView (Product.detailGetDescription product)
@@ -573,10 +572,9 @@ normalView logInState isWideScreen nowMaybe { product, likeSending, commentSendi
     { title = Just (Product.detailGetName product)
     , tab = BasicParts.tabNone
     , html =
-        [ Html.div
-            [ Html.Attributes.class "container" ]
-            [ Html.div
-                [ Html.Attributes.class "product" ]
+        [ Page.Style.container
+            [ Html.Styled.div
+                [ Html.Styled.Attributes.class "product" ]
                 ([ productsViewImage (Product.detailGetImageUrls product)
                  , productsViewName (Product.detailGetName product)
                  , productsViewLike
@@ -628,86 +626,85 @@ normalView logInState isWideScreen nowMaybe { product, likeSending, commentSendi
     }
 
 
-productsViewImage : List String -> Html.Html msg
+productsViewImage : List String -> Html.Styled.Html msg
 productsViewImage urlList =
-    Html.div
-        [ Html.Attributes.class "product-imageListContainer" ]
-        [ Html.div
-            [ Html.Attributes.class "product-imageList"
+    Html.Styled.div
+        [ Html.Styled.Attributes.class "product-imageListContainer" ]
+        [ Html.Styled.div
+            [ Html.Styled.Attributes.class "product-imageList"
             ]
             (urlList |> List.map imageView)
         ]
 
 
-imageView : String -> Html.Html msg
+imageView : String -> Html.Styled.Html msg
 imageView url =
-    Html.img
-        [ Html.Attributes.class "product-image"
-        , Html.Attributes.src url
+    Html.Styled.img
+        [ Html.Styled.Attributes.class "product-image"
+        , Html.Styled.Attributes.src url
         ]
         []
 
 
-productsViewName : String -> Html.Html msg
+productsViewName : String -> Html.Styled.Html msg
 productsViewName name =
-    Html.div
-        [ Html.Attributes.class "product-name" ]
-        [ Html.text name ]
+    Html.Styled.div
+        [ Html.Styled.Attributes.class "product-name" ]
+        [ Html.Styled.text name ]
 
 
-productsViewLike : LogInState.LogInState -> Bool -> Int -> Product.Id -> Html.Html Msg
+productsViewLike : LogInState.LogInState -> Bool -> Int -> Product.Id -> Html.Styled.Html Msg
 productsViewLike logInState sending likedCount id =
-    Html.div
-        [ Html.Attributes.class "product-like-container" ]
+    Html.Styled.div
+        [ Html.Styled.Attributes.class "product-like-container" ]
         [ likeButton logInState sending likedCount id
         ]
 
 
-likeButton : LogInState.LogInState -> Bool -> Int -> Product.Id -> Html.Html Msg
+likeButton : LogInState.LogInState -> Bool -> Int -> Product.Id -> Html.Styled.Html Msg
 likeButton logInState sending likedCount id =
     if sending then
-        Html.button
-            [ Html.Attributes.class "product-like"
-            , Html.Attributes.disabled True
+        Html.Styled.button
+            [ Html.Styled.Attributes.class "product-like"
+            , Html.Styled.Attributes.disabled True
             ]
             [ Icon.loading { size = 20, color = Css.rgb 255 255 255 }
-                |> Html.Styled.toUnstyled
             ]
 
     else
         case logInState of
             LogInState.Ok { likedProductIds, token } ->
                 if List.member id likedProductIds then
-                    Html.button
-                        [ Html.Events.onClick (UnLike token id)
-                        , Html.Attributes.class "product-liked"
-                        , Html.Attributes.class "product-like"
+                    Html.Styled.button
+                        [ Html.Styled.Events.onClick (UnLike token id)
+                        , Html.Styled.Attributes.class "product-liked"
+                        , Html.Styled.Attributes.class "product-like"
                         ]
                         (itemLikeBody likedCount)
 
                 else
-                    Html.button
-                        [ Html.Events.onClick (Like token id)
-                        , Html.Attributes.class "product-like"
+                    Html.Styled.button
+                        [ Html.Styled.Events.onClick (Like token id)
+                        , Html.Styled.Attributes.class "product-like"
                         ]
                         (itemLikeBody likedCount)
 
             _ ->
-                Html.div
-                    [ Html.Attributes.class "product-like-label" ]
+                Html.Styled.div
+                    [ Html.Styled.Attributes.class "product-like-label" ]
                     (itemLikeBody likedCount)
 
 
-itemLikeBody : Int -> List (Html.Html msg)
+itemLikeBody : Int -> List (Html.Styled.Html msg)
 itemLikeBody count =
-    [ Html.text "いいね"
-    , Html.span
-        [ Html.Attributes.class "product-like-number" ]
-        [ Html.text (String.fromInt count) ]
+    [ Html.Styled.text "いいね"
+    , Html.Styled.span
+        [ Html.Styled.Attributes.class "product-like-number" ]
+        [ Html.Styled.text (String.fromInt count) ]
     ]
 
 
-statusView : Product.Status -> Html.Html msg
+statusView : Product.Status -> Html.Styled.Html msg
 statusView status =
     Page.Style.titleAndContent "取引状態"
         (Html.div
@@ -716,36 +713,38 @@ statusView status =
         )
 
 
-sellerNameView : User.WithName -> Html.Html msg
+sellerNameView : User.WithName -> Html.Styled.Html msg
 sellerNameView user =
-    Page.Style.titleAndContent "出品者"
-        (Html.a
-            [ Html.Attributes.href (PageLocation.toUrlAsString (PageLocation.User (User.withNameGetId user)))
-            , Html.Attributes.style "display" "flex"
-            , Html.Attributes.style "align-items" "center"
-            , Html.Attributes.style "text-decoration" "none"
+    Page.Style.titleAndContentStyle "出品者"
+        (Html.Styled.a
+            [ Html.Styled.Attributes.href (PageLocation.toUrlAsString (PageLocation.User (User.withNameGetId user)))
+            , Html.Styled.Attributes.css
+                [ Css.displayFlex
+                , Css.alignItems Css.center
+                , Css.textDecoration Css.none
+                ]
             ]
             [ Page.Style.userImage 48 (User.withNameGetImageId user)
-            , Html.text (User.withNameGetDisplayName user)
+            , Html.Styled.text (User.withNameGetDisplayName user)
             ]
         )
 
 
-descriptionView : String -> Html.Html msg
+descriptionView : String -> Html.Styled.Html msg
 descriptionView description =
     Page.Style.titleAndContent
         "商品の説明"
         (Html.div [] [ Html.text description ])
 
 
-categoryView : Category.Category -> Html.Html msg
+categoryView : Category.Category -> Html.Styled.Html msg
 categoryView category =
     Page.Style.titleAndContent
         "カテゴリー"
         (Html.div [] [ Html.text (Category.toJapaneseString category) ])
 
 
-conditionView : Product.Condition -> Html.Html msg
+conditionView : Product.Condition -> Html.Styled.Html msg
 conditionView condition =
     Page.Style.titleAndContent
         "商品の状態"
@@ -756,7 +755,7 @@ conditionView condition =
         )
 
 
-createdAtView : Maybe ( Time.Posix, Time.Zone ) -> Time.Posix -> Html.Html msg
+createdAtView : Maybe ( Time.Posix, Time.Zone ) -> Time.Posix -> Html.Styled.Html msg
 createdAtView nowMaybe createdAt =
     Page.Style.titleAndContent
         "出品日時"
@@ -768,32 +767,32 @@ createdAtView nowMaybe createdAt =
         )
 
 
-editButton : Html.Html Msg
+editButton : Html.Styled.Html Msg
 editButton =
-    Html.button
-        [ Html.Attributes.class "subButton"
-        , Html.Events.onClick EditProduct
+    Html.Styled.button
+        [ Html.Styled.Attributes.class "subButton"
+        , Html.Styled.Events.onClick EditProduct
         ]
         [ Icon.edit
             [ Css.width (Css.px 32)
             , Css.height (Css.px 32)
             ]
-        , Html.text "編集する"
+        , Html.Styled.text "編集する"
         ]
 
 
-deleteView : Product.Id -> Api.Token -> Html.Html Msg
+deleteView : Product.Id -> Api.Token -> Html.Styled.Html Msg
 deleteView productId token =
-    Html.button
-        [ Html.Attributes.class "product-deleteButton"
-        , Html.Events.onClick (Delete token productId)
+    Html.Styled.button
+        [ Html.Styled.Attributes.class "product-deleteButton"
+        , Html.Styled.Events.onClick (Delete token productId)
         ]
         [ Icon.deleteGarbageCan
             [ Css.width (Css.px 32)
             , Css.height (Css.px 32)
             , Css.fill (Css.rgb 238 238 238)
             ]
-        , Html.text "削除する"
+        , Html.Styled.text "削除する"
         ]
 
 
@@ -803,9 +802,9 @@ commentListView :
     -> User.Id
     -> LogInState.LogInState
     -> Maybe (List Product.Comment)
-    -> Html.Html Msg
+    -> Html.Styled.Html Msg
 commentListView commentSending nowMaybe sellerId logInState commentListMaybe =
-    Html.div
+    Html.Styled.div
         []
         ((case LogInState.getToken logInState of
             Just token ->
@@ -840,37 +839,37 @@ commentListView commentSending nowMaybe sellerId logInState commentListMaybe =
                                 )
                             )
                     )
+                    |> Html.Styled.fromUnstyled
                ]
         )
 
 
-commentInputArea : Bool -> Api.Token -> Html.Html Msg
+commentInputArea : Bool -> Api.Token -> Html.Styled.Html Msg
 commentInputArea sending token =
-    Html.div
+    Html.Styled.div
         []
-        ([ Html.textarea
-            [ Html.Events.onInput InputComment
-            , Html.Attributes.class "form-textarea"
-            , Html.Attributes.id commentTextAreaId
+        ([ Html.Styled.textarea
+            [ Html.Styled.Events.onInput InputComment
+            , Html.Styled.Attributes.class "form-textarea"
+            , Html.Styled.Attributes.id commentTextAreaId
             ]
             []
          ]
             ++ (if sending then
-                    [ Html.button
-                        [ Html.Attributes.class "product-comment-sendButton"
-                        , Html.Attributes.disabled True
+                    [ Html.Styled.button
+                        [ Html.Styled.Attributes.class "product-comment-sendButton"
+                        , Html.Styled.Attributes.disabled True
                         ]
                         [ Icon.loading { size = 24, color = Css.rgb 0 0 0 }
-                            |> Html.Styled.toUnstyled
                         ]
                     ]
 
                 else
-                    [ Html.button
-                        [ Html.Events.onClick (SendComment token)
-                        , Html.Attributes.class "product-comment-sendButton"
+                    [ Html.Styled.button
+                        [ Html.Styled.Events.onClick (SendComment token)
+                        , Html.Styled.Attributes.class "product-comment-sendButton"
                         ]
-                        [ Html.text "コメントを送信" ]
+                        [ Html.Styled.text "コメントを送信" ]
                     ]
                )
         )
@@ -881,7 +880,7 @@ commentTextAreaId =
     "comment-text-area"
 
 
-productsViewPriceAndBuyButton : Bool -> Product.ProductDetail -> Maybe User.WithName -> Html.Html Msg
+productsViewPriceAndBuyButton : Bool -> Product.ProductDetail -> Maybe User.WithName -> Html.Styled.Html Msg
 productsViewPriceAndBuyButton isWideScreen product userWithNameMaybe =
     Html.div
         [ Html.Attributes.classList
@@ -900,6 +899,7 @@ productsViewPriceAndBuyButton isWideScreen product userWithNameMaybe =
                         []
                )
         )
+        |> Html.Styled.fromUnstyled
 
 
 buyButton : Product.ProductDetail -> Maybe User.WithName -> Maybe (Html.Html Msg)
@@ -923,21 +923,21 @@ buyButton product userWithNameMaybe =
             Nothing
 
 
-tradeStartButton : LogInState.LogInState -> Product.Id -> Html.Html Msg
+tradeStartButton : LogInState.LogInState -> Product.Id -> Html.Styled.Html Msg
 tradeStartButton logInState productId =
-    Html.div
+    Html.Styled.div
         []
-        [ Html.button
-            ([ Html.Attributes.class "mainButton" ]
+        [ Html.Styled.button
+            ([ Html.Styled.Attributes.class "mainButton" ]
                 ++ (case LogInState.getToken logInState of
                         Just accessToken ->
-                            [ Html.Events.onClick (TradeStart accessToken productId) ]
+                            [ Html.Styled.Events.onClick (TradeStart accessToken productId) ]
 
                         Nothing ->
-                            [ Html.Attributes.class "mainButton-disabled" ]
+                            [ Html.Styled.Attributes.class "mainButton-disabled" ]
                    )
             )
-            [ Html.text "取引を開始する" ]
+            [ Html.Styled.text "取引を開始する" ]
         ]
 
 

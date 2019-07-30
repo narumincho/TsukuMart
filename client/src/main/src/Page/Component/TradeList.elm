@@ -92,6 +92,7 @@ userView userWithName =
     Html.div
         []
         [ Page.Style.userImage 48 (User.withNameGetImageId userWithName)
+            |> Html.Styled.toUnstyled
         , Html.text (User.withNameGetDisplayName userWithName)
         ]
 

@@ -3,6 +3,9 @@ module Page.About exposing (Model, aboutModel, privacyPolicyModel, view)
 import BasicParts
 import Html
 import Html.Attributes
+import Html.Styled
+import Html.Styled.Attributes
+import Page.Style
 import PageLocation
 
 
@@ -26,7 +29,7 @@ view :
     ->
         { title : String
         , tab : BasicParts.Tab msg
-        , html : List (Html.Html msg)
+        , html : List (Html.Styled.Html msg)
         , bottomNavigation : Maybe BasicParts.BottomNavigationSelect
         }
 view model =
@@ -35,17 +38,17 @@ view model =
             { title = "つくマートについて"
             , tab = BasicParts.tabNone
             , html =
-                [ Html.div
-                    [ Html.Attributes.class "container" ]
-                    [ Html.div []
-                        [ Html.text "つくマートについて"
-                        , Html.a
-                            [ Html.Attributes.href PageLocation.aboutPrivacyPolicyUrl
-                            , Html.Attributes.class "mainButton"
+                [ Page.Style.container
+                    [ Html.Styled.div []
+                        [ Html.Styled.text "つくマートについて"
+                        , Html.Styled.a
+                            [ Html.Styled.Attributes.href PageLocation.aboutPrivacyPolicyUrl
+                            , Html.Styled.Attributes.class "mainButton"
                             ]
-                            [ Html.text "プライバシーポリシー" ]
+                            [ Html.Styled.text "プライバシーポリシー" ]
                         ]
                     ]
+                    |> Html.Styled.fromUnstyled
                 ]
             , bottomNavigation = Nothing
             }
@@ -54,9 +57,9 @@ view model =
             { title = "プライバシーポリシー"
             , tab = BasicParts.tabNone
             , html =
-                [ Html.div
-                    [ Html.Attributes.class "container" ]
-                    [ Html.text "プライバシーポリシー" ]
+                [ Page.Style.container
+                    [ Html.Styled.text "プライバシーポリシー" ]
+                    |> Html.Styled.fromUnstyled
                 ]
             , bottomNavigation = Nothing
             }

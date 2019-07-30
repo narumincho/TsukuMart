@@ -51,10 +51,10 @@ update msg _ =
 -}
 
 
-view : Model -> Html.Html Msg
+view : Model -> Html.Styled.Html Msg
 view (Model waitLogInUrl) =
-    Html.div
-        [ Html.Attributes.class "logIn" ]
+    Html.Styled.div
+        [ Html.Styled.Attributes.class "logIn" ]
         [ Html.Styled.div
             [ Html.Styled.Attributes.css
                 [ Page.Style.displayGridAndGap 24
@@ -80,7 +80,6 @@ view (Model waitLogInUrl) =
                             serviceLogInButtonListView
                    )
             )
-            |> Html.Styled.toUnstyled
         ]
 
 

@@ -88,9 +88,8 @@ view (Model rec) =
     { title = Just "検索"
     , tab = BasicParts.tabNone
     , html =
-        [ Html.div
-            [ Html.Attributes.class "container" ]
-            [ viewBody rec.categorySelect |> Html.Styled.toUnstyled ]
+        [ Page.Style.container
+            [ viewBody rec.categorySelect ]
         ]
     , bottomNavigation = Just BasicParts.Search
     }

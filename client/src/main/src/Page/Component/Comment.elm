@@ -54,6 +54,7 @@ commentView nowMaybe comment =
             , Html.Attributes.href (PageLocation.toUrlAsString (PageLocation.User (User.withNameGetId comment.user)))
             ]
             [ Page.Style.userImage 48 (User.withNameGetImageId comment.user)
+                |> Html.Styled.toUnstyled
             , Html.text (User.withNameGetDisplayName comment.user)
             ]
         , Html.div

@@ -87,7 +87,7 @@ main : Program { sendEmailToken : String, imageId : String, name : String } Mode
 main =
     Browser.element
         { init = init
-        , view = view
+        , view = \model -> view model |> Html.Styled.toUnstyled
         , update = update
         , subscriptions = always subscription
         }
@@ -270,12 +270,12 @@ analysisStudentIdOrSAddressResultToEmailAddress sAddressOrStudentId =
             Just emailAddress
 
 
-view : Model -> Html.Html Msg
+view : Model -> Html.Styled.Html Msg
 view model =
-    Html.div
-        [ Html.Attributes.id "app" ]
+    Html.Styled.div
+        [ Html.Styled.Attributes.id "app" ]
         [ BasicParts.headerWithoutBackArrow
-        , (case model of
+        , case model of
             Normal rec ->
                 normalView rec
 
@@ -287,8 +287,6 @@ view model =
 
             Sent { emailAddress } ->
                 sentView emailAddress
-          )
-            |> Html.Styled.toUnstyled
         ]
 
 

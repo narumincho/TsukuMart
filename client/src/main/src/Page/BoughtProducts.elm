@@ -14,8 +14,10 @@ import Data.LogInState as LogInState
 import Data.Product as Product
 import Html
 import Html.Attributes
+import Html.Styled
 import Page.Component.LogIn as LogIn
 import Page.Component.ProductList as ProductList
+import Page.Style
 
 
 type Model
@@ -155,14 +157,13 @@ view logInState isWideScreen (Model rec) =
     , html =
         case logInState of
             LogInState.None ->
-                [ Html.div
-                    [ Html.Attributes.class "container" ]
-                    [ Html.div
+                [ Page.Style.container
+                    [ Html.Styled.div
                         []
-                        [ Html.text "ログインか新規登録をして、購入した商品一覧機能を使えるようにしよう!" ]
+                        [ Html.Styled.text "ログインか新規登録をして、購入した商品一覧機能を使えるようにしよう!" ]
                     , LogIn.view
                         rec.logIn
-                        |> Html.map MsgByLogIn
+                        |> Html.Styled.map MsgByLogIn
                     ]
                 ]
 

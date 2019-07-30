@@ -16,8 +16,10 @@ import Data.Product as Product
 import Data.Trade as Trade
 import Html
 import Html.Attributes
+import Html.Styled
 import Page.Component.LogIn as LogIn
 import Page.Component.TradeList as TradeList
+import Page.Style
 
 
 type Model
@@ -115,14 +117,13 @@ view logInState (Model rec) =
     , html =
         case logInState of
             LogInState.None ->
-                [ Html.div
-                    [ Html.Attributes.class "container" ]
-                    [ Html.div
+                [ Page.Style.container
+                    [ Html.Styled.div
                         []
-                        [ Html.text "ログインか新規登録をして、いいねと閲覧履歴を使えるようにしよう!" ]
+                        [ Html.Styled.text "ログインか新規登録をして、いいねと閲覧履歴を使えるようにしよう!" ]
                     , LogIn.view
                         rec.logIn
-                        |> Html.map MsgByLogIn
+                        |> Html.Styled.map MsgByLogIn
                     ]
                 ]
 

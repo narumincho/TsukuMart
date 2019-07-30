@@ -10,7 +10,9 @@ module Page.LogIn exposing
 import BasicParts
 import Html
 import Html.Attributes
+import Html.Styled
 import Page.Component.LogIn as LogInOrSignUp
+import Page.Style
 
 
 type Model
@@ -59,10 +61,9 @@ view (Model logInOrSignUpModel) =
     { title = Just "ログイン"
     , tab = BasicParts.tabSingle "ログイン"
     , html =
-        [ Html.div
-            [ Html.Attributes.class "container" ]
+        [ Page.Style.container
             [ LogInOrSignUp.view logInOrSignUpModel
-                |> Html.map Msg
+                |> Html.Styled.map Msg
             ]
         ]
     , bottomNavigation = Just BasicParts.User

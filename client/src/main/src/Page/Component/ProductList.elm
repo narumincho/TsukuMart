@@ -18,8 +18,10 @@ import Html
 import Html.Attributes
 import Html.Events
 import Html.Styled
+import Html.Styled.Attributes
 import Icon
 import Json.Decode
+import Page.Style
 import PageLocation
 import Set
 
@@ -90,30 +92,27 @@ view (Model { likeUpdating }) logInState isWideMode productList =
             listView likeUpdating logInState isWideMode ( x, xs )
 
         Nothing ->
-            Html.div
-                [ Html.Attributes.class "container" ]
-                [ Html.div
+            Page.Style.container
+                [ Html.Styled.div
                     []
-                    [ Html.text "読み込み中"
+                    [ Html.Styled.text "読み込み中"
                     , Icon.loading { size = 48, color = Css.rgb 0 0 0 }
-                    |> Html.Styled.toUnstyled
                     ]
                 ]
 
 
 emptyView : Html.Html Msg
 emptyView =
-    Html.div
-        [ Html.Attributes.class "container" ]
-        [ Html.div
-            [ Html.Attributes.class "productList-zero" ]
-            [ Html.img
-                [ Html.Attributes.src "/assets/logo_bird.png"
-                , Html.Attributes.class "productList-zeroImage"
-                , Html.Attributes.alt "ざんねん。商品がありません"
+    Page.Style.container
+        [ Html.Styled.div
+            [ Html.Styled.Attributes.class "productList-zero" ]
+            [ Html.Styled.img
+                [ Html.Styled.Attributes.src "/assets/logo_bird.png"
+                , Html.Styled.Attributes.class "productList-zeroImage"
+                , Html.Styled.Attributes.alt "ざんねん。商品がありません"
                 ]
                 []
-            , Html.text "ここに表示する商品がありません"
+            , Html.Styled.text "ここに表示する商品がありません"
             ]
         ]
 
@@ -198,7 +197,7 @@ itemLike logInState sending product =
             , Html.Attributes.style "padding" "8px 24px"
             ]
             [ Icon.loading { size = 20, color = Css.rgb 255 255 255 }
-            |> Html.Styled.toUnstyled
+                |> Html.Styled.toUnstyled
             ]
 
     else

@@ -4,6 +4,8 @@ import Api
 import BasicParts
 import Browser
 import Browser.Navigation
+import Css
+import Css.Animations
 import Data.LogInState
 import Data.Product
 import Data.Trade
@@ -11,6 +13,9 @@ import Data.User
 import Html
 import Html.Attributes
 import Html.Keyed
+import Html.Styled
+import Html.Styled.Attributes
+import Html.Styled.Keyed
 import Page.About
 import Page.BoughtProducts
 import Page.CommentedProducts
@@ -150,7 +155,11 @@ main =
     Browser.application
         { init = init
         , update = update
-        , view = view
+        , view =
+            \model ->
+                { title = (view model).title
+                , body = (view model).body |> List.map Html.Styled.toUnstyled
+                }
         , subscriptions = subscription
         , onUrlRequest = UrlRequest
         , onUrlChange = UrlChange
@@ -1298,7 +1307,7 @@ updateLikedCountInEachPageProduct key productId result page =
 
 {-| 見た目を決める
 -}
-view : Model -> { title : String, body : List (Html.Html Msg) }
+view : Model -> { title : String, body : List (Html.Styled.Html Msg) }
 view (Model { page, wideScreen, message, logInState, now }) =
     let
         { title, tab, html, bottomNavigation } =
@@ -1307,7 +1316,7 @@ view (Model { page, wideScreen, message, logInState, now }) =
     { title = title
     , body =
         [ BasicParts.headerWithBackArrow
-            |> Html.map (always HistoryBack)
+            |> Html.Styled.map (always HistoryBack)
         ]
             ++ (if wideScreen then
                     [ BasicParts.menu logInState ]
@@ -1315,33 +1324,21 @@ view (Model { page, wideScreen, message, logInState, now }) =
                 else
                     []
                )
-            ++ [ BasicParts.tabView wideScreen tab |> Html.map PageMsg
-               , Html.div
-                    [ Html.Attributes.style "padding"
-                        ((if BasicParts.isTabNone tab then
-                            "64"
-
-                          else
-                            "112"
-                         )
-                            ++ "px 0 "
-                            ++ (if wideScreen then
-                                    "0 320px"
-
-                                else
-                                    "64px 0"
-                               )
-                        )
-                    , Html.Attributes.style "word-wrap" "break-word"
-                    , Html.Attributes.style "overflow-x" "hidden"
-                    , Html.Attributes.style "width" "100%"
+            ++ [ BasicParts.tabView wideScreen tab |> Html.Styled.map PageMsg
+               , Html.Styled.div
+                    [ Html.Styled.Attributes.css
+                        [ mainViewPaddingStyle tab wideScreen
+                        , Css.property "word-wrap" "break-word"
+                        , Css.overflowX Css.hidden
+                        , Css.width (Css.pct 100)
+                        ]
                     ]
                     html
-                    |> Html.map PageMsg
+                    |> Html.Styled.map PageMsg
                ]
             ++ (case message of
                     Just m ->
-                        [ Html.Keyed.node "div" [] [ ( m, messageView m ) ] ]
+                        [ Html.Styled.Keyed.node "div" [] [ ( m, messageView m ) ] ]
 
                     Nothing ->
                         []
@@ -1356,6 +1353,33 @@ view (Model { page, wideScreen, message, logInState, now }) =
     }
 
 
+mainViewPaddingStyle : BasicParts.Tab msg -> Bool -> Css.Style
+mainViewPaddingStyle tab wideScreen =
+    let
+        paddingTop =
+            (if BasicParts.isTabNone tab then
+                64
+
+             else
+                112
+            )
+                |> Css.px
+    in
+    if wideScreen then
+        Css.padding4
+            paddingTop
+            Css.zero
+            Css.zero
+            (Css.px 320)
+
+    else
+        Css.padding4
+            paddingTop
+            Css.zero
+            (Css.px 64)
+            Css.zero
+
+
 titleAndTabDataAndMainView :
     Data.LogInState.LogInState
     -> Bool
@@ -1365,7 +1389,7 @@ titleAndTabDataAndMainView :
         { title : String
         , tab : BasicParts.Tab PageMsg
         , bottomNavigation : Maybe BasicParts.BottomNavigationSelect
-        , html : List (Html.Html PageMsg)
+        , html : List (Html.Styled.Html PageMsg)
         }
 titleAndTabDataAndMainView logInState isWideScreen nowMaybe page =
     case page of
@@ -1465,7 +1489,7 @@ mapPageMsg :
     ->
         { title : String
         , tab : BasicParts.Tab PageMsg
-        , html : List (Html.Html PageMsg)
+        , html : List (Html.Styled.Html PageMsg)
         , bottomNavigation : Maybe BasicParts.BottomNavigationSelect
         }
 mapPageMsg f { title, tab, html, bottomNavigation } =
@@ -1477,16 +1501,43 @@ mapPageMsg f { title, tab, html, bottomNavigation } =
             Nothing ->
                 "つくマート"
     , tab = tab |> BasicParts.tabMap f
-    , html = html |> List.map (Html.map f)
+    , html = html |> List.map (Html.map f >> Html.Styled.fromUnstyled)
     , bottomNavigation = bottomNavigation
     }
 
 
-messageView : String -> Html.Html msg
+messageView : String -> Html.Styled.Html msg
 messageView message =
-    Html.div
-        [ Html.Attributes.class "message" ]
-        [ Html.text message ]
+    Html.Styled.div
+        [ Html.Styled.Attributes.css
+            [ Css.position Css.fixed
+            , Css.top (Css.px 128)
+            , Css.left (Css.pct 10)
+            , Css.width (Css.pct 80)
+            , Css.textAlign Css.center
+            , Css.zIndex (Css.int 2)
+            , Css.backgroundColor (Css.rgb 221 221 221)
+            , Css.color (Css.rgb 17 17 17)
+            , Css.border3 (Css.px 2) Css.solid (Css.rgb 17 17 17)
+            , Css.borderRadius (Css.px 8)
+            , Css.fontSize (Css.rem 1.3)
+            , Css.padding (Css.px 32)
+            , Css.pointerEvents Css.none
+            , Css.animationName
+                (Css.Animations.keyframes
+                    [ ( 0, [ Css.Animations.opacity (Css.num 1) ] )
+                    , ( 100, [ Css.Animations.opacity (Css.num 0) ] )
+                    ]
+                )
+            , Css.animationDuration (Css.sec 10)
+            , Css.animationDelay (Css.sec 3)
+            , Css.animationIterationCount (Css.int 1)
+            , Css.maxWidth (Css.pct 100)
+            , Css.boxSizing Css.borderBox
+            , Css.property "word-break" "break-word"
+            ]
+        ]
+        [ Html.Styled.text message ]
 
 
 subscription : Model -> Sub Msg

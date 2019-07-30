@@ -23,7 +23,7 @@ import Svg.Styled.Attributes as A
 import Svg.Styled.Events
 
 
-edit : List Css.Style -> Html.Html msg
+edit : List Css.Style -> Html.Styled.Html msg
 edit styleList =
     S.svg
         [ A.viewBox "0 0 24 24"
@@ -35,10 +35,9 @@ edit styleList =
             ]
             []
         ]
-        |> Html.Styled.toUnstyled
 
 
-deleteGarbageCan : List Css.Style -> Html.Html msg
+deleteGarbageCan : List Css.Style -> Html.Styled.Html msg
 deleteGarbageCan styleList =
     S.svg
         [ A.viewBox "0 0 24 24"
@@ -48,7 +47,6 @@ deleteGarbageCan styleList =
             [ A.d "M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V9c0-1.1-.9-2-2-2H8c-1.1 0-2 .9-2 2v10zM18 4h-2.5l-.71-.71c-.18-.18-.44-.29-.7-.29H9.91c-.26 0-.52.11-.7.29L8.5 4H6c-.55 0-1 .45-1 1s.45 1 1 1h12c.55 0 1-.45 1-1s-.45-1-1-1z" ]
             []
         ]
-        |> Html.Styled.toUnstyled
 
 
 home : List Css.Style -> Html.Styled.Html msg
@@ -89,7 +87,7 @@ notifications styleList =
         ]
 
 
-information : List Css.Style -> Html.Html msg
+information : List Css.Style -> Html.Styled.Html msg
 information styleList =
     S.svg
         [ A.viewBox "0 0 24 24"
@@ -100,7 +98,6 @@ information styleList =
             ]
             []
         ]
-        |> Html.Styled.toUnstyled
 
 
 loading : { size : Int, color : Css.ColorValue c } -> Html.Styled.Html msg

@@ -1,5 +1,6 @@
 module Page.Style exposing
     ( RadioSelect(..)
+    , container
     , displayGridAndGap
     , formItem
     , inputText
@@ -33,7 +34,21 @@ primaryColorLight =
     Css.rgb 154 108 201
 
 
-titleAndContent : String -> Html.Html msg -> Html.Html msg
+container : List (H.Html msg) -> Html.Html msg
+container children =
+    H.div
+        [ A.css
+            [ Css.displayFlex
+            , Css.alignItems Css.center
+            , Css.width (Css.pct 100)
+            , Css.flexDirection Css.column
+            ]
+        ]
+        children
+        |> H.toUnstyled
+
+
+titleAndContent : String -> Html.Html msg -> H.Html msg
 titleAndContent title content =
     H.div
         [ A.css [ displayGridAndGap 4 ]
@@ -43,7 +58,6 @@ titleAndContent title content =
             [ H.text title ]
         , content |> H.fromUnstyled
         ]
-        |> H.toUnstyled
 
 
 titleAndContentStyle : String -> H.Html msg -> H.Html msg
@@ -95,7 +109,7 @@ displayGridAndGap gap =
         |> Css.batch
 
 
-userImage : Int -> Data.ImageId.ImageId -> Html.Html msg
+userImage : Int -> Data.ImageId.ImageId -> H.Html msg
 userImage size imageId =
     H.img
         [ A.css
@@ -109,7 +123,6 @@ userImage size imageId =
         , A.src (Data.ImageId.toUrlString imageId)
         ]
         []
-        |> H.toUnstyled
 
 
 selectMenu : String -> List String -> H.Html (Maybe Int)

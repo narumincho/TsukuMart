@@ -21,6 +21,8 @@ import Html.Attributes
 import Html.Events
 import Html.Keyed
 import Html.Styled
+import Html.Styled.Attributes
+import Html.Styled.Events
 import Icon
 import Page.Component.University as UniversityComponent
 import Page.Style
@@ -274,8 +276,7 @@ view logInState isWideScreen model =
             )
     , tab = BasicParts.tabSingle "プロフィール"
     , html =
-        [ Html.div
-            [ Html.Attributes.class "container" ]
+        [ Page.Style.container
             (case ( logInState, model ) of
                 ( LogInState.Ok { userWithName }, Normal normalUser ) ->
                     if User.withNameGetId userWithName == User.withProfileGetId normalUser then
@@ -297,56 +298,56 @@ view logInState isWideScreen model =
                     editView token editModel
 
                 ( _, Edit _ ) ->
-                    [ Html.text "自分以外のプロフィールは編集できない" ]
+                    [ Html.Styled.text "自分以外のプロフィールは編集できない" ]
             )
         ]
     , bottomNavigation = Just BasicParts.User
     }
 
 
-loadingWithUserIdView : User.Id -> List (Html.Html msg)
+loadingWithUserIdView : User.Id -> List (Html.Styled.Html msg)
 loadingWithUserIdView userId =
-    [ Html.text ("ユーザーID" ++ User.idToString userId ++ "のプロフィールを読み込み中")
-    , Icon.loading { size = 48, color = Css.rgb 0 0 0 } |> Html.Styled.toUnstyled
+    [ Html.Styled.text ("ユーザーID" ++ User.idToString userId ++ "のプロフィールを読み込み中")
+    , Icon.loading { size = 48, color = Css.rgb 0 0 0 }
     ]
 
 
-loadingWithUserIdAndNameView : Bool -> User.WithName -> List (Html.Html msg)
+loadingWithUserIdAndNameView : Bool -> User.WithName -> List (Html.Styled.Html msg)
 loadingWithUserIdAndNameView isWideScreen userWithName =
     imageAndDisplayNameView
         isWideScreen
         (User.withNameGetImageId userWithName)
         (User.withNameGetDisplayName userWithName)
-        ++ [ Html.text (User.withNameGetDisplayName userWithName ++ "さんの紹介文、学群学類を読み込み中")
-           , Icon.loading { size = 48, color = Css.rgb 0 0 0 } |> Html.Styled.toUnstyled
+        ++ [ Html.Styled.text (User.withNameGetDisplayName userWithName ++ "さんの紹介文、学群学類を読み込み中")
+           , Icon.loading { size = 48, color = Css.rgb 0 0 0 }
            ]
 
 
-profileContainerStyle : List (Html.Attribute a)
+profileContainerStyle : Css.Style
 profileContainerStyle =
-    [ Html.Attributes.style "display" "grid"
-    , Html.Attributes.style "max-width" "40rem"
-    , Html.Attributes.style "gap" "16px"
-    , Html.Attributes.style "padding" "16px"
-    , Html.Attributes.style "box-sizing" "border-box"
-    , Html.Attributes.style "width" "100%"
+    [ Page.Style.displayGridAndGap 16
+    , Css.maxWidth (Css.px 640)
+    , Css.padding (Css.px 16)
+    , Css.boxSizing Css.borderBox
+    , Css.width (Css.pct 100)
     ]
+        |> Css.batch
 
 
-normalView : Bool -> User.WithProfile -> List (Html.Html Msg)
+normalView : Bool -> User.WithProfile -> List (Html.Styled.Html Msg)
 normalView isWideScreen user =
-    [ Html.div
-        profileContainerStyle
+    [ Html.Styled.div
+        [ Html.Styled.Attributes.css [ profileContainerStyle ] ]
         (userView isWideScreen user
             ++ [ userDataLink (User.withProfileGetId user) ]
         )
     ]
 
 
-normalMyProfileView : Bool -> User.WithProfile -> List (Html.Html Msg)
+normalMyProfileView : Bool -> User.WithProfile -> List (Html.Styled.Html Msg)
 normalMyProfileView isWideScreen user =
-    [ Html.div
-        profileContainerStyle
+    [ Html.Styled.div
+        [ Html.Styled.Attributes.css [ profileContainerStyle ] ]
         (userView isWideScreen user
             ++ [ userPrivateDataLink (User.withProfileGetId user) ]
             ++ [ toEditButton, logOutButton ]
@@ -356,7 +357,7 @@ normalMyProfileView isWideScreen user =
 
 {-| ユーザーの情報表示
 -}
-userView : Bool -> User.WithProfile -> List (Html.Html msg)
+userView : Bool -> User.WithProfile -> List (Html.Styled.Html msg)
 userView isWideScreen userWithProfile =
     imageAndDisplayNameView
         isWideScreen
@@ -365,42 +366,47 @@ userView isWideScreen userWithProfile =
         ++ [ introductionView (User.withProfileGetIntroduction userWithProfile)
            ]
         ++ universityView (User.withProfileGetUniversity userWithProfile)
-        ++ [ Html.text ("ユーザーID " ++ (userWithProfile |> User.withProfileGetId |> User.idToString))
+        ++ [ Html.Styled.text ("ユーザーID " ++ (userWithProfile |> User.withProfileGetId |> User.idToString))
            ]
 
 
-imageAndDisplayNameView : Bool -> Data.ImageId.ImageId -> String -> List (Html.Html msg)
+imageAndDisplayNameView : Bool -> Data.ImageId.ImageId -> String -> List (Html.Styled.Html msg)
 imageAndDisplayNameView isWideScreen imageId displayName =
     if isWideScreen then
-        [ Html.div
-            [ Html.Attributes.style "display" "flex"
-            , Html.Attributes.style "justify-content" "center"
+        [ Html.Styled.div
+            [ Html.Styled.Attributes.css
+                [ Css.displayFlex
+                , Css.justifyContent Css.center
+                ]
             ]
             [ Page.Style.userImage 200 imageId
-            , Html.div
-                [ Html.Attributes.style "flex-grow" "1"
-                , Html.Attributes.style "font-size" "1.5rem"
+            , Html.Styled.div
+                [ Html.Styled.Attributes.css
+                    [ Css.flexGrow (Css.int 1)
+                    , Css.fontSize (Css.rem 1.5)
+                    ]
                 ]
-                [ Html.text displayName ]
+                [ Html.Styled.text displayName ]
             ]
         ]
 
     else
-        [ Html.div
-            [ Html.Attributes.style "display" "flex"
-            , Html.Attributes.style "justify-content" "center"
+        [ Html.Styled.div
+            [ Html.Styled.Attributes.css
+                [ Css.displayFlex
+                , Css.justifyContent Css.center
+                ]
             ]
-            [ Page.Style.userImage 200 imageId
+            [ Page.Style.userImage 200 imageId ]
+        , Html.Styled.div
+            [ Html.Styled.Attributes.css
+                [ Css.fontSize (Css.rem 1.5) ]
             ]
-        , Html.div
-            [ Html.Attributes.style "flex-grow" "1"
-            , Html.Attributes.style "font-size" "1.5rem"
-            ]
-            [ Html.text displayName ]
+            [ Html.Styled.text displayName ]
         ]
 
 
-introductionView : String -> Html.Html msg
+introductionView : String -> Html.Styled.Html msg
 introductionView introduction =
     Page.Style.titleAndContent "紹介文"
         (Html.div []
@@ -412,7 +418,7 @@ introductionView introduction =
         )
 
 
-universityView : Data.University.University -> List (Html.Html msg)
+universityView : Data.University.University -> List (Html.Styled.Html msg)
 universityView university =
     let
         { graduate, school, department } =
@@ -457,71 +463,75 @@ universityView university =
            )
 
 
-userDataLink : User.Id -> Html.Html msg
+userDataLink : User.Id -> Html.Styled.Html msg
 userDataLink userId =
-    Html.div
-        [ Html.Attributes.style "display" "grid"
-        , Html.Attributes.style "gap" "8px"
-        , Html.Attributes.style "padding" "0 0 48px 0"
-        ]
-        [ userDataLinkItem (PageLocation.SoldProducts userId) "出品した商品"
-        ]
+    dataLinkContainer
+        [ ( PageLocation.SoldProducts userId, "出品した商品" ) ]
 
 
-userPrivateDataLink : User.Id -> Html.Html msg
+userPrivateDataLink : User.Id -> Html.Styled.Html msg
 userPrivateDataLink userId =
-    Html.div
-        [ Html.Attributes.style "display" "grid"
-        , Html.Attributes.style "gap" "8px"
-        , Html.Attributes.style "padding" "0 0 48px 0"
-        ]
-        [ userDataLinkItem PageLocation.LikedProducts "いいねした商品"
-        , userDataLinkItem PageLocation.History "閲覧した商品"
-        , userDataLinkItem (PageLocation.SoldProducts userId) "出品した商品"
-        , userDataLinkItem PageLocation.BoughtProducts "購入した商品"
-        , userDataLinkItem PageLocation.TradingProducts "進行中の取引"
-        , userDataLinkItem PageLocation.TradedProducts "過去にした取引"
-        , userDataLinkItem PageLocation.CommentedProducts "コメントをした商品"
+    dataLinkContainer
+        [ ( PageLocation.LikedProducts, "いいねした商品" )
+        , ( PageLocation.History, "閲覧した商品" )
+        , ( PageLocation.SoldProducts userId, "出品した商品" )
+        , ( PageLocation.BoughtProducts, "購入した商品" )
+        , ( PageLocation.TradingProducts, "進行中の取引" )
+        , ( PageLocation.TradedProducts, "過去にした取引" )
+        , ( PageLocation.CommentedProducts, "コメントをした商品" )
         ]
 
 
-userDataLinkItem : PageLocation.PageLocation -> String -> Html.Html msg
+dataLinkContainer : List ( PageLocation.PageLocation, String ) -> Html.Styled.Html msg
+dataLinkContainer data =
+    Html.Styled.div
+        [ Html.Styled.Attributes.css
+            [ Page.Style.displayGridAndGap 8
+            , Css.padding4 Css.zero Css.zero (Css.px 48) Css.zero
+            ]
+        ]
+        (data |> List.map (\( link, text ) -> userDataLinkItem link text))
+
+
+userDataLinkItem : PageLocation.PageLocation -> String -> Html.Styled.Html msg
 userDataLinkItem link text =
-    Html.a
-        [ Html.Attributes.href (PageLocation.toUrlAsString link)
-        , Html.Attributes.style "text-decoration" "none"
-        , Html.Attributes.style "color" "black"
-        , Html.Attributes.style "background-color" "#999"
-        , Html.Attributes.style "padding" "16px"
-        , Html.Attributes.style "font-size" "1.5rem"
-        , Html.Attributes.style "text-align" "center"
+    Html.Styled.a
+        [ Html.Styled.Attributes.href (PageLocation.toUrlAsString link)
+        , Html.Styled.Attributes.css
+            [ Css.textDecoration Css.none
+            , Css.color (Css.rgb 0 0 0)
+            , Css.backgroundColor (Css.rgb 153 153 153)
+            , Css.padding (Css.px 16)
+            , Css.fontSize (Css.rem 1.5)
+            , Css.textAlign Css.center
+            ]
         ]
-        [ Html.text text ]
+        [ Html.Styled.text text ]
 
 
-toEditButton : Html.Html Msg
+toEditButton : Html.Styled.Html Msg
 toEditButton =
-    Html.button
-        [ Html.Attributes.class "mainButton"
-        , Html.Events.onClick MsgToEditMode
+    Html.Styled.button
+        [ Html.Styled.Attributes.class "mainButton"
+        , Html.Styled.Events.onClick MsgToEditMode
         ]
         [ Icon.edit [ Css.width (Css.px 32), Css.height (Css.px 32) ]
-        , Html.text "編集する"
+        , Html.Styled.text "編集する"
         ]
 
 
-logOutButton : Html.Html Msg
+logOutButton : Html.Styled.Html Msg
 logOutButton =
-    Html.button
-        [ Html.Attributes.class "subButton"
-        , Html.Events.onClick MsgLogOut
+    Html.Styled.button
+        [ Html.Styled.Attributes.class "subButton"
+        , Html.Styled.Events.onClick MsgLogOut
         ]
-        [ Html.text "ログアウトする" ]
+        [ Html.Styled.text "ログアウトする" ]
 
 
 {-| 編集モードでの表示
 -}
-editView : Api.Token -> EditModel -> List (Html.Html Msg)
+editView : Api.Token -> EditModel -> List (Html.Styled.Html Msg)
 editView access editModel =
     [ Html.Keyed.node "div"
         [ Html.Attributes.class "form" ]
@@ -534,6 +544,7 @@ editView access editModel =
             ++ [ ( "button", editButton access editModel )
                ]
         )
+        |> Html.Styled.fromUnstyled
     ]
 
 

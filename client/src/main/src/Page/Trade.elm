@@ -20,6 +20,8 @@ import Html
 import Html.Attributes
 import Html.Events
 import Html.Styled
+import Html.Styled.Attributes
+import Html.Styled.Events
 import Icon
 import Page.Component.Comment
 import Page.Style
@@ -251,8 +253,7 @@ view logInState timeData model =
     { title = Just "取引"
     , tab = BasicParts.tabNone
     , html =
-        [ Html.div
-            [ Html.Attributes.class "container" ]
+        [ Page.Style.container
             [ Html.div
                 [ Html.Attributes.class "product" ]
                 (case logInState of
@@ -269,6 +270,7 @@ view logInState timeData model =
 
                             Main { trade, sending } ->
                                 mainView sending token timeData userWithName trade
+                                    |> List.map Html.Styled.toUnstyled
 
                     LogInState.LoadingProfile _ ->
                         [ Html.text "読み込み中"
@@ -279,6 +281,7 @@ view logInState timeData model =
                     LogInState.None ->
                         [ Html.text "取引するにはログインが必要です" ]
                 )
+                |> Html.Styled.fromUnstyled
             ]
         ]
     , bottomNavigation = Nothing
@@ -306,7 +309,7 @@ mainView :
     -> Maybe ( Time.Posix, Time.Zone )
     -> User.WithName
     -> Trade.TradeDetail
-    -> List (Html.Html Msg)
+    -> List (Html.Styled.Html Msg)
 mainView sending token timeData user trade =
     let
         product =
@@ -341,16 +344,17 @@ mainView sending token timeData user trade =
     , Page.Style.titleAndContent
         "開始日時"
         (Html.text (Data.DateTime.toDiffString timeData (Trade.detailGetCreatedAt trade)))
-    , Html.a
-        [ Html.Attributes.style "display" "block"
-        , Html.Attributes.href
+    , Html.Styled.a
+        [ Html.Styled.Attributes.css
+            [ Css.display Css.block ]
+        , Html.Styled.Attributes.href
             (PageLocation.toUrlAsString
                 (PageLocation.Product
                     (Product.detailGetId product)
                 )
             )
         ]
-        [ Html.text "商品詳細ページ" ]
+        [ Html.Styled.text "商品詳細ページ" ]
     , sellerAndBuyerView (Product.detailGetSeller product) (Trade.detailGetBuyer trade)
     ]
         ++ (case tradeStatus of
@@ -417,51 +421,56 @@ mainView sending token timeData user trade =
            )
 
 
-productImageView : List String -> Html.Html Msg
+productImageView : List String -> Html.Styled.Html Msg
 productImageView urlList =
-    Html.div
-        [ Html.Attributes.class "product-imageListContainer" ]
-        [ Html.div
-            [ Html.Attributes.class "product-imageList"
+    Html.Styled.div
+        [ Html.Styled.Attributes.class "product-imageListContainer" ]
+        [ Html.Styled.div
+            [ Html.Styled.Attributes.class "product-imageList"
             ]
             (urlList |> List.map imageView)
         ]
 
 
-imageView : String -> Html.Html msg
+imageView : String -> Html.Styled.Html msg
 imageView url =
-    Html.img
-        [ Html.Attributes.class "product-image"
-        , Html.Attributes.src url
+    Html.Styled.img
+        [ Html.Styled.Attributes.class "product-image"
+        , Html.Styled.Attributes.src url
         ]
         []
 
 
-sellerAndBuyerView : User.WithName -> User.WithName -> Html.Html msg
+sellerAndBuyerView : User.WithName -> User.WithName -> Html.Styled.Html msg
 sellerAndBuyerView seller buyer =
-    Html.div
-        [ Html.Attributes.style "display" "flex"
+    Html.Styled.div
+        [ Html.Styled.Attributes.css
+            [ Css.displayFlex ]
         ]
         [ userView seller
-        , Html.div [ Html.Attributes.style "font-size" "32px" ] [ Html.text "→" ]
+        , Html.Styled.div
+            [ Html.Styled.Attributes.css
+                [ Css.fontSize (Css.px 32) ]
+            ]
+            [ Html.Styled.text "→" ]
         , userView buyer
         ]
 
 
-userView : User.WithName -> Html.Html msg
+userView : User.WithName -> Html.Styled.Html msg
 userView userWithName =
-    Html.a
-        [ Html.Attributes.href
+    Html.Styled.a
+        [ Html.Styled.Attributes.href
             (PageLocation.toUrlAsString
                 (PageLocation.User (User.withNameGetId userWithName))
             )
         ]
         [ Page.Style.userImage 48 (User.withNameGetImageId userWithName)
-        , Html.text (User.withNameGetDisplayName userWithName)
+        , Html.Styled.text (User.withNameGetDisplayName userWithName)
         ]
 
 
-commentInputArea : Maybe Sending -> Api.Token -> Html.Html Msg
+commentInputArea : Maybe Sending -> Api.Token -> Html.Styled.Html Msg
 commentInputArea sending token =
     Html.div
         []
@@ -498,6 +507,7 @@ commentInputArea sending token =
                         ]
                )
         )
+        |> Html.Styled.fromUnstyled
 
 
 commentTextAreaId : String
@@ -505,9 +515,9 @@ commentTextAreaId =
     "comment-text-area"
 
 
-commentView : Maybe ( Time.Posix, Time.Zone ) -> User.WithName -> Trade.TradeDetail -> Html.Html msg
+commentView : Maybe ( Time.Posix, Time.Zone ) -> User.WithName -> Trade.TradeDetail -> Html.Styled.Html msg
 commentView timeData user trade =
-    Html.div
+    Html.Styled.div
         []
         [ Page.Component.Comment.view timeData
             (trade
@@ -515,6 +525,7 @@ commentView timeData user trade =
                 |> List.map (tradeCommentToCommentData trade (User.withNameGetId user))
                 |> Just
             )
+            |> Html.Styled.fromUnstyled
         ]
 
 
@@ -556,29 +567,29 @@ tradeCommentToCommentData trade myId (Trade.Comment { body, speaker, createdAt }
             }
 
 
-finishButton : Maybe Sending -> Trade.SellerOrBuyer -> Api.Token -> Html.Html Msg
+finishButton : Maybe Sending -> Trade.SellerOrBuyer -> Api.Token -> Html.Styled.Html Msg
 finishButton sending position token =
     case sending of
         Just Finish ->
-            Html.button
-                [ Html.Attributes.class "mainButton"
-                , Html.Attributes.disabled True
+            Html.Styled.button
+                [ Html.Styled.Attributes.class "mainButton"
+                , Html.Styled.Attributes.disabled True
                 ]
-                [ Icon.loading { size = 24, color = Css.rgb 0 0 0 } |> Html.Styled.toUnstyled]
+                [ Icon.loading { size = 24, color = Css.rgb 0 0 0 } ]
 
         Just _ ->
-            Html.button
-                [ Html.Attributes.class "mainButton"
-                , Html.Attributes.disabled True
+            Html.Styled.button
+                [ Html.Styled.Attributes.class "mainButton"
+                , Html.Styled.Attributes.disabled True
                 ]
-                [ Html.text (finishText position) ]
+                [ Html.Styled.text (finishText position) ]
 
         Nothing ->
-            Html.button
-                [ Html.Attributes.class "mainButton"
-                , Html.Events.onClick (FinishTrade token)
+            Html.Styled.button
+                [ Html.Styled.Attributes.class "mainButton"
+                , Html.Styled.Events.onClick (FinishTrade token)
                 ]
-                [ Html.text (finishText position) ]
+                [ Html.Styled.text (finishText position) ]
 
 
 finishText : Trade.SellerOrBuyer -> String
@@ -591,26 +602,26 @@ finishText position =
             "商品を受け取った"
 
 
-cancelButton : Maybe Sending -> Api.Token -> Html.Html Msg
+cancelButton : Maybe Sending -> Api.Token -> Html.Styled.Html Msg
 cancelButton sending token =
     case sending of
         Just Cancel ->
-            Html.button
-                [ Html.Attributes.class "product-deleteButton"
-                , Html.Attributes.disabled True
+            Html.Styled.button
+                [ Html.Styled.Attributes.class "product-deleteButton"
+                , Html.Styled.Attributes.disabled True
                 ]
-                [ Icon.loading { size = 24, color = Css.rgb 0 0 0 }|> Html.Styled.toUnstyled ]
+                [ Icon.loading { size = 24, color = Css.rgb 0 0 0 } ]
 
         Just _ ->
-            Html.button
-                [ Html.Attributes.class "product-deleteButton"
-                , Html.Attributes.disabled True
+            Html.Styled.button
+                [ Html.Styled.Attributes.class "product-deleteButton"
+                , Html.Styled.Attributes.disabled True
                 ]
-                [ Html.text "取引をキャンセルする" ]
+                [ Html.Styled.text "取引をキャンセルする" ]
 
         Nothing ->
-            Html.button
-                [ Html.Attributes.class "product-deleteButton"
-                , Html.Events.onClick (CancelTrade token)
+            Html.Styled.button
+                [ Html.Styled.Attributes.class "product-deleteButton"
+                , Html.Styled.Events.onClick (CancelTrade token)
                 ]
-                [ Html.text "取引をキャンセルする" ]
+                [ Html.Styled.text "取引をキャンセルする" ]

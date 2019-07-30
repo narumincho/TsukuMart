@@ -19,6 +19,9 @@ import Html.Attributes
 import Html.Events
 import Html.Keyed
 import Html.Styled
+import Html.Styled.Attributes
+import Html.Styled.Events
+import Html.Styled.Keyed
 import Icon
 import Page.Component.LogIn as LogIn
 import Page.Component.ProductEditor as ProductEditor
@@ -193,10 +196,9 @@ view logInState (Model { page, logInOrSignUpModel }) =
     { title = Just "出品"
     , tab = BasicParts.tabSingle tabText
     , html =
-        [ Html.div
-            [ Html.Attributes.class "container" ]
-            [ Html.Keyed.node "div"
-                [ Html.Attributes.class "exhibition" ]
+        [ Page.Style.container
+            [ Html.Styled.Keyed.node "div"
+                [ Html.Styled.Attributes.class "exhibition" ]
                 body
             ]
         ]
@@ -204,17 +206,17 @@ view logInState (Model { page, logInOrSignUpModel }) =
     }
 
 
-logInStateNoneView : LogIn.Model -> ( String, List ( String, Html.Html Msg ) )
+logInStateNoneView : LogIn.Model -> ( String, List ( String, Html.Styled.Html Msg ) )
 logInStateNoneView model =
     ( "出品画面"
     , [ ( "logIn"
-        , Html.div
+        , Html.Styled.div
             []
-            [ Html.text "ログインして商品を出品しよう" ]
+            [ Html.Styled.text "ログインして商品を出品しよう" ]
         )
       , ( "logInComp"
         , LogIn.view model
-            |> Html.map LogInOrSignUpMsg
+            |> Html.Styled.map LogInOrSignUpMsg
         )
       ]
     )
@@ -227,11 +229,11 @@ logInStateNoneView model =
 -}
 
 
-editView : ProductEditor.Model -> ( String, List ( String, Html.Html Msg ) )
+editView : ProductEditor.Model -> ( String, List ( String, Html.Styled.Html Msg ) )
 editView productEditorModel =
     ( "商品の情報を入力"
     , (ProductEditor.view productEditorModel
-        |> List.map (Tuple.mapSecond (Html.map MsgByProductEditor))
+        |> List.map (Tuple.mapSecond (Html.map MsgByProductEditor >> Html.Styled.fromUnstyled))
       )
         ++ [ ( "conform"
              , toConformPageButton (ProductEditor.toSoldRequest productEditorModel /= Nothing)
@@ -240,22 +242,22 @@ editView productEditorModel =
     )
 
 
-toConformPageButton : Bool -> Html.Html Msg
+toConformPageButton : Bool -> Html.Styled.Html Msg
 toConformPageButton available =
     if available then
-        Html.a
-            [ Html.Attributes.href (PageLocation.toUrlAsString PageLocation.ExhibitionConfirm)
-            , Html.Attributes.class "mainButton"
+        Html.Styled.a
+            [ Html.Styled.Attributes.href (PageLocation.toUrlAsString PageLocation.ExhibitionConfirm)
+            , Html.Styled.Attributes.class "mainButton"
             ]
-            [ Html.text "出品確認画面へ" ]
+            [ Html.Styled.text "出品確認画面へ" ]
 
     else
-        Html.button
-            [ Html.Attributes.class "mainButton"
-            , Html.Attributes.class "mainButton-disabled"
-            , Html.Attributes.disabled True
+        Html.Styled.button
+            [ Html.Styled.Attributes.class "mainButton"
+            , Html.Styled.Attributes.class "mainButton-disabled"
+            , Html.Styled.Attributes.disabled True
             ]
-            [ Html.text "出品確認画面へ" ]
+            [ Html.Styled.text "出品確認画面へ" ]
 
 
 
@@ -265,7 +267,7 @@ toConformPageButton available =
 -}
 
 
-confirmView : Api.Token -> Api.SellProductRequest -> Bool -> ( String, List ( String, Html.Html Msg ) )
+confirmView : Api.Token -> Api.SellProductRequest -> Bool -> ( String, List ( String, Html.Styled.Html Msg ) )
 confirmView accessToken (Api.SellProductRequest requestData) sending =
     ( "出品 確認"
     , ([ confirmViewImage requestData.images
@@ -281,24 +283,24 @@ confirmView accessToken (Api.SellProductRequest requestData) sending =
             (Html.div [] [ Html.text (Product.conditionToJapaneseString requestData.condition) ])
        ]
         ++ (if sending then
-                [ Html.button
-                    [ Html.Attributes.class "mainButton"
-                    , Html.Attributes.class "mainButton-disabled"
-                    , Html.Attributes.disabled True
+                [ Html.Styled.button
+                    [ Html.Styled.Attributes.class "mainButton"
+                    , Html.Styled.Attributes.class "mainButton-disabled"
+                    , Html.Styled.Attributes.disabled True
                     ]
                     [ Icon.loading { size = 24, color = Css.rgb 255 255 255 }
-                        |> Html.Styled.toUnstyled
                     ]
                 ]
 
             else
-                [ Html.div [ Html.Attributes.class "exhibition-confirm-msg" ]
-                    [ Html.text "この商品を出品します。よろしいですか?" ]
-                , Html.button
-                    [ Html.Events.onClick (SellProduct ( accessToken, Api.SellProductRequest requestData ))
-                    , Html.Attributes.class "mainButton"
+                [ Html.Styled.div
+                    [ Html.Styled.Attributes.class "exhibition-confirm-msg" ]
+                    [ Html.Styled.text "この商品を出品します。よろしいですか?" ]
+                , Html.Styled.button
+                    [ Html.Styled.Events.onClick (SellProduct ( accessToken, Api.SellProductRequest requestData ))
+                    , Html.Styled.Attributes.class "mainButton"
                     ]
-                    [ Html.text "出品する" ]
+                    [ Html.Styled.text "出品する" ]
                 ]
            )
       )
@@ -306,20 +308,20 @@ confirmView accessToken (Api.SellProductRequest requestData) sending =
     )
 
 
-confirmViewImage : List String -> Html.Html Msg
+confirmViewImage : List String -> Html.Styled.Html Msg
 confirmViewImage images =
-    Html.div
-        [ Html.Attributes.class "exhibition-photo-cardList-container" ]
-        [ Html.div
-            [ Html.Attributes.class "exhibition-photo-cardList" ]
+    Html.Styled.div
+        [ Html.Styled.Attributes.class "exhibition-photo-cardList-container" ]
+        [ Html.Styled.div
+            [ Html.Styled.Attributes.class "exhibition-photo-cardList" ]
             (images
                 |> List.map
                     (\dataUrl ->
-                        Html.div
-                            [ Html.Attributes.class "exhibition-photo-card" ]
-                            [ Html.img
-                                [ Html.Attributes.src dataUrl
-                                , Html.Attributes.class "exhibition-photo-card-image"
+                        Html.Styled.div
+                            [ Html.Styled.Attributes.class "exhibition-photo-card" ]
+                            [ Html.Styled.img
+                                [ Html.Styled.Attributes.src dataUrl
+                                , Html.Styled.Attributes.class "exhibition-photo-card-image"
                                 ]
                                 []
                             ]
