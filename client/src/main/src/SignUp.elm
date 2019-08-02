@@ -96,7 +96,7 @@ main =
 init : { sendEmailToken : String, imageId : String, name : String } -> ( Model, Cmd Msg )
 init { sendEmailToken, imageId, name } =
     let
-        ( universityModel, universityEmission ) =
+        ( universityModel, universityCmd ) =
             University.initModelNone
     in
     ( Normal

@@ -1,5 +1,5 @@
 module Page.LogIn exposing
-    ( Emission(..)
+    ( Cmd(..)
     , Model
     , Msg(..)
     , initModel
@@ -19,23 +19,23 @@ type Model
     = Model LogInOrSignUp.Model
 
 
-type Emission
-    = LogInOrSignUpEmission LogInOrSignUp.Emission
-    | EmissionPageToHome
+type Cmd
+    = LogInOrSignUpCmd LogInOrSignUp.Cmd
+    | CmdPageToHome
 
 
 type Msg
     = Msg LogInOrSignUp.Msg
 
 
-initModel : ( Model, List Emission )
+initModel : ( Model, List Cmd )
 initModel =
     ( Model LogInOrSignUp.initModel
     , []
     )
 
 
-update : Msg -> Model -> ( Model, List Emission )
+update : Msg -> Model -> ( Model, List Cmd )
 update msg (Model logInOrSignUpModel) =
     case msg of
         Msg logInOrSignUpMsg ->
@@ -43,7 +43,7 @@ update msg (Model logInOrSignUpModel) =
                 |> LogInOrSignUp.update logInOrSignUpMsg
                 |> Tuple.mapBoth Model
                     (\e ->
-                        e |> List.map LogInOrSignUpEmission
+                        e |> List.map LogInOrSignUpCmd
                     )
 
 

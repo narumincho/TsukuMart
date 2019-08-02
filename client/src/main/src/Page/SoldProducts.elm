@@ -1,5 +1,5 @@
 module Page.SoldProducts exposing
-    ( Emission(..)
+    ( Cmd(..)
     , Model
     , Msg(..)
     , getAllProducts
@@ -30,10 +30,10 @@ type NormalModel
     | Error
 
 
-type Emission
-    = EmissionGetSoldProducts User.Id
-    | EmissionByProductList ProductList.Emission
-    | EmissionAddLogMessage String
+type Cmd
+    = CmdGetSoldProducts User.Id
+    | CmdByProductList ProductList.Cmd
+    | CmdAddLogMessage String
 
 
 type Msg
@@ -41,10 +41,10 @@ type Msg
     | MsgByProductList ProductList.Msg
 
 
-initModel : User.Id -> Maybe Product.Id -> ( Model, List Emission )
+initModel : User.Id -> Maybe Product.Id -> ( Model, List Cmd )
 initModel userId productIdMaybe =
     let
-        ( productListModel, emissionList ) =
+        ( productListModel, cmdList ) =
             ProductList.initModel productIdMaybe
     in
     ( Model
@@ -52,8 +52,8 @@ initModel userId productIdMaybe =
         , userId = userId
         , productList = productListModel
         }
-    , [ EmissionGetSoldProducts userId ]
-        ++ (emissionList |> List.map EmissionByProductList)
+    , [ CmdGetSoldProducts userId ]
+        ++ (cmdList |> List.map CmdByProductList)
     )
 
 
@@ -69,7 +69,7 @@ getAllProducts (Model { normal }) =
             []
 
 
-update : Msg -> Model -> ( Model, List Emission )
+update : Msg -> Model -> ( Model, List Cmd )
 update msg (Model rec) =
     case msg of
         GetSoldProductListResponse result ->
@@ -82,12 +82,12 @@ update msg (Model rec) =
 
                 Err errorMessage ->
                     ( Model { rec | normal = Error }
-                    , [ EmissionAddLogMessage errorMessage ]
+                    , [ CmdAddLogMessage errorMessage ]
                     )
 
         MsgByProductList productListMsg ->
             let
-                ( newModel, emissionList ) =
+                ( newModel, cmdList ) =
                     rec.productList |> ProductList.update productListMsg
             in
             ( case productListMsg of
@@ -100,7 +100,7 @@ update msg (Model rec) =
 
                 _ ->
                     Model { rec | productList = newModel }
-            , emissionList |> List.map EmissionByProductList
+            , cmdList |> List.map CmdByProductList
             )
 
 

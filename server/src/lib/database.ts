@@ -624,6 +624,32 @@ export const getProduct = async (id: string): Promise<ProductReturnLowCost> =>
         data: await databaseLow.getProduct(id)
     });
 
+export type SearchCondition = {
+    query: string;
+    category:
+        | {
+              c: "category";
+              v: type.Category;
+          }
+        | {
+              c: "group";
+              v: type.CategoryGroup;
+          };
+    university:
+        | {
+              c: "department";
+              v: type.SchoolAndDepartment;
+          }
+        | {
+              c: "school";
+              v: type.School;
+          }
+        | {
+              c: "graduate";
+              v: type.Graduate;
+          };
+};
+
 export const productSearch = async (
     query: string,
     category: Maybe<type.Category>,

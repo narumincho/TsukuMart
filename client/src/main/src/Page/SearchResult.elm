@@ -30,13 +30,13 @@ type Msg
 
 type Command
     = SearchProducts SearchCondition.Condition
-    | CommandByProductList ProductList.Emission
+    | CommandByProductList ProductList.Cmd
 
 
 initModel : Maybe Data.Product.Id -> SearchCondition.Condition -> ( Model, List Command )
 initModel productIdMaybe condition =
     let
-        ( productListModel, emissionList ) =
+        ( productListModel, cmdList ) =
             ProductList.initModel productIdMaybe
     in
     ( Model
@@ -44,7 +44,7 @@ initModel productIdMaybe condition =
         , condition = condition
         , result = Nothing
         }
-    , [ SearchProducts condition ] ++ (emissionList |> List.map CommandByProductList)
+    , [ SearchProducts condition ] ++ (cmdList |> List.map CommandByProductList)
     )
 
 
@@ -68,7 +68,7 @@ update msg (Model rec) =
 
         MessageFromProductList productListMsg ->
             let
-                ( newModel, emissionList ) =
+                ( newModel, cmdList ) =
                     rec.productList |> ProductList.update productListMsg
             in
             ( case productListMsg of
@@ -81,7 +81,7 @@ update msg (Model rec) =
 
                 _ ->
                     Model { rec | productList = newModel }
-            , emissionList |> List.map CommandByProductList
+            , cmdList |> List.map CommandByProductList
             )
 
 

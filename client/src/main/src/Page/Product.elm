@@ -1,5 +1,5 @@
 module Page.Product exposing
-    ( Emission(..)
+    ( Cmd(..)
     , Model
     , Msg(..)
     , getProduct
@@ -61,21 +61,21 @@ type Model
         }
 
 
-type Emission
-    = EmissionGetProduct { productId : Product.Id }
-    | EmissionGetProductAndMarkHistory { productId : Product.Id, token : Api.Token }
-    | EmissionGetCommentList { productId : Product.Id }
-    | EmissionAddComment Api.Token { productId : Product.Id } String
-    | EmissionLike Api.Token Product.Id
-    | EmissionUnLike Api.Token Product.Id
-    | EmissionTradeStart Api.Token Product.Id
-    | EmissionAddLogMessage String
-    | EmissionUpdateNowTime
-    | EmissionDelete Api.Token Product.Id
-    | EmissionJumpToTradePage Trade.Trade
-    | EmissionByProductEditor ProductEditor.Emission
-    | EmissionUpdateProductData Api.Token Product.Id Api.UpdateProductRequest
-    | EmissionReplaceElementText { id : String, text : String }
+type Cmd
+    = CmdGetProduct { productId : Product.Id }
+    | CmdGetProductAndMarkHistory { productId : Product.Id, token : Api.Token }
+    | CmdGetCommentList { productId : Product.Id }
+    | CmdAddComment Api.Token { productId : Product.Id } String
+    | CmdLike Api.Token Product.Id
+    | CmdUnLike Api.Token Product.Id
+    | CmdTradeStart Api.Token Product.Id
+    | CmdAddLogMessage String
+    | CmdUpdateNowTime
+    | CmdDelete Api.Token Product.Id
+    | CmdJumpToTradePage Trade.Trade
+    | CmdByProductEditor ProductEditor.Cmd
+    | CmdUpdateProductData Api.Token Product.Id Api.UpdateProductRequest
+    | CmdReplaceElementText { id : String, text : String }
 
 
 type Msg
@@ -100,37 +100,37 @@ type Msg
 
 {-| 指定したIDの商品詳細ページ
 -}
-initModel : LogInState.LogInState -> Product.Id -> ( Model, List Emission )
+initModel : LogInState.LogInState -> Product.Id -> ( Model, List Cmd )
 initModel logInState id =
     ( Loading id
     , case LogInState.getToken logInState of
         Just accessToken ->
-            [ EmissionGetProductAndMarkHistory
+            [ CmdGetProductAndMarkHistory
                 { productId = id
                 , token = accessToken
                 }
             ]
 
         Nothing ->
-            [ EmissionGetProduct { productId = id } ]
+            [ CmdGetProduct { productId = id } ]
     )
 
 
 {-| 一覧画面から商品の内容が一部わかっているときのもの
 -}
-initModelFromProduct : LogInState.LogInState -> Product.Product -> ( Model, List Emission )
+initModelFromProduct : LogInState.LogInState -> Product.Product -> ( Model, List Cmd )
 initModelFromProduct logInState product =
     ( WaitNewData product
     , case LogInState.getToken logInState of
         Just accessToken ->
-            [ EmissionGetProductAndMarkHistory
+            [ CmdGetProductAndMarkHistory
                 { productId = Product.getId product
                 , token = accessToken
                 }
             ]
 
         Nothing ->
-            [ EmissionGetProduct { productId = Product.getId product } ]
+            [ CmdGetProduct { productId = Product.getId product } ]
     )
 
 
@@ -207,7 +207,7 @@ productGetUser product =
            )
 
 
-update : Msg -> Model -> ( Model, List Emission )
+update : Msg -> Model -> ( Model, List Cmd )
 update msg model =
     case msg of
         GetProductResponse productsResult ->
@@ -219,33 +219,33 @@ update msg model =
                         , commentSending = False
                         , comment = ""
                         }
-                    , [ EmissionGetCommentList { productId = Product.detailGetId product }
-                      , EmissionUpdateNowTime
+                    , [ CmdGetCommentList { productId = Product.detailGetId product }
+                      , CmdUpdateNowTime
                       ]
                     )
 
                 ( WaitNewData _, Ok product ) ->
                     ( Normal { product = product, likeSending = False, commentSending = False, comment = "" }
-                    , [ EmissionGetCommentList { productId = Product.detailGetId product }
-                      , EmissionUpdateNowTime
+                    , [ CmdGetCommentList { productId = Product.detailGetId product }
+                      , CmdUpdateNowTime
                       ]
                     )
 
                 ( Normal rec, Ok product ) ->
                     ( Normal { rec | product = product }
-                    , [ EmissionGetCommentList { productId = Product.detailGetId product }
-                      , EmissionUpdateNowTime
+                    , [ CmdGetCommentList { productId = Product.detailGetId product }
+                      , CmdUpdateNowTime
                       ]
                     )
 
                 ( _, Err text ) ->
                     ( model
-                    , [ EmissionAddLogMessage ("商品情報の取得に失敗しました " ++ text) ]
+                    , [ CmdAddLogMessage ("商品情報の取得に失敗しました " ++ text) ]
                     )
 
                 ( _, _ ) ->
                     ( model
-                    , [ EmissionAddLogMessage "画面がNormalでないときに商品情報を受け取ってしまった" ]
+                    , [ CmdAddLogMessage "画面がNormalでないときに商品情報を受け取ってしまった" ]
                     )
 
         GetCommentListResponse commentListResult ->
@@ -257,22 +257,22 @@ update msg model =
                             , comment = ""
                             , commentSending = False
                         }
-                    , [ EmissionReplaceElementText
+                    , [ CmdReplaceElementText
                             { id = commentTextAreaId
                             , text = ""
                             }
-                      , EmissionUpdateNowTime
+                      , CmdUpdateNowTime
                       ]
                     )
 
                 ( _, Err text ) ->
                     ( model
-                    , [ EmissionAddLogMessage ("コメント取得に失敗しました " ++ text) ]
+                    , [ CmdAddLogMessage ("コメント取得に失敗しました " ++ text) ]
                     )
 
                 ( _, _ ) ->
                     ( model
-                    , [ EmissionAddLogMessage "画面がNormalでないときにコメントを受け取ってしまった" ]
+                    , [ CmdAddLogMessage "画面がNormalでないときにコメントを受け取ってしまった" ]
                     )
 
         Like token id ->
@@ -282,7 +282,7 @@ update msg model =
 
                 _ ->
                     model
-            , [ EmissionLike token id ]
+            , [ CmdLike token id ]
             )
 
         UnLike token id ->
@@ -292,7 +292,7 @@ update msg model =
 
                 _ ->
                     model
-            , [ EmissionUnLike token id ]
+            , [ CmdUnLike token id ]
             )
 
         LikeResponse result ->
@@ -308,12 +308,12 @@ update msg model =
 
                 ( Ok _, _ ) ->
                     ( model
-                    , [ EmissionAddLogMessage "画面がNormalでないときにいいねの結果を受け取ってしまった" ]
+                    , [ CmdAddLogMessage "画面がNormalでないときにいいねの結果を受け取ってしまった" ]
                     )
 
                 ( Err text, _ ) ->
                     ( model
-                    , [ EmissionAddLogMessage ("いいねをするのに失敗 " ++ text) ]
+                    , [ CmdAddLogMessage ("いいねをするのに失敗 " ++ text) ]
                     )
 
         UnlikeResponse result ->
@@ -329,29 +329,29 @@ update msg model =
 
                 ( Ok _, _ ) ->
                     ( model
-                    , [ EmissionAddLogMessage "画面がNormalでないときにいいねを外すの結果を受け取ってしまった" ]
+                    , [ CmdAddLogMessage "画面がNormalでないときにいいねを外すの結果を受け取ってしまった" ]
                     )
 
                 ( Err text, _ ) ->
                     ( model
-                    , [ EmissionAddLogMessage ("いいねを外すのに失敗 " ++ text) ]
+                    , [ CmdAddLogMessage ("いいねを外すのに失敗 " ++ text) ]
                     )
 
         TradeStart token productId ->
             ( model
-            , [ EmissionTradeStart token productId ]
+            , [ CmdTradeStart token productId ]
             )
 
         TradeStartResponse result ->
             ( model
             , case result of
                 Ok trade ->
-                    [ EmissionAddLogMessage "取引開始"
-                    , EmissionJumpToTradePage trade
+                    [ CmdAddLogMessage "取引開始"
+                    , CmdJumpToTradePage trade
                     ]
 
                 Err text ->
-                    [ EmissionAddLogMessage ("取引開始を失敗しました " ++ text) ]
+                    [ CmdAddLogMessage ("取引開始を失敗しました " ++ text) ]
             )
 
         ToConfirmPage ->
@@ -380,7 +380,7 @@ update msg model =
             case model of
                 Normal rec ->
                     ( Normal { rec | commentSending = True }
-                    , [ EmissionAddComment token { productId = Product.detailGetId rec.product } rec.comment ]
+                    , [ CmdAddComment token { productId = Product.detailGetId rec.product } rec.comment ]
                     )
 
                 _ ->
@@ -390,7 +390,7 @@ update msg model =
 
         Delete token productId ->
             ( model
-            , [ EmissionDelete token productId ]
+            , [ CmdDelete token productId ]
             )
 
         EditProduct ->
@@ -412,7 +412,7 @@ update msg model =
                         , commentSending = False
                         , comment = ""
                         }
-                    , [ EmissionGetProduct { productId = Product.detailGetId beforeProduct } ]
+                    , [ CmdGetProduct { productId = Product.detailGetId beforeProduct } ]
                     )
 
                 _ ->
@@ -434,7 +434,7 @@ update msg model =
 
         UpdateProductData token productId requestData ->
             ( model
-            , [ EmissionUpdateProductData token productId requestData
+            , [ CmdUpdateProductData token productId requestData
               ]
             )
 
@@ -445,7 +445,7 @@ update msg model =
 
                 Err text ->
                     ( model
-                    , [ EmissionAddLogMessage ("商品の編集に失敗しました " ++ text) ]
+                    , [ CmdAddLogMessage ("商品の編集に失敗しました " ++ text) ]
                     )
 
 

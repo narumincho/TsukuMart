@@ -1,5 +1,5 @@
 module Page.TradesInProgress exposing
-    ( Emission(..)
+    ( Cmd(..)
     , Model
     , Msg(..)
     , getAllProducts
@@ -40,13 +40,13 @@ type Msg
     | MsgByLogIn LogIn.Msg
 
 
-type Emission
-    = EmissionGetTradingProducts Api.Token
-    | EmissionByLogIn LogIn.Emission
-    | EmissionAddLogMessage String
+type Cmd
+    = CmdGetTradingProducts Api.Token
+    | CmdByLogIn LogIn.Cmd
+    | CmdAddLogMessage String
 
 
-initModel : Maybe Product.Id -> LogInState.LogInState -> ( Model, List Emission )
+initModel : Maybe Product.Id -> LogInState.LogInState -> ( Model, List Cmd )
 initModel goodIdMaybe logInState =
     ( Model
         { normal = Loading
@@ -54,7 +54,7 @@ initModel goodIdMaybe logInState =
         }
     , case LogInState.getToken logInState of
         Just accessToken ->
-            [ EmissionGetTradingProducts accessToken
+            [ CmdGetTradingProducts accessToken
             ]
 
         Nothing ->
@@ -80,7 +80,7 @@ getAllProducts =
         >> List.map Trade.getProduct
 
 
-update : Msg -> Model -> ( Model, List Emission )
+update : Msg -> Model -> ( Model, List Cmd )
 update msg (Model rec) =
     case msg of
         GetProductsResponse result ->
@@ -93,17 +93,17 @@ update msg (Model rec) =
                 Err errorMessage ->
                     ( Model
                         { rec | normal = Error }
-                    , [ EmissionAddLogMessage ("取引中の商品の取得に失敗 " ++ errorMessage) ]
+                    , [ CmdAddLogMessage ("取引中の商品の取得に失敗 " ++ errorMessage) ]
                     )
 
         MsgByLogIn logInOrSignUpMsg ->
             let
-                ( newModel, emissionList ) =
+                ( newModel, cmdList ) =
                     rec.logIn |> LogIn.update logInOrSignUpMsg
             in
             ( Model
                 { rec | logIn = newModel }
-            , emissionList |> List.map EmissionByLogIn
+            , cmdList |> List.map CmdByLogIn
             )
 
 

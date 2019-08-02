@@ -1,4 +1,4 @@
-module Page.Search exposing (Emission(..), Model, Msg, initModel, update, view)
+module Page.Search exposing (Cmd(..), Model, Msg, initModel, update, view)
 
 import BasicParts
 import Data.SearchCondition as SearchCondition
@@ -23,15 +23,15 @@ type Msg
     | SelectGraduate
 
 
-type Emission
-    = EmissionReplaceElementText { id : String, text : String }
-    | EmissionByCategory Page.Component.Category.Emission
+type Cmd
+    = CmdReplaceElementText { id : String, text : String }
+    | CmdByCategory Page.Component.Category.Cmd
 
 
-initModel : ( Model, List Emission )
+initModel : ( Model, List Cmd )
 initModel =
     let
-        ( categoryModel, categoryEmissions ) =
+        ( categoryModel, categoryCmds ) =
             Page.Component.Category.initModelWithSearchCondition SearchCondition.CategorySelectNone
     in
     ( Model
@@ -39,11 +39,11 @@ initModel =
         , categorySelect = categoryModel
         , universitySelect = SearchCondition.UniversitySelectNone
         }
-    , categoryEmissions |> List.map EmissionByCategory
+    , categoryCmds |> List.map CmdByCategory
     )
 
 
-update : Msg -> Model -> ( Model, List Emission )
+update : Msg -> Model -> ( Model, List Cmd )
 update msg (Model rec) =
     case msg of
         InputQuery string ->

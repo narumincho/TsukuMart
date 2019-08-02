@@ -1,4 +1,4 @@
-module Page.Home exposing (Emission(..), Model, Msg(..), getAllProducts, initModel, update, view)
+module Page.Home exposing (Cmd(..), Model, Msg(..), getAllProducts, initModel, update, view)
 
 import BasicParts
 import Css
@@ -27,12 +27,12 @@ type TabSelect
     | TabFree
 
 
-type Emission
-    = EmissionGetRecentProducts
-    | EmissionGetRecommendProducts
-    | EmissionGetFreeProducts
-    | EmissionProducts ProductList.Emission
-    | EmissionAddLogMessage String
+type Cmd
+    = CmdGetRecentProducts
+    | CmdGetRecommendProducts
+    | CmdGetFreeProducts
+    | CmdProducts ProductList.Cmd
+    | CmdAddLogMessage String
 
 
 type Msg
@@ -45,10 +45,10 @@ type Msg
 
 {-| 最初の状態。真ん中のタブ「おすすめ」が選択されている。Maybe Product.Idで指定した商品のところまでスクロールする
 -}
-initModel : Maybe Product.Id -> ( Model, List Emission )
+initModel : Maybe Product.Id -> ( Model, List Cmd )
 initModel productIdMaybe =
     let
-        ( productListModel, emissionList ) =
+        ( productListModel, cmdList ) =
             ProductList.initModel productIdMaybe
     in
     ( Model
@@ -58,7 +58,7 @@ initModel productIdMaybe =
         , free = Nothing
         , productListModel = productListModel
         }
-    , [ EmissionGetRecommendProducts ] ++ (emissionList |> List.map EmissionProducts)
+    , [ CmdGetRecommendProducts ] ++ (cmdList |> List.map CmdProducts)
     )
 
 
@@ -79,20 +79,20 @@ getAllProducts (Model rec) =
         |> Maybe.withDefault []
 
 
-update : Msg -> Model -> ( Model, List Emission )
+update : Msg -> Model -> ( Model, List Cmd )
 update msg (Model rec) =
     case msg of
         SelectTab tabSelect ->
             ( Model { rec | tabSelect = tabSelect }
             , case tabSelect of
                 TabRecent ->
-                    [ EmissionGetRecentProducts ]
+                    [ CmdGetRecentProducts ]
 
                 TabRecommend ->
-                    [ EmissionGetRecommendProducts ]
+                    [ CmdGetRecommendProducts ]
 
                 TabFree ->
-                    [ EmissionGetFreeProducts ]
+                    [ CmdGetFreeProducts ]
             )
 
         GetRecentProductsResponse result ->
@@ -102,7 +102,7 @@ update msg (Model rec) =
 
                 Err errorMessage ->
                     ( Model rec
-                    , [ EmissionAddLogMessage errorMessage ]
+                    , [ CmdAddLogMessage errorMessage ]
                     )
 
         GetRecommendProductsResponse result ->
@@ -112,7 +112,7 @@ update msg (Model rec) =
 
                 Err errorMessage ->
                     ( Model rec
-                    , [ EmissionAddLogMessage errorMessage ]
+                    , [ CmdAddLogMessage errorMessage ]
                     )
 
         GetFreeProductsResponse result ->
@@ -121,11 +121,11 @@ update msg (Model rec) =
                     ( Model { rec | free = Just goodList }, [] )
 
                 Err errorMessage ->
-                    ( Model rec, [ EmissionAddLogMessage errorMessage ] )
+                    ( Model rec, [ CmdAddLogMessage errorMessage ] )
 
         MsgByProductList productListMsg ->
             let
-                ( newModel, emissionList ) =
+                ( newModel, cmdList ) =
                     rec.productListModel |> ProductList.update productListMsg
             in
             ( case productListMsg of
@@ -144,7 +144,7 @@ update msg (Model rec) =
 
                 _ ->
                     Model { rec | productListModel = newModel }
-            , emissionList |> List.map EmissionProducts
+            , cmdList |> List.map CmdProducts
             )
 
 

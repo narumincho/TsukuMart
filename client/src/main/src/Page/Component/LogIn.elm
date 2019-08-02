@@ -1,5 +1,5 @@
 module Page.Component.LogIn exposing
-    ( Emission(..)
+    ( Cmd(..)
     , Model
     , Msg(..)
     , initModel
@@ -22,8 +22,8 @@ type Model
     = Model (Maybe Data.SocialLoginService.SocialLoginService)
 
 
-type Emission
-    = EmissionLogInOrSignUp Data.SocialLoginService.SocialLoginService
+type Cmd
+    = CmdLogInOrSignUp Data.SocialLoginService.SocialLoginService
 
 
 type Msg
@@ -35,12 +35,12 @@ initModel =
     Model Nothing
 
 
-update : Msg -> Model -> ( Model, List Emission )
+update : Msg -> Model -> ( Model, List Cmd )
 update msg _ =
     case msg of
         LogInOrSignUpRequest service ->
             ( Model (Just service)
-            , [ EmissionLogInOrSignUp service ]
+            , [ CmdLogInOrSignUp service ]
             )
 
 

@@ -1,5 +1,5 @@
 module Page.Component.ProductList exposing
-    ( Emission(..)
+    ( Cmd(..)
     , Model
     , Msg(..)
     , initModel
@@ -14,9 +14,6 @@ import Api
 import Css
 import Data.LogInState
 import Data.Product as Product
-import Html
-import Html.Attributes
-import Html.Events
 import Html.Styled
 import Html.Styled.Attributes
 import Html.Styled.Events
@@ -37,35 +34,35 @@ type Msg
     | UpdateLikedCountResponse Product.Id (Result String Int)
 
 
-type Emission
-    = EmissionLike Api.Token Product.Id
-    | EmissionUnlike Api.Token Product.Id
-    | EmissionScrollIntoView String
+type Cmd
+    = CmdLike Api.Token Product.Id
+    | CmdUnlike Api.Token Product.Id
+    | CmdScrollIntoView String
 
 
-initModel : Maybe Product.Id -> ( Model, List Emission )
+initModel : Maybe Product.Id -> ( Model, List Cmd )
 initModel productIdMaybe =
     ( Model { likeUpdating = Set.empty }
     , case productIdMaybe of
         Just id ->
-            [ EmissionScrollIntoView (productIdString id) ]
+            [ CmdScrollIntoView (productIdString id) ]
 
         Nothing ->
             []
     )
 
 
-update : Msg -> Model -> ( Model, List Emission )
+update : Msg -> Model -> ( Model, List Cmd )
 update msg (Model rec) =
     case msg of
         Like token productId ->
             ( Model { rec | likeUpdating = rec.likeUpdating |> Set.insert (Product.idToString productId) }
-            , [ EmissionLike token productId ]
+            , [ CmdLike token productId ]
             )
 
         UnLike token productId ->
             ( Model { rec | likeUpdating = rec.likeUpdating |> Set.insert (Product.idToString productId) }
-            , [ EmissionUnlike token productId ]
+            , [ CmdUnlike token productId ]
             )
 
         UpdateLikedCountResponse productId _ ->

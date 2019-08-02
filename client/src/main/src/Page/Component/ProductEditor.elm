@@ -1,5 +1,5 @@
 module Page.Component.ProductEditor exposing
-    ( Emission(..)
+    ( Cmd(..)
     , Model
     , Msg(..)
     , initModel
@@ -41,11 +41,11 @@ type Model
         }
 
 
-type Emission
-    = EmissionAddEventListenerForProductImages { labelId : String, inputId : String }
-    | EmissionReplaceText { id : String, text : String }
-    | EmissionChangeSelectedIndex { id : String, index : Int }
-    | EmissionByCategory CateogryComp.Emission
+type Cmd
+    = CmdAddEventListenerForProductImages { labelId : String, inputId : String }
+    | CmdReplaceText { id : String, text : String }
+    | CmdChangeSelectedIndex { id : String, index : Int }
+    | CmdByCategory CateogryComp.Cmd
 
 
 type Msg
@@ -58,10 +58,10 @@ type Msg
     | MsgByCategory CateogryComp.Msg
 
 
-initModelBlank : ( Model, List Emission )
+initModelBlank : ( Model, List Cmd )
 initModelBlank =
     let
-        ( categoryModel, categoryEmission ) =
+        ( categoryModel, categoryCmd ) =
             CateogryComp.initModel
     in
     ( Model
@@ -74,15 +74,15 @@ initModelBlank =
         , beforeImageIds = []
         , deleteImagesAt = Set.empty
         }
-    , [ EmissionAddEventListenerForProductImages { labelId = photoAddLabelId, inputId = photoAddInputId } ]
-        ++ (categoryEmission |> List.map EmissionByCategory)
+    , [ CmdAddEventListenerForProductImages { labelId = photoAddLabelId, inputId = photoAddInputId } ]
+        ++ (categoryCmd |> List.map CmdByCategory)
     )
 
 
-initModelFromSellRequestData : Api.SellProductRequest -> ( Model, List Emission )
+initModelFromSellRequestData : Api.SellProductRequest -> ( Model, List Cmd )
 initModelFromSellRequestData (Api.SellProductRequest rec) =
     let
-        ( categoryModel, categoryEmission ) =
+        ( categoryModel, categoryCmd ) =
             CateogryComp.initModelWithCategorySelect rec.category
     in
     ( Model
@@ -95,18 +95,18 @@ initModelFromSellRequestData (Api.SellProductRequest rec) =
         , beforeImageIds = []
         , deleteImagesAt = Set.empty
         }
-    , [ EmissionAddEventListenerForProductImages
+    , [ CmdAddEventListenerForProductImages
             { labelId = photoAddLabelId, inputId = photoAddInputId }
-      , EmissionReplaceText
+      , CmdReplaceText
             { id = nameEditorId, text = rec.name }
-      , EmissionReplaceText
+      , CmdReplaceText
             { id = descriptionEditorId, text = rec.description }
-      , EmissionReplaceText
+      , CmdReplaceText
             { id = priceEditorId, text = String.fromInt rec.price }
-      , EmissionChangeSelectedIndex
+      , CmdChangeSelectedIndex
             { id = conditionSelectId, index = Product.conditionToIndex rec.condition + 1 }
       ]
-        ++ (categoryEmission |> List.map EmissionByCategory)
+        ++ (categoryCmd |> List.map CmdByCategory)
     )
 
 
@@ -118,10 +118,10 @@ initModel :
     , category : Category.Category
     , imageIds : List ImageId.ImageId
     }
-    -> ( Model, List Emission )
+    -> ( Model, List Cmd )
 initModel { name, description, price, condition, category, imageIds } =
     let
-        ( categoryModel, categoryEmission ) =
+        ( categoryModel, categoryCmd ) =
             CateogryComp.initModelWithCategorySelect category
     in
     ( Model
@@ -134,18 +134,18 @@ initModel { name, description, price, condition, category, imageIds } =
         , beforeImageIds = imageIds
         , deleteImagesAt = Set.empty
         }
-    , [ EmissionAddEventListenerForProductImages
+    , [ CmdAddEventListenerForProductImages
             { labelId = photoAddLabelId, inputId = photoAddInputId }
-      , EmissionReplaceText
+      , CmdReplaceText
             { id = nameEditorId, text = name }
-      , EmissionReplaceText
+      , CmdReplaceText
             { id = descriptionEditorId, text = description }
-      , EmissionReplaceText
+      , CmdReplaceText
             { id = priceEditorId, text = String.fromInt price }
-      , EmissionChangeSelectedIndex
+      , CmdChangeSelectedIndex
             { id = conditionSelectId, index = Product.conditionToIndex condition + 1 }
       ]
-        ++ (categoryEmission |> List.map EmissionByCategory)
+        ++ (categoryCmd |> List.map CmdByCategory)
     )
 
 

@@ -1,5 +1,5 @@
 module Page.Component.University exposing
-    ( Emission(..)
+    ( Cmd(..)
     , Model
     , Msg
     , getUniversity
@@ -39,16 +39,16 @@ type Msg
     | SelectDepartment (Maybe Int)
 
 
-type Emission
-    = EmissionChangeSelectedIndex { id : String, index : Int }
+type Cmd
+    = CmdChangeSelectedIndex { id : String, index : Int }
 
 
 {-| 何も選択していない状態
 -}
-initModelNone : ( Model, List Emission )
+initModelNone : ( Model, List Cmd )
 initModelNone =
     ( School SchoolNone
-    , [ EmissionChangeSelectedIndex
+    , [ CmdChangeSelectedIndex
             { id = schoolSelectId, index = 0 }
       ]
     )
@@ -56,7 +56,7 @@ initModelNone =
 
 {-| 最初から選択している状態
 -}
-initModelFromUniversity : University.University -> ( Model, List Emission )
+initModelFromUniversity : University.University -> ( Model, List Cmd )
 initModelFromUniversity university =
     case university of
         University.GraduateTsukuba graduate schoolAndDepartment ->
@@ -64,18 +64,18 @@ initModelFromUniversity university =
                 { graduate = Just graduate
                 , school = SchoolSchoolAndDepartment schoolAndDepartment
                 }
-            , [ EmissionChangeSelectedIndex
+            , [ CmdChangeSelectedIndex
                     { id = graduateSelectId, index = University.graduateToIndex graduate + 1 }
-              , EmissionChangeSelectedIndex
+              , CmdChangeSelectedIndex
                     { id = schoolSelectId, index = University.schoolToIndex (University.schoolFromDepartment schoolAndDepartment) + 1 }
-              , EmissionChangeSelectedIndex
+              , CmdChangeSelectedIndex
                     { id = departmentSelectId, index = University.departmentToIndexInSchool schoolAndDepartment + 1 }
               ]
             )
 
         University.GraduateNoTsukuba graduate ->
             ( GraduateNoTsukuba (Just graduate)
-            , [ EmissionChangeSelectedIndex
+            , [ CmdChangeSelectedIndex
                     { id = graduateSelectId, index = University.graduateToIndex graduate + 1 }
               ]
             )
@@ -83,9 +83,9 @@ initModelFromUniversity university =
         University.NotGraduate schoolAndDepartment ->
             ( School
                 (SchoolSchoolAndDepartment schoolAndDepartment)
-            , [ EmissionChangeSelectedIndex
+            , [ CmdChangeSelectedIndex
                     { id = schoolSelectId, index = University.schoolToIndex (University.schoolFromDepartment schoolAndDepartment) + 1 }
-              , EmissionChangeSelectedIndex
+              , CmdChangeSelectedIndex
                     { id = departmentSelectId, index = University.departmentToIndexInSchool schoolAndDepartment + 1 }
               ]
             )
@@ -128,7 +128,7 @@ getDepartment select =
             University.departmentFromOneSchool school
 
 
-update : Msg -> Model -> ( Model, List Emission )
+update : Msg -> Model -> ( Model, List Cmd )
 update msg model =
     ( case ( msg, model ) of
         ( SwitchGraduate, School schoolSelect ) ->

@@ -1,5 +1,5 @@
 module Page.User exposing
-    ( Emission(..)
+    ( Cmd(..)
     , Model
     , Msg(..)
     , getUser
@@ -44,13 +44,13 @@ type alias EditModel =
     }
 
 
-type Emission
-    = EmissionGetUserProfile User.Id
-    | EmissionChangeProfile Api.Token Api.ProfileUpdateData
-    | EmissionReplaceElementText { id : String, text : String }
-    | EmissionByUniversity UniversityComponent.Emission
-    | EmissionLogOut
-    | EmissionAddLogMessage String
+type Cmd
+    = CmdGetUserProfile User.Id
+    | CmdChangeProfile Api.Token Api.ProfileUpdateData
+    | CmdReplaceElementText { id : String, text : String }
+    | CmdByUniversity UniversityComponent.Cmd
+    | CmdLogOut
+    | CmdAddLogMessage String
 
 
 type Msg
@@ -65,32 +65,32 @@ type Msg
     | MsgUserProfileResponse (Result String User.WithProfile)
 
 
-initModelWithName : User.WithName -> ( Model, List Emission )
+initModelWithName : User.WithName -> ( Model, List Cmd )
 initModelWithName userWithNameInit =
     ( LoadingWithUserIdAndName userWithNameInit
-    , [ EmissionGetUserProfile (User.withNameGetId userWithNameInit) ]
+    , [ CmdGetUserProfile (User.withNameGetId userWithNameInit) ]
     )
 
 
 {-| 外部ページから飛んで来たときはユーザーIDだけを頼りにしてユーザーページを作らなければならない
 -}
-initModelFromId : LogInState.LogInState -> User.Id -> ( Model, List Emission )
+initModelFromId : LogInState.LogInState -> User.Id -> ( Model, List Cmd )
 initModelFromId logInState userId =
     case logInState of
         LogInState.Ok { userWithName } ->
             if User.withNameGetId userWithName == userId then
                 ( LoadingWithUserIdAndName userWithName
-                , [ EmissionGetUserProfile userId ]
+                , [ CmdGetUserProfile userId ]
                 )
 
             else
                 ( LoadingWithUserId userId
-                , [ EmissionGetUserProfile userId ]
+                , [ CmdGetUserProfile userId ]
                 )
 
         _ ->
             ( LoadingWithUserId userId
-            , [ EmissionGetUserProfile userId ]
+            , [ CmdGetUserProfile userId ]
             )
 
 
@@ -114,7 +114,7 @@ getUser model =
 {- ====== Update ====== -}
 
 
-update : Msg -> Model -> ( Model, List Emission )
+update : Msg -> Model -> ( Model, List Cmd )
 update msg model =
     case msg of
         MsgToEditMode ->
@@ -157,7 +157,7 @@ update msg model =
                                 r.university
                     in
                     ( Edit { r | university = componentModel }
-                    , componentEmittions |> List.map EmissionByUniversity
+                    , componentEmittions |> List.map CmdByUniversity
                     )
 
                 _ ->
@@ -175,24 +175,24 @@ update msg model =
 
         MsgChangeProfile token profile ->
             ( model
-            , [ EmissionChangeProfile token profile ]
+            , [ CmdChangeProfile token profile ]
             )
 
         MsgChangeProfileResponse result ->
             case result of
                 Ok profile ->
                     ( Normal profile
-                    , [ EmissionAddLogMessage "ユーザー情報を更新しました" ]
+                    , [ CmdAddLogMessage "ユーザー情報を更新しました" ]
                     )
 
                 _ ->
                     ( model
-                    , [ EmissionAddLogMessage "ユーザー情報を更新に失敗しました" ]
+                    , [ CmdAddLogMessage "ユーザー情報を更新に失敗しました" ]
                     )
 
         MsgLogOut ->
             ( model
-            , [ EmissionLogOut ]
+            , [ CmdLogOut ]
             )
 
         MsgUserProfileResponse result ->
@@ -214,11 +214,11 @@ update msg model =
 
                 ( _, Err string ) ->
                     ( model
-                    , [ EmissionAddLogMessage ("ユーザー情報の取得に失敗しました " ++ string) ]
+                    , [ CmdAddLogMessage ("ユーザー情報の取得に失敗しました " ++ string) ]
                     )
 
 
-toEditMode : User.WithProfile -> ( Model, List Emission )
+toEditMode : User.WithProfile -> ( Model, List Cmd )
 toEditMode userWithProfile =
     let
         displayName =
@@ -227,7 +227,7 @@ toEditMode userWithProfile =
         introduction =
             User.withProfileGetIntroduction userWithProfile
 
-        ( universityModel, universityEmissions ) =
+        ( universityModel, universityCmds ) =
             UniversityComponent.initModelFromUniversity
                 (User.withProfileGetUniversity userWithProfile)
     in
@@ -237,10 +237,10 @@ toEditMode userWithProfile =
         , university = universityModel
         , before = userWithProfile
         }
-    , [ EmissionReplaceElementText { id = nickNameEditorId, text = displayName }
-      , EmissionReplaceElementText { id = introductionEditorId, text = introduction }
+    , [ CmdReplaceElementText { id = nickNameEditorId, text = displayName }
+      , CmdReplaceElementText { id = introductionEditorId, text = introduction }
       ]
-        ++ (universityEmissions |> List.map EmissionByUniversity)
+        ++ (universityCmds |> List.map CmdByUniversity)
     )
 
 

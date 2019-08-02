@@ -1,5 +1,5 @@
 module Page.Trade exposing
-    ( Emission(..)
+    ( Cmd(..)
     , Model
     , Msg(..)
     , initModelFromId
@@ -56,41 +56,41 @@ type Msg
     | TradeDetailResponse (Result String Trade.TradeDetail)
 
 
-type Emission
-    = EmissionUpdateNowTime
-    | EmissionGetTradeDetail Api.Token Trade.Id
-    | EmissionAddComment Api.Token Trade.Id String
-    | EmissionFinishTrade Api.Token Trade.Id
-    | EmissionCancelTrade Api.Token Trade.Id
-    | EmissionAddLogMessage String
-    | EmissionReplaceElementText { id : String, text : String }
+type Cmd
+    = CmdUpdateNowTime
+    | CmdGetTradeDetail Api.Token Trade.Id
+    | CmdAddComment Api.Token Trade.Id String
+    | CmdFinishTrade Api.Token Trade.Id
+    | CmdCancelTrade Api.Token Trade.Id
+    | CmdAddLogMessage String
+    | CmdReplaceElementText { id : String, text : String }
 
 
-initModelFromId : LogInState.LogInState -> Trade.Id -> ( Model, List Emission )
+initModelFromId : LogInState.LogInState -> Trade.Id -> ( Model, List Cmd )
 initModelFromId logInState id =
     ( CheckTrader id
     , case LogInState.getToken logInState of
         Just token ->
-            [ EmissionGetTradeDetail token id ]
+            [ CmdGetTradeDetail token id ]
 
         Nothing ->
             []
     )
 
 
-initModelFromTrade : LogInState.LogInState -> Trade.Trade -> ( Model, List Emission )
+initModelFromTrade : LogInState.LogInState -> Trade.Trade -> ( Model, List Cmd )
 initModelFromTrade logInState trade =
     ( Loading trade
     , case LogInState.getToken logInState of
         Just token ->
-            [ EmissionGetTradeDetail token (Trade.getId trade) ]
+            [ CmdGetTradeDetail token (Trade.getId trade) ]
 
         Nothing ->
             []
     )
 
 
-update : Msg -> Model -> ( Model, List Emission )
+update : Msg -> Model -> ( Model, List Cmd )
 update msg model =
     case msg of
         InputComment string ->
@@ -109,12 +109,12 @@ update msg model =
                     case rec.sending of
                         Just _ ->
                             ( model
-                            , [ EmissionAddLogMessage "同時に複数のリクエストをすることはできません" ]
+                            , [ CmdAddLogMessage "同時に複数のリクエストをすることはできません" ]
                             )
 
                         Nothing ->
                             ( Main { rec | sending = Just Comment }
-                            , [ EmissionAddComment token (Trade.detailGetId rec.trade) rec.commentInput ]
+                            , [ CmdAddComment token (Trade.detailGetId rec.trade) rec.commentInput ]
                             )
 
                 _ ->
@@ -126,12 +126,12 @@ update msg model =
                     case rec.sending of
                         Just _ ->
                             ( model
-                            , [ EmissionAddLogMessage "同時に複数のリクエストをすることはできません" ]
+                            , [ CmdAddLogMessage "同時に複数のリクエストをすることはできません" ]
                             )
 
                         Nothing ->
                             ( Main { rec | sending = Just Finish }
-                            , [ EmissionFinishTrade token (Trade.detailGetId rec.trade) ]
+                            , [ CmdFinishTrade token (Trade.detailGetId rec.trade) ]
                             )
 
                 _ ->
@@ -143,12 +143,12 @@ update msg model =
                     case rec.sending of
                         Just _ ->
                             ( model
-                            , [ EmissionAddLogMessage "同時に複数のリクエストをすることはできません" ]
+                            , [ CmdAddLogMessage "同時に複数のリクエストをすることはできません" ]
                             )
 
                         Nothing ->
                             ( Main { rec | sending = Just Cancel }
-                            , [ EmissionCancelTrade token (Trade.detailGetId rec.trade) ]
+                            , [ CmdCancelTrade token (Trade.detailGetId rec.trade) ]
                             )
 
                 _ ->
@@ -158,8 +158,8 @@ update msg model =
             case result of
                 Ok trade ->
                     ( Main { trade = trade, commentInput = "", sending = Nothing }
-                    , [ EmissionReplaceElementText { id = commentTextAreaId, text = "" }
-                      , EmissionAddLogMessage
+                    , [ CmdReplaceElementText { id = commentTextAreaId, text = "" }
+                      , CmdAddLogMessage
                             (case Trade.detailGetStatus trade of
                                 Trade.Finish ->
                                     "取引を完了しました"
@@ -177,16 +177,16 @@ update msg model =
 
                         _ ->
                             model
-                    , [ EmissionAddLogMessage ("取引の完了に失敗 " ++ errMsg) ]
+                    , [ CmdAddLogMessage ("取引の完了に失敗 " ++ errMsg) ]
                     )
 
         CancelTradeResponse result ->
             case result of
                 Ok trade ->
                     ( Main { trade = trade, commentInput = "", sending = Nothing }
-                    , [ EmissionReplaceElementText { id = commentTextAreaId, text = "" }
-                      , EmissionAddLogMessage "取引をキャンセルしました"
-                      , EmissionUpdateNowTime
+                    , [ CmdReplaceElementText { id = commentTextAreaId, text = "" }
+                      , CmdAddLogMessage "取引をキャンセルしました"
+                      , CmdUpdateNowTime
                       ]
                     )
 
@@ -197,15 +197,15 @@ update msg model =
 
                         _ ->
                             model
-                    , [ EmissionAddLogMessage ("取引のキャンセルに失敗 " ++ errMsg) ]
+                    , [ CmdAddLogMessage ("取引のキャンセルに失敗 " ++ errMsg) ]
                     )
 
         AddCommentResponse result ->
             case result of
                 Ok trade ->
                     ( Main { trade = trade, commentInput = "", sending = Nothing }
-                    , [ EmissionReplaceElementText { id = commentTextAreaId, text = "" }
-                      , EmissionUpdateNowTime
+                    , [ CmdReplaceElementText { id = commentTextAreaId, text = "" }
+                      , CmdUpdateNowTime
                       ]
                     )
 
@@ -216,15 +216,15 @@ update msg model =
 
                         _ ->
                             model
-                    , [ EmissionAddLogMessage ("コメントの追加に失敗 " ++ errMsg) ]
+                    , [ CmdAddLogMessage ("コメントの追加に失敗 " ++ errMsg) ]
                     )
 
         TradeDetailResponse result ->
             case result of
                 Ok trade ->
                     ( Main { trade = trade, commentInput = "", sending = Nothing }
-                    , [ EmissionReplaceElementText { id = commentTextAreaId, text = "" }
-                      , EmissionUpdateNowTime
+                    , [ CmdReplaceElementText { id = commentTextAreaId, text = "" }
+                      , CmdUpdateNowTime
                       ]
                     )
 
@@ -235,7 +235,7 @@ update msg model =
 
                         _ ->
                             model
-                    , [ EmissionAddLogMessage ("取引の情報の取得に失敗 " ++ errMsg) ]
+                    , [ CmdAddLogMessage ("取引の情報の取得に失敗 " ++ errMsg) ]
                     )
 
 

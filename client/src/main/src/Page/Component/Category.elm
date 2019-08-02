@@ -1,5 +1,5 @@
 module Page.Component.Category exposing
-    ( Emission(..)
+    ( Cmd(..)
     , Model
     , Msg
     , Select(..)
@@ -32,8 +32,8 @@ type Msg
     | SelectCategory (Maybe Int)
 
 
-type Emission
-    = EmissionChangeSelectedIndex { id : String, index : Int }
+type Cmd
+    = CmdChangeSelectedIndex { id : String, index : Int }
 
 
 type Select
@@ -42,10 +42,10 @@ type Select
     | CategorySelect Category.Category
 
 
-initModel : ( Model, List Emission )
+initModel : ( Model, List Cmd )
 initModel =
     ( Model None
-    , [ EmissionChangeSelectedIndex
+    , [ CmdChangeSelectedIndex
             { id = groupSelectId
             , index = 0
             }
@@ -53,14 +53,14 @@ initModel =
     )
 
 
-initModelWithCategorySelect : Category.Category -> ( Model, List Emission )
+initModelWithCategorySelect : Category.Category -> ( Model, List Cmd )
 initModelWithCategorySelect category =
     ( Model (CategorySelect category)
-    , [ EmissionChangeSelectedIndex
+    , [ CmdChangeSelectedIndex
             { id = groupSelectId
             , index = Category.groupToIndex (Category.groupFromCategory category) + 1
             }
-      , EmissionChangeSelectedIndex
+      , CmdChangeSelectedIndex
             { id = categorySelectId
             , index = Category.toIndexInGroup category + 1
             }
@@ -68,7 +68,7 @@ initModelWithCategorySelect category =
     )
 
 
-initModelWithSearchCondition : Data.SearchCondition.CategorySelect -> ( Model, List Emission )
+initModelWithSearchCondition : Data.SearchCondition.CategorySelect -> ( Model, List Cmd )
 initModelWithSearchCondition categorySelect =
     case categorySelect of
         Data.SearchCondition.CategorySelectNone ->
@@ -76,7 +76,7 @@ initModelWithSearchCondition categorySelect =
 
         Data.SearchCondition.CategorySelectGroup group ->
             ( Model (GroupSelect group)
-            , [ EmissionChangeSelectedIndex
+            , [ CmdChangeSelectedIndex
                     { id = groupSelectId
                     , index = Category.groupToIndex group + 1
                     }
