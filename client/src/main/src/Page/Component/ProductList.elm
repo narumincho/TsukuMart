@@ -241,7 +241,8 @@ itemImage : String -> String -> Html.Styled.Html msg
 itemImage name url =
     Html.Styled.img
         [ Html.Styled.Attributes.css
-            [ Css.width (Css.pct 100)
+            [ Css.display Css.block
+            , Css.width (Css.pct 100)
             , Css.height (Css.px 192)
             , Css.property "object-fit" "contain"
             , Css.property "grid-column" "1 / 2"

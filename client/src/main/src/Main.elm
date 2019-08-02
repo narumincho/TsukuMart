@@ -279,15 +279,13 @@ urlParserInitResultToPageAndCmd key logInState page =
             Page.User.initModelFromId logInState userId
                 |> mapPageModel PageUser userPageEmissionToCmd
 
-        PageLocation.InitSearch conditionMaybe ->
-            case conditionMaybe of
-                Just condition ->
-                    Page.SearchResult.initModel Nothing condition
-                        |> mapPageModel PageSearchResult searchResultPageEmissionToCmd
+        PageLocation.InitSearch ->
+            Page.Search.initModel
+                |> mapPageModel PageSearch searchPageEmissionToCmd
 
-                Nothing ->
-                    Page.Search.initModel
-                        |> mapPageModel PageSearch searchPageEmissionToCmd
+        PageLocation.InitSearchResult condition ->
+            Page.SearchResult.initModel Nothing condition
+                |> mapPageModel PageSearchResult searchResultPageEmissionToCmd
 
         PageLocation.InitNotification ->
             Page.Notification.initModel
@@ -1153,15 +1151,13 @@ urlParserResultToPageAndCmd (Model rec) result =
             )
                 |> mapPageModel PageUser userPageEmissionToCmd
 
-        PageLocation.Search conditionMaybe ->
-            case conditionMaybe of
-                Just condition ->
-                    Page.SearchResult.initModel (getProductId rec.page) condition
-                        |> mapPageModel PageSearchResult searchResultPageEmissionToCmd
+        PageLocation.Search ->
+            Page.Search.initModel
+                |> mapPageModel PageSearch searchPageEmissionToCmd
 
-                Nothing ->
-                    Page.Search.initModel
-                        |> mapPageModel PageSearch searchPageEmissionToCmd
+        PageLocation.SearchResult condition ->
+            Page.SearchResult.initModel (getProductId rec.page) condition
+                |> mapPageModel PageSearchResult searchResultPageEmissionToCmd
 
         PageLocation.Notification ->
             Page.Notification.initModel

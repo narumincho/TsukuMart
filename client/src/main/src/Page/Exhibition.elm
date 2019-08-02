@@ -317,6 +317,8 @@ confirmViewImage images =
                             [ Html.Styled.Attributes.class "exhibition-photo-card" ]
                             [ Html.Styled.img
                                 [ Html.Styled.Attributes.src dataUrl
+                                , Html.Styled.Attributes.css
+                                    [ Css.display Css.block ]
                                 , Html.Styled.Attributes.class "exhibition-photo-card-image"
                                 ]
                                 []

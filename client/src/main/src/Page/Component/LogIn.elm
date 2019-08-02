@@ -111,7 +111,8 @@ logInButtonLine =
         [ Html.Styled.img
             [ Html.Styled.Attributes.src "/assets/line_icon120.png"
             , Html.Styled.Attributes.css
-                [ Css.width (Css.px 44)
+                [ Css.display Css.block
+                , Css.width (Css.px 44)
                 , Css.height (Css.px 44)
                 , Css.borderRight3 (Css.px 1) Css.solid (Css.hex "#00b300")
                 , Css.padding (Css.px 4)

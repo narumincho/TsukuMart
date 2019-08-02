@@ -432,6 +432,8 @@ imageView : String -> Html.Styled.Html msg
 imageView url =
     Html.Styled.img
         [ Html.Styled.Attributes.class "product-image"
+        , Html.Styled.Attributes.css
+            [ Css.display Css.block ]
         , Html.Styled.Attributes.src url
         ]
         []

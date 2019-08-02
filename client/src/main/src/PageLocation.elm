@@ -10,7 +10,6 @@ module PageLocation exposing
 
 import Api
 import Data.Category
-import Data.ImageId
 import Data.Product
 import Data.SearchCondition
 import Data.Trade
@@ -36,7 +35,8 @@ type InitPageLocation
     | InitProduct Data.Product.Id
     | InitTrade Data.Trade.Id
     | InitUser Data.User.Id
-    | InitSearch (Maybe Data.SearchCondition.Condition)
+    | InitSearch
+    | InitSearchResult Data.SearchCondition.Condition
     | InitNotification
     | InitAbout
     | InitAboutPrivacyPolicy
@@ -78,7 +78,8 @@ initFromUrl url =
       , productParser |> parserMap InitProduct
       , tradeParser |> parserMap InitTrade
       , userParser |> parserMap InitUser
-      , searchParser fragmentDict |> parserMap InitSearch
+      , searchParser fragmentDict |> parserMap (always InitSearch)
+      , searchResultParser fragmentDict |> parserMap InitSearchResult
       , notificationParser |> parserMap (always InitNotification)
       , aboutParser |> parserMap (always InitAbout)
       , aboutPrivacyPolicyParser |> parserMap (always InitAboutPrivacyPolicy)
@@ -150,8 +151,11 @@ initToUrlAsString location =
         InitUser id ->
             userUrl id
 
-        InitSearch condition ->
-            searchUrl condition
+        InitSearch ->
+            searchUrl
+
+        InitSearchResult condition ->
+            searchResultUrl condition
 
         InitNotification ->
             notificationUrl
@@ -178,7 +182,8 @@ type PageLocation
     | Product Data.Product.Id
     | Trade Data.Trade.Id
     | User Data.User.Id
-    | Search (Maybe Data.SearchCondition.Condition)
+    | Search
+    | SearchResult Data.SearchCondition.Condition
     | Notification
     | About
     | AboutPrivacyPolicy
@@ -210,7 +215,8 @@ fromUrl url =
     , productParser |> parserMap Product
     , tradeParser |> parserMap Trade
     , userParser |> parserMap User
-    , searchParser fragmentDict |> parserMap Search
+    , searchParser fragmentDict |> parserMap (always Search)
+    , searchResultParser fragmentDict |> parserMap SearchResult
     , notificationParser |> parserMap (always Notification)
     , aboutParser |> parserMap (always About)
     , aboutPrivacyPolicyParser |> parserMap (always AboutPrivacyPolicy)
@@ -264,8 +270,11 @@ toUrlAsString location =
         User id ->
             userUrl id
 
-        Search condition ->
-            searchUrl condition
+        Search ->
+            searchUrl
+
+        SearchResult condition ->
+            searchResultUrl condition
 
         Notification ->
             notificationUrl
@@ -592,82 +601,86 @@ userUrl userId =
 {- search -}
 
 
-searchParser : Dict.Dict String String -> List String -> Maybe (Maybe Data.SearchCondition.Condition)
+searchParser : Dict.Dict String String -> List String -> Maybe ()
 searchParser fragment path =
-    if path == searchPath then
-        if fragment |> Dict.isEmpty then
-            Just Nothing
-
-        else
-            Data.SearchCondition.init
-                (fragment |> Dict.get "query" |> Maybe.withDefault "")
-                (case ( fragment |> Dict.get "categoryType", fragment |> Dict.get "category" ) of
-                    ( Just "category", Just categoryString ) ->
-                        case Data.Category.fromIdString categoryString of
-                            Just category ->
-                                Data.SearchCondition.CategorySelectCategory category
-
-                            Nothing ->
-                                Data.SearchCondition.CategorySelectNone
-
-                    ( Just "group", Just groupString ) ->
-                        case Data.Category.groupFromIdString groupString of
-                            Just group ->
-                                Data.SearchCondition.CategorySelectGroup group
-
-                            Nothing ->
-                                Data.SearchCondition.CategorySelectNone
-
-                    ( _, _ ) ->
-                        Data.SearchCondition.CategorySelectNone
-                )
-                (case ( fragment |> Dict.get "universityType", fragment |> Dict.get "university" ) of
-                    ( Just "department", Just departmentString ) ->
-                        case Data.University.departmentFromIdString departmentString of
-                            Just department ->
-                                Data.SearchCondition.UniversitySelectDepartment department
-
-                            Nothing ->
-                                Data.SearchCondition.UniversitySelectNone
-
-                    ( Just "school", Just schoolString ) ->
-                        case Data.University.schoolFromIdString schoolString of
-                            Just school ->
-                                Data.SearchCondition.UniversitySelectSchool school
-
-                            Nothing ->
-                                Data.SearchCondition.UniversitySelectNone
-
-                    ( Just "graduate", Just graduateString ) ->
-                        case Data.University.graduateFromIdString graduateString of
-                            Just graduate ->
-                                Data.SearchCondition.UniversitySelectGraduate graduate
-
-                            Nothing ->
-                                Data.SearchCondition.UniversitySelectNone
-
-                    ( _, _ ) ->
-                        Data.SearchCondition.UniversitySelectNone
-                )
-                |> Just
-                |> Just
+    if path == searchPath && Dict.isEmpty fragment then
+        Just ()
 
     else
         Nothing
 
 
-searchUrl : Maybe Data.SearchCondition.Condition -> String
-searchUrl conditionMaybe =
-    case conditionMaybe of
-        Just condition ->
-            Url.Builder.absolute
-                (searchPath ++ [ searchFragmentFromCondition condition ])
-                []
+searchResultParser : Dict.Dict String String -> List String -> Maybe Data.SearchCondition.Condition
+searchResultParser fragment path =
+    if path == searchPath then
+        Data.SearchCondition.init
+            (fragment |> Dict.get "query" |> Maybe.withDefault "")
+            (case ( fragment |> Dict.get "categoryType", fragment |> Dict.get "category" ) of
+                ( Just "category", Just categoryString ) ->
+                    case Data.Category.fromIdString categoryString of
+                        Just category ->
+                            Data.SearchCondition.CategorySelectCategory category
 
-        Nothing ->
-            Url.Builder.absolute
-                searchPath
-                []
+                        Nothing ->
+                            Data.SearchCondition.CategorySelectNone
+
+                ( Just "group", Just groupString ) ->
+                    case Data.Category.groupFromIdString groupString of
+                        Just group ->
+                            Data.SearchCondition.CategorySelectGroup group
+
+                        Nothing ->
+                            Data.SearchCondition.CategorySelectNone
+
+                ( _, _ ) ->
+                    Data.SearchCondition.CategorySelectNone
+            )
+            (case ( fragment |> Dict.get "universityType", fragment |> Dict.get "university" ) of
+                ( Just "department", Just departmentString ) ->
+                    case Data.University.departmentFromIdString departmentString of
+                        Just department ->
+                            Data.SearchCondition.UniversitySelectDepartment department
+
+                        Nothing ->
+                            Data.SearchCondition.UniversitySelectNone
+
+                ( Just "school", Just schoolString ) ->
+                    case Data.University.schoolFromIdString schoolString of
+                        Just school ->
+                            Data.SearchCondition.UniversitySelectSchool school
+
+                        Nothing ->
+                            Data.SearchCondition.UniversitySelectNone
+
+                ( Just "graduate", Just graduateString ) ->
+                    case Data.University.graduateFromIdString graduateString of
+                        Just graduate ->
+                            Data.SearchCondition.UniversitySelectGraduate graduate
+
+                        Nothing ->
+                            Data.SearchCondition.UniversitySelectNone
+
+                ( _, _ ) ->
+                    Data.SearchCondition.UniversitySelectNone
+            )
+            |> Just
+
+    else
+        Nothing
+
+
+searchUrl : String
+searchUrl =
+    Url.Builder.absolute
+        searchPath
+        []
+
+
+searchResultUrl : Data.SearchCondition.Condition -> String
+searchResultUrl condition =
+    Url.Builder.absolute
+        (searchPath ++ [ searchFragmentFromCondition condition ])
+        []
 
 
 searchFragmentFromCondition : Data.SearchCondition.Condition -> String

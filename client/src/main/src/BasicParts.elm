@@ -328,7 +328,15 @@ logoSubTextFontColor =
 menu : Data.LogInState.LogInState -> Html.Styled.Html msg
 menu logInState =
     Html.Styled.div
-        [ Html.Styled.Attributes.class "menu" ]
+        [ Html.Styled.Attributes.css
+            [ Css.width (Css.px 320)
+            , Css.height (Css.calc (Css.pct 100) Css.minus (Css.px 64))
+            , Css.backgroundColor (Css.rgb 221 221 221)
+            , Css.position Css.fixed
+            , Css.top (Css.px 64)
+            , Css.left Css.zero
+            ]
+        ]
         (case logInState of
             Data.LogInState.None ->
                 menuLogInStateNone
@@ -344,118 +352,67 @@ menu logInState =
 menuLogInStateNone : List (Html.Styled.Html msg)
 menuLogInStateNone =
     [ Html.Styled.div
-        [ Html.Styled.Attributes.class "menu-account" ]
-        [ Html.Styled.div
-            [ Html.Styled.Attributes.class "menu-logInSignUpButtonContainer" ]
-            [ Html.Styled.a
-                [ Html.Styled.Attributes.class "menu-logInButton"
-                , Html.Styled.Attributes.href (PageLocation.toUrlAsString PageLocation.LogIn)
-                ]
-                [ Html.Styled.text "ログイン / 新規登録" ]
+        [ Html.Styled.Attributes.css
+            [ Css.displayFlex
+            , Css.flexDirection Css.column
+            , Css.backgroundColor Page.Style.primaryColor
+            , Css.padding (Css.px 16)
             ]
         ]
-    , Html.Styled.a
-        [ Html.Styled.Attributes.class "menu-item"
-        , Html.Styled.Attributes.href (PageLocation.toUrlAsString PageLocation.Home)
+        [ Html.Styled.a
+            [ Html.Styled.Attributes.css
+                [ Css.backgroundColor (Css.rgb 170 170 170)
+                , Css.color (Css.rgb 17 17 17)
+                , Css.padding2 (Css.px 16) Css.zero
+                , Css.borderRadius (Css.px 8)
+                , Css.textDecoration Css.none
+                , Page.Style.userSelectNone
+                , Css.displayFlex
+                , Css.justifyContent Css.center
+                , Css.hover
+                    [ Css.backgroundColor (Css.rgb 221 221 221) ]
+                ]
+            , Html.Styled.Attributes.href (PageLocation.toUrlAsString PageLocation.LogIn)
+            ]
+            [ Html.Styled.text "ログイン / 新規登録" ]
         ]
-        [ Icon.home menuIconStyle
-        , Html.Styled.text "ホーム"
-        ]
-    , Html.Styled.a
-        [ Html.Styled.Attributes.class "menu-item"
-        , Html.Styled.Attributes.href (PageLocation.toUrlAsString (PageLocation.Search Nothing))
-        ]
-        [ Icon.search menuIconStyle
-        , Html.Styled.text "検索"
-        ]
-    , Html.Styled.a
-        [ Html.Styled.Attributes.class "menu-item"
-        , Html.Styled.Attributes.href (PageLocation.toUrlAsString PageLocation.About)
-        ]
-        [ Icon.information menuIconStyle
-        , Html.Styled.text "つくマートについて"
-        ]
+    , menuItem (Just ( PageLocation.Home, Icon.home )) "ホーム"
+    , menuItem (Just ( PageLocation.Search, Icon.search )) "検索"
+    , menuItem (Just ( PageLocation.About, Icon.information )) "つくマートについて"
     ]
 
 
 menuLogInStateLoadingProfile : List (Html.Styled.Html msg)
 menuLogInStateLoadingProfile =
-    [ Html.Styled.a
-        [ Html.Styled.Attributes.class "menu-item"
-        , Html.Styled.Attributes.href (PageLocation.toUrlAsString PageLocation.Home)
-        ]
-        [ Icon.home menuIconStyle
-        , Html.Styled.text "ホーム"
-        ]
-    , Html.Styled.a
-        [ Html.Styled.Attributes.class "menu-item"
-        , Html.Styled.Attributes.href (PageLocation.toUrlAsString (PageLocation.Search Nothing))
-        ]
-        [ Icon.search menuIconStyle
-        , Html.Styled.text "検索"
-        ]
-    , Html.Styled.a
-        [ Html.Styled.Attributes.class "menu-item"
-        , Html.Styled.Attributes.href (PageLocation.toUrlAsString PageLocation.Notification)
-        ]
-        [ Icon.notifications menuIconStyle
-        , Html.Styled.text "通知"
-        ]
-    , Html.Styled.a
-        [ Html.Styled.Attributes.class "menu-item" ]
-        [ Html.Styled.text "プロフィール情報を読み込み中"
-        , Icon.loading { size = 48, color = Css.rgb 0 0 0 }
-        ]
+    [ menuItem (Just ( PageLocation.Home, Icon.home )) "ホーム"
+    , menuItem (Just ( PageLocation.Search, Icon.search )) "検索"
+    , menuItem
+        (Just ( PageLocation.Notification, Icon.notifications ))
+        "通知"
+    , menuItem Nothing "プロフィール情報を読み込み中……"
     , subMenuItem (Just PageLocation.LikedProducts) "いいねした商品"
     , subMenuItem (Just PageLocation.History) "閲覧した商品"
     , subMenuItem (Just PageLocation.BoughtProducts) "購入した商品"
-    , subMenuItem Nothing "出品した商品"
+    , subMenuItem Nothing "プロフィール情報を読み込み中……"
     , subMenuItem (Just PageLocation.TradingProducts) "進行中の取引"
     , subMenuItem (Just PageLocation.TradedProducts) "過去にした取引"
     , subMenuItem (Just PageLocation.CommentedProducts) "コメントをした商品"
-    , Html.Styled.a
-        [ Html.Styled.Attributes.class "menu-item"
-        , Html.Styled.Attributes.href (PageLocation.toUrlAsString PageLocation.About)
-        ]
-        [ Icon.information menuIconStyle
-        , Html.Styled.text "つくマートについて"
-        ]
+    , menuItem (Just ( PageLocation.About, Icon.information )) "つくマートについて"
     ]
 
 
 menuLogInStateOk : Data.User.WithName -> List (Html.Styled.Html msg)
 menuLogInStateOk userWithName =
-    [ Html.Styled.a
-        [ Html.Styled.Attributes.class "menu-item"
-        , Html.Styled.Attributes.href (PageLocation.toUrlAsString PageLocation.Home)
-        ]
-        [ Icon.home menuIconStyle
-        , Html.Styled.text "ホーム"
-        ]
-    , Html.Styled.a
-        [ Html.Styled.Attributes.class "menu-item"
-        , Html.Styled.Attributes.href (PageLocation.toUrlAsString (PageLocation.Search Nothing))
-        ]
-        [ Icon.search menuIconStyle, Html.Styled.text "検索" ]
-    , Html.Styled.a
-        [ Html.Styled.Attributes.class "menu-item"
-        , Html.Styled.Attributes.href (PageLocation.toUrlAsString PageLocation.Notification)
-        ]
-        [ Icon.notifications menuIconStyle, Html.Styled.text "通知" ]
-    , Html.Styled.a
-        [ Html.Styled.Attributes.href
-            (PageLocation.toUrlAsString
-                (PageLocation.User
-                    (Data.User.withNameGetId userWithName)
-                )
+    [ menuItem (Just ( PageLocation.Home, Icon.home )) "ホーム"
+    , menuItem (Just ( PageLocation.Search, Icon.search )) "検索"
+    , menuItem (Just ( PageLocation.Notification, Icon.notifications )) "通知"
+    , menuItem
+        (Just
+            ( PageLocation.User (Data.User.withNameGetId userWithName)
+            , always (Page.Style.userImage 40 (Data.User.withNameGetImageId userWithName))
             )
-        , Html.Styled.Attributes.class "menu-item"
-        ]
-        [ Page.Style.userImage 40 (Data.User.withNameGetImageId userWithName)
-        , Html.Styled.div
-            []
-            [ Html.Styled.text (Data.User.withNameGetDisplayName userWithName) ]
-        ]
+        )
+        (Data.User.withNameGetDisplayName userWithName)
     , subMenuItem (Just PageLocation.LikedProducts) "いいねした商品"
     , subMenuItem (Just PageLocation.History) "閲覧した商品"
     , subMenuItem (Just PageLocation.BoughtProducts) "購入した商品"
@@ -463,21 +420,51 @@ menuLogInStateOk userWithName =
     , subMenuItem (Just PageLocation.TradingProducts) "進行中の取引"
     , subMenuItem (Just PageLocation.TradedProducts) "過去にした取引"
     , subMenuItem (Just PageLocation.CommentedProducts) "コメントをした商品"
-    , Html.Styled.a
-        [ Html.Styled.Attributes.class "menu-item"
-        , Html.Styled.Attributes.href (PageLocation.toUrlAsString PageLocation.About)
+    , menuItem (Just ( PageLocation.About, Icon.information )) "つくマートについて"
+    ]
+
+
+menuItem : Maybe ( PageLocation.PageLocation, Css.Style -> Html.Styled.Html msg ) -> String -> Html.Styled.Html msg
+menuItem locationAndIconMaybe text =
+    case locationAndIconMaybe of
+        Just ( location, icon ) ->
+            Html.Styled.a
+                [ Html.Styled.Attributes.css [ menuItemStyle ]
+                , Html.Styled.Attributes.href (PageLocation.toUrlAsString location)
+                ]
+                [ icon
+                    (Css.batch
+                        [ Css.width (Css.px 32)
+                        , Css.height (Css.px 32)
+                        , Css.padding (Css.px 8)
+                        , Css.fill (Css.rgb 0 0 0)
+                        ]
+                    )
+                , Html.Styled.text text
+                ]
+
+        Nothing ->
+            Html.Styled.div
+                [ Html.Styled.Attributes.css [ menuItemStyle ]
+                ]
+                [ Html.Styled.text text
+                ]
+
+
+menuItemStyle : Css.Style
+menuItemStyle =
+    Css.batch
+        [ Css.padding (Css.px 4)
+        , Css.displayFlex
+        , Css.alignItems Css.center
+        , Css.fontSize (Css.rem 1.5)
+        , Page.Style.userSelectNone
+        , Css.textDecoration Css.none
+        , Css.color (Css.rgb 0 0 0)
+        , Css.hover
+            [ Css.backgroundColor (Css.rgb 187 187 187)
+            ]
         ]
-        [ Icon.information menuIconStyle, Html.Styled.text "つくマートについて" ]
-    ]
-
-
-menuIconStyle : List Css.Style
-menuIconStyle =
-    [ Css.width (Css.px 32)
-    , Css.height (Css.px 32)
-    , Css.padding (Css.px 8)
-    , Css.fill (Css.rgb 0 0 0)
-    ]
 
 
 subMenuItem : Maybe PageLocation.PageLocation -> String -> Html.Styled.Html msg
@@ -485,16 +472,13 @@ subMenuItem linkMaybe text =
     (case linkMaybe of
         Just link ->
             Html.Styled.a
-                [ Html.Styled.Attributes.class "menu-item"
-                , Html.Styled.Attributes.href (PageLocation.toUrlAsString link)
+                [ Html.Styled.Attributes.href (PageLocation.toUrlAsString link)
                 , Html.Styled.Attributes.css [ subMenuItemStyle ]
                 ]
 
         Nothing ->
             Html.Styled.div
-                [ Html.Styled.Attributes.class "menu-item"
-                , Html.Styled.Attributes.css [ subMenuItemStyle ]
-                ]
+                [ Html.Styled.Attributes.css [ subMenuItemStyle ] ]
     )
         [ Html.Styled.text text ]
 
@@ -503,6 +487,14 @@ subMenuItemStyle : Css.Style
 subMenuItemStyle =
     [ Css.padding4 (Css.px 4) Css.zero (Css.px 4) (Css.px 52)
     , Css.fontSize (Css.rem 1.3)
+    , Css.displayFlex
+    , Css.alignItems Css.center
+    , Page.Style.userSelectNone
+    , Css.textDecoration Css.none
+    , Css.color (Css.rgb 0 0 0)
+    , Css.hover
+        [ Css.backgroundColor (Css.rgb 187 187 187)
+        ]
     ]
         |> Css.batch
 
@@ -664,7 +656,7 @@ type BottomNavigationSelect
 
 bottomNavigation : Data.LogInState.LogInState -> BottomNavigationSelect -> Html.Styled.Html msg
 bottomNavigation logInState select =
-    (case logInState of
+    case logInState of
         Data.LogInState.None ->
             bottomNavigationContainer
                 [ bottomNavigationItem
@@ -675,7 +667,7 @@ bottomNavigation logInState select =
                 , bottomNavigationItem
                     (select == Search)
                     (Just
-                        (PageLocation.Search Nothing)
+                        PageLocation.Search
                     )
                     (Just Icon.search)
                     "検索"
@@ -696,7 +688,7 @@ bottomNavigation logInState select =
                 , bottomNavigationItem
                     (select == Search)
                     (Just
-                        (PageLocation.Search Nothing)
+                        PageLocation.Search
                     )
                     (Just Icon.search)
                     "検索"
@@ -722,7 +714,7 @@ bottomNavigation logInState select =
                 , bottomNavigationItem
                     (select == Search)
                     (Just
-                        (PageLocation.Search Nothing)
+                        PageLocation.Search
                     )
                     (Just Icon.search)
                     "検索"
@@ -741,7 +733,6 @@ bottomNavigation logInState select =
                     )
                     "ユーザー"
                 ]
-    )
 
 
 bottomNavigationContainer : List (Html.Styled.Html msg) -> Html.Styled.Html msg
@@ -767,7 +758,7 @@ bottomNavigationContainer item =
 bottomNavigationItem :
     Bool
     -> Maybe PageLocation.PageLocation
-    -> Maybe (List Css.Style -> Html.Styled.Html msg)
+    -> Maybe (Css.Style -> Html.Styled.Html msg)
     -> String
     -> Html.Styled.Html msg
 bottomNavigationItem select linkMaybe iconMaybe text =
@@ -786,16 +777,18 @@ bottomNavigationItem select linkMaybe iconMaybe text =
         (case iconMaybe of
             Just icon ->
                 [ icon
-                    [ Css.width (Css.px 32)
-                    , Css.height (Css.px 32)
-                    , Css.fill
-                        (if select then
-                            Css.rgb 255 255 255
+                    (Css.batch
+                        [ Css.width (Css.px 32)
+                        , Css.height (Css.px 32)
+                        , Css.fill
+                            (if select then
+                                Css.rgb 255 255 255
 
-                         else
-                            Css.rgb 170 170 170
-                        )
-                    ]
+                             else
+                                Css.rgb 170 170 170
+                            )
+                        ]
+                    )
                 , Html.Styled.text text
                 ]
 

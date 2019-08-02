@@ -12,6 +12,7 @@ module Page.Component.ProductEditor exposing
     )
 
 import Api
+import Css
 import Data.Category as Category
 import Data.ImageId as ImageId
 import Data.Product as Product
@@ -468,6 +469,8 @@ photoImage index dataUrl =
             |> Html.Styled.map (always (DeleteImage index))
         , Html.Styled.img
             [ Html.Styled.Attributes.src dataUrl
+            , Html.Styled.Attributes.css
+                [ Css.display Css.block ]
             , Html.Styled.Attributes.class "exhibition-photo-card-image"
             ]
             []

@@ -15,7 +15,7 @@ module Page.Style exposing
     , titleAndContent
     , titleAndContentStyle
     , userImage
-    , mainButtonLink)
+    , mainButtonLink, userSelectNone)
 
 import Css
 import Css.Transitions
@@ -143,6 +143,9 @@ displayGridAndGap gap =
     )
         |> Css.batch
 
+userSelectNone : Css.Style
+userSelectNone =
+    Css.property "user-select" "none"
 
 userImage : Int -> Data.ImageId.ImageId -> H.Html msg
 userImage size imageId =

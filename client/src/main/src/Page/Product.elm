@@ -629,6 +629,8 @@ imageView : String -> Html.Styled.Html msg
 imageView url =
     Html.Styled.img
         [ Html.Styled.Attributes.class "product-image"
+        , Html.Styled.Attributes.css
+            [ Css.display Css.block ]
         , Html.Styled.Attributes.src url
         ]
         []
@@ -762,9 +764,11 @@ editButton =
         , Html.Styled.Events.onClick EditProduct
         ]
         [ Icon.edit
-            [ Css.width (Css.px 32)
-            , Css.height (Css.px 32)
-            ]
+            (Css.batch
+                [ Css.width (Css.px 32)
+                , Css.height (Css.px 32)
+                ]
+            )
         , Html.Styled.text "編集する"
         ]
 
@@ -776,10 +780,12 @@ deleteView productId token =
         , Html.Styled.Events.onClick (Delete token productId)
         ]
         [ Icon.deleteGarbageCan
-            [ Css.width (Css.px 32)
-            , Css.height (Css.px 32)
-            , Css.fill (Css.rgb 238 238 238)
-            ]
+            (Css.batch
+                [ Css.width (Css.px 32)
+                , Css.height (Css.px 32)
+                , Css.fill (Css.rgb 238 238 238)
+                ]
+            )
         , Html.Styled.text "削除する"
         ]
 

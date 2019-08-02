@@ -57,7 +57,8 @@ itemView trade =
         [ Html.Styled.img
             [ Html.Styled.Attributes.src (Product.getThumbnailImageUrl product)
             , Html.Styled.Attributes.css
-                [ Css.property "grid-column" "1 / 2"
+                [ Css.display Css.block
+                , Css.property "grid-column" "1 / 2"
                 , Css.property "grid-row" "1 / 4"
                 , Css.width (Css.px 192)
                 , Css.height (Css.px 192)

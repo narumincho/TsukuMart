@@ -390,7 +390,8 @@ imageView image =
                             dataUrl
                     )
                 , Html.Styled.Attributes.css
-                    [ Css.maxWidth (Css.px 128)
+                    [ Css.display Css.block
+                    , Css.maxWidth (Css.px 128)
                     , Css.maxHeight (Css.px 128)
                     , Css.borderRadius (Css.pct 50)
                     ]
