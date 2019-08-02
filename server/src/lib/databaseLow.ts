@@ -37,7 +37,7 @@ export type UserData = {
     schoolAndDepartment: type.SchoolAndDepartment | null;
     graduate: type.Graduate | null;
     introduction: string;
-    lastRefreshId: string;
+    lastAccessTokenId: string;
     createdAt: firestore.Timestamp;
     trading: Array<string>;
     traded: Array<string>;
@@ -306,11 +306,11 @@ export const getUserByLogInServiceAndId = async (
     return null;
 };
 
-export const updateRefreshId = async (
-    refreshId: string,
+export const updateRandomState = async (
+    lastAccessTokenId: string,
     userDocumentRef: firestore.DocumentReference
 ): Promise<void> => {
-    await userDocumentRef.set({ lastRefreshId: refreshId }, { merge: true });
+    await userDocumentRef.set({ lastAccessTokenId }, { merge: true });
 };
 /**
  * ユーザーの条件を指定して検索する

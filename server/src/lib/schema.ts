@@ -884,8 +884,9 @@ const userPrivate = makeQueryOrMutationField<
     },
     type: g.GraphQLNonNull(userPrivateGraphQLType),
     resolve: async (source, args) => {
-        const accessTokenData = database.verifyAccessToken(args.accessToken);
-        return await database.getUserData(accessTokenData.id);
+        return await database.getUserData(
+            await database.verifyAccessToken(args.accessToken)
+        );
     },
     description: "個人的な情報を含んだユーザーの情報を取得する"
 });
@@ -1007,8 +1008,8 @@ const trade = makeQueryOrMutationField<
     },
     type: g.GraphQLNonNull(tradeGraphQLType),
     resolve: async (source, args, context, info) => {
-        const { id } = database.verifyAccessToken(args.accessToken);
-        const userData = await database.getUserData(id);
+        const userId = await database.verifyAccessToken(args.accessToken);
+        const userData = await database.getUserData(userId);
         if (
             includeTradeData(args.tradeId, userData.tradingAll) ||
             includeTradeData(args.tradeId, userData.tradedAll)
@@ -1152,9 +1153,9 @@ const registerSignUpData = makeQueryOrMutationField<
         console.log("schemaのsendConformEmailのリゾルバが呼ばれた");
         const universityUnsafe = args.university;
         const logInAccountServiceId = verifySendEmailToken(args.sendEmailToken);
-        // if (!args.email.match(/s(\d{7})@[a-zA-Z0-9]+\.tsukuba\.ac\.jp/)) {
-        //     throw new Error("email address must be tsukuba.ac.jp domain");
-        // }
+        if (!args.email.match(/s(\d{7})@[a-zA-Z0-9]+\.tsukuba\.ac\.jp/)) {
+            throw new Error("email address must be tsukuba.ac.jp domain");
+        }
 
         const userBeforeInputData = await database.getUserInUserBeforeInputData(
             logInAccountServiceId
@@ -1196,25 +1197,6 @@ const verifySendEmailToken = (
     return type.logInServiceAndIdFromString(decodedMarked.sub);
 };
 
-/**
- * アクセストークンの取得とリフレッシュトークンの更新
- */
-const getAccessTokenAndUpdateRefreshToken = makeQueryOrMutationField<
-    { refreshToken: string },
-    type.RefreshTokenAndAccessToken
->({
-    type: g.GraphQLNonNull(type.refreshTokenAndAccessTokenGraphQLType),
-    args: {
-        refreshToken: {
-            type: g.GraphQLNonNull(g.GraphQLString),
-            description: "リフレッシュトークン"
-        }
-    },
-    resolve: async (source, args): Promise<type.RefreshTokenAndAccessToken> =>
-        await database.getAccessTokenAndUpdateRefreshToken(args.refreshToken),
-    description: "アクセストークンの取得とリフレッシュトークンの更新"
-});
-
 const updateProfile = makeQueryOrMutationField<
     {
         accessToken: string;
@@ -1252,8 +1234,8 @@ const updateProfile = makeQueryOrMutationField<
         source,
         { accessToken, displayName, image, introduction, university }
     ) => {
-        const { id } = database.verifyAccessToken(accessToken);
-        const profileData = await database.setProfile(id, {
+        const userId = await database.verifyAccessToken(accessToken);
+        const profileData = await database.setProfile(userId, {
             displayName: displayName,
             image,
             introduction,
@@ -1314,8 +1296,8 @@ const sellProduct = makeQueryOrMutationField<
     },
     type: g.GraphQLNonNull(productGraphQLType),
     resolve: async (source, args) => {
-        const { id } = database.verifyAccessToken(args.accessToken);
-        return await database.sellProduct(id, {
+        const userId = await database.verifyAccessToken(args.accessToken);
+        return await database.sellProduct(userId, {
             name: args.name,
             price: args.price,
             description: args.description,
@@ -1343,8 +1325,8 @@ const markProductInHistory = makeQueryOrMutationField<
     },
     type: g.GraphQLNonNull(productGraphQLType),
     resolve: async (source, args) => {
-        const { id } = database.verifyAccessToken(args.accessToken);
-        return await database.markProductInHistory(id, args.productId);
+        const userId = await database.verifyAccessToken(args.accessToken);
+        return await database.markProductInHistory(userId, args.productId);
     },
     description: "商品を閲覧したと記録する"
 });
@@ -1365,8 +1347,10 @@ const likeProduct = makeQueryOrMutationField<
     },
     type: g.GraphQLNonNull(productGraphQLType),
     resolve: async (source, args, context, info) => {
-        const { id } = database.verifyAccessToken(args.accessToken);
-        return await database.likeProduct(id, args.productId);
+        return await database.likeProduct(
+            await database.verifyAccessToken(args.accessToken),
+            args.productId
+        );
     },
     description: "商品にいいねをする"
 });
@@ -1387,8 +1371,10 @@ const unlikeProduct = makeQueryOrMutationField<
     },
     type: g.GraphQLNonNull(productGraphQLType),
     resolve: async (source, args, context, info) => {
-        const { id } = database.verifyAccessToken(args.accessToken);
-        return await database.unlikeProduct(id, args.productId);
+        return await database.unlikeProduct(
+            await database.verifyAccessToken(args.accessToken),
+            args.productId
+        );
     },
     description: "商品からいいねを外す"
 });
@@ -1416,10 +1402,13 @@ const addProductComment = makeQueryOrMutationField<
     },
     type: g.GraphQLNonNull(productGraphQLType),
     resolve: async (source, args, context, info) => {
-        const { id } = database.verifyAccessToken(args.accessToken);
-        return await database.addCommentProduct(id, args.productId, {
-            body: args.body
-        });
+        return await database.addCommentProduct(
+            await database.verifyAccessToken(args.accessToken),
+            args.productId,
+            {
+                body: args.body
+            }
+        );
     },
     description: "商品にコメントを追加する"
 });
@@ -1466,15 +1455,17 @@ const addDraftProduct = makeQueryOrMutationField<
     },
     type: g.GraphQLNonNull(draftProductGraphQLType),
     resolve: async (source, args, context, info) => {
-        const { id } = database.verifyAccessToken(args.accessToken);
-        return await database.addDraftProductData(id, {
-            name: args.name,
-            price: args.price,
-            description: args.description,
-            condition: args.condition,
-            category: args.category,
-            images: args.images
-        });
+        return await database.addDraftProductData(
+            await database.verifyAccessToken(args.accessToken),
+            {
+                name: args.name,
+                price: args.price,
+                description: args.description,
+                condition: args.condition,
+                category: args.category,
+                images: args.images
+            }
+        );
     },
     description: "商品の下書きを登録する"
 });
@@ -1538,17 +1529,19 @@ const updateDraftProduct = makeQueryOrMutationField<
         g.GraphQLList(g.GraphQLNonNull(draftProductGraphQLType))
     ),
     resolve: async (source, args, context, info) => {
-        const { id } = database.verifyAccessToken(args.accessToken);
-        return await database.updateDraftProduct(id, {
-            draftId: args.draftId,
-            name: args.name,
-            price: args.price,
-            description: args.description,
-            category: args.category,
-            condition: args.condition,
-            deleteImagesAt: args.deleteImagesAt,
-            addImages: args.addImages
-        });
+        return await database.updateDraftProduct(
+            await database.verifyAccessToken(args.accessToken),
+            {
+                draftId: args.draftId,
+                name: args.name,
+                price: args.price,
+                description: args.description,
+                category: args.category,
+                condition: args.condition,
+                deleteImagesAt: args.deleteImagesAt,
+                addImages: args.addImages
+            }
+        );
     },
     description: "商品の下書きを編集する"
 });
@@ -1571,9 +1564,9 @@ const deleteDraftProduct = makeQueryOrMutationField<
         g.GraphQLList(g.GraphQLNonNull(draftProductGraphQLType))
     ),
     resolve: async (source, args, context, info) => {
-        const { id } = database.verifyAccessToken(args.accessToken);
-        await database.deleteDraftProduct(id, args.draftId);
-        return database.getDraftProducts(id);
+        const userId = await database.verifyAccessToken(args.accessToken);
+        await database.deleteDraftProduct(userId, args.draftId);
+        return database.getDraftProducts(userId);
     },
     description: "商品の下書きを削除する"
 });
@@ -1594,15 +1587,15 @@ const startTrade = makeQueryOrMutationField<
     },
     type: g.GraphQLNonNull(tradeGraphQLType),
     resolve: async (source, args, context, info) => {
-        const { id } = database.verifyAccessToken(args.accessToken);
+        const userId = await database.verifyAccessToken(args.accessToken);
         const product = await database.getProduct(args.productId);
-        if (product.seller.id === id) {
+        if (product.seller.id === userId) {
             throw new Error("自分が出品した商品を買うことはできません");
         }
         if (product.status !== "selling") {
-            throw new Error("売出し中以外の商品を買うことはできません");
+            throw new Error("売り出し中以外の商品を買うことはできません");
         }
-        return await database.startTrade(id, args.productId);
+        return await database.startTrade(userId, args.productId);
     },
     description: "取引を開始する"
 });
@@ -1627,8 +1620,11 @@ const addTradeComment = makeQueryOrMutationField<
     },
     type: g.GraphQLNonNull(tradeGraphQLType),
     resolve: async (source, args, context, info) => {
-        const { id } = database.verifyAccessToken(args.accessToken);
-        return await database.addTradeComment(id, args.tradeId, args.body);
+        return await database.addTradeComment(
+            await database.verifyAccessToken(args.accessToken),
+            args.tradeId,
+            args.body
+        );
     },
     description: "取引にコメントを追加する"
 });
@@ -1649,8 +1645,10 @@ const cancelTrade = makeQueryOrMutationField<
     },
     type: g.GraphQLNonNull(tradeGraphQLType),
     resolve: async (source, args, context, info) => {
-        const { id } = database.verifyAccessToken(args.accessToken);
-        return await database.cancelTrade(id, args.tradeId);
+        return await database.cancelTrade(
+            await database.verifyAccessToken(args.accessToken),
+            args.tradeId
+        );
     },
     description: "取引をキャンセルする"
 });
@@ -1671,8 +1669,10 @@ const finishTrade = makeQueryOrMutationField<
     },
     type: g.GraphQLNonNull(tradeGraphQLType),
     resolve: async (source, args, context, info) => {
-        const { id } = database.verifyAccessToken(args.accessToken);
-        return await database.finishTrade(id, args.tradeId);
+        return await database.finishTrade(
+            await database.verifyAccessToken(args.accessToken),
+            args.tradeId
+        );
     },
     description: "取引を完了する"
 });
@@ -1706,7 +1706,6 @@ export const schema = new g.GraphQLSchema({
         fields: {
             getLogInUrl,
             registerSignUpData,
-            getAccessTokenAndUpdateRefreshToken,
             updateProfile,
             sellProduct,
             markProductInHistory,

@@ -132,13 +132,11 @@ viewBody (Model rec) =
         , Page.Style.mainButtonLink
             [ Html.Styled.text "検索する" ]
             (Just
-                (PageLocation.Search
-                    (Just
-                        (SearchCondition.init
-                            rec.query
-                            (Page.Component.Category.getSelect rec.categorySelect)
-                            SearchCondition.UniversitySelectNone
-                        )
+                (PageLocation.SearchResult
+                    (SearchCondition.init
+                        rec.query
+                        (Page.Component.Category.getSelect rec.categorySelect)
+                        SearchCondition.UniversitySelectNone
                     )
                 )
             )

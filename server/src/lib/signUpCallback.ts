@@ -10,14 +10,13 @@ import * as utilUrl from "./util/url";
 
 const domain = "tsukumart.com";
 /**
- * アクセストークンとリフレッシュトークンが含まれたURLを作成
- * @param refreshToken リフレッシュトークン
+ * アクセストークンがフラグメントに含まれたURLを作成
  * @param accessToken アクセストークン
  */
-const tokenUrl = (refreshToken: string, accessToken: string): URL =>
+const tokenUrl = (accessToken: string): URL =>
     utilUrl.fromStringWithFragment(
         domain,
-        new Map([["refreshToken", refreshToken], ["accessToken", accessToken]])
+        new Map([["accessToken", accessToken]])
     );
 
 /**
@@ -94,11 +93,12 @@ export const googleLogInReceiver = async (
     };
     try {
         // ユーザーを探す
-        const token = await database.getAccessTokenAndRefreshToken(
-            logInServiceAndId
-        );
         response.redirect(
-            tokenUrl(token.refreshToken, token.accessToken).toString()
+            tokenUrl(
+                await database.getAccessTokenFromLogInAccountService(
+                    logInServiceAndId
+                )
+            ).toString()
         );
     } catch {
         const imageId = await getAndSaveUserImage(new URL(googleData.picture));
@@ -253,11 +253,12 @@ query {
     };
     try {
         // ユーザーを探す
-        const token = await database.getAccessTokenAndRefreshToken(
-            logInServiceAndId
-        );
         response.redirect(
-            tokenUrl(token.refreshToken, token.accessToken).toString()
+            tokenUrl(
+                await database.getAccessTokenFromLogInAccountService(
+                    logInServiceAndId
+                )
+            ).toString()
         );
     } catch (e) {
         console.log("ユーザーを探すところでエラー発生" + e);
@@ -310,11 +311,12 @@ export const twitterLogInReceiver = async (
     };
     try {
         // ユーザーを探す
-        const token = await database.getAccessTokenAndRefreshToken(
-            logInServiceAndId
-        );
         response.redirect(
-            tokenUrl(token.refreshToken, token.accessToken).toString()
+            tokenUrl(
+                await database.getAccessTokenFromLogInAccountService(
+                    logInServiceAndId
+                )
+            ).toString()
         );
     } catch {
         switch (twitterData.c) {
@@ -410,11 +412,12 @@ export const lineLogInReceiver = async (
 
     try {
         // ユーザーを探す
-        const token = await database.getAccessTokenAndRefreshToken(
-            logInServiceAndId
-        );
         response.redirect(
-            tokenUrl(token.refreshToken, token.accessToken).toString()
+            tokenUrl(
+                await database.getAccessTokenFromLogInAccountService(
+                    logInServiceAndId
+                )
+            ).toString()
         );
     } catch {
         const imageId = await getAndSaveUserImage(new URL(lineData.picture));

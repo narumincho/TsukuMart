@@ -59,10 +59,10 @@ port toWideScreenMode : (() -> msg) -> Sub msg
 port toNarrowScreenMode : (() -> msg) -> Sub msg
 
 
-port saveRefreshTokenToLocalStorage : String -> Cmd msg
+port saveAccessTokenToLocalStorage : String -> Cmd msg
 
 
-port deleteRefreshTokenAndAllFromLocalStorage : () -> Cmd msg
+port deleteAllFromLocalStorage : () -> Cmd msg
 
 
 port elementScrollIntoView : String -> Cmd msg
@@ -147,7 +147,7 @@ type PageMsg
     | PageMsgTrade Page.Trade.Msg
 
 
-main : Program { refreshToken : Maybe String } Model Msg
+main : Program { accessToken : Maybe String } Model Msg
 main =
     Browser.application
         { init = init
@@ -163,10 +163,10 @@ main =
         }
 
 
-init : { refreshToken : Maybe String } -> Url.Url -> Browser.Navigation.Key -> ( Model, Cmd Msg )
-init { refreshToken } url key =
+init : { accessToken : Maybe String } -> Url.Url -> Browser.Navigation.Key -> ( Model, Cmd Msg )
+init { accessToken } url key =
     let
-        ( accessTokenAndRefreshTokenByUrl, page ) =
+        ( tokenFromUrlMaybe, page ) =
             PageLocation.initFromUrl url
 
         ( newPage, cmd ) =
@@ -176,16 +176,27 @@ init { refreshToken } url key =
         { page = newPage
         , wideScreen = False
         , message = Nothing
-        , logInState = Data.LogInState.None
+        , logInState =
+            case ( tokenFromUrlMaybe, accessToken ) of
+                ( Just tokenFromUrl, _ ) ->
+                    Data.LogInState.LoadingProfile tokenFromUrl
+
+                ( Nothing, Just accessTokenString ) ->
+                    Data.LogInState.LoadingProfile (Api.tokenFromString accessTokenString)
+
+                ( _, _ ) ->
+                    Data.LogInState.None
         , notificationVisible = False
         , key = key
         , now = Nothing
         }
     , Cmd.batch
-        ((case ( accessTokenAndRefreshTokenByUrl, refreshToken ) of
-            ( Just accessTokenAndRefreshToken, _ ) ->
-                [ logInResponseCmd accessTokenAndRefreshToken key url
-                , Task.succeed () |> Task.perform (always (AddLogMessage "ログイン中"))
+        ((case ( tokenFromUrlMaybe, accessToken ) of
+            ( Just tokenFromUrl, _ ) ->
+                [ Api.getMyNameAndLikedProductsId
+                    tokenFromUrl
+                    GetMyProfileAndLikedProductIdsResponse
+                , saveAccessTokenToLocalStorage (Api.tokenToString tokenFromUrl)
                 , Browser.Navigation.replaceUrl key
                     (page
                         |> Maybe.withDefault PageLocation.InitHome
@@ -193,11 +204,11 @@ init { refreshToken } url key =
                     )
                 ]
 
-            ( Nothing, Just refreshTokenString ) ->
-                [ Api.tokenRefresh
-                    refreshTokenString
-                    LogInResponse
-                , Task.succeed () |> Task.perform (always (AddLogMessage "ログイン中"))
+            ( Nothing, Just accessTokenString ) ->
+                [ Api.getMyNameAndLikedProductsId
+                    (Api.tokenFromString accessTokenString)
+                    GetMyProfileAndLikedProductIdsResponse
+                , saveAccessTokenToLocalStorage accessTokenString
                 ]
 
             ( Nothing, Nothing ) ->
@@ -298,18 +309,6 @@ urlParserInitResultToPageAndCmd key logInState page =
             ( PageAbout Page.About.privacyPolicyModel, Cmd.none )
 
 
-logInResponseCmd : Api.Token -> Browser.Navigation.Key -> Url.Url -> Cmd Msg
-logInResponseCmd token key url =
-    Cmd.batch
-        [ Task.perform
-            (always
-                (LogInResponse (Ok token))
-            )
-            (Task.succeed ())
-        , Browser.Navigation.replaceUrl key (Url.toString { url | query = Nothing })
-        ]
-
-
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg (Model rec) =
     case msg of
@@ -363,9 +362,7 @@ update msg (Model rec) =
                                 Data.LogInState.LoadingProfile token
                         }
                     , Cmd.batch
-                        [ Api.getMyNameAndLikedProductsId token GetMyProfileAndLikedProductIdsResponse
-                        , saveRefreshTokenToLocalStorage (Api.tokenGetRefreshTokenAsString token)
-                        ]
+                        []
                     )
 
                 Err string ->
@@ -867,7 +864,7 @@ userPageEmissionToCmd emission =
 
         Page.User.EmissionLogOut ->
             Cmd.batch
-                [ deleteRefreshTokenAndAllFromLocalStorage ()
+                [ deleteAllFromLocalStorage ()
                 , Task.perform (always LogOut) (Task.succeed ())
                 ]
 

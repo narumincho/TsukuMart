@@ -1,7 +1,7 @@
 interface Window {
     Elm: {
         Main: {
-            init: (args: { flags: { refreshToken: string | null } }) => ElmApp;
+            init: (args: { flags: { accessToken: string | null } }) => ElmApp;
         };
     };
 }
@@ -30,10 +30,10 @@ type ElmApp = {
         toNarrowScreenMode: {
             send: (arg: null) => void;
         };
-        saveRefreshTokenToLocalStorage: {
-            subscribe: (arg: (refreshToken: string) => void) => void;
+        saveAccessTokenToLocalStorage: {
+            subscribe: (arg: (accessToken: string) => void) => void;
         };
-        deleteRefreshTokenAndAllFromLocalStorage: {
+        deleteAllFromLocalStorage: {
             subscribe: (arg: () => void) => void;
         };
         elementScrollIntoView: {
@@ -152,7 +152,7 @@ const checkFileInput = (id: string) => async () => {
 /* Elmを起動!! */
 const app = window.Elm.Main.init({
     flags: {
-        refreshToken: localStorage.getItem("refreshToken")
+        accessToken: localStorage.getItem("accessToken")
     }
 });
 const windowResizeListener = () => {
@@ -166,11 +166,11 @@ const windowResizeListener = () => {
 addEventListener("resize", windowResizeListener);
 windowResizeListener();
 /* リフレッシュトークンを保存する */
-app.ports.saveRefreshTokenToLocalStorage.subscribe(refreshToken => {
-    localStorage.setItem("refreshToken", refreshToken);
+app.ports.saveAccessTokenToLocalStorage.subscribe(accessToken => {
+    localStorage.setItem("accessToken", accessToken);
 });
 /* リフレッシュトークンとその他すべてを削除する */
-app.ports.deleteRefreshTokenAndAllFromLocalStorage.subscribe(() => {
+app.ports.deleteAllFromLocalStorage.subscribe(() => {
     localStorage.clear();
 });
 

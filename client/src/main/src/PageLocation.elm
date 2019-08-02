@@ -54,17 +54,9 @@ initFromUrl url =
             (Erl.parse ("?" ++ hash)).query
                 |> Dict.fromList
     in
-    ( case ( fragmentDict |> Dict.get "refreshToken", fragmentDict |> Dict.get "accessToken" ) of
-        ( Just refreshToken, Just accessToken ) ->
-            Just
-                (Api.makeToken
-                    { refreshToken = refreshToken
-                    , accessToken = accessToken
-                    }
-                )
-
-        ( _, _ ) ->
-            Nothing
+    ( fragmentDict
+        |> Dict.get "accessToken"
+        |> Maybe.map Api.tokenFromString
     , [ homeParser |> parserMap (always InitHome)
       , logInParser |> parserMap (always InitLogIn)
       , likedProductsParser |> parserMap (always InitLikedProducts)

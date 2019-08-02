@@ -119,23 +119,23 @@ export const addUserBeforeEmailVerification = async (
 };
 
 /**
- * ソーシャルログインのアカウントIDからアクセストークンをリフレッシュトークンを得る
+ * ソーシャルログインのアカウントIDからアクセストークンを得る
  * @param logInAccountServiceId
  */
-export const getAccessTokenAndRefreshToken = async (
+export const getAccessTokenFromLogInAccountService = async (
     logInAccountServiceId: type.LogInServiceAndId
-): Promise<{ refreshToken: string; accessToken: string }> => {
+): Promise<string> => {
     const userDataMaybe = await databaseLow.getUserByLogInServiceAndId(
         logInAccountServiceId
     );
-    // ユーザーが存在するなら
+    // 1回以上ログインしたユーザーに存在するなら
     if (userDataMaybe !== null) {
-        const refreshId = createRefreshId();
-        await databaseLow.updateRefreshId(refreshId, userDataMaybe.ref);
-        return {
-            accessToken: createAccessToken(userDataMaybe.id, false),
-            refreshToken: createRefreshToken(userDataMaybe.id, refreshId)
-        };
+        const randomStateForIsLastIssue = createRandomStateForIsLastIssueId();
+        await databaseLow.updateRandomState(
+            randomStateForIsLastIssue,
+            userDataMaybe.ref
+        );
+        return createAccessToken(userDataMaybe.id, randomStateForIsLastIssue);
     }
 
     // ユーザーが存在するなら (メール認証から初回)
@@ -149,7 +149,7 @@ export const getAccessTokenAndRefreshToken = async (
             )
         ) {
             console.log("メールで認証済み", userBeforeEmailVerification);
-            const refreshId = createRefreshId();
+            const randomStateForIsLastIssueId = createRandomStateForIsLastIssueId();
             const newUserId = await databaseLow.addUserData({
                 logInAccountServiceId: type.logInServiceAndIdToString(
                     logInAccountServiceId
@@ -160,7 +160,7 @@ export const getAccessTokenAndRefreshToken = async (
                     userBeforeEmailVerification.schoolAndDepartment,
                 graduate: userBeforeEmailVerification.graduate,
                 introduction: "",
-                lastRefreshId: refreshId,
+                lastAccessTokenId: randomStateForIsLastIssueId,
                 createdAt: databaseLow.getNowTimestamp(),
                 email: userBeforeEmailVerification.email,
                 traded: [],
@@ -172,10 +172,7 @@ export const getAccessTokenAndRefreshToken = async (
                 logInAccountServiceId
             );
 
-            return {
-                accessToken: createAccessToken(newUserId, false),
-                refreshToken: createRefreshToken(newUserId, refreshId)
-            };
+            return createAccessToken(newUserId, randomStateForIsLastIssueId);
         }
         console.log("メールで認証済みでない" + logInAccountServiceId);
         throw new Error("email not verified");
@@ -185,91 +182,49 @@ export const getAccessTokenAndRefreshToken = async (
     throw new Error("user dose not exists");
 };
 
-export const getAccessTokenAndUpdateRefreshToken = async (
-    refreshToken: string
-): Promise<type.RefreshTokenAndAccessToken> => {
-    const decoded = jwt.verify(refreshToken, key.refreshTokenSecretKey, {
-        algorithms: ["HS256"]
-    }) as { sub: unknown; jti: unknown };
-    const sub = decoded.sub;
-    const jti = decoded.jti;
-    if (typeof sub !== "string" || typeof jti !== "string") {
-        console.log("subかjtiがない!");
-        throw new Error("invalid refresh token");
-    }
-
-    const userData = await databaseLow.getUserData(sub);
-    console.log(
-        "データベースで保存されていたリフレッシュトークンID",
-        userData.lastRefreshId
-    );
-    console.log("JWTに入っていたリフレッシュトークンID", jti);
-    if (userData.lastRefreshId === jti) {
-        const refreshId: string = createRefreshId();
-        await databaseLow.updateUserData(sub, { lastRefreshId: refreshId });
-        return {
-            refreshToken: createRefreshToken(sub, refreshId),
-            accessToken: createAccessToken(sub, true)
-        };
-    } else {
-        throw new Error("古いリフレッシュトークンを受け取った");
-    }
-};
-
 /**
  * アクセストークンの正当性チェックとidの取得
  * @param accessToken
  * @throws {Error} invalid access token
  */
-export const verifyAccessToken = (
+export const verifyAccessToken = async (
     accessToken: string
-): { id: string; isLogInByRefreshToken: boolean } => {
+): Promise<string> => {
     const decoded = jwt.verify(accessToken, key.accessTokenSecretKey, {
         algorithms: ["HS256"]
-    }) as { sub: unknown; ref: unknown };
-    if (typeof decoded.sub !== "string" || typeof decoded.ref !== "boolean") {
+    }) as { sub: unknown; jti: unknown };
+    if (typeof decoded.sub !== "string" || typeof decoded.jti !== "string") {
         throw new Error("invalid access token");
     }
-    return {
-        id: decoded.sub,
-        isLogInByRefreshToken: decoded.ref
-    };
+    const userData = await databaseLow.getUserData(decoded.sub);
+    if (userData.lastAccessTokenId !== decoded.jti) {
+        throw new Error(
+            "他の端末でログインされたので、ログインしなおしてください"
+        );
+    }
+    return decoded.sub;
 };
 
 /**
  * アクセストークンを作成する
- * @param userId
- * @param byRefreshToken
+ * @param userId つくマート内でのユーザーID
+ * @param randomStateForIsLastIssue 最後にソーシャルログインしたものだけを有効にするため
  */
-const createAccessToken = (userId: string, byRefreshToken: boolean): string => {
-    const time = new Date();
-    time.setUTCMinutes(time.getUTCMinutes() + 15); // 有効期限は15分後
+const createAccessToken = (
+    userId: string,
+    randomStateForIsLastIssue: string
+): string => {
     const payload = {
         sub: userId,
-        ref: byRefreshToken, //リフレッシュトークンでログインしたか
-        exp: Math.round(time.getTime() / 1000) // 有効期限
+        jti: randomStateForIsLastIssue // 最後に発行したものか調べる用
     };
     /** アクセストークン */
     return jwt.sign(payload, key.accessTokenSecretKey, { algorithm: "HS256" });
 };
 
-/**
- * リフレッシュトークンを作成する
- * @param userId
- * @param refreshId
- */
-const createRefreshToken = (userId: string, refreshId: string): string => {
-    /** リフレッシュトークン 有効期限はなし */
-    const payload = {
-        sub: userId,
-        jti: refreshId
-    };
-    return jwt.sign(payload, key.refreshTokenSecretKey, { algorithm: "HS256" });
-};
-
-const createRefreshId = (): string => {
+const createRandomStateForIsLastIssueId = (): string => {
     let id = "";
-    const charTable: string =
+    const charTable =
         "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
     for (let i = 0; i < 15; i++) {
         id += charTable[(Math.random() * charTable.length) | 0];

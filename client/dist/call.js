@@ -65,7 +65,7 @@ const checkFileInput = (id) => async () => {
 };
 const app = window.Elm.Main.init({
     flags: {
-        refreshToken: localStorage.getItem("refreshToken")
+        accessToken: localStorage.getItem("accessToken")
     }
 });
 const windowResizeListener = () => {
@@ -78,10 +78,10 @@ const windowResizeListener = () => {
 };
 addEventListener("resize", windowResizeListener);
 windowResizeListener();
-app.ports.saveRefreshTokenToLocalStorage.subscribe(refreshToken => {
-    localStorage.setItem("refreshToken", refreshToken);
+app.ports.saveAccessTokenToLocalStorage.subscribe(accessToken => {
+    localStorage.setItem("accessToken", accessToken);
 });
-app.ports.deleteRefreshTokenAndAllFromLocalStorage.subscribe(() => {
+app.ports.deleteAllFromLocalStorage.subscribe(() => {
     localStorage.clear();
 });
 app.ports.replaceText.subscribe(({ id, text }) => {

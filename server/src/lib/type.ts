@@ -289,29 +289,6 @@ export const universityGraphQLObjectType = new g.GraphQLObjectType({
     description: "大学での所属"
 });
 
-/** ===================================
- *    Refresh Token And Access Token
- * ====================================
- */
-export const refreshTokenAndAccessTokenGraphQLType = new g.GraphQLObjectType({
-    name: "RefreshTokenAndAccessToken",
-    fields: {
-        refreshToken: {
-            type: g.GraphQLNonNull(g.GraphQLString),
-            description: "アクセストークンを更新するためのトークン"
-        },
-        accessToken: {
-            type: g.GraphQLNonNull(g.GraphQLString),
-            description:
-                "各種リソースにアクセスするのに必要なトークン。署名つき証明書"
-        }
-    }
-});
-
-export type RefreshTokenAndAccessToken = {
-    refreshToken: string;
-    accessToken: string;
-};
 /** ==============================
  *            User
  * ===============================
