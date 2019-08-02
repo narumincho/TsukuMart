@@ -1569,30 +1569,9 @@ graphQLErrorResponseDecoderWithoutToken : Jd.Decoder String
 graphQLErrorResponseDecoderWithoutToken =
     Jd.field "errors"
         (Jd.list
-            (Jd.succeed
-                (\message lineAndColumnList ->
-                    "message "
-                        ++ message
-                        ++ " at "
-                        ++ (lineAndColumnList
-                                |> List.map
-                                    (\( line, column ) ->
-                                        String.fromInt line ++ ":" ++ String.fromInt column
-                                    )
-                                |> String.join ","
-                           )
-                )
-                |> Jdp.required "message" Jd.string
-                |> Jdp.required "locations"
-                    (Jd.list
-                        (Jd.succeed Tuple.pair
-                            |> Jdp.required "line" Jd.int
-                            |> Jdp.required "column" Jd.int
-                        )
-                    )
-            )
+            (Jd.field "message" Jd.string)
         )
-        |> Jd.map (String.join ",\n")
+        |> Jd.map (String.join ", ")
 
 
 batchError : List (Result String ()) -> Result String ()

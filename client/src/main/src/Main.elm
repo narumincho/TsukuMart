@@ -446,19 +446,25 @@ update msg (Model rec) =
             )
 
         GetMyProfileAndLikedProductIdsResponse response ->
-            ( case response of
+            case response of
                 Ok userWithProfile ->
-                    Model
+                    ( Model
                         { rec
                             | logInState =
                                 rec.logInState
                                     |> Data.LogInState.addUserWithNameAndLikedProductIds userWithProfile
                         }
+                    , Cmd.none
+                    )
 
                 Err string ->
-                    Model { rec | message = Just ("プロフィール情報の取得に失敗しました" ++ string) }
-            , Cmd.none
-            )
+                    ( Model { rec | message = Just string }
+                    , if string == "他の端末でログインされたので、ログインしなおしてください" then
+                        deleteAllFromLocalStorage ()
+
+                      else
+                        Cmd.none
+                    )
 
         SellProductResponse response ->
             ( case response of

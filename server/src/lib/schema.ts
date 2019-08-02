@@ -911,6 +911,7 @@ const productSearch = makeQueryOrMutationField<
     {
         query: string;
         category: Maybe<type.Category>;
+        categoryGroup: Maybe<type.CategoryGroup>;
         condition: Maybe<type.Condition>;
         school: Maybe<type.School>;
         department: Maybe<type.SchoolAndDepartment>;
@@ -925,7 +926,13 @@ const productSearch = makeQueryOrMutationField<
         },
         category: {
             type: type.categoryGraphQLType,
-            description: "カテゴリーの指定。nullで指定なし"
+            description:
+                "カテゴリーの指定。nullで指定なし。categoryGroupも指定していたらエラー"
+        },
+        categoryGroup: {
+            type: type.categoryGroupGraphQLType,
+            description:
+                "大まかなカテゴリーの指定。nullでしていなし。categoryもしてしていたらエラー"
         },
         condition: {
             type: type.conditionGraphQLType,

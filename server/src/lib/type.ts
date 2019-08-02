@@ -123,7 +123,7 @@ const schoolValues = {
 
 export type School = keyof (typeof schoolValues);
 
-const schoolGraphQLType = new g.GraphQLEnumType({
+export const schoolGraphQLType = new g.GraphQLEnumType({
     name: "School",
     values: schoolValues,
     description: "学群ID"
@@ -482,9 +482,48 @@ export const conditionGraphQLType = new g.GraphQLEnumType({
     description: conditionDescription
 });
 /* ===============================
+ *       Category Group
+ * ===============================
+ */
+const categoryGroupValues = {
+    furniture: {
+        description: "家具"
+    },
+    appliance: {
+        description: "電化製品・電子機器"
+    },
+    fashion: {
+        description: "ファッション"
+    },
+    book: {
+        description: "教科書・本"
+    },
+    vehicle: {
+        description: "自転車・車両"
+    },
+    food: {
+        description: "食料品"
+    },
+    hobby: {
+        description: "ホビー・雑貨"
+    }
+};
+
+export type CategoryGroup = keyof typeof categoryGroupValues;
+
+export const categoryGroupDescription =
+    "商品を分類するカテゴリーの大まかなグループ";
+
+export const categoryGroupGraphQLType = new g.GraphQLEnumType({
+    name: "CategoryGroup",
+    values: categoryGroupValues,
+    description: categoryGroupDescription
+});
+/* ===============================
  *          Category
  * ===============================
  */
+
 const categoryValues = {
     furnitureTable: {
         description: "家具 / 机"
