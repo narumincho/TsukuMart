@@ -20,6 +20,7 @@ import Page.Component.Category
 import Page.Component.LogIn
 import Page.Component.ProductEditor
 import Page.Component.ProductList
+import Page.Component.SchoolSelect
 import Page.Component.University
 import Page.Exhibition
 import Page.History
@@ -1004,6 +1005,16 @@ universityCmdToCmd cmd =
     case cmd of
         Page.Component.University.CmdChangeSelectedIndex { id, index } ->
             changeSelectedIndex { id = id, index = index }
+
+        Page.Component.University.CmdBySchoolSelect c ->
+            schoolSelectCmdToCmd c
+
+
+schoolSelectCmdToCmd : Page.Component.SchoolSelect.Cmd -> Cmd Msg
+schoolSelectCmdToCmd cmd =
+    case cmd of
+        Page.Component.SchoolSelect.CmdChangeSelectedIndex idAndIndex ->
+            changeSelectedIndex idAndIndex
 
 
 productEditorCmdToCmd : Page.Component.ProductEditor.Cmd -> Cmd Msg
