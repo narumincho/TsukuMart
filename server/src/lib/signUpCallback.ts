@@ -380,7 +380,7 @@ export const lineLogInReceiver = async (
     if (!(await database.checkExistsLogInState(state, "line"))) {
         console.log("lineのログインで生成していないstateを指定された", state);
         response.send(
-            `LINE LogIn Error: definy do not generate state =${state}`
+            `LINE LogIn Error: tsukumart do not generate state =${state}`
         );
         return;
     }

@@ -21,6 +21,7 @@ const twitterLogInTokenSecretDocumentRef: FirebaseFirestore.DocumentReference = 
     .collection("twitterState")
     .doc("last");
 const lineLogInStateCollection = dataBase.collection("lineState");
+const lineNotifyStateCollection = dataBase.collection("lineNotifyState");
 const productCollectionRef = dataBase.collection("product");
 const tradeCollectionRef = dataBase.collection("trade");
 const contentSecurityPolicyReportRef = dataBase.collection(
@@ -804,6 +805,13 @@ export const generateAndWriteLineLogInState = async (): Promise<string> =>
     (await lineLogInStateCollection.add({})).id;
 
 /**
+ * LINE Notifyの、CSRF攻撃に対応するためのトークンを生成して保存する
+ * リプレイアタックを防いだり、他のサーバーがつくマートのクライアントIDを使って発行しても自分が発行したものと見比べて識別できるようにする
+ */
+export const generateAndWriteLineNotifyState = async (): Promise<string> =>
+    (await lineNotifyStateCollection.add({})).id;
+
+/**
  * TwitterのTokenSecretを上書き保存する
  */
 export const writeTwitterLogInTokenSecret = async (
@@ -870,6 +878,22 @@ export const getTwitterLastTokenSecret = async (): Promise<string> => {
         throw new Error("Twitterの最後に保存したtokenSecretがない");
     }
     return lastData.tokenSecret;
+};
+
+/**
+ * LINE Notifyへのstateが存在することを確認し、存在するなら削除する
+ */
+export const getLineNotifyStateAndDelete = async (
+    state: string
+): Promise<boolean> => {
+    const docRef: FirebaseFirestore.DocumentReference = lineNotifyStateCollection.doc(
+        state
+    );
+    const exists = (await docRef.get()).exists;
+    if (exists) {
+        await docRef.delete();
+    }
+    return exists;
 };
 
 /**

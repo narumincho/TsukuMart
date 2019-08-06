@@ -3,6 +3,7 @@ import * as graphqlExpress from "express-graphql";
 import * as database from "./lib/database";
 import * as databaseLow from "./lib/databaseLow";
 import * as signUpCallback from "./lib/signUpCallback";
+import * as lineNotify from "./lib/lineNotify";
 import * as libSchema from "./lib/schema";
 
 console.log("run index.js 2019-05-27");
@@ -75,19 +76,31 @@ export const api = functions
 /** ソーシャルログインをしたあとのリダイレクト先 */
 export const logInReceiver = functions
     .region("asia-northeast1")
-    .https.onRequest(async (request, response) => {
-        switch (request.path) {
-            case "/google":
-                await signUpCallback.googleLogInReceiver(request, response);
-            case "/gitHub":
-                await signUpCallback.gitHubLogInReceiver(request, response);
-            case "/twitter":
-                await signUpCallback.twitterLogInReceiver(request, response);
-            case "/line":
-                await signUpCallback.lineLogInReceiver(request, response);
+    .https.onRequest(
+        async (request, response): Promise<void> => {
+            switch (request.path) {
+                case "/google":
+                    await signUpCallback.googleLogInReceiver(request, response);
+                case "/gitHub":
+                    await signUpCallback.gitHubLogInReceiver(request, response);
+                case "/twitter":
+                    await signUpCallback.twitterLogInReceiver(
+                        request,
+                        response
+                    );
+                case "/line":
+                    await signUpCallback.lineLogInReceiver(request, response);
+            }
         }
-    });
+    );
 
+export const notifyCallBack = functions
+    .region("asia-northeast1")
+    .https.onRequest(
+        async (request, response): Promise<void> => {
+            await lineNotify.callBack(request, response);
+        }
+    );
 /* =====================================================================
  *                       ユーザーの画像などを返す
  * =====================================================================

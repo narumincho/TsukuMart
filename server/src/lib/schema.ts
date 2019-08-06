@@ -1185,6 +1185,24 @@ const getLogInUrl = makeQueryOrMutationField<
         "新規登録かログインするためのURLを得る。受け取ったURLをlocation.hrefに代入するとかして、各サービスの認証画面へ"
 });
 
+const getLineNotifyUrl = makeQueryOrMutationField<{}, URL>({
+    type: g.GraphQLNonNull(type.urlGraphQLType),
+    args: {},
+    resolve: async (source, args, context, info) => {
+        return UtilUrl.fromStringWithQuery(
+            "notify-bot.line.me/oauth/authorize",
+            new Map([
+                ["response_type", "code"],
+                ["client_id", key.lineNotifyClientId],
+                ["redirect_uri", key.lineNotifyRedirectUri],
+                ["scope", "notify"],
+                ["state", await database.generateAndWriteLineNotifyState()]
+            ])
+        );
+    },
+    description: "LINE Notifyを登録するためのURLを取得する"
+});
+
 /**
  * ユーザー情報を登録する
  */
@@ -1776,6 +1794,7 @@ export const schema = new g.GraphQLSchema({
         description: "データを作成、更新ができる",
         fields: {
             getLogInUrl,
+            getLineNotifyUrl,
             registerSignUpData,
             updateProfile,
             sellProduct,

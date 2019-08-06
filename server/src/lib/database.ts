@@ -3,7 +3,6 @@ import * as databaseLow from "./databaseLow";
 import * as key from "./key";
 import * as type from "./type";
 import Maybe from "graphql/tsutils/Maybe";
-import { database } from "firebase-admin";
 
 /**
  * 指定したStateがつくマート自身が発行したものかどうか調べ、あったらそのStateを削除する
@@ -26,6 +25,14 @@ export const checkExistsLogInState = async (
         }
     }
 };
+
+/**
+ * 指定したstateがつくマートが発行したものかどうか調べ、あったらそのstateを削除する
+ * @param state
+ */
+export const checkExistsLineNotifyState = async (
+    state: string
+): Promise<boolean> => databaseLow.getLineNotifyStateAndDelete(state);
 
 /** 最後に保存したTokenSecretを取得する */
 export const getTwitterLastTokenSecret = async (): Promise<string> =>
@@ -59,6 +66,13 @@ export const generateAndWriteGitHubLogInState = async (): Promise<string> =>
  */
 export const generateAndWriteLineLogInState = async (): Promise<string> =>
     await databaseLow.generateAndWriteLineLogInState();
+
+/**
+ * LINE Notifyの、CSRF攻撃に対応するためのトークンを生成して保存する
+ * リプレイアタックを防いだり、他のサーバーがつくマートのクライアントIDを使って発行しても自分が発行したものと見比べて識別できるようにする
+ */
+export const generateAndWriteLineNotifyState = async (): Promise<string> =>
+    await databaseLow.generateAndWriteLineNotifyState();
 
 /**
  * ユーザー情報を入力する前のユーザーを保存する
