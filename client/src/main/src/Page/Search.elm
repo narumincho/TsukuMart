@@ -12,7 +12,7 @@ type Model
     = Model
         { query : String
         , categorySelect : Page.Component.Category.Model
-        , universitySelect : SearchCondition.UniversitySelect
+        , universitySelect : SearchCondition.UniversityCondition
         }
 
 
@@ -32,12 +32,12 @@ initModel : ( Model, List Cmd )
 initModel =
     let
         ( categoryModel, categoryCmds ) =
-            Page.Component.Category.initModelWithSearchCondition SearchCondition.CategorySelectNone
+            Page.Component.Category.initModelWithSearchCondition SearchCondition.CategoryNone
     in
     ( Model
         { query = ""
         , categorySelect = categoryModel
-        , universitySelect = SearchCondition.UniversitySelectNone
+        , universitySelect = SearchCondition.UniversityNone
         }
     , categoryCmds |> List.map CmdByCategory
     )
@@ -136,7 +136,7 @@ viewBody (Model rec) =
                     (SearchCondition.init
                         rec.query
                         (Page.Component.Category.getSelect rec.categorySelect)
-                        SearchCondition.UniversitySelectNone
+                        SearchCondition.UniversityNone
                     )
                 )
             )

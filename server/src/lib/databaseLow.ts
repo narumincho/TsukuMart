@@ -34,7 +34,7 @@ export type UserData = {
     logInAccountServiceId: string;
     displayName: string;
     imageId: string;
-    schoolAndDepartment: type.SchoolAndDepartment | null;
+    schoolAndDepartment: type.Department | null;
     graduate: type.Graduate | null;
     introduction: string;
     lastAccessTokenId: string;
@@ -369,7 +369,7 @@ type UserBeforeEmailVerificationData = {
     firebaseAuthUserId: string;
     name: string;
     imageId: string;
-    schoolAndDepartment: type.SchoolAndDepartment | null;
+    schoolAndDepartment: type.Department | null;
     graduate: type.Graduate | null;
     email: string;
 };

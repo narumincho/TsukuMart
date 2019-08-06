@@ -1335,13 +1335,13 @@ searchProducts condition callBack =
                     [ ( "query", GraphQLString (SearchCondition.getQuery condition) )
                     ]
                         ++ (case SearchCondition.getCategory condition of
-                                SearchCondition.CategorySelectNone ->
+                                SearchCondition.CategoryNone ->
                                     []
 
-                                SearchCondition.CategorySelectGroup group ->
+                                SearchCondition.CategoryGroup group ->
                                     []
 
-                                SearchCondition.CategorySelectCategory category ->
+                                SearchCondition.CategoryCategory category ->
                                     [ ( "category", GraphQLEnum (Category.toIdString category) )
                                     ]
                            )

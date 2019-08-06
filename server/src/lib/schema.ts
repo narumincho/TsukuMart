@@ -914,7 +914,7 @@ const productSearch = makeQueryOrMutationField<
         categoryGroup: Maybe<type.CategoryGroup>;
         condition: Maybe<type.Condition>;
         school: Maybe<type.School>;
-        department: Maybe<type.SchoolAndDepartment>;
+        department: Maybe<type.Department>;
         graduate: Maybe<type.Graduate>;
     },
     Array<type.ProductInternal>
@@ -939,25 +939,89 @@ const productSearch = makeQueryOrMutationField<
             description: "商品の品質状態の指定。nullで指定なし"
         },
         school: {
-            type: type.schoolAndDepartmentGraphQLType,
-            description:
-                "出品者の学群の指定。nullで指定なし。departmentも指定していたらエラー"
+            type: type.departmentGraphQLType,
+            description: "出品者の学群の指定。nullで指定なし。"
         },
         department: {
-            type: type.schoolAndDepartmentGraphQLType,
+            type: type.departmentGraphQLType,
             description:
-                "出品者の学群学類の指定。nullで指定なし。schoolも指定していたらエラー"
+                "出品者の学群学類の指定。nullで指定なし。schoolを指定していたら無視される"
         },
         graduate: {
             type: type.graduateGraphQLType,
-            description: "出品者の研究科の指定。nullで指定なし"
+            description:
+                "出品者の研究科の指定。nullで指定なし。schoolかdepartmentを指定していたら無視される"
         }
     },
     type: g.GraphQLNonNull(g.GraphQLList(g.GraphQLNonNull(productGraphQLType))),
-    resolve: async (source, args, context, info) =>
-        await database.productSearch(args.query, args.category, args.condition),
+    resolve: async (source, args, context, info) => {
+        return await database.productSearch({
+            query: args.query,
+            category: toCategoryCondition(args.category, args.categoryGroup),
+            university: toUniversityCondition(
+                args.school,
+                args.department,
+                args.graduate
+            )
+        });
+    },
     description: "商品を検索で探す"
 });
+
+const toCategoryCondition = (
+    category: Maybe<type.Category>,
+    categoryGroup: Maybe<type.CategoryGroup>
+): database.CategoryCondition | null => {
+    if (
+        category !== null &&
+        category !== undefined &&
+        categoryGroup !== null &&
+        categoryGroup !== undefined
+    ) {
+        throw new Error(
+            "categoryとcategoryGroupを同時に指定することはできません"
+        );
+    }
+    if (category !== null && category !== undefined) {
+        return {
+            c: "category",
+            v: category
+        };
+    }
+    if (categoryGroup !== null && categoryGroup !== undefined) {
+        return {
+            c: "group",
+            v: categoryGroup
+        };
+    }
+    return null;
+};
+
+const toUniversityCondition = (
+    school: Maybe<type.School>,
+    department: Maybe<type.Department>,
+    graduate: Maybe<type.Graduate>
+): database.UniversityCondition | null => {
+    if (school !== null && school !== undefined) {
+        return {
+            c: "school",
+            v: school
+        };
+    }
+    if (department !== null && department !== undefined) {
+        return {
+            c: "department",
+            v: department
+        };
+    }
+    if (graduate !== null && graduate !== undefined) {
+        return {
+            c: "graduate",
+            v: graduate
+        };
+    }
+    return null;
+};
 
 const productAll = makeQueryOrMutationField<{}, Array<type.ProductInternal>>({
     args: {},

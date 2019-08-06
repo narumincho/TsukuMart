@@ -3,6 +3,7 @@ import * as databaseLow from "./databaseLow";
 import * as key from "./key";
 import * as type from "./type";
 import Maybe from "graphql/tsutils/Maybe";
+import { database } from "firebase-admin";
 
 /**
  * 指定したStateがつくマート自身が発行したものかどうか調べ、あったらそのStateを削除する
@@ -626,50 +627,156 @@ export const getProduct = async (id: string): Promise<ProductReturnLowCost> =>
 
 export type SearchCondition = {
     query: string;
-    category:
-        | {
-              c: "category";
-              v: type.Category;
-          }
-        | {
-              c: "group";
-              v: type.CategoryGroup;
-          };
-    university:
-        | {
-              c: "department";
-              v: type.SchoolAndDepartment;
-          }
-        | {
-              c: "school";
-              v: type.School;
-          }
-        | {
-              c: "graduate";
-              v: type.Graduate;
-          };
+    category: CategoryCondition | null;
+    university: UniversityCondition | null;
 };
 
+export type CategoryCondition =
+    | {
+          c: "category";
+          v: type.Category;
+      }
+    | {
+          c: "group";
+          v: type.CategoryGroup;
+      };
+
+export type UniversityCondition =
+    | {
+          c: "department";
+          v: type.Department;
+      }
+    | {
+          c: "school";
+          v: type.School;
+      }
+    | {
+          c: "graduate";
+          v: type.Graduate;
+      };
+
 export const productSearch = async (
-    query: string,
-    category: Maybe<type.Category>,
-    condition: Maybe<type.Condition>
-): Promise<Array<ProductReturnLowCost>> =>
-    (await databaseLow.getAllProductData())
-        .filter(
-            ({ id, data }) =>
-                (typeof category === "string"
-                    ? data.category === category
-                    : true) &&
-                (typeof condition === "string"
-                    ? data.condition === condition
-                    : true) &&
-                (normalization(data.name).includes(normalization(query)) ||
-                    normalization(data.description).includes(
-                        normalization(query)
-                    ))
-        )
-        .map(productReturnLowCostFromDatabaseLow);
+    condition: SearchCondition
+): Promise<Array<ProductReturnLowCost>> => {
+    const productDataList = await getProductListFromUniversity(
+        condition.university
+    );
+    const productsFilteredCategory =
+        condition.category !== null
+            ? filterProductsByCategoryCondition(
+                  condition.category,
+                  productDataList
+              )
+            : productDataList;
+
+    return productDataList.filter(
+        product =>
+            normalization(product.name).includes(
+                normalization(condition.query)
+            ) ||
+            normalization(product.description).includes(
+                normalization(condition.query)
+            )
+    );
+};
+
+const getProductListFromUniversity = async (
+    universityCondition: UniversityCondition | null
+): Promise<Array<ProductReturnLowCost>> => {
+    if (universityCondition === null) {
+        return (await databaseLow.getAllProductData()).map(
+            productReturnLowCostFromDatabaseLow
+        );
+    }
+    const productList: Array<ProductReturnLowCost> = [];
+    const userList = await getUserListFromUniversityCondition(
+        universityCondition
+    );
+    for (const user of userList) {
+        for (const product of user.soldProductAll) {
+            productList.push(
+                productReturnLowCostFromDatabaseLow({
+                    id: product.id,
+                    data: await databaseLow.getProduct(product.id)
+                })
+            );
+        }
+    }
+    return productList;
+};
+
+const getUserListFromUniversityCondition = async (
+    universityCondition: UniversityCondition
+): Promise<Array<UserReturnLowConst>> => {
+    const allUser = (await databaseLow.getAllUserData()).map(
+        databaseLowUserDataToUserDataLowCost
+    );
+    switch (universityCondition.c) {
+        case "department": {
+            return allUser.filter(
+                (e): boolean => {
+                    switch (e.university.c) {
+                        case type.UniversityC.NotGraduate:
+                        case type.UniversityC.GraduateTsukuba:
+                            return (
+                                e.university.schoolAndDepartment ===
+                                universityCondition.v
+                            );
+                        case type.UniversityC.GraduateNotTsukuba:
+                            return false;
+                    }
+                }
+            );
+        }
+        case "school": {
+            const departmentList = type.departmentListFromSchool(
+                universityCondition.v
+            );
+            return allUser.filter(
+                (u): boolean => {
+                    switch (u.university.c) {
+                        case type.UniversityC.NotGraduate:
+                        case type.UniversityC.GraduateTsukuba:
+                            return departmentList.includes(
+                                u.university.schoolAndDepartment
+                            );
+                        case type.UniversityC.GraduateNotTsukuba:
+                            return false;
+                    }
+                }
+            );
+        }
+        case "graduate":
+            return allUser.filter(
+                (u): boolean => {
+                    switch (u.university.c) {
+                        case type.UniversityC.NotGraduate:
+                            return false;
+                        case type.UniversityC.GraduateTsukuba:
+                        case type.UniversityC.GraduateNotTsukuba:
+                            return (
+                                u.university.graduate === universityCondition.v
+                            );
+                    }
+                }
+            );
+    }
+};
+
+const filterProductsByCategoryCondition = (
+    condition: CategoryCondition,
+    products: Array<ProductReturnLowCost>
+): Array<ProductReturnLowCost> => {
+    switch (condition.c) {
+        case "category":
+            return products.filter(product => product.category === condition.v);
+        case "group":
+            const categoryList = type.categoryListFromGroup(condition.v);
+            return products.filter(product =>
+                categoryList.includes(product.category)
+            );
+    }
+};
 
 /**
  * 検索用に正規化する。カタカナをひらがなに、アルファベットの大文字を小文字に

@@ -1,7 +1,7 @@
 module Data.SearchCondition exposing
-    ( CategorySelect(..)
+    ( CategoryCondition(..)
     , Condition
-    , UniversitySelect(..)
+    , UniversityCondition(..)
     , getCategory
     , getQuery
     , getUniversitySelect
@@ -15,12 +15,12 @@ import Data.University
 type Condition
     = Condition
         { query : String
-        , category : CategorySelect
-        , university : UniversitySelect
+        , category : CategoryCondition
+        , university : UniversityCondition
         }
 
 
-init : String -> CategorySelect -> UniversitySelect -> Condition
+init : String -> CategoryCondition -> UniversityCondition -> Condition
 init query category university =
     Condition
         { query = query
@@ -34,24 +34,24 @@ getQuery (Condition { query }) =
     query
 
 
-getCategory : Condition -> CategorySelect
+getCategory : Condition -> CategoryCondition
 getCategory (Condition { category }) =
     category
 
 
-getUniversitySelect : Condition -> UniversitySelect
+getUniversitySelect : Condition -> UniversityCondition
 getUniversitySelect (Condition { university }) =
     university
 
 
-type CategorySelect
-    = CategorySelectNone
-    | CategorySelectGroup Data.Category.Group
-    | CategorySelectCategory Data.Category.Category
+type CategoryCondition
+    = CategoryNone
+    | CategoryGroup Data.Category.Group
+    | CategoryCategory Data.Category.Category
 
 
-type UniversitySelect
-    = UniversitySelectNone
-    | UniversitySelectDepartment Data.University.Department
-    | UniversitySelectSchool Data.University.School
-    | UniversitySelectGraduate Data.University.Graduate
+type UniversityCondition
+    = UniversityNone
+    | UniversityDepartment Data.University.Department
+    | UniversitySchool Data.University.School
+    | UniversityGraduate Data.University.Graduate

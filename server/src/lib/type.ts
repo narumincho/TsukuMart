@@ -110,9 +110,15 @@ export const checkAccountServiceValues = (
  * ====================================
  */
 const schoolValues = {
-    humcul: { description: "人文・文化学群" },
-    socint: { description: "社会・国際学群" },
-    human: { description: "人間学群" },
+    humcul: {
+        description: "人文・文化学群",
+        department: ["humanity", "culture", "japanese"]
+    },
+    socint: { description: "社会・国際学群", department: ["social", "cis"] },
+    human: {
+        description: "人間学群",
+        department: ["education", "psyche", "disability"]
+    },
     life: { description: "生命環境学群" },
     sse: { description: "理工学群" },
     info: { description: "情報学群" },
@@ -129,7 +135,7 @@ export const schoolGraphQLType = new g.GraphQLEnumType({
     description: "学群ID"
 });
 
-const schoolAndDepartmentValues = {
+const departmentValues = {
     humanity: { description: "人文・文化学群 / 人文学類" },
     culture: { description: "人文・文化学群 / 比較文化学類" },
     japanese: {
@@ -159,13 +165,36 @@ const schoolAndDepartmentValues = {
     sport: { description: "体育専門学群" }
 };
 
-export type SchoolAndDepartment = keyof (typeof schoolAndDepartmentValues);
+export type Department = keyof (typeof departmentValues);
 
-export const schoolAndDepartmentGraphQLType = new g.GraphQLEnumType({
-    name: "SchoolAndDepartment",
-    values: schoolAndDepartmentValues,
-    description: "学群学類ID"
+export const departmentGraphQLType = new g.GraphQLEnumType({
+    name: "Department",
+    values: departmentValues,
+    description: "学類ID"
 });
+
+export const departmentListFromSchool = (school: School): Array<Department> => {
+    switch (school) {
+        case "humcul":
+            return ["humanity", "culture", "japanese"];
+        case "socint":
+            return ["social", "cis"];
+        case "human":
+            return ["education", "psyche", "disability"];
+        case "life":
+            return ["biol", "bres", "earth"];
+        case "sse":
+            return ["math", "phys", "chem", "coens", "esys", "pandps"];
+        case "info":
+            return ["coins", "mast", "klis"];
+        case "med":
+            return ["med", "nurse", "ms"];
+        case "aandd":
+            return ["aandd"];
+        case "sport":
+            return ["sport"];
+    }
+};
 
 const graduateValues = {
     education: { description: "教育研究科" },
@@ -187,25 +216,24 @@ export const graduateGraphQLType = new g.GraphQLEnumType({
 });
 
 export type UniversityInternal = {
-    schoolAndDepartment: Maybe<SchoolAndDepartment>;
+    schoolAndDepartment: Maybe<Department>;
     graduate: Maybe<Graduate>;
 };
 
 export type University =
     | {
           c: UniversityC.GraduateTsukuba;
-          schoolAndDepartment: SchoolAndDepartment;
+          schoolAndDepartment: Department;
           graduate: Graduate;
       }
     | { c: UniversityC.GraduateNotTsukuba; graduate: Graduate }
-    | { c: UniversityC.NotGraduate; schoolAndDepartment: SchoolAndDepartment };
+    | { c: UniversityC.NotGraduate; schoolAndDepartment: Department };
 
-const enum UniversityC {
+export const enum UniversityC {
     GraduateTsukuba,
     GraduateNotTsukuba,
     NotGraduate
 }
-
 /**
  *
  * @param universityUnsafe
@@ -244,7 +272,7 @@ export const universityFromInternal = (
 export const universityToInternal = (
     university: University
 ): {
-    schoolAndDepartment: SchoolAndDepartment | null;
+    schoolAndDepartment: Department | null;
     graduate: Graduate | null;
 } => {
     switch (university.c) {
@@ -268,7 +296,7 @@ export const universityToInternal = (
 
 const universityField = {
     schoolAndDepartment: {
-        type: schoolAndDepartmentGraphQLType,
+        type: departmentGraphQLType,
         description: "学群学類ID 筑波大学以外からの編入ならnull"
     },
     graduate: {
@@ -672,6 +700,65 @@ export const categoryGraphQLType = new g.GraphQLEnumType({
     description: categoryDescription
 });
 
+export const categoryListFromGroup = (
+    category: CategoryGroup
+): Array<Category> => {
+    switch (category) {
+        case "furniture":
+            return [
+                "furnitureTable",
+                "furnitureChair",
+                "furnitureChest",
+                "furnitureBed",
+                "furnitureKitchen",
+                "furnitureCurtain",
+                "furnitureMat",
+                "furnitureOther"
+            ];
+        case "appliance":
+            return [
+                "applianceRefrigerator",
+                "applianceMicrowave",
+                "applianceWashing",
+                "applianceVacuum",
+                "applianceTemperature",
+                "applianceHumidity",
+                "applianceLight",
+                "applianceTv",
+                "applianceSpeaker",
+                "applianceSmartphone",
+                "appliancePc",
+                "applianceCommunication",
+                "applianceOther"
+            ];
+        case "fashion":
+            return ["fashionMens", "fashionLadies", "fashionOther"];
+        case "book":
+            return ["bookTextbook", "bookBook", "bookComic", "bookOther"];
+        case "vehicle":
+            return [
+                "vehicleBicycle",
+                "vehicleBike",
+                "vehicleCar",
+                "vehicleOther"
+            ];
+        case "food":
+            return ["foodFood", "foodBeverage", "foodOther"];
+        case "hobby":
+            return [
+                "hobbyDisc",
+                "hobbyInstrument",
+                "hobbyCamera",
+                "hobbyGame",
+                "hobbySport",
+                "hobbyArt",
+                "hobbyAccessory",
+                "hobbyDaily",
+                "hobbyHandmade",
+                "hobbyOther"
+            ];
+    }
+};
 /* ===============================
  *             Trade
  * ===============================

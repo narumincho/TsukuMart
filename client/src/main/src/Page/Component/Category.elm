@@ -68,13 +68,13 @@ initModelWithCategorySelect category =
     )
 
 
-initModelWithSearchCondition : Data.SearchCondition.CategorySelect -> ( Model, List Cmd )
+initModelWithSearchCondition : Data.SearchCondition.CategoryCondition -> ( Model, List Cmd )
 initModelWithSearchCondition categorySelect =
     case categorySelect of
-        Data.SearchCondition.CategorySelectNone ->
+        Data.SearchCondition.CategoryNone ->
             initModel
 
-        Data.SearchCondition.CategorySelectGroup group ->
+        Data.SearchCondition.CategoryGroup group ->
             ( Model (GroupSelect group)
             , [ CmdChangeSelectedIndex
                     { id = groupSelectId
@@ -83,21 +83,21 @@ initModelWithSearchCondition categorySelect =
               ]
             )
 
-        Data.SearchCondition.CategorySelectCategory category ->
+        Data.SearchCondition.CategoryCategory category ->
             initModelWithCategorySelect category
 
 
-getSelect : Model -> Data.SearchCondition.CategorySelect
+getSelect : Model -> Data.SearchCondition.CategoryCondition
 getSelect (Model select) =
     case select of
         None ->
-            Data.SearchCondition.CategorySelectNone
+            Data.SearchCondition.CategoryNone
 
         GroupSelect group ->
-            Data.SearchCondition.CategorySelectGroup group
+            Data.SearchCondition.CategoryGroup group
 
         CategorySelect category ->
-            Data.SearchCondition.CategorySelectCategory category
+            Data.SearchCondition.CategoryCategory category
 
 
 getCategory : Model -> Maybe Category.Category
