@@ -6,7 +6,7 @@ import * as signUpCallback from "./lib/signUpCallback";
 import * as lineNotify from "./lib/lineNotify";
 import * as libSchema from "./lib/schema";
 
-console.log("run index.js 2019-05-27");
+console.log("サーバーのプログラムが読み込まれた!");
 
 export const indexHtml = functions
     .region("us-central1")

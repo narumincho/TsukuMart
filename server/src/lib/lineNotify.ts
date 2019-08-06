@@ -25,49 +25,58 @@ export const callBack = async (
         return;
     }
 
-    const lineData = await responseToAccessToken(
-        await axios.post(
-            "https://notify-bot.line.me/oauth/token",
+    try {
+        const lineData = await responseToAccessToken(
+            await axios.post(
+                "https://notify-bot.line.me/oauth/token",
+                new URLSearchParams(
+                    new Map([
+                        ["grant_type", "authorization_code"],
+                        ["code", code],
+                        ["redirect_uri", key.lineNotifyRedirectUri],
+                        ["client_id", key.lineNotifyClientId],
+                        ["client_secret", key.lineNotifySecret]
+                    ])
+                ).toString(),
+                {
+                    headers: {
+                        "Content-Type": "application/x-www-form-urlencoded"
+                    }
+                }
+            )
+        );
+
+        console.log("LINE Notify用のトークンを得た");
+        const messageResponse = await axios.post(
+            "https://notify-api.line.me/api/notify",
             new URLSearchParams(
                 new Map([
-                    ["grant_type", "authorization_code"],
-                    ["code", code],
-                    ["redirect_uri", key.lineNotifyRedirectUri],
-                    ["client_id", key.lineNotifyClientId],
-                    ["client_secret	", key.lineNotifySecret]
+                    ["message", "つくマートからのメッセージだ!!!"],
+                    ["stickerPackageId", "2"],
+                    ["stickerId", "171"]
                 ])
             ).toString(),
             {
                 headers: {
-                    "Content-Type": "application/x-www-form-urlencoded"
+                    "Content-Type": "application/x-www-form-urlencoded",
+                    Authorization: "Bearer " + lineData
                 }
             }
-        )
-    );
+        );
+        console.log("メッセージを送信した!");
+        response.send(lineData);
+    } catch (error) {
+        console.log("LINE Notifyのエラーだな");
+        console.log(
+            (error.response as AxiosResponse<{
+                status: number;
+                message: string;
+            }>).data
+        );
 
-    console.log("LINE Notify用のトークンを得た");
-    console.log(lineData);
-    const messageResponse = await axios.post(
-        "https://notify-api.line.me/api/notify",
-        new URLSearchParams(
-            new Map([
-                ["message", "つくマートからのメッセージだ!!!"],
-                ["stickerPackageId", "2"],
-                ["stickerId", "171"]
-            ])
-        ).toString(),
-        {
-            headers: {
-                "Content-Type": "application/x-www-form-urlencoded",
-                Authorization: "Bearer " + lineData
-            }
-        }
-    );
-    console.log("メッセージを送信した!");
-    console.log(messageResponse.status);
-    console.log(messageResponse.headers["X-RateLimit-Limit"]);
-
-    response.send(lineData);
+        response.send("LINE Notifyのエラーだ。悲しい😥");
+        return;
+    }
 };
 
 const responseToAccessToken = (
