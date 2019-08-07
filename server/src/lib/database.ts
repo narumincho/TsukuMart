@@ -3,6 +3,7 @@ import * as databaseLow from "./databaseLow";
 import * as key from "./key";
 import * as type from "./type";
 import Maybe from "graphql/tsutils/Maybe";
+import * as lineNotify from "./lineNotify";
 
 /**
  * 指定したStateがつくマート自身が発行したものかどうか調べ、あったらそのStateを削除する
@@ -15,13 +16,13 @@ export const checkExistsLogInState = async (
 ): Promise<boolean> => {
     switch (service) {
         case "google": {
-            return databaseLow.getGoogleLogInStateAndDelete(state);
+            return databaseLow.existsGoogleLogInStateAndDelete(state);
         }
         case "gitHub": {
-            return databaseLow.getGitHubLogInStateAndDelete(state);
+            return databaseLow.existsGitHubLogInStateAndDelete(state);
         }
         case "line": {
-            return databaseLow.getLineLogInStateAndDelete(state);
+            return databaseLow.existsLineLogInStateAndDelete(state);
         }
     }
 };
@@ -32,7 +33,8 @@ export const checkExistsLogInState = async (
  */
 export const checkExistsLineNotifyState = async (
     state: string
-): Promise<boolean> => databaseLow.getLineNotifyStateAndDelete(state);
+): Promise<string | null> =>
+    databaseLow.existsLineNotifyStateAndDeleteAndGetUserId(state);
 
 /** 最後に保存したTokenSecretを取得する */
 export const getTwitterLastTokenSecret = async (): Promise<string> =>
@@ -71,8 +73,9 @@ export const generateAndWriteLineLogInState = async (): Promise<string> =>
  * LINE Notifyの、CSRF攻撃に対応するためのトークンを生成して保存する
  * リプレイアタックを防いだり、他のサーバーがつくマートのクライアントIDを使って発行しても自分が発行したものと見比べて識別できるようにする
  */
-export const generateAndWriteLineNotifyState = async (): Promise<string> =>
-    await databaseLow.generateAndWriteLineNotifyState();
+export const generateAndWriteLineNotifyState = async (
+    userId: string
+): Promise<string> => await databaseLow.generateAndWriteLineNotifyState(userId);
 
 /**
  * ユーザー情報を入力する前のユーザーを保存する
@@ -181,7 +184,8 @@ export const getAccessTokenFromLogInAccountService = async (
                 traded: [],
                 trading: [],
                 soldProducts: [],
-                boughtProducts: []
+                boughtProducts: [],
+                notifyToken: null
             });
             await databaseLow.deleteUserBeforeEmailVerification(
                 logInAccountServiceId
@@ -351,6 +355,21 @@ export const addCommentProduct = async (
         speakerDisplayName: userData.displayName,
         speakerImageId: userData.imageId
     });
+    const productData = await databaseLow.getProduct(productId);
+    const notifyAccessToken = (await databaseLow.getUserData(
+        productData.sellerId
+    )).notifyToken;
+    if (notifyAccessToken !== null) {
+        lineNotify.sendMessage(
+            `${userData.displayName}さんが${
+                productData.name
+            }にコメントをつけました。\n${
+                data.body
+            }\n 商品ページ https://tsukumart.com/product/${productId}`,
+            false,
+            notifyAccessToken
+        );
+    }
     return productReturnLowCostFromDatabaseLow({
         id: productId,
         data: await databaseLow.getProduct(productId)
@@ -1266,4 +1285,13 @@ export const finishTrade = async (userId: string, tradeId: string) => {
         });
     }
     throw new Error("購入者じゃない人が、取引を完了させようとした");
+};
+
+export const saveNotifyToken = async (
+    userId: string,
+    token: string
+): Promise<void> => {
+    return await databaseLow.updateUserData(userId, {
+        notifyToken: token
+    });
 };

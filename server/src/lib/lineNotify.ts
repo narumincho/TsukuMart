@@ -17,7 +17,9 @@ export const callBack = async (
         response.redirect("https://tsukumart.com/");
         return;
     }
-    if (!(await database.checkExistsLineNotifyState(state))) {
+    const userId = await database.checkExistsLineNotifyState(state);
+
+    if (userId === null) {
         console.log("LINE Notifyで生成していないstateを指定された", state);
         response.send(
             `LINE Notify Error: tsukumart do not generate state =${state}`
@@ -26,7 +28,7 @@ export const callBack = async (
     }
 
     try {
-        const lineData = await responseToAccessToken(
+        const accessToken = await responseToAccessToken(
             await axios.post(
                 "https://notify-bot.line.me/oauth/token",
                 new URLSearchParams(
@@ -47,24 +49,15 @@ export const callBack = async (
         );
 
         console.log("LINE Notify用のトークンを得た");
-        const messageResponse = await axios.post(
-            "https://notify-api.line.me/api/notify",
-            new URLSearchParams(
-                new Map([
-                    ["message", "つくマートからのメッセージだ!!!"],
-                    ["stickerPackageId", "2"],
-                    ["stickerId", "171"]
-                ])
-            ).toString(),
-            {
-                headers: {
-                    "Content-Type": "application/x-www-form-urlencoded",
-                    Authorization: "Bearer " + lineData
-                }
-            }
+        await sendMessage(
+            "つくマートから通知を登録できたことをお知らせします!",
+            true,
+            accessToken
         );
         console.log("メッセージを送信した!");
-        response.send(lineData);
+
+        await database.saveNotifyToken(userId, accessToken);
+        response.redirect("https://tsukumart.com/");
     } catch (error) {
         console.log("LINE Notifyのエラーだな");
         console.log(
@@ -83,4 +76,32 @@ const responseToAccessToken = (
     response: AxiosResponse<{ access_token: string }>
 ) => {
     return response.data.access_token;
+};
+
+export const sendMessage = async (
+    message: string,
+    sticker: boolean,
+    accessToken: string
+): Promise<void> => {
+    const args = new Map(
+        sticker
+            ? [
+                  ["message", message],
+                  ["stickerPackageId", "2"],
+                  ["stickerId", "171"]
+              ]
+            : [["message", message]]
+    );
+    await axios
+        .post(
+            "https://notify-api.line.me/api/notify",
+            new URLSearchParams(new Map([["message", message]])).toString(),
+            {
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                    Authorization: "Bearer " + accessToken
+                }
+            }
+        )
+        .catch(e => e.response);
 };

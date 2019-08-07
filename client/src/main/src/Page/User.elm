@@ -51,6 +51,7 @@ type Cmd
     | CmdByUniversity UniversityComponent.Cmd
     | CmdLogOut
     | CmdAddLogMessage String
+    | CmdJumpToLineNotifySetting Api.Token
 
 
 type Msg
@@ -63,6 +64,7 @@ type Msg
     | MsgChangeProfileResponse (Result String User.WithProfile)
     | MsgLogOut
     | MsgUserProfileResponse (Result String User.WithProfile)
+    | MsgToLineNotifySetting Api.Token
 
 
 initModelWithName : User.WithName -> ( Model, List Cmd )
@@ -217,6 +219,11 @@ update msg model =
                     , [ CmdAddLogMessage ("ユーザー情報の取得に失敗しました " ++ string) ]
                     )
 
+        MsgToLineNotifySetting token ->
+            ( model
+            , [ CmdJumpToLineNotifySetting token ]
+            )
+
 
 toEditMode : User.WithProfile -> ( Model, List Cmd )
 toEditMode userWithProfile =
@@ -278,9 +285,9 @@ view logInState isWideScreen model =
     , html =
         [ Page.Style.container
             (case ( logInState, model ) of
-                ( LogInState.Ok { userWithName }, Normal normalUser ) ->
+                ( LogInState.Ok { userWithName, token }, Normal normalUser ) ->
                     if User.withNameGetId userWithName == User.withProfileGetId normalUser then
-                        normalMyProfileView isWideScreen normalUser
+                        normalMyProfileView token isWideScreen normalUser
 
                     else
                         normalView isWideScreen normalUser
@@ -329,11 +336,11 @@ normalView isWideScreen user =
         ++ [ userDataLink (User.withProfileGetId user) ]
 
 
-normalMyProfileView : Bool -> User.WithProfile -> List (Html.Styled.Html Msg)
-normalMyProfileView isWideScreen user =
+normalMyProfileView : Api.Token -> Bool -> User.WithProfile -> List (Html.Styled.Html Msg)
+normalMyProfileView token isWideScreen user =
     userView isWideScreen user
         ++ [ userPrivateDataLink (User.withProfileGetId user) ]
-        ++ [ toEditButton, logOutButton ]
+        ++ [ lineNotifySettingButton token, toEditButton, logOutButton ]
 
 
 {-| ユーザーの情報表示
@@ -488,6 +495,16 @@ userDataLinkItem link text =
             ]
         ]
         [ Html.Styled.text text ]
+
+
+lineNotifySettingButton : Api.Token -> Html.Styled.Html Msg
+lineNotifySettingButton token =
+    Html.Styled.button
+        [ Html.Styled.Attributes.class "mainButton"
+        , Html.Styled.Events.onClick (MsgToLineNotifySetting token)
+        ]
+        [ Html.Styled.text "LINE Notifyで通知を有効にする"
+        ]
 
 
 toEditButton : Html.Styled.Html Msg

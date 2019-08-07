@@ -44,6 +44,7 @@ export type UserData = {
     traded: Array<string>;
     soldProducts: Array<string>;
     boughtProducts: Array<string>;
+    notifyToken: string | null;
 };
 /**
  * ユーザーのデータを取得する
@@ -808,8 +809,10 @@ export const generateAndWriteLineLogInState = async (): Promise<string> =>
  * LINE Notifyの、CSRF攻撃に対応するためのトークンを生成して保存する
  * リプレイアタックを防いだり、他のサーバーがつくマートのクライアントIDを使って発行しても自分が発行したものと見比べて識別できるようにする
  */
-export const generateAndWriteLineNotifyState = async (): Promise<string> =>
-    (await lineNotifyStateCollection.add({})).id;
+export const generateAndWriteLineNotifyState = async (
+    userId: string
+): Promise<string> =>
+    (await lineNotifyStateCollection.add({ userId: userId })).id;
 
 /**
  * TwitterのTokenSecretを上書き保存する
@@ -825,7 +828,7 @@ export const writeTwitterLogInTokenSecret = async (
 /**
  * Googleへのstateが存在することを確認し、存在するなら削除する
  */
-export const getGoogleLogInStateAndDelete = async (
+export const existsGoogleLogInStateAndDelete = async (
     state: string
 ): Promise<boolean> => {
     const docRef: FirebaseFirestore.DocumentReference = googleLogInStateCollection.doc(
@@ -841,7 +844,7 @@ export const getGoogleLogInStateAndDelete = async (
 /**
  * GitHubへのstateが存在することを確認し、存在するなら削除する
  */
-export const getGitHubLogInStateAndDelete = async (
+export const existsGitHubLogInStateAndDelete = async (
     state: string
 ): Promise<boolean> => {
     const docRef: FirebaseFirestore.DocumentReference = gitHubLogInStateCollection.doc(
@@ -857,7 +860,7 @@ export const getGitHubLogInStateAndDelete = async (
 /**
  * LINEへのstateが存在することを確認し、存在するなら削除する
  */
-export const getLineLogInStateAndDelete = async (
+export const existsLineLogInStateAndDelete = async (
     state: string
 ): Promise<boolean> => {
     const docRef: FirebaseFirestore.DocumentReference = lineLogInStateCollection.doc(
@@ -883,17 +886,18 @@ export const getTwitterLastTokenSecret = async (): Promise<string> => {
 /**
  * LINE Notifyへのstateが存在することを確認し、存在するなら削除する
  */
-export const getLineNotifyStateAndDelete = async (
+export const existsLineNotifyStateAndDeleteAndGetUserId = async (
     state: string
-): Promise<boolean> => {
+): Promise<string | null> => {
     const docRef: FirebaseFirestore.DocumentReference = lineNotifyStateCollection.doc(
         state
     );
-    const exists = (await docRef.get()).exists;
-    if (exists) {
-        await docRef.delete();
+    const data = (await docRef.get()).data();
+    if (data === undefined) {
+        return null;
     }
-    return exists;
+    await docRef.delete();
+    return data.userId;
 };
 
 /**

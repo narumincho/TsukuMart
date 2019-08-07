@@ -126,7 +126,7 @@ type Msg
     | HistoryBack
     | PageMsg PageMsg
     | GetNowTime (Result () ( Time.Posix, Time.Zone ))
-    | LogInOrSignUpUrlResponse (Result String Url.Url)
+    | Jump (Result String Url.Url)
 
 
 type PageMsg
@@ -555,7 +555,7 @@ update msg (Model rec) =
                     , Cmd.none
                     )
 
-        LogInOrSignUpUrlResponse result ->
+        Jump result ->
             case result of
                 Ok url ->
                     ( Model rec
@@ -564,7 +564,7 @@ update msg (Model rec) =
 
                 Err string ->
                     ( Model
-                        { rec | message = Just ("ログイン用のURL取得に失敗" ++ string) }
+                        { rec | message = Just ("URL取得に失敗した " ++ string) }
                     , Cmd.none
                     )
 
@@ -883,6 +883,9 @@ userPageCmdToCmd cmd =
             Task.succeed ()
                 |> Task.perform (always (AddLogMessage log))
 
+        Page.User.CmdJumpToLineNotifySetting token ->
+            Api.getLineNotifyUrl token Jump
+
 
 productPageCmdToCmd : Browser.Navigation.Key -> Page.Product.Cmd -> Cmd Msg
 productPageCmdToCmd key cmd =
@@ -984,7 +987,7 @@ logInCmdToCmd : Page.Component.LogIn.Cmd -> Cmd Msg
 logInCmdToCmd cmd =
     case cmd of
         Page.Component.LogIn.CmdLogInOrSignUp service ->
-            Api.logInOrSignUpUrlRequest service LogInOrSignUpUrlResponse
+            Api.getLogInUrl service Jump
 
 
 productListCmdToCmd : Page.Component.ProductList.Cmd -> Cmd Msg

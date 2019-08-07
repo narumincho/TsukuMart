@@ -9,8 +9,6 @@ module Page.Component.LogIn exposing
 
 import Css
 import Data.SocialLoginService
-import Html
-import Html.Attributes
 import Html.Styled
 import Html.Styled.Attributes
 import Html.Styled.Events

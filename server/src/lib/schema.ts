@@ -1185,23 +1185,35 @@ const getLogInUrl = makeQueryOrMutationField<
         "新規登録かログインするためのURLを得る。受け取ったURLをlocation.hrefに代入するとかして、各サービスの認証画面へ"
 });
 
-const getLineNotifyUrl = makeQueryOrMutationField<{}, URL>({
-    type: g.GraphQLNonNull(type.urlGraphQLType),
-    args: {},
-    resolve: async (source, args, context, info) => {
-        return UtilUrl.fromStringWithQuery(
-            "notify-bot.line.me/oauth/authorize",
-            new Map([
-                ["response_type", "code"],
-                ["client_id", key.lineNotifyClientId],
-                ["redirect_uri", key.lineNotifyRedirectUri],
-                ["scope", "notify"],
-                ["state", await database.generateAndWriteLineNotifyState()]
-            ])
-        );
-    },
-    description: "LINE Notifyを登録するためのURLを取得する"
-});
+const getLineNotifyUrl = makeQueryOrMutationField<{ accessToken: string }, URL>(
+    {
+        type: g.GraphQLNonNull(type.urlGraphQLType),
+        args: {
+            accessToken: {
+                type: g.GraphQLNonNull(g.GraphQLString),
+                description: type.accessTokenDescription
+            }
+        },
+        resolve: async (source, args, context, info) => {
+            return UtilUrl.fromStringWithQuery(
+                "notify-bot.line.me/oauth/authorize",
+                new Map([
+                    ["response_type", "code"],
+                    ["client_id", key.lineNotifyClientId],
+                    ["redirect_uri", key.lineNotifyRedirectUri],
+                    ["scope", "notify"],
+                    [
+                        "state",
+                        await database.generateAndWriteLineNotifyState(
+                            await database.verifyAccessToken(args.accessToken)
+                        )
+                    ]
+                ])
+            );
+        },
+        description: "LINE Notifyを登録するためのURLを取得する"
+    }
+);
 
 /**
  * ユーザー情報を登録する

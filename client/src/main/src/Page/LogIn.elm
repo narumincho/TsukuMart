@@ -8,8 +8,6 @@ module Page.LogIn exposing
     )
 
 import BasicParts
-import Html
-import Html.Attributes
 import Html.Styled
 import Page.Component.LogIn as LogInOrSignUp
 import Page.Style

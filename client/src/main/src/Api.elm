@@ -14,6 +14,8 @@ module Api exposing
     , getFreeProductList
     , getHistoryViewProducts
     , getLikedProducts
+    , getLineNotifyUrl
+    , getLogInUrl
     , getMyNameAndLikedProductsId
     , getProduct
     , getProductComments
@@ -25,13 +27,12 @@ module Api exposing
     , getTradingProductList
     , getUserProfile
     , likeProduct
-    , logInOrSignUpUrlRequest
-    , tokenFromString
     , markProductInHistory
     , registerSignUpData
     , searchProducts
     , sellProduct
     , startTrade
+    , tokenFromString
     , tokenToString
     , unlikeProduct
     , updateProduct
@@ -1362,8 +1363,8 @@ searchProducts condition callBack =
 -}
 
 
-logInOrSignUpUrlRequest : Data.SocialLoginService.SocialLoginService -> (Result String Url.Url -> msg) -> Cmd msg
-logInOrSignUpUrlRequest service callBack =
+getLogInUrl : Data.SocialLoginService.SocialLoginService -> (Result String Url.Url -> msg) -> Cmd msg
+getLogInUrl service callBack =
     graphQlApiRequest
         (Mutation
             [ Field
@@ -1404,8 +1405,39 @@ logInOrSignUpUrlResponseToResult =
                         Jd.succeed url
 
                     Nothing ->
-                        Jd.fail "url"
+                        Jd.fail "url format error"
             )
+
+
+
+{- ==============================================================================
+                            LINE Notify での通知設定
+   ==============================================================================
+-}
+
+
+getLineNotifyUrl : Token -> (Result String Url.Url -> msg) -> Cmd msg
+getLineNotifyUrl token =
+    graphQlApiRequest
+        (Mutation
+            [ Field
+                { name = "getLineNotifyUrl"
+                , args = [ ( "accessToken", GraphQLString (tokenToString token) ) ]
+                , return = []
+                }
+            ]
+        )
+        (Jd.field "getLineNotifyUrl" Jd.string
+            |> Jd.andThen
+                (\urlString ->
+                    case Url.fromString urlString of
+                        Just url ->
+                            Jd.succeed url
+
+                        Nothing ->
+                            Jd.fail "url format error"
+                )
+        )
 
 
 
