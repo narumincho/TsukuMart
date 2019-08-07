@@ -17,8 +17,6 @@ import Data.Product as Product
 import Data.Trade as Trade
 import Data.User as User
 import Html
-import Html.Attributes
-import Html.Events
 import Html.Styled
 import Html.Styled.Attributes
 import Html.Styled.Events
@@ -470,42 +468,41 @@ userView userWithName =
 
 commentInputArea : Maybe Sending -> Api.Token -> Html.Styled.Html Msg
 commentInputArea sending token =
-    Html.div
+    Html.Styled.div
         []
-        ([ Html.textarea
-            [ Html.Events.onInput InputComment
-            , Html.Attributes.class "form-textarea"
-            , Html.Attributes.id commentTextAreaId
+        ([ Html.Styled.textarea
+            [ Html.Styled.Events.onInput InputComment
+            , Html.Styled.Attributes.class "form-textarea"
+            , Html.Styled.Attributes.id commentTextAreaId
             ]
             []
          ]
             ++ (case sending of
                     Just Comment ->
-                        [ Html.button
-                            [ Html.Attributes.class "product-comment-sendButton"
-                            , Html.Attributes.disabled True
+                        [ Html.Styled.button
+                            [ Html.Styled.Attributes.css [ Page.Component.Comment.commentSendButtonStyle ]
+                            , Html.Styled.Attributes.disabled True
                             ]
-                            [ Icon.loading { size = 24, color = Css.rgb 0 0 0 } |> Html.Styled.toUnstyled ]
+                            [ Icon.loading { size = 24, color = Css.rgb 0 0 0 } ]
                         ]
 
                     Just _ ->
-                        [ Html.button
-                            [ Html.Attributes.class "product-comment-sendButton"
-                            , Html.Attributes.disabled True
+                        [ Html.Styled.button
+                            [ Html.Styled.Attributes.css [ Page.Component.Comment.commentSendButtonStyle ]
+                            , Html.Styled.Attributes.disabled True
                             ]
-                            [ Html.text "コメントを送信" ]
+                            [ Html.Styled.text "コメントを送信" ]
                         ]
 
                     Nothing ->
-                        [ Html.button
-                            [ Html.Events.onClick (AddComment token)
-                            , Html.Attributes.class "product-comment-sendButton"
+                        [ Html.Styled.button
+                            [ Html.Styled.Events.onClick (AddComment token)
+                            , Html.Styled.Attributes.css [ Page.Component.Comment.commentSendButtonStyle ]
                             ]
-                            [ Html.text "コメントを送信" ]
+                            [ Html.Styled.text "コメントを送信" ]
                         ]
                )
         )
-        |> Html.Styled.fromUnstyled
 
 
 commentTextAreaId : String
@@ -523,7 +520,6 @@ commentView timeData user trade =
                 |> List.map (tradeCommentToCommentData trade (User.withNameGetId user))
                 |> Just
             )
-            |> Html.Styled.fromUnstyled
         ]
 
 

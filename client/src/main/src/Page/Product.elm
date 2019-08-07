@@ -799,7 +799,9 @@ commentListView :
     -> Html.Styled.Html Msg
 commentListView commentSending nowMaybe sellerId logInState commentListMaybe =
     Html.Styled.div
-        []
+        [ Html.Styled.Attributes.css
+            [ Css.paddingBottom (Css.px 64) ]
+        ]
         ((case LogInState.getToken logInState of
             Just token ->
                 [ commentInputArea commentSending token ]
@@ -833,7 +835,6 @@ commentListView commentSending nowMaybe sellerId logInState commentListMaybe =
                                 )
                             )
                     )
-                    |> Html.Styled.fromUnstyled
                ]
         )
 
@@ -851,7 +852,7 @@ commentInputArea sending token =
          ]
             ++ (if sending then
                     [ Html.Styled.button
-                        [ Html.Styled.Attributes.class "product-comment-sendButton"
+                        [ Html.Styled.Attributes.css [ Page.Component.Comment.commentSendButtonStyle ]
                         , Html.Styled.Attributes.disabled True
                         ]
                         [ Icon.loading { size = 24, color = Css.rgb 0 0 0 }
@@ -861,7 +862,7 @@ commentInputArea sending token =
                 else
                     [ Html.Styled.button
                         [ Html.Styled.Events.onClick (SendComment token)
-                        , Html.Styled.Attributes.class "product-comment-sendButton"
+                        , Html.Styled.Attributes.css [ Page.Component.Comment.commentSendButtonStyle ]
                         ]
                         [ Html.Styled.text "コメントを送信" ]
                     ]

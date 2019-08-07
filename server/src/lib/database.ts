@@ -363,9 +363,9 @@ export const addCommentProduct = async (
         lineNotify.sendMessage(
             `${userData.displayName}さんが${
                 productData.name
-            }にコメントをつけました。\n${
+            }にコメントをつけました。\n\n${
                 data.body
-            }\n 商品ページ https://tsukumart.com/product/${productId}`,
+            }\n\nhttps://tsukumart.com/product/${productId}`,
             false,
             notifyAccessToken
         );

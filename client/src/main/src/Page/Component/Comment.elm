@@ -1,11 +1,10 @@
-module Page.Component.Comment exposing (view)
+module Page.Component.Comment exposing (view, commentSendButtonStyle)
 
 import Css
 import Data.DateTime
 import Data.User as User
-import Html
-import Html.Attributes
 import Html.Styled
+import Html.Styled.Attributes
 import Icon
 import Page.Style
 import PageLocation
@@ -17,10 +16,12 @@ import Time
 view :
     Maybe ( Time.Posix, Time.Zone )
     -> Maybe (List { isMine : Bool, isSeller : Bool, user : User.WithName, body : String, createdAt : Time.Posix })
-    -> Html.Html msg
+    -> Html.Styled.Html msg
 view nowMaybe commentListMaybe =
-    Html.div
-        [ Html.Attributes.class "product-commentList" ]
+    Html.Styled.div
+        [ Html.Styled.Attributes.css
+            [ Page.Style.displayGridAndGap 16 ]
+        ]
         (case commentListMaybe of
             Just comments ->
                 comments
@@ -29,9 +30,8 @@ view nowMaybe commentListMaybe =
                         (commentView nowMaybe)
 
             Nothing ->
-                [ Html.text "コメント読み込み中"
+                [ Html.Styled.text "コメント読み込み中"
                 , Icon.loading { size = 48, color = Css.rgb 0 0 0 }
-                    |> Html.Styled.toUnstyled
                 ]
         )
 
@@ -39,32 +39,46 @@ view nowMaybe commentListMaybe =
 commentView :
     Maybe ( Time.Posix, Time.Zone )
     -> { isMine : Bool, isSeller : Bool, user : User.WithName, body : String, createdAt : Time.Posix }
-    -> Html.Html msg
+    -> Html.Styled.Html msg
 commentView nowMaybe comment =
-    Html.div
-        [ Html.Attributes.class "product-comment" ]
-        [ Html.a
-            [ Html.Attributes.class
-                (if comment.isSeller then
-                    "product-comment-sellerName"
+    Html.Styled.div
+        [ Html.Styled.Attributes.css
+            [ Page.Style.displayGridAndGap 0
+            , Css.property "grid-template-columns" "1fr"
+            ]
+        ]
+        [ Html.Styled.a
+            [ Html.Styled.Attributes.css
+                [ Css.displayFlex
+                , Css.justifyContent
+                    (if comment.isSeller then
+                        Css.flexStart
 
-                 else
-                    "product-comment-name"
+                     else
+                        Css.flexEnd
+                    )
+                , Css.alignItems Css.center
+                , Css.textDecoration Css.none
+                ]
+            , Html.Styled.Attributes.href
+                (PageLocation.toUrlAsString
+                    (PageLocation.User (User.withNameGetId comment.user))
                 )
-            , Html.Attributes.href (PageLocation.toUrlAsString (PageLocation.User (User.withNameGetId comment.user)))
             ]
             [ Page.Style.userImage 48 (User.withNameGetImageId comment.user)
-                |> Html.Styled.toUnstyled
-            , Html.text (User.withNameGetDisplayName comment.user)
+            , Html.Styled.text (User.withNameGetDisplayName comment.user)
             ]
-        , Html.div
-            [ Html.Attributes.class
-                (if comment.isSeller then
-                    "product-comment-sellerBox"
+        , Html.Styled.div
+            [ Html.Styled.Attributes.css
+                [ Css.displayFlex
+                , Css.justifyContent
+                    (if comment.isSeller then
+                        Css.flexStart
 
-                 else
-                    "product-comment-box"
-                )
+                     else
+                        Css.flexEnd
+                    )
+                ]
             ]
             ((if comment.isSeller then
                 [ commentTriangleLeft comment.isMine ]
@@ -72,14 +86,24 @@ commentView nowMaybe comment =
               else
                 []
              )
-                ++ [ Html.div
-                        [ Html.Attributes.classList
-                            [ ( "product-comment-text", True )
-                            , ( "product-comment-text-mine", comment.isMine )
-                            , ( "product-comment-text-seller", comment.isSeller )
+                ++ [ Html.Styled.div
+                        [ Html.Styled.Attributes.css
+                            [ Css.backgroundColor
+                                (if comment.isMine then
+                                    mineColor
+
+                                 else
+                                    Css.rgb 221 221 221
+                                )
+                            , Css.padding (Css.px 8)
+                            , if comment.isSeller then
+                                Css.borderRadius4 Css.zero (Css.px 8) (Css.px 8) (Css.px 8)
+
+                              else
+                                Css.borderRadius4 (Css.px 8) Css.zero (Css.px 8) (Css.px 8)
                             ]
                         ]
-                        [ Html.text comment.body ]
+                        [ Html.Styled.text comment.body ]
                    ]
                 ++ (if comment.isSeller then
                         []
@@ -88,47 +112,66 @@ commentView nowMaybe comment =
                         [ commentTriangleRight comment.isMine ]
                    )
             )
-        , Html.div
-            [ Html.Attributes.class "product-comment-time" ]
-            [ Html.text (Data.DateTime.toDiffString nowMaybe comment.createdAt) ]
+        , Html.Styled.div
+            [ Html.Styled.Attributes.css
+                [ Css.displayFlex
+                , Css.fontSize (Css.rem 0.8)
+                , Css.color (Css.rgb 102 102 102)
+                , Css.justifyContent Css.flexEnd
+                ]
+            ]
+            [ Html.Styled.text (Data.DateTime.toDiffString nowMaybe comment.createdAt) ]
         ]
 
 
-commentTriangleLeft : Bool -> Html.Html msg
+commentTriangleLeft : Bool -> Html.Styled.Html msg
 commentTriangleLeft isMine =
     S.svg
-        ([ A.viewBox "0 0 10 10"
-         , A.class "product-comment-text-triangle"
-         ]
-            ++ (if isMine then
-                    [ A.class "product-comment-text-triangle-mine" ]
-
-                else
-                    []
-               )
-        )
+        [ A.viewBox "0 0 10 10"
+        , A.css
+            [ triangleStyle isMine ]
+        ]
         [ S.polygon
             [ A.points "10 0 0 0 10 10" ]
             []
         ]
-        |> S.toUnstyled
 
 
-commentTriangleRight : Bool -> Html.Html msg
+commentTriangleRight : Bool -> Html.Styled.Html msg
 commentTriangleRight isMine =
     S.svg
-        ([ A.viewBox "0 0 10 10"
-         , A.class "product-comment-text-triangle"
-         ]
-            ++ (if isMine then
-                    [ A.class "product-comment-text-triangle-mine" ]
-
-                else
-                    []
-               )
-        )
+        [ A.viewBox "0 0 10 10"
+        , A.css [ triangleStyle isMine ]
+        ]
         [ S.polygon
             [ A.points "0 0 10 0 0 10" ]
             []
         ]
-        |> S.toUnstyled
+
+
+triangleStyle : Bool -> Css.Style
+triangleStyle isMine =
+    Css.batch
+        [ Css.fill
+            (if isMine then
+                mineColor
+
+             else
+                Css.rgb 221 221 221
+            )
+        , Css.width (Css.px 16)
+        , Css.height (Css.px 16)
+        ]
+
+
+mineColor : Css.Color
+mineColor =
+    Css.rgb 200 162 219
+
+commentSendButtonStyle : Css.Style
+commentSendButtonStyle =
+    Css.batch
+        [ Css.padding2 (Css.px 16) (Css.px 32)
+        , Css.width (Css.pct 100)
+        , Css.borderRadius (Css.px 8)
+        ]
