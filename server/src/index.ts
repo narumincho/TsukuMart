@@ -10,10 +10,14 @@ console.log("サーバーのプログラムが読み込まれた!");
 
 export const indexHtml = functions
     .region("us-central1")
-    .https.onRequest((request, response) => {
+    .https.onRequest(async (request, response) => {
         if (request.host !== "tsukumart.com") {
             response.redirect("https://tsukumart.com");
         }
+        const descriptionAndImageUrl = await pathToDescriptionAndImageUrl(
+            request.path
+        );
+
         response.setHeader("content-type", "text/html");
         response.send(`<!doctype html>
 <html lang="ja">
@@ -29,9 +33,16 @@ export const indexHtml = functions
     <link rel="manifest" href="https://tsukumart.com/manifest.json">
     <meta name="twitter:card" content="summary_large_image">
     <meta property="og:url" content="https://tsukumart.com${request.url}">
-    <meta property="og:title" content="つくマート">
-    <meta property="og:description" content="記事の要約 デバッグ=${Math.random()}">
-    <meta property="og:image" content="https://tsukumart.com/assets/logo_bird.png">
+    <meta property="og:title" content="${escapeHtml(
+        descriptionAndImageUrl.title
+    )}">
+    <meta property="og:site_name" content="つくマート">
+    <meta property="og:description" content="${escapeHtml(
+        descriptionAndImageUrl.description
+    )}">
+    <meta property="og:image" content="${escapeHtml(
+        descriptionAndImageUrl.imageUrl
+    )}">
     <script src="https://tsukumart.com/main.js" defer></script>
     <script src="https://tsukumart.com/call.js" type="module"></script>
 </head>
@@ -44,6 +55,59 @@ export const indexHtml = functions
 </body>
 `);
     });
+
+const pathToDescriptionAndImageUrl = async (
+    path: string
+): Promise<{ title: string; description: string; imageUrl: string }> => {
+    const productMathResult = path.match(/^\/product\/(\w+)/);
+    if (productMathResult !== null) {
+        const product = await database.getProduct(productMathResult[1]);
+        return {
+            title: product.name,
+            description: `${product.name} | ${product.description}`,
+            imageUrl:
+                "https://asia-northeast1-tsukumart-f0971.cloudfunctions.net/image/" +
+                product.thumbnailImageId
+        };
+    }
+    const userMathResult = path.match(/^\/user\//);
+    if (userMathResult !== null) {
+        const user = await database.getUserData(userMathResult[1]);
+        return {
+            title: user.displayName,
+            description: `${user.displayName}さんのプロフィール | ${
+                user.introduction
+            }`,
+            imageUrl:
+                "https://asia-northeast1-tsukumart-f0971.cloudfunctions.net/image/" +
+                user.imageId
+        };
+    }
+    return {
+        title: "つくマート",
+        description: "筑波大生専用手渡しフリーマーケットサービス",
+        imageUrl: "https://tsukumart.com/assets/logo_bird.png"
+    };
+};
+
+const escapeHtml = (text: string): string =>
+    text.replace(
+        /[&'`"<>]/g,
+        (s: string): string =>
+            s === "&"
+                ? "&amp;"
+                : s === "'"
+                ? "&#x27;"
+                : s === "`"
+                ? "&#x60;"
+                : s === '"'
+                ? "&quot;"
+                : s === "<"
+                ? "&lt;"
+                : s === ">"
+                ? "&gt;"
+                : ""
+    );
 
 /** API */
 export const api = functions

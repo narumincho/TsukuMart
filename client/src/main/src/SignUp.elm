@@ -8,8 +8,6 @@ import Data.EmailAddress
 import Data.ImageId
 import Data.SAddress
 import Data.StudentId
-import Html
-import Html.Attributes
 import Html.Styled
 import Html.Styled.Attributes
 import Html.Styled.Events
@@ -266,8 +264,8 @@ analysisStudentIdOrSAddressResultToEmailAddress sAddressOrStudentId =
         APartStudentId _ ->
             Nothing
 
-        AEmailButIsNotTsukuba emailAddress ->
-            Just emailAddress
+        AEmailButIsNotTsukuba _ ->
+            Nothing
 
 
 view : Model -> Html.Styled.Html Msg

@@ -1070,6 +1070,7 @@ export const addTradeComment = async (
 ): Promise<TradeLowCost> => {
     const nowTime = databaseLow.getNowTimestamp();
     const tradeData = await databaseLow.getTradeData(tradeId);
+    const productData = await databaseLow.getProduct(tradeData.productId);
     if (tradeData.buyerUserId === userId) {
         await databaseLow.addTradeComment(tradeId, {
             body: body,
@@ -1079,12 +1080,26 @@ export const addTradeComment = async (
         await databaseLow.updateTradeData(tradeId, {
             updateAt: nowTime
         });
+        const notifyAccessToken = (await databaseLow.getUserData(
+            productData.sellerId
+        )).notifyToken;
+        const buyerName = (await databaseLow.getUserData(tradeData.buyerUserId))
+            .displayName;
+        if (notifyAccessToken !== null) {
+            lineNotify.sendMessage(
+                `${buyerName}さんが${
+                    productData.name
+                }の取引にコメントをつけました。\n\n${body}\n\nhttps://tsukumart.com/trade/${tradeId}`,
+                false,
+                notifyAccessToken
+            );
+        }
         return tradeReturnLowCostFromDatabaseLow({
             id: tradeId,
             data: tradeData
         });
     }
-    const productData = await databaseLow.getProduct(tradeData.productId);
+
     if (productData.sellerId === userId) {
         await databaseLow.addTradeComment(tradeId, {
             body: body,
@@ -1094,6 +1109,19 @@ export const addTradeComment = async (
         await databaseLow.updateTradeData(tradeId, {
             updateAt: nowTime
         });
+        const notifyAccessToken = (await databaseLow.getUserData(
+            tradeData.buyerUserId
+        )).notifyToken;
+        if (notifyAccessToken !== null) {
+            lineNotify.sendMessage(
+                `${productData.sellerDisplayName}さんが${
+                    productData.name
+                }の取引にコメントをつけました。\n\n${body}\n\nhttps://tsukumart.com/trade/${tradeId}`,
+                false,
+                notifyAccessToken
+            );
+        }
+
         return tradeReturnLowCostFromDatabaseLow({
             id: tradeId,
             data: tradeData
@@ -1119,15 +1147,27 @@ export const startTrade = async (
             tradeId
         ])
     });
-    const sellerId = (await databaseLow.getProduct(productId)).sellerId;
-    await databaseLow.updateUserData(sellerId, {
-        trading: (await databaseLow.getUserData(sellerId)).trading.concat([
-            tradeId
-        ])
+    const product = await databaseLow.getProduct(productId);
+    await databaseLow.updateUserData(product.sellerId, {
+        trading: (await databaseLow.getUserData(
+            product.sellerId
+        )).trading.concat([tradeId])
     });
     await databaseLow.updateProductData(productId, {
         status: "trading"
     });
+
+    const seller = await databaseLow.getUserData(product.sellerId);
+    const buyer = await databaseLow.getUserData(buyerUserId);
+    if (seller.notifyToken !== null) {
+        lineNotify.sendMessage(
+            `${buyer.displayName}さんが${
+                product.name
+            }の取引を開始しました。\n\nhttps://tsukumart.com/trade/${tradeId}`,
+            true,
+            seller.notifyToken
+        );
+    }
     return {
         id: tradeId,
         buyer: {
