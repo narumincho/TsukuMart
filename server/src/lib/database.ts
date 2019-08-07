@@ -360,7 +360,7 @@ export const addCommentProduct = async (
         productData.sellerId
     )).notifyToken;
     if (notifyAccessToken !== null) {
-        lineNotify.sendMessage(
+        await lineNotify.sendMessage(
             `${userData.displayName}さんが${
                 productData.name
             }にコメントをつけました。\n\n${
@@ -1086,7 +1086,7 @@ export const addTradeComment = async (
         const buyerName = (await databaseLow.getUserData(tradeData.buyerUserId))
             .displayName;
         if (notifyAccessToken !== null) {
-            lineNotify.sendMessage(
+            await lineNotify.sendMessage(
                 `${buyerName}さんが${
                     productData.name
                 }の取引にコメントをつけました。\n\n${body}\n\nhttps://tsukumart.com/trade/${tradeId}`,
@@ -1113,7 +1113,7 @@ export const addTradeComment = async (
             tradeData.buyerUserId
         )).notifyToken;
         if (notifyAccessToken !== null) {
-            lineNotify.sendMessage(
+            await lineNotify.sendMessage(
                 `${productData.sellerDisplayName}さんが${
                     productData.name
                 }の取引にコメントをつけました。\n\n${body}\n\nhttps://tsukumart.com/trade/${tradeId}`,
@@ -1160,7 +1160,7 @@ export const startTrade = async (
     const seller = await databaseLow.getUserData(product.sellerId);
     const buyer = await databaseLow.getUserData(buyerUserId);
     if (seller.notifyToken !== null) {
-        lineNotify.sendMessage(
+        await lineNotify.sendMessage(
             `${buyer.displayName}さんが${
                 product.name
             }の取引を開始しました。\n\nhttps://tsukumart.com/trade/${tradeId}`,
@@ -1190,10 +1190,30 @@ export const cancelTrade = async (
     const tradeData = await databaseLow.getTradeData(tradeId);
     let status: type.TradeStatus | undefined = undefined;
     const productData = await databaseLow.getProduct(tradeData.productId);
+    const seller = await databaseLow.getUserData(productData.sellerId);
+    const buyer = await databaseLow.getUserData(tradeData.buyerUserId);
     if (tradeData.buyerUserId === userId) {
+        if (seller.notifyToken !== null) {
+            await lineNotify.sendMessage(
+                `${buyer.displayName}さんが${
+                    productData.name
+                }の取引をキャンセルしました。\n\nhttps://tsukumart.com/trade/${tradeId}`,
+                true,
+                seller.notifyToken
+            );
+        }
         status = "cancelByBuyer";
     }
     if (productData.sellerId === userId) {
+        if (buyer.notifyToken !== null) {
+            await lineNotify.sendMessage(
+                `${seller.displayName}さんが${
+                    productData.name
+                }の取引をキャンセルしました。\n\nhttps://tsukumart.com/trade/${tradeId}`,
+                true,
+                buyer.notifyToken
+            );
+        }
         status = "cancelBySeller";
     }
     if (status === undefined) {
