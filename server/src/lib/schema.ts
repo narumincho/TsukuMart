@@ -939,7 +939,7 @@ const productSearch = makeQueryOrMutationField<
             description: "商品の品質状態の指定。nullで指定なし"
         },
         school: {
-            type: type.departmentGraphQLType,
+            type: type.schoolGraphQLType,
             description: "出品者の学群の指定。nullで指定なし。"
         },
         department: {

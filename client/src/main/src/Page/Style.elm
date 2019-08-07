@@ -7,6 +7,7 @@ module Page.Style exposing
     , formItem
     , inputText
     , mainButton
+    , mainButtonLink
     , normalShadow
     , primaryColor
     , primaryColorLight
@@ -15,7 +16,8 @@ module Page.Style exposing
     , titleAndContent
     , titleAndContentStyle
     , userImage
-    , mainButtonLink, userSelectNone)
+    , userSelectNone
+    )
 
 import Css
 import Css.Transitions
@@ -143,9 +145,11 @@ displayGridAndGap gap =
     )
         |> Css.batch
 
+
 userSelectNone : Css.Style
 userSelectNone =
     Css.property "user-select" "none"
+
 
 userImage : Int -> Data.ImageId.ImageId -> H.Html msg
 userImage size imageId =
@@ -163,6 +167,8 @@ userImage size imageId =
         []
 
 
+{-| 選択肢から選べるメニュー。一番上は選択してください固定でこれを選んだらNothingが返ってくる
+-}
 selectMenu : String -> List String -> H.Html (Maybe Int)
 selectMenu id labelList =
     H.select

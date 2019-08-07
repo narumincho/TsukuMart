@@ -11,6 +11,7 @@ module Page.Component.University exposing
 
 import Data.University as University
 import Html.Styled
+import Page.Component.GraduateSelect as GraduateSelect
 import Page.Component.SchoolSelect as SchoolSelect
 import Page.Style
 
@@ -18,10 +19,10 @@ import Page.Style
 type Model
     = School SchoolSelect.Model
     | GraduateTsukuba
-        { graduate : Maybe University.Graduate
+        { graduate : GraduateSelect.Model
         , school : SchoolSelect.Model
         }
-    | GraduateNoTsukuba (Maybe University.Graduate)
+    | GraduateNoTsukuba GraduateSelect.Model
 
 
 type Msg
@@ -29,13 +30,14 @@ type Msg
     | SwitchSchool
     | SwitchGraduateTsukuba
     | SwitchGraduateNoTsukuba
-    | SelectGraduate (Maybe Int)
+    | MsgByGraduate GraduateSelect.Msg
     | MsgBySchool SchoolSelect.Msg
 
 
 type Cmd
     = CmdChangeSelectedIndex { id : String, index : Int }
     | CmdBySchoolSelect SchoolSelect.Cmd
+    | CmdByGraduateSelect GraduateSelect.Cmd
 
 
 {-| 何も選択していない状態
@@ -55,22 +57,25 @@ initModelFromUniversity university =
             let
                 ( schoolModel, schoolCmd ) =
                     SchoolSelect.initSelected schoolAndDepartment
+
+                ( graduateModel, graduateCmd ) =
+                    GraduateSelect.initSelected graduate
             in
             ( GraduateTsukuba
-                { graduate = Just graduate
+                { graduate = graduateModel
                 , school = schoolModel
                 }
-            , [ CmdChangeSelectedIndex
-                    { id = graduateSelectId, index = University.graduateToIndex graduate + 1 }
-              ]
+            , (graduateCmd |> List.map CmdByGraduateSelect)
                 ++ (schoolCmd |> List.map CmdBySchoolSelect)
             )
 
         University.GraduateNoTsukuba graduate ->
-            ( GraduateNoTsukuba (Just graduate)
-            , [ CmdChangeSelectedIndex
-                    { id = graduateSelectId, index = University.graduateToIndex graduate + 1 }
-              ]
+            let
+                ( graduateModel, graduateCmd ) =
+                    GraduateSelect.initSelected graduate
+            in
+            ( GraduateNoTsukuba graduateModel
+            , graduateCmd |> List.map CmdByGraduateSelect
             )
 
         University.NotGraduate schoolAndDepartment ->
@@ -93,29 +98,31 @@ getUniversity universitySelect =
                 |> Maybe.map University.NotGraduate
 
         GraduateTsukuba { graduate, school } ->
-            case ( graduate, SchoolSelect.getDepartment school ) of
+            case ( GraduateSelect.getGraduate graduate, SchoolSelect.getDepartment school ) of
                 ( Just g, Just department ) ->
                     Just (University.GraduateTsukuba g department)
 
                 ( _, _ ) ->
                     Nothing
 
-        GraduateNoTsukuba (Just graduate) ->
-            Just (University.GraduateNoTsukuba graduate)
-
-        GraduateNoTsukuba Nothing ->
-            Nothing
+        GraduateNoTsukuba graduate ->
+            GraduateSelect.getGraduate graduate
+                |> Maybe.map University.GraduateNoTsukuba
 
 
 update : Msg -> Model -> ( Model, List Cmd )
 update msg model =
     case ( msg, model ) of
         ( SwitchGraduate, School schoolSelect ) ->
+            let
+                ( graduateModel, graduateCmd ) =
+                    GraduateSelect.initNone
+            in
             ( GraduateTsukuba
                 { school = schoolSelect
-                , graduate = Nothing
+                , graduate = graduateModel
                 }
-            , []
+            , graduateCmd |> List.map CmdByGraduateSelect
             )
 
         ( SwitchSchool, GraduateTsukuba { school } ) ->
@@ -145,18 +152,17 @@ update msg model =
             , []
             )
 
-        ( SelectGraduate index, GraduateTsukuba rec ) ->
+        ( MsgByGraduate graduateMsg, GraduateTsukuba rec ) ->
             ( GraduateTsukuba
                 { rec
                     | graduate =
-                        index
-                            |> Maybe.andThen University.graduateFromIndex
+                        GraduateSelect.update graduateMsg rec.graduate
                 }
             , []
             )
 
-        ( SelectGraduate index, GraduateNoTsukuba _ ) ->
-            ( GraduateNoTsukuba (index |> Maybe.andThen University.graduateFromIndex)
+        ( MsgByGraduate graduateMsg, GraduateNoTsukuba graduateModel ) ->
+            ( GraduateNoTsukuba (GraduateSelect.update graduateMsg graduateModel)
             , []
             )
 
@@ -233,40 +239,19 @@ schoolOrGraduateView select =
     )
 
 
-graduateTsukubaView : Maybe University.Graduate -> SchoolSelect.Model -> List ( String, Html.Styled.Html Msg )
+graduateTsukubaView : GraduateSelect.Model -> SchoolSelect.Model -> List ( String, Html.Styled.Html Msg )
 graduateTsukubaView graduateSelect schoolSelect =
-    [ graduateSelectView graduateSelect
+    [ GraduateSelect.view graduateSelect |> Tuple.mapSecond (Html.Styled.map MsgByGraduate)
     , graduateYesNoTsukubaView Page.Style.Left
     ]
         ++ (SchoolSelect.view schoolSelect |> List.map (Tuple.mapSecond (Html.Styled.map MsgBySchool)))
 
 
-graduateNoTsukubaView : Maybe University.Graduate -> List ( String, Html.Styled.Html Msg )
+graduateNoTsukubaView : GraduateSelect.Model -> List ( String, Html.Styled.Html Msg )
 graduateNoTsukubaView graduateSelect =
-    [ graduateSelectView graduateSelect
+    [ GraduateSelect.view graduateSelect |> Tuple.mapSecond (Html.Styled.map MsgByGraduate)
     , graduateYesNoTsukubaView Page.Style.Right
     ]
-
-
-graduateSelectView : Maybe University.Graduate -> ( String, Html.Styled.Html Msg )
-graduateSelectView graduateMaybe =
-    ( "selectGraduate"
-    , Page.Style.formItem
-        "研究科"
-        graduateSelectId
-        [ Page.Style.selectMenu
-            graduateSelectId
-            (University.graduateAllValue
-                |> List.map University.graduateToJapaneseString
-            )
-        ]
-        |> Html.Styled.map SelectGraduate
-    )
-
-
-graduateSelectId : String
-graduateSelectId =
-    "signUp-selectGraduate"
 
 
 {-| 筑波大学に所属していたかしていなかったか

@@ -702,7 +702,7 @@ export const productSearch = async (
               )
             : productDataList;
 
-    return productDataList.filter(
+    return productsFilteredCategory.filter(
         product =>
             normalization(product.name).includes(
                 normalization(condition.query)

@@ -17,6 +17,7 @@ import Page.About
 import Page.BoughtProducts
 import Page.CommentedProducts
 import Page.Component.Category
+import Page.Component.GraduateSelect
 import Page.Component.LogIn
 import Page.Component.ProductEditor
 import Page.Component.ProductList
@@ -839,6 +840,12 @@ searchPageCmdToCmd cmd =
         Page.Search.CmdByCategory e ->
             categoryCmdToCmd e
 
+        Page.Search.CmdBySchoolSelect c ->
+            schoolSelectCmdToCmd c
+
+        Page.Search.CmdByGraduateSelect c ->
+            graduateSelectCmdToCmd c
+
 
 searchResultPageCmdToCmd : Page.SearchResult.Command -> Cmd Msg
 searchResultPageCmdToCmd command =
@@ -1012,11 +1019,21 @@ universityCmdToCmd cmd =
         Page.Component.University.CmdBySchoolSelect c ->
             schoolSelectCmdToCmd c
 
+        Page.Component.University.CmdByGraduateSelect c ->
+            graduateSelectCmdToCmd c
+
 
 schoolSelectCmdToCmd : Page.Component.SchoolSelect.Cmd -> Cmd Msg
 schoolSelectCmdToCmd cmd =
     case cmd of
         Page.Component.SchoolSelect.CmdChangeSelectedIndex idAndIndex ->
+            changeSelectedIndex idAndIndex
+
+
+graduateSelectCmdToCmd : Page.Component.GraduateSelect.Cmd -> Cmd Msg
+graduateSelectCmdToCmd cmd =
+    case cmd of
+        Page.Component.GraduateSelect.CmdChangeSelectedIndex idAndIndex ->
             changeSelectedIndex idAndIndex
 
 

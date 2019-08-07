@@ -3,6 +3,7 @@ module Page.Component.SchoolSelect exposing
     , Model
     , Msg
     , getDepartment
+    , getSchool
     , initNone
     , initSelected
     , update
@@ -51,6 +52,19 @@ initSelected department =
             }
       ]
     )
+
+
+getSchool : Model -> Maybe University.School
+getSchool model =
+    case model of
+        None ->
+            Nothing
+
+        School school ->
+            Just school
+
+        Department department ->
+            Just (University.schoolFromDepartment department)
 
 
 getDepartment : Model -> Maybe University.Department

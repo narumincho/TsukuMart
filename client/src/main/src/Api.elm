@@ -1332,20 +1332,7 @@ searchProducts condition callBack =
         (Query
             [ Field
                 { name = "productSearch"
-                , args =
-                    [ ( "query", GraphQLString (SearchCondition.getQuery condition) )
-                    ]
-                        ++ (case SearchCondition.getCategory condition of
-                                SearchCondition.CategoryNone ->
-                                    []
-
-                                SearchCondition.CategoryGroup group ->
-                                    []
-
-                                SearchCondition.CategoryCategory category ->
-                                    [ ( "category", GraphQLEnum (Category.toIdString category) )
-                                    ]
-                           )
+                , args = searchConditionToArgs condition
                 , return = productReturn
                 }
             ]
@@ -1354,6 +1341,39 @@ searchProducts condition callBack =
             (Jd.list productDecoder)
         )
         callBack
+
+
+searchConditionToArgs : SearchCondition.Condition -> List ( String, GraphQLValue )
+searchConditionToArgs condition =
+    [ ( "query", GraphQLString (SearchCondition.getQuery condition) )
+    ]
+        ++ (case SearchCondition.getCategory condition of
+                SearchCondition.CategoryNone ->
+                    []
+
+                SearchCondition.CategoryGroup group ->
+                    [ ( "categoryGroup", GraphQLEnum (Category.groupToIdString group) )
+                    ]
+
+                SearchCondition.CategoryCategory category ->
+                    [ ( "category", GraphQLEnum (Category.toIdString category) )
+                    ]
+           )
+        ++ (case SearchCondition.getUniversitySelect condition of
+                SearchCondition.UniversityNone ->
+                    []
+
+                SearchCondition.UniversityGraduate graduate ->
+                    [ ( "graduate", GraphQLEnum (University.graduateToIdString graduate) )
+                    ]
+
+                SearchCondition.UniversitySchool school ->
+                    [ ( "school", GraphQLEnum (University.schoolToIdString school) )
+                    ]
+
+                SearchCondition.UniversityDepartment department ->
+                    [ ( "department", GraphQLEnum (University.departmentToIdString department) ) ]
+           )
 
 
 
