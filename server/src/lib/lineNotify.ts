@@ -95,7 +95,7 @@ export const sendMessage = async (
     await axios
         .post(
             "https://notify-api.line.me/api/notify",
-            new URLSearchParams(new Map([["message", message]])).toString(),
+            new URLSearchParams(args).toString(),
             {
                 headers: {
                     "Content-Type": "application/x-www-form-urlencoded",
