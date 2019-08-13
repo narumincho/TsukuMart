@@ -63,7 +63,7 @@ const sendConfirmEmail = async (token) => {
         console.log("エラーが発生したので再送する", e);
         setTimeout(async () => {
             await sendConfirmEmail(token);
-        }, 100);
+        }, 1000);
     }
 };
 app.ports.sendConfirmEmail.subscribe(sendConfirmEmail);

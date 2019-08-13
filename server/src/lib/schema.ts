@@ -1221,7 +1221,6 @@ const registerSignUpData = makeQueryOrMutationField<
         const userBeforeInputData = await database.getUserInUserBeforeInputData(
             logInAccountServiceId
         );
-        console.log("前に入力したデータを受け取った");
         let imageId: string;
         if (args.image !== null && args.image !== undefined) {
             imageId = await database.saveImage(

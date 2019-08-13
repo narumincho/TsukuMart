@@ -151,17 +151,5 @@ const urlBase64ToUint8Array = (base64String) => {
     return outputArray;
 };
 (async () => {
-    const getSubscription = async (registration) => {
-        const subscription = await registration.pushManager.getSubscription();
-        if (subscription !== null) {
-            return subscription;
-        }
-        return await registration.pushManager.subscribe({
-            applicationServerKey: urlBase64ToUint8Array("BMo4G5KJhOggWuUwFxZasez9zXlk-oeCAyVYOy-WiqfuVCx1G6uyAdLTww_2bNBx3fW8-C_a726ddCax7XaoW6Q"),
-            userVisibleOnly: true
-        });
-    };
-    const registration = await navigator.serviceWorker.register("/serviceworker.js", { scope: "/" });
-    const subscription = await getSubscription(registration);
-    console.log(subscription);
+    await navigator.serviceWorker.register("/serviceworker.js", { scope: "/" });
 })();

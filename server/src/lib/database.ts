@@ -120,20 +120,28 @@ export const addUserBeforeEmailVerification = async (
     email: string,
     university: type.University
 ): Promise<string> => {
-    const authUser = await databaseLow.createFirebaseAuthUserByRandomPassword(
+    const allUserData = await databaseLow.getAllUserData();
+    for (const { data } of allUserData) {
+        if (data.emailAddress === email) {
+            throw new Error(
+                "すでにあるアカウントで指定のメールアドレスで作成したアカウントがある"
+            );
+        }
+    }
+    const uid = await databaseLow.createFirebaseAuthUserByRandomPassword(
         email,
         name
     );
     const flatUniversity = type.universityToInternal(university);
     await databaseLow.addUserBeforeEmailVerification(logInAccountServiceId, {
-        firebaseAuthUserId: authUser.id,
+        firebaseAuthUserId: uid,
         name: name,
         imageId: imageId,
         schoolAndDepartment: flatUniversity.schoolAndDepartment,
         graduate: flatUniversity.graduate,
         email: email
     });
-    return await databaseLow.createCustomToken(authUser.id);
+    return await databaseLow.createCustomToken(uid);
 };
 
 /**
@@ -180,7 +188,7 @@ export const getAccessTokenFromLogInAccountService = async (
                 introduction: "",
                 lastAccessTokenId: randomStateForIsLastIssueId,
                 createdAt: databaseLow.getNowTimestamp(),
-                email: userBeforeEmailVerification.email,
+                emailAddress: userBeforeEmailVerification.email,
                 traded: [],
                 trading: [],
                 soldProducts: [],
@@ -375,6 +383,12 @@ export const addCommentProduct = async (
         data: await databaseLow.getProduct(productId)
     });
 };
+
+// export const updateProduct = async (
+//     userId: string,
+//     productId: string,
+//     data: Pick<type.Product, "name" | "description" | "price" | "condition" | "category" | "">
+// ) => {};
 
 export const deleteProduct = async (userId: string, productId: string) => {
     const now = databaseLow.getNowTimestamp();

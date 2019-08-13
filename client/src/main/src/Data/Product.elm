@@ -22,6 +22,7 @@ module Data.Product exposing
     , detailGetCreatedAt
     , detailGetDescription
     , detailGetId
+    , detailGetImageIds
     , detailGetImageUrls
     , detailGetLikedCount
     , detailGetName
@@ -467,10 +468,14 @@ getThumbnailImageUrl (Product { thumbnailImageId }) =
 
 
 detailGetImageUrls : ProductDetail -> List String
-detailGetImageUrls (ProductDetail { imageIds }) =
+detailGetImageUrls =
+    detailGetImageIds >> List.map ImageId.toUrlString
+
+
+detailGetImageIds : ProductDetail -> List ImageId.ImageId
+detailGetImageIds (ProductDetail { imageIds }) =
     Tuple.first imageIds
         :: Tuple.second imageIds
-        |> List.map ImageId.toUrlString
 
 
 {-| 出品者を取得する

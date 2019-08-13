@@ -409,8 +409,22 @@ update msg model =
         EditProduct ->
             case model of
                 Normal { product } ->
-                    ( model
-                    , []
+                    let
+                        ( productEditorMode, productEditorCmdList ) =
+                            ProductEditor.initModel
+                                { name = Product.detailGetName product
+                                , description = Product.detailGetDescription product
+                                , price = Product.detailGetPrice product
+                                , condition = Product.detailGetCondition product
+                                , category = Product.detailGetCategory product
+                                , imageIds = Product.detailGetImageIds product
+                                }
+                    in
+                    ( Edit
+                        { beforeProduct = product
+                        , productEditor = productEditorMode
+                        }
+                    , productEditorCmdList |> List.map CmdByProductEditor
                     )
 
                 _ ->

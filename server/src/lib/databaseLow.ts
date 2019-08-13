@@ -46,6 +46,7 @@ export type UserData = {
     soldProducts: Array<string>;
     boughtProducts: Array<string>;
     notifyToken: string | null;
+    emailAddress: string;
 };
 /**
  * ユーザーのデータを取得する
@@ -272,9 +273,7 @@ export const deleteDraftProduct = async (
  * ユーザーのデータを追加する
  * @param userData
  */
-export const addUserData = async (
-    data: UserData & { email: string }
-): Promise<string> => {
+export const addUserData = async (data: UserData): Promise<string> => {
     const id = createRandomFileId();
     await userCollectionRef.doc(id).set(data);
     return id;
@@ -361,7 +360,7 @@ export const getAndDeleteUserBeforeInputData = async (
         console.log("存在しない情報入力前のユーザーを指定された");
         throw new Error("存在しない情報入力前のユーザーを指定された");
     }
-    docRef.delete();
+    await docRef.delete();
     return userBeforeInputData as UserBeforeInputDataData;
 };
 /* ==========================================
@@ -677,22 +676,33 @@ export const timestampToDate = (timeStamp: firestore.Timestamp): Date =>
 */
 /**
  * Firebase Authenticationのユーザーをランダムなパスワードで作成する
+ * // メールを送るためだけのアカウント。実際のユーザーは別で管理する
  */
-export const createFirebaseAuthUserByRandomPassword = async (
+export const createFirebaseAuthUserByRandomPassword = (
     email: string,
     displayName: string
-): Promise<{ id: string; password: string }> => {
-    const password: string = createRandomPassword();
-    const userRecord = await initializedAdmin.auth().createUser({
-        email: email,
-        password: password,
-        displayName: displayName
+): Promise<string> =>
+    new Promise((resolve, reject) => {
+        initializedAdmin
+            .auth()
+            .getUserByEmail(email)
+            .then(user => {
+                user.displayName = displayName;
+                resolve(user.uid);
+            })
+            .catch(() => {
+                initializedAdmin
+                    .auth()
+                    .createUser({
+                        email: email,
+                        password: createRandomPassword(),
+                        displayName: displayName
+                    })
+                    .then(user => {
+                        resolve(user.uid);
+                    });
+            });
     });
-    return {
-        id: userRecord.uid,
-        password: password
-    };
-};
 
 const createRandomPassword = (): string => {
     let id = "";
