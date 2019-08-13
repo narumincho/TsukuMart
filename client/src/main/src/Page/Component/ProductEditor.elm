@@ -294,6 +294,7 @@ toUpdateRequest (Model rec) =
                     , description = rec.description
                     , price = price
                     , condition = condition
+                    , category = category
                     , addImageList = rec.addImages
                     , deleteImageIndex = rec.deleteImagesAt
                     }

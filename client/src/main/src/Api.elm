@@ -496,6 +496,7 @@ type UpdateProductRequest
         , description : String
         , price : Int
         , condition : Product.Condition
+        , category : Category.Category
         , addImageList : List String
         , deleteImageIndex : Set.Set Int
         }
@@ -514,6 +515,7 @@ updateProduct productId (UpdateProductRequest rec) token =
                     , ( "description", GraphQLString rec.description )
                     , ( "price", GraphQLInt rec.price )
                     , ( "condition", GraphQLEnum (Product.conditionToIdString rec.condition) )
+                    , ( "category", GraphQLEnum (Category.toIdString rec.category) )
                     , ( "addImageList"
                       , rec.addImageList
                             |> List.map GraphQLString
