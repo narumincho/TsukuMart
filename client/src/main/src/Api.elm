@@ -501,9 +501,38 @@ type UpdateProductRequest
         }
 
 
-updateProduct : Token -> Product.Id -> UpdateProductRequest -> (Result String () -> msg) -> Cmd msg
-updateProduct accessToken productId editProductRequest callBack =
-    Cmd.none
+updateProduct : Product.Id -> UpdateProductRequest -> Token -> (Result String Product.ProductDetail -> msg) -> Cmd msg
+updateProduct productId (UpdateProductRequest rec) token =
+    graphQlApiRequest
+        (Mutation
+            [ Field
+                { name = "updateProfile"
+                , args =
+                    [ ( "accessToken", GraphQLString (tokenToString token) )
+                    , ( "productId", GraphQLString (Product.idToString productId) )
+                    , ( "name", GraphQLString rec.name )
+                    , ( "description", GraphQLString rec.description )
+                    , ( "price", GraphQLInt rec.price )
+                    , ( "condition", GraphQLEnum (Product.conditionToIdString rec.condition) )
+                    , ( "addImageList"
+                      , rec.addImageList
+                            |> List.map GraphQLString
+                            |> GraphQLList
+                      )
+                    , ( "deleteImageIndex"
+                      , rec.deleteImageIndex
+                            |> Set.toList
+                            |> List.map GraphQLInt
+                            |> GraphQLList
+                      )
+                    ]
+                , return = productDetailReturn
+                }
+            ]
+        )
+        (Jd.field "updateProfile"
+            productDetailDecoder
+        )
 
 
 

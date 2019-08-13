@@ -96,7 +96,7 @@ type Msg
     | MsgBackToViewMode
     | MsgByProductEditor ProductEditor.Msg
     | UpdateProductData Api.Token Product.Id Api.UpdateProductRequest
-    | UpdateProductDataResponse (Result String ())
+    | UpdateProductDataResponse (Result String Product.ProductDetail)
 
 
 {-| 指定したIDの商品詳細ページ
@@ -467,8 +467,15 @@ update msg model =
 
         UpdateProductDataResponse result ->
             case result of
-                Ok () ->
-                    update MsgBackToViewMode model
+                Ok productDetail ->
+                    ( Normal
+                        { product = productDetail
+                        , likeSending = False
+                        , commentSending = False
+                        , comment = ""
+                        }
+                    , []
+                    )
 
                 Err text ->
                     ( model

@@ -942,9 +942,10 @@ productPageCmdToCmd key cmd =
             productEditorCmdToCmd e
 
         Page.Product.CmdUpdateProductData token productId requestData ->
-            Api.updateProduct token
+            Api.updateProduct
                 productId
                 requestData
+                token
                 (Page.Product.UpdateProductDataResponse >> PageMsgProduct >> PageMsg)
 
         Page.Product.CmdReplaceElementText idAndText ->
