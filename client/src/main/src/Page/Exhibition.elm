@@ -15,13 +15,9 @@ import Data.Category
 import Data.LogInState
 import Data.Product as Product
 import Html
-import Html.Attributes
-import Html.Events
-import Html.Keyed
 import Html.Styled
 import Html.Styled.Attributes
 import Html.Styled.Events
-import Html.Styled.Keyed
 import Icon
 import Page.Component.LogIn as LogIn
 import Page.Component.ProductEditor as ProductEditor
@@ -48,6 +44,8 @@ type Cmd
     = CmdLogInOrSignUp LogIn.Cmd
     | CmdSellProducts ( Api.Token, Api.SellProductRequest )
     | CmdByProductEditor ProductEditor.Cmd
+    | CmdAddLogMessage String
+    | CmdJumpToHome
 
 
 type Msg
@@ -55,6 +53,7 @@ type Msg
     | BackToEditPage
     | LogInOrSignUpMsg LogIn.Msg
     | SellProduct ( Api.Token, Api.SellProductRequest )
+    | SellProductResponse (Result String Product.ProductDetail)
     | MsgByProductEditor ProductEditor.Msg
 
 
@@ -137,6 +136,18 @@ updateWhenLogIn msg page =
                         |> Tuple.mapBoth
                             EditPage
                             (List.map CmdByProductEditor)
+
+                SellProductResponse result ->
+                    ( ConfirmPage rec
+                    , case result of
+                        Ok productDetail ->
+                            [ CmdAddLogMessage "出品しました"
+                            , CmdJumpToHome
+                            ]
+
+                        Err errorMessage ->
+                            [ CmdAddLogMessage ("出品できませんでした " ++ errorMessage) ]
+                    )
 
                 _ ->
                     ( ConfirmPage rec

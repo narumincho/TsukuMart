@@ -120,7 +120,6 @@ type Msg
     | ReceiveProductImages (List String)
     | ReceiveUserImage String
     | GetMyProfileAndLikedProductIdsResponse (Result String ( Data.User.WithName, List Data.Product.Id ))
-    | SellProductResponse (Result String Data.Product.ProductDetail)
     | LikeProductResponse Data.Product.Id (Result String Int)
     | UnlikeProductResponse Data.Product.Id (Result String Int)
     | ChangeProfileResponse (Result String Data.User.WithProfile)
@@ -278,7 +277,7 @@ urlParserInitResultToPageAndCmd key logInState page =
 
         PageLocation.InitExhibition ->
             Page.Exhibition.initModel
-                |> mapPageModel PageExhibition exhibitionPageCmdToCmd
+                |> mapPageModel PageExhibition (exhibitionPageCmdToCmd key)
 
         PageLocation.InitProduct productId ->
             Page.Product.initModel logInState productId
@@ -410,7 +409,7 @@ update msg (Model rec) =
                                 exhibitionPageModel
                     in
                     ( Model { rec | page = PageExhibition newModel }
-                    , cmds |> List.map exhibitionPageCmdToCmd |> Cmd.batch
+                    , cmds |> List.map (exhibitionPageCmdToCmd rec.key) |> Cmd.batch
                     )
 
                 PageProduct productPageModel ->
@@ -467,17 +466,6 @@ update msg (Model rec) =
                       else
                         Cmd.none
                     )
-
-        SellProductResponse response ->
-            ( case response of
-                Ok productDetail ->
-                    Model
-                        { rec | message = Just "出品しました" }
-
-                Err errorMessage ->
-                    Model { rec | message = Just ("出品できませんでした " ++ errorMessage) }
-            , Cmd.none
-            )
 
         LikeProductResponse id response ->
             let
@@ -621,7 +609,7 @@ updatePageMsg pageMsg (Model rec) =
         ( PageMsgExhibition msg, PageExhibition model ) ->
             model
                 |> Page.Exhibition.update rec.logInState msg
-                |> mapPageModel PageExhibition exhibitionPageCmdToCmd
+                |> mapPageModel PageExhibition (exhibitionPageCmdToCmd rec.key)
 
         ( PageMsgSearch msg, PageSearch model ) ->
             model
@@ -818,17 +806,24 @@ logInPageCmdToCmd key cmd =
             Browser.Navigation.pushUrl key (PageLocation.toUrlAsString PageLocation.Home)
 
 
-exhibitionPageCmdToCmd : Page.Exhibition.Cmd -> Cmd Msg
-exhibitionPageCmdToCmd cmd =
+exhibitionPageCmdToCmd : Browser.Navigation.Key -> Page.Exhibition.Cmd -> Cmd Msg
+exhibitionPageCmdToCmd key cmd =
     case cmd of
         Page.Exhibition.CmdLogInOrSignUp e ->
             logInCmdToCmd e
 
         Page.Exhibition.CmdSellProducts ( token, request ) ->
-            Api.sellProduct request token SellProductResponse
+            Api.sellProduct request token (Page.Exhibition.SellProductResponse >> PageMsgExhibition >> PageMsg)
 
         Page.Exhibition.CmdByProductEditor e ->
             productEditorCmdToCmd e
+
+        Page.Exhibition.CmdAddLogMessage log ->
+            Task.succeed ()
+                |> Task.perform (always (AddLogMessage log))
+
+        Page.Exhibition.CmdJumpToHome ->
+            Browser.Navigation.pushUrl key (PageLocation.toUrlAsString PageLocation.Home)
 
 
 searchPageCmdToCmd : Page.Search.Cmd -> Cmd Msg
@@ -1137,11 +1132,11 @@ urlParserResultToPageAndCmd (Model rec) result =
                 PageExhibition exhibitionModel ->
                     exhibitionModel
                         |> Page.Exhibition.update rec.logInState Page.Exhibition.BackToEditPage
-                        |> mapPageModel PageExhibition exhibitionPageCmdToCmd
+                        |> mapPageModel PageExhibition (exhibitionPageCmdToCmd rec.key)
 
                 _ ->
                     Page.Exhibition.initModel
-                        |> mapPageModel PageExhibition exhibitionPageCmdToCmd
+                        |> mapPageModel PageExhibition (exhibitionPageCmdToCmd rec.key)
 
         PageLocation.ExhibitionConfirm ->
             case rec.page of
@@ -1150,7 +1145,7 @@ urlParserResultToPageAndCmd (Model rec) result =
                         Just msg ->
                             pageModel
                                 |> Page.Exhibition.update rec.logInState msg
-                                |> mapPageModel PageExhibition exhibitionPageCmdToCmd
+                                |> mapPageModel PageExhibition (exhibitionPageCmdToCmd rec.key)
 
                         Nothing ->
                             ( PageExhibition pageModel, Cmd.none )
