@@ -143,15 +143,6 @@ export const logInReceiver = functions
     .https.onRequest(
         async (request, response): Promise<void> => {
             switch (request.path) {
-                case "/google":
-                    await signUpCallback.googleLogInReceiver(request, response);
-                case "/gitHub":
-                    await signUpCallback.gitHubLogInReceiver(request, response);
-                case "/twitter":
-                    await signUpCallback.twitterLogInReceiver(
-                        request,
-                        response
-                    );
                 case "/line":
                     await signUpCallback.lineLogInReceiver(request, response);
             }

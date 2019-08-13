@@ -1393,15 +1393,6 @@ getLogInUrl service callBack =
                     [ ( "service"
                       , GraphQLEnum
                             (case service of
-                                Data.SocialLoginService.Google ->
-                                    "google"
-
-                                Data.SocialLoginService.GitHub ->
-                                    "gitHub"
-
-                                Data.SocialLoginService.Twitter ->
-                                    "twitter"
-
                                 Data.SocialLoginService.Line ->
                                     "line"
                             )

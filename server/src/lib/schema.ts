@@ -4,7 +4,6 @@ import { URL } from "url";
 import * as UtilUrl from "./util/url";
 import * as key from "./key";
 import * as database from "./database";
-import * as twitterLogIn from "./twitterLogIn";
 import * as jwt from "jsonwebtoken";
 import Maybe from "graphql/tsutils/Maybe";
 
@@ -1125,45 +1124,6 @@ const getLogInUrl = makeQueryOrMutationField<
     resolve: async (source, args) => {
         const accountService = args.service;
         switch (accountService) {
-            case "google": {
-                return UtilUrl.fromStringWithQuery(
-                    "accounts.google.com/o/oauth2/v2/auth",
-                    new Map([
-                        ["response_type", "code"],
-                        ["client_id", key.googleLogInClientId],
-                        ["redirect_uri", key.googleLogInRedirectUri],
-                        ["scope", "profile openid"],
-                        [
-                            "state",
-                            await database.generateAndWriteGoogleLogInState()
-                        ]
-                    ])
-                );
-            }
-            case "gitHub": {
-                return UtilUrl.fromStringWithQuery(
-                    "github.com/login/oauth/authorize",
-                    new Map([
-                        ["response_type", "code"],
-                        ["client_id", key.gitHubLogInClientId],
-                        ["redirect_uri", key.gitHubLogInRedirectUri],
-                        ["scope", "read:user"],
-                        [
-                            "state",
-                            await database.generateAndWriteGitHubLogInState()
-                        ]
-                    ])
-                );
-            }
-            case "twitter": {
-                const { tokenSecret, url } = await twitterLogIn.getLoginUrl(
-                    key.twitterLogInClientId,
-                    key.twitterLogInSecret,
-                    key.twitterLogInRedirectUri
-                );
-                await database.writeTwitterLogInTokenSecret(tokenSecret);
-                return url;
-            }
             case "line": {
                 return UtilUrl.fromStringWithQuery(
                     "access.line.me/oauth2/v2.1/authorize",

@@ -80,11 +80,7 @@ view (Model waitLogInUrl) =
 
 serviceLogInButtonListView : List (Html.Styled.Html Msg)
 serviceLogInButtonListView =
-    [ logInButtonNoLine Icon.google Data.SocialLoginService.Google
-    , logInButtonNoLine Icon.gitHub Data.SocialLoginService.GitHub
-    , logInButtonNoLine Icon.twitter Data.SocialLoginService.Twitter
-    , logInButtonLine
-    ]
+    [ logInButtonLine ]
 
 
 logInButtonLine : Html.Styled.Html Msg
@@ -122,33 +118,6 @@ logInButtonLine =
             ]
             []
         , logInButtonText "LINEでログイン"
-        ]
-
-
-logInButtonNoLine :
-    Html.Styled.Html Msg
-    -> Data.SocialLoginService.SocialLoginService
-    -> Html.Styled.Html Msg
-logInButtonNoLine icon service =
-    Html.Styled.button
-        [ Html.Styled.Events.onClick (LogInOrSignUpRequest service)
-        , Html.Styled.Attributes.css
-            [ Css.backgroundColor (Css.rgb 221 221 221)
-            , Css.borderRadius (Css.px 4)
-            , Css.border2 Css.zero Css.none
-            , Css.color (Css.rgb 17 17 17)
-            , Css.displayFlex
-            , Css.alignItems Css.center
-            , Css.padding Css.zero
-            , Css.cursor Css.pointer
-            , Css.hover
-                [ Css.backgroundColor (Css.rgb 238 238 238) ]
-            , Css.active
-                [ Css.backgroundColor (Css.rgb 204 204 204) ]
-            ]
-        ]
-        [ icon
-        , logInButtonText (Data.SocialLoginService.serviceName service ++ "でログイン")
         ]
 
 

@@ -68,18 +68,6 @@ export const dateTimeGraphQLType = new g.GraphQLScalarType(dateTimeTypeConfig);
  * ====================================
  */
 const accountServiceValues = {
-    google: {
-        description:
-            "Google https://developers.google.com/identity/sign-in/web/"
-    },
-    gitHub: {
-        description:
-            "GitHub https://developer.github.com/v3/guides/basics-of-authentication/"
-    },
-    twitter: {
-        description:
-            "Twitter https://developer.twitter.com/en/docs/twitter-for-websites/log-in-with-twitter/login-in-with-twitter.html"
-    },
     line: {
         description: "LINE https://developers.line.biz/ja/docs/line-login/"
     }
@@ -97,9 +85,6 @@ export const checkAccountServiceValues = (
     string: string
 ): AccountService | null => {
     switch (string) {
-        case "google":
-        case "gitHub":
-        case "twitter":
         case "line":
             return string;
     }
