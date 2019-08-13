@@ -27,7 +27,6 @@ import Data.User as User
 import Html
 import Html.Attributes
 import Html.Events
-import Html.Keyed
 import Html.Styled
 import Html.Styled.Attributes
 import Html.Styled.Events
@@ -76,6 +75,7 @@ type Cmd
     | CmdByProductEditor ProductEditor.Cmd
     | CmdUpdateProductData Api.Token Product.Id Api.UpdateProductRequest
     | CmdReplaceElementText { id : String, text : String }
+    | CmdJumpToHome
 
 
 type Msg
@@ -91,6 +91,7 @@ type Msg
     | InputComment String
     | SendComment Api.Token
     | Delete Api.Token Product.Id
+    | DeleteResponse (Result String ())
     | EditProduct
     | MsgBackToViewMode
     | MsgByProductEditor ProductEditor.Msg
@@ -393,6 +394,18 @@ update msg model =
             , [ CmdDelete token productId ]
             )
 
+        DeleteResponse result ->
+            ( model
+            , case result of
+                Ok () ->
+                    [ CmdAddLogMessage "商品の削除に成功しました"
+                    , CmdJumpToHome
+                    ]
+
+                Err errorMessage ->
+                    [ CmdAddLogMessage ("商品の削除に失敗しました" ++ errorMessage) ]
+            )
+
         EditProduct ->
             case model of
                 Normal { product } ->
@@ -589,9 +602,14 @@ normalView logInState isWideScreen nowMaybe { product, likeSending, commentSendi
                                 User.withNameGetId userWithName
                                     == User.withNameGetId (Product.detailGetSeller product)
                             then
-                                [ editButton
-                                , deleteView (Product.detailGetId product) token
-                                ]
+                                case Product.detailGetStatus product of
+                                    Product.Selling ->
+                                        [ editButton
+                                        , deleteView (Product.detailGetId product) token
+                                        ]
+
+                                    _ ->
+                                        []
 
                             else
                                 []

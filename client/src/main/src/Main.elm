@@ -938,7 +938,7 @@ productPageCmdToCmd key cmd =
                 |> Task.attempt GetNowTime
 
         Page.Product.CmdDelete token productId ->
-            Api.deleteProduct token productId
+            Api.deleteProduct productId token (Page.Product.DeleteResponse >> PageMsgProduct >> PageMsg)
 
         Page.Product.CmdJumpToTradePage trade ->
             Browser.Navigation.pushUrl key (PageLocation.toUrlAsString (PageLocation.Trade (Data.Trade.getId trade)))
@@ -954,6 +954,9 @@ productPageCmdToCmd key cmd =
 
         Page.Product.CmdReplaceElementText idAndText ->
             replaceText idAndText
+
+        Page.Product.CmdJumpToHome ->
+            Browser.Navigation.load (PageLocation.toUrlAsString PageLocation.Home)
 
 
 tradePageCmdToCmd : Page.Trade.Cmd -> Cmd Msg

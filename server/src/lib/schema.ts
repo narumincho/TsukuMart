@@ -1474,6 +1474,31 @@ const addProductComment = makeQueryOrMutationField<
     description: "商品にコメントを追加する"
 });
 
+const deleteProduct = makeQueryOrMutationField<
+    { accessToken: string; productId: string },
+    true
+>({
+    args: {
+        accessToken: {
+            type: g.GraphQLNonNull(g.GraphQLString),
+            description: type.accessTokenDescription
+        },
+        productId: {
+            type: g.GraphQLNonNull(g.GraphQLID),
+            description: productGraphQLType.getFields().id.description
+        }
+    },
+    type: g.GraphQLBoolean,
+    resolve: async (source, args, context, info) => {
+        await database.deleteProduct(
+            await database.verifyAccessToken(args.accessToken),
+            args.productId
+        );
+        return true;
+    },
+    description: "商品を削除する。(売り出し時のみ)"
+});
+
 const addDraftProduct = makeQueryOrMutationField<
     { accessToken: string; images: Array<type.DataURL> } & Pick<
         type.DraftProduct,
@@ -1606,7 +1631,6 @@ const updateDraftProduct = makeQueryOrMutationField<
     },
     description: "商品の下書きを編集する"
 });
-
 const deleteDraftProduct = makeQueryOrMutationField<
     { accessToken: string } & Pick<type.DraftProduct, "draftId">,
     Array<type.DraftProduct>
@@ -1774,6 +1798,7 @@ export const schema = new g.GraphQLSchema({
             likeProduct,
             unlikeProduct,
             addProductComment,
+            deleteProduct,
             addDraftProduct,
             updateDraftProduct,
             deleteDraftProduct,

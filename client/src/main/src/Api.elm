@@ -872,9 +872,32 @@ getProduct id callBack =
 -}
 
 
-deleteProduct : Token -> Product.Id -> Cmd msg
-deleteProduct token productId =
-    Cmd.none
+deleteProduct : Product.Id -> Token -> (Result String () -> msg) -> Cmd msg
+deleteProduct productId token =
+    graphQlApiRequest
+        (Mutation
+            [ Field
+                { name = "deleteProduct"
+                , args =
+                    [ ( "accessToken", GraphQLString (tokenToString token) )
+                    , ( "productId", GraphQLString (Product.idToString productId) )
+                    ]
+                , return = []
+                }
+            ]
+        )
+        (Jd.field "deleteProduct"
+            (Jd.bool
+                |> Jd.andThen
+                    (\b ->
+                        if b then
+                            Jd.succeed ()
+
+                        else
+                            Jd.fail "商品の削除に失敗"
+                    )
+            )
+        )
 
 
 

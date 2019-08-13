@@ -23,6 +23,7 @@ const twitterLogInTokenSecretDocumentRef: FirebaseFirestore.DocumentReference = 
 const lineLogInStateCollection = dataBase.collection("lineState");
 const lineNotifyStateCollection = dataBase.collection("lineNotifyState");
 const productCollectionRef = dataBase.collection("product");
+const productDeletedCollectionRef = dataBase.collection("productDeleted");
 const tradeCollectionRef = dataBase.collection("trade");
 const contentSecurityPolicyReportRef = dataBase.collection(
     "contentSecurityPolicyReport"
@@ -581,6 +582,16 @@ export const getProductComments = async (
             .orderBy("createdAt")
             .get()
     )) as Array<{ id: string; data: ProductComment }>;
+
+export const deleteProduct = async (id: string): Promise<void> => {
+    await productCollectionRef.doc(id).delete();
+};
+
+export const addDeletedProduct = async (
+    data: ProductData & { deletedAt: firestore.Timestamp }
+): Promise<void> => {
+    await productDeletedCollectionRef.add(data);
+};
 /* ==========================================
                     Trade
    ==========================================
