@@ -12,15 +12,9 @@ import * as lineNotify from "./lineNotify";
  */
 export const checkExistsLogInState = async (
     state: string,
-    service: "google" | "gitHub" | "line"
+    service: "line"
 ): Promise<boolean> => {
     switch (service) {
-        case "google": {
-            return databaseLow.existsGoogleLogInStateAndDelete(state);
-        }
-        case "gitHub": {
-            return databaseLow.existsGitHubLogInStateAndDelete(state);
-        }
         case "line": {
             return databaseLow.existsLineLogInStateAndDelete(state);
         }
@@ -35,32 +29,6 @@ export const checkExistsLineNotifyState = async (
     state: string
 ): Promise<string | null> =>
     databaseLow.existsLineNotifyStateAndDeleteAndGetUserId(state);
-
-/** 最後に保存したTokenSecretを取得する */
-export const getTwitterLastTokenSecret = async (): Promise<string> =>
-    await databaseLow.getTwitterLastTokenSecret();
-
-/**
- * TwitterのTokenSecretを上書き保存する
- * @param tokenSecret
- */
-export const writeTwitterLogInTokenSecret = async (
-    tokenSecret: string
-): Promise<void> => await databaseLow.writeTwitterLogInTokenSecret(tokenSecret);
-
-/**
- * Googleへの OpenId ConnectのStateを生成して保存する
- * リプレイアタックを防いだり、他のサーバーがつくマートのクライアントIDを使って発行しても自分が発行したものと見比べて識別できるようにする
- */
-export const generateAndWriteGoogleLogInState = async (): Promise<string> =>
-    await databaseLow.generateAndWriteGoogleLogInState();
-
-/**
- * GitHubへの OpenId ConnectのStateを生成して保存する
- * リプレイアタックを防いだり、他のサーバーがつくマートのクライアントIDを使って発行しても自分が発行したものと見比べて識別できるようにする
- */
-export const generateAndWriteGitHubLogInState = async (): Promise<string> =>
-    await databaseLow.generateAndWriteGitHubLogInState();
 
 /**
  * LINEへの OpenId ConnectのStateを生成して保存する

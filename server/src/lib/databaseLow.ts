@@ -15,11 +15,6 @@ const userBeforeInputDataCollection = dataBase.collection(
 const userBeforeEmailVerificationCollection = dataBase.collection(
     "userBeforeEmailVerification"
 );
-const googleLogInStateCollection = dataBase.collection("googleState");
-const gitHubLogInStateCollection = dataBase.collection("gitHubState");
-const twitterLogInTokenSecretDocumentRef: FirebaseFirestore.DocumentReference = dataBase
-    .collection("twitterState")
-    .doc("last");
 const lineLogInStateCollection = dataBase.collection("lineState");
 const lineNotifyStateCollection = dataBase.collection("lineNotifyState");
 const productCollectionRef = dataBase.collection("product");
@@ -806,21 +801,7 @@ export const getImageReadStream = (fileId: string): stream.Readable =>
     storage.file(fileId).createReadStream();
 
 /**
- * Googleへの OpenId ConnectのStateを生成して保存する
- * リプレイアタックを防いだり、他のサーバーがつくマートのクライアントIDを使って発行しても自分が発行したものと見比べて識別できるようにする
- */
-export const generateAndWriteGoogleLogInState = async (): Promise<string> =>
-    (await googleLogInStateCollection.add({})).id;
-
-/**
- * GitHubへの stateを生成して保存する
- * リプレイアタックを防いだり、他のサーバーがつくマートのクライアントIDを使って発行しても自分が発行したものと見比べて識別できるようにする
- */
-export const generateAndWriteGitHubLogInState = async (): Promise<string> =>
-    (await gitHubLogInStateCollection.add({})).id;
-
-/**
- * Googleへの OpenId ConnectのStateを生成して保存する
+ * LINEへの OpenId ConnectのStateを生成して保存する
  * リプレイアタックを防いだり、他のサーバーがつくマートのクライアントIDを使って発行しても自分が発行したものと見比べて識別できるようにする
  */
 export const generateAndWriteLineLogInState = async (): Promise<string> =>
@@ -836,49 +817,6 @@ export const generateAndWriteLineNotifyState = async (
     (await lineNotifyStateCollection.add({ userId: userId })).id;
 
 /**
- * TwitterのTokenSecretを上書き保存する
- */
-export const writeTwitterLogInTokenSecret = async (
-    tokenSecret: string
-): Promise<void> => {
-    await twitterLogInTokenSecretDocumentRef.set({
-        tokenSecret: tokenSecret
-    });
-};
-
-/**
- * Googleへのstateが存在することを確認し、存在するなら削除する
- */
-export const existsGoogleLogInStateAndDelete = async (
-    state: string
-): Promise<boolean> => {
-    const docRef: FirebaseFirestore.DocumentReference = googleLogInStateCollection.doc(
-        state
-    );
-    const exists = (await docRef.get()).exists;
-    if (exists) {
-        await docRef.delete();
-    }
-    return exists;
-};
-
-/**
- * GitHubへのstateが存在することを確認し、存在するなら削除する
- */
-export const existsGitHubLogInStateAndDelete = async (
-    state: string
-): Promise<boolean> => {
-    const docRef: FirebaseFirestore.DocumentReference = gitHubLogInStateCollection.doc(
-        state
-    );
-    const exists = (await docRef.get()).exists;
-    if (exists) {
-        await docRef.delete();
-    }
-    return exists;
-};
-
-/**
  * LINEへのstateが存在することを確認し、存在するなら削除する
  */
 export const existsLineLogInStateAndDelete = async (
@@ -892,16 +830,6 @@ export const existsLineLogInStateAndDelete = async (
         await docRef.delete();
     }
     return exists;
-};
-
-export const getTwitterLastTokenSecret = async (): Promise<string> => {
-    const lastData:
-        | FirebaseFirestore.DocumentData
-        | undefined = (await twitterLogInTokenSecretDocumentRef.get()).data();
-    if (lastData === undefined) {
-        throw new Error("Twitterの最後に保存したtokenSecretがない");
-    }
-    return lastData.tokenSecret;
 };
 
 /**
