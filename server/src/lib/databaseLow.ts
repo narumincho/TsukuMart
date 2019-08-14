@@ -725,9 +725,6 @@ export const createCustomToken = async (uid: string): Promise<string> =>
 */
 /**
  * Firebase Cloud Storageで新しくファイルを作成する
- * 被らないIDで保存したかったが、すでに存在しているかのチェックがうまくいかない
- * ごくまれにかぶるかも
- * @param folderName フォルダの名
  */
 export const saveFileToCloudStorage = async (
     data: ArrayBuffer,
