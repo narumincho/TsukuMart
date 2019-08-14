@@ -54,6 +54,7 @@ type Model
     | Edit
         { beforeProduct : Product.ProductDetail
         , productEditor : ProductEditor.Model
+        , sending : Bool
         }
     | Confirm
         { product : Product.ProductDetail
@@ -423,6 +424,7 @@ update msg model =
                     ( Edit
                         { beforeProduct = product
                         , productEditor = productEditorMode
+                        , sending = False
                         }
                     , productEditorCmdList |> List.map CmdByProductEditor
                     )
@@ -460,7 +462,12 @@ update msg model =
             )
 
         UpdateProductData token productId requestData ->
-            ( model
+            ( case model of
+                Edit rec ->
+                    Edit { rec | sending = True }
+
+                _ ->
+                    model
             , [ CmdUpdateProductData token productId requestData
               ]
             )
@@ -478,9 +485,16 @@ update msg model =
                     )
 
                 Err text ->
-                    ( model
-                    , [ CmdAddLogMessage ("商品の編集に失敗しました " ++ text) ]
-                    )
+                    case model of
+                        Edit rec ->
+                            ( Edit { rec | sending = False }
+                            , [ CmdAddLogMessage ("商品の編集に失敗しました " ++ text) ]
+                            )
+
+                        _ ->
+                            ( model
+                            , [ CmdAddLogMessage ("商品の編集に失敗しました " ++ text) ]
+                            )
 
 
 view :
@@ -536,7 +550,7 @@ view logInState isWideScreen nowMaybe model =
                 , product = rec.product
                 }
 
-        Edit { productEditor, beforeProduct } ->
+        Edit { productEditor, beforeProduct, sending } ->
             { title = Just (Product.detailGetName beforeProduct)
             , tab = BasicParts.tabNone
             , html =
@@ -550,6 +564,7 @@ view logInState isWideScreen nowMaybe model =
                                      , editOkCancelButton
                                         accessToken
                                         (Product.detailGetId beforeProduct)
+                                        sending
                                         (ProductEditor.toUpdateRequest productEditor)
                                      )
                                    ]
@@ -975,26 +990,37 @@ tradeStartButton logInState productId =
         ]
 
 
-editOkCancelButton : Api.Token -> Product.Id -> Maybe Api.UpdateProductRequest -> Html.Styled.Html Msg
-editOkCancelButton token productId requestDataMaybe =
-    Html.Styled.div
-        [ Html.Styled.Attributes.class "profile-editButtonArea" ]
-        [ Html.Styled.button
-            [ Html.Styled.Attributes.class "profile-editCancelButton"
-            , Html.Styled.Events.onClick MsgBackToViewMode
+editOkCancelButton : Api.Token -> Product.Id -> Bool -> Maybe Api.UpdateProductRequest -> Html.Styled.Html Msg
+editOkCancelButton token productId sending requestDataMaybe =
+    if sending then
+        Html.Styled.div
+            [ Html.Styled.Attributes.class "profile-editButtonArea" ]
+            [ Html.Styled.button
+                [ Html.Styled.Attributes.class "profile-editOkButton"
+                , Html.Styled.Attributes.disabled True
+                ]
+                [ Icon.loading { size = 32, color = Css.rgb 0 0 0 } ]
             ]
-            [ Html.Styled.text "キャンセル" ]
-        , Html.Styled.button
-            ([ Html.Styled.Attributes.class "profile-editOkButton" ]
-                ++ (case requestDataMaybe of
-                        Just requestDate ->
-                            [ Html.Styled.Events.onClick (UpdateProductData token productId requestDate)
-                            , Html.Styled.Attributes.disabled False
-                            ]
 
-                        Nothing ->
-                            [ Html.Styled.Attributes.disabled True ]
-                   )
-            )
-            [ Html.Styled.text "変更する" ]
-        ]
+    else
+        Html.Styled.div
+            [ Html.Styled.Attributes.class "profile-editButtonArea" ]
+            [ Html.Styled.button
+                [ Html.Styled.Attributes.class "profile-editCancelButton"
+                , Html.Styled.Events.onClick MsgBackToViewMode
+                ]
+                [ Html.Styled.text "キャンセル" ]
+            , Html.Styled.button
+                ([ Html.Styled.Attributes.class "profile-editOkButton" ]
+                    ++ (case requestDataMaybe of
+                            Just requestData ->
+                                [ Html.Styled.Events.onClick (UpdateProductData token productId requestData)
+                                , Html.Styled.Attributes.disabled False
+                                ]
+
+                            Nothing ->
+                                [ Html.Styled.Attributes.disabled True ]
+                       )
+                )
+                [ Html.Styled.text "変更する" ]
+            ]

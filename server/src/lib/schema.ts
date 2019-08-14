@@ -1473,6 +1473,80 @@ const addProductComment = makeQueryOrMutationField<
     description: "商品にコメントを追加する"
 });
 
+const updateProduct = makeQueryOrMutationField<
+    {
+        accessToken: string;
+        productId: string;
+        addImageList: Array<type.DataURL>;
+        deleteImageIndex: Array<number>;
+    } & Pick<
+        type.ProductInternal,
+        "name" | "price" | "description" | "condition" | "category"
+    >,
+    type.ProductInternal
+>({
+    args: {
+        accessToken: {
+            type: g.GraphQLNonNull(g.GraphQLString),
+            description: type.accessTokenDescription
+        },
+        productId: {
+            type: g.GraphQLNonNull(g.GraphQLID),
+            description: productGraphQLType.getFields().id.description
+        },
+        name: {
+            type: g.GraphQLNonNull(g.GraphQLString),
+            description: "商品名"
+        },
+        price: {
+            type: g.GraphQLNonNull(g.GraphQLInt),
+            description: "値段"
+        },
+        description: {
+            type: g.GraphQLNonNull(g.GraphQLString),
+            description: "説明文"
+        },
+        condition: {
+            type: g.GraphQLNonNull(type.conditionGraphQLType),
+            description: type.conditionDescription
+        },
+        category: {
+            type: g.GraphQLNonNull(type.categoryGraphQLType),
+            description: type.categoryDescription
+        },
+        addImageList: {
+            type: g.GraphQLNonNull(
+                g.GraphQLList(g.GraphQLNonNull(type.dataUrlGraphQLType))
+            ),
+            description: "追加する商品画像"
+        },
+        deleteImageIndex: {
+            type: g.GraphQLNonNull(
+                g.GraphQLList(g.GraphQLNonNull(g.GraphQLInt))
+            ),
+            description: "削除する商品画像のインデックス 0始まり"
+        }
+    },
+    type: g.GraphQLNonNull(productGraphQLType),
+    resolve: async (source, args, context, info) => {
+        return await database.updateProduct(
+            await database.verifyAccessToken(args.accessToken),
+            args.productId,
+            {
+                name: args.name,
+                description: args.description,
+                price: args.price,
+                condition: args.condition,
+                category: args.category,
+                addImageList: args.addImageList,
+                deleteImageIndex: args.deleteImageIndex
+            }
+        );
+    },
+    description:
+        "商品の情報を修正する。(自分が出品している商品で売り出し時のみ)"
+});
+
 const deleteProduct = makeQueryOrMutationField<
     { accessToken: string; productId: string },
     true
@@ -1495,7 +1569,7 @@ const deleteProduct = makeQueryOrMutationField<
         );
         return true;
     },
-    description: "商品を削除する。(売り出し時のみ)"
+    description: "商品を削除する。(自分が出品している商品で売り出し時のみ)"
 });
 
 const addDraftProduct = makeQueryOrMutationField<
@@ -1797,6 +1871,7 @@ export const schema = new g.GraphQLSchema({
             likeProduct,
             unlikeProduct,
             addProductComment,
+            updateProduct,
             deleteProduct,
             addDraftProduct,
             updateDraftProduct,

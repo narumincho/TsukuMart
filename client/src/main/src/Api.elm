@@ -507,7 +507,7 @@ updateProduct productId (UpdateProductRequest rec) token =
     graphQlApiRequest
         (Mutation
             [ Field
-                { name = "updateProfile"
+                { name = "updateProduct"
                 , args =
                     [ ( "accessToken", GraphQLString (tokenToString token) )
                     , ( "productId", GraphQLString (Product.idToString productId) )
@@ -532,7 +532,7 @@ updateProduct productId (UpdateProductRequest rec) token =
                 }
             ]
         )
-        (Jd.field "updateProfile"
+        (Jd.field "updateProduct"
             productDetailDecoder
         )
 

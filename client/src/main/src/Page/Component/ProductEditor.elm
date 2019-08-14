@@ -21,7 +21,6 @@ import Html.Styled
 import Html.Styled.Attributes
 import Html.Styled.Events
 import Icon
-import Json.Decode
 import Page.Component.Category as CateogryComp
 import Page.Style
 import Set
@@ -259,7 +258,7 @@ toSoldRequest (Model rec) =
             if
                 nameCheck rec.name
                     == Nothing
-                    && imagesCheck rec.addImages
+                    && imagesCheck rec.addImages rec.beforeImageIds
                     == Nothing
             then
                 Api.SellProductRequest
@@ -286,7 +285,7 @@ toUpdateRequest (Model rec) =
             if
                 nameCheck rec.name
                     == Nothing
-                    && imagesCheck rec.addImages
+                    && imagesCheck rec.addImages rec.beforeImageIds
                     == Nothing
             then
                 Api.UpdateProductRequest
@@ -344,11 +343,11 @@ priceCheck priceMaybe =
             Err "0 ～ 100万円の価格を入力してください"
 
 
-imagesCheck : List String -> Maybe String
-imagesCheck images =
+imagesCheck : List String -> List ImageId.ImageId -> Maybe String
+imagesCheck addImageList beforeImageIds =
     let
         length =
-            List.length images
+            List.length addImageList + List.length beforeImageIds
     in
     if length < 1 then
         Just "画像は1枚以上必要です"
@@ -612,15 +611,3 @@ conditionView condition =
 conditionSelectId : String
 conditionSelectId =
     "exhibition-selectCondition"
-
-
-blankOption : Html.Html msg
-blankOption =
-    Html.option [] [ Html.text "--選択してください--" ]
-
-
-selectDecoder : Json.Decode.Decoder Int
-selectDecoder =
-    Json.Decode.at
-        [ "target", "selectedIndex" ]
-        Json.Decode.int

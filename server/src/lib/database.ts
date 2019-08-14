@@ -384,11 +384,62 @@ export const addCommentProduct = async (
     });
 };
 
-// export const updateProduct = async (
-//     userId: string,
-//     productId: string,
-//     data: Pick<type.Product, "name" | "description" | "price" | "condition" | "category" | "">
-// ) => {};
+export const updateProduct = async (
+    userId: string,
+    productId: string,
+    data: Pick<
+        type.Product,
+        "name" | "description" | "price" | "condition" | "category"
+    > & {
+        addImageList: Array<type.DataURL>;
+        deleteImageIndex: Array<number>;
+    }
+): Promise<ProductReturnLowCost> => {
+    const nowTime = databaseLow.getNowTimestamp();
+    const beforeData = await databaseLow.getProduct(productId);
+    if (beforeData.sellerId !== userId) {
+        throw new Error("出品者以外が商品を編集しようとしている");
+    }
+    if (beforeData.status !== "selling") {
+        throw new Error("売り出し時以外の商品を編集しようとしている");
+    }
+
+    const newImageData = await updateProductImage(
+        beforeData.thumbnailImageId,
+        beforeData.imageIds,
+        data.addImageList,
+        data.deleteImageIndex
+    );
+    await databaseLow.updateProductData(productId, {
+        name: data.name,
+        price: data.price,
+        description: data.description,
+        category: data.category,
+        condition: data.condition,
+        updateAt: nowTime,
+        imageIds: newImageData.imageIds
+    });
+    return {
+        id: productId,
+        name: data.name,
+        price: data.price,
+        description: data.description,
+        category: data.category,
+        condition: data.condition,
+        createdAt: databaseLow.timestampToDate(beforeData.createdAt),
+        updateAt: databaseLow.timestampToDate(nowTime),
+        thumbnailImageId: newImageData.thumbnailImageId,
+        imageIds: newImageData.imageIds,
+        likedCount: beforeData.likedCount,
+        viewedCount: beforeData.viewedCount,
+        status: beforeData.status,
+        seller: {
+            id: beforeData.sellerId,
+            displayName: beforeData.sellerDisplayName,
+            imageId: beforeData.sellerImageId
+        }
+    };
+};
 
 export const deleteProduct = async (userId: string, productId: string) => {
     const now = databaseLow.getNowTimestamp();
@@ -483,43 +534,20 @@ export const updateDraftProduct = async (
         data.draftId
     );
 
-    const newImageIds: Array<string> = [];
-    let restFirstImage: boolean = true;
-    let deleteAtIndex = 0;
-    for (let i = 0; i < beforeData.imageIds.length; i++) {
-        if (i === data.deleteImagesAt[deleteAtIndex]) {
-            if (i === 0) {
-                restFirstImage = false;
-            }
-            deleteAtIndex += 1;
-        } else {
-            newImageIds.push(beforeData.imageIds[i]);
-        }
-    }
-    for (let i = 0; i < data.addImages.length; i++) {
-        newImageIds.push(
-            await databaseLow.saveThumbnailImageToCloudStorage(
-                data.addImages[i].data,
-                data.addImages[i].mimeType
-            )
-        );
-    }
-    if (newImageIds.length <= 0) {
-        throw new Error("商品画像がなくなってしまった");
-    }
-    let thumbnailImageId = beforeData.thumbnailImageId;
-    if (!restFirstImage) {
-        thumbnailImageId = await databaseLow.saveThumbnailImageFromCloudStorageToCloudStorage(
-            newImageIds[0]
-        );
-    }
+    const newImageData = await updateProductImage(
+        beforeData.thumbnailImageId,
+        beforeData.imageIds,
+        data.addImages,
+        data.deleteImagesAt
+    );
     await databaseLow.updateDraftProduct(userId, data.draftId, {
         name: data.name,
         price: data.price,
         description: data.description,
         category: data.category,
         condition: data.condition,
-        updateAt: nowTime
+        updateAt: nowTime,
+        imageIds: newImageData.imageIds
     });
     return {
         draftId: data.draftId,
@@ -530,8 +558,8 @@ export const updateDraftProduct = async (
         condition: data.condition,
         createdAt: databaseLow.timestampToDate(beforeData.createdAt),
         updateAt: databaseLow.timestampToDate(nowTime),
-        thumbnailImageId: thumbnailImageId,
-        imageIds: newImageIds
+        thumbnailImageId: newImageData.thumbnailImageId,
+        imageIds: newImageData.imageIds
     };
 };
 
@@ -540,6 +568,53 @@ export const deleteDraftProduct = async (
     draftId: string
 ): Promise<void> => {
     await databaseLow.deleteDraftProduct(userId, draftId);
+};
+
+const updateProductImage = async (
+    thumbnailImageId: string,
+    beforeImageId: Array<string>,
+    addImages: Array<type.DataURL>,
+    deleteImagesAt: Array<number>
+): Promise<{
+    thumbnailImageId: string;
+    imageIds: Array<string>;
+}> => {
+    const newImageIds: Array<string> = [];
+    let restFirstImage: boolean = true;
+    let deleteAtIndex = 0;
+    for (let i = 0; i < beforeImageId.length; i++) {
+        if (i === deleteImagesAt[deleteAtIndex]) {
+            if (i === 0) {
+                restFirstImage = false;
+            }
+            deleteAtIndex += 1;
+        } else {
+            newImageIds.push(beforeImageId[i]);
+        }
+    }
+    for (let i = 0; i < addImages.length; i++) {
+        newImageIds.push(
+            await databaseLow.saveFileToCloudStorage(
+                addImages[i].data,
+                addImages[i].mimeType
+            )
+        );
+    }
+    if (newImageIds.length <= 0) {
+        throw new Error("商品画像がなくなってしまった");
+    }
+    if (!restFirstImage) {
+        return {
+            thumbnailImageId: await databaseLow.saveThumbnailImageFromCloudStorageToCloudStorage(
+                newImageIds[0]
+            ),
+            imageIds: newImageIds
+        };
+    }
+    return {
+        thumbnailImageId: thumbnailImageId,
+        imageIds: newImageIds
+    };
 };
 
 /**
