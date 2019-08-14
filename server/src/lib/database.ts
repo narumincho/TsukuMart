@@ -732,25 +732,21 @@ export const getAllProducts = async (): Promise<Array<ProductReturnLowCost>> =>
 export const getRecentProducts = async (): Promise<
     Array<ProductReturnLowCost>
 > =>
-    (await databaseLow.getRecentProductData())
-        .map(productReturnLowCostFromDatabaseLow)
-        .filter(isNotTradingProducts);
+    (await databaseLow.getRecentProductData()).map(
+        productReturnLowCostFromDatabaseLow
+    );
 
 export const getRecommendProducts = async (): Promise<
     Array<ProductReturnLowCost>
 > =>
-    (await databaseLow.getRecommendProductData())
-        .map(productReturnLowCostFromDatabaseLow)
-        .filter(isNotTradingProducts);
+    (await databaseLow.getRecommendProductData()).map(
+        productReturnLowCostFromDatabaseLow
+    );
 
 export const getFreeProducts = async (): Promise<Array<ProductReturnLowCost>> =>
-    (await databaseLow.getFreeProductData())
-        .map(productReturnLowCostFromDatabaseLow)
-        .filter(isNotTradingProducts);
-
-const isNotTradingProducts = (product: ProductReturnLowCost): boolean => {
-    return product.status !== "trading";
-};
+    (await databaseLow.getFreeProductData()).map(
+        productReturnLowCostFromDatabaseLow
+    );
 
 /**
  * 商品のデータを取得する

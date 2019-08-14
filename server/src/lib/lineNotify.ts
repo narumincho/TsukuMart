@@ -91,7 +91,7 @@ export const sendMessage = async (
                   ["stickerId", "171"],
                   [
                       "imageFullsize",
-                      "https://tsukumart.com/tsukubird_for_linenotify.jpg"
+                      "https://tsukumart.com/assets/tsukubird_for_linenotify.jpg"
                   ]
               ]
             : [["message", message]]

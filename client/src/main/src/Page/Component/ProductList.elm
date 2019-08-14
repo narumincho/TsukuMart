@@ -138,11 +138,14 @@ itemView logInState sending product =
         ([ itemImage (Product.getName product) (Product.getThumbnailImageUrl product)
          ]
             ++ (case Product.getStatus product of
-                    Product.SoldOut ->
+                    Product.Selling ->
+                        []
+
+                    Product.Trading ->
                         [ soldOutBar ]
 
-                    _ ->
-                        []
+                    Product.SoldOut ->
+                        [ soldOutBar ]
                )
             ++ [ Html.Styled.div
                     [ Html.Styled.Attributes.class "productList-name" ]
