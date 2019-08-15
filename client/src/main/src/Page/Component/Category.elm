@@ -229,7 +229,7 @@ categoryView group category =
         [ Page.Style.selectMenu
             categorySelectId
             (Category.groupToCategoryList group
-                |> List.map Category.toJapaneseString
+                |> List.map Category.partToJapaneseString
             )
         ]
         |> Html.Styled.map SelectCategory

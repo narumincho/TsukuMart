@@ -664,7 +664,7 @@ export const getNowTimestamp = (): firestore.Timestamp =>
     admin.firestore.Timestamp.now();
 
 export const timestampToDate = (timeStamp: firestore.Timestamp): Date =>
-    new Date(timeStamp.toMillis());
+    timeStamp.toDate();
 /* ==========================================
         Firebase Authentication 
    ==========================================
