@@ -169,8 +169,8 @@ userImage size imageId =
 
 {-| 選択肢から選べるメニュー。一番上は選択してください固定でこれを選んだらNothingが返ってくる
 -}
-selectMenu : String -> List String -> H.Html (Maybe Int)
-selectMenu id labelList =
+selectMenu : Bool -> String -> List String -> H.Html (Maybe Int)
+selectMenu disabled id labelList =
     H.select
         [ A.css
             [ Css.display Css.block
@@ -182,6 +182,7 @@ selectMenu id labelList =
             , Css.fontSize (Css.px 24)
             ]
         , A.id id
+        , A.disabled disabled
         , Html.Styled.Events.on "change" selectDecoder
         ]
         (blankOption

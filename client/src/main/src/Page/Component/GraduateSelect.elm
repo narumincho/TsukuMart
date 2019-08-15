@@ -74,6 +74,7 @@ view _ =
         "研究科"
         graduateSelectId
         [ Page.Style.selectMenu
+            False
             graduateSelectId
             (University.graduateAllValue
                 |> List.map University.graduateToJapaneseString

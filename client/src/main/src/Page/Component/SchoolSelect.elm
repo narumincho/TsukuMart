@@ -181,6 +181,7 @@ selectSchoolView schoolMaybe =
         "学群"
         schoolSelectId
         [ Page.Style.selectMenu
+            False
             schoolSelectId
             (University.schoolAll
                 |> List.map University.schoolToJapaneseString
@@ -222,6 +223,7 @@ selectDepartmentViewFromLabelString school labelList =
         "学類"
         departmentSelectId
         [ Page.Style.selectMenu
+            False
             departmentSelectId
             labelList
         ]

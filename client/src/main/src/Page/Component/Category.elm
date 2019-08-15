@@ -3,12 +3,8 @@ module Page.Component.Category exposing
     , Model
     , Msg
     , Select(..)
-    , categorySelectId
-    , categoryView
     , getCategory
     , getSelect
-    , groupSelectId
-    , groupView
     , initModel
     , initModelWithCategorySelect
     , initModelWithSearchCondition
@@ -181,7 +177,9 @@ view (Model select) =
         []
         (case select of
             None ->
-                [ groupView Nothing ]
+                [ groupView Nothing
+                , categoryViewDisable
+                ]
 
             GroupSelect group ->
                 [ groupView
@@ -208,6 +206,7 @@ groupView categoryGroup =
         "カテゴリ グループ"
         groupSelectId
         [ Page.Style.selectMenu
+            False
             groupSelectId
             (Category.groupAll |> List.map Category.groupToJapaneseString)
         ]
@@ -227,10 +226,26 @@ categoryView group category =
         "カテゴリ"
         categorySelectId
         [ Page.Style.selectMenu
+            False
             categorySelectId
             (Category.groupToCategoryList group
                 |> List.map Category.partToJapaneseString
             )
+        ]
+        |> Html.Styled.map SelectCategory
+    )
+
+
+categoryViewDisable : ( String, Html.Styled.Html Msg )
+categoryViewDisable =
+    ( "selectCategoryDisable"
+    , Page.Style.formItem
+        "カテゴリ"
+        categorySelectId
+        [ Page.Style.selectMenu
+            True
+            categorySelectId
+            []
         ]
         |> Html.Styled.map SelectCategory
     )

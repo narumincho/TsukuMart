@@ -600,6 +600,7 @@ conditionView condition =
         "商品の状態"
         conditionSelectId
         [ Page.Style.selectMenu
+            False
             conditionSelectId
             (Product.conditionAll
                 |> List.map Product.conditionToJapaneseString
