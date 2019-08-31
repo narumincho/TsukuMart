@@ -1,8 +1,8 @@
 {
     "compilerOptions": {
-        "target": "es2018",
+        "target": "es2019",
         "module": "commonjs",
-        "lib": ["es2018"],
+        "lib": ["es2019"],
         "strict": true,
         "moduleResolution": "node",
         "noErrorTruncation": true,
