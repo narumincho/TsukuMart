@@ -59,7 +59,7 @@ export const indexHtml = functions
 const pathToDescriptionAndImageUrl = async (
     path: string
 ): Promise<{ title: string; description: string; imageUrl: string }> => {
-    const productMathResult = path.match(/^\/product\/(\w+)/);
+    const productMathResult = path.match(/^\/product\/(\w+)$/);
     if (productMathResult !== null) {
         const product = await database.getProduct(productMathResult[1]);
         return {
@@ -70,14 +70,12 @@ const pathToDescriptionAndImageUrl = async (
                 product.thumbnailImageId
         };
     }
-    const userMathResult = path.match(/^\/user\//);
+    const userMathResult = path.match(/^\/user\/(\w+)$/);
     if (userMathResult !== null) {
         const user = await database.getUserData(userMathResult[1]);
         return {
             title: user.displayName,
-            description: `${user.displayName}さんのプロフィール | ${
-                user.introduction
-            }`,
+            description: `${user.displayName}さんのプロフィール | ${user.introduction}`,
             imageUrl:
                 "https://asia-northeast1-tsukumart-f0971.cloudfunctions.net/image/" +
                 user.imageId
@@ -91,22 +89,20 @@ const pathToDescriptionAndImageUrl = async (
 };
 
 const escapeHtml = (text: string): string =>
-    text.replace(
-        /[&'`"<>]/g,
-        (s: string): string =>
-            s === "&"
-                ? "&amp;"
-                : s === "'"
-                ? "&#x27;"
-                : s === "`"
-                ? "&#x60;"
-                : s === '"'
-                ? "&quot;"
-                : s === "<"
-                ? "&lt;"
-                : s === ">"
-                ? "&gt;"
-                : ""
+    text.replace(/[&'`"<>]/g, (s: string): string =>
+        s === "&"
+            ? "&amp;"
+            : s === "'"
+            ? "&#x27;"
+            : s === "`"
+            ? "&#x60;"
+            : s === '"'
+            ? "&quot;"
+            : s === "<"
+            ? "&lt;"
+            : s === ">"
+            ? "&gt;"
+            : ""
     );
 
 /** API */
