@@ -171,7 +171,7 @@ itemPrice price =
         [ Html.Styled.span
             [ Html.Styled.Attributes.css
                 [ Css.fontSize (Css.rem 1.5)
-                , Css.color (Css.rgb 218 112 0)
+                , Css.color (Css.rgb 81 33 130)
                 ]
             ]
             [ Html.Styled.text (Product.priceToStringWithoutYen price) ]
