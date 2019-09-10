@@ -1,2 +1,4 @@
-User-agent: *
+User-Agent: *
+Disallow:
+
 Sitemap: https://tsukumart.com/sitemap

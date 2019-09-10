@@ -2,10 +2,12 @@
 ((self: ServiceWorkerGlobalScope) => {
     self.addEventListener("install", e => {
         e.waitUntil(
-            (() => {
+            (async () => {
                 console.log(
-                    "Service Worker内でブラウザにインストールされたことを検知した!"
+                    "Service Worker内でServiceWorkerがブラウザにインストールされたことを検知した!"
                 );
+                const cache = await caches.open("indexHtml");
+                await cache.add("https://tsukumart.com/");
                 self.skipWaiting();
             })()
         );
@@ -21,28 +23,15 @@
     });
 
     self.addEventListener("fetch", e => {
-        e.waitUntil(() => {
-            const accept = e.request.headers.get("accept");
-            if (accept === null) {
-                return;
-            }
-            if (/text\/html/.test(accept) && !navigator.onLine) {
-                return new Response(`
-<!doctype html>
-<html lang="ja">
-
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>つくマート</title>
-</head>
-
-<body>
-    オフライン時、つくマートを使うことはできません
-</body>
-
-</html>
-`);
+        e.waitUntil(async () => {
+            if (!navigator.onLine) {
+                e.respondWith(
+                    caches
+                        .match(e.request)
+                        .then(response =>
+                            response !== undefined ? response : new Response()
+                        )
+                );
             }
         });
     });
@@ -62,4 +51,4 @@
             })
         );
     });
-})(self as ServiceWorkerGlobalScope);
+})((self as unknown) as ServiceWorkerGlobalScope);

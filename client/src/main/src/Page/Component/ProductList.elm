@@ -265,7 +265,7 @@ soldOutBar =
         ]
         [ Html.Styled.div
             [ Html.Styled.Attributes.css
-                [ Css.backgroundColor (Css.rgb 240 16 16)
+                [ Css.backgroundColor (Css.rgb 149 12 12)
                 , Css.color (Css.rgb 255 255 255)
                 , Css.transforms
                     [ Css.translate2 (Css.px -73) (Css.px 42)
