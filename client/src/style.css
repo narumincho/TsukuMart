@@ -28,9 +28,9 @@ body {
 
 .mainTab-wide {
     position: fixed;
-    left: 20rem;
+    left: 320px;
     top: 4rem;
-    width: calc(100% - 20rem);
+    width: calc(100% - 320px);
 }
 
 .mainTab-item {

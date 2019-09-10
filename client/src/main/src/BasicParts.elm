@@ -15,7 +15,6 @@ module BasicParts exposing
 
 import Css
 import Data.LogInState
-import Data.SearchCondition
 import Data.User
 import Html
 import Html.Attributes
