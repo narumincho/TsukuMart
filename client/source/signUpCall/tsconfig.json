@@ -4,8 +4,8 @@
         "strict": true,
         "lib": ["es2019", "dom"],
         "removeComments": true,
-        "outDir": "../../dist/",
+        "outDir": "../../distribution/",
         "newLine": "LF"
     },
-    "include": ["call.ts"]
+    "include": ["signup-call.ts"]
 }

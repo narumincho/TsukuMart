@@ -41,7 +41,7 @@
                 ]
             }
         ],
-        "public": "client/dist",
+        "public": "client/distribution",
         "rewrites": [
             {
                 "source": "sitemap",
@@ -54,6 +54,6 @@
         ]
     },
     "functions": {
-        "source": "server/dist"
+        "source": "server/distribution"
     }
 }

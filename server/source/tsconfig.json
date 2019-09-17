@@ -8,7 +8,7 @@
         "noErrorTruncation": true,
         "removeComments": true,
         "newLine": "LF",
-        "outDir": "../dist"
+        "outDir": "../distribution"
     },
     "include": ["index.ts"]
 }

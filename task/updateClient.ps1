@@ -3,18 +3,18 @@ Write-Output "Compile Client Code And Upload Firebase Server";
 
 Write-Output "Compile Elm ...";
 $Host.UI.RawUI.ForegroundColor = "Gray";
-Set-Location -Path ./client/src/main/;
+Set-Location -Path ./client/source/main/;
 elm make ./src/Main.elm --output ./mainBeforeMinifiy.js --optimize;
 elm make ./src/SignUp.elm --output ./signUpBeforeMinifiy.js --optimize;
-Copy-Item ./signup.html -Destination ../../dist/signup
+Copy-Item ./signup.html -Destination ../../distribution/signup
 $Host.UI.RawUI.ForegroundColor = "Yellow";
 Write-Output "Compile Elm OK";
 
 $Host.UI.RawUI.ForegroundColor = "Yellow";
 Write-Output "Minify JavaScript ...";
 $Host.UI.RawUI.ForegroundColor = "Gray";
-uglifyjs ./mainBeforeMinifiy.js -o ../../dist/main.js;
-uglifyjs ./signUpBeforeMinifiy.js -o ../../dist/signup.js;
+uglifyjs ./mainBeforeMinifiy.js -o ../../distribution/main.js;
+uglifyjs ./signUpBeforeMinifiy.js -o ../../distribution/signup.js;
 Remove-Item ./mainBeforeMinifiy.js;
 Remove-Item ./signUpBeforeMinifiy.js;
 $Host.UI.RawUI.ForegroundColor = "Yellow";
@@ -23,7 +23,7 @@ Write-Output "Minify JavaScript OK";
 Write-Output "Minify CSS ...";
 $Host.UI.RawUI.ForegroundColor = "Gray";
 Set-Location -Path ../;
-cleancss ./style.css -o ../dist/style.css;
+cleancss ./style.css -o ../distribution/style.css;
 $Host.UI.RawUI.ForegroundColor = "Yellow";
 Write-Output "Minify CSS OK"
 
