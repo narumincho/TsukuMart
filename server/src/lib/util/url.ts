@@ -15,7 +15,7 @@ export const fromStringWithQuery = (
 };
 
 /**
- * 
+ *
  * @param domainAndPath https://を除いたドメインとパス narumincho.com/path など
  * @param fragment URLSearchParamsとしてエンコードされる
  */
