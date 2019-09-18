@@ -15,13 +15,13 @@ const makeObjectFieldMap = <Type extends { [k in string]: unknown }>(
                         type: g.GraphQLOutputType;
                         description: string;
                     }
-                  : GraphQLFieldConfigWithArgs<Type, Key>
+                  : GraphQLFieldConfigWithArgs<Type, Key>;
           })
         : {
               [Key in keyof Type]: {
                   type: g.GraphQLOutputType;
                   description: string;
-              }
+              };
           }
 ): g.GraphQLFieldConfigMap<Type, void, any> => args;
 
@@ -64,10 +64,9 @@ type Return<Type> = Type extends Array<infer E>
     : ReturnLoop<Type>;
 
 /** resolveで返すべき部分型を生成する型関数のループ */
-type ReturnLoop<Type> = {
-    0: { [k in keyof Type]: Return<Type[k]> };
-    1: { id: string } & { [k in keyof Type]?: Return<Type[k]> };
-}[Type extends { id: string } ? 1 : 0];
+type ReturnLoop<Type> = Type extends { id: string }
+    ? { id: string } & { [k in keyof Type]?: Return<Type[k]> }
+    : { [k in keyof Type]: Return<Type[k]> };
 
 const makeQueryOrMutationField = <
     Args extends { [k in string]: unknown },
@@ -78,7 +77,7 @@ const makeQueryOrMutationField = <
         [a in keyof Args]: {
             type: g.GraphQLInputType;
             description: Maybe<string>;
-        }
+        };
     };
     resolve: (
         source: void,
