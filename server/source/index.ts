@@ -11,7 +11,7 @@ console.log("サーバーのプログラムが読み込まれた!");
 export const indexHtml = functions
     .region("us-central1")
     .https.onRequest(async (request, response) => {
-        if (request.host !== "tsukumart.com") {
+        if (request.hostname !== "tsukumart.com") {
             response.redirect("https://tsukumart.com");
         }
         const descriptionAndImageUrl = await pathToDescriptionAndImageUrl(
