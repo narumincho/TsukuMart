@@ -7,7 +7,7 @@
                     "Service Worker内でServiceWorkerがブラウザにインストールされたことを検知した!"
                 );
                 const cache = await caches.open("indexHtml");
-                await cache.add("https://tsukumart.com/");
+                await cache.add("/");
                 self.skipWaiting();
             })()
         );
@@ -23,17 +23,23 @@
     });
 
     self.addEventListener("fetch", e => {
-        e.waitUntil(async () => {
-            if (!navigator.onLine) {
-                e.respondWith(
-                    caches
-                        .match(e.request)
-                        .then(response =>
-                            response !== undefined ? response : new Response()
-                        )
-                );
-            }
-        });
+        e.waitUntil(
+            (() => {
+                console.log("fetch!");
+                if (!navigator.onLine) {
+                    console.log("fetchでオフライン");
+                    e.respondWith(
+                        caches
+                            .match(e.request)
+                            .then(response =>
+                                response !== undefined
+                                    ? response
+                                    : new Response()
+                            )
+                    );
+                }
+            })()
+        );
     });
 
     self.addEventListener("sync", e => {
