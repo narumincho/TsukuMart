@@ -15,9 +15,9 @@
 
     self.addEventListener("activate", e => {
         e.waitUntil(
-            (() => {
+            (async () => {
                 console.log("Service Workerがアクティブな状態になった");
-                self.clients.claim();
+                await self.clients.claim();
             })()
         );
     });
