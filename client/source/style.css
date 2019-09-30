@@ -385,7 +385,7 @@ body {
 }
 
 .productList-name {
-    font-size: 1.5rem;
+    font-size: 1.1rem;
     overflow-wrap: break-word;
     padding: 4px 8px;
 }
@@ -397,17 +397,11 @@ body {
     padding: 4px 8px;
 }
 
-.productList-image {
-    width: 100%;
-    height: 192px;
-    object-fit: contain;
-}
-
 .productList-like-noLogIn {
-    border-radius: 8px;
     user-select: none;
     padding: 8px;
     border: solid 1px #aaa;
+    font-size: 0.8rem;
 }
 
 .productList-like {
@@ -417,6 +411,7 @@ body {
     cursor: pointer;
     padding: 8px;
     border: none;
+    font-size: 0.8rem;
 }
 
 .productList-like:hover {

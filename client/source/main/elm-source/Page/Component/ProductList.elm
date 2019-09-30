@@ -247,6 +247,7 @@ itemImage name url =
             , Css.property "object-fit" "contain"
             , Css.property "grid-column" "1 / 2"
             , Css.property "grid-row" "1 / 2"
+            , Css.backgroundColor (Css.rgb 128 128 128)
             ]
         , Html.Styled.Attributes.src url
         , Html.Styled.Attributes.alt (name ++ "の画像")

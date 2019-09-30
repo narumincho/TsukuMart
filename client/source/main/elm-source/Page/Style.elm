@@ -77,7 +77,7 @@ containerStyle =
 containerInnerStyle : Css.Style
 containerInnerStyle =
     Css.batch
-        [ displayGridAndGap 16
+        [ displayGridAndGap 48
         , Css.maxWidth (Css.px 640)
         , Css.padding (Css.px 16)
         , Css.boxSizing Css.borderBox
@@ -310,6 +310,7 @@ mainButtonStyle =
         , Css.alignItems Css.center
         , Css.justifyContent Css.center
         , Css.boxSizing Css.borderBox
+        , Css.textDecoration Css.none
         ]
 
 
