@@ -124,8 +124,7 @@ formItem title idString content =
 
 labelStyle : Css.Style
 labelStyle =
-    [ Css.backgroundColor (Css.rgb 221 221 221) ]
-        |> Css.batch
+    [] |> Css.batch
 
 
 displayGridAndGap : Int -> Css.Style
