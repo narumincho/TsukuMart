@@ -45,6 +45,11 @@ export const indexHtml = functions
     )}">
     <script src="https://tsukumart.com/main.js" defer></script>
     <script src="https://tsukumart.com/call.js" type="module"></script>
+    <script nomodule>
+        onload = () => {
+            document.body.textContent = "ES Moduleに対応していないブラウザです。新しいブラウザを使ってください";
+        }
+    </script>
 </head>
 
 <body>
