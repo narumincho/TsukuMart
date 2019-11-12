@@ -4,6 +4,13 @@ import Api
 import BasicParts
 import Browser
 import Browser.Navigation
+import Component.Category
+import Component.GraduateSelect
+import Component.LogIn
+import Component.ProductEditor
+import Component.ProductList
+import Component.SchoolSelect
+import Component.University
 import Css
 import Css.Animations
 import Data.LogInState
@@ -16,13 +23,6 @@ import Html.Styled.Keyed
 import Page.About
 import Page.BoughtProducts
 import Page.CommentedProducts
-import Component.Category
-import Component.GraduateSelect
-import Component.LogIn
-import Component.ProductEditor
-import Component.ProductList
-import Component.SchoolSelect
-import Component.University
 import Page.Exhibition
 import Page.History
 import Page.Home
@@ -73,7 +73,10 @@ port replaceText : { id : String, text : String } -> Cmd msg
 port changeSelectedIndex : { id : String, index : Int } -> Cmd msg
 
 
-port getAllProducts : List { id : String, name : String } -> Cmd msg
+port requestAllProducts : () -> Cmd msg
+
+
+port receiveAllProducts : (List Data.Product.Firestore -> msg) -> Sub msg
 
 
 type Model
@@ -667,7 +670,7 @@ homePageCmdToCmd cmd =
             Api.getRecentProductList (Page.Home.GetRecentProductsResponse >> PageMsgHome >> PageMsg)
 
         Page.Home.CmdGetRecommendProducts ->
-            Api.getRecommendProductList (Page.Home.GetRecommendProductsResponse >> PageMsgHome >> PageMsg)
+            requestAllProducts ()
 
         Page.Home.CmdGetFreeProducts ->
             Api.getFreeProductList (Page.Home.GetFreeProductsResponse >> PageMsgHome >> PageMsg)
@@ -1582,4 +1585,9 @@ subscription (Model { wideScreen }) =
 
           else
             toWideScreenMode (always ToWideScreenMode)
+        , receiveAllProducts
+            (Page.Home.GetRecommendProductsResponse
+                >> PageMsgHome
+                >> PageMsg
+            )
         ]

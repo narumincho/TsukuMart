@@ -1,6 +1,7 @@
 module Data.Product exposing
     ( Comment
     , Condition
+    , Firestore
     , Id
     , Product
     , ProductDetail
@@ -32,6 +33,7 @@ module Data.Product exposing
     , detailUpdateLikedCount
     , fromApi
     , fromDetail
+    , fromFirestore
     , getId
     , getLikedCount
     , getName
@@ -72,6 +74,25 @@ type Product
         , thumbnailImageId : ImageId.ImageId
         , likedCount : Int
         }
+
+
+type alias Firestore =
+    { id : String
+    , category : String
+    , condition : String
+    , createdAt : Int
+    , description : String
+    , imageIds : List String
+    , likedCount : Int
+    , name : String
+    , price : Int
+    , sellerDisplayName : String
+    , sellerId : String
+    , sellerImageId : String
+    , status : String
+    , thumbnailImageId : String
+    , updateAt : Int
+    }
 
 
 type ProductDetail
@@ -125,6 +146,26 @@ fromApi rec =
         , thumbnailImageId = rec.thumbnailImageId
         , likedCount = rec.likedCount
         }
+
+
+fromFirestore : Firestore -> Maybe Product
+fromFirestore rec =
+    case ( Category.fromIdString rec.category, statusFromIdString rec.status ) of
+        ( Just category, Just status ) ->
+            Just
+                (Product
+                    { id = Id rec.id
+                    , name = rec.name
+                    , price = rec.price
+                    , status = status
+                    , category = category
+                    , thumbnailImageId = ImageId.fromString rec.thumbnailImageId
+                    , likedCount = rec.likedCount
+                    }
+                )
+
+        ( _, _ ) ->
+            Nothing
 
 
 detailFromApi :

@@ -51,6 +51,30 @@ type ElmApp = {
                 arg: (arg: { id: string; index: number }) => void
             ) => void;
         };
+        requestAllProducts: {
+            subscribe: (arg: (arg: null) => void) => void;
+        };
+        receiveAllProducts: {
+            send: (
+                arg: Array<{
+                    id: string;
+                    category: string;
+                    condition: string;
+                    createdAt: number;
+                    description: string;
+                    imageIds: Array<string>;
+                    likedCount: number;
+                    name: Array<string>;
+                    price: number;
+                    sellerDisplayName: string;
+                    sellerId: string;
+                    sellerImageId: string;
+                    status: string;
+                    thumbnailImageId: string;
+                    updateAt: number;
+                }>
+            ) => void;
+        };
     };
 };
 
@@ -270,9 +294,36 @@ const urlBase64ToUint8Array = (base64String: string) => {
     const firestore = firebase.firestore();
     const productCollection = firestore.collection("product");
     console.log("firestore request");
-    const productsQuerySnapshot = await productCollection.get();
-    console.log("firestore get response");
-    for (const doc of productsQuerySnapshot.docs) {
-        console.log(doc.data());
-    }
+    app.ports.requestAllProducts.subscribe(async () => {
+        const productsQuerySnapshot = await productCollection
+            .orderBy("likedCount", "desc")
+            .get();
+        console.log("firestore get response");
+        app.ports.receiveAllProducts.send(
+            productsQuerySnapshot.docs.map(documentDataToProduct)
+        );
+    });
 })();
+
+const documentDataToProduct = (
+    documentSnapshot: firebase.firestore.QueryDocumentSnapshot
+) => {
+    const data = documentSnapshot.data();
+    return {
+        id: documentSnapshot.id,
+        category: data.category,
+        condition: data.condition,
+        createdAt: (data.createdAt as firebase.firestore.Timestamp).toMillis(),
+        description: data.description,
+        imageIds: data.imageIds,
+        likedCount: data.likedCount,
+        name: data.name,
+        price: data.price,
+        sellerDisplayName: data.sellerDisplayName,
+        sellerId: data.sellerId,
+        sellerImageId: data.sellerImageId,
+        status: data.status,
+        thumbnailImageId: data.thumbnailImageId,
+        updateAt: (data.updateAt as firebase.firestore.Timestamp).toMillis()
+    };
+};

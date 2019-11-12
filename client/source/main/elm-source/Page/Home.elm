@@ -1,14 +1,15 @@
 module Page.Home exposing (Cmd(..), Model, Msg(..), getAllProducts, initModel, update, view)
 
 import BasicParts
+import Component.ProductList as ProductList
 import Css
 import Data.LogInState as LogInState
 import Data.Product as Product
 import Html.Styled
 import Html.Styled.Attributes
-import Component.ProductList as ProductList
 import Page.Style
 import PageLocation
+import Utility
 
 
 type Model
@@ -38,7 +39,7 @@ type Cmd
 type Msg
     = SelectTab TabSelect
     | GetRecentProductsResponse (Result String (List Product.Product))
-    | GetRecommendProductsResponse (Result String (List Product.Product))
+    | GetRecommendProductsResponse (List Product.Firestore)
     | GetFreeProductsResponse (Result String (List Product.Product))
     | MsgByProductList ProductList.Msg
 
@@ -105,14 +106,14 @@ update msg (Model rec) =
                     , [ CmdAddLogMessage errorMessage ]
                     )
 
-        GetRecommendProductsResponse result ->
-            case result of
-                Ok goodList ->
-                    ( Model { rec | recommend = Just goodList }, [] )
+        GetRecommendProductsResponse productFirestoreList ->
+            case productFirestoreList |> List.map Product.fromFirestore |> Utility.takeAllFromMaybeList of
+                Just products ->
+                    ( Model { rec | recommend = Just products }, [] )
 
-                Err errorMessage ->
+                Nothing ->
                     ( Model rec
-                    , [ CmdAddLogMessage errorMessage ]
+                    , [ CmdAddLogMessage "firestoreから直接取得したデータの型が合いません" ]
                     )
 
         GetFreeProductsResponse result ->

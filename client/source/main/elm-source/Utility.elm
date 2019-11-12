@@ -1,4 +1,4 @@
-module Utility exposing (getAt, getFirstIndex, removeAt)
+module Utility exposing (getAt, getFirstIndex, removeAt, takeAllFromMaybeList)
 
 import Array
 
@@ -28,3 +28,23 @@ getAt index list =
 removeAt : Int -> List a -> List a
 removeAt index list =
     List.take index list ++ List.drop (index + 1) list
+
+
+{-| List (Maybe a)の中身が全てJust aならJust [a,a,a]にして1つでもNothingが入っていればNothing
+-}
+takeAllFromMaybeList : List (Maybe a) -> Maybe (List a)
+takeAllFromMaybeList list =
+    case list of
+        (Just x) :: xs ->
+            case takeAllFromMaybeList xs of
+                Just xss ->
+                    Just (x :: xss)
+
+                Nothing ->
+                    Nothing
+
+        Nothing :: _ ->
+            Nothing
+
+        [] ->
+            Just []
