@@ -9,7 +9,7 @@ module Page.LogIn exposing
 
 import BasicParts
 import Html.Styled
-import Page.Component.LogIn as LogInOrSignUp
+import Component.LogIn as LogInOrSignUp
 import Page.Style
 
 

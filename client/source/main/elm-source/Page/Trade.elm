@@ -21,7 +21,7 @@ import Html.Styled
 import Html.Styled.Attributes
 import Html.Styled.Events
 import Icon
-import Page.Component.Comment
+import Component.Comment
 import Page.Style
 import PageLocation
 import Time
@@ -480,7 +480,7 @@ commentInputArea sending token =
             ++ (case sending of
                     Just Comment ->
                         [ Html.Styled.button
-                            [ Html.Styled.Attributes.css [ Page.Component.Comment.commentSendButtonStyle ]
+                            [ Html.Styled.Attributes.css [ Component.Comment.commentSendButtonStyle ]
                             , Html.Styled.Attributes.disabled True
                             ]
                             [ Icon.loading { size = 24, color = Css.rgb 0 0 0 } ]
@@ -488,7 +488,7 @@ commentInputArea sending token =
 
                     Just _ ->
                         [ Html.Styled.button
-                            [ Html.Styled.Attributes.css [ Page.Component.Comment.commentSendButtonStyle ]
+                            [ Html.Styled.Attributes.css [ Component.Comment.commentSendButtonStyle ]
                             , Html.Styled.Attributes.disabled True
                             ]
                             [ Html.Styled.text "コメントを送信" ]
@@ -497,7 +497,7 @@ commentInputArea sending token =
                     Nothing ->
                         [ Html.Styled.button
                             [ Html.Styled.Events.onClick (AddComment token)
-                            , Html.Styled.Attributes.css [ Page.Component.Comment.commentSendButtonStyle ]
+                            , Html.Styled.Attributes.css [ Component.Comment.commentSendButtonStyle ]
                             ]
                             [ Html.Styled.text "コメントを送信" ]
                         ]
@@ -514,7 +514,7 @@ commentView : Maybe ( Time.Posix, Time.Zone ) -> User.WithName -> Trade.TradeDet
 commentView timeData user trade =
     Html.Styled.div
         []
-        [ Page.Component.Comment.view timeData
+        [ Component.Comment.view timeData
             (trade
                 |> Trade.detailGetComment
                 |> List.map (tradeCommentToCommentData trade (User.withNameGetId user))

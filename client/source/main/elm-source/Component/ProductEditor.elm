@@ -1,4 +1,4 @@
-module Page.Component.ProductEditor exposing
+module Component.ProductEditor exposing
     ( Cmd(..)
     , Model
     , Msg(..)
@@ -21,7 +21,7 @@ import Html.Styled
 import Html.Styled.Attributes
 import Html.Styled.Events
 import Icon
-import Page.Component.Category as CateogryComp
+import Component.Category as CategoryComp
 import Page.Style
 import Set
 import Utility
@@ -33,7 +33,7 @@ type Model
         , description : String
         , price : Maybe Int
         , condition : Maybe Product.Condition
-        , category : CateogryComp.Model
+        , category : CategoryComp.Model
         , addImages : List String
         , beforeImageIds : List ImageId.ImageId
         , deleteImagesAt : Set.Set Int
@@ -44,7 +44,7 @@ type Cmd
     = CmdAddEventListenerForProductImages { labelId : String, inputId : String }
     | CmdReplaceText { id : String, text : String }
     | CmdChangeSelectedIndex { id : String, index : Int }
-    | CmdByCategory CateogryComp.Cmd
+    | CmdByCategory CategoryComp.Cmd
 
 
 type Msg
@@ -54,14 +54,14 @@ type Msg
     | SelectCondition (Maybe Int)
     | DeleteImage Int
     | InputImageList (List String)
-    | MsgByCategory CateogryComp.Msg
+    | MsgByCategory CategoryComp.Msg
 
 
 initModelBlank : ( Model, List Cmd )
 initModelBlank =
     let
         ( categoryModel, categoryCmd ) =
-            CateogryComp.initModel
+            CategoryComp.initModel
     in
     ( Model
         { name = ""
@@ -82,7 +82,7 @@ initModelFromSellRequestData : Api.SellProductRequest -> ( Model, List Cmd )
 initModelFromSellRequestData (Api.SellProductRequest rec) =
     let
         ( categoryModel, categoryCmd ) =
-            CateogryComp.initModelWithCategorySelect rec.category
+            CategoryComp.initModelWithCategorySelect rec.category
     in
     ( Model
         { name = rec.name
@@ -121,7 +121,7 @@ initModel :
 initModel { name, description, price, condition, category, imageIds } =
     let
         ( categoryModel, categoryCmd ) =
-            CateogryComp.initModelWithCategorySelect category
+            CategoryComp.initModelWithCategorySelect category
     in
     ( Model
         { name = name
@@ -203,7 +203,7 @@ update msg (Model rec) =
                 { rec
                     | category =
                         rec.category
-                            |> CateogryComp.update categoryMsg
+                            |> CategoryComp.update categoryMsg
                 }
 
 
@@ -253,7 +253,7 @@ beforeImageAddDeleteIndex index beforeImageIdLength deleteAt offset =
 
 toSoldRequest : Model -> Maybe Api.SellProductRequest
 toSoldRequest (Model rec) =
-    case ( priceCheck rec.price, rec.condition, CateogryComp.getCategory rec.category ) of
+    case ( priceCheck rec.price, rec.condition, CategoryComp.getCategory rec.category ) of
         ( Ok price, Just condition, Just category ) ->
             if
                 nameCheck rec.name
@@ -280,7 +280,7 @@ toSoldRequest (Model rec) =
 
 toUpdateRequest : Model -> Maybe Api.UpdateProductRequest
 toUpdateRequest (Model rec) =
-    case ( rec.price, rec.condition, CateogryComp.getCategory rec.category ) of
+    case ( rec.price, rec.condition, CategoryComp.getCategory rec.category ) of
         ( Just price, Just condition, Just category ) ->
             if
                 nameCheck rec.name
@@ -386,7 +386,7 @@ view (Model rec) =
            , ( "price", priceView rec.price )
            , ( "condition", conditionView rec.condition )
            , ( "category"
-             , CateogryComp.view rec.category
+             , CategoryComp.view rec.category
                 |> Html.Styled.map MsgByCategory
              )
            ]

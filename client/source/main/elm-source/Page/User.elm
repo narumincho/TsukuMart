@@ -11,6 +11,7 @@ module Page.User exposing
 
 import Api
 import BasicParts
+import Component.University
 import Css
 import Data.ImageId
 import Data.LogInState as LogInState
@@ -24,7 +25,6 @@ import Html.Styled
 import Html.Styled.Attributes
 import Html.Styled.Events
 import Icon
-import Page.Component.University as UniversityComponent
 import Page.Style
 import PageLocation
 
@@ -39,7 +39,7 @@ type Model
 type alias EditModel =
     { displayName : String
     , introduction : String
-    , university : UniversityComponent.Model
+    , university : Component.University.Model
     , before : User.WithProfile
     }
 
@@ -48,7 +48,7 @@ type Cmd
     = CmdGetUserProfile User.Id
     | CmdChangeProfile Api.Token Api.ProfileUpdateData
     | CmdReplaceElementText { id : String, text : String }
-    | CmdByUniversity UniversityComponent.Cmd
+    | CmdByUniversity Component.University.Cmd
     | CmdLogOut
     | CmdAddLogMessage String
     | CmdJumpToLineNotifySetting Api.Token
@@ -58,7 +58,7 @@ type Msg
     = MsgToEditMode
     | MsgInputDisplayName String
     | MsgInputIntroduction String
-    | MsgByUniversity UniversityComponent.Msg
+    | MsgByUniversity Component.University.Msg
     | MsgBackToViewMode
     | MsgChangeProfile Api.Token Api.ProfileUpdateData
     | MsgChangeProfileResponse (Result String User.WithProfile)
@@ -154,7 +154,7 @@ update msg model =
                 Edit r ->
                     let
                         ( componentModel, componentEmittions ) =
-                            UniversityComponent.update
+                            Component.University.update
                                 componentMsg
                                 r.university
                     in
@@ -235,7 +235,7 @@ toEditMode userWithProfile =
             User.withProfileGetIntroduction userWithProfile
 
         ( universityModel, universityCmds ) =
-            UniversityComponent.initModelFromUniversity
+            Component.University.initModelFromUniversity
                 (User.withProfileGetUniversity userWithProfile)
     in
     ( Edit
@@ -536,7 +536,7 @@ editView access editModel =
         ([ ( "nickNameEditor", displayNameEditor editModel.displayName )
          , ( "introductionEditor", introductionEditor editModel.introduction )
          ]
-            ++ (UniversityComponent.view editModel.university
+            ++ (Component.University.view editModel.university
                     |> List.map (Tuple.mapSecond (Html.Styled.toUnstyled >> Html.map MsgByUniversity))
                )
             ++ [ ( "button", editButton access editModel )
@@ -631,7 +631,7 @@ editButton token editModel =
 editModelToProfileUpdateData : EditModel -> Maybe Api.ProfileUpdateData
 editModelToProfileUpdateData { displayName, introduction, university } =
     if 1 <= String.length displayName && String.length displayName <= 50 then
-        case UniversityComponent.getUniversity university of
+        case Component.University.getUniversity university of
             Just univ ->
                 Just
                     { displayName = displayName

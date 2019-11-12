@@ -4,9 +4,9 @@ import BasicParts
 import Data.SearchCondition as SearchCondition
 import Html.Styled
 import Html.Styled.Keyed
-import Page.Component.Category
-import Page.Component.GraduateSelect
-import Page.Component.SchoolSelect
+import Component.Category
+import Component.GraduateSelect
+import Component.SchoolSelect
 import Page.Style
 import PageLocation
 
@@ -14,40 +14,40 @@ import PageLocation
 type Model
     = Model
         { query : String
-        , categorySelect : Page.Component.Category.Model
+        , categorySelect : Component.Category.Model
         , universitySelect : UniversitySelect
         }
 
 
 type UniversitySelect
-    = School Page.Component.SchoolSelect.Model
-    | Graduate Page.Component.GraduateSelect.Model
+    = School Component.SchoolSelect.Model
+    | Graduate Component.GraduateSelect.Model
 
 
 type Msg
     = InputQuery String
-    | MsgByCategory Page.Component.Category.Msg
-    | MsgBySchoolSelect Page.Component.SchoolSelect.Msg
-    | MsgByGraduateSelect Page.Component.GraduateSelect.Msg
+    | MsgByCategory Component.Category.Msg
+    | MsgBySchoolSelect Component.SchoolSelect.Msg
+    | MsgByGraduateSelect Component.GraduateSelect.Msg
     | SelectSchoolOrDepartment
     | SelectGraduate
 
 
 type Cmd
     = CmdReplaceElementText { id : String, text : String }
-    | CmdByCategory Page.Component.Category.Cmd
-    | CmdBySchoolSelect Page.Component.SchoolSelect.Cmd
-    | CmdByGraduateSelect Page.Component.GraduateSelect.Cmd
+    | CmdByCategory Component.Category.Cmd
+    | CmdBySchoolSelect Component.SchoolSelect.Cmd
+    | CmdByGraduateSelect Component.GraduateSelect.Cmd
 
 
 initModel : ( Model, List Cmd )
 initModel =
     let
         ( categoryModel, categoryCmd ) =
-            Page.Component.Category.initModelWithSearchCondition SearchCondition.CategoryNone
+            Component.Category.initModelWithSearchCondition SearchCondition.CategoryNone
 
         ( schoolModel, schoolCmd ) =
-            Page.Component.SchoolSelect.initNone
+            Component.SchoolSelect.initNone
     in
     ( Model
         { query = ""
@@ -72,7 +72,7 @@ update msg (Model rec) =
         SelectSchoolOrDepartment ->
             let
                 ( schoolModel, schoolCmd ) =
-                    Page.Component.SchoolSelect.initNone
+                    Component.SchoolSelect.initNone
             in
             ( Model { rec | universitySelect = School schoolModel }
             , schoolCmd |> List.map CmdBySchoolSelect
@@ -81,7 +81,7 @@ update msg (Model rec) =
         SelectGraduate ->
             let
                 ( graduateModel, graduateCmd ) =
-                    Page.Component.GraduateSelect.initNone
+                    Component.GraduateSelect.initNone
             in
             ( Model
                 { rec | universitySelect = Graduate graduateModel }
@@ -93,7 +93,7 @@ update msg (Model rec) =
                 { rec
                     | categorySelect =
                         rec.categorySelect
-                            |> Page.Component.Category.update categoryMsg
+                            |> Component.Category.update categoryMsg
                 }
             , []
             )
@@ -101,7 +101,7 @@ update msg (Model rec) =
         MsgBySchoolSelect schoolSelectMsg ->
             case rec.universitySelect of
                 School schoolModel ->
-                    ( Model { rec | universitySelect = School (Page.Component.SchoolSelect.update schoolSelectMsg schoolModel) }
+                    ( Model { rec | universitySelect = School (Component.SchoolSelect.update schoolSelectMsg schoolModel) }
                     , []
                     )
 
@@ -120,7 +120,7 @@ update msg (Model rec) =
                 Graduate graduateModel ->
                     ( Model
                         { rec
-                            | universitySelect = Graduate (Page.Component.GraduateSelect.update graduateMsg graduateModel)
+                            | universitySelect = Graduate (Component.GraduateSelect.update graduateMsg graduateModel)
                         }
                     , []
                     )
@@ -160,7 +160,7 @@ viewBody (Model rec) =
         ]
     , Page.Style.titleAndContentStyle
         "カテゴリ"
-        (Page.Component.Category.view rec.categorySelect
+        (Component.Category.view rec.categorySelect
             |> Html.Styled.map MsgByCategory
         )
     , Page.Style.radioForm
@@ -189,7 +189,7 @@ viewBody (Model rec) =
                 School schoolModel ->
                     [ Html.Styled.Keyed.node "div"
                         []
-                        (Page.Component.SchoolSelect.view
+                        (Component.SchoolSelect.view
                             schoolModel
                         )
                         |> Html.Styled.map MsgBySchoolSelect
@@ -198,7 +198,7 @@ viewBody (Model rec) =
                 Graduate graduateModel ->
                     [ Html.Styled.Keyed.node "div"
                         []
-                        [ Page.Component.GraduateSelect.view
+                        [ Component.GraduateSelect.view
                             graduateModel
                         ]
                         |> Html.Styled.map MsgByGraduateSelect
@@ -220,15 +220,15 @@ searchLinkButton (Model rec) =
             (PageLocation.SearchResult
                 (SearchCondition.init
                     rec.query
-                    (Page.Component.Category.getSelect rec.categorySelect)
+                    (Component.Category.getSelect rec.categorySelect)
                     (case rec.universitySelect of
                         School schoolModel ->
-                            case Page.Component.SchoolSelect.getDepartment schoolModel of
+                            case Component.SchoolSelect.getDepartment schoolModel of
                                 Just department ->
                                     SearchCondition.UniversityDepartment department
 
                                 Nothing ->
-                                    case Page.Component.SchoolSelect.getSchool schoolModel of
+                                    case Component.SchoolSelect.getSchool schoolModel of
                                         Just school ->
                                             SearchCondition.UniversitySchool school
 
@@ -236,7 +236,7 @@ searchLinkButton (Model rec) =
                                             SearchCondition.UniversityNone
 
                         Graduate graduateModel ->
-                            case Page.Component.GraduateSelect.getGraduate graduateModel of
+                            case Component.GraduateSelect.getGraduate graduateModel of
                                 Just graduate ->
                                     SearchCondition.UniversityGraduate graduate
 

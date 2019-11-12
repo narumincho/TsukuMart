@@ -1,6 +1,7 @@
 $Host.UI.RawUI.ForegroundColor = "Yellow";
 Write-Output "Compile Client Code And Upload Firebase Server";
-New-Item -Path ./client/distribution -ItemType Directory
+
+New-Item -Path ./client/distribution -ItemType Directory -Force
 
 Write-Output "Compile Elm ...";
 $Host.UI.RawUI.ForegroundColor = "Gray";
@@ -53,7 +54,7 @@ Write-Output "ServiceWoker Compile OK"
 Write-Output "Copy Assets ...";
 $Host.UI.RawUI.ForegroundColor = "Gray";
 Set-Location -Path ../
-Copy-Item -Path assets -Destination ../distribution -Recurse
+Copy-Item -Path assets -Destination ../distribution -Recurse -Force
 Copy-Item -Path manifest.json ../distribution
 Copy-Item -Path robots.txt ../distribution
 $Host.UI.RawUI.ForegroundColor = "Yellow";

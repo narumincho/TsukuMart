@@ -1,4 +1,4 @@
-module Page.Component.TradeList exposing (view)
+module Component.TradeList exposing (view)
 
 import Css
 import Data.Product as Product

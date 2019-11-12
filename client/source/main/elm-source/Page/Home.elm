@@ -6,7 +6,7 @@ import Data.LogInState as LogInState
 import Data.Product as Product
 import Html.Styled
 import Html.Styled.Attributes
-import Page.Component.ProductList as ProductList
+import Component.ProductList as ProductList
 import Page.Style
 import PageLocation
 

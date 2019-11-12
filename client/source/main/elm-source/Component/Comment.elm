@@ -1,4 +1,4 @@
-module Page.Component.Comment exposing (view, commentSendButtonStyle)
+module Component.Comment exposing (view, commentSendButtonStyle)
 
 import Css
 import Data.DateTime

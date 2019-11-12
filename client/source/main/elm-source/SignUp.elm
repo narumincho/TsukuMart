@@ -13,7 +13,7 @@ import Html.Styled.Attributes
 import Html.Styled.Events
 import Html.Styled.Keyed
 import Icon
-import Page.Component.University as University
+import Component.University as University
 import Page.Style
 
 

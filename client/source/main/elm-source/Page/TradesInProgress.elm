@@ -14,11 +14,9 @@ import BasicParts
 import Data.LogInState as LogInState
 import Data.Product as Product
 import Data.Trade as Trade
-import Html
-import Html.Attributes
 import Html.Styled
-import Page.Component.LogIn as LogIn
-import Page.Component.TradeList as TradeList
+import Component.LogIn as LogIn
+import Component.TradeList as TradeList
 import Page.Style
 
 

@@ -31,8 +31,8 @@ import Html.Styled
 import Html.Styled.Attributes
 import Html.Styled.Events
 import Icon
-import Page.Component.Comment
-import Page.Component.ProductEditor as ProductEditor
+import Component.Comment
+import Component.ProductEditor as ProductEditor
 import Page.Style
 import PageLocation
 import Time
@@ -863,7 +863,7 @@ commentListView commentSending nowMaybe sellerId logInState commentListMaybe =
             Nothing ->
                 []
          )
-            ++ [ Page.Component.Comment.view
+            ++ [ Component.Comment.view
                     nowMaybe
                     (commentListMaybe
                         |> Maybe.map
@@ -906,7 +906,7 @@ commentInputArea sending token =
          ]
             ++ (if sending then
                     [ Html.Styled.button
-                        [ Html.Styled.Attributes.css [ Page.Component.Comment.commentSendButtonStyle ]
+                        [ Html.Styled.Attributes.css [ Component.Comment.commentSendButtonStyle ]
                         , Html.Styled.Attributes.disabled True
                         ]
                         [ Icon.loading { size = 24, color = Css.rgb 0 0 0 }
@@ -916,7 +916,7 @@ commentInputArea sending token =
                 else
                     [ Html.Styled.button
                         [ Html.Styled.Events.onClick (SendComment token)
-                        , Html.Styled.Attributes.css [ Page.Component.Comment.commentSendButtonStyle ]
+                        , Html.Styled.Attributes.css [ Component.Comment.commentSendButtonStyle ]
                         ]
                         [ Html.Styled.text "コメントを送信" ]
                     ]

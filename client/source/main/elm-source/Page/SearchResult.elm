@@ -12,7 +12,7 @@ import Data.LogInState
 import Data.Product
 import Data.SearchCondition as SearchCondition
 import Html.Styled
-import Page.Component.ProductList as ProductList
+import Component.ProductList as ProductList
 
 
 type Model

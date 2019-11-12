@@ -1,4 +1,4 @@
-module Page.Component.ProductList exposing
+module Component.ProductList exposing
     ( Cmd(..)
     , Model
     , Msg(..)

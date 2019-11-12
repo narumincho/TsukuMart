@@ -1,4 +1,4 @@
-module Page.Component.Category exposing
+module Component.Category exposing
     ( Cmd(..)
     , Model
     , Msg

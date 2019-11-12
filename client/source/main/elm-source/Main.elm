@@ -16,13 +16,13 @@ import Html.Styled.Keyed
 import Page.About
 import Page.BoughtProducts
 import Page.CommentedProducts
-import Page.Component.Category
-import Page.Component.GraduateSelect
-import Page.Component.LogIn
-import Page.Component.ProductEditor
-import Page.Component.ProductList
-import Page.Component.SchoolSelect
-import Page.Component.University
+import Component.Category
+import Component.GraduateSelect
+import Component.LogIn
+import Component.ProductEditor
+import Component.ProductList
+import Component.SchoolSelect
+import Component.University
 import Page.Exhibition
 import Page.History
 import Page.Home
@@ -404,7 +404,7 @@ update msg (Model rec) =
                             Page.Exhibition.update
                                 rec.logInState
                                 (Page.Exhibition.MsgByProductEditor
-                                    (Page.Component.ProductEditor.InputImageList dataUrlList)
+                                    (Component.ProductEditor.InputImageList dataUrlList)
                                 )
                                 exhibitionPageModel
                     in
@@ -417,7 +417,7 @@ update msg (Model rec) =
                         ( newModel, cmds ) =
                             Page.Product.update
                                 (Page.Product.MsgByProductEditor
-                                    (Page.Component.ProductEditor.InputImageList dataUrlList)
+                                    (Component.ProductEditor.InputImageList dataUrlList)
                                 )
                                 productPageModel
                     in
@@ -989,73 +989,73 @@ tradePageCmdToCmd cmd =
 {- ===================== Page Component Cmd To Msg ======================== -}
 
 
-logInCmdToCmd : Page.Component.LogIn.Cmd -> Cmd Msg
+logInCmdToCmd : Component.LogIn.Cmd -> Cmd Msg
 logInCmdToCmd cmd =
     case cmd of
-        Page.Component.LogIn.CmdLogInOrSignUp service ->
+        Component.LogIn.CmdLogInOrSignUp service ->
             Api.getLogInUrl service Jump
 
 
-productListCmdToCmd : Page.Component.ProductList.Cmd -> Cmd Msg
+productListCmdToCmd : Component.ProductList.Cmd -> Cmd Msg
 productListCmdToCmd cmd =
     case cmd of
-        Page.Component.ProductList.CmdLike token id ->
+        Component.ProductList.CmdLike token id ->
             Api.likeProduct id token (LikeProductResponse id)
 
-        Page.Component.ProductList.CmdUnlike token id ->
+        Component.ProductList.CmdUnlike token id ->
             Api.unlikeProduct id token (UnlikeProductResponse id)
 
-        Page.Component.ProductList.CmdScrollIntoView idString ->
+        Component.ProductList.CmdScrollIntoView idString ->
             elementScrollIntoView idString
 
 
-universityCmdToCmd : Page.Component.University.Cmd -> Cmd Msg
+universityCmdToCmd : Component.University.Cmd -> Cmd Msg
 universityCmdToCmd cmd =
     case cmd of
-        Page.Component.University.CmdChangeSelectedIndex { id, index } ->
+        Component.University.CmdChangeSelectedIndex { id, index } ->
             changeSelectedIndex { id = id, index = index }
 
-        Page.Component.University.CmdBySchoolSelect c ->
+        Component.University.CmdBySchoolSelect c ->
             schoolSelectCmdToCmd c
 
-        Page.Component.University.CmdByGraduateSelect c ->
+        Component.University.CmdByGraduateSelect c ->
             graduateSelectCmdToCmd c
 
 
-schoolSelectCmdToCmd : Page.Component.SchoolSelect.Cmd -> Cmd Msg
+schoolSelectCmdToCmd : Component.SchoolSelect.Cmd -> Cmd Msg
 schoolSelectCmdToCmd cmd =
     case cmd of
-        Page.Component.SchoolSelect.CmdChangeSelectedIndex idAndIndex ->
+        Component.SchoolSelect.CmdChangeSelectedIndex idAndIndex ->
             changeSelectedIndex idAndIndex
 
 
-graduateSelectCmdToCmd : Page.Component.GraduateSelect.Cmd -> Cmd Msg
+graduateSelectCmdToCmd : Component.GraduateSelect.Cmd -> Cmd Msg
 graduateSelectCmdToCmd cmd =
     case cmd of
-        Page.Component.GraduateSelect.CmdChangeSelectedIndex idAndIndex ->
+        Component.GraduateSelect.CmdChangeSelectedIndex idAndIndex ->
             changeSelectedIndex idAndIndex
 
 
-productEditorCmdToCmd : Page.Component.ProductEditor.Cmd -> Cmd Msg
+productEditorCmdToCmd : Component.ProductEditor.Cmd -> Cmd Msg
 productEditorCmdToCmd cmd =
     case cmd of
-        Page.Component.ProductEditor.CmdAddEventListenerForProductImages record ->
+        Component.ProductEditor.CmdAddEventListenerForProductImages record ->
             addEventListenerForProductImages record
 
-        Page.Component.ProductEditor.CmdReplaceText { id, text } ->
+        Component.ProductEditor.CmdReplaceText { id, text } ->
             replaceText { id = id, text = text }
 
-        Page.Component.ProductEditor.CmdChangeSelectedIndex { id, index } ->
+        Component.ProductEditor.CmdChangeSelectedIndex { id, index } ->
             changeSelectedIndex { id = id, index = index }
 
-        Page.Component.ProductEditor.CmdByCategory e ->
+        Component.ProductEditor.CmdByCategory e ->
             categoryCmdToCmd e
 
 
-categoryCmdToCmd : Page.Component.Category.Cmd -> Cmd Msg
+categoryCmdToCmd : Component.Category.Cmd -> Cmd Msg
 categoryCmdToCmd cmd =
     case cmd of
-        Page.Component.Category.CmdChangeSelectedIndex { id, index } ->
+        Component.Category.CmdChangeSelectedIndex { id, index } ->
             changeSelectedIndex { id = id, index = index }
 
 
@@ -1293,7 +1293,7 @@ updateLikedCountInEachPageProduct : Browser.Navigation.Key -> Data.Product.Id ->
 updateLikedCountInEachPageProduct key productId result page =
     let
         productListMsg =
-            Page.Component.ProductList.UpdateLikedCountResponse productId result
+            Component.ProductList.UpdateLikedCountResponse productId result
     in
     case page of
         PageHome msg ->

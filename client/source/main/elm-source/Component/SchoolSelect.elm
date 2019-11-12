@@ -1,4 +1,4 @@
-module Page.Component.SchoolSelect exposing
+module Component.SchoolSelect exposing
     ( Cmd(..)
     , Model
     , Msg

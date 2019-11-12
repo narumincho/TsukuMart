@@ -1,4 +1,4 @@
-module Page.Component.GraduateSelect exposing
+module Component.GraduateSelect exposing
     ( Cmd(..)
     , Model
     , Msg

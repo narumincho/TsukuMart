@@ -12,11 +12,9 @@ import Api
 import BasicParts
 import Data.LogInState as LogInState
 import Data.Product as Product
-import Html
-import Html.Attributes
 import Html.Styled
-import Page.Component.LogIn as LogIn
-import Page.Component.ProductList as ProductList
+import Component.LogIn as LogIn
+import Component.ProductList as ProductList
 import Page.Style
 
 

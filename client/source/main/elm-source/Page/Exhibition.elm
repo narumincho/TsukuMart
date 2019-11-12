@@ -19,8 +19,8 @@ import Html.Styled
 import Html.Styled.Attributes
 import Html.Styled.Events
 import Icon
-import Page.Component.LogIn as LogIn
-import Page.Component.ProductEditor as ProductEditor
+import Component.LogIn as LogIn
+import Component.ProductEditor as ProductEditor
 import Page.Style
 import PageLocation
 

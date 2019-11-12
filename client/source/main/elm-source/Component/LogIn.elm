@@ -1,4 +1,4 @@
-module Page.Component.LogIn exposing
+module Component.LogIn exposing
     ( Cmd(..)
     , Model
     , Msg(..)

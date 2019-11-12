@@ -1,4 +1,4 @@
-module Page.Component.University exposing
+module Component.University exposing
     ( Cmd(..)
     , Model
     , Msg
@@ -11,8 +11,8 @@ module Page.Component.University exposing
 
 import Data.University as University
 import Html.Styled
-import Page.Component.GraduateSelect as GraduateSelect
-import Page.Component.SchoolSelect as SchoolSelect
+import Component.GraduateSelect as GraduateSelect
+import Component.SchoolSelect as SchoolSelect
 import Page.Style
 
 
