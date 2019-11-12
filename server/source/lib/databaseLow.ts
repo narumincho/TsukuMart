@@ -205,10 +205,12 @@ export const addDraftProductData = async (
     userId: string,
     data: DraftProductData
 ): Promise<string> =>
-    (await userCollectionRef
-        .doc(userId)
-        .collection("draftProduct")
-        .add(data)).id;
+    (
+        await userCollectionRef
+            .doc(userId)
+            .collection("draftProduct")
+            .add(data)
+    ).id;
 
 /**
  * 商品の下書きのデータをユーザーから最後に更新した順に取得する
@@ -229,11 +231,13 @@ export const getDraftProductData = async (
     userId: string,
     draftId: string
 ): Promise<DraftProductData> => {
-    const data = (await await userCollectionRef
-        .doc(userId)
-        .collection("draftProduct")
-        .doc(draftId)
-        .get()).data();
+    const data = (
+        await await userCollectionRef
+            .doc(userId)
+            .collection("draftProduct")
+            .doc(draftId)
+            .get()
+    ).data();
     if (data === undefined) {
         throw new Error(
             `trade id=${draftId} at userId=${userId} dose not exists`
@@ -277,9 +281,10 @@ export const addUserData = async (data: UserData): Promise<string> => {
 /**
  * すべてのユーザーのデータを取得する
  */
-export const getAllUserData = async (): Promise<
-    Array<{ id: string; data: UserData }>
-> => {
+export const getAllUserData = async (): Promise<Array<{
+    id: string;
+    data: UserData;
+}>> => {
     return (await querySnapshotToIdAndDataArray(
         await userCollectionRef.get()
     )) as Array<{
@@ -383,9 +388,11 @@ export const addUserBeforeEmailVerification = async (
 export const getUserBeforeEmailVerification = async (
     logInAccountServiceId: type.LogInServiceAndId
 ): Promise<UserBeforeEmailVerificationData | undefined> =>
-    (await userBeforeEmailVerificationCollection
-        .doc(type.logInServiceAndIdToString(logInAccountServiceId))
-        .get()).data() as UserBeforeEmailVerificationData | undefined;
+    (
+        await userBeforeEmailVerificationCollection
+            .doc(type.logInServiceAndIdToString(logInAccountServiceId))
+            .get()
+    ).data() as UserBeforeEmailVerificationData | undefined;
 
 export const deleteUserBeforeEmailVerification = async (
     logInAccountServiceId: type.LogInServiceAndId
@@ -461,9 +468,10 @@ export const addProductData = async (data: ProductData): Promise<string> => {
 /**
  * すべての商品のデータを取得する
  */
-export const getAllProductData = async (): Promise<
-    Array<{ id: string; data: ProductData }>
-> =>
+export const getAllProductData = async (): Promise<Array<{
+    id: string;
+    data: ProductData;
+}>> =>
     (await querySnapshotToIdAndDataArray(
         await productCollectionRef.get()
     )) as Array<{
@@ -474,9 +482,10 @@ export const getAllProductData = async (): Promise<
 /**
  *  商品を新着順で取得する
  */
-export const getRecentProductData = async (): Promise<
-    Array<{ id: string; data: ProductData }>
-> =>
+export const getRecentProductData = async (): Promise<Array<{
+    id: string;
+    data: ProductData;
+}>> =>
     (await querySnapshotToIdAndDataArray(
         await getProductsOrderBy("createdAt", "desc")
     )) as Array<{
@@ -487,9 +496,10 @@ export const getRecentProductData = async (): Promise<
 /**
  * 商品をいいねが多い順に取得する
  */
-export const getRecommendProductData = async (): Promise<
-    Array<{ id: string; data: ProductData }>
-> =>
+export const getRecommendProductData = async (): Promise<Array<{
+    id: string;
+    data: ProductData;
+}>> =>
     (await querySnapshotToIdAndDataArray(
         await getProductsOrderBy("likedCount", "desc")
     )) as Array<{ id: string; data: ProductData }>;
@@ -497,9 +507,10 @@ export const getRecommendProductData = async (): Promise<
 /**
  * 0円の商品を取得する
  */
-export const getFreeProductData = async (): Promise<
-    Array<{ id: string; data: ProductData }>
-> =>
+export const getFreeProductData = async (): Promise<Array<{
+    id: string;
+    data: ProductData;
+}>> =>
     (await querySnapshotToIdAndDataArray(
         await getProductsCondition("price", "==", 0)
     )) as Array<{ id: string; data: ProductData }>;
@@ -629,10 +640,12 @@ export const addTradeComment = async (
     id: string,
     data: TradeComment
 ): Promise<string> => {
-    return (await tradeCollectionRef
-        .doc(id)
-        .collection("comment")
-        .add(data)).id;
+    return (
+        await tradeCollectionRef
+            .doc(id)
+            .collection("comment")
+            .add(data)
+    ).id;
 };
 
 export const getTradeComments = async (

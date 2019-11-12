@@ -58,7 +58,8 @@ export const addUserInUserBeforeInputData = async (
 ): Promise<void> => {
     await databaseLow.addUserBeforeInputData(logInServiceAndId, {
         name,
-        imageId: imageId
+        imageId: imageId,
+        createdAt: databaseLow.getNowTimestamp()
     });
 };
 
@@ -107,7 +108,8 @@ export const addUserBeforeEmailVerification = async (
         imageId: imageId,
         schoolAndDepartment: flatUniversity.schoolAndDepartment,
         graduate: flatUniversity.graduate,
-        email: email
+        email: email,
+        createdAt: databaseLow.getNowTimestamp()
     });
     return await databaseLow.createCustomToken(uid);
 };
@@ -332,16 +334,12 @@ export const addCommentProduct = async (
         speakerImageId: userData.imageId
     });
     const productData = await databaseLow.getProduct(productId);
-    const notifyAccessToken = (await databaseLow.getUserData(
-        productData.sellerId
-    )).notifyToken;
+    const notifyAccessToken = (
+        await databaseLow.getUserData(productData.sellerId)
+    ).notifyToken;
     if (notifyAccessToken !== null) {
         await lineNotify.sendMessage(
-            `${userData.displayName}さんが${
-                productData.name
-            }にコメントをつけました。\n\n${
-                data.body
-            }\n\nhttps://tsukumart.com/product/${productId}`,
+            `${userData.displayName}さんが${productData.name}にコメントをつけました。\n\n${data.body}\n\nhttps://tsukumart.com/product/${productId}`,
             false,
             notifyAccessToken
         );
@@ -595,12 +593,10 @@ export const setProfile = async (
         type.UserPrivate,
         "displayName" | "introduction" | "university"
     >
-): Promise<
-    Pick<
-        type.UserPrivate,
-        "id" | "displayName" | "imageId" | "introduction" | "university"
-    >
-> => {
+): Promise<Pick<
+    type.UserPrivate,
+    "id" | "displayName" | "imageId" | "introduction" | "university"
+>> => {
     let imageId: string;
     const universityInternal = type.universityToInternal(data.university);
     if (data.image === null || data.image === undefined) {
@@ -697,16 +693,16 @@ export const getAllProducts = async (): Promise<Array<ProductReturnLowCost>> =>
         productReturnLowCostFromDatabaseLow
     );
 
-export const getRecentProducts = async (): Promise<
-    Array<ProductReturnLowCost>
-> =>
+export const getRecentProducts = async (): Promise<Array<
+    ProductReturnLowCost
+>> =>
     (await databaseLow.getRecentProductData()).map(
         productReturnLowCostFromDatabaseLow
     );
 
-export const getRecommendProducts = async (): Promise<
-    Array<ProductReturnLowCost>
-> =>
+export const getRecommendProducts = async (): Promise<Array<
+    ProductReturnLowCost
+>> =>
     (await databaseLow.getRecommendProductData()).map(
         productReturnLowCostFromDatabaseLow
     );
@@ -814,53 +810,45 @@ const getUserListFromUniversityCondition = async (
     );
     switch (universityCondition.c) {
         case "department": {
-            return allUser.filter(
-                (e): boolean => {
-                    switch (e.university.c) {
-                        case type.UniversityC.NotGraduate:
-                        case type.UniversityC.GraduateTsukuba:
-                            return (
-                                e.university.schoolAndDepartment ===
-                                universityCondition.v
-                            );
-                        case type.UniversityC.GraduateNotTsukuba:
-                            return false;
-                    }
+            return allUser.filter((e): boolean => {
+                switch (e.university.c) {
+                    case type.UniversityC.NotGraduate:
+                    case type.UniversityC.GraduateTsukuba:
+                        return (
+                            e.university.schoolAndDepartment ===
+                            universityCondition.v
+                        );
+                    case type.UniversityC.GraduateNotTsukuba:
+                        return false;
                 }
-            );
+            });
         }
         case "school": {
             const departmentList = type.departmentListFromSchool(
                 universityCondition.v
             );
-            return allUser.filter(
-                (u): boolean => {
-                    switch (u.university.c) {
-                        case type.UniversityC.NotGraduate:
-                        case type.UniversityC.GraduateTsukuba:
-                            return departmentList.includes(
-                                u.university.schoolAndDepartment
-                            );
-                        case type.UniversityC.GraduateNotTsukuba:
-                            return false;
-                    }
+            return allUser.filter((u): boolean => {
+                switch (u.university.c) {
+                    case type.UniversityC.NotGraduate:
+                    case type.UniversityC.GraduateTsukuba:
+                        return departmentList.includes(
+                            u.university.schoolAndDepartment
+                        );
+                    case type.UniversityC.GraduateNotTsukuba:
+                        return false;
                 }
-            );
+            });
         }
         case "graduate":
-            return allUser.filter(
-                (u): boolean => {
-                    switch (u.university.c) {
-                        case type.UniversityC.NotGraduate:
-                            return false;
-                        case type.UniversityC.GraduateTsukuba:
-                        case type.UniversityC.GraduateNotTsukuba:
-                            return (
-                                u.university.graduate === universityCondition.v
-                            );
-                    }
+            return allUser.filter((u): boolean => {
+                switch (u.university.c) {
+                    case type.UniversityC.NotGraduate:
+                        return false;
+                    case type.UniversityC.GraduateTsukuba:
+                    case type.UniversityC.GraduateNotTsukuba:
+                        return u.university.graduate === universityCondition.v;
                 }
-            );
+            });
     }
 };
 
@@ -896,21 +884,19 @@ export const sellProduct = async (
         type.Product,
         "name" | "price" | "description" | "condition" | "category"
     > & { images: Array<type.DataURL> }
-): Promise<
-    Pick<
-        type.Product,
-        | "id"
-        | "name"
-        | "price"
-        | "description"
-        | "condition"
-        | "category"
-        | "thumbnailImageId"
-        | "imageIds"
-        | "createdAt"
-        | "updateAt"
-    >
-> => {
+): Promise<Pick<
+    type.Product,
+    | "id"
+    | "name"
+    | "price"
+    | "description"
+    | "condition"
+    | "category"
+    | "thumbnailImageId"
+    | "imageIds"
+    | "createdAt"
+    | "updateAt"
+>> => {
     const userData = await databaseLow.getUserData(userId);
 
     const thumbnailImageId = await databaseLow.saveThumbnailImageToCloudStorage(
@@ -959,13 +945,11 @@ export const sellProduct = async (
 
 export const getProductComments = async (
     productId: string
-): Promise<
-    Array<
-        Pick<type.ProductComment, "body" | "commentId" | "createdAt"> & {
-            speaker: Pick<type.User, "id" | "displayName" | "imageId">;
-        }
-    >
-> =>
+): Promise<Array<
+    Pick<type.ProductComment, "body" | "commentId" | "createdAt"> & {
+        speaker: Pick<type.User, "id" | "displayName" | "imageId">;
+    }
+>> =>
     (await databaseLow.getProductComments(productId)).map(({ id, data }) => ({
         commentId: id,
         body: data.body,
@@ -981,13 +965,11 @@ export const createProductComment = async (
     userId: string,
     productId: string,
     data: Pick<type.ProductComment, "body">
-): Promise<
-    Array<
-        Pick<type.ProductComment, "body" | "commentId" | "createdAt"> & {
-            speaker: Pick<type.User, "id" | "displayName" | "imageId">;
-        }
-    >
-> => {
+): Promise<Array<
+    Pick<type.ProductComment, "body" | "commentId" | "createdAt"> & {
+        speaker: Pick<type.User, "id" | "displayName" | "imageId">;
+    }
+>> => {
     const userData = await databaseLow.getUserData(userId);
     const nowTimestamp = databaseLow.getNowTimestamp();
     await databaseLow.addProductComment(productId, {
@@ -1148,16 +1130,14 @@ export const addTradeComment = async (
         await databaseLow.updateTradeData(tradeId, {
             updateAt: nowTime
         });
-        const notifyAccessToken = (await databaseLow.getUserData(
-            productData.sellerId
-        )).notifyToken;
+        const notifyAccessToken = (
+            await databaseLow.getUserData(productData.sellerId)
+        ).notifyToken;
         const buyerName = (await databaseLow.getUserData(tradeData.buyerUserId))
             .displayName;
         if (notifyAccessToken !== null) {
             await lineNotify.sendMessage(
-                `${buyerName}さんが${
-                    productData.name
-                }の取引にコメントをつけました。\n\n${body}\n\nhttps://tsukumart.com/trade/${tradeId}`,
+                `${buyerName}さんが${productData.name}の取引にコメントをつけました。\n\n${body}\n\nhttps://tsukumart.com/trade/${tradeId}`,
                 false,
                 notifyAccessToken
             );
@@ -1177,14 +1157,12 @@ export const addTradeComment = async (
         await databaseLow.updateTradeData(tradeId, {
             updateAt: nowTime
         });
-        const notifyAccessToken = (await databaseLow.getUserData(
-            tradeData.buyerUserId
-        )).notifyToken;
+        const notifyAccessToken = (
+            await databaseLow.getUserData(tradeData.buyerUserId)
+        ).notifyToken;
         if (notifyAccessToken !== null) {
             await lineNotify.sendMessage(
-                `${productData.sellerDisplayName}さんが${
-                    productData.name
-                }の取引にコメントをつけました。\n\n${body}\n\nhttps://tsukumart.com/trade/${tradeId}`,
+                `${productData.sellerDisplayName}さんが${productData.name}の取引にコメントをつけました。\n\n${body}\n\nhttps://tsukumart.com/trade/${tradeId}`,
                 false,
                 notifyAccessToken
             );
@@ -1217,9 +1195,9 @@ export const startTrade = async (
     });
     const product = await databaseLow.getProduct(productId);
     await databaseLow.updateUserData(product.sellerId, {
-        trading: (await databaseLow.getUserData(
-            product.sellerId
-        )).trading.concat([tradeId])
+        trading: (
+            await databaseLow.getUserData(product.sellerId)
+        ).trading.concat([tradeId])
     });
     await databaseLow.updateProductData(productId, {
         status: "trading"
@@ -1229,9 +1207,7 @@ export const startTrade = async (
     const buyer = await databaseLow.getUserData(buyerUserId);
     if (seller.notifyToken !== null) {
         await lineNotify.sendMessage(
-            `${buyer.displayName}さんが${
-                product.name
-            }の取引を開始しました。\n\nhttps://tsukumart.com/trade/${tradeId}`,
+            `${buyer.displayName}さんが${product.name}の取引を開始しました。\n\nhttps://tsukumart.com/trade/${tradeId}`,
             true,
             seller.notifyToken
         );
@@ -1263,9 +1239,7 @@ export const cancelTrade = async (
     if (tradeData.buyerUserId === userId) {
         if (seller.notifyToken !== null) {
             await lineNotify.sendMessage(
-                `${buyer.displayName}さんが${
-                    productData.name
-                }の取引をキャンセルしました。\n\nhttps://tsukumart.com/trade/${tradeId}`,
+                `${buyer.displayName}さんが${productData.name}の取引をキャンセルしました。\n\nhttps://tsukumart.com/trade/${tradeId}`,
                 true,
                 seller.notifyToken
             );
@@ -1275,9 +1249,7 @@ export const cancelTrade = async (
     if (productData.sellerId === userId) {
         if (buyer.notifyToken !== null) {
             await lineNotify.sendMessage(
-                `${seller.displayName}さんが${
-                    productData.name
-                }の取引をキャンセルしました。\n\nhttps://tsukumart.com/trade/${tradeId}`,
+                `${seller.displayName}さんが${productData.name}の取引をキャンセルしました。\n\nhttps://tsukumart.com/trade/${tradeId}`,
                 true,
                 buyer.notifyToken
             );

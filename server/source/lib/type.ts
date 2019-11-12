@@ -73,7 +73,7 @@ const accountServiceValues = {
     }
 };
 
-export type AccountService = keyof (typeof accountServiceValues);
+export type AccountService = keyof typeof accountServiceValues;
 
 export const accountServiceGraphQLType = new g.GraphQLEnumType({
     name: "AccountService",
@@ -112,7 +112,7 @@ const schoolValues = {
     sport: { description: "体育専門学群" }
 };
 
-export type School = keyof (typeof schoolValues);
+export type School = keyof typeof schoolValues;
 
 export const schoolGraphQLType = new g.GraphQLEnumType({
     name: "School",
@@ -150,7 +150,7 @@ const departmentValues = {
     sport: { description: "体育専門学群" }
 };
 
-export type Department = keyof (typeof departmentValues);
+export type Department = keyof typeof departmentValues;
 
 export const departmentGraphQLType = new g.GraphQLEnumType({
     name: "Department",
@@ -192,7 +192,7 @@ const graduateValues = {
     slis: { description: "図書館情報メディア研究科" },
     global: { description: "グローバル研究院" }
 };
-export type Graduate = keyof (typeof graduateValues);
+export type Graduate = keyof typeof graduateValues;
 
 export const graduateGraphQLType = new g.GraphQLEnumType({
     name: "Graduate",

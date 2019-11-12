@@ -9,14 +9,14 @@ import Maybe from "graphql/tsutils/Maybe";
 
 const makeObjectFieldMap = <Type extends { [k in string]: unknown }>(
     args: Type extends { id: string }
-        ? ({
+        ? {
               [Key in keyof Type]: Key extends "id"
                   ? {
                         type: g.GraphQLOutputType;
                         description: string;
                     }
                   : GraphQLFieldConfigWithArgs<Type, Key>;
-          })
+          }
         : {
               [Key in keyof Type]: {
                   type: g.GraphQLOutputType;
