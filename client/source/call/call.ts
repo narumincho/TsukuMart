@@ -51,7 +51,10 @@ type ElmApp = {
                 arg: (arg: { id: string; index: number }) => void
             ) => void;
         };
-        requestAllProducts: {
+        startListenRecommendProducts: {
+            subscribe: (arg: (arg: null) => void) => void;
+        };
+        stopListenRecommendProducts: {
             subscribe: (arg: (arg: null) => void) => void;
         };
         receiveAllProducts: {
@@ -294,15 +297,22 @@ const urlBase64ToUint8Array = (base64String: string) => {
     const firestore = firebase.firestore();
     const productCollection = firestore.collection("product");
     console.log("firestore request");
-    app.ports.requestAllProducts.subscribe(async () => {
-        const productsQuerySnapshot = await productCollection
-            .orderBy("likedCount", "desc")
-            .get();
-        console.log("firestore get response");
-        app.ports.receiveAllProducts.send(
-            productsQuerySnapshot.docs.map(documentDataToProduct)
-        );
+    const query = productCollection.orderBy("likedCount", "desc");
+    let unsubscription: () => void;
+    app.ports.startListenRecommendProducts.subscribe(async () => {
+        unsubscription = query.onSnapshot(productsQuerySnapshot => {
+            console.log("firestore get response");
+            app.ports.receiveAllProducts.send(
+                productsQuerySnapshot.docs.map(documentDataToProduct)
+            );
+        });
     });
+    // app.ports.stopListenRecommendProducts.subscribe(() => {
+    //     if (unsubscription === undefined) {
+    //         return;
+    //     }
+    //     unsubscription();
+    // });
 })();
 
 const documentDataToProduct = (

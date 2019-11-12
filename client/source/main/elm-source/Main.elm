@@ -73,7 +73,10 @@ port replaceText : { id : String, text : String } -> Cmd msg
 port changeSelectedIndex : { id : String, index : Int } -> Cmd msg
 
 
-port requestAllProducts : () -> Cmd msg
+port startListenRecommendProducts : () -> Cmd msg
+
+
+port stopListenRecommendProducts : () -> Cmd msg
 
 
 port receiveAllProducts : (List Data.Product.Firestore -> msg) -> Sub msg
@@ -670,7 +673,7 @@ homePageCmdToCmd cmd =
             Api.getRecentProductList (Page.Home.GetRecentProductsResponse >> PageMsgHome >> PageMsg)
 
         Page.Home.CmdGetRecommendProducts ->
-            requestAllProducts ()
+            startListenRecommendProducts ()
 
         Page.Home.CmdGetFreeProducts ->
             Api.getFreeProductList (Page.Home.GetFreeProductsResponse >> PageMsgHome >> PageMsg)
