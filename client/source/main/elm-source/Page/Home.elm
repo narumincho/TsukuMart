@@ -107,7 +107,7 @@ update msg (Model rec) =
                     )
 
         GetRecommendProductsResponse productFirestoreList ->
-            case productFirestoreList |> List.map Product.fromFirestore |> Utility.takeAllFromMaybeList of
+            case productFirestoreList |> List.map Product.fromFirestore |> Utility.sequenceMaybeList of
                 Just products ->
                     ( Model { rec | recommend = Just products }, [] )
 

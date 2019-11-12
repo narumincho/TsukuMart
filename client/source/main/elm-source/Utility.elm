@@ -1,4 +1,4 @@
-module Utility exposing (getAt, getFirstIndex, removeAt, takeAllFromMaybeList)
+module Utility exposing (getAt, getFirstIndex, removeAt, sequenceMaybeList)
 
 import Array
 
@@ -31,12 +31,16 @@ removeAt index list =
 
 
 {-| List (Maybe a)の中身が全てJust aならJust [a,a,a]にして1つでもNothingが入っていればNothing
+
+http://hackage.haskell.org/package/base-4.12.0.0/docs/Data-Traversable.html#v:sequenceA
+
+https://pursuit.purescript.org/packages/purescript-foldable-traversable/4.1.1/docs/Data.Traversable#v:sequence
 -}
-takeAllFromMaybeList : List (Maybe a) -> Maybe (List a)
-takeAllFromMaybeList list =
+sequenceMaybeList : List (Maybe a) -> Maybe (List a)
+sequenceMaybeList list =
     case list of
         (Just x) :: xs ->
-            case takeAllFromMaybeList xs of
+            case sequenceMaybeList xs of
                 Just xss ->
                     Just (x :: xss)
 
