@@ -1,10 +1,4 @@
 "use strict";
-firebase.initializeApp({
-    apiKey: "AIzaSyCqdk8wwbQdoosZ34e8z_M4UASU0s1bDXs",
-    authDomain: "tsukumart-f0971.firebaseapp.com",
-    messagingSenderId: "244512762605",
-    projectId: "tsukumart-f0971"
-});
 const fragment = new URLSearchParams(location.hash.substring(1));
 const app = Elm.SignUp.init({
     flags: {

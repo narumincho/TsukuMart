@@ -1,12 +1,5 @@
 /// <reference path="node_modules/firebase/index.d.ts" />
 
-firebase.initializeApp({
-    apiKey: "AIzaSyCqdk8wwbQdoosZ34e8z_M4UASU0s1bDXs",
-    authDomain: "tsukumart-f0971.firebaseapp.com",
-    messagingSenderId: "244512762605",
-    projectId: "tsukumart-f0971"
-});
-
 declare const Elm: {
     SignUp: { init: (arg: { flags: {}; node: HTMLElement }) => ElmApp };
 };
