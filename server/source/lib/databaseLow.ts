@@ -337,6 +337,7 @@ export const deleteUser = async () => {
 type UserBeforeInputDataData = {
     name: string;
     imageId: string;
+    createdAt: firestore.Timestamp;
 };
 
 export const addUserBeforeInputData = async (
@@ -374,6 +375,7 @@ type UserBeforeEmailVerificationData = {
     schoolAndDepartment: type.Department | null;
     graduate: type.Graduate | null;
     email: string;
+    createdAt: firestore.Timestamp;
 };
 
 export const addUserBeforeEmailVerification = async (

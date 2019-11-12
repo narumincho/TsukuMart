@@ -414,12 +414,11 @@ export const deleteProduct = async (userId: string, productId: string) => {
         throw new Error("自分が出品した商品以外を削除しようとした");
     }
     const productData = await databaseLow.getProduct(productId);
-    if (productData.status === "selling") {
-        await databaseLow.addDeletedProduct({ ...productData, deletedAt: now });
-        await databaseLow.deleteProduct(productId);
-        return;
+    if (productData.status !== "selling") {
+        throw new Error("商品が売出し中のとき以外に削除しようとした");
     }
-    throw new Error("商品が売出し中のとき以外に削除しようとした");
+    await databaseLow.addDeletedProduct({ ...productData, deletedAt: now });
+    await databaseLow.deleteProduct(productId);
 };
 
 export const getCommentedProducts = async (
