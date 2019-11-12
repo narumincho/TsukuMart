@@ -44,7 +44,11 @@ export const indexHtml = functions
         descriptionAndImageUrl.imageUrl
     )}">
     <script src="https://tsukumart.com/main.js" defer></script>
+    <script src="https://www.gstatic.com/firebasejs/7.3.0/firebase-app.js" defer></script>
+    <script src="https://www.gstatic.com/firebasejs/7.3.0/firebase-firestore.js" defer></script>
+    <script src="https://tsukumart.com/__/firebase/init.js" defer></script>
     <script src="https://tsukumart.com/call.js" type="module"></script>
+
     <script nomodule>
         onload = () => {
             document.body.textContent = "ES Moduleに対応していないブラウザです。新しいブラウザを使ってください";

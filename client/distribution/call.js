@@ -31,24 +31,30 @@ const insideSize = (width, height) => {
         height: height
     };
 };
-const prodcutImageFilesResizeAndConvertToDataUrl = async (fileList) => {
-    return await Promise.all(new Array(Math.min(fileList.length, 10)).fill(0).map((_, index) => {
-        return new Promise((resolve, reject) => {
-            const file = fileList.item(index);
-            const image = new Image();
-            image.addEventListener("load", () => {
-                const canvas = document.createElement("canvas");
-                const size = insideSize(image.width, image.height);
-                canvas.width = size.width;
-                canvas.height = size.height;
-                const context = canvas.getContext("2d");
-                context.drawImage(image, 0, 0, image.width, image.height, 0, 0, size.width, size.height);
-                resolve(canvas.toDataURL("image/jpeg"));
-            });
-            image.src = window.URL.createObjectURL(file);
-        });
-    }));
+const productImageFilesResizeAndConvertToDataUrl = async (fileList) => {
+    const result = [];
+    for (let i = 0; i < 5; i++) {
+        const file = fileList.item(i);
+        if (file === null) {
+            continue;
+        }
+        result.push(await productImageResizeAndConvertToDataUrl(file));
+    }
+    return result;
 };
+const productImageResizeAndConvertToDataUrl = (file) => new Promise((resolve, reject) => {
+    const image = new Image();
+    image.addEventListener("load", () => {
+        const canvas = document.createElement("canvas");
+        const size = insideSize(image.width, image.height);
+        canvas.width = size.width;
+        canvas.height = size.height;
+        const context = canvas.getContext("2d");
+        context.drawImage(image, 0, 0, image.width, image.height, 0, 0, size.width, size.height);
+        resolve(canvas.toDataURL("image/jpeg"));
+    });
+    image.src = window.URL.createObjectURL(file);
+});
 const checkFileInput = (id) => async () => {
     const inputElement = document.getElementById(id);
     if (inputElement === null) {
@@ -58,7 +64,7 @@ const checkFileInput = (id) => async () => {
         window.requestAnimationFrame(checkFileInput(id));
         return;
     }
-    const dataUrls = await prodcutImageFilesResizeAndConvertToDataUrl(inputElement.files);
+    const dataUrls = await productImageFilesResizeAndConvertToDataUrl(inputElement.files);
     app.ports.receiveProductImages.send(dataUrls);
     inputElement.value = "";
     window.requestAnimationFrame(checkFileInput(id));
@@ -133,7 +139,7 @@ app.ports.addEventListenerForProductImages.subscribe(({ inputId, labelId }) => {
             if (e.dataTransfer === null) {
                 return;
             }
-            app.ports.receiveProductImages.send(await prodcutImageFilesResizeAndConvertToDataUrl(e.dataTransfer.files));
+            app.ports.receiveProductImages.send(await productImageFilesResizeAndConvertToDataUrl(e.dataTransfer.files));
         });
     };
     window.requestAnimationFrame(addEventListenerForProductImages);
@@ -153,3 +159,6 @@ const urlBase64ToUint8Array = (base64String) => {
 (async () => {
     await navigator.serviceWorker.register("/serviceworker.js", { scope: "/" });
 })();
+{
+    console.log("firestore", firebase.firestore());
+}

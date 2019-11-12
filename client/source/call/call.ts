@@ -1,3 +1,5 @@
+/// <reference path="node_modules/firebase/index.d.ts" />
+
 interface Window {
     Elm: {
         Main: {
@@ -99,40 +101,45 @@ const insideSize = (
         height: height
     };
 };
-const prodcutImageFilesResizeAndConvertToDataUrl = async (
+const productImageFilesResizeAndConvertToDataUrl = async (
     fileList: FileList
 ): Promise<Array<string>> => {
-    return await Promise.all(
-        new Array(Math.min(fileList.length, 10)).fill(0).map((_, index) => {
-            return new Promise((resolve, reject) => {
-                const file = fileList.item(index) as File;
-                const image = new Image();
-                image.addEventListener("load", () => {
-                    const canvas = document.createElement("canvas");
-                    const size = insideSize(image.width, image.height);
-                    canvas.width = size.width;
-                    canvas.height = size.height;
-                    const context = canvas.getContext(
-                        "2d"
-                    ) as CanvasRenderingContext2D;
-                    context.drawImage(
-                        image,
-                        0,
-                        0,
-                        image.width,
-                        image.height,
-                        0,
-                        0,
-                        size.width,
-                        size.height
-                    );
-                    resolve(canvas.toDataURL("image/jpeg"));
-                });
-                image.src = window.URL.createObjectURL(file);
-            });
-        })
-    );
+    const result: Array<string> = [];
+    for (let i = 0; i < 5; i++) {
+        const file = fileList.item(i);
+        if (file === null) {
+            continue;
+        }
+        result.push(await productImageResizeAndConvertToDataUrl(file));
+    }
+    return result;
 };
+
+const productImageResizeAndConvertToDataUrl = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+        const image = new Image();
+        image.addEventListener("load", () => {
+            const canvas = document.createElement("canvas");
+            const size = insideSize(image.width, image.height);
+            canvas.width = size.width;
+            canvas.height = size.height;
+            const context = canvas.getContext("2d") as CanvasRenderingContext2D;
+            context.drawImage(
+                image,
+                0,
+                0,
+                image.width,
+                image.height,
+                0,
+                0,
+                size.width,
+                size.height
+            );
+            resolve(canvas.toDataURL("image/jpeg"));
+        });
+        image.src = window.URL.createObjectURL(file);
+    });
+
 const checkFileInput = (id: string) => async () => {
     const inputElement = document.getElementById(id) as HTMLInputElement | null;
     if (inputElement === null) {
@@ -142,7 +149,7 @@ const checkFileInput = (id: string) => async () => {
         window.requestAnimationFrame(checkFileInput(id));
         return;
     }
-    const dataUrls = await prodcutImageFilesResizeAndConvertToDataUrl(
+    const dataUrls = await productImageFilesResizeAndConvertToDataUrl(
         inputElement.files
     );
     app.ports.receiveProductImages.send(dataUrls);
@@ -277,7 +284,7 @@ app.ports.addEventListenerForProductImages.subscribe(({ inputId, labelId }) => {
                 return;
             }
             app.ports.receiveProductImages.send(
-                await prodcutImageFilesResizeAndConvertToDataUrl(
+                await productImageFilesResizeAndConvertToDataUrl(
                     e.dataTransfer.files
                 )
             );
@@ -302,3 +309,7 @@ const urlBase64ToUint8Array = (base64String: string) => {
 (async () => {
     await navigator.serviceWorker.register("/serviceworker.js", { scope: "/" });
 })();
+
+{
+    console.log("firestore", firebase.firestore());
+}
