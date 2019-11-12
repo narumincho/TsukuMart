@@ -219,51 +219,6 @@ app.ports.changeSelectedIndex.subscribe(({ id, index }) => {
     };
     window.requestAnimationFrame(changeSelectedIndex);
 });
-/* アカウント画像の入力イベントを設定する */
-// app.ports.addEventListenerForUserImage.subscribe(({ inputId, labelId }) => {
-//     const addEventListenerForUserImage = () => {
-//         const inputElement = document.getElementById(
-//             inputId
-//         ) as HTMLInputElement;
-//         if (inputElement === null) {
-//             console.warn(`id=${inputId}の要素が存在しません`);
-//             window.requestAnimationFrame(addEventListenerForUserImage);
-//             return;
-//         }
-//         inputElement.addEventListener("input", async e => {
-//             if (inputElement.files === null) {
-//                 console.warn(`id=${inputId}のfilesがnullです`);
-//                 return;
-//             }
-//         });
-
-//         const labelElement = document.getElementById(labelId);
-//         if (labelElement === null) {
-//             console.warn(`id=${labelId}の要素が存在しません`);
-//             window.requestAnimationFrame(addEventListenerForUserImage);
-//             return;
-//         }
-//         labelElement.addEventListener("dragover", e => {
-//             e.preventDefault();
-//         });
-//         labelElement.addEventListener("drop", async e => {
-//             e.preventDefault();
-//             if (e.dataTransfer === null) {
-//                 console.warn("drop event dataTransfer is null");
-//                 return;
-//             }
-//             const file = e.dataTransfer.files.item(0);
-//             if (file === null) {
-//                 console.warn("drop file is empty");
-//                 return;
-//             }
-//             app.ports.receiveUserImage.send(
-//                 await userImageFileResizeAndConvertToDataUrl(file)
-//             );
-//         });
-//     };
-//     window.requestAnimationFrame(addEventListenerForUserImage);
-// });
 
 /* 商品画像の入力イベントを設定する */
 app.ports.addEventListenerForProductImages.subscribe(({ inputId, labelId }) => {
@@ -310,6 +265,14 @@ const urlBase64ToUint8Array = (base64String: string) => {
     await navigator.serviceWorker.register("/serviceworker.js", { scope: "/" });
 })();
 
-{
-    console.log("firestore", firebase.firestore());
-}
+(async () => {
+    console.log("firestore run");
+    const firestore = firebase.firestore();
+    const productCollection = firestore.collection("product");
+    console.log("firestore request");
+    const productsQuerySnapshot = await productCollection.get();
+    console.log("firestore get response");
+    for (const doc of productsQuerySnapshot.docs) {
+        console.log(doc.data());
+    }
+})();

@@ -159,6 +159,14 @@ const urlBase64ToUint8Array = (base64String) => {
 (async () => {
     await navigator.serviceWorker.register("/serviceworker.js", { scope: "/" });
 })();
-{
-    console.log("firestore", firebase.firestore());
-}
+(async () => {
+    console.log("firestore run");
+    const firestore = firebase.firestore();
+    const productCollection = firestore.collection("product");
+    console.log("firestore request");
+    const productsQuerySnapshot = await productCollection.get();
+    console.log("firestore get response");
+    for (const doc of productsQuerySnapshot.docs) {
+        console.log(doc.data());
+    }
+})();
