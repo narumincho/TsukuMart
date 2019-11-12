@@ -6,6 +6,7 @@ module Page.Style exposing
     , emptyList
     , formItem
     , inputText
+    , justifyItemsCenter
     , mainButton
     , mainButtonLink
     , normalShadow
@@ -143,6 +144,11 @@ displayGridAndGap gap =
            )
     )
         |> Css.batch
+
+
+justifyItemsCenter : Css.Style
+justifyItemsCenter =
+    Css.property "justify-items" "center"
 
 
 userSelectNone : Css.Style

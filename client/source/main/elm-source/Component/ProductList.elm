@@ -92,7 +92,11 @@ view (Model { likeUpdating }) logInState isWideMode productList =
         Nothing ->
             Page.Style.container
                 [ Html.Styled.div
-                    []
+                    [ Html.Styled.Attributes.css
+                        [ Page.Style.displayGridAndGap 0
+                        , Page.Style.justifyItemsCenter
+                        ]
+                    ]
                     [ Html.Styled.text "読み込み中"
                     , Icon.loading { size = 48, color = Css.rgb 0 0 0 }
                     ]
