@@ -105,7 +105,7 @@ const productImageFilesResizeAndConvertToDataUrl = async (
     fileList: FileList
 ): Promise<Array<string>> => {
     const result: Array<string> = [];
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < Math.min(5, fileList.length); i++) {
         const file = fileList.item(i);
         if (file === null) {
             continue;

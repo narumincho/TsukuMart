@@ -33,7 +33,7 @@ const insideSize = (width, height) => {
 };
 const productImageFilesResizeAndConvertToDataUrl = async (fileList) => {
     const result = [];
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < Math.min(5, fileList.length); i++) {
         const file = fileList.item(i);
         if (file === null) {
             continue;
