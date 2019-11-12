@@ -42,36 +42,6 @@ const app = Elm.SignUp.init({
 });
 app.ports.load.subscribe(
     ({ imageInputElementId, imageUrl, nameElementId, name }) => {
-        const userImageFileResizeAndConvertToDataUrl = (
-            file: File
-        ): Promise<string> =>
-            new Promise((resolve, reject) => {
-                const image = new Image();
-                image.onload = () => {
-                    const canvas = document.createElement("canvas");
-                    const sourceSize = Math.min(image.width, image.height);
-                    const outputSize = Math.min(sourceSize, 400);
-                    canvas.width = outputSize;
-                    canvas.height = outputSize;
-                    const context = canvas.getContext(
-                        "2d"
-                    ) as CanvasRenderingContext2D;
-                    context.drawImage(
-                        image,
-                        (image.width - sourceSize) / 2,
-                        (image.height - sourceSize) / 2,
-                        sourceSize,
-                        sourceSize,
-                        0,
-                        0,
-                        outputSize,
-                        outputSize
-                    );
-                    resolve(canvas.toDataURL("image/png"));
-                };
-                image.src = window.URL.createObjectURL(file);
-            });
-
         requestAnimationFrame(() => {
             const imageInputElement = document.getElementById(
                 imageInputElementId
@@ -96,6 +66,32 @@ app.ports.load.subscribe(
         });
     }
 );
+
+const userImageFileResizeAndConvertToDataUrl = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+        const image = new Image();
+        image.onload = () => {
+            const canvas = document.createElement("canvas");
+            const sourceSize = Math.min(image.width, image.height);
+            const outputSize = Math.min(sourceSize, 400);
+            canvas.width = outputSize;
+            canvas.height = outputSize;
+            const context = canvas.getContext("2d") as CanvasRenderingContext2D;
+            context.drawImage(
+                image,
+                (image.width - sourceSize) / 2,
+                (image.height - sourceSize) / 2,
+                sourceSize,
+                sourceSize,
+                0,
+                0,
+                outputSize,
+                outputSize
+            );
+            resolve(canvas.toDataURL("image/png"));
+        };
+        image.src = window.URL.createObjectURL(file);
+    });
 
 const sendConfirmEmail = async (token: string) => {
     try {
