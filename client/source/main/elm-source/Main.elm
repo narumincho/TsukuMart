@@ -43,9 +43,6 @@ import Time
 import Url
 
 
-port addEventListenerForUserImage : { labelId : String, inputId : String } -> Cmd msg
-
-
 port receiveUserImage : (String -> msg) -> Sub msg
 
 
@@ -74,6 +71,9 @@ port replaceText : { id : String, text : String } -> Cmd msg
 
 
 port changeSelectedIndex : { id : String, index : Int } -> Cmd msg
+
+
+port getAllProducts : List { id : String, name : String } -> Cmd msg
 
 
 type Model
