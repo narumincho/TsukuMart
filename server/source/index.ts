@@ -211,14 +211,14 @@ export const sitemap = functions
     .https.onRequest(async (request, response) => {
         console.log("sitemap called");
         const productData = await database.getAllProducts();
-        const userData = await database.getAllUser();
+        const userData = await database.getAllUserId();
 
         response.setHeader("content-type", "application/xml");
         response.send(`<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${pathToXml("")}
 ${productData.map(product => pathToXml("product/" + product.id)).join("\n")}
-${userData.map(user => pathToXml("user/" + user.id)).join("\n")}
+${userData.map(id => pathToXml("user/" + id)).join("\n")}
 </urlset>`);
     });
 

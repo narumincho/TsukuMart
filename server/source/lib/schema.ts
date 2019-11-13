@@ -491,6 +491,9 @@ const setUserPrivateData = async (
     source.tradedAll = userData.tradedAll;
     source.soldProductAll = userData.soldProductAll;
     source.boughtProductAll = userData.boughtProductAll;
+    source.historyViewProductAll = userData.historyViewProduct;
+    source.likedProductAll = userData.likedProduct;
+    source.commentedProductAll = userData.commentedProduct;
     return userData;
 };
 
@@ -595,11 +598,7 @@ const userPrivateGraphQLType = new g.GraphQLObjectType({
                 args: {},
                 resolve: async (source, args, context, info) => {
                     if (source.likedProductAll === undefined) {
-                        const likedProducts = await database.getLikedProductData(
-                            source.id
-                        );
-                        source.likedProductAll = likedProducts;
-                        return likedProducts;
+                        return (await setUserPrivateData(source)).likedProduct;
                     }
                     return source.likedProductAll;
                 },
@@ -616,11 +615,7 @@ const userPrivateGraphQLType = new g.GraphQLObjectType({
                 args: {},
                 resolve: async (source, args, context, info) => {
                     if (source.historyViewProductAll === undefined) {
-                        const data = await database.getHistoryViewProduct(
-                            source.id
-                        );
-                        source.historyViewProductAll = data;
-                        return data;
+                        return (await setUserData(source)).historyViewProduct;
                     }
                     return source.historyViewProductAll;
                 },
@@ -633,11 +628,7 @@ const userPrivateGraphQLType = new g.GraphQLObjectType({
                 args: {},
                 resolve: async (source, args, context, info) => {
                     if (source.commentedProductAll === undefined) {
-                        const data = await database.getCommentedProducts(
-                            source.id
-                        );
-                        source.commentedProductAll = data;
-                        return data;
+                        return (await setUserData(source)).commentedProduct;
                     }
                     return source.commentedProductAll;
                 },
@@ -851,23 +842,6 @@ const user = makeQueryOrMutationField<{ userId: string }, type.UserInternal>({
         };
     },
     description: "ユーザーの情報を取得する"
-});
-
-const userAll = makeQueryOrMutationField<{}, Array<type.UserInternal>>({
-    type: g.GraphQLNonNull(g.GraphQLList(g.GraphQLNonNull(userGraphQLType))),
-    args: {},
-    resolve: async () => {
-        return (await database.getAllUser()).map(userData => ({
-            id: userData.id,
-            displayName: userData.displayName,
-            imageId: userData.imageId,
-            introduction: userData.introduction,
-            university: type.universityToInternal(userData.university),
-            createdAt: userData.createdAt,
-            soldProductAll: userData.soldProductAll
-        }));
-    },
-    description: "すべてのユーザーの情報を取得する"
 });
 
 const userPrivate = makeQueryOrMutationField<
@@ -1846,7 +1820,6 @@ export const schema = new g.GraphQLSchema({
         fields: {
             hello,
             user,
-            userAll,
             userPrivate,
             product,
             productSearch,

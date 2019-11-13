@@ -9,6 +9,7 @@ const dataBase = initializedAdmin.firestore();
 const storage = initializedAdmin.storage().bucket();
 
 const userCollectionRef = dataBase.collection("user");
+const userPrivateCollectionRef = dataBase.collection("userPrivate");
 const userBeforeInputDataCollection = dataBase.collection(
     "userBeforeInputData"
 );
@@ -28,20 +29,13 @@ const contentSecurityPolicyReportRef = dataBase.collection(
    ==========================================
 */
 export type UserData = {
-    logInAccountServiceId: string;
     displayName: string;
     imageId: string;
     schoolAndDepartment: type.Department | null;
     graduate: type.Graduate | null;
     introduction: string;
-    lastAccessTokenId: string;
     createdAt: firestore.Timestamp;
-    trading: Array<string>;
-    traded: Array<string>;
     soldProducts: Array<string>;
-    boughtProducts: Array<string>;
-    notifyToken: string | null;
-    emailAddress: string;
 };
 /**
  * ユーザーのデータを取得する
@@ -49,13 +43,26 @@ export type UserData = {
  * @throws {Error} userId ${id} dose not exists
  */
 export const getUserData = async (id: string): Promise<UserData> => {
-    const userData = (await (await userCollectionRef.doc(id)).get()).data();
+    const userData = (await userCollectionRef.doc(id).get()).data();
     if (userData === undefined) {
         throw new Error(`userId ${id} dose not exists`);
     }
     return userData as UserData;
 };
-
+/**
+ * ユーザーの個人的なデータを取得する
+ * @param id
+ * @param userData
+ */
+export const getUserPrivateData = async (
+    id: string
+): Promise<UserPrivateData> => {
+    const data = (await userPrivateCollectionRef.doc(id).get()).data();
+    if (data === undefined) {
+        throw new Error(`userId ${id} dose not exists`);
+    }
+    return data as UserPrivateData;
+};
 /**
  * ユーザーのデータを上書きする。すでにあるフィールドはそのまま残る
  * @param id
@@ -68,14 +75,13 @@ export const updateUserData = async (
     await userCollectionRef.doc(id).update(userData);
 };
 
-/*
-        HistoryView Product
-*/
-type HistoryViewProductData = {
-    createdAt: firestore.Timestamp;
+export const updateUserPrivateData = async (
+    id: string,
+    userData: Partial<UserPrivateData>
+): Promise<void> => {
+    await userPrivateCollectionRef.doc(id).update(userData);
 };
 
-const userHistoryViewProductCollectionName = "historyViewProduct";
 /**
  * ユーザーの商品の閲覧記録に商品を登録する。
  * @param userId
@@ -83,33 +89,12 @@ const userHistoryViewProductCollectionName = "historyViewProduct";
  */
 export const addHistoryViewProductData = async (
     userId: string,
-    productId: string,
-    data: HistoryViewProductData
+    productId: string
 ): Promise<void> => {
-    await userCollectionRef
-        .doc(userId)
-        .collection(userHistoryViewProductCollectionName)
-        .doc(productId)
-        .set(data);
+    await userPrivateCollectionRef.doc(userId).update({
+        historyViewProduct: firestore.FieldValue.arrayUnion(productId)
+    });
 };
-
-/**
- * 最後に閲覧した順に閲覧履歴を取得する
- * @param userId
- */
-export const getHistoryViewProductData = async (
-    userId: string
-): Promise<Array<{ id: string; data: HistoryViewProductData }>> =>
-    (await querySnapshotToIdAndDataArray(
-        await userCollectionRef
-            .doc(userId)
-            .collection(userHistoryViewProductCollectionName)
-            .orderBy("createdAt")
-            .get()
-    )) as Array<{ id: string; data: HistoryViewProductData }>;
-/*
-        Liked Product
-*/
 
 type LikedProductData = {
     createdAt: firestore.Timestamp;
@@ -120,69 +105,28 @@ export const addLikedProductData = async (
     productId: string,
     data: LikedProductData
 ): Promise<void> => {
-    await userCollectionRef
+    await userPrivateCollectionRef
         .doc(userId)
-        .collection("likedProduct")
-        .doc(productId)
-        .set(data);
+        .update({ likedProduct: firestore.FieldValue.arrayUnion(productId) });
 };
 
 export const deleteLikedProductData = async (
     userId: string,
     productId: string
 ): Promise<void> => {
-    await userCollectionRef
+    await userPrivateCollectionRef
         .doc(userId)
-        .collection("likedProduct")
-        .doc(productId)
-        .delete();
+        .update({ likedProduct: firestore.FieldValue.arrayRemove(productId) });
 };
-/**
- * 最後にいいねした順にいいねした商品を取得する
- * @param userId
- */
-export const getAllLikedProductsData = async (
-    userId: string
-): Promise<Array<{ id: string; data: LikedProductData }>> =>
-    (await querySnapshotToIdAndDataArray(
-        await userCollectionRef
-            .doc(userId)
-            .collection("likedProduct")
-            .orderBy("createdAt")
-            .get()
-    )) as Array<{ id: string; data: LikedProductData }>;
-
-/*
-        Commented Product
-*/
-type CommentedProductData = {
-    createdAt: firestore.Timestamp;
-};
-
-const userCommentedProductCollectionName = "commentedProduct";
 
 export const addCommentedProductData = async (
     userId: string,
-    productId: string,
-    data: CommentedProductData
+    productId: string
 ): Promise<void> => {
-    await userCollectionRef
-        .doc(userId)
-        .collection(userCommentedProductCollectionName)
-        .doc(productId)
-        .set(data);
+    await userPrivateCollectionRef.doc(userId).update({
+        commentedProduct: firestore.FieldValue.arrayUnion(productId)
+    });
 };
-
-export const getCommentedProductData = async (
-    userId: string
-): Promise<Array<{ id: string; data: CommentedProductData }>> =>
-    (await querySnapshotToIdAndDataArray(
-        await userCollectionRef
-            .doc(userId)
-            .collection(userCommentedProductCollectionName)
-            .orderBy("createdAt")
-            .get()
-    )) as Array<{ id: string; data: CommentedProductData }>;
 
 type DraftProductData = {
     name: string;
@@ -269,13 +213,22 @@ export const deleteDraftProduct = async (
         .delete();
 };
 /**
- * ユーザーのデータを追加する
+ * ユーザーの追加(公開するデータ)
  * @param userData
  */
 export const addUserData = async (data: UserData): Promise<string> => {
     const id = createRandomFileId();
     await userCollectionRef.doc(id).set(data);
     return id;
+};
+/**
+ * ユーザーの追加(個人的なデータ)
+ */
+export const addUserPrivateData = async (
+    id: string,
+    data: UserPrivateData
+): Promise<void> => {
+    await userPrivateCollectionRef.doc(id).set(data);
 };
 
 /**
@@ -295,24 +248,26 @@ export const getAllUserData = async (): Promise<Array<{
 
 export const getUserByLogInServiceAndId = async (
     logInServiceAndId: type.LogInServiceAndId
-): Promise<{ ref: firestore.DocumentReference; id: string } | null> => {
-    const queryDocumentSnapshot = await getUserListFromCondition(
+): Promise<{ id: string } | null> => {
+    const queryDocumentSnapshot = await getUserPrivateListFromCondition(
         "logInAccountServiceId",
         "==",
         type.logInServiceAndIdToString(logInServiceAndId)
     );
     if (0 < queryDocumentSnapshot.length) {
         const snapshot = queryDocumentSnapshot[0];
-        return { ref: snapshot.ref, id: snapshot.id };
+        return { id: snapshot.id };
     }
     return null;
 };
 
 export const updateRandomState = async (
     lastAccessTokenId: string,
-    userDocumentRef: firestore.DocumentReference
+    userId: string
 ): Promise<void> => {
-    await userDocumentRef.set({ lastAccessTokenId }, { merge: true });
+    await userPrivateCollectionRef
+        .doc(userId)
+        .set({ lastAccessTokenId }, { merge: true });
 };
 /**
  * ユーザーの条件を指定して検索する
@@ -326,6 +281,16 @@ const getUserListFromCondition = async <Field extends keyof UserData>(
     value: UserData[Field]
 ): Promise<firestore.QueryDocumentSnapshot[]> =>
     (await userCollectionRef.where(fieldName, operator, value).get()).docs;
+
+const getUserPrivateListFromCondition = async <
+    Field extends keyof UserPrivateData
+>(
+    fieldName: Field,
+    operator: firestore.WhereFilterOp,
+    value: UserPrivateData[Field]
+): Promise<firestore.QueryDocumentSnapshot[]> =>
+    (await userPrivateCollectionRef.where(fieldName, operator, value).get())
+        .docs;
 
 export const deleteUser = async () => {
     //サブコレクションを手動で削除しなければならない。履歴、下書きなど
@@ -676,7 +641,7 @@ const querySnapshotToIdAndDataArray = (
    ==========================================
 */
 export const getNowTimestamp = (): firestore.Timestamp =>
-    admin.firestore.Timestamp.now();
+    firestore.Timestamp.now();
 
 export const timestampToDate = (timeStamp: firestore.Timestamp): Date =>
     timeStamp.toDate();
@@ -869,3 +834,18 @@ export const contentSecurityPolicyReport = async (
 ): Promise<void> => {
     await contentSecurityPolicyReportRef.add({ raw: report });
 };
+
+export type UserPrivateData = {
+    boughtProduct: Array<string>;
+    emailAddress: string;
+    lastAccessTokenId: string;
+    logInAccountServiceId: string;
+    notifyToken: string | null;
+    traded: Array<string>;
+    trading: Array<string>;
+    historyViewProduct: Array<string>;
+    commentedProduct: Array<string>;
+    likedProduct: Array<string>;
+};
+
+export const c = async (): Promise<void> => {};
