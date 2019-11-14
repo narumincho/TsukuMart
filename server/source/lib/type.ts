@@ -323,8 +323,8 @@ export type User = {
     imageId: string;
     introduction: string;
     university: University;
-    createdAt: Date;
     soldProductAll: Array<Product>;
+    createdAt: Date;
 };
 /** ==============================
  *         User Private
