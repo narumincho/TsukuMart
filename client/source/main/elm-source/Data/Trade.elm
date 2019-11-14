@@ -10,15 +10,14 @@ module Data.Trade exposing
     , detailGetComment
     , detailGetCreatedAt
     , detailGetId
-    , detailGetProduct
+    , detailGetProductId
     , detailGetStatus
     , detailGetUpdateAt
     , fromApi
     , getBuyer
     , getCreatedAt
     , getId
-    , getProduct
-    , getSeller
+    , getProductId
     , getUpdateAt
     , idFromString
     , idToString
@@ -35,8 +34,7 @@ import Time
 type Trade
     = Trade
         { id : Id
-        , product : Product.Product
-        , seller : User.WithName
+        , productId : Product.Id
         , buyer : User.WithName
         , createdAt : Time.Posix
         , updateAt : Time.Posix
@@ -59,8 +57,7 @@ idToString (Id string) =
 
 fromApi :
     { id : String
-    , product : Product.Product
-    , seller : User.WithName
+    , productId : String
     , buyer : User.WithName
     , createdAt : Time.Posix
     , updateAt : Time.Posix
@@ -69,8 +66,7 @@ fromApi :
 fromApi rec =
     Trade
         { id = Id rec.id
-        , product = rec.product
-        , seller = rec.seller
+        , productId = Product.idFromString rec.productId
         , buyer = rec.buyer
         , createdAt = rec.createdAt
         , updateAt = rec.updateAt
@@ -82,14 +78,9 @@ getId (Trade { id }) =
     id
 
 
-getProduct : Trade -> Product.Product
-getProduct (Trade { product }) =
-    product
-
-
-getSeller : Trade -> User.WithName
-getSeller (Trade { seller }) =
-    seller
+getProductId : Trade -> Product.Id
+getProductId (Trade { productId }) =
+    productId
 
 
 getBuyer : Trade -> User.WithName
@@ -110,7 +101,7 @@ getUpdateAt (Trade { updateAt }) =
 type TradeDetail
     = TradeDetail
         { id : Id
-        , product : Product.ProductDetail
+        , productId : Product.Id
         , buyer : User.WithName
         , createdAt : Time.Posix
         , updateAt : Time.Posix
@@ -190,7 +181,7 @@ type SellerOrBuyer
 
 detailFromApi :
     { id : String
-    , product : Product.ProductDetail
+    , productId : String
     , buyer : User.WithName
     , createdAt : Time.Posix
     , updateAt : Time.Posix
@@ -201,7 +192,7 @@ detailFromApi :
 detailFromApi rec =
     TradeDetail
         { id = Id rec.id
-        , product = rec.product
+        , productId = Product.idFromString rec.productId
         , buyer = rec.buyer
         , createdAt = rec.createdAt
         , updateAt = rec.updateAt
@@ -215,9 +206,9 @@ detailGetId (TradeDetail { id }) =
     id
 
 
-detailGetProduct : TradeDetail -> Product.ProductDetail
-detailGetProduct (TradeDetail { product }) =
-    product
+detailGetProductId : TradeDetail -> Product.Id
+detailGetProductId (TradeDetail { productId }) =
+    productId
 
 
 detailGetBuyer : TradeDetail -> User.WithName

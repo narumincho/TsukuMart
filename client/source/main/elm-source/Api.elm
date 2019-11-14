@@ -289,7 +289,7 @@ type SellProductRequest
         }
 
 
-sellProduct : SellProductRequest -> Token -> (Result String Product.ProductDetail -> msg) -> Cmd msg
+sellProduct : SellProductRequest -> Token -> (Result String Product.Product -> msg) -> Cmd msg
 sellProduct (SellProductRequest request) token =
     graphQlApiRequest
         (Mutation
@@ -304,50 +304,15 @@ sellProduct (SellProductRequest request) token =
                     , ( "condition", GraphQLEnum (Product.conditionToIdString request.condition) )
                     , ( "category", GraphQLEnum (Category.toIdString request.category) )
                     ]
-                , return = productDetailReturn
+                , return = productReturn
                 }
             ]
         )
-        (Jd.field "sellProduct" productDetailDecoder)
+        (Jd.field "sellProduct" productDecoder)
 
 
 productReturn : List Field
 productReturn =
-    [ Field { name = "id", args = [], return = [] }
-    , Field { name = "name", args = [], return = [] }
-    , Field { name = "price", args = [], return = [] }
-    , Field { name = "category", args = [], return = [] }
-    , Field { name = "status", args = [], return = [] }
-    , Field { name = "thumbnailImageId", args = [], return = [] }
-    , Field { name = "likedCount", args = [], return = [] }
-    ]
-
-
-productDecoder : Jd.Decoder Product.Product
-productDecoder =
-    Jd.succeed
-        (\id name price category status thumbnailImageId likedCount ->
-            Product.fromApi
-                { id = id
-                , name = name
-                , price = price
-                , category = category
-                , status = status
-                , thumbnailImageId = thumbnailImageId
-                , likedCount = likedCount
-                }
-        )
-        |> Jdp.required "id" Jd.string
-        |> Jdp.required "name" Jd.string
-        |> Jdp.required "price" Jd.int
-        |> Jdp.required "category" categoryDecoder
-        |> Jdp.required "status" productStatusDecoder
-        |> Jdp.required "thumbnailImageId" imageIdDecoder
-        |> Jdp.required "likedCount" Jd.int
-
-
-productDetailReturn : List Field
-productDetailReturn =
     [ Field { name = "id", args = [], return = [] }
     , Field { name = "name", args = [], return = [] }
     , Field { name = "description", args = [], return = [] }
@@ -363,14 +328,16 @@ productDetailReturn =
         , return = userWithNameReturn
         }
     , Field { name = "createdAt", args = [], return = [] }
+    , Field { name = "thumbnailImageId", args = [], return = [] }
+    , Field { name = "updateAt", args = [], return = [] }
     ]
 
 
-productDetailDecoder : Jd.Decoder Product.ProductDetail
-productDetailDecoder =
+productDecoder : Jd.Decoder Product.Product
+productDecoder =
     Jd.succeed
-        (\id name description price condition category status imageIds likedCount seller createdAt ->
-            Product.detailFromApi
+        (\id name description price condition category status imageIds likedCount seller createdAt thumbnailImageId updateAt ->
+            Product.fromApi
                 { id = id
                 , name = name
                 , description = description
@@ -382,6 +349,8 @@ productDetailDecoder =
                 , likedCount = likedCount
                 , seller = seller
                 , createdAt = createdAt
+                , thumbnailImageId = thumbnailImageId
+                , updateAt = updateAt
                 }
         )
         |> Jdp.required "id" Jd.string
@@ -395,6 +364,8 @@ productDetailDecoder =
         |> Jdp.required "likedCount" Jd.int
         |> Jdp.required "seller" userWithNameDecoder
         |> Jdp.required "createdAt" dateTimeDecoder
+        |> Jdp.required "thumbnailImageId" imageIdDecoder
+        |> Jdp.required "updateAt" dateTimeDecoder
 
 
 conditionDecoder : Jd.Decoder Product.Condition
@@ -502,7 +473,7 @@ type UpdateProductRequest
         }
 
 
-updateProduct : Product.Id -> UpdateProductRequest -> Token -> (Result String Product.ProductDetail -> msg) -> Cmd msg
+updateProduct : Product.Id -> UpdateProductRequest -> Token -> (Result String Product.Product -> msg) -> Cmd msg
 updateProduct productId (UpdateProductRequest rec) token =
     graphQlApiRequest
         (Mutation
@@ -528,12 +499,12 @@ updateProduct productId (UpdateProductRequest rec) token =
                             |> GraphQLList
                       )
                     ]
-                , return = productDetailReturn
+                , return = productReturn
                 }
             ]
         )
         (Jd.field "updateProduct"
-            productDetailDecoder
+            productDecoder
         )
 
 
@@ -881,18 +852,18 @@ getFreeProductList callBack =
 -}
 
 
-getProduct : Product.Id -> (Result String Product.ProductDetail -> msg) -> Cmd msg
+getProduct : Product.Id -> (Result String Product.Product -> msg) -> Cmd msg
 getProduct id callBack =
     graphQlApiRequest
         (Query
             [ Field
                 { name = "product"
                 , args = [ ( "productId", GraphQLString (Product.idToString id) ) ]
-                , return = productDetailReturn
+                , return = productReturn
                 }
             ]
         )
-        (Jd.field "product" productDetailDecoder)
+        (Jd.field "product" productDecoder)
         callBack
 
 
@@ -938,7 +909,7 @@ deleteProduct productId token =
 -}
 
 
-markProductInHistory : Product.Id -> Token -> (Result String Product.ProductDetail -> msg) -> Cmd msg
+markProductInHistory : Product.Id -> Token -> (Result String Product.Product -> msg) -> Cmd msg
 markProductInHistory productId token =
     graphQlApiRequest
         (Mutation
@@ -948,11 +919,11 @@ markProductInHistory productId token =
                     [ ( "accessToken", GraphQLString (tokenToString token) )
                     , ( "productId", GraphQLString (Product.idToString productId) )
                     ]
-                , return = productDetailReturn
+                , return = productReturn
                 }
             ]
         )
-        (Jd.field "markProductInHistory" productDetailDecoder)
+        (Jd.field "markProductInHistory" productDecoder)
 
 
 
@@ -1147,7 +1118,7 @@ tradeDetailReturn =
         { name = "product"
         , args = []
         , return =
-            productDetailReturn
+            [ Field { name = "id", args = [], return = [] } ]
         }
     , Field { name = "buyer", args = [], return = userWithNameReturn }
     , Field { name = "createdAt", args = [], return = [] }
@@ -1164,10 +1135,10 @@ tradeDetailReturn =
 tradeDetailDecoder : Jd.Decoder Trade.TradeDetail
 tradeDetailDecoder =
     Jd.succeed
-        (\id product buyer createdAt updateAt comments status ->
+        (\id productId buyer createdAt updateAt comments status ->
             Trade.detailFromApi
                 { id = id
-                , product = product
+                , productId = productId
                 , buyer = buyer
                 , createdAt = createdAt
                 , updateAt = updateAt
@@ -1176,7 +1147,7 @@ tradeDetailDecoder =
                 }
         )
         |> Jdp.required "id" Jd.string
-        |> Jdp.required "product" productDetailDecoder
+        |> Jdp.requiredAt [ "product", "id" ] Jd.string
         |> Jdp.required "buyer" userWithNameDecoder
         |> Jdp.required "createdAt" dateTimeDecoder
         |> Jdp.required "updateAt" dateTimeDecoder
@@ -1202,19 +1173,17 @@ tradeReturn =
 tradeDecoder : Jd.Decoder Trade.Trade
 tradeDecoder =
     Jd.succeed
-        (\id product seller buyer createdAt updateAt ->
+        (\id productId buyer createdAt updateAt ->
             Trade.fromApi
                 { id = id
-                , product = product
-                , seller = seller
+                , productId = productId
                 , buyer = buyer
                 , createdAt = createdAt
                 , updateAt = updateAt
                 }
         )
         |> Jdp.required "id" Jd.string
-        |> Jdp.required "product" productDecoder
-        |> Jdp.requiredAt [ "product", "seller" ] userWithNameDecoder
+        |> Jdp.requiredAt [ "product", "id" ] Jd.string
         |> Jdp.required "buyer" userWithNameDecoder
         |> Jdp.required "createdAt" dateTimeDecoder
         |> Jdp.required "updateAt" dateTimeDecoder

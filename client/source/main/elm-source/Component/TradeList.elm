@@ -38,7 +38,7 @@ itemView : Trade.Trade -> Html.Styled.Html msg
 itemView trade =
     let
         product =
-            Trade.getProduct trade
+            Trade.getProductId trade
     in
     Html.Styled.a
         [ Html.Styled.Attributes.href

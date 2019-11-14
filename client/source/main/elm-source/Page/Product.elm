@@ -200,7 +200,7 @@ getUser model =
 productGetUser : Product.ProductDetail -> List User.WithName
 productGetUser product =
     (product
-        |> Product.detailGetSeller
+        |> Product.getSeller
     )
         :: (product
                 |> Product.detailGetCommentList
@@ -414,11 +414,11 @@ update msg model =
                         ( productEditorMode, productEditorCmdList ) =
                             ProductEditor.initModel
                                 { name = Product.detailGetName product
-                                , description = Product.detailGetDescription product
+                                , description = Product.getDescription product
                                 , price = Product.detailGetPrice product
-                                , condition = Product.detailGetCondition product
-                                , category = Product.detailGetCategory product
-                                , imageIds = Product.detailGetImageIds product
+                                , condition = Product.getCondition product
+                                , category = Product.getCategory product
+                                , imageIds = Product.getImageIds product
                                 }
                     in
                     ( Edit
@@ -582,10 +582,10 @@ view logInState isWideScreen nowMaybe model =
             , html =
                 [ Page.Style.container
                     [ Html.Styled.text "購入確認画面。この商品の取引を開始しますか?"
-                    , productsViewImage (Product.detailGetImageUrls product)
+                    , productsViewImage (Product.getImageUrls product)
                     , productsViewName (Product.detailGetName product)
-                    , descriptionView (Product.detailGetDescription product)
-                    , conditionView (Product.detailGetCondition product)
+                    , descriptionView (Product.getDescription product)
+                    , conditionView (Product.getCondition product)
                     , tradeStartButton logInState (Product.detailGetId product)
                     ]
                 ]
@@ -613,7 +613,7 @@ normalView logInState isWideScreen nowMaybe { product, likeSending, commentSendi
     , tab = BasicParts.tabNone
     , html =
         [ Page.Style.container
-            ([ productsViewImage (Product.detailGetImageUrls product)
+            ([ productsViewImage (Product.getImageUrls product)
              , productsViewName (Product.detailGetName product)
              , productsViewLike
                 logInState
@@ -621,14 +621,14 @@ normalView logInState isWideScreen nowMaybe { product, likeSending, commentSendi
                 (Product.detailGetLikedCount product)
                 (Product.detailGetId product)
              , statusView (Product.detailGetStatus product)
-             , sellerNameView (Product.detailGetSeller product)
-             , descriptionView (Product.detailGetDescription product)
-             , categoryView (Product.detailGetCategory product)
-             , conditionView (Product.detailGetCondition product)
+             , sellerNameView (Product.getSeller product)
+             , descriptionView (Product.getDescription product)
+             , categoryView (Product.getCategory product)
+             , conditionView (Product.getCondition product)
              , createdAtView nowMaybe (Product.detailGetCreatedAt product)
              , commentListView commentSending
                 nowMaybe
-                (product |> Product.detailGetSeller |> User.withNameGetId)
+                (product |> Product.getSeller |> User.withNameGetId)
                 logInState
                 (Product.detailGetCommentList product)
              ]
@@ -636,7 +636,7 @@ normalView logInState isWideScreen nowMaybe { product, likeSending, commentSendi
                         LogInState.Ok { token, userWithName } ->
                             if
                                 User.withNameGetId userWithName
-                                    == User.withNameGetId (Product.detailGetSeller product)
+                                    == User.withNameGetId (Product.getSeller product)
                             then
                                 case Product.detailGetStatus product of
                                     Product.Selling ->
@@ -956,7 +956,7 @@ buyButton product userWithNameMaybe =
     case ( Product.detailGetStatus product, userWithNameMaybe ) of
         ( Product.Selling, Just user ) ->
             if
-                User.withNameGetId (Product.detailGetSeller product)
+                User.withNameGetId (Product.getSeller product)
                     == User.withNameGetId user
             then
                 Nothing

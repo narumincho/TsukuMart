@@ -75,7 +75,7 @@ getAllTrades (Model { normal }) =
 getAllProducts : Model -> List Product.Product
 getAllProducts =
     getAllTrades
-        >> List.map Trade.getProduct
+        >> List.map Trade.getProductId
 
 
 update : Msg -> Model -> ( Model, List Cmd )

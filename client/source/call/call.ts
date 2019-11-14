@@ -54,9 +54,6 @@ type ElmApp = {
         startListenRecommendProducts: {
             subscribe: (arg: (arg: null) => void) => void;
         };
-        stopListenRecommendProducts: {
-            subscribe: (arg: (arg: null) => void) => void;
-        };
         receiveAllProducts: {
             send: (
                 arg: Array<{
@@ -128,6 +125,7 @@ const insideSize = (
         height: height
     };
 };
+
 const productImageFilesResizeAndConvertToDataUrl = async (
     fileList: FileList
 ): Promise<Array<string>> => {
@@ -183,6 +181,7 @@ const checkFileInput = (id: string) => async () => {
     inputElement.value = "";
     window.requestAnimationFrame(checkFileInput(id));
 };
+
 /* Elmを起動!! */
 const app = window.Elm.Main.init({
     flags: {
@@ -297,22 +296,14 @@ const urlBase64ToUint8Array = (base64String: string) => {
     const firestore = firebase.firestore();
     const productCollection = firestore.collection("product");
     console.log("firestore request");
-    const query = productCollection.orderBy("likedCount", "desc");
-    let unsubscription: () => void;
     app.ports.startListenRecommendProducts.subscribe(async () => {
-        unsubscription = query.onSnapshot(productsQuerySnapshot => {
+        productCollection.onSnapshot(productsQuerySnapshot => {
             console.log("firestore get response");
             app.ports.receiveAllProducts.send(
                 productsQuerySnapshot.docs.map(documentDataToProduct)
             );
         });
     });
-    // app.ports.stopListenRecommendProducts.subscribe(() => {
-    //     if (unsubscription === undefined) {
-    //         return;
-    //     }
-    //     unsubscription();
-    // });
 })();
 
 const documentDataToProduct = (

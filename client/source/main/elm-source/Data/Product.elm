@@ -4,7 +4,6 @@ module Data.Product exposing
     , Firestore
     , Id
     , Product
-    , ProductDetail
     , Status(..)
     , commentFromApi
     , commentGetBody
@@ -16,28 +15,19 @@ module Data.Product exposing
     , conditionToIdString
     , conditionToIndex
     , conditionToJapaneseString
-    , detailFromApi
-    , detailGetCategory
-    , detailGetCommentList
-    , detailGetCondition
     , detailGetCreatedAt
-    , detailGetDescription
-    , detailGetId
-    , detailGetImageIds
-    , detailGetImageUrls
-    , detailGetLikedCount
-    , detailGetName
-    , detailGetPrice
-    , detailGetSeller
-    , detailGetStatus
-    , detailUpdateLikedCount
     , fromApi
-    , fromDetail
     , fromFirestore
+    , getCategory
+    , getCondition
+    , getDescription
     , getId
+    , getImageIds
+    , getImageUrls
     , getLikedCount
     , getName
     , getPrice
+    , getSeller
     , getStatus
     , getThumbnailImageUrl
     , idFromString
@@ -45,7 +35,6 @@ module Data.Product exposing
     , priceToString
     , priceToStringWithoutYen
     , searchFromId
-    , setCommentList
     , statusAll
     , statusFromIdString
     , statusToIdString
@@ -67,12 +56,18 @@ import Utility
 type Product
     = Product
         { id : Id
+        , category : Category.Category
+        , condition : Condition
+        , createdAt : Time.Posix
+        , description : String
+        , imageIds : ( ImageId.ImageId, List ImageId.ImageId )
+        , likedCount : Int
         , name : String
         , price : Int
-        , category : Category.Category
+        , seller : User.WithName
         , status : Status
         , thumbnailImageId : ImageId.ImageId
-        , likedCount : Int
+        , updateAt : Time.Posix
         }
 
 
@@ -95,23 +90,6 @@ type alias Firestore =
     }
 
 
-type ProductDetail
-    = ProductDetail
-        { id : Id
-        , name : String
-        , description : String
-        , price : Int
-        , condition : Condition
-        , category : Category.Category
-        , status : Status
-        , imageIds : ( ImageId.ImageId, List ImageId.ImageId )
-        , likedCount : Int
-        , seller : User.WithName
-        , commentList : Maybe (List Comment)
-        , createdAt : Time.Posix
-        }
-
-
 type Id
     = Id String
 
@@ -126,82 +104,69 @@ idFromString =
     Id
 
 
+fromFirestore : Firestore -> Maybe Product
+fromFirestore rec =
+    case ( Category.fromIdString rec.category, statusFromIdString rec.status, ( conditionFromIdString rec.condition, rec.imageIds ) ) of
+        ( Just category, Just status, ( Just condition, imageIdFirst :: imageIdOthers ) ) ->
+            Just
+                (Product
+                    { id = Id rec.id
+                    , category = category
+                    , condition = condition
+                    , createdAt = Time.millisToPosix rec.createdAt
+                    , description = rec.description
+                    , imageIds = ( ImageId.fromString imageIdFirst, imageIdOthers |> List.map ImageId.fromString )
+                    , likedCount = rec.likedCount
+                    , name = rec.name
+                    , price = rec.price
+                    , seller =
+                        User.withNameFromApi
+                            { id = rec.sellerId
+                            , displayName = rec.sellerDisplayName
+                            , imageId = ImageId.fromString rec.sellerImageId
+                            }
+                    , status = status
+                    , thumbnailImageId = ImageId.fromString rec.thumbnailImageId
+                    , updateAt = Time.millisToPosix rec.updateAt
+                    }
+                )
+
+        ( _, _, ( _, _ ) ) ->
+            Nothing
+
+
 fromApi :
     { id : String
+    , category : Category.Category
+    , condition : Condition
+    , createdAt : Time.Posix
+    , description : String
+    , imageIds : ( ImageId.ImageId, List ImageId.ImageId )
+    , likedCount : Int
     , name : String
     , price : Int
-    , category : Category.Category
+    , seller : User.WithName
     , status : Status
     , thumbnailImageId : ImageId.ImageId
-    , likedCount : Int
+    , updateAt : Time.Posix
     }
     -> Product
 fromApi rec =
     Product
         { id = Id rec.id
-        , name = rec.name
-        , price = rec.price
-        , status = rec.status
         , category = rec.category
-        , thumbnailImageId = rec.thumbnailImageId
-        , likedCount = rec.likedCount
-        }
-
-
-fromFirestore : Firestore -> Maybe Product
-fromFirestore rec =
-    case ( Category.fromIdString rec.category, statusFromIdString rec.status ) of
-        ( Just category, Just status ) ->
-            Just
-                (Product
-                    { id = Id rec.id
-                    , name = rec.name
-                    , price = rec.price
-                    , status = status
-                    , category = category
-                    , thumbnailImageId = ImageId.fromString rec.thumbnailImageId
-                    , likedCount = rec.likedCount
-                    }
-                )
-
-        ( _, _ ) ->
-            Nothing
-
-
-detailFromApi :
-    { id : String
-    , name : String
-    , description : String
-    , price : Int
-    , condition : Condition
-    , category : Category.Category
-    , status : Status
-    , imageIds : ( ImageId.ImageId, List ImageId.ImageId )
-    , likedCount : Int
-    , seller : User.WithName
-    , createdAt : Time.Posix
-    }
-    -> ProductDetail
-detailFromApi rec =
-    ProductDetail
-        { id = Id rec.id
-        , name = rec.name
-        , description = rec.description
-        , price = rec.price
         , condition = rec.condition
-        , category = rec.category
-        , status = rec.status
+        , createdAt = rec.createdAt
+        , description = rec.description
         , imageIds = rec.imageIds
         , likedCount = rec.likedCount
+        , name = rec.name
+        , price = rec.price
         , seller = rec.seller
-        , commentList = Nothing
-        , createdAt = rec.createdAt
+        , status = rec.status
+        , thumbnailImageId = rec.thumbnailImageId
+        , updateAt = rec.updateAt
         }
-
-
-setCommentList : List Comment -> ProductDetail -> ProductDetail
-setCommentList commentList (ProductDetail rec) =
-    ProductDetail { rec | commentList = Just commentList }
 
 
 
@@ -405,30 +370,10 @@ commentGetSpeaker (Comment { speaker }) =
     speaker
 
 
-{-| 詳細データから簡易データの形式にするが、サムネイル画像は商品画像の0枚目になる
--}
-fromDetail : ProductDetail -> Product
-fromDetail (ProductDetail rec) =
-    Product
-        { id = rec.id
-        , name = rec.name
-        , price = rec.price
-        , category = rec.category
-        , status = rec.status
-        , thumbnailImageId = Tuple.first rec.imageIds
-        , likedCount = rec.likedCount
-        }
-
-
 {-| 商品のID
 -}
 getId : Product -> Id
 getId (Product { id }) =
-    id
-
-
-detailGetId : ProductDetail -> Id
-detailGetId (ProductDetail { id }) =
     id
 
 
@@ -439,20 +384,10 @@ getName (Product { name }) =
     name
 
 
-detailGetName : ProductDetail -> String
-detailGetName (ProductDetail { name }) =
-    name
-
-
 {-| いいねをされた数
 -}
 getLikedCount : Product -> Int
 getLikedCount (Product { likedCount }) =
-    likedCount
-
-
-detailGetLikedCount : ProductDetail -> Int
-detailGetLikedCount (ProductDetail { likedCount }) =
     likedCount
 
 
@@ -463,22 +398,17 @@ updateLikedCount likedCount (Product rec) =
     Product { rec | likedCount = likedCount }
 
 
-detailUpdateLikedCount : Int -> ProductDetail -> ProductDetail
-detailUpdateLikedCount likedCount (ProductDetail rec) =
-    ProductDetail { rec | likedCount = likedCount }
-
-
 {-| 商品の説明
 -}
-detailGetDescription : ProductDetail -> String
-detailGetDescription (ProductDetail { description }) =
+getDescription : Product -> String
+getDescription (Product { description }) =
     description
 
 
 {-| 商品のカテゴリー
 -}
-detailGetCategory : ProductDetail -> Category.Category
-detailGetCategory (ProductDetail { category }) =
+getCategory : Product -> Category.Category
+getCategory (Product { category }) =
     category
 
 
@@ -489,15 +419,10 @@ getPrice (Product { price }) =
     price
 
 
-detailGetPrice : ProductDetail -> Int
-detailGetPrice (ProductDetail { price }) =
-    price
-
-
 {-| 商品の状態
 -}
-detailGetCondition : ProductDetail -> Condition
-detailGetCondition (ProductDetail { condition }) =
+getCondition : Product -> Condition
+getCondition (Product { condition }) =
     condition
 
 
@@ -508,44 +433,36 @@ getThumbnailImageUrl (Product { thumbnailImageId }) =
     ImageId.toUrlString thumbnailImageId
 
 
-detailGetImageUrls : ProductDetail -> List String
-detailGetImageUrls =
-    detailGetImageIds >> List.map ImageId.toUrlString
+getImageUrls : Product -> List String
+getImageUrls =
+    getImageIds >> List.map ImageId.toUrlString
 
 
-detailGetImageIds : ProductDetail -> List ImageId.ImageId
-detailGetImageIds (ProductDetail { imageIds }) =
+getImageIds : Product -> List ImageId.ImageId
+getImageIds (Product { imageIds }) =
     Tuple.first imageIds
         :: Tuple.second imageIds
 
 
 {-| 出品者を取得する
 -}
-detailGetSeller : ProductDetail -> User.WithName
-detailGetSeller (ProductDetail { seller }) =
+getSeller : Product -> User.WithName
+getSeller (Product { seller }) =
     seller
 
 
+{-| 商品の取引状態を取得する
+-}
 getStatus : Product -> Status
 getStatus (Product { status }) =
     status
 
 
-detailGetStatus : ProductDetail -> Status
-detailGetStatus (ProductDetail { status }) =
-    status
-
-
-detailGetCreatedAt : ProductDetail -> Time.Posix
-detailGetCreatedAt (ProductDetail { createdAt }) =
-    createdAt
-
-
-{-| 商品のコメントを取得する
+{-| 出品日を取得する
 -}
-detailGetCommentList : ProductDetail -> Maybe (List Comment)
-detailGetCommentList (ProductDetail { commentList }) =
-    commentList
+detailGetCreatedAt : Product -> Time.Posix
+detailGetCreatedAt (Product { createdAt }) =
+    createdAt
 
 
 {-| 価格(整数)を3桁ごとに,をつけ、円を末尾に追加。例 5120 → 5,120円

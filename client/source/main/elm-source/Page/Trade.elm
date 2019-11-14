@@ -283,7 +283,7 @@ loadingView : Trade.Trade -> List (Html.Styled.Html Msg)
 loadingView trade =
     let
         product =
-            Trade.getProduct trade
+            Trade.getProductId trade
     in
     [ productImageView [ Product.getThumbnailImageUrl product ]
     , Page.Style.titleAndContent
@@ -307,7 +307,7 @@ mainView :
 mainView sending token timeData user trade =
     let
         product =
-            Trade.detailGetProduct trade
+            Trade.detailGetProductId trade
 
         tradeStatus =
             Trade.detailGetStatus trade
@@ -322,7 +322,7 @@ mainView sending token timeData user trade =
             else
                 Trade.Seller
     in
-    [ productImageView (Product.detailGetImageUrls product)
+    [ productImageView (Product.getImageUrls product)
     , Page.Style.titleAndContent
         "商品名"
         (Html.div [] [ Html.text (Product.detailGetName product) ])
@@ -349,7 +349,7 @@ mainView sending token timeData user trade =
             )
         ]
         [ Html.Styled.text "商品詳細ページ" ]
-    , sellerAndBuyerView (Product.detailGetSeller product) (Trade.detailGetBuyer trade)
+    , sellerAndBuyerView (Product.getSeller product) (Trade.detailGetBuyer trade)
     ]
         ++ (case tradeStatus of
                 Trade.InProgress ->
@@ -539,7 +539,7 @@ tradeCommentToCommentData trade myId (Trade.Comment { body, speaker, createdAt }
         Trade.Seller ->
             let
                 commentUser =
-                    trade |> Trade.detailGetProduct |> Product.detailGetSeller
+                    trade |> Trade.detailGetProductId |> Product.getSeller
             in
             { isMine = User.withNameGetId commentUser == myId
             , isSeller = True

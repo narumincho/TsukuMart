@@ -41,6 +41,7 @@ import PageLocation
 import Task
 import Time
 import Url
+import Utility
 
 
 port receiveUserImage : (String -> msg) -> Sub msg
@@ -76,15 +77,13 @@ port changeSelectedIndex : { id : String, index : Int } -> Cmd msg
 port startListenRecommendProducts : () -> Cmd msg
 
 
-port stopListenRecommendProducts : () -> Cmd msg
-
-
 port receiveAllProducts : (List Data.Product.Firestore -> msg) -> Sub msg
 
 
 type Model
     = Model
         { page : PageModel -- 開いているページ
+        , allProducts : Maybe (List Data.Product.Product)
         , wideScreen : Bool
         , message : Maybe String -- ちょっとしたことがあったら表示するもの
         , logInState : Data.LogInState.LogInState
@@ -133,6 +132,7 @@ type Msg
     | PageMsg PageMsg
     | GetNowTime (Result () ( Time.Posix, Time.Zone ))
     | Jump (Result String Url.Url)
+    | UpdateProducts (List Data.Product.Firestore)
 
 
 type PageMsg
@@ -181,6 +181,7 @@ init { accessToken } url key =
     in
     ( Model
         { page = newPage
+        , allProducts = Nothing
         , wideScreen = False
         , message = Nothing
         , logInState =
@@ -227,6 +228,7 @@ init { accessToken } url key =
                     Time.now
                     Time.here
                     |> Task.attempt GetNowTime
+               , startListenRecommendProducts ()
                ]
         )
     )
@@ -563,6 +565,19 @@ update msg (Model rec) =
                     , Cmd.none
                     )
 
+        UpdateProducts products ->
+            case products |> List.map Data.Product.fromFirestore |> Utility.sequenceMaybeList of
+                Just allProducts ->
+                    ( Model { rec | allProducts = Just allProducts }
+                    , Cmd.none
+                    )
+
+                Nothing ->
+                    ( Model rec
+                    , Task.succeed ()
+                        |> Task.perform (always (AddLogMessage "FireStoreから取得した商品データの型が合わない"))
+                    )
+
 
 updatePageMsg : PageMsg -> Model -> ( PageModel, Cmd Msg )
 updatePageMsg pageMsg (Model rec) =
@@ -669,15 +684,6 @@ mapPageModel modelFunc cmdListFunc ( eachPageMsg, eachPageCmdList ) =
 homePageCmdToCmd : Page.Home.Cmd -> Cmd Msg
 homePageCmdToCmd cmd =
     case cmd of
-        Page.Home.CmdGetRecentProducts ->
-            Api.getRecentProductList (Page.Home.GetRecentProductsResponse >> PageMsgHome >> PageMsg)
-
-        Page.Home.CmdGetRecommendProducts ->
-            startListenRecommendProducts ()
-
-        Page.Home.CmdGetFreeProducts ->
-            Api.getFreeProductList (Page.Home.GetFreeProductsResponse >> PageMsgHome >> PageMsg)
-
         Page.Home.CmdProducts e ->
             productListCmdToCmd e
 
@@ -1588,9 +1594,5 @@ subscription (Model { wideScreen }) =
 
           else
             toWideScreenMode (always ToWideScreenMode)
-        , receiveAllProducts
-            (Page.Home.GetRecommendProductsResponse
-                >> PageMsgHome
-                >> PageMsg
-            )
+        , receiveAllProducts UpdateProducts
         ]
