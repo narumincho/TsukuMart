@@ -228,12 +228,3 @@ const pathToXml = (path: string): string => `
         <lastmod>2019-07-12</lastmod>
     </url>
 `;
-/* =====================================================================
- *                  content-security-policy の 報告先
- * =====================================================================
- */
-export const contentSecurityPolicyReport = functions.https.onRequest(
-    async (request, response) => {
-        await databaseLow.contentSecurityPolicyReport(request.body.toString());
-    }
-);

@@ -21,9 +21,6 @@ const lineNotifyStateCollection = dataBase.collection("lineNotifyState");
 const productCollectionRef = dataBase.collection("product");
 const productDeletedCollectionRef = dataBase.collection("productDeleted");
 const tradeCollectionRef = dataBase.collection("trade");
-const contentSecurityPolicyReportRef = dataBase.collection(
-    "contentSecurityPolicyReport"
-);
 /* ==========================================
                     User
    ==========================================
@@ -824,15 +821,6 @@ export const existsLineNotifyStateAndDeleteAndGetUserId = async (
     }
     await docRef.delete();
     return data.userId;
-};
-
-/**
- * content-security-policy の 報告先
- */
-export const contentSecurityPolicyReport = async (
-    report: string
-): Promise<void> => {
-    await contentSecurityPolicyReportRef.add({ raw: report });
 };
 
 export type UserPrivateData = {

@@ -1,4 +1,4 @@
-module Page.Home exposing (Cmd(..), Model, Msg(..), getAllProducts, initModel, update, view)
+module Page.Home exposing (Cmd(..), Model, Msg(..), initModel, update, view)
 
 import BasicParts
 import Component.ProductList as ProductList
@@ -15,9 +15,6 @@ import Utility
 type Model
     = Model
         { tabSelect : TabSelect
-        , recent : Maybe (List Product.Product)
-        , recommend : Maybe (List Product.Product)
-        , free : Maybe (List Product.Product)
         , productListModel : ProductList.Model
         }
 
@@ -29,18 +26,12 @@ type TabSelect
 
 
 type Cmd
-    = CmdGetRecentProducts
-    | CmdGetRecommendProducts
-    | CmdGetFreeProducts
-    | CmdProducts ProductList.Cmd
+    = CmdProducts ProductList.Cmd
     | CmdAddLogMessage String
 
 
 type Msg
     = SelectTab TabSelect
-    | GetRecentProductsResponse (Result String (List Product.Product))
-    | GetRecommendProductsResponse (List Product.Firestore)
-    | GetFreeProductsResponse (Result String (List Product.Product))
     | MsgByProductList ProductList.Msg
 
 
@@ -54,31 +45,10 @@ initModel productIdMaybe =
     in
     ( Model
         { tabSelect = TabRecommend
-        , recent = Nothing
-        , recommend = Nothing
-        , free = Nothing
         , productListModel = productListModel
         }
     , [ CmdGetRecommendProducts ] ++ (cmdList |> List.map CmdProducts)
     )
-
-
-{-| この画面から取得できる商品のデータを集める
--}
-getAllProducts : Model -> List Product.Product
-getAllProducts (Model rec) =
-    (case rec.tabSelect of
-        TabRecent ->
-            rec.recent
-
-        TabRecommend ->
-            rec.recommend
-
-        TabFree ->
-            rec.free
-    )
-        |> Maybe.withDefault []
-
 
 update : Msg -> Model -> ( Model, List Cmd )
 update msg (Model rec) =
@@ -95,34 +65,6 @@ update msg (Model rec) =
                 TabFree ->
                     [ CmdGetFreeProducts ]
             )
-
-        GetRecentProductsResponse result ->
-            case result of
-                Ok goodList ->
-                    ( Model { rec | recent = Just goodList }, [] )
-
-                Err errorMessage ->
-                    ( Model rec
-                    , [ CmdAddLogMessage errorMessage ]
-                    )
-
-        GetRecommendProductsResponse productFirestoreList ->
-            case productFirestoreList |> List.map Product.fromFirestore |> Utility.sequenceMaybeList of
-                Just products ->
-                    ( Model { rec | recommend = Just products }, [] )
-
-                Nothing ->
-                    ( Model rec
-                    , [ CmdAddLogMessage "firestoreから直接取得したデータの型が合いません" ]
-                    )
-
-        GetFreeProductsResponse result ->
-            case result of
-                Ok goodList ->
-                    ( Model { rec | free = Just goodList }, [] )
-
-                Err errorMessage ->
-                    ( Model rec, [ CmdAddLogMessage errorMessage ] )
 
         MsgByProductList productListMsg ->
             let
