@@ -506,7 +506,7 @@ normalView logInState isWideScreen nowMaybe { product, likeSending, commentSendi
              , descriptionView (Product.getDescription product)
              , categoryView (Product.getCategory product)
              , conditionView (Product.getCondition product)
-             , createdAtView nowMaybe (Product.detailGetCreatedAt product)
+             , createdAtView nowMaybe (Product.getCreatedAt product)
              , commentListView commentSending
                 nowMaybe
                 (product |> Product.getSeller |> User.withNameGetId)
