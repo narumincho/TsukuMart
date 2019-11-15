@@ -9,7 +9,7 @@ module Api exposing
     , cancelTrade
     , deleteProduct
     , finishTrade
-    , getBoughtProductList
+    , getBoughtProductIds
     , getCommentedProductList
     , getHistoryViewProducts
     , getLikedProducts
@@ -606,8 +606,8 @@ getHistoryViewProducts token =
 -}
 
 
-getSoldProductList : User.Id -> (Result String (List Product.Product) -> msg) -> Cmd msg
-getSoldProductList userId callBack =
+getSoldProductList : User.Id -> (Result String (List Product.Id) -> msg) -> Cmd msg
+getSoldProductList userId =
     graphQlApiRequest
         (Query
             [ Field
@@ -617,16 +617,15 @@ getSoldProductList userId callBack =
                     [ Field
                         { name = "soldProductAll"
                         , args = []
-                        , return = productReturn
+                        , return = [ Field { name = "id", args = [], return = [] } ]
                         }
                     ]
                 }
             ]
         )
         (Jd.field "user"
-            (Jd.field "soldProductAll" (Jd.list productDecoder))
+            (Jd.field "soldProductAll" (Jd.list (Jd.field "id" (Jd.string |> Jd.map Product.idFromString))))
         )
-        callBack
 
 
 
@@ -636,8 +635,8 @@ getSoldProductList userId callBack =
 -}
 
 
-getBoughtProductList : Token -> (Result String (List Product.Product) -> msg) -> Cmd msg
-getBoughtProductList token =
+getBoughtProductIds : Token -> (Result String (List Product.Id) -> msg) -> Cmd msg
+getBoughtProductIds token =
     graphQlApiRequest
         (Query
             [ Field
@@ -647,14 +646,14 @@ getBoughtProductList token =
                     [ Field
                         { name = "boughtProductAll"
                         , args = []
-                        , return = productReturn
+                        , return = [ Field { name = "id", args = [], return = [] } ]
                         }
                     ]
                 }
             ]
         )
         (Jd.field "userPrivate"
-            (Jd.field "boughtProductAll" (Jd.list productDecoder))
+            (Jd.field "boughtProductAll" (Jd.list (Jd.field "id" (Jd.string |> Jd.map Product.idFromString))))
         )
 
 
