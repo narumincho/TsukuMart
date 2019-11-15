@@ -58,7 +58,7 @@ type Model
 type Cmd
     = CmdGetProduct { productId : Product.Id }
     | CmdGetProductAndMarkHistory { productId : Product.Id, token : Api.Token }
-    | CmdGetCommentList { productId : Product.Id }
+    | CmdGetCommentList Product.Id
     | CmdAddComment Api.Token { productId : Product.Id } String
     | CmdLike Api.Token Product.Id
     | CmdUnLike Api.Token Product.Id
@@ -113,7 +113,7 @@ initModel logInState id =
             ]
 
         Nothing ->
-            [ CmdGetProduct { productId = id } ]
+            [ CmdGetCommentList id ]
     )
 
 
@@ -329,7 +329,7 @@ update allProductsMaybe msg model =
                         , commentSending = False
                         , comment = ""
                         }
-                    , [ CmdGetCommentList { productId = beforeProduct } ]
+                    , [ CmdGetCommentList beforeProduct ]
                     )
 
                 _ ->
@@ -370,7 +370,7 @@ update allProductsMaybe msg model =
                         , comment = ""
                         , commentList = Nothing
                         }
-                    , [ CmdGetCommentList { productId = getProductId model } ]
+                    , [ CmdGetCommentList (getProductId model) ]
                     )
 
                 Err text ->

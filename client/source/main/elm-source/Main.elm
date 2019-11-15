@@ -914,7 +914,7 @@ productPageCmdToCmd key cmd =
                 token
                 (Page.Product.GetProductResponse >> PageMsgProduct >> PageMsg)
 
-        Page.Product.CmdGetCommentList { productId } ->
+        Page.Product.CmdGetCommentList productId ->
             Api.getProductComments productId (Page.Product.GetCommentListResponse >> PageMsgProduct >> PageMsg)
 
         Page.Product.CmdAddComment token { productId } comment ->
