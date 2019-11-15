@@ -22,7 +22,7 @@ module Api exposing
     , getRecentProductList
     , getRecommendProductList
     , getSoldProductList
-    , getTradeDetail
+    , getTradeAndComments
     , getTradedProductList
     , getTradingProductList
     , getUserProfile
@@ -1132,27 +1132,28 @@ tradeDetailReturn =
     ]
 
 
-tradeDetailDecoder : Jd.Decoder Trade.TradeDetail
-tradeDetailDecoder =
+tradeAndCommentDecoder : Jd.Decoder ( Trade.Trade, List Trade.Comment )
+tradeAndCommentDecoder =
     Jd.succeed
-        (\id productId buyer createdAt updateAt comments status ->
-            Trade.detailFromApi
+        (\id productId buyer createdAt updateAt status comments ->
+            ( Trade.fromApi
                 { id = id
                 , productId = productId
                 , buyer = buyer
                 , createdAt = createdAt
                 , updateAt = updateAt
-                , comments = comments
                 , status = status
                 }
+            , comments
+            )
         )
         |> Jdp.required "id" Jd.string
         |> Jdp.requiredAt [ "product", "id" ] Jd.string
         |> Jdp.required "buyer" userWithNameDecoder
         |> Jdp.required "createdAt" dateTimeDecoder
         |> Jdp.required "updateAt" dateTimeDecoder
-        |> Jdp.required "comment" (Jd.list tradeCommentDecoder)
         |> Jdp.required "status" tradeStatusDecoder
+        |> Jdp.required "comment" (Jd.list tradeCommentDecoder)
 
 
 tradeReturn : List Field
@@ -1167,19 +1168,21 @@ tradeReturn =
     , Field { name = "buyer", args = [], return = userWithNameReturn }
     , Field { name = "createdAt", args = [], return = [] }
     , Field { name = "updateAt", args = [], return = [] }
+    , Field { name = "status", args = [], return = [] }
     ]
 
 
 tradeDecoder : Jd.Decoder Trade.Trade
 tradeDecoder =
     Jd.succeed
-        (\id productId buyer createdAt updateAt ->
+        (\id productId buyer createdAt updateAt status ->
             Trade.fromApi
                 { id = id
                 , productId = productId
                 , buyer = buyer
                 , createdAt = createdAt
                 , updateAt = updateAt
+                , status = status
                 }
         )
         |> Jdp.required "id" Jd.string
@@ -1187,6 +1190,7 @@ tradeDecoder =
         |> Jdp.required "buyer" userWithNameDecoder
         |> Jdp.required "createdAt" dateTimeDecoder
         |> Jdp.required "updateAt" dateTimeDecoder
+        |> Jdp.required "status" tradeStatusDecoder
 
 
 tradeCommentReturn : List Field
@@ -1250,8 +1254,15 @@ tradeStatusDecoder =
 -}
 
 
-getTradeDetail : Trade.Id -> Token -> (Result String Trade.TradeDetail -> msg) -> Cmd msg
-getTradeDetail id token =
+getTradeAndComments :
+    Trade.Id
+    -> Token
+    ->
+        (Result String ( Trade.Trade, List Trade.Comment )
+         -> msg
+        )
+    -> Cmd msg
+getTradeAndComments id token =
     graphQlApiRequest
         (Query
             [ Field
@@ -1264,7 +1275,7 @@ getTradeDetail id token =
                 }
             ]
         )
-        (Jd.field "trade" tradeDetailDecoder)
+        (Jd.field "trade" tradeAndCommentDecoder)
 
 
 
@@ -1274,7 +1285,15 @@ getTradeDetail id token =
 -}
 
 
-addTradeComment : Trade.Id -> String -> Token -> (Result String Trade.TradeDetail -> msg) -> Cmd msg
+addTradeComment :
+    Trade.Id
+    -> String
+    -> Token
+    ->
+        (Result String ( Trade.Trade, List Trade.Comment )
+         -> msg
+        )
+    -> Cmd msg
 addTradeComment tradeId body token =
     graphQlApiRequest
         (Mutation
@@ -1289,7 +1308,7 @@ addTradeComment tradeId body token =
                 }
             ]
         )
-        (Jd.field "addTradeComment" tradeDetailDecoder)
+        (Jd.field "addTradeComment" tradeAndCommentDecoder)
 
 
 
@@ -1299,7 +1318,7 @@ addTradeComment tradeId body token =
 -}
 
 
-cancelTrade : Trade.Id -> Token -> (Result String Trade.TradeDetail -> msg) -> Cmd msg
+cancelTrade : Trade.Id -> Token -> (Result String ( Trade.Trade, List Trade.Comment ) -> msg) -> Cmd msg
 cancelTrade tradeId token =
     graphQlApiRequest
         (Mutation
@@ -1314,7 +1333,7 @@ cancelTrade tradeId token =
                 }
             ]
         )
-        (Jd.field "cancelTrade" tradeDetailDecoder)
+        (Jd.field "cancelTrade" tradeAndCommentDecoder)
 
 
 
@@ -1324,7 +1343,14 @@ cancelTrade tradeId token =
 -}
 
 
-finishTrade : Trade.Id -> Token -> (Result String Trade.TradeDetail -> msg) -> Cmd msg
+finishTrade :
+    Trade.Id
+    -> Token
+    ->
+        (Result String ( Trade.Trade, List Trade.Comment )
+         -> msg
+        )
+    -> Cmd msg
 finishTrade tradeId token =
     graphQlApiRequest
         (Mutation
@@ -1339,7 +1365,7 @@ finishTrade tradeId token =
                 }
             ]
         )
-        (Jd.field "finishTrade" tradeDetailDecoder)
+        (Jd.field "finishTrade" tradeAndCommentDecoder)
 
 
 
