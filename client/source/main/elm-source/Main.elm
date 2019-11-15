@@ -1336,26 +1336,26 @@ updateLikedCountInEachPageProduct key productId result page =
 {-| 見た目を決める
 -}
 view : Model -> { title : String, body : List (Html.Styled.Html Msg) }
-view (Model { page, wideScreen, message, logInState, now }) =
+view (Model rec) =
     let
         { title, tab, html, bottomNavigation } =
-            titleAndTabDataAndMainView logInState wideScreen now page
+            titleAndTabDataAndMainView rec.logInState rec.wideScreen rec.now rec.allProducts rec.page
     in
     { title = title
     , body =
         [ BasicParts.headerWithBackArrow
             |> Html.Styled.map (always HistoryBack)
         ]
-            ++ (if wideScreen then
-                    [ BasicParts.menu logInState ]
+            ++ (if rec.wideScreen then
+                    [ BasicParts.menu rec.logInState ]
 
                 else
                     []
                )
-            ++ [ BasicParts.tabView wideScreen tab |> Html.Styled.map PageMsg
+            ++ [ BasicParts.tabView rec.wideScreen tab |> Html.Styled.map PageMsg
                , Html.Styled.div
                     [ Html.Styled.Attributes.css
-                        [ mainViewPaddingStyle tab wideScreen
+                        [ mainViewPaddingStyle tab rec.wideScreen
                         , Css.property "word-wrap" "break-word"
                         , Css.overflowX Css.hidden
                         , Css.width (Css.pct 100)
@@ -1364,16 +1364,16 @@ view (Model { page, wideScreen, message, logInState, now }) =
                     html
                     |> Html.Styled.map PageMsg
                ]
-            ++ (case message of
+            ++ (case rec.message of
                     Just m ->
                         [ Html.Styled.Keyed.node "div" [] [ ( m, messageView m ) ] ]
 
                     Nothing ->
                         []
                )
-            ++ (case ( wideScreen, bottomNavigation ) of
+            ++ (case ( rec.wideScreen, bottomNavigation ) of
                     ( False, Just select ) ->
-                        [ BasicParts.bottomNavigation logInState select ]
+                        [ BasicParts.bottomNavigation rec.logInState select ]
 
                     ( _, _ ) ->
                         []
