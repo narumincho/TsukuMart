@@ -904,15 +904,11 @@ userPageCmdToCmd cmd =
 productPageCmdToCmd : Browser.Navigation.Key -> Page.Product.Cmd -> Cmd Msg
 productPageCmdToCmd key cmd =
     case cmd of
-        Page.Product.CmdGetProduct { productId } ->
-            Api.getProduct productId
-                (Page.Product.GetProductResponse >> PageMsgProduct >> PageMsg)
-
         Page.Product.CmdGetProductAndMarkHistory { productId, token } ->
             Api.markProductInHistory
                 productId
                 token
-                (Page.Product.GetProductResponse >> PageMsgProduct >> PageMsg)
+                (always NoOperation)
 
         Page.Product.CmdGetCommentList productId ->
             Api.getProductComments productId (Page.Product.GetCommentListResponse >> PageMsgProduct >> PageMsg)
@@ -958,7 +954,7 @@ productPageCmdToCmd key cmd =
                 productId
                 requestData
                 token
-                (Page.Product.UpdateProductDataResponse >> PageMsgProduct >> PageMsg)
+                (Result.map (always ()) >> Page.Product.UpdateProductDataResponse >> PageMsgProduct >> PageMsg)
 
         Page.Product.CmdReplaceElementText idAndText ->
             replaceText idAndText

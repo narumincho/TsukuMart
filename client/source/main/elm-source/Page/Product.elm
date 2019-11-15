@@ -56,8 +56,7 @@ type Model
 
 
 type Cmd
-    = CmdGetProduct { productId : Product.Id }
-    | CmdGetProductAndMarkHistory { productId : Product.Id, token : Api.Token }
+    = CmdGetProductAndMarkHistory { productId : Product.Id, token : Api.Token }
     | CmdGetCommentList Product.Id
     | CmdAddComment Api.Token { productId : Product.Id } String
     | CmdLike Api.Token Product.Id
@@ -110,6 +109,7 @@ initModel logInState id =
                 { productId = id
                 , token = accessToken
                 }
+            , CmdGetCommentList id
             ]
 
         Nothing ->
