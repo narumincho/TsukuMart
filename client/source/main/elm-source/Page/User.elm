@@ -3,8 +3,7 @@ module Page.User exposing
     , Model
     , Msg(..)
     , getUser
-    , initModelFromId
-    , initModelWithName
+    , initialModel
     , update
     , view
     )
@@ -67,17 +66,10 @@ type Msg
     | MsgToLineNotifySetting Api.Token
 
 
-initModelWithName : User.WithName -> ( Model, List Cmd )
-initModelWithName userWithNameInit =
-    ( LoadingWithUserIdAndName userWithNameInit
-    , [ CmdGetUserProfile (User.withNameGetId userWithNameInit) ]
-    )
-
-
 {-| 外部ページから飛んで来たときはユーザーIDだけを頼りにしてユーザーページを作らなければならない
 -}
-initModelFromId : LogInState.LogInState -> User.Id -> ( Model, List Cmd )
-initModelFromId logInState userId =
+initialModel : LogInState.LogInState -> User.Id -> ( Model, List Cmd )
+initialModel logInState userId =
     case logInState of
         LogInState.Ok { userWithName } ->
             if User.withNameGetId userWithName == userId then
