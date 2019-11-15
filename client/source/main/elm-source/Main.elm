@@ -119,9 +119,7 @@ type Msg
     | UrlChange Url.Url
     | UrlRequest Browser.UrlRequest
     | AddLogMessage String
-    | LogInResponse (Result String Api.Token)
     | LogOut
-    | SignUpConfirmResponse (Result String ())
     | ReceiveProductImages (List String)
     | ReceiveUserImage String
     | GetMyProfileAndLikedProductIdsResponse (Result String ( Data.User.WithName, List Data.Product.Id ))
@@ -361,49 +359,6 @@ update msg (Model rec) =
                 }
             , Cmd.none
             )
-
-        LogInResponse result ->
-            case result of
-                Ok token ->
-                    ( Model
-                        { rec
-                            | message = Just "ログインしました"
-                            , logInState =
-                                Data.LogInState.LoadingProfile token
-                        }
-                    , Cmd.batch
-                        []
-                    )
-
-                Err string ->
-                    ( Model
-                        { rec | message = Just ("ログインに失敗しました" ++ string) }
-                    , Cmd.none
-                    )
-
-        SignUpConfirmResponse response ->
-            case response of
-                Ok _ ->
-                    let
-                        ( newModel, cmds ) =
-                            Page.Home.initModel (getProductId rec.page)
-                    in
-                    ( Model
-                        { rec
-                            | message = Just "新規登録完了"
-                            , page = PageHome newModel
-                        }
-                    , Cmd.batch
-                        ([ Browser.Navigation.pushUrl rec.key (PageLocation.toUrlAsString PageLocation.Home)
-                         ]
-                            ++ List.map homePageCmdToCmd cmds
-                        )
-                    )
-
-                Err e ->
-                    ( Model rec
-                    , Cmd.none
-                    )
 
         ReceiveProductImages dataUrlList ->
             case rec.page of
