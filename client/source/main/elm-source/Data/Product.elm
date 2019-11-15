@@ -491,18 +491,37 @@ priceToStringWithoutYen price =
         |> String.join ","
 
 
-searchFromId : Id -> List Product -> Maybe Product
+searchFromId : Id -> List Product -> Product
 searchFromId id list =
     case list of
         x :: xs ->
             if getId x == id then
-                Just x
+                x
 
             else
                 searchFromId id xs
 
         [] ->
-            Nothing
+            Product
+                { id = Id "unknown"
+                , category = Category.FurnitureOther
+                , condition = ConditionJunk
+                , createdAt = Time.millisToPosix 0
+                , description = "存在しない商品"
+                , imageIds = ( ImageId.fromString "unknown", [] )
+                , likedCount = 0
+                , name = "?????????"
+                , price = 0
+                , seller =
+                    User.withNameFromApi
+                        { id = "unknownUser"
+                        , displayName = "???"
+                        , imageId = ImageId.fromString "unknown"
+                        }
+                , status = Selling
+                , thumbnailImageId = ImageId.fromString "unknown"
+                , updateAt = Time.millisToPosix 0
+                }
 
 
 updateById : Id -> (Product -> Product) -> List Product -> List Product
