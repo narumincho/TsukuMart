@@ -76,8 +76,8 @@ type Msg
     = GetCommentListResponse (Result String (List Product.Comment))
     | Like Api.Token Product.Id
     | UnLike Api.Token Product.Id
-    | LikeResponse (Result String Int)
-    | UnlikeResponse (Result String Int)
+    | LikeResponse (Result String ())
+    | UnlikeResponse (Result String ())
     | TradeStart Api.Token Product.Id
     | TradeStartResponse (Result String Trade.Trade)
     | ToConfirmPage
@@ -185,7 +185,7 @@ update allProductsMaybe msg model =
 
         LikeResponse result ->
             case ( result, model ) of
-                ( Ok _, Normal rec ) ->
+                ( Ok (), Normal rec ) ->
                     ( Normal
                         { rec
                             | likeSending = False
@@ -193,7 +193,7 @@ update allProductsMaybe msg model =
                     , []
                     )
 
-                ( Ok _, _ ) ->
+                ( Ok (), _ ) ->
                     ( model
                     , []
                     )
@@ -205,7 +205,7 @@ update allProductsMaybe msg model =
 
         UnlikeResponse result ->
             case ( result, model ) of
-                ( Ok likedCount, Normal rec ) ->
+                ( Ok (), Normal rec ) ->
                     ( Normal
                         { rec
                             | likeSending = False
@@ -213,7 +213,7 @@ update allProductsMaybe msg model =
                     , []
                     )
 
-                ( Ok _, _ ) ->
+                ( Ok (), _ ) ->
                     ( model
                     , []
                     )

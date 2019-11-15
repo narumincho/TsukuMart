@@ -8,11 +8,11 @@ module Page.SearchResult exposing
     )
 
 import BasicParts
+import Component.ProductList as ProductList
 import Data.LogInState
 import Data.Product
 import Data.SearchCondition as SearchCondition
 import Html.Styled
-import Component.ProductList as ProductList
 
 
 type Model
@@ -71,24 +71,9 @@ update msg (Model rec) =
                 ( newModel, cmdList ) =
                     rec.productList |> ProductList.update productListMsg
             in
-            ( case productListMsg of
-                ProductList.UpdateLikedCountResponse id (Ok likedCount) ->
-                    Model
-                        { rec
-                            | result = updateLikedCount likedCount id rec.result
-                            , productList = newModel
-                        }
-
-                _ ->
-                    Model { rec | productList = newModel }
+            ( Model { rec | productList = newModel }
             , cmdList |> List.map CommandByProductList
             )
-
-
-updateLikedCount : Int -> Data.Product.Id -> Maybe (List Data.Product.Product) -> Maybe (List Data.Product.Product)
-updateLikedCount likedCount id result =
-    result
-        |> Maybe.map (Data.Product.updateById id (Data.Product.updateLikedCount likedCount))
 
 
 view :

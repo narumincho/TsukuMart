@@ -64,19 +64,7 @@ update msg (Model rec) =
                 ( newModel, cmdList ) =
                     rec.productListModel |> ProductList.update productListMsg
             in
-            ( case productListMsg of
-                ProductList.UpdateLikedCountResponse id (Ok likedCount) ->
-                    let
-                        likeFunc =
-                            Maybe.map (Product.updateById id (Product.updateLikedCount likedCount))
-                    in
-                    Model
-                        { rec
-                            | productListModel = newModel
-                        }
-
-                _ ->
-                    Model { rec | productListModel = newModel }
+            ( Model { rec | productListModel = newModel }
             , cmdList |> List.map CmdProducts
             )
 

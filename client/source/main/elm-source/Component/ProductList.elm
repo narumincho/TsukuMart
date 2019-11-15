@@ -31,7 +31,7 @@ type Model
 type Msg
     = Like Api.Token Product.Id
     | UnLike Api.Token Product.Id
-    | UpdateLikedCountResponse Product.Id (Result String Int)
+    | UpdateLikedCountResponse Product.Id (Result String ())
 
 
 type Cmd

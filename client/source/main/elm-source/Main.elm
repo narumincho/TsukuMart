@@ -125,8 +125,8 @@ type Msg
     | ReceiveProductImages (List String)
     | ReceiveUserImage String
     | GetMyProfileAndLikedProductIdsResponse (Result String ( Data.User.WithName, List Data.Product.Id ))
-    | LikeProductResponse Data.Product.Id (Result String Int)
-    | UnlikeProductResponse Data.Product.Id (Result String Int)
+    | LikeProductResponse Data.Product.Id (Result String ())
+    | UnlikeProductResponse Data.Product.Id (Result String ())
     | ChangeProfileResponse (Result String Data.User.WithProfile)
     | HistoryBack
     | PageMsg PageMsg
