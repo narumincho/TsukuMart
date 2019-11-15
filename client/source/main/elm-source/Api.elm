@@ -11,7 +11,6 @@ module Api exposing
     , finishTrade
     , getBoughtProductList
     , getCommentedProductList
-    , getFreeProductList
     , getHistoryViewProducts
     , getLikedProducts
     , getLineNotifyUrl
@@ -19,8 +18,6 @@ module Api exposing
     , getMyNameAndLikedProductsId
     , getProduct
     , getProductComments
-    , getRecentProductList
-    , getRecommendProductList
     , getSoldProductList
     , getTradeAndComments
     , getTradedProductList
@@ -769,78 +766,6 @@ getUserProfile userId callBack =
         )
         (Jd.field "user"
             userWithProfileDecoder
-        )
-        callBack
-
-
-
-{- ==============================================================
-                           新着の商品を取得
-   ==============================================================
--}
-
-
-getRecentProductList : (Result String (List Product.Product) -> msg) -> Cmd msg
-getRecentProductList callBack =
-    graphQlApiRequest
-        (Query
-            [ Field
-                { name = "productRecentAll"
-                , args = []
-                , return = productReturn
-                }
-            ]
-        )
-        (Jd.field "productRecentAll"
-            (Jd.list productDecoder)
-        )
-        callBack
-
-
-
-{- ==============================================================
-                      おすすめの商品を取得
-   ==============================================================
--}
-
-
-getRecommendProductList : (Result String (List Product.Product) -> msg) -> Cmd msg
-getRecommendProductList callBack =
-    graphQlApiRequest
-        (Query
-            [ Field
-                { name = "productRecommendAll"
-                , args = []
-                , return = productReturn
-                }
-            ]
-        )
-        (Jd.field "productRecommendAll"
-            (Jd.list productDecoder)
-        )
-        callBack
-
-
-
-{- ==============================================================
-                        0円の商品を取得
-   ==============================================================
--}
-
-
-getFreeProductList : (Result String (List Product.Product) -> msg) -> Cmd msg
-getFreeProductList callBack =
-    graphQlApiRequest
-        (Query
-            [ Field
-                { name = "productFreeAll"
-                , args = []
-                , return = productReturn
-                }
-            ]
-        )
-        (Jd.field "productFreeAll"
-            (Jd.list productDecoder)
         )
         callBack
 
