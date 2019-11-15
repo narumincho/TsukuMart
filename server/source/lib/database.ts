@@ -4,6 +4,7 @@ import * as key from "./key";
 import * as type from "./type";
 import Maybe from "graphql/tsutils/Maybe";
 import * as lineNotify from "./lineNotify";
+import { firestore } from "firebase-admin";
 
 /**
  * 指定したStateがつくマート自身が発行したものかどうか調べ、あったらそのStateを削除する
@@ -979,48 +980,32 @@ export const createProductComment = async (
 export const likeProduct = async (
     userId: string,
     productId: string
-): Promise<ProductReturnLowCost> => {
+): Promise<void> => {
     const userPrivateData = await databaseLow.getUserPrivateData(userId);
-    const productData = await databaseLow.getProduct(productId);
     if (userPrivateData.likedProduct.includes(productId)) {
-        return productReturnLowCostFromDatabaseLow({
-            id: productId,
-            data: productData
-        });
+        return;
     }
     await databaseLow.updateProductData(productId, {
-        likedCount: productData.likedCount + 1
+        likedCount: firestore.FieldValue.increment(1)
     });
     await databaseLow.addLikedProductData(userId, productId, {
         createdAt: databaseLow.getNowTimestamp()
     });
-    console.log(`いいねproductId=${productId}, userId=${userId}`);
-    return productReturnLowCostFromDatabaseLow({
-        id: productId,
-        data: { ...productData, likedCount: productData.likedCount + 1 }
-    });
+    return;
 };
 
 export const unlikeProduct = async (
     userId: string,
     productId: string
-): Promise<ProductReturnLowCost> => {
+): Promise<void> => {
     const userPrivateData = await databaseLow.getUserPrivateData(userId);
-    const productData = await databaseLow.getProduct(productId);
     if (!userPrivateData.likedProduct.includes(productId)) {
-        return productReturnLowCostFromDatabaseLow({
-            id: productId,
-            data: productData
-        });
+        return;
     }
     await databaseLow.updateProductData(productId, {
-        likedCount: productData.likedCount - 1
+        likedCount: firestore.FieldValue.increment(-1)
     });
     await databaseLow.deleteLikedProductData(userId, productId);
-    return productReturnLowCostFromDatabaseLow({
-        id: productId,
-        data: { ...productData, likedCount: productData.likedCount - 1 }
-    });
 };
 
 /* ==========================================
