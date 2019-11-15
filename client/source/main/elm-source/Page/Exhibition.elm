@@ -53,7 +53,7 @@ type Msg
     | BackToEditPage
     | LogInOrSignUpMsg LogIn.Msg
     | SellProduct ( Api.Token, Api.SellProductRequest )
-    | SellProductResponse (Result String Product.ProductDetail)
+    | SellProductResponse (Result String Product.Product)
     | MsgByProductEditor ProductEditor.Msg
 
 

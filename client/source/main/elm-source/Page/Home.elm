@@ -47,23 +47,16 @@ initModel productIdMaybe =
         { tabSelect = TabRecommend
         , productListModel = productListModel
         }
-    , [ CmdGetRecommendProducts ] ++ (cmdList |> List.map CmdProducts)
+    , cmdList |> List.map CmdProducts
     )
+
 
 update : Msg -> Model -> ( Model, List Cmd )
 update msg (Model rec) =
     case msg of
         SelectTab tabSelect ->
             ( Model { rec | tabSelect = tabSelect }
-            , case tabSelect of
-                TabRecent ->
-                    [ CmdGetRecentProducts ]
-
-                TabRecommend ->
-                    [ CmdGetRecommendProducts ]
-
-                TabFree ->
-                    [ CmdGetFreeProducts ]
+            , []
             )
 
         MsgByProductList productListMsg ->
@@ -79,10 +72,7 @@ update msg (Model rec) =
                     in
                     Model
                         { rec
-                            | recent = likeFunc rec.recent
-                            , recommend = likeFunc rec.recommend
-                            , free = likeFunc rec.free
-                            , productListModel = newModel
+                            | productListModel = newModel
                         }
 
                 _ ->
@@ -94,6 +84,7 @@ update msg (Model rec) =
 view :
     LogInState.LogInState
     -> Bool
+    -> Maybe (List Product.Product)
     -> Model
     ->
         { title : Maybe String
@@ -101,7 +92,7 @@ view :
         , html : List (Html.Styled.Html Msg)
         , bottomNavigation : Maybe BasicParts.BottomNavigationSelect
         }
-view logInState isWideScreen (Model rec) =
+view logInState isWideScreen allProducts (Model rec) =
     { title = Nothing
     , tab =
         BasicParts.tabMulti
@@ -118,19 +109,11 @@ view logInState isWideScreen (Model rec) =
                         2
             }
     , html =
-        [ ProductList.view rec.productListModel
+        [ ProductList.view
+            rec.productListModel
             logInState
             isWideScreen
-            (case rec.tabSelect of
-                TabRecent ->
-                    rec.recent
-
-                TabRecommend ->
-                    rec.recommend
-
-                TabFree ->
-                    rec.free
-            )
+            allProducts
             |> Html.Styled.map MsgByProductList
         ]
             ++ (case LogInState.getToken logInState of

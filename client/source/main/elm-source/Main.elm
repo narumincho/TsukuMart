@@ -1284,21 +1284,6 @@ getTradeFromPage tradeId pageModel =
         |> Data.Trade.searchFromId tradeId
 
 
-getUserFromPage : Data.User.Id -> PageModel -> Maybe Data.User.WithName
-getUserFromPage userId pageModel =
-    (case pageModel of
-        PageProduct model ->
-            Page.Product.getUser model
-
-        PageUser model ->
-            Page.User.getUser model
-
-        _ ->
-            []
-    )
-        |> Data.User.searchFromId userId
-
-
 {-| 各ページにいいねを押した結果を反映するように通知する
 -}
 updateLikedCountInEachPageProduct : Browser.Navigation.Key -> Data.Product.Id -> Result String Int -> PageModel -> ( PageModel, Cmd Msg )

@@ -11,34 +11,39 @@ import Page.Style
 import PageLocation
 
 
-view : Maybe (List Trade.Trade) -> Html.Styled.Html msg
-view tradesMaybe =
+view : Maybe (List Product.Product) -> Maybe (List Trade.Trade) -> Html.Styled.Html msg
+view allProductsMaybe tradesMaybe =
     Html.Styled.div
         []
-        (case tradesMaybe of
-            Just (x :: xs) ->
-                mainView ( x, xs )
+        (case ( allProductsMaybe, tradesMaybe ) of
+            ( Just allProducts, Just (x :: xs) ) ->
+                mainView allProducts ( x, xs )
 
-            Just [] ->
+            ( _, Just [] ) ->
                 [ Page.Style.emptyList "ここに表示する取引がありません" ]
 
-            Nothing ->
-                [ Html.Styled.text "読み込み中"
+            ( _, Nothing ) ->
+                [ Html.Styled.text "取引情報を読み込み中"
+                , Icon.loading { size = 64, color = Css.rgb 0 0 0 }
+                ]
+
+            ( Nothing, _ ) ->
+                [ Html.Styled.text "商品情報を読み込み中"
                 , Icon.loading { size = 64, color = Css.rgb 0 0 0 }
                 ]
         )
 
 
-mainView : ( Trade.Trade, List Trade.Trade ) -> List (Html.Styled.Html msg)
-mainView ( x, xs ) =
-    List.map itemView (x :: xs)
+mainView : List Product.Product -> ( Trade.Trade, List Trade.Trade ) -> List (Html.Styled.Html msg)
+mainView allProducts ( x, xs ) =
+    (x :: xs) |> List.map (itemView allProducts)
 
 
-itemView : Trade.Trade -> Html.Styled.Html msg
-itemView trade =
+itemView : List Product.Product -> Trade.Trade -> Html.Styled.Html msg
+itemView allProducts trade =
     let
         product =
-            Trade.getProductId trade
+            allProducts |> Product.searchFromId (Trade.getProductId trade)
     in
     Html.Styled.a
         [ Html.Styled.Attributes.href
@@ -89,7 +94,7 @@ itemView trade =
                 , Css.displayFlex
                 ]
             ]
-            [ userView (Trade.getSeller trade)
+            [ userView (Product.getSeller product)
             , Html.Styled.div
                 [ Html.Styled.Attributes.css
                     [ Css.fontSize (Css.rem 2) ]
