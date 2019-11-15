@@ -450,7 +450,7 @@ update msg (Model rec) =
         PageMsg pageMsg ->
             let
                 ( pageModel, cmd ) =
-                    updatePageMsg pageMsg (Model rec)
+                    updatePageMsg rec.allProducts pageMsg (Model rec)
             in
             ( Model { rec | page = pageModel }
             , cmd
@@ -480,7 +480,7 @@ update msg (Model rec) =
         LikeProductResponse id response ->
             let
                 ( page, cmd ) =
-                    updateLikedCountInEachPageProduct rec.key id response rec.page
+                    updateLikedCountInEachPageProduct rec.key id rec.allProducts response rec.page
             in
             ( Model
                 { rec
@@ -493,7 +493,7 @@ update msg (Model rec) =
         UnlikeProductResponse id response ->
             let
                 ( page, cmd ) =
-                    updateLikedCountInEachPageProduct rec.key id response rec.page
+                    updateLikedCountInEachPageProduct rec.key id rec.allProducts response rec.page
             in
             ( Model
                 { rec
@@ -585,8 +585,9 @@ update msg (Model rec) =
             , Cmd.none
             )
 
-updatePageMsg : PageMsg -> Model -> ( PageModel, Cmd Msg )
-updatePageMsg pageMsg (Model rec) =
+
+updatePageMsg : Maybe (List Data.Product.Product) -> PageMsg -> Model -> ( PageModel, Cmd Msg )
+updatePageMsg allProductsMaybe pageMsg (Model rec) =
     case ( pageMsg, rec.page ) of
         ( PageMsgHome msg, PageHome model ) ->
             model
@@ -660,7 +661,7 @@ updatePageMsg pageMsg (Model rec) =
 
         ( PageMsgProduct msg, PageProduct model ) ->
             model
-                |> Page.Product.update msg
+                |> Page.Product.update allProductsMaybe msg
                 |> mapPageModel PageProduct (productPageCmdToCmd rec.key)
 
         ( PageMsgTrade msg, PageTrade model ) ->
@@ -737,7 +738,7 @@ soldProductsPageCmdToCmd : Page.SoldProducts.Cmd -> Cmd Msg
 soldProductsPageCmdToCmd cmd =
     case cmd of
         Page.SoldProducts.CmdGetSoldProducts userId ->
-            Api.getSoldProductList userId
+            Api.getSoldProductIds userId
                 (Page.SoldProducts.GetSoldProductListResponse >> PageMsgSoldProducts >> PageMsg)
 
         Page.SoldProducts.CmdByProductList e ->
@@ -751,9 +752,9 @@ soldProductsPageCmdToCmd cmd =
 boughtProductsPageCmdToCmd : Page.BoughtProducts.Cmd -> Cmd Msg
 boughtProductsPageCmdToCmd cmd =
     case cmd of
-        Page.BoughtProducts.CmdGetPurchaseProducts token ->
-            Api.getBoughtProductList token
-                (Page.BoughtProducts.GetProductsResponse >> PageMsgBoughtProducts >> PageMsg)
+        Page.BoughtProducts.CmdRequestPurchaseProductIds token ->
+            Api.getBoughtProductIds token
+                (Page.BoughtProducts.GetResponse >> PageMsgBoughtProducts >> PageMsg)
 
         Page.BoughtProducts.CmdByLogIn e ->
             logInCmdToCmd e
@@ -800,7 +801,7 @@ commentedProductsCmdToCmd : Page.CommentedProducts.Cmd -> Cmd Msg
 commentedProductsCmdToCmd cmd =
     case cmd of
         Page.CommentedProducts.CmdGetCommentedProducts token ->
-            Api.getCommentedProductList token
+            Api.getCommentedProductIds token
                 (Page.CommentedProducts.GetProductsResponse >> PageMsgCommentedProducts >> PageMsg)
 
         Page.CommentedProducts.CmdByLogIn e ->
@@ -1183,13 +1184,7 @@ urlParserResultToPageAndCmd (Model rec) result =
                 |> mapPageModel PageTrade tradePageCmdToCmd
 
         PageLocation.User userId ->
-            (case getUserFromPage userId rec.page of
-                Just userWithName ->
-                    Page.User.initModelWithName userWithName
-
-                Nothing ->
-                    Page.User.initModelFromId rec.logInState userId
-            )
+            Page.User.initialModel rec.logInState userId
                 |> mapPageModel PageUser userPageCmdToCmd
 
         PageLocation.Search ->
@@ -1241,8 +1236,14 @@ getTradeFromPage tradeId pageModel =
 
 {-| 各ページにいいねを押した結果を反映するように通知する
 -}
-updateLikedCountInEachPageProduct : Browser.Navigation.Key -> Data.Product.Id -> Result String Int -> PageModel -> ( PageModel, Cmd Msg )
-updateLikedCountInEachPageProduct key productId result page =
+updateLikedCountInEachPageProduct :
+    Browser.Navigation.Key
+    -> Data.Product.Id
+    -> Maybe (List Data.Product.Product)
+    -> Result String ()
+    -> PageModel
+    -> ( PageModel, Cmd Msg )
+updateLikedCountInEachPageProduct key productId allProductsMaybe result page =
     let
         productListMsg =
             Component.ProductList.UpdateLikedCountResponse productId result
@@ -1275,7 +1276,7 @@ updateLikedCountInEachPageProduct key productId result page =
 
         PageProduct msg ->
             msg
-                |> Page.Product.update (Page.Product.LikeResponse result)
+                |> Page.Product.update allProductsMaybe (Page.Product.LikeResponse result)
                 |> mapPageModel PageProduct (productPageCmdToCmd key)
 
         _ ->
@@ -1367,6 +1368,7 @@ titleAndTabDataAndMainView :
     Data.LogInState.LogInState
     -> Bool
     -> Maybe ( Time.Posix, Time.Zone )
+    -> Maybe (List Data.Product.Product)
     -> PageModel
     ->
         { title : String
@@ -1374,11 +1376,11 @@ titleAndTabDataAndMainView :
         , bottomNavigation : Maybe BasicParts.BottomNavigationSelect
         , html : List (Html.Styled.Html PageMsg)
         }
-titleAndTabDataAndMainView logInState isWideScreen nowMaybe page =
+titleAndTabDataAndMainView logInState isWideScreen nowMaybe allProductsMaybe page =
     case page of
         PageHome model ->
             model
-                |> Page.Home.view logInState isWideScreen
+                |> Page.Home.view logInState isWideScreen allProductsMaybe
                 |> mapPageMsg PageMsgHome
 
         PageLikedProducts model ->
@@ -1393,27 +1395,27 @@ titleAndTabDataAndMainView logInState isWideScreen nowMaybe page =
 
         PageBoughtProducts model ->
             model
-                |> Page.BoughtProducts.view logInState isWideScreen
+                |> Page.BoughtProducts.view logInState isWideScreen allProductsMaybe
                 |> mapPageMsg PageMsgBoughtProducts
 
         PageSoldProducts model ->
             model
-                |> Page.SoldProducts.view logInState isWideScreen
+                |> Page.SoldProducts.view logInState isWideScreen allProductsMaybe
                 |> mapPageMsg PageMsgSoldProducts
 
         PageTradesInProgress model ->
             model
-                |> Page.TradesInProgress.view logInState
+                |> Page.TradesInProgress.view logInState allProductsMaybe
                 |> mapPageMsg PageMsgTradesInProgress
 
         PageTradesInPast model ->
             model
-                |> Page.TradesInPast.view logInState
+                |> Page.TradesInPast.view logInState allProductsMaybe
                 |> mapPageMsg PageMsgTradesInPast
 
         PageCommentedProducts model ->
             model
-                |> Page.CommentedProducts.view logInState isWideScreen
+                |> Page.CommentedProducts.view logInState isWideScreen allProductsMaybe
                 |> mapPageMsg PageMsgCommentedProducts
 
         PageExhibition model ->
@@ -1428,12 +1430,12 @@ titleAndTabDataAndMainView logInState isWideScreen nowMaybe page =
 
         PageProduct model ->
             model
-                |> Page.Product.view logInState isWideScreen nowMaybe
+                |> Page.Product.view logInState isWideScreen nowMaybe allProductsMaybe
                 |> mapPageMsg PageMsgProduct
 
         PageTrade model ->
             model
-                |> Page.Trade.view logInState nowMaybe
+                |> Page.Trade.view logInState nowMaybe allProductsMaybe
                 |> mapPageMsg PageMsgTrade
 
         PageUser model ->

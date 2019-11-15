@@ -2,7 +2,6 @@ module Page.CommentedProducts exposing
     ( Cmd(..)
     , Model
     , Msg(..)
-    , getAllProducts
     , initModel
     , update
     , view
@@ -28,12 +27,12 @@ type Model
 
 type NormalModel
     = Loading
-    | Normal (List Product.Product)
+    | Normal (List Product.Id)
     | Error
 
 
 type Msg
-    = GetProductsResponse (Result String (List Product.Product))
+    = GetProductsResponse (Result String (List Product.Id))
     | MsgByLogIn LogIn.Msg
     | MsgByProductList ProductList.Msg
 
@@ -66,18 +65,6 @@ initModel productIdMaybe logInState =
       )
         ++ (cmdList |> List.map CmdByProductList)
     )
-
-
-{-| この画面から取得できる商品のデータを集める
--}
-getAllProducts : Model -> List Product.Product
-getAllProducts (Model { normal }) =
-    case normal of
-        Normal products ->
-            products
-
-        _ ->
-            []
 
 
 update : Msg -> Model -> ( Model, List Cmd )
@@ -120,6 +107,7 @@ update msg (Model rec) =
 view :
     LogInState.LogInState
     -> Bool
+    -> Maybe (List Product.Product)
     -> Model
     ->
         { title : Maybe String
@@ -127,7 +115,7 @@ view :
         , html : List (Html.Styled.Html Msg)
         , bottomNavigation : Maybe BasicParts.BottomNavigationSelect
         }
-view logInState isWideScreen (Model rec) =
+view logInState isWideScreen allProductsMaybe (Model rec) =
     { title = Just "コメントした商品"
     , tab = BasicParts.tabSingle "コメントした商品"
     , html =
@@ -146,14 +134,19 @@ view logInState isWideScreen (Model rec) =
                     rec.productList
                     logInState
                     isWideScreen
-                    (case rec.normal of
-                        Loading ->
+                    (case ( rec.normal, allProductsMaybe ) of
+                        ( Normal productIds, Just allProducts ) ->
+                            productIds
+                                |> List.map (\id -> Product.searchFromId id allProducts)
+                                |> Just
+
+                        ( Normal _, _ ) ->
                             Nothing
 
-                        Normal products ->
-                            Just products
+                        ( Loading, _ ) ->
+                            Nothing
 
-                        Error ->
+                        ( Error, _ ) ->
                             Just []
                     )
                     |> Html.Styled.map MsgByProductList

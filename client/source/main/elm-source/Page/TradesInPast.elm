@@ -10,12 +10,12 @@ module Page.TradesInPast exposing
 
 import Api
 import BasicParts
+import Component.LogIn as LogIn
+import Component.TradeList as TradeList
 import Data.LogInState as LogInState
 import Data.Product as Product
 import Data.Trade as Trade
 import Html.Styled
-import Component.LogIn as LogIn
-import Component.TradeList as TradeList
 import Page.Style
 
 
@@ -100,6 +100,7 @@ update msg (Model rec) =
 
 view :
     LogInState.LogInState
+    -> Maybe (List Product.Product)
     -> Model
     ->
         { title : Maybe String
@@ -107,7 +108,7 @@ view :
         , html : List (Html.Styled.Html Msg)
         , bottomNavigation : Maybe BasicParts.BottomNavigationSelect
         }
-view logInState (Model rec) =
+view logInState allProductsMaybe (Model rec) =
     { title = Just "過去にした取引"
     , tab = BasicParts.tabSingle "過去にした取引"
     , html =
@@ -123,6 +124,7 @@ view logInState (Model rec) =
 
             _ ->
                 [ TradeList.view
+                    allProductsMaybe
                     (case rec.normal of
                         Loading ->
                             Nothing
