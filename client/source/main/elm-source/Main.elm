@@ -297,7 +297,7 @@ urlParserInitResultToPageAndCmd key logInState page =
                 |> mapPageModel PageTrade tradePageCmdToCmd
 
         PageLocation.InitUser userId ->
-            Page.User.initModelFromId logInState userId
+            Page.User.initialModel logInState userId
                 |> mapPageModel PageUser userPageCmdToCmd
 
         PageLocation.InitSearch ->
@@ -425,6 +425,7 @@ update msg (Model rec) =
                     let
                         ( newModel, cmds ) =
                             Page.Product.update
+                                rec.allProducts
                                 (Page.Product.MsgByProductEditor
                                     (Component.ProductEditor.InputImageList dataUrlList)
                                 )
