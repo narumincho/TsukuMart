@@ -835,7 +835,7 @@ markProductInHistory productId token =
 -}
 
 
-likeProduct : Product.Id -> Token -> (Result String Int -> msg) -> Cmd msg
+likeProduct : Product.Id -> Token -> (Result String () -> msg) -> Cmd msg
 likeProduct productId token =
     graphQlApiRequest
         (Mutation
@@ -845,23 +845,11 @@ likeProduct productId token =
                     [ ( "accessToken", GraphQLString (tokenToString token) )
                     , ( "productId", GraphQLString (Product.idToString productId) )
                     ]
-                , return = productOnlyLikeCountReturn
+                , return = []
                 }
             ]
         )
-        (Jd.field "likeProduct" productOnlyLikeCountDecoder)
-
-
-productOnlyLikeCountReturn : List Field
-productOnlyLikeCountReturn =
-    [ Field
-        { name = "likedCount", args = [], return = [] }
-    ]
-
-
-productOnlyLikeCountDecoder : Jd.Decoder Int
-productOnlyLikeCountDecoder =
-    Jd.field "likedCount" Jd.int
+        (Jd.succeed ())
 
 
 
@@ -871,7 +859,7 @@ productOnlyLikeCountDecoder =
 -}
 
 
-unlikeProduct : Product.Id -> Token -> (Result String Int -> msg) -> Cmd msg
+unlikeProduct : Product.Id -> Token -> (Result String () -> msg) -> Cmd msg
 unlikeProduct productId token =
     graphQlApiRequest
         (Mutation
@@ -881,11 +869,11 @@ unlikeProduct productId token =
                     [ ( "accessToken", GraphQLString (tokenToString token) )
                     , ( "productId", GraphQLString (Product.idToString productId) )
                     ]
-                , return = productOnlyLikeCountReturn
+                , return = []
                 }
             ]
         )
-        (Jd.field "unlikeProduct" productOnlyLikeCountDecoder)
+        (Jd.succeed ())
 
 
 
