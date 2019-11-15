@@ -4,21 +4,13 @@ module Data.Trade exposing
     , SellerOrBuyer(..)
     , Status(..)
     , Trade
-    , TradeDetail
-    , detailFromApi
-    , detailGetBuyer
-    , detailGetComment
-    , detailGetCreatedAt
-    , detailGetId
-    , detailGetProductId
-    , detailGetStatus
-    , detailGetUpdateAt
-    , fromApi
     , getBuyer
     , getCreatedAt
     , getId
     , getProductId
+    , getStatus
     , getUpdateAt
+    , fromApi
     , idFromString
     , idToString
     , searchFromId
@@ -38,6 +30,7 @@ type Trade
         , buyer : User.WithName
         , createdAt : Time.Posix
         , updateAt : Time.Posix
+        , status : Status
         }
 
 
@@ -61,6 +54,7 @@ fromApi :
     , buyer : User.WithName
     , createdAt : Time.Posix
     , updateAt : Time.Posix
+    , status : Status
     }
     -> Trade
 fromApi rec =
@@ -70,45 +64,8 @@ fromApi rec =
         , buyer = rec.buyer
         , createdAt = rec.createdAt
         , updateAt = rec.updateAt
+        , status = rec.status
         }
-
-
-getId : Trade -> Id
-getId (Trade { id }) =
-    id
-
-
-getProductId : Trade -> Product.Id
-getProductId (Trade { productId }) =
-    productId
-
-
-getBuyer : Trade -> User.WithName
-getBuyer (Trade { buyer }) =
-    buyer
-
-
-getCreatedAt : Trade -> Time.Posix
-getCreatedAt (Trade { createdAt }) =
-    createdAt
-
-
-getUpdateAt : Trade -> Time.Posix
-getUpdateAt (Trade { updateAt }) =
-    updateAt
-
-
-type TradeDetail
-    = TradeDetail
-        { id : Id
-        , productId : Product.Id
-        , buyer : User.WithName
-        , createdAt : Time.Posix
-        , updateAt : Time.Posix
-        , comments : List Comment
-        , status : Status
-        }
-
 
 type Status
     = InProgress
@@ -179,61 +136,34 @@ type SellerOrBuyer
     | Buyer
 
 
-detailFromApi :
-    { id : String
-    , productId : String
-    , buyer : User.WithName
-    , createdAt : Time.Posix
-    , updateAt : Time.Posix
-    , comments : List Comment
-    , status : Status
-    }
-    -> TradeDetail
-detailFromApi rec =
-    TradeDetail
-        { id = Id rec.id
-        , productId = Product.idFromString rec.productId
-        , buyer = rec.buyer
-        , createdAt = rec.createdAt
-        , updateAt = rec.updateAt
-        , comments = rec.comments
-        , status = rec.status
-        }
-
-
-detailGetId : TradeDetail -> Id
-detailGetId (TradeDetail { id }) =
+getId : Trade -> Id
+getId (Trade { id }) =
     id
 
 
-detailGetProductId : TradeDetail -> Product.Id
-detailGetProductId (TradeDetail { productId }) =
+getProductId : Trade -> Product.Id
+getProductId (Trade { productId }) =
     productId
 
 
-detailGetBuyer : TradeDetail -> User.WithName
-detailGetBuyer (TradeDetail { buyer }) =
+getBuyer : Trade -> User.WithName
+getBuyer (Trade { buyer }) =
     buyer
 
 
-detailGetCreatedAt : TradeDetail -> Time.Posix
-detailGetCreatedAt (TradeDetail { createdAt }) =
+getCreatedAt : Trade -> Time.Posix
+getCreatedAt (Trade { createdAt }) =
     createdAt
 
 
-detailGetUpdateAt : TradeDetail -> Time.Posix
-detailGetUpdateAt (TradeDetail { updateAt }) =
+getUpdateAt : Trade -> Time.Posix
+getUpdateAt (Trade { updateAt }) =
     updateAt
 
 
-detailGetStatus : TradeDetail -> Status
-detailGetStatus (TradeDetail { status }) =
+getStatus : Trade -> Status
+getStatus (Trade { status }) =
     status
-
-
-detailGetComment : TradeDetail -> List Comment
-detailGetComment (TradeDetail { comments }) =
-    comments
 
 
 searchFromId : Id -> List Trade -> Maybe Trade

@@ -977,8 +977,8 @@ tradePageCmdToCmd cmd =
                 Time.here
                 |> Task.attempt GetNowTime
 
-        Page.Trade.CmdGetTradeDetail token id ->
-            Api.getTradeDetail id token (Page.Trade.TradeDetailResponse >> PageMsgTrade >> PageMsg)
+        Page.Trade.CmdGetTrade token id ->
+            Api.getTradeDetail id token (Page.Trade.TradeResponse >> PageMsgTrade >> PageMsg)
 
         Page.Trade.CmdAddComment token id string ->
             Api.addTradeComment id string token (Page.Trade.AddCommentResponse >> PageMsgTrade >> PageMsg)
