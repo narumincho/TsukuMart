@@ -48,9 +48,9 @@ type Msg
     | AddComment Api.Token
     | FinishTrade Api.Token
     | CancelTrade Api.Token
-    | FinishTradeResponse (Result String Trade.Trade)
-    | CancelTradeResponse (Result String Trade.Trade)
-    | AddCommentResponse (Result String Trade.Trade)
+    | FinishTradeResponse (Result String ( Trade.Trade, List Trade.Comment ))
+    | CancelTradeResponse (Result String ( Trade.Trade, List Trade.Comment ))
+    | AddCommentResponse (Result String ( Trade.Trade, List Trade.Comment ))
     | TradeResponse (Result String ( Trade.Trade, List Trade.Comment ))
 
 
@@ -139,8 +139,8 @@ update msg model =
 
         ( FinishTradeResponse result, Main rec ) ->
             case result of
-                Ok trade ->
-                    ( Main { trade = trade, commentInput = "", sending = Nothing, comments = rec.comments }
+                Ok ( trade, comments ) ->
+                    ( Main { trade = trade, commentInput = "", sending = Nothing, comments = Just comments }
                     , [ CmdReplaceElementText { id = commentTextAreaId, text = "" }
                       , CmdAddLogMessage
                             (case Trade.getStatus trade of
@@ -160,8 +160,8 @@ update msg model =
 
         ( CancelTradeResponse result, Main rec ) ->
             case result of
-                Ok trade ->
-                    ( Main { trade = trade, commentInput = "", sending = Nothing, comments = rec.comments }
+                Ok ( trade, comments ) ->
+                    ( Main { trade = trade, commentInput = "", sending = Nothing, comments = Just comments }
                     , [ CmdReplaceElementText { id = commentTextAreaId, text = "" }
                       , CmdAddLogMessage "取引をキャンセルしました"
                       , CmdUpdateNowTime
@@ -175,8 +175,8 @@ update msg model =
 
         ( AddCommentResponse result, Main rec ) ->
             case result of
-                Ok trade ->
-                    ( Main { trade = trade, commentInput = "", sending = Nothing, comments = rec.comments }
+                Ok ( trade, comments ) ->
+                    ( Main { trade = trade, commentInput = "", sending = Nothing, comments = Just comments }
                     , [ CmdReplaceElementText { id = commentTextAreaId, text = "" }
                       , CmdUpdateNowTime
                       ]
