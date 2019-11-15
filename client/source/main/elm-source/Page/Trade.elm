@@ -236,10 +236,10 @@ view logInState timeData allProductsMaybe model =
                             , Icon.loading { size = 64, color = Css.rgb 0 0 0 }
                             ]
 
-                        Main { trade, sending } ->
+                        Main { trade, sending, comments } ->
                             case allProductsMaybe of
                                 Just allProducts ->
-                                    mainView sending token timeData userWithName allProducts trade
+                                    mainView sending token timeData userWithName allProducts comments trade
 
                                 Nothing ->
                                     [ Html.Styled.text "商品データの読み込み中"
@@ -265,9 +265,10 @@ mainView :
     -> Maybe ( Time.Posix, Time.Zone )
     -> User.WithName
     -> List Product.Product
+    -> Maybe (List Trade.Comment)
     -> Trade.Trade
     -> List (Html.Styled.Html Msg)
-mainView sending token timeData user allProducts trade =
+mainView sending token timeData user allProducts comments trade =
     let
         product =
             allProducts |> Product.searchFromId (Trade.getProductId trade)
@@ -333,7 +334,7 @@ mainView sending token timeData user allProducts trade =
                 Trade.Finish ->
                     []
            )
-        ++ [ commentView timeData user trade ]
+        ++ [ commentView timeData user allProducts trade comments ]
         ++ (case tradeStatus of
                 Trade.InProgress ->
                     [ finishButton sending position token ]
@@ -476,16 +477,25 @@ commentTextAreaId =
 commentView :
     Maybe ( Time.Posix, Time.Zone )
     -> User.WithName
+    -> List Product.Product
     -> Trade.Trade
-    -> List Trade.Comment
+    -> Maybe (List Trade.Comment)
     -> Html.Styled.Html msg
-commentView timeData user trade comments =
+commentView timeData user allProducts trade commentsMaybe =
     Html.Styled.div
         []
         [ Component.Comment.view timeData
-            (comments
-                |> List.map (tradeCommentToCommentData trade (User.withNameGetId user))
-                |> Just
+            (commentsMaybe
+                |> Maybe.map
+                    (List.map
+                        (tradeCommentToCommentData trade
+                            (User.withNameGetId user)
+                            (allProducts
+                                |> Product.searchFromId (Trade.getProductId trade)
+                                |> Product.getSeller
+                            )
+                        )
+                    )
             )
         ]
 
@@ -493,6 +503,7 @@ commentView timeData user trade comments =
 tradeCommentToCommentData :
     Trade.Trade
     -> User.Id
+    -> User.WithName
     -> Trade.Comment
     ->
         { isMine : Bool
@@ -501,16 +512,12 @@ tradeCommentToCommentData :
         , body : String
         , createdAt : Time.Posix
         }
-tradeCommentToCommentData trade myId (Trade.Comment { body, speaker, createdAt }) =
+tradeCommentToCommentData trade myId seller (Trade.Comment { body, speaker, createdAt }) =
     case speaker of
         Trade.Seller ->
-            let
-                commentUser =
-                    trade |> Trade.getProductId |> Product.getSeller
-            in
-            { isMine = User.withNameGetId commentUser == myId
+            { isMine = User.withNameGetId seller == myId
             , isSeller = True
-            , user = commentUser
+            , user = seller
             , body = body
             , createdAt = createdAt
             }
