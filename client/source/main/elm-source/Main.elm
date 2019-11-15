@@ -133,6 +133,7 @@ type Msg
     | GetNowTime (Result () ( Time.Posix, Time.Zone ))
     | Jump (Result String Url.Url)
     | UpdateProducts (List Data.Product.Firestore)
+    | NoOperation
 
 
 type PageMsg
@@ -578,6 +579,10 @@ update msg (Model rec) =
                         |> Task.perform (always (AddLogMessage "FireStoreから取得した商品データの型が合わない"))
                     )
 
+        NoOperation ->
+            ( Model rec
+            , Cmd.none
+            )
 
 updatePageMsg : PageMsg -> Model -> ( PageModel, Cmd Msg )
 updatePageMsg pageMsg (Model rec) =
