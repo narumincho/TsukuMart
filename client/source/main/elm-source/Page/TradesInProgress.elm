@@ -2,7 +2,6 @@ module Page.TradesInProgress exposing
     ( Cmd(..)
     , Model
     , Msg(..)
-    , getAllProducts
     , getAllTrades
     , initModel
     , update
@@ -70,12 +69,6 @@ getAllTrades (Model { normal }) =
 
         _ ->
             []
-
-
-getAllProducts : Model -> List Product.Product
-getAllProducts =
-    getAllTrades
-        >> List.map Trade.getProductId
 
 
 update : Msg -> Model -> ( Model, List Cmd )
