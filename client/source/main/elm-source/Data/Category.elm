@@ -1,6 +1,6 @@
 module Data.Category exposing
-    ( Category
-    , Group
+    ( Category(..)
+    , Group(..)
     , all
     , fromIdString
     , fromIndexInGroup
