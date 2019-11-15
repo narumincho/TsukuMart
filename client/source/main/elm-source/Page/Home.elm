@@ -9,7 +9,7 @@ import Html.Styled
 import Html.Styled.Attributes
 import Page.Style
 import PageLocation
-import Utility
+import Time
 
 
 type Model
@@ -113,7 +113,7 @@ view logInState isWideScreen allProducts (Model rec) =
             rec.productListModel
             logInState
             isWideScreen
-            allProducts
+            (allProducts |> Maybe.map (filterOrSortBySelectedTab rec.tabSelect))
             |> Html.Styled.map MsgByProductList
         ]
             ++ (case LogInState.getToken logInState of
@@ -150,3 +150,16 @@ exhibitButton =
         , Html.Styled.Attributes.href (PageLocation.toUrlAsString PageLocation.Exhibition)
         ]
         [ Html.Styled.text "出品" ]
+
+
+filterOrSortBySelectedTab : TabSelect -> List Product.Product -> List Product.Product
+filterOrSortBySelectedTab tabSelect allProducts =
+    case tabSelect of
+        TabRecent ->
+            allProducts |> List.sortBy (Product.getCreatedAt >> Time.posixToMillis) |> List.reverse
+
+        TabRecommend ->
+            allProducts |> List.sortBy Product.getLikedCount |> List.reverse
+
+        TabFree ->
+            allProducts |> List.filter (\p -> Product.getPrice p == 0)
