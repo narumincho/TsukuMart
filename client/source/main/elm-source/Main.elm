@@ -1163,13 +1163,7 @@ urlParserResultToPageAndCmd (Model rec) result =
                     ( rec.page, Cmd.none )
 
         PageLocation.Product productId ->
-            (case getProductFromPage productId rec.page of
-                Just product ->
-                    Page.Product.initModelFromProduct rec.logInState product
-
-                Nothing ->
-                    Page.Product.initModel rec.logInState productId
-            )
+            Page.Product.initModel rec.logInState productId
                 |> mapPageModel PageProduct (productPageCmdToCmd rec.key)
 
         PageLocation.Trade tradeId ->
@@ -1222,47 +1216,6 @@ getProductId page =
 
         _ ->
             Nothing
-
-
-getProductFromPage : Data.Product.Id -> PageModel -> Maybe Data.Product.Product
-getProductFromPage productId pageModel =
-    (case pageModel of
-        PageHome model ->
-            Page.Home.getAllProducts model
-
-        PageLikedProducts model ->
-            Page.LikedProducts.getAllProducts model
-
-        PageHistory model ->
-            Page.History.getAllProducts model
-
-        PageSoldProducts model ->
-            Page.SoldProducts.getAllProducts model
-
-        PageBoughtProducts model ->
-            Page.BoughtProducts.getAllProducts model
-
-        PageTradesInProgress model ->
-            Page.TradesInProgress.getAllProducts model
-
-        PageTradesInPast model ->
-            Page.TradesInPast.getAllProducts model
-
-        PageCommentedProducts model ->
-            Page.CommentedProducts.getAllProducts model
-
-        PageProduct model ->
-            case Page.Product.getProduct model of
-                Just product ->
-                    [ product ]
-
-                Nothing ->
-                    []
-
-        _ ->
-            []
-    )
-        |> Data.Product.searchFromId productId
 
 
 getTradeFromPage : Data.Trade.Id -> PageModel -> Maybe Data.Trade.Trade
