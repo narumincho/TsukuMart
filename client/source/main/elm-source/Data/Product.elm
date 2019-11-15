@@ -15,7 +15,7 @@ module Data.Product exposing
     , conditionToIdString
     , conditionToIndex
     , conditionToJapaneseString
-    , detailGetCreatedAt
+    , getCreatedAt
     , fromApi
     , fromFirestore
     , getCategory
@@ -460,8 +460,8 @@ getStatus (Product { status }) =
 
 {-| 出品日を取得する
 -}
-detailGetCreatedAt : Product -> Time.Posix
-detailGetCreatedAt (Product { createdAt }) =
+getCreatedAt : Product -> Time.Posix
+getCreatedAt (Product { createdAt }) =
     createdAt
 
 
