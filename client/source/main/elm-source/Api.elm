@@ -10,14 +10,14 @@ module Api exposing
     , deleteProduct
     , finishTrade
     , getBoughtProductIds
-    , getCommentedProductList
+    , getCommentedProductIds
     , getHistoryViewProducts
     , getLikedProducts
     , getLineNotifyUrl
     , getLogInUrl
     , getMyNameAndLikedProductsId
     , getProductComments
-    , getSoldProductList
+    , getSoldProductIds
     , getTradeAndComments
     , getTradedProductList
     , getTradingProductList
@@ -606,8 +606,8 @@ getHistoryViewProducts token =
 -}
 
 
-getSoldProductList : User.Id -> (Result String (List Product.Id) -> msg) -> Cmd msg
-getSoldProductList userId =
+getSoldProductIds : User.Id -> (Result String (List Product.Id) -> msg) -> Cmd msg
+getSoldProductIds userId =
     graphQlApiRequest
         (Query
             [ Field
@@ -722,8 +722,8 @@ getTradedProductList token =
 -}
 
 
-getCommentedProductList : Token -> (Result String (List Product.Product) -> msg) -> Cmd msg
-getCommentedProductList token =
+getCommentedProductIds : Token -> (Result String (List Product.Id) -> msg) -> Cmd msg
+getCommentedProductIds token =
     graphQlApiRequest
         (Query
             [ Field
@@ -733,14 +733,14 @@ getCommentedProductList token =
                     [ Field
                         { name = "commentedProductAll"
                         , args = []
-                        , return = productReturn
+                        , return = [ Field { name = "id", args = [], return = [] } ]
                         }
                     ]
                 }
             ]
         )
         (Jd.field "userPrivate"
-            (Jd.field "commentedProductAll" (Jd.list productDecoder))
+            (Jd.field "commentedProductAll" (Jd.list (Jd.field "id" (Jd.string |> Jd.map Product.idFromString))))
         )
 
 
