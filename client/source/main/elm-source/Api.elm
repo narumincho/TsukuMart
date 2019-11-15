@@ -16,7 +16,6 @@ module Api exposing
     , getLineNotifyUrl
     , getLogInUrl
     , getMyNameAndLikedProductsId
-    , getProduct
     , getProductComments
     , getSoldProductList
     , getTradeAndComments
@@ -767,28 +766,6 @@ getUserProfile userId callBack =
         (Jd.field "user"
             userWithProfileDecoder
         )
-        callBack
-
-
-
-{- ==============================================================================
-                              商品の情報を取得
-   ==============================================================================
--}
-
-
-getProduct : Product.Id -> (Result String Product.Product -> msg) -> Cmd msg
-getProduct id callBack =
-    graphQlApiRequest
-        (Query
-            [ Field
-                { name = "product"
-                , args = [ ( "productId", GraphQLString (Product.idToString id) ) ]
-                , return = productReturn
-                }
-            ]
-        )
-        (Jd.field "product" productDecoder)
         callBack
 
 
