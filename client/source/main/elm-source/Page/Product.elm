@@ -52,7 +52,7 @@ type Model
         , productEditor : ProductEditor.Model
         , sending : Bool
         }
-    | Confirm { product : Product.Id }
+    | Confirm Product.Id
 
 
 type Cmd
@@ -128,7 +128,7 @@ getProductId model =
         Edit { beforeProduct } ->
             beforeProduct
 
-        Confirm { product } ->
+        Confirm product ->
             product
 
 
@@ -243,7 +243,7 @@ update allProductsMaybe msg model =
         ToConfirmPage ->
             ( case model of
                 Normal { product } ->
-                    Confirm { product = product }
+                    Confirm product
 
                 _ ->
                     model
@@ -424,10 +424,10 @@ view logInState isWideScreen nowMaybe productAllMaybe model =
 
         ( Edit { productEditor, beforeProduct, sending }, Just productAll ) ->
             let
-                product =
+                productId =
                     productAll |> Product.searchFromId beforeProduct
             in
-            { title = Just (Product.getName product)
+            { title = Just (Product.getName productId)
             , tab = BasicParts.tabNone
             , html =
                 [ Page.Style.containerKeyed
@@ -452,7 +452,7 @@ view logInState isWideScreen nowMaybe productAllMaybe model =
             , bottomNavigation = Nothing
             }
 
-        ( Confirm { product }, Just productAll ) ->
+        ( Confirm product, Just productAll ) ->
             let
                 productData =
                     productAll |> Product.searchFromId product
@@ -778,14 +778,13 @@ commentInputArea : Bool -> Api.Token -> Html.Styled.Html Msg
 commentInputArea sending token =
     Html.Styled.div
         []
-        ([ Html.Styled.textarea
+        (Html.Styled.textarea
             [ Html.Styled.Events.onInput InputComment
             , Html.Styled.Attributes.class "form-textarea"
             , Html.Styled.Attributes.id commentTextAreaId
             ]
             []
-         ]
-            ++ (if sending then
+            :: (if sending then
                     [ Html.Styled.button
                         [ Html.Styled.Attributes.css [ Component.Comment.commentSendButtonStyle ]
                         , Html.Styled.Attributes.disabled True
@@ -818,10 +817,9 @@ productsViewPriceAndBuyButton isWideScreen product userWithNameMaybe =
             , ( "product-priceAndBuyButton-wide", isWideScreen )
             ]
         ]
-        ([ Html.div [ Html.Attributes.class "product-price" ]
+        (Html.div [ Html.Attributes.class "product-price" ]
             [ Html.text (Product.priceToString (Product.getPrice product)) ]
-         ]
-            ++ (case buyButton product userWithNameMaybe of
+            :: (case buyButton product userWithNameMaybe of
                     Just button ->
                         [ button ]
 
@@ -858,8 +856,8 @@ tradeStartButton logInState productId =
     Html.Styled.div
         []
         [ Html.Styled.button
-            ([ Html.Styled.Attributes.class "mainButton" ]
-                ++ (case LogInState.getToken logInState of
+            (Html.Styled.Attributes.class "mainButton"
+                :: (case LogInState.getToken logInState of
                         Just accessToken ->
                             [ Html.Styled.Events.onClick (TradeStart accessToken productId) ]
 
@@ -892,8 +890,8 @@ editOkCancelButton token productId sending requestDataMaybe =
                 ]
                 [ Html.Styled.text "キャンセル" ]
             , Html.Styled.button
-                ([ Html.Styled.Attributes.class "profile-editOkButton" ]
-                    ++ (case requestDataMaybe of
+                (Html.Styled.Attributes.class "profile-editOkButton"
+                    :: (case requestDataMaybe of
                             Just requestData ->
                                 [ Html.Styled.Events.onClick (UpdateProductData token productId requestData)
                                 , Html.Styled.Attributes.disabled False

@@ -134,9 +134,8 @@ displayGridAndGap gap =
         block =
             Css.block
     in
-    ([ Css.display { block | value = "grid" }
-     ]
-        ++ (if gap == 0 then
+    (Css.display { block | value = "grid" }
+        :: (if gap == 0 then
                 []
 
             else

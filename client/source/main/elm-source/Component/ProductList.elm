@@ -139,9 +139,8 @@ itemView logInState sending product =
         , Html.Styled.Attributes.href (PageLocation.toUrlAsString (PageLocation.Product (Product.getId product)))
         , Html.Styled.Attributes.id (productIdString (Product.getId product))
         ]
-        ([ itemImage (Product.getName product) (Product.getThumbnailImageUrl product)
-         ]
-            ++ (case Product.getStatus product of
+        (itemImage (Product.getName product) (Product.getThumbnailImageUrl product)
+            :: (case Product.getStatus product of
                     Product.Selling ->
                         []
 

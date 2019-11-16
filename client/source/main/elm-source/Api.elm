@@ -1283,9 +1283,8 @@ searchProducts condition callBack =
 
 searchConditionToArgs : SearchCondition.Condition -> List ( String, GraphQLValue )
 searchConditionToArgs condition =
-    [ ( "query", GraphQLString (SearchCondition.getQuery condition) )
-    ]
-        ++ (case SearchCondition.getCategory condition of
+    ( "query", GraphQLString (SearchCondition.getQuery condition) )
+        :: (case SearchCondition.getCategory condition of
                 SearchCondition.CategoryNone ->
                     []
 
@@ -1553,21 +1552,3 @@ graphQLErrorResponseDecoderWithoutToken =
             (Jd.field "message" Jd.string)
         )
         |> Jd.map (String.join ", ")
-
-
-batchError : List (Result String ()) -> Result String ()
-batchError list =
-    case list of
-        [] ->
-            Err "空のエラー"
-
-        (Ok ()) :: _ ->
-            Ok ()
-
-        (Err message) :: xs ->
-            case batchError xs of
-                Ok () ->
-                    Ok ()
-
-                Err messageJoined ->
-                    Err (message ++ ",\n" ++ messageJoined)

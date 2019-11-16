@@ -16,8 +16,6 @@ module Page.Notification exposing
 -}
 
 import BasicParts
-import Html
-import Html.Attributes
 import Html.Styled
 
 

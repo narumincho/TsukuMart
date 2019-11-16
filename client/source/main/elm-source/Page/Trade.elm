@@ -334,8 +334,8 @@ mainView sending token timeData user allProducts comments trade =
                 Trade.Finish ->
                     []
            )
-        ++ [ commentView timeData user allProducts trade comments ]
-        ++ (case tradeStatus of
+        ++ commentView timeData user allProducts trade comments
+        :: (case tradeStatus of
                 Trade.InProgress ->
                     [ finishButton sending position token ]
 
@@ -434,14 +434,13 @@ commentInputArea : Maybe Sending -> Api.Token -> Html.Styled.Html Msg
 commentInputArea sending token =
     Html.Styled.div
         []
-        ([ Html.Styled.textarea
+        (Html.Styled.textarea
             [ Html.Styled.Events.onInput InputComment
             , Html.Styled.Attributes.class "form-textarea"
             , Html.Styled.Attributes.id commentTextAreaId
             ]
             []
-         ]
-            ++ (case sending of
+            :: (case sending of
                     Just Comment ->
                         [ Html.Styled.button
                             [ Html.Styled.Attributes.css [ Component.Comment.commentSendButtonStyle ]

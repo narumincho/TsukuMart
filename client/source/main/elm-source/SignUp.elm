@@ -3,6 +3,7 @@ port module SignUp exposing (main)
 import Api
 import BasicParts
 import Browser
+import Component.University as University
 import Css
 import Data.EmailAddress
 import Data.ImageId
@@ -13,7 +14,6 @@ import Html.Styled.Attributes
 import Html.Styled.Events
 import Html.Styled.Keyed
 import Icon
-import Component.University as University
 import Page.Style
 
 
@@ -94,7 +94,7 @@ main =
 init : { sendEmailToken : String, imageId : String, name : String } -> ( Model, Cmd Msg )
 init { sendEmailToken, imageId, name } =
     let
-        ( universityModel, universityCmd ) =
+        ( universityModel, _ ) =
             University.initModelNone
     in
     ( Normal
@@ -409,14 +409,13 @@ nameView : String -> Html.Styled.Html Msg
 nameView name =
     Page.Style.formItem "名前"
         studentInputId
-        ([ Page.Style.inputText
+        (Page.Style.inputText
             { id = nameInputId
             , type_ = "text"
             , autoComplete = "nickname"
             , required = True
             }
-         ]
-            ++ (if String.length name < 1 then
+            :: (if String.length name < 1 then
                     [ Html.Styled.text "表示名は 1文字以上である必要があります" ]
 
                 else if 50 < String.length name then
@@ -471,7 +470,7 @@ imageInputId =
 
 
 sendingUserDataView : Data.EmailAddress.EmailAddress -> Html.Styled.Html msg
-sendingUserDataView emailAddress =
+sendingUserDataView _ =
     Html.Styled.div
         [ Html.Styled.Attributes.css [ loadingStyle ] ]
         [ Html.Styled.text "新規登録データを送信中"

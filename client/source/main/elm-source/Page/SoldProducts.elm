@@ -51,8 +51,8 @@ initModel userId productIdMaybe =
         , userId = userId
         , productList = productListModel
         }
-    , [ CmdGetSoldProducts userId ]
-        ++ (cmdList |> List.map CmdByProductList)
+    , CmdGetSoldProducts userId
+        :: (cmdList |> List.map CmdByProductList)
     )
 
 

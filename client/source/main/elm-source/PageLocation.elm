@@ -678,8 +678,8 @@ searchResultUrl condition =
 searchFragmentFromCondition : Data.SearchCondition.Condition -> String
 searchFragmentFromCondition condition =
     "#"
-        ++ (([ "query=" ++ Url.percentEncode (Data.SearchCondition.getQuery condition) ]
-                ++ (case Data.SearchCondition.getCategory condition of
+        ++ ((("query=" ++ Url.percentEncode (Data.SearchCondition.getQuery condition))
+                :: (case Data.SearchCondition.getCategory condition of
                         Data.SearchCondition.CategoryNone ->
                             []
 

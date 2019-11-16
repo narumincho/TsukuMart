@@ -97,14 +97,14 @@ view logInState isWideScreen allProducts (Model rec) =
                         2
             }
     , html =
-        [ ProductList.view
+        (ProductList.view
             rec.productListModel
             logInState
             isWideScreen
             (allProducts |> Maybe.map (filterOrSortBySelectedTab rec.tabSelect))
             |> Html.Styled.map MsgByProductList
-        ]
-            ++ (case LogInState.getToken logInState of
+        )
+            :: (case LogInState.getToken logInState of
                     Just _ ->
                         [ exhibitButton ]
 

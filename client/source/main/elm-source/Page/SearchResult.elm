@@ -44,7 +44,7 @@ initModel productIdMaybe condition =
         , condition = condition
         , result = Nothing
         }
-    , [ SearchProducts condition ] ++ (cmdList |> List.map CommandByProductList)
+    , SearchProducts condition :: (cmdList |> List.map CommandByProductList)
     )
 
 

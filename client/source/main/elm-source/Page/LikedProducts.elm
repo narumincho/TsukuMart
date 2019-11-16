@@ -116,22 +116,6 @@ update msg (Model rec) =
             )
 
 
-updateLikedCount : Int -> Product.Id -> NormalModel -> NormalModel
-updateLikedCount likedCount id normalModel =
-    case normalModel of
-        Loading ->
-            Loading
-
-        Normal products ->
-            Normal
-                (products
-                    |> Product.updateById id (Product.updateLikedCount likedCount)
-                )
-
-        Error ->
-            Error
-
-
 view :
     LogInState.LogInState
     -> Bool

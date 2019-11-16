@@ -43,8 +43,8 @@ type Cmd
     | CmdAddLogMessage String
 
 
-initModel : Maybe Product.Id -> LogInState.LogInState -> ( Model, List Cmd )
-initModel goodIdMaybe logInState =
+initModel : LogInState.LogInState -> ( Model, List Cmd )
+initModel logInState =
     ( Model
         { normal = Loading
         , logIn = LogIn.initModel
