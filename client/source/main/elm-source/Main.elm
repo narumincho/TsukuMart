@@ -271,11 +271,11 @@ urlParserInitResultToPageAndCmd key logInState page =
                 |> mapPageModel PageBoughtProducts boughtProductsPageCmdToCmd
 
         PageLocation.InitTradingProducts ->
-            Page.TradesInProgress.initModel Nothing logInState
+            Page.TradesInProgress.initModel logInState
                 |> mapPageModel PageTradesInProgress tradingProductsCmdToCmd
 
         PageLocation.InitTradedProducts ->
-            Page.TradesInPast.initModel Nothing logInState
+            Page.TradesInPast.initModel logInState
                 |> mapPageModel PageTradesInPast tradedProductsCmdToCmd
 
         PageLocation.InitCommentedProducts ->
@@ -1087,11 +1087,11 @@ urlParserResultToPageAndCmd (Model rec) result =
                 |> mapPageModel PageBoughtProducts boughtProductsPageCmdToCmd
 
         PageLocation.TradingProducts ->
-            Page.TradesInProgress.initModel (getProductId rec.page) rec.logInState
+            Page.TradesInProgress.initModel rec.logInState
                 |> mapPageModel PageTradesInProgress tradingProductsCmdToCmd
 
         PageLocation.TradedProducts ->
-            Page.TradesInPast.initModel (getProductId rec.page) rec.logInState
+            Page.TradesInPast.initModel rec.logInState
                 |> mapPageModel PageTradesInPast tradedProductsCmdToCmd
 
         PageLocation.CommentedProducts ->
