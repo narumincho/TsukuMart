@@ -176,7 +176,7 @@ init { accessToken } url key =
             PageLocation.initFromUrl url
 
         ( newPage, cmd ) =
-            urlParserInit Data.LogInState.None key page
+            urlParserInit Data.LogInState.None key Nothing page
     in
     ( Model
         { page = newPage
@@ -233,18 +233,28 @@ init { accessToken } url key =
     )
 
 
-urlParserInit : Data.LogInState.LogInState -> Browser.Navigation.Key -> Maybe PageLocation.InitPageLocation -> ( PageModel, Cmd Msg )
-urlParserInit logInState key page =
+urlParserInit :
+    Data.LogInState.LogInState
+    -> Browser.Navigation.Key
+    -> Maybe (List Data.Product.Product)
+    -> Maybe PageLocation.InitPageLocation
+    -> ( PageModel, Cmd Msg )
+urlParserInit logInState key allProductsMaybe page =
     case page of
         Just p ->
-            urlParserInitResultToPageAndCmd key logInState p
+            urlParserInitResultToPageAndCmd key logInState allProductsMaybe p
 
         Nothing ->
             pageNotFound
 
 
-urlParserInitResultToPageAndCmd : Browser.Navigation.Key -> Data.LogInState.LogInState -> PageLocation.InitPageLocation -> ( PageModel, Cmd Msg )
-urlParserInitResultToPageAndCmd key logInState page =
+urlParserInitResultToPageAndCmd :
+    Browser.Navigation.Key
+    -> Data.LogInState.LogInState
+    -> Maybe (List Data.Product.Product)
+    -> PageLocation.InitPageLocation
+    -> ( PageModel, Cmd Msg )
+urlParserInitResultToPageAndCmd key logInState allProductsMaybe page =
     case page of
         PageLocation.InitHome ->
             Page.Home.initModel Nothing
@@ -303,7 +313,7 @@ urlParserInitResultToPageAndCmd key logInState page =
                 |> mapPageModel PageSearch searchPageCmdToCmd
 
         PageLocation.InitSearchResult condition ->
-            Page.SearchResult.initModel Nothing condition
+            Page.SearchResult.initModel Nothing condition allProductsMaybe
                 |> mapPageModel PageSearchResult searchResultPageCmdToCmd
 
         PageLocation.InitNotification ->
@@ -819,9 +829,6 @@ searchPageCmdToCmd cmd =
 searchResultPageCmdToCmd : Page.SearchResult.Command -> Cmd Msg
 searchResultPageCmdToCmd command =
     case command of
-        Page.SearchResult.SearchProducts condition ->
-            Api.searchProducts condition (Page.SearchResult.SearchProductsResponse >> PageMsgSearchResult >> PageMsg)
-
         Page.SearchResult.CommandByProductList cmd ->
             productListCmdToCmd cmd
 
@@ -1147,7 +1154,7 @@ urlParserResultToPageAndCmd (Model rec) result =
                 |> mapPageModel PageSearch searchPageCmdToCmd
 
         PageLocation.SearchResult condition ->
-            Page.SearchResult.initModel (getProductId rec.page) condition
+            Page.SearchResult.initModel (getProductId rec.page) condition rec.allProducts
                 |> mapPageModel PageSearchResult searchResultPageCmdToCmd
 
         PageLocation.Notification ->
@@ -1405,7 +1412,7 @@ titleAndTabDataAndMainView logInState isWideScreen nowMaybe allProductsMaybe pag
 
         PageSearchResult model ->
             model
-                |> Page.SearchResult.view logInState isWideScreen
+                |> Page.SearchResult.view logInState isWideScreen allProductsMaybe
                 |> mapPageMsg PageMsgSearchResult
 
         PageNotification model ->
