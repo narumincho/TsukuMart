@@ -12,6 +12,7 @@ module Component.ProductEditor exposing
     )
 
 import Api
+import Component.Category as CategoryComp
 import Css
 import Data.Category as Category
 import Data.ImageId as ImageId
@@ -21,7 +22,6 @@ import Html.Styled
 import Html.Styled.Attributes
 import Html.Styled.Events
 import Icon
-import Component.Category as CategoryComp
 import Page.Style
 import Set
 import Utility
@@ -73,8 +73,8 @@ initModelBlank =
         , beforeImageIds = []
         , deleteImagesAt = Set.empty
         }
-    , [ CmdAddEventListenerForProductImages { labelId = photoAddLabelId, inputId = photoAddInputId } ]
-        ++ (categoryCmd |> List.map CmdByCategory)
+    , CmdAddEventListenerForProductImages { labelId = photoAddLabelId, inputId = photoAddInputId }
+        :: (categoryCmd |> List.map CmdByCategory)
     )
 
 
@@ -489,7 +489,7 @@ nameView name =
     Page.Style.formItem
         "商品名"
         nameEditorId
-        ([ Html.Styled.input
+        (Html.Styled.input
             [ Html.Styled.Attributes.placeholder "40文字まで"
             , Html.Styled.Attributes.class "form-input"
             , Html.Styled.Attributes.id nameEditorId
@@ -497,8 +497,7 @@ nameView name =
             , Html.Styled.Events.onInput InputName
             ]
             []
-         ]
-            ++ (case nameCheck name of
+            :: (case nameCheck name of
                     Just errorMsg ->
                         [ Html.Styled.text errorMsg ]
 
@@ -595,7 +594,7 @@ priceEditorId =
 
 
 conditionView : Maybe Product.Condition -> Html.Styled.Html Msg
-conditionView condition =
+conditionView _ =
     Page.Style.formItem
         "商品の状態"
         conditionSelectId

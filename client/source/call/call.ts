@@ -38,6 +38,9 @@ type ElmApp = {
         deleteAllFromLocalStorage: {
             subscribe: (arg: () => void) => void;
         };
+        mainViewScrollToTop: {
+            subscribe: (arg: () => void) => void;
+        };
         elementScrollIntoView: {
             subscribe: (arg: (id: string) => void) => void;
         };
@@ -52,9 +55,6 @@ type ElmApp = {
             ) => void;
         };
         startListenRecommendProducts: {
-            subscribe: (arg: (arg: null) => void) => void;
-        };
-        stopListenRecommendProducts: {
             subscribe: (arg: (arg: null) => void) => void;
         };
         receiveAllProducts: {
@@ -128,6 +128,7 @@ const insideSize = (
         height: height
     };
 };
+
 const productImageFilesResizeAndConvertToDataUrl = async (
     fileList: FileList
 ): Promise<Array<string>> => {
@@ -183,6 +184,7 @@ const checkFileInput = (id: string) => async () => {
     inputElement.value = "";
     window.requestAnimationFrame(checkFileInput(id));
 };
+
 /* Elmを起動!! */
 const app = window.Elm.Main.init({
     flags: {
@@ -221,6 +223,12 @@ app.ports.replaceText.subscribe(({ id, text }) => {
         element.value = text;
     };
     window.requestAnimationFrame(replaceText);
+});
+/* 指定されたidの要素のスクロール位置を(0,0)にする */
+app.ports.mainViewScrollToTop.subscribe(() => {
+    window.requestAnimationFrame(() => {
+        document.getElementById("mainView")?.scroll(0, 0);
+    });
 });
 /* 指定されたidの要素が表示されるようにスクロールさせる */
 app.ports.elementScrollIntoView.subscribe(id => {
@@ -297,22 +305,14 @@ const urlBase64ToUint8Array = (base64String: string) => {
     const firestore = firebase.firestore();
     const productCollection = firestore.collection("product");
     console.log("firestore request");
-    const query = productCollection.orderBy("likedCount", "desc");
-    let unsubscription: () => void;
     app.ports.startListenRecommendProducts.subscribe(async () => {
-        unsubscription = query.onSnapshot(productsQuerySnapshot => {
+        productCollection.onSnapshot(productsQuerySnapshot => {
             console.log("firestore get response");
             app.ports.receiveAllProducts.send(
                 productsQuerySnapshot.docs.map(documentDataToProduct)
             );
         });
     });
-    // app.ports.stopListenRecommendProducts.subscribe(() => {
-    //     if (unsubscription === undefined) {
-    //         return;
-    //     }
-    //     unsubscription();
-    // });
 })();
 
 const documentDataToProduct = (

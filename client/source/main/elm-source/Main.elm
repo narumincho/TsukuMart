@@ -33,6 +33,7 @@ import Page.Product
 import Page.Search
 import Page.SearchResult
 import Page.SoldProducts
+import Page.Style
 import Page.Trade
 import Page.TradesInPast
 import Page.TradesInProgress
@@ -41,6 +42,7 @@ import PageLocation
 import Task
 import Time
 import Url
+import Utility
 
 
 port receiveUserImage : (String -> msg) -> Sub msg
@@ -64,6 +66,9 @@ port saveAccessTokenToLocalStorage : String -> Cmd msg
 port deleteAllFromLocalStorage : () -> Cmd msg
 
 
+port mainViewScrollToTop : () -> Cmd msg
+
+
 port elementScrollIntoView : String -> Cmd msg
 
 
@@ -76,15 +81,13 @@ port changeSelectedIndex : { id : String, index : Int } -> Cmd msg
 port startListenRecommendProducts : () -> Cmd msg
 
 
-port stopListenRecommendProducts : () -> Cmd msg
-
-
 port receiveAllProducts : (List Data.Product.Firestore -> msg) -> Sub msg
 
 
 type Model
     = Model
         { page : PageModel -- 開いているページ
+        , allProducts : Maybe (List Data.Product.Product)
         , wideScreen : Bool
         , message : Maybe String -- ちょっとしたことがあったら表示するもの
         , logInState : Data.LogInState.LogInState
@@ -120,19 +123,19 @@ type Msg
     | UrlChange Url.Url
     | UrlRequest Browser.UrlRequest
     | AddLogMessage String
-    | LogInResponse (Result String Api.Token)
     | LogOut
-    | SignUpConfirmResponse (Result String ())
     | ReceiveProductImages (List String)
     | ReceiveUserImage String
     | GetMyProfileAndLikedProductIdsResponse (Result String ( Data.User.WithName, List Data.Product.Id ))
-    | LikeProductResponse Data.Product.Id (Result String Int)
-    | UnlikeProductResponse Data.Product.Id (Result String Int)
+    | LikeProductResponse Data.Product.Id (Result String ())
+    | UnlikeProductResponse Data.Product.Id (Result String ())
     | ChangeProfileResponse (Result String Data.User.WithProfile)
     | HistoryBack
     | PageMsg PageMsg
     | GetNowTime (Result () ( Time.Posix, Time.Zone ))
     | Jump (Result String Url.Url)
+    | UpdateProducts (List Data.Product.Firestore)
+    | NoOperation
 
 
 type PageMsg
@@ -177,10 +180,11 @@ init { accessToken } url key =
             PageLocation.initFromUrl url
 
         ( newPage, cmd ) =
-            urlParserInit Data.LogInState.None key page
+            urlParserInit Data.LogInState.None key Nothing page
     in
     ( Model
         { page = newPage
+        , allProducts = Nothing
         , wideScreen = False
         , message = Nothing
         , logInState =
@@ -227,23 +231,34 @@ init { accessToken } url key =
                     Time.now
                     Time.here
                     |> Task.attempt GetNowTime
+               , startListenRecommendProducts ()
                ]
         )
     )
 
 
-urlParserInit : Data.LogInState.LogInState -> Browser.Navigation.Key -> Maybe PageLocation.InitPageLocation -> ( PageModel, Cmd Msg )
-urlParserInit logInState key page =
+urlParserInit :
+    Data.LogInState.LogInState
+    -> Browser.Navigation.Key
+    -> Maybe (List Data.Product.Product)
+    -> Maybe PageLocation.InitPageLocation
+    -> ( PageModel, Cmd Msg )
+urlParserInit logInState key allProductsMaybe page =
     case page of
         Just p ->
-            urlParserInitResultToPageAndCmd key logInState p
+            urlParserInitResultToPageAndCmd key logInState allProductsMaybe p
 
         Nothing ->
             pageNotFound
 
 
-urlParserInitResultToPageAndCmd : Browser.Navigation.Key -> Data.LogInState.LogInState -> PageLocation.InitPageLocation -> ( PageModel, Cmd Msg )
-urlParserInitResultToPageAndCmd key logInState page =
+urlParserInitResultToPageAndCmd :
+    Browser.Navigation.Key
+    -> Data.LogInState.LogInState
+    -> Maybe (List Data.Product.Product)
+    -> PageLocation.InitPageLocation
+    -> ( PageModel, Cmd Msg )
+urlParserInitResultToPageAndCmd key logInState allProductsMaybe page =
     case page of
         PageLocation.InitHome ->
             Page.Home.initModel Nothing
@@ -270,11 +285,11 @@ urlParserInitResultToPageAndCmd key logInState page =
                 |> mapPageModel PageBoughtProducts boughtProductsPageCmdToCmd
 
         PageLocation.InitTradingProducts ->
-            Page.TradesInProgress.initModel Nothing logInState
+            Page.TradesInProgress.initModel logInState
                 |> mapPageModel PageTradesInProgress tradingProductsCmdToCmd
 
         PageLocation.InitTradedProducts ->
-            Page.TradesInPast.initModel Nothing logInState
+            Page.TradesInPast.initModel logInState
                 |> mapPageModel PageTradesInPast tradedProductsCmdToCmd
 
         PageLocation.InitCommentedProducts ->
@@ -294,7 +309,7 @@ urlParserInitResultToPageAndCmd key logInState page =
                 |> mapPageModel PageTrade tradePageCmdToCmd
 
         PageLocation.InitUser userId ->
-            Page.User.initModelFromId logInState userId
+            Page.User.initialModel logInState userId
                 |> mapPageModel PageUser userPageCmdToCmd
 
         PageLocation.InitSearch ->
@@ -302,7 +317,7 @@ urlParserInitResultToPageAndCmd key logInState page =
                 |> mapPageModel PageSearch searchPageCmdToCmd
 
         PageLocation.InitSearchResult condition ->
-            Page.SearchResult.initModel Nothing condition
+            Page.SearchResult.initModel Nothing condition allProductsMaybe
                 |> mapPageModel PageSearchResult searchResultPageCmdToCmd
 
         PageLocation.InitNotification ->
@@ -359,49 +374,6 @@ update msg (Model rec) =
             , Cmd.none
             )
 
-        LogInResponse result ->
-            case result of
-                Ok token ->
-                    ( Model
-                        { rec
-                            | message = Just "ログインしました"
-                            , logInState =
-                                Data.LogInState.LoadingProfile token
-                        }
-                    , Cmd.batch
-                        []
-                    )
-
-                Err string ->
-                    ( Model
-                        { rec | message = Just ("ログインに失敗しました" ++ string) }
-                    , Cmd.none
-                    )
-
-        SignUpConfirmResponse response ->
-            case response of
-                Ok _ ->
-                    let
-                        ( newModel, cmds ) =
-                            Page.Home.initModel (getProductId rec.page)
-                    in
-                    ( Model
-                        { rec
-                            | message = Just "新規登録完了"
-                            , page = PageHome newModel
-                        }
-                    , Cmd.batch
-                        ([ Browser.Navigation.pushUrl rec.key (PageLocation.toUrlAsString PageLocation.Home)
-                         ]
-                            ++ List.map homePageCmdToCmd cmds
-                        )
-                    )
-
-                Err e ->
-                    ( Model rec
-                    , Cmd.none
-                    )
-
         ReceiveProductImages dataUrlList ->
             case rec.page of
                 PageExhibition exhibitionPageModel ->
@@ -422,6 +394,7 @@ update msg (Model rec) =
                     let
                         ( newModel, cmds ) =
                             Page.Product.update
+                                rec.allProducts
                                 (Page.Product.MsgByProductEditor
                                     (Component.ProductEditor.InputImageList dataUrlList)
                                 )
@@ -446,7 +419,7 @@ update msg (Model rec) =
         PageMsg pageMsg ->
             let
                 ( pageModel, cmd ) =
-                    updatePageMsg pageMsg (Model rec)
+                    updatePageMsg rec.allProducts pageMsg (Model rec)
             in
             ( Model { rec | page = pageModel }
             , cmd
@@ -476,7 +449,7 @@ update msg (Model rec) =
         LikeProductResponse id response ->
             let
                 ( page, cmd ) =
-                    updateLikedCountInEachPageProduct rec.key id response rec.page
+                    updateLikedCountInEachPageProduct rec.key id rec.allProducts response rec.page
             in
             ( Model
                 { rec
@@ -489,7 +462,7 @@ update msg (Model rec) =
         UnlikeProductResponse id response ->
             let
                 ( page, cmd ) =
-                    updateLikedCountInEachPageProduct rec.key id response rec.page
+                    updateLikedCountInEachPageProduct rec.key id rec.allProducts response rec.page
             in
             ( Model
                 { rec
@@ -563,9 +536,27 @@ update msg (Model rec) =
                     , Cmd.none
                     )
 
+        UpdateProducts products ->
+            case products |> List.map Data.Product.fromFirestore |> Utility.sequenceMaybeList of
+                Just allProducts ->
+                    ( Model { rec | allProducts = Just allProducts }
+                    , Cmd.none
+                    )
 
-updatePageMsg : PageMsg -> Model -> ( PageModel, Cmd Msg )
-updatePageMsg pageMsg (Model rec) =
+                Nothing ->
+                    ( Model rec
+                    , Task.succeed ()
+                        |> Task.perform (always (AddLogMessage "FireStoreから取得した商品データの型が合わない"))
+                    )
+
+        NoOperation ->
+            ( Model rec
+            , Cmd.none
+            )
+
+
+updatePageMsg : Maybe (List Data.Product.Product) -> PageMsg -> Model -> ( PageModel, Cmd Msg )
+updatePageMsg allProductsMaybe pageMsg (Model rec) =
     case ( pageMsg, rec.page ) of
         ( PageMsgHome msg, PageHome model ) ->
             model
@@ -639,7 +630,7 @@ updatePageMsg pageMsg (Model rec) =
 
         ( PageMsgProduct msg, PageProduct model ) ->
             model
-                |> Page.Product.update msg
+                |> Page.Product.update allProductsMaybe msg
                 |> mapPageModel PageProduct (productPageCmdToCmd rec.key)
 
         ( PageMsgTrade msg, PageTrade model ) ->
@@ -669,15 +660,6 @@ mapPageModel modelFunc cmdListFunc ( eachPageMsg, eachPageCmdList ) =
 homePageCmdToCmd : Page.Home.Cmd -> Cmd Msg
 homePageCmdToCmd cmd =
     case cmd of
-        Page.Home.CmdGetRecentProducts ->
-            Api.getRecentProductList (Page.Home.GetRecentProductsResponse >> PageMsgHome >> PageMsg)
-
-        Page.Home.CmdGetRecommendProducts ->
-            startListenRecommendProducts ()
-
-        Page.Home.CmdGetFreeProducts ->
-            Api.getFreeProductList (Page.Home.GetFreeProductsResponse >> PageMsgHome >> PageMsg)
-
         Page.Home.CmdProducts e ->
             productListCmdToCmd e
 
@@ -725,7 +707,7 @@ soldProductsPageCmdToCmd : Page.SoldProducts.Cmd -> Cmd Msg
 soldProductsPageCmdToCmd cmd =
     case cmd of
         Page.SoldProducts.CmdGetSoldProducts userId ->
-            Api.getSoldProductList userId
+            Api.getSoldProductIds userId
                 (Page.SoldProducts.GetSoldProductListResponse >> PageMsgSoldProducts >> PageMsg)
 
         Page.SoldProducts.CmdByProductList e ->
@@ -739,9 +721,9 @@ soldProductsPageCmdToCmd cmd =
 boughtProductsPageCmdToCmd : Page.BoughtProducts.Cmd -> Cmd Msg
 boughtProductsPageCmdToCmd cmd =
     case cmd of
-        Page.BoughtProducts.CmdGetPurchaseProducts token ->
-            Api.getBoughtProductList token
-                (Page.BoughtProducts.GetProductsResponse >> PageMsgBoughtProducts >> PageMsg)
+        Page.BoughtProducts.CmdRequestPurchaseProductIds token ->
+            Api.getBoughtProductIds token
+                (Page.BoughtProducts.GetResponse >> PageMsgBoughtProducts >> PageMsg)
 
         Page.BoughtProducts.CmdByLogIn e ->
             logInCmdToCmd e
@@ -788,7 +770,7 @@ commentedProductsCmdToCmd : Page.CommentedProducts.Cmd -> Cmd Msg
 commentedProductsCmdToCmd cmd =
     case cmd of
         Page.CommentedProducts.CmdGetCommentedProducts token ->
-            Api.getCommentedProductList token
+            Api.getCommentedProductIds token
                 (Page.CommentedProducts.GetProductsResponse >> PageMsgCommentedProducts >> PageMsg)
 
         Page.CommentedProducts.CmdByLogIn e ->
@@ -851,9 +833,6 @@ searchPageCmdToCmd cmd =
 searchResultPageCmdToCmd : Page.SearchResult.Command -> Cmd Msg
 searchResultPageCmdToCmd command =
     case command of
-        Page.SearchResult.SearchProducts condition ->
-            Api.searchProducts condition (Page.SearchResult.SearchProductsResponse >> PageMsgSearchResult >> PageMsg)
-
         Page.SearchResult.CommandByProductList cmd ->
             productListCmdToCmd cmd
 
@@ -898,17 +877,13 @@ userPageCmdToCmd cmd =
 productPageCmdToCmd : Browser.Navigation.Key -> Page.Product.Cmd -> Cmd Msg
 productPageCmdToCmd key cmd =
     case cmd of
-        Page.Product.CmdGetProduct { productId } ->
-            Api.getProduct productId
-                (Page.Product.GetProductResponse >> PageMsgProduct >> PageMsg)
-
         Page.Product.CmdGetProductAndMarkHistory { productId, token } ->
             Api.markProductInHistory
                 productId
                 token
-                (Page.Product.GetProductResponse >> PageMsgProduct >> PageMsg)
+                (always NoOperation)
 
-        Page.Product.CmdGetCommentList { productId } ->
+        Page.Product.CmdGetCommentList productId ->
             Api.getProductComments productId (Page.Product.GetCommentListResponse >> PageMsgProduct >> PageMsg)
 
         Page.Product.CmdAddComment token { productId } comment ->
@@ -952,13 +927,16 @@ productPageCmdToCmd key cmd =
                 productId
                 requestData
                 token
-                (Page.Product.UpdateProductDataResponse >> PageMsgProduct >> PageMsg)
+                (Result.map (always ()) >> Page.Product.UpdateProductDataResponse >> PageMsgProduct >> PageMsg)
 
         Page.Product.CmdReplaceElementText idAndText ->
             replaceText idAndText
 
         Page.Product.CmdJumpToHome ->
             Browser.Navigation.load (PageLocation.toUrlAsString PageLocation.Home)
+
+        Page.Product.CmdScrollToTop ->
+            mainViewScrollToTop ()
 
 
 tradePageCmdToCmd : Page.Trade.Cmd -> Cmd Msg
@@ -971,8 +949,8 @@ tradePageCmdToCmd cmd =
                 Time.here
                 |> Task.attempt GetNowTime
 
-        Page.Trade.CmdGetTradeDetail token id ->
-            Api.getTradeDetail id token (Page.Trade.TradeDetailResponse >> PageMsgTrade >> PageMsg)
+        Page.Trade.CmdGetTrade token id ->
+            Api.getTradeAndComments id token (Page.Trade.TradeResponse >> PageMsgTrade >> PageMsg)
 
         Page.Trade.CmdAddComment token id string ->
             Api.addTradeComment id string token (Page.Trade.AddCommentResponse >> PageMsgTrade >> PageMsg)
@@ -1123,11 +1101,11 @@ urlParserResultToPageAndCmd (Model rec) result =
                 |> mapPageModel PageBoughtProducts boughtProductsPageCmdToCmd
 
         PageLocation.TradingProducts ->
-            Page.TradesInProgress.initModel (getProductId rec.page) rec.logInState
+            Page.TradesInProgress.initModel rec.logInState
                 |> mapPageModel PageTradesInProgress tradingProductsCmdToCmd
 
         PageLocation.TradedProducts ->
-            Page.TradesInPast.initModel (getProductId rec.page) rec.logInState
+            Page.TradesInPast.initModel rec.logInState
                 |> mapPageModel PageTradesInPast tradedProductsCmdToCmd
 
         PageLocation.CommentedProducts ->
@@ -1161,13 +1139,7 @@ urlParserResultToPageAndCmd (Model rec) result =
                     ( rec.page, Cmd.none )
 
         PageLocation.Product productId ->
-            (case getProductFromPage productId rec.page of
-                Just product ->
-                    Page.Product.initModelFromProduct rec.logInState product
-
-                Nothing ->
-                    Page.Product.initModel rec.logInState productId
-            )
+            Page.Product.initModel rec.logInState productId
                 |> mapPageModel PageProduct (productPageCmdToCmd rec.key)
 
         PageLocation.Trade tradeId ->
@@ -1181,13 +1153,7 @@ urlParserResultToPageAndCmd (Model rec) result =
                 |> mapPageModel PageTrade tradePageCmdToCmd
 
         PageLocation.User userId ->
-            (case getUserFromPage userId rec.page of
-                Just userWithName ->
-                    Page.User.initModelWithName userWithName
-
-                Nothing ->
-                    Page.User.initModelFromId rec.logInState userId
-            )
+            Page.User.initialModel rec.logInState userId
                 |> mapPageModel PageUser userPageCmdToCmd
 
         PageLocation.Search ->
@@ -1195,7 +1161,7 @@ urlParserResultToPageAndCmd (Model rec) result =
                 |> mapPageModel PageSearch searchPageCmdToCmd
 
         PageLocation.SearchResult condition ->
-            Page.SearchResult.initModel (getProductId rec.page) condition
+            Page.SearchResult.initModel (getProductId rec.page) condition rec.allProducts
                 |> mapPageModel PageSearchResult searchResultPageCmdToCmd
 
         PageLocation.Notification ->
@@ -1222,47 +1188,6 @@ getProductId page =
             Nothing
 
 
-getProductFromPage : Data.Product.Id -> PageModel -> Maybe Data.Product.Product
-getProductFromPage productId pageModel =
-    (case pageModel of
-        PageHome model ->
-            Page.Home.getAllProducts model
-
-        PageLikedProducts model ->
-            Page.LikedProducts.getAllProducts model
-
-        PageHistory model ->
-            Page.History.getAllProducts model
-
-        PageSoldProducts model ->
-            Page.SoldProducts.getAllProducts model
-
-        PageBoughtProducts model ->
-            Page.BoughtProducts.getAllProducts model
-
-        PageTradesInProgress model ->
-            Page.TradesInProgress.getAllProducts model
-
-        PageTradesInPast model ->
-            Page.TradesInPast.getAllProducts model
-
-        PageCommentedProducts model ->
-            Page.CommentedProducts.getAllProducts model
-
-        PageProduct model ->
-            case Page.Product.getProduct model of
-                Just product ->
-                    [ product ]
-
-                Nothing ->
-                    []
-
-        _ ->
-            []
-    )
-        |> Data.Product.searchFromId productId
-
-
 getTradeFromPage : Data.Trade.Id -> PageModel -> Maybe Data.Trade.Trade
 getTradeFromPage tradeId pageModel =
     (case pageModel of
@@ -1278,25 +1203,16 @@ getTradeFromPage tradeId pageModel =
         |> Data.Trade.searchFromId tradeId
 
 
-getUserFromPage : Data.User.Id -> PageModel -> Maybe Data.User.WithName
-getUserFromPage userId pageModel =
-    (case pageModel of
-        PageProduct model ->
-            Page.Product.getUser model
-
-        PageUser model ->
-            Page.User.getUser model
-
-        _ ->
-            []
-    )
-        |> Data.User.searchFromId userId
-
-
 {-| 各ページにいいねを押した結果を反映するように通知する
 -}
-updateLikedCountInEachPageProduct : Browser.Navigation.Key -> Data.Product.Id -> Result String Int -> PageModel -> ( PageModel, Cmd Msg )
-updateLikedCountInEachPageProduct key productId result page =
+updateLikedCountInEachPageProduct :
+    Browser.Navigation.Key
+    -> Data.Product.Id
+    -> Maybe (List Data.Product.Product)
+    -> Result String ()
+    -> PageModel
+    -> ( PageModel, Cmd Msg )
+updateLikedCountInEachPageProduct key productId allProductsMaybe result page =
     let
         productListMsg =
             Component.ProductList.UpdateLikedCountResponse productId result
@@ -1329,7 +1245,7 @@ updateLikedCountInEachPageProduct key productId result page =
 
         PageProduct msg ->
             msg
-                |> Page.Product.update (Page.Product.LikeResponse result)
+                |> Page.Product.update allProductsMaybe (Page.Product.LikeResponse result)
                 |> mapPageModel PageProduct (productPageCmdToCmd key)
 
         _ ->
@@ -1345,82 +1261,68 @@ updateLikedCountInEachPageProduct key productId result page =
 {-| 見た目を決める
 -}
 view : Model -> { title : String, body : List (Html.Styled.Html Msg) }
-view (Model { page, wideScreen, message, logInState, now }) =
+view (Model rec) =
     let
         { title, tab, html, bottomNavigation } =
-            titleAndTabDataAndMainView logInState wideScreen now page
+            titleAndTabDataAndMainView rec.logInState rec.wideScreen rec.now rec.allProducts rec.page
     in
     { title = title
     , body =
-        [ BasicParts.headerWithBackArrow
-            |> Html.Styled.map (always HistoryBack)
-        ]
-            ++ (if wideScreen then
-                    [ BasicParts.menu logInState ]
+        [ Html.Styled.div
+            [ Html.Styled.Attributes.css
+                [ Page.Style.displayGridAndGap 0
+                , Page.Style.gridTemplateColumns "max-content 1fr"
+                , Page.Style.gridTemplateRows "64px max-content 1fr max-content"
+                , Css.height (Css.pct 100)
+                , Css.property "word-wrap" "break-word"
+                ]
+            ]
+            ([ BasicParts.headerWithBackArrow
+                |> Html.Styled.map (always HistoryBack)
+             ]
+                ++ (if rec.wideScreen then
+                        [ BasicParts.menu rec.logInState ]
 
-                else
-                    []
-               )
-            ++ [ BasicParts.tabView wideScreen tab |> Html.Styled.map PageMsg
-               , Html.Styled.div
-                    [ Html.Styled.Attributes.css
-                        [ mainViewPaddingStyle tab wideScreen
-                        , Css.property "word-wrap" "break-word"
-                        , Css.overflowX Css.hidden
-                        , Css.width (Css.pct 100)
+                    else
+                        []
+                   )
+                ++ [ BasicParts.tabView tab |> Html.Styled.map PageMsg
+                   , Html.Styled.div
+                        [ Html.Styled.Attributes.id "mainView"
+                        , Html.Styled.Attributes.css
+                            [ Css.overflowX Css.auto
+                            , Page.Style.gridColumn 2 3
+                            , Page.Style.gridRow 3 4
+                            , Page.Style.webkitOverflowScrolling
+                            ]
                         ]
-                    ]
-                    html
-                    |> Html.Styled.map PageMsg
-               ]
-            ++ (case message of
-                    Just m ->
-                        [ Html.Styled.Keyed.node "div" [] [ ( m, messageView m ) ] ]
+                        html
+                        |> Html.Styled.map PageMsg
+                   ]
+                ++ (case rec.message of
+                        Just m ->
+                            [ Html.Styled.Keyed.node "div" [] [ ( m, messageView m ) ] ]
 
-                    Nothing ->
-                        []
-               )
-            ++ (case ( wideScreen, bottomNavigation ) of
-                    ( False, Just select ) ->
-                        [ BasicParts.bottomNavigation logInState select ]
+                        Nothing ->
+                            []
+                   )
+                ++ (case ( rec.wideScreen, bottomNavigation ) of
+                        ( False, Just select ) ->
+                            [ BasicParts.bottomNavigation rec.logInState select ]
 
-                    ( _, _ ) ->
-                        []
-               )
-    }
-
-
-mainViewPaddingStyle : BasicParts.Tab msg -> Bool -> Css.Style
-mainViewPaddingStyle tab wideScreen =
-    let
-        paddingTop =
-            (if BasicParts.isTabNone tab then
-                64
-
-             else
-                112
+                        ( _, _ ) ->
+                            []
+                   )
             )
-                |> Css.px
-    in
-    if wideScreen then
-        Css.padding4
-            paddingTop
-            Css.zero
-            Css.zero
-            (Css.px 320)
-
-    else
-        Css.padding4
-            paddingTop
-            Css.zero
-            (Css.px 64)
-            Css.zero
+        ]
+    }
 
 
 titleAndTabDataAndMainView :
     Data.LogInState.LogInState
     -> Bool
     -> Maybe ( Time.Posix, Time.Zone )
+    -> Maybe (List Data.Product.Product)
     -> PageModel
     ->
         { title : String
@@ -1428,11 +1330,11 @@ titleAndTabDataAndMainView :
         , bottomNavigation : Maybe BasicParts.BottomNavigationSelect
         , html : List (Html.Styled.Html PageMsg)
         }
-titleAndTabDataAndMainView logInState isWideScreen nowMaybe page =
+titleAndTabDataAndMainView logInState isWideScreen nowMaybe allProductsMaybe page =
     case page of
         PageHome model ->
             model
-                |> Page.Home.view logInState isWideScreen
+                |> Page.Home.view logInState isWideScreen allProductsMaybe
                 |> mapPageMsg PageMsgHome
 
         PageLikedProducts model ->
@@ -1447,27 +1349,27 @@ titleAndTabDataAndMainView logInState isWideScreen nowMaybe page =
 
         PageBoughtProducts model ->
             model
-                |> Page.BoughtProducts.view logInState isWideScreen
+                |> Page.BoughtProducts.view logInState isWideScreen allProductsMaybe
                 |> mapPageMsg PageMsgBoughtProducts
 
         PageSoldProducts model ->
             model
-                |> Page.SoldProducts.view logInState isWideScreen
+                |> Page.SoldProducts.view logInState isWideScreen allProductsMaybe
                 |> mapPageMsg PageMsgSoldProducts
 
         PageTradesInProgress model ->
             model
-                |> Page.TradesInProgress.view logInState
+                |> Page.TradesInProgress.view logInState allProductsMaybe
                 |> mapPageMsg PageMsgTradesInProgress
 
         PageTradesInPast model ->
             model
-                |> Page.TradesInPast.view logInState
+                |> Page.TradesInPast.view logInState allProductsMaybe
                 |> mapPageMsg PageMsgTradesInPast
 
         PageCommentedProducts model ->
             model
-                |> Page.CommentedProducts.view logInState isWideScreen
+                |> Page.CommentedProducts.view logInState isWideScreen allProductsMaybe
                 |> mapPageMsg PageMsgCommentedProducts
 
         PageExhibition model ->
@@ -1482,12 +1384,12 @@ titleAndTabDataAndMainView logInState isWideScreen nowMaybe page =
 
         PageProduct model ->
             model
-                |> Page.Product.view logInState isWideScreen nowMaybe
+                |> Page.Product.view logInState isWideScreen nowMaybe allProductsMaybe
                 |> mapPageMsg PageMsgProduct
 
         PageTrade model ->
             model
-                |> Page.Trade.view logInState nowMaybe
+                |> Page.Trade.view logInState nowMaybe allProductsMaybe
                 |> mapPageMsg PageMsgTrade
 
         PageUser model ->
@@ -1502,7 +1404,7 @@ titleAndTabDataAndMainView logInState isWideScreen nowMaybe page =
 
         PageSearchResult model ->
             model
-                |> Page.SearchResult.view logInState isWideScreen
+                |> Page.SearchResult.view logInState isWideScreen allProductsMaybe
                 |> mapPageMsg PageMsgSearchResult
 
         PageNotification model ->
@@ -1588,9 +1490,5 @@ subscription (Model { wideScreen }) =
 
           else
             toWideScreenMode (always ToWideScreenMode)
-        , receiveAllProducts
-            (Page.Home.GetRecommendProductsResponse
-                >> PageMsgHome
-                >> PageMsg
-            )
+        , receiveAllProducts UpdateProducts
         ]

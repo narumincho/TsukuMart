@@ -1366,7 +1366,7 @@ const markProductInHistory = makeQueryOrMutationField<
 
 const likeProduct = makeQueryOrMutationField<
     { accessToken: string; productId: string },
-    type.ProductInternal
+    boolean
 >({
     args: {
         accessToken: {
@@ -1378,19 +1378,20 @@ const likeProduct = makeQueryOrMutationField<
             description: productGraphQLType.getFields().id.description
         }
     },
-    type: g.GraphQLNonNull(productGraphQLType),
+    type: g.GraphQLBoolean,
     resolve: async (source, args, context, info) => {
-        return await database.likeProduct(
+        await database.likeProduct(
             await database.verifyAccessToken(args.accessToken),
             args.productId
         );
+        return true;
     },
     description: "商品にいいねをする"
 });
 
 const unlikeProduct = makeQueryOrMutationField<
     { accessToken: string; productId: string },
-    type.ProductInternal
+    boolean
 >({
     args: {
         accessToken: {
@@ -1402,12 +1403,13 @@ const unlikeProduct = makeQueryOrMutationField<
             description: productGraphQLType.getFields().id.description
         }
     },
-    type: g.GraphQLNonNull(productGraphQLType),
+    type: g.GraphQLBoolean,
     resolve: async (source, args, context, info) => {
-        return await database.unlikeProduct(
+        await database.unlikeProduct(
             await database.verifyAccessToken(args.accessToken),
             args.productId
         );
+        return true;
     },
     description: "商品からいいねを外す"
 });

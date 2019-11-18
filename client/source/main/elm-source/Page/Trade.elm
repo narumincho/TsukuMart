@@ -10,6 +10,7 @@ module Page.Trade exposing
 
 import Api
 import BasicParts
+import Component.Comment
 import Css
 import Data.DateTime
 import Data.LogInState as LogInState
@@ -21,19 +22,18 @@ import Html.Styled
 import Html.Styled.Attributes
 import Html.Styled.Events
 import Icon
-import Component.Comment
 import Page.Style
 import PageLocation
 import Time
 
 
 type Model
-    = CheckTrader Trade.Id
-    | Loading Trade.Trade
+    = CheckingTrader Trade.Id
     | Main
-        { trade : Trade.TradeDetail
+        { trade : Trade.Trade
         , commentInput : String
         , sending : Maybe Sending
+        , comments : Maybe (List Trade.Comment)
         }
 
 
@@ -48,15 +48,15 @@ type Msg
     | AddComment Api.Token
     | FinishTrade Api.Token
     | CancelTrade Api.Token
-    | FinishTradeResponse (Result String Trade.TradeDetail)
-    | CancelTradeResponse (Result String Trade.TradeDetail)
-    | AddCommentResponse (Result String Trade.TradeDetail)
-    | TradeDetailResponse (Result String Trade.TradeDetail)
+    | FinishTradeResponse (Result String ( Trade.Trade, List Trade.Comment ))
+    | CancelTradeResponse (Result String ( Trade.Trade, List Trade.Comment ))
+    | AddCommentResponse (Result String ( Trade.Trade, List Trade.Comment ))
+    | TradeResponse (Result String ( Trade.Trade, List Trade.Comment ))
 
 
 type Cmd
     = CmdUpdateNowTime
-    | CmdGetTradeDetail Api.Token Trade.Id
+    | CmdGetTrade Api.Token Trade.Id
     | CmdAddComment Api.Token Trade.Id String
     | CmdFinishTrade Api.Token Trade.Id
     | CmdCancelTrade Api.Token Trade.Id
@@ -66,10 +66,10 @@ type Cmd
 
 initModelFromId : LogInState.LogInState -> Trade.Id -> ( Model, List Cmd )
 initModelFromId logInState id =
-    ( CheckTrader id
+    ( CheckingTrader id
     , case LogInState.getToken logInState of
         Just token ->
-            [ CmdGetTradeDetail token id ]
+            [ CmdGetTrade token id ]
 
         Nothing ->
             []
@@ -78,10 +78,15 @@ initModelFromId logInState id =
 
 initModelFromTrade : LogInState.LogInState -> Trade.Trade -> ( Model, List Cmd )
 initModelFromTrade logInState trade =
-    ( Loading trade
+    ( Main
+        { trade = trade
+        , commentInput = ""
+        , sending = Nothing
+        , comments = Nothing
+        }
     , case LogInState.getToken logInState of
         Just token ->
-            [ CmdGetTradeDetail token (Trade.getId trade) ]
+            [ CmdGetTrade token (Trade.getId trade) ]
 
         Nothing ->
             []
@@ -90,75 +95,55 @@ initModelFromTrade logInState trade =
 
 update : Msg -> Model -> ( Model, List Cmd )
 update msg model =
-    case msg of
-        InputComment string ->
-            case model of
-                Main rec ->
-                    ( Main { rec | commentInput = string }
-                    , []
+    case ( msg, model ) of
+        ( InputComment string, Main rec ) ->
+            ( Main { rec | commentInput = string }
+            , []
+            )
+
+        ( AddComment token, Main rec ) ->
+            case rec.sending of
+                Just _ ->
+                    ( model
+                    , [ CmdAddLogMessage "同時に複数のリクエストをすることはできません" ]
                     )
 
-                _ ->
-                    ( model, [] )
+                Nothing ->
+                    ( Main { rec | sending = Just Comment }
+                    , [ CmdAddComment token (Trade.getId rec.trade) rec.commentInput ]
+                    )
 
-        AddComment token ->
-            case model of
-                Main rec ->
-                    case rec.sending of
-                        Just _ ->
-                            ( model
-                            , [ CmdAddLogMessage "同時に複数のリクエストをすることはできません" ]
-                            )
+        ( FinishTrade token, Main rec ) ->
+            case rec.sending of
+                Just _ ->
+                    ( model
+                    , [ CmdAddLogMessage "同時に複数のリクエストをすることはできません" ]
+                    )
 
-                        Nothing ->
-                            ( Main { rec | sending = Just Comment }
-                            , [ CmdAddComment token (Trade.detailGetId rec.trade) rec.commentInput ]
-                            )
+                Nothing ->
+                    ( Main { rec | sending = Just Finish }
+                    , [ CmdFinishTrade token (Trade.getId rec.trade) ]
+                    )
 
-                _ ->
-                    ( model, [] )
+        ( CancelTrade token, Main rec ) ->
+            case rec.sending of
+                Just _ ->
+                    ( model
+                    , [ CmdAddLogMessage "同時に複数のリクエストをすることはできません" ]
+                    )
 
-        FinishTrade token ->
-            case model of
-                Main rec ->
-                    case rec.sending of
-                        Just _ ->
-                            ( model
-                            , [ CmdAddLogMessage "同時に複数のリクエストをすることはできません" ]
-                            )
+                Nothing ->
+                    ( Main { rec | sending = Just Cancel }
+                    , [ CmdCancelTrade token (Trade.getId rec.trade) ]
+                    )
 
-                        Nothing ->
-                            ( Main { rec | sending = Just Finish }
-                            , [ CmdFinishTrade token (Trade.detailGetId rec.trade) ]
-                            )
-
-                _ ->
-                    ( model, [] )
-
-        CancelTrade token ->
-            case model of
-                Main rec ->
-                    case rec.sending of
-                        Just _ ->
-                            ( model
-                            , [ CmdAddLogMessage "同時に複数のリクエストをすることはできません" ]
-                            )
-
-                        Nothing ->
-                            ( Main { rec | sending = Just Cancel }
-                            , [ CmdCancelTrade token (Trade.detailGetId rec.trade) ]
-                            )
-
-                _ ->
-                    ( model, [] )
-
-        FinishTradeResponse result ->
+        ( FinishTradeResponse result, Main rec ) ->
             case result of
-                Ok trade ->
-                    ( Main { trade = trade, commentInput = "", sending = Nothing }
+                Ok ( trade, comments ) ->
+                    ( Main { trade = trade, commentInput = "", sending = Nothing, comments = Just comments }
                     , [ CmdReplaceElementText { id = commentTextAreaId, text = "" }
                       , CmdAddLogMessage
-                            (case Trade.detailGetStatus trade of
+                            (case Trade.getStatus trade of
                                 Trade.Finish ->
                                     "取引を完了しました"
 
@@ -169,19 +154,14 @@ update msg model =
                     )
 
                 Err errMsg ->
-                    ( case model of
-                        Main rec ->
-                            Main { rec | sending = Nothing }
-
-                        _ ->
-                            model
+                    ( Main { rec | sending = Nothing }
                     , [ CmdAddLogMessage ("取引の完了に失敗 " ++ errMsg) ]
                     )
 
-        CancelTradeResponse result ->
+        ( CancelTradeResponse result, Main rec ) ->
             case result of
-                Ok trade ->
-                    ( Main { trade = trade, commentInput = "", sending = Nothing }
+                Ok ( trade, comments ) ->
+                    ( Main { trade = trade, commentInput = "", sending = Nothing, comments = Just comments }
                     , [ CmdReplaceElementText { id = commentTextAreaId, text = "" }
                       , CmdAddLogMessage "取引をキャンセルしました"
                       , CmdUpdateNowTime
@@ -189,38 +169,28 @@ update msg model =
                     )
 
                 Err errMsg ->
-                    ( case model of
-                        Main rec ->
-                            Main { rec | sending = Nothing }
-
-                        _ ->
-                            model
+                    ( Main { rec | sending = Nothing }
                     , [ CmdAddLogMessage ("取引のキャンセルに失敗 " ++ errMsg) ]
                     )
 
-        AddCommentResponse result ->
+        ( AddCommentResponse result, Main rec ) ->
             case result of
-                Ok trade ->
-                    ( Main { trade = trade, commentInput = "", sending = Nothing }
+                Ok ( trade, comments ) ->
+                    ( Main { trade = trade, commentInput = "", sending = Nothing, comments = Just comments }
                     , [ CmdReplaceElementText { id = commentTextAreaId, text = "" }
                       , CmdUpdateNowTime
                       ]
                     )
 
                 Err errMsg ->
-                    ( case model of
-                        Main rec ->
-                            Main { rec | sending = Nothing }
-
-                        _ ->
-                            model
+                    ( Main { rec | sending = Nothing }
                     , [ CmdAddLogMessage ("コメントの追加に失敗 " ++ errMsg) ]
                     )
 
-        TradeDetailResponse result ->
+        ( TradeResponse result, _ ) ->
             case result of
-                Ok trade ->
-                    ( Main { trade = trade, commentInput = "", sending = Nothing }
+                Ok ( trade, comments ) ->
+                    ( Main { trade = trade, commentInput = "", sending = Nothing, comments = Just comments }
                     , [ CmdReplaceElementText { id = commentTextAreaId, text = "" }
                       , CmdUpdateNowTime
                       ]
@@ -236,10 +206,16 @@ update msg model =
                     , [ CmdAddLogMessage ("取引の情報の取得に失敗 " ++ errMsg) ]
                     )
 
+        ( _, CheckingTrader _ ) ->
+            ( model
+            , [ CmdAddLogMessage "取引の関係者かどうか調べているときに取引に関する結果を受け取ってしまった" ]
+            )
+
 
 view :
     LogInState.LogInState
     -> Maybe ( Time.Posix, Time.Zone )
+    -> Maybe (List Product.Product)
     -> Model
     ->
         { title : Maybe String
@@ -247,7 +223,7 @@ view :
         , html : List (Html.Styled.Html Msg)
         , bottomNavigation : Maybe BasicParts.BottomNavigationSelect
         }
-view logInState timeData model =
+view logInState timeData allProductsMaybe model =
     { title = Just "取引"
     , tab = BasicParts.tabNone
     , html =
@@ -255,16 +231,20 @@ view logInState timeData model =
             (case logInState of
                 LogInState.Ok { token, userWithName } ->
                     case model of
-                        CheckTrader id ->
-                            [ Html.Styled.text ("id=" ++ Trade.idToString id ++ "の取引データを読み込み中")
+                        CheckingTrader id ->
+                            [ Html.Styled.text ("id=" ++ Trade.idToString id ++ "の取引の関係者かどうかの調べてる")
                             , Icon.loading { size = 64, color = Css.rgb 0 0 0 }
                             ]
 
-                        Loading trade ->
-                            loadingView trade
+                        Main { trade, sending, comments } ->
+                            case allProductsMaybe of
+                                Just allProducts ->
+                                    mainView sending token timeData userWithName allProducts comments trade
 
-                        Main { trade, sending } ->
-                            mainView sending token timeData userWithName trade
+                                Nothing ->
+                                    [ Html.Styled.text "商品データの読み込み中"
+                                    , Icon.loading { size = 64, color = Css.rgb 0 0 0 }
+                                    ]
 
                 LogInState.LoadingProfile _ ->
                     [ Html.Styled.text "読み込み中"
@@ -279,42 +259,26 @@ view logInState timeData model =
     }
 
 
-loadingView : Trade.Trade -> List (Html.Styled.Html Msg)
-loadingView trade =
-    let
-        product =
-            Trade.getProduct trade
-    in
-    [ productImageView [ Product.getThumbnailImageUrl product ]
-    , Page.Style.titleAndContent
-        "商品名"
-        (Html.div [] [ Html.text (Product.getName product) ])
-    , Page.Style.titleAndContent
-        "値段"
-        (Html.div [] [ Html.text (Product.priceToString (Product.getPrice product)) ])
-    , Html.Styled.text "読み込み中"
-    , Icon.loading { size = 64, color = Css.rgb 0 0 0 }
-    ]
-
-
 mainView :
     Maybe Sending
     -> Api.Token
     -> Maybe ( Time.Posix, Time.Zone )
     -> User.WithName
-    -> Trade.TradeDetail
+    -> List Product.Product
+    -> Maybe (List Trade.Comment)
+    -> Trade.Trade
     -> List (Html.Styled.Html Msg)
-mainView sending token timeData user trade =
+mainView sending token timeData user allProducts comments trade =
     let
         product =
-            Trade.detailGetProduct trade
+            allProducts |> Product.searchFromId (Trade.getProductId trade)
 
         tradeStatus =
-            Trade.detailGetStatus trade
+            Trade.getStatus trade
 
         position =
             if
-                User.withNameGetId (Trade.detailGetBuyer trade)
+                User.withNameGetId (Trade.getBuyer trade)
                     == User.withNameGetId user
             then
                 Trade.Buyer
@@ -322,34 +286,34 @@ mainView sending token timeData user trade =
             else
                 Trade.Seller
     in
-    [ productImageView (Product.detailGetImageUrls product)
+    [ productImageView (Product.getImageUrls product)
     , Page.Style.titleAndContent
         "商品名"
-        (Html.div [] [ Html.text (Product.detailGetName product) ])
+        (Html.div [] [ Html.text (Product.getName product) ])
     , Page.Style.titleAndContent
         "値段"
-        (Html.div [] [ Html.text (Product.priceToString (Product.detailGetPrice product)) ])
+        (Html.div [] [ Html.text (Product.priceToString (Product.getPrice product)) ])
     , Page.Style.titleAndContent
         "取引状態"
-        (Html.text (Trade.statusToJapaneseString (Trade.detailGetStatus trade)))
+        (Html.text (Trade.statusToJapaneseString (Trade.getStatus trade)))
     , Page.Style.titleAndContent
         "更新日時"
-        (Html.text (Data.DateTime.toDiffString timeData (Trade.detailGetUpdateAt trade)))
+        (Html.text (Data.DateTime.toDiffString timeData (Trade.getUpdateAt trade)))
     , Page.Style.titleAndContent
         "開始日時"
-        (Html.text (Data.DateTime.toDiffString timeData (Trade.detailGetCreatedAt trade)))
+        (Html.text (Data.DateTime.toDiffString timeData (Trade.getCreatedAt trade)))
     , Html.Styled.a
         [ Html.Styled.Attributes.css
             [ Css.display Css.block ]
         , Html.Styled.Attributes.href
             (PageLocation.toUrlAsString
                 (PageLocation.Product
-                    (Product.detailGetId product)
+                    (Trade.getProductId trade)
                 )
             )
         ]
         [ Html.Styled.text "商品詳細ページ" ]
-    , sellerAndBuyerView (Product.detailGetSeller product) (Trade.detailGetBuyer trade)
+    , sellerAndBuyerView (Product.getSeller product) (Trade.getBuyer trade)
     ]
         ++ (case tradeStatus of
                 Trade.InProgress ->
@@ -370,8 +334,8 @@ mainView sending token timeData user trade =
                 Trade.Finish ->
                     []
            )
-        ++ [ commentView timeData user trade ]
-        ++ (case tradeStatus of
+        ++ commentView timeData user allProducts trade comments
+        :: (case tradeStatus of
                 Trade.InProgress ->
                     [ finishButton sending position token ]
 
@@ -470,14 +434,13 @@ commentInputArea : Maybe Sending -> Api.Token -> Html.Styled.Html Msg
 commentInputArea sending token =
     Html.Styled.div
         []
-        ([ Html.Styled.textarea
+        (Html.Styled.textarea
             [ Html.Styled.Events.onInput InputComment
             , Html.Styled.Attributes.class "form-textarea"
             , Html.Styled.Attributes.id commentTextAreaId
             ]
             []
-         ]
-            ++ (case sending of
+            :: (case sending of
                     Just Comment ->
                         [ Html.Styled.button
                             [ Html.Styled.Attributes.css [ Component.Comment.commentSendButtonStyle ]
@@ -510,22 +473,36 @@ commentTextAreaId =
     "comment-text-area"
 
 
-commentView : Maybe ( Time.Posix, Time.Zone ) -> User.WithName -> Trade.TradeDetail -> Html.Styled.Html msg
-commentView timeData user trade =
+commentView :
+    Maybe ( Time.Posix, Time.Zone )
+    -> User.WithName
+    -> List Product.Product
+    -> Trade.Trade
+    -> Maybe (List Trade.Comment)
+    -> Html.Styled.Html msg
+commentView timeData user allProducts trade commentsMaybe =
     Html.Styled.div
         []
         [ Component.Comment.view timeData
-            (trade
-                |> Trade.detailGetComment
-                |> List.map (tradeCommentToCommentData trade (User.withNameGetId user))
-                |> Just
+            (commentsMaybe
+                |> Maybe.map
+                    (List.map
+                        (tradeCommentToCommentData trade
+                            (User.withNameGetId user)
+                            (allProducts
+                                |> Product.searchFromId (Trade.getProductId trade)
+                                |> Product.getSeller
+                            )
+                        )
+                    )
             )
         ]
 
 
 tradeCommentToCommentData :
-    Trade.TradeDetail
+    Trade.Trade
     -> User.Id
+    -> User.WithName
     -> Trade.Comment
     ->
         { isMine : Bool
@@ -534,16 +511,12 @@ tradeCommentToCommentData :
         , body : String
         , createdAt : Time.Posix
         }
-tradeCommentToCommentData trade myId (Trade.Comment { body, speaker, createdAt }) =
+tradeCommentToCommentData trade myId seller (Trade.Comment { body, speaker, createdAt }) =
     case speaker of
         Trade.Seller ->
-            let
-                commentUser =
-                    trade |> Trade.detailGetProduct |> Product.detailGetSeller
-            in
-            { isMine = User.withNameGetId commentUser == myId
+            { isMine = User.withNameGetId seller == myId
             , isSeller = True
-            , user = commentUser
+            , user = seller
             , body = body
             , createdAt = createdAt
             }
@@ -551,7 +524,7 @@ tradeCommentToCommentData trade myId (Trade.Comment { body, speaker, createdAt }
         Trade.Buyer ->
             let
                 commentUser =
-                    trade |> Trade.detailGetBuyer
+                    trade |> Trade.getBuyer
             in
             { isMine = User.withNameGetId commentUser == myId
             , isSeller = False

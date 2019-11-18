@@ -414,7 +414,9 @@ export const getProduct = async (id: string): Promise<ProductData> => {
  */
 export const updateProductData = async (
     id: string,
-    data: Partial<ProductData>
+    data: {
+        [P in keyof ProductData]?: ProductData[P] | firestore.FieldValue;
+    }
 ): Promise<void> => {
     await productCollectionRef.doc(id).update(data);
 };

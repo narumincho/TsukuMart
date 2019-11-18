@@ -200,7 +200,7 @@ view (Model select) =
 
 
 groupView : Maybe Category.Group -> ( String, Html.Styled.Html Msg )
-groupView categoryGroup =
+groupView _ =
     ( "selectCategoryGroup"
     , Page.Style.formItem
         "カテゴリ グループ"
@@ -220,7 +220,7 @@ groupSelectId =
 
 
 categoryView : Category.Group -> Maybe Category.Category -> ( String, Html.Styled.Html Msg )
-categoryView group category =
+categoryView group _ =
     ( "selectCategory" ++ Category.groupToIdString group
     , Page.Style.formItem
         "カテゴリ"

@@ -10,11 +10,11 @@ module Page.LikedProducts exposing
 
 import Api
 import BasicParts
+import Component.LogIn as LogIn
+import Component.ProductList as ProductList
 import Data.LogInState as LogInState
 import Data.Product as Product
 import Html.Styled
-import Component.LogIn as LogIn
-import Component.ProductList as ProductList
 import Page.Style
 
 
@@ -111,34 +111,9 @@ update msg (Model rec) =
                 ( newModel, cmdList ) =
                     rec.productList |> ProductList.update productListMsg
             in
-            ( case productListMsg of
-                ProductList.UpdateLikedCountResponse id (Ok likedCount) ->
-                    Model
-                        { rec
-                            | normal = updateLikedCount likedCount id rec.normal
-                            , productList = newModel
-                        }
-
-                _ ->
-                    Model { rec | productList = newModel }
+            ( Model { rec | productList = newModel }
             , cmdList |> List.map CmdByProductList
             )
-
-
-updateLikedCount : Int -> Product.Id -> NormalModel -> NormalModel
-updateLikedCount likedCount id normalModel =
-    case normalModel of
-        Loading ->
-            Loading
-
-        Normal products ->
-            Normal
-                (products
-                    |> Product.updateById id (Product.updateLikedCount likedCount)
-                )
-
-        Error ->
-            Error
 
 
 view :

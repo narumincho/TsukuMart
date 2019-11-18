@@ -1,8 +1,6 @@
 module Page.About exposing (Model, aboutModel, privacyPolicyModel, view)
 
 import BasicParts
-import Html
-import Html.Attributes
 import Html.Styled
 import Html.Styled.Attributes
 import Page.Style

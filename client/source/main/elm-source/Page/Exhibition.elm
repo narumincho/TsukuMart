@@ -10,6 +10,8 @@ module Page.Exhibition exposing
 
 import Api
 import BasicParts
+import Component.LogIn as LogIn
+import Component.ProductEditor as ProductEditor
 import Css
 import Data.Category
 import Data.LogInState
@@ -19,8 +21,6 @@ import Html.Styled
 import Html.Styled.Attributes
 import Html.Styled.Events
 import Icon
-import Component.LogIn as LogIn
-import Component.ProductEditor as ProductEditor
 import Page.Style
 import PageLocation
 
@@ -53,7 +53,7 @@ type Msg
     | BackToEditPage
     | LogInOrSignUpMsg LogIn.Msg
     | SellProduct ( Api.Token, Api.SellProductRequest )
-    | SellProductResponse (Result String Product.ProductDetail)
+    | SellProductResponse (Result String Product.Product)
     | MsgByProductEditor ProductEditor.Msg
 
 
@@ -140,7 +140,7 @@ updateWhenLogIn msg page =
                 SellProductResponse result ->
                     ( ConfirmPage rec
                     , case result of
-                        Ok productDetail ->
+                        Ok _ ->
                             [ CmdAddLogMessage "出品しました"
                             , CmdJumpToHome
                             ]

@@ -2,7 +2,6 @@ module Page.BoughtProducts exposing
     ( Cmd(..)
     , Model
     , Msg(..)
-    , getAllProducts
     , initModel
     , update
     , view
@@ -10,11 +9,11 @@ module Page.BoughtProducts exposing
 
 import Api
 import BasicParts
+import Component.LogIn as LogIn
+import Component.ProductList as ProductList
 import Data.LogInState as LogInState
 import Data.Product as Product
 import Html.Styled
-import Component.LogIn as LogIn
-import Component.ProductList as ProductList
 import Page.Style
 
 
@@ -28,18 +27,18 @@ type Model
 
 type NormalModel
     = Loading
-    | Normal (List Product.Product)
+    | Normal (List Product.Id)
     | Error
 
 
 type Msg
-    = GetProductsResponse (Result String (List Product.Product))
+    = GetResponse (Result String (List Product.Id))
     | MsgByLogIn LogIn.Msg
     | MsgByProductList ProductList.Msg
 
 
 type Cmd
-    = CmdGetPurchaseProducts Api.Token
+    = CmdRequestPurchaseProductIds Api.Token
     | CmdByLogIn LogIn.Cmd
     | CmdByProductList ProductList.Cmd
     | CmdAddLogMessage String
@@ -58,7 +57,7 @@ initModel productIdMaybe logInState =
         }
     , (case LogInState.getToken logInState of
         Just accessToken ->
-            [ CmdGetPurchaseProducts accessToken ]
+            [ CmdRequestPurchaseProductIds accessToken ]
 
         Nothing ->
             []
@@ -67,22 +66,10 @@ initModel productIdMaybe logInState =
     )
 
 
-{-| この画面から取得できる商品のデータを集める
--}
-getAllProducts : Model -> List Product.Product
-getAllProducts (Model { normal }) =
-    case normal of
-        Normal products ->
-            products
-
-        _ ->
-            []
-
-
 update : Msg -> Model -> ( Model, List Cmd )
 update msg (Model rec) =
     case msg of
-        GetProductsResponse result ->
+        GetResponse result ->
             case result of
                 Ok products ->
                     ( Model
@@ -110,11 +97,10 @@ update msg (Model rec) =
                     rec.productList |> ProductList.update productListMsg
             in
             ( case productListMsg of
-                ProductList.UpdateLikedCountResponse id (Ok likedCount) ->
+                ProductList.UpdateLikedCountResponse id (Ok ()) ->
                     Model
                         { rec
-                            | normal = updateLikedCount likedCount id rec.normal
-                            , productList = newModel
+                            | productList = newModel
                         }
 
                 _ ->
@@ -123,25 +109,10 @@ update msg (Model rec) =
             )
 
 
-updateLikedCount : Int -> Product.Id -> NormalModel -> NormalModel
-updateLikedCount likedCount id normalModel =
-    case normalModel of
-        Loading ->
-            Loading
-
-        Normal products ->
-            Normal
-                (products
-                    |> Product.updateById id (Product.updateLikedCount likedCount)
-                )
-
-        Error ->
-            Error
-
-
 view :
     LogInState.LogInState
     -> Bool
+    -> Maybe (List Product.Product)
     -> Model
     ->
         { title : Maybe String
@@ -149,7 +120,7 @@ view :
         , html : List (Html.Styled.Html Msg)
         , bottomNavigation : Maybe BasicParts.BottomNavigationSelect
         }
-view logInState isWideScreen (Model rec) =
+view logInState isWideScreen allProductsMaybe (Model rec) =
     { title = Just "購入した商品"
     , tab = BasicParts.tabSingle "購入した商品"
     , html =
@@ -168,14 +139,17 @@ view logInState isWideScreen (Model rec) =
                     rec.productList
                     logInState
                     isWideScreen
-                    (case rec.normal of
-                        Loading ->
+                    (case ( rec.normal, allProductsMaybe ) of
+                        ( Normal productIds, Just allProducts ) ->
+                            Just (productIds |> List.map (\id -> Product.searchFromId id allProducts))
+
+                        ( Normal _, Nothing ) ->
                             Nothing
 
-                        Normal products ->
-                            Just products
+                        ( Loading, _ ) ->
+                            Nothing
 
-                        Error ->
+                        ( Error, _ ) ->
                             Just []
                     )
                     |> Html.Styled.map MsgByProductList

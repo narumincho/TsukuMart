@@ -8,33 +8,31 @@ module Page.SearchResult exposing
     )
 
 import BasicParts
+import Component.ProductList as ProductList
 import Data.LogInState
 import Data.Product
 import Data.SearchCondition as SearchCondition
 import Html.Styled
-import Component.ProductList as ProductList
 
 
 type Model
     = Model
         { productList : ProductList.Model
         , condition : SearchCondition.Condition
-        , result : Maybe (List Data.Product.Product)
+        , result : Maybe (List Data.Product.Id)
         }
 
 
 type Msg
-    = SearchProductsResponse (Result String (List Data.Product.Product))
-    | MessageFromProductList ProductList.Msg
+    = MessageFromProductList ProductList.Msg
 
 
 type Command
-    = SearchProducts SearchCondition.Condition
-    | CommandByProductList ProductList.Cmd
+    = CommandByProductList ProductList.Cmd
 
 
-initModel : Maybe Data.Product.Id -> SearchCondition.Condition -> ( Model, List Command )
-initModel productIdMaybe condition =
+initModel : Maybe Data.Product.Id -> SearchCondition.Condition -> Maybe (List Data.Product.Product) -> ( Model, List Command )
+initModel productIdMaybe condition allProductMaybe =
     let
         ( productListModel, cmdList ) =
             ProductList.initModel productIdMaybe
@@ -42,58 +40,29 @@ initModel productIdMaybe condition =
     ( Model
         { productList = productListModel
         , condition = condition
-        , result = Nothing
+        , result = allProductMaybe |> Maybe.map (SearchCondition.search condition)
         }
-    , [ SearchProducts condition ] ++ (cmdList |> List.map CommandByProductList)
+    , cmdList |> List.map CommandByProductList
     )
 
 
 update : Msg -> Model -> ( Model, List Command )
 update msg (Model rec) =
     case msg of
-        SearchProductsResponse result ->
-            case result of
-                Ok products ->
-                    ( Model
-                        { rec
-                            | result = Just products
-                        }
-                    , []
-                    )
-
-                Err errorMessage ->
-                    ( Model rec
-                    , []
-                    )
-
         MessageFromProductList productListMsg ->
             let
                 ( newModel, cmdList ) =
                     rec.productList |> ProductList.update productListMsg
             in
-            ( case productListMsg of
-                ProductList.UpdateLikedCountResponse id (Ok likedCount) ->
-                    Model
-                        { rec
-                            | result = updateLikedCount likedCount id rec.result
-                            , productList = newModel
-                        }
-
-                _ ->
-                    Model { rec | productList = newModel }
+            ( Model { rec | productList = newModel }
             , cmdList |> List.map CommandByProductList
             )
-
-
-updateLikedCount : Int -> Data.Product.Id -> Maybe (List Data.Product.Product) -> Maybe (List Data.Product.Product)
-updateLikedCount likedCount id result =
-    result
-        |> Maybe.map (Data.Product.updateById id (Data.Product.updateLikedCount likedCount))
 
 
 view :
     Data.LogInState.LogInState
     -> Bool
+    -> Maybe (List Data.Product.Product)
     -> Model
     ->
         { title : Maybe String
@@ -101,15 +70,21 @@ view :
         , html : List (Html.Styled.Html Msg)
         , bottomNavigation : Maybe BasicParts.BottomNavigationSelect
         }
-view logInState isWideScreen (Model rec) =
+view logInState isWideScreen allProductsMaybe (Model rec) =
     { title = Just "検索結果"
-    , tab = BasicParts.tabSingle ""
+    , tab = BasicParts.tabSingle "検索結果"
     , html =
         [ ProductList.view
             rec.productList
             logInState
             isWideScreen
-            rec.result
+            (case ( allProductsMaybe, rec.result ) of
+                ( Just allProducts, Just ids ) ->
+                    ids |> List.map (\id -> Data.Product.searchFromId id allProducts) |> Just
+
+                ( _, _ ) ->
+                    Nothing
+            )
             |> Html.Styled.map MessageFromProductList
         ]
     , bottomNavigation = Nothing

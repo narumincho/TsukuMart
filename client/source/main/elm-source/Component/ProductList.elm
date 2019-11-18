@@ -31,7 +31,7 @@ type Model
 type Msg
     = Like Api.Token Product.Id
     | UnLike Api.Token Product.Id
-    | UpdateLikedCountResponse Product.Id (Result String Int)
+    | UpdateLikedCountResponse Product.Id (Result String ())
 
 
 type Cmd
@@ -139,9 +139,8 @@ itemView logInState sending product =
         , Html.Styled.Attributes.href (PageLocation.toUrlAsString (PageLocation.Product (Product.getId product)))
         , Html.Styled.Attributes.id (productIdString (Product.getId product))
         ]
-        ([ itemImage (Product.getName product) (Product.getThumbnailImageUrl product)
-         ]
-            ++ (case Product.getStatus product of
+        (itemImage (Product.getName product) (Product.getThumbnailImageUrl product)
+            :: (case Product.getStatus product of
                     Product.Selling ->
                         []
 
@@ -248,9 +247,9 @@ itemImage name url =
             [ Css.display Css.block
             , Css.width (Css.pct 100)
             , Css.height (Css.px 192)
-            , Css.property "object-fit" "contain"
-            , Css.property "grid-column" "1 / 2"
-            , Css.property "grid-row" "1 / 2"
+            , Css.property "object-fit" "cover"
+            , Page.Style.gridColumn 1 2
+            , Page.Style.gridRow 1 2
             , Css.backgroundColor (Css.rgb 128 128 128)
             ]
         , Html.Styled.Attributes.src url
@@ -263,8 +262,8 @@ soldOutBar : Html.Styled.Html msg
 soldOutBar =
     Html.Styled.div
         [ Html.Styled.Attributes.css
-            [ Css.property "grid-column" "1 / 2"
-            , Css.property "grid-row" "1 / 2"
+            [ Page.Style.gridColumn 1 2
+            , Page.Style.gridRow 1 2
             , Css.overflow Css.hidden
             ]
         ]

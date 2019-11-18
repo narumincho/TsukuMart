@@ -1,4 +1,4 @@
-module Component.Comment exposing (view, commentSendButtonStyle)
+module Component.Comment exposing (commentSendButtonStyle, view)
 
 import Css
 import Data.DateTime
@@ -86,26 +86,25 @@ commentView nowMaybe comment =
               else
                 []
              )
-                ++ [ Html.Styled.div
-                        [ Html.Styled.Attributes.css
-                            [ Css.backgroundColor
-                                (if comment.isMine then
-                                    mineColor
+                ++ Html.Styled.div
+                    [ Html.Styled.Attributes.css
+                        [ Css.backgroundColor
+                            (if comment.isMine then
+                                mineColor
 
-                                 else
-                                    Css.rgb 221 221 221
-                                )
-                            , Css.padding (Css.px 8)
-                            , if comment.isSeller then
-                                Css.borderRadius4 Css.zero (Css.px 8) (Css.px 8) (Css.px 8)
+                             else
+                                Css.rgb 221 221 221
+                            )
+                        , Css.padding (Css.px 8)
+                        , if comment.isSeller then
+                            Css.borderRadius4 Css.zero (Css.px 8) (Css.px 8) (Css.px 8)
 
-                              else
-                                Css.borderRadius4 (Css.px 8) Css.zero (Css.px 8) (Css.px 8)
-                            ]
+                          else
+                            Css.borderRadius4 (Css.px 8) Css.zero (Css.px 8) (Css.px 8)
                         ]
-                        [ Html.Styled.text comment.body ]
-                   ]
-                ++ (if comment.isSeller then
+                    ]
+                    [ Html.Styled.text comment.body ]
+                :: (if comment.isSeller then
                         []
 
                     else
@@ -167,6 +166,7 @@ triangleStyle isMine =
 mineColor : Css.Color
 mineColor =
     Css.rgb 200 162 219
+
 
 commentSendButtonStyle : Css.Style
 commentSendButtonStyle =

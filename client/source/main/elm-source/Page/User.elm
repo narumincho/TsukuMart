@@ -3,8 +3,7 @@ module Page.User exposing
     , Model
     , Msg(..)
     , getUser
-    , initModelFromId
-    , initModelWithName
+    , initialModel
     , update
     , view
     )
@@ -67,17 +66,10 @@ type Msg
     | MsgToLineNotifySetting Api.Token
 
 
-initModelWithName : User.WithName -> ( Model, List Cmd )
-initModelWithName userWithNameInit =
-    ( LoadingWithUserIdAndName userWithNameInit
-    , [ CmdGetUserProfile (User.withNameGetId userWithNameInit) ]
-    )
-
-
 {-| 外部ページから飛んで来たときはユーザーIDだけを頼りにしてユーザーページを作らなければならない
 -}
-initModelFromId : LogInState.LogInState -> User.Id -> ( Model, List Cmd )
-initModelFromId logInState userId =
+initialModel : LogInState.LogInState -> User.Id -> ( Model, List Cmd )
+initialModel logInState userId =
     case logInState of
         LogInState.Ok { userWithName } ->
             if User.withNameGetId userWithName == userId then
@@ -339,8 +331,11 @@ normalView isWideScreen user =
 normalMyProfileView : Api.Token -> Bool -> User.WithProfile -> List (Html.Styled.Html Msg)
 normalMyProfileView token isWideScreen user =
     userView isWideScreen user
-        ++ [ userPrivateDataLink (User.withProfileGetId user) ]
-        ++ [ lineNotifySettingButton token, toEditButton, logOutButton ]
+        ++ [ userPrivateDataLink (User.withProfileGetId user)
+           , lineNotifySettingButton token
+           , toEditButton
+           , logOutButton
+           ]
 
 
 {-| ユーザーの情報表示
@@ -351,9 +346,8 @@ userView isWideScreen userWithProfile =
         isWideScreen
         (User.withProfileGetImageId userWithProfile)
         (User.withProfileGetDisplayName userWithProfile)
-        ++ [ introductionView (User.withProfileGetIntroduction userWithProfile)
-           ]
-        ++ universityView (User.withProfileGetUniversity userWithProfile)
+        ++ introductionView (User.withProfileGetIntroduction userWithProfile)
+        :: universityView (User.withProfileGetUniversity userWithProfile)
         ++ [ Html.Styled.text ("ユーザーID " ++ (userWithProfile |> User.withProfileGetId |> User.idToString))
            ]
 
@@ -581,7 +575,7 @@ nickNameEditorId =
 
 
 introductionEditor : String -> Html.Html Msg
-introductionEditor introduction =
+introductionEditor _ =
     Html.div
         []
         [ Html.label
@@ -613,8 +607,8 @@ editButton token editModel =
             ]
             [ Html.text "キャンセル" ]
         , Html.button
-            ([ Html.Attributes.class "profile-editOkButton" ]
-                ++ (case editModelToProfileUpdateData editModel of
+            (Html.Attributes.class "profile-editOkButton"
+                :: (case editModelToProfileUpdateData editModel of
                         Just profile ->
                             [ Html.Events.onClick (MsgChangeProfile token profile)
                             , Html.Attributes.disabled False
@@ -631,17 +625,15 @@ editButton token editModel =
 editModelToProfileUpdateData : EditModel -> Maybe Api.ProfileUpdateData
 editModelToProfileUpdateData { displayName, introduction, university } =
     if 1 <= String.length displayName && String.length displayName <= 50 then
-        case Component.University.getUniversity university of
-            Just univ ->
-                Just
+        Component.University.getUniversity university
+            |> Maybe.map
+                (\univ ->
                     { displayName = displayName
                     , introduction = introduction
                     , image = Nothing
                     , university = univ
                     }
-
-            Nothing ->
-                Nothing
+                )
 
     else
         Nothing

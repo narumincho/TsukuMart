@@ -11,34 +11,39 @@ import Page.Style
 import PageLocation
 
 
-view : Maybe (List Trade.Trade) -> Html.Styled.Html msg
-view tradesMaybe =
+view : Maybe (List Product.Product) -> Maybe (List Trade.Trade) -> Html.Styled.Html msg
+view allProductsMaybe tradesMaybe =
     Html.Styled.div
         []
-        (case tradesMaybe of
-            Just (x :: xs) ->
-                mainView ( x, xs )
+        (case ( allProductsMaybe, tradesMaybe ) of
+            ( Just allProducts, Just (x :: xs) ) ->
+                mainView allProducts ( x, xs )
 
-            Just [] ->
+            ( _, Just [] ) ->
                 [ Page.Style.emptyList "ここに表示する取引がありません" ]
 
-            Nothing ->
-                [ Html.Styled.text "読み込み中"
+            ( _, Nothing ) ->
+                [ Html.Styled.text "取引情報を読み込み中"
+                , Icon.loading { size = 64, color = Css.rgb 0 0 0 }
+                ]
+
+            ( Nothing, _ ) ->
+                [ Html.Styled.text "商品情報を読み込み中"
                 , Icon.loading { size = 64, color = Css.rgb 0 0 0 }
                 ]
         )
 
 
-mainView : ( Trade.Trade, List Trade.Trade ) -> List (Html.Styled.Html msg)
-mainView ( x, xs ) =
-    List.map itemView (x :: xs)
+mainView : List Product.Product -> ( Trade.Trade, List Trade.Trade ) -> List (Html.Styled.Html msg)
+mainView allProducts ( x, xs ) =
+    (x :: xs) |> List.map (itemView allProducts)
 
 
-itemView : Trade.Trade -> Html.Styled.Html msg
-itemView trade =
+itemView : List Product.Product -> Trade.Trade -> Html.Styled.Html msg
+itemView allProducts trade =
     let
         product =
-            Trade.getProduct trade
+            allProducts |> Product.searchFromId (Trade.getProductId trade)
     in
     Html.Styled.a
         [ Html.Styled.Attributes.href
@@ -58,8 +63,8 @@ itemView trade =
             [ Html.Styled.Attributes.src (Product.getThumbnailImageUrl product)
             , Html.Styled.Attributes.css
                 [ Css.display Css.block
-                , Css.property "grid-column" "1 / 2"
-                , Css.property "grid-row" "1 / 4"
+                , Page.Style.gridColumn 1 2
+                , Page.Style.gridRow 1 4
                 , Css.width (Css.px 192)
                 , Css.height (Css.px 192)
                 , Css.property "object-fit" "contain"
@@ -68,8 +73,8 @@ itemView trade =
             []
         , Html.Styled.div
             [ Html.Styled.Attributes.css
-                [ Css.property "grid-column" "2 / 3"
-                , Css.property "grid-row" "1 / 2"
+                [ Page.Style.gridColumn 2 3
+                , Page.Style.gridRow 1 2
                 , Css.color (Css.rgb 0 0 0)
                 , Css.fontSize (Css.px 32)
                 ]
@@ -77,19 +82,19 @@ itemView trade =
             [ Html.Styled.text (Product.getName product) ]
         , Html.Styled.div
             [ Html.Styled.Attributes.css
-                [ Css.property "grid-column" "2 / 3"
-                , Css.property "grid-row" "2 / 3"
+                [ Page.Style.gridColumn 2 3
+                , Page.Style.gridRow 2 3
                 ]
             ]
             [ Html.Styled.text (Product.priceToString (Product.getPrice product)) ]
         , Html.Styled.div
             [ Html.Styled.Attributes.css
-                [ Css.property "grid-column" "2 / 3"
-                , Css.property "grid-row" "3 / 4"
+                [ Page.Style.gridColumn 2 3
+                , Page.Style.gridRow 3 4
                 , Css.displayFlex
                 ]
             ]
-            [ userView (Trade.getSeller trade)
+            [ userView (Product.getSeller product)
             , Html.Styled.div
                 [ Html.Styled.Attributes.css
                     [ Css.fontSize (Css.rem 2) ]

@@ -150,9 +150,8 @@ view schoolSelect =
             [ selectSchoolView Nothing ]
 
         School school ->
-            [ selectSchoolView (Just school)
-            ]
-                ++ (case selectDepartmentView school Nothing of
+            selectSchoolView (Just school)
+                :: (case selectDepartmentView school Nothing of
                         Just v ->
                             [ v ]
 
@@ -161,9 +160,8 @@ view schoolSelect =
                    )
 
         Department department ->
-            [ selectSchoolView (Just (University.schoolFromDepartment department))
-            ]
-                ++ (case selectDepartmentView (University.schoolFromDepartment department) (Just department) of
+            selectSchoolView (Just (University.schoolFromDepartment department))
+                :: (case selectDepartmentView (University.schoolFromDepartment department) (Just department) of
                         Just v ->
                             [ v ]
 
@@ -175,7 +173,7 @@ view schoolSelect =
 {-| 学群の選択
 -}
 selectSchoolView : Maybe University.School -> ( String, Html.Styled.Html Msg )
-selectSchoolView schoolMaybe =
+selectSchoolView _ =
     ( "schoolSelect"
     , Page.Style.formItem
         "学群"
@@ -202,7 +200,7 @@ selectDepartmentView :
     University.School
     -> Maybe University.Department
     -> Maybe ( String, Html.Styled.Html Msg )
-selectDepartmentView school departmentMaybe =
+selectDepartmentView school _ =
     case University.schoolToDepartmentList school of
         x :: xs ->
             selectDepartmentViewFromLabelString school

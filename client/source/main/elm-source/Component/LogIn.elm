@@ -57,11 +57,10 @@ view (Model waitLogInUrl) =
             , Css.padding (Css.px 24)
             ]
         ]
-        ([ Html.Styled.div
+        (Html.Styled.div
             []
             [ Html.Styled.text "ログイン/新規登録するためには以下のどれかのアカウントが必要です" ]
-         ]
-            ++ (case waitLogInUrl of
+            :: (case waitLogInUrl of
                     Just service ->
                         [ Html.Styled.div []
                             [ Html.Styled.text

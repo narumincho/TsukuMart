@@ -2,7 +2,6 @@ module Page.TradesInProgress exposing
     ( Cmd(..)
     , Model
     , Msg(..)
-    , getAllProducts
     , getAllTrades
     , initModel
     , update
@@ -11,12 +10,12 @@ module Page.TradesInProgress exposing
 
 import Api
 import BasicParts
+import Component.LogIn as LogIn
+import Component.TradeList as TradeList
 import Data.LogInState as LogInState
 import Data.Product as Product
 import Data.Trade as Trade
 import Html.Styled
-import Component.LogIn as LogIn
-import Component.TradeList as TradeList
 import Page.Style
 
 
@@ -44,8 +43,8 @@ type Cmd
     | CmdAddLogMessage String
 
 
-initModel : Maybe Product.Id -> LogInState.LogInState -> ( Model, List Cmd )
-initModel goodIdMaybe logInState =
+initModel : LogInState.LogInState -> ( Model, List Cmd )
+initModel logInState =
     ( Model
         { normal = Loading
         , logIn = LogIn.initModel
@@ -70,12 +69,6 @@ getAllTrades (Model { normal }) =
 
         _ ->
             []
-
-
-getAllProducts : Model -> List Product.Product
-getAllProducts =
-    getAllTrades
-        >> List.map Trade.getProduct
 
 
 update : Msg -> Model -> ( Model, List Cmd )
@@ -107,6 +100,7 @@ update msg (Model rec) =
 
 view :
     LogInState.LogInState
+    -> Maybe (List Product.Product)
     -> Model
     ->
         { title : Maybe String
@@ -114,7 +108,7 @@ view :
         , html : List (Html.Styled.Html Msg)
         , bottomNavigation : Maybe BasicParts.BottomNavigationSelect
         }
-view logInState (Model rec) =
+view logInState allProductsMaybe (Model rec) =
     { title = Just "進行中の取引"
     , tab = BasicParts.tabSingle "進行中の取引"
     , html =
@@ -130,6 +124,7 @@ view logInState (Model rec) =
 
             _ ->
                 [ TradeList.view
+                    allProductsMaybe
                     (case rec.normal of
                         Loading ->
                             Nothing
