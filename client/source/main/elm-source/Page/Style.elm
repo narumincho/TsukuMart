@@ -5,19 +5,25 @@ module Page.Style exposing
     , displayGridAndGap
     , emptyList
     , formItem
+    , gridColumn
+    , gridRow
+    , gridTemplateColumns
+    , gridTemplateRows
     , inputText
     , justifyItemsCenter
     , mainButton
     , mainButtonLink
     , normalShadow
+    , pointerEventsNone
     , primaryColor
-    , primaryColorLight
     , radioForm
     , selectMenu
     , titleAndContent
     , titleAndContentStyle
     , userImage
     , userSelectNone
+    , webkitOverflowScrolling
+    , webkitTapHighlightColorTransparent
     )
 
 import Css
@@ -35,11 +41,6 @@ import PageLocation
 primaryColor : Css.Color
 primaryColor =
     Css.rgb 115 63 167
-
-
-primaryColorLight : Css.Color
-primaryColorLight =
-    Css.rgb 154 108 201
 
 
 container : List (H.Html msg) -> H.Html msg
@@ -72,6 +73,7 @@ containerStyle =
         , Css.alignItems Css.center
         , Css.width (Css.pct 100)
         , Css.flexDirection Css.column
+        , Css.overflowY Css.auto
         ]
 
 
@@ -145,6 +147,36 @@ displayGridAndGap gap =
         |> Css.batch
 
 
+gridTemplateRows : String -> Css.Style
+gridTemplateRows =
+    Css.property "grid-template-rows"
+
+
+gridTemplateColumns : String -> Css.Style
+gridTemplateColumns =
+    Css.property "grid-template-columns"
+
+
+gridRow : Int -> Int -> Css.Style
+gridRow start end =
+    Css.property "grid-row" (String.fromInt start ++ " / " ++ String.fromInt end)
+
+
+gridColumn : Int -> Int -> Css.Style
+gridColumn start end =
+    Css.property "grid-column" (String.fromInt start ++ " / " ++ String.fromInt end)
+
+
+webkitTapHighlightColorTransparent : Css.Style
+webkitTapHighlightColorTransparent =
+    Css.property "-webkit-tap-highlight-color" "transparent"
+
+
+webkitOverflowScrolling : Css.Style
+webkitOverflowScrolling =
+    Css.property "-webkit-overflow-scrolling" "touch"
+
+
 justifyItemsCenter : Css.Style
 justifyItemsCenter =
     Css.property "justify-items" "center"
@@ -153,6 +185,11 @@ justifyItemsCenter =
 userSelectNone : Css.Style
 userSelectNone =
     Css.property "user-select" "none"
+
+
+pointerEventsNone : Css.Style
+pointerEventsNone =
+    Css.property "pointer-events" "none"
 
 
 userImage : Int -> Data.ImageId.ImageId -> H.Html msg
@@ -376,8 +413,8 @@ radioForm { select, leftText, rightText, name } =
             , A.css
                 [ radioLabelStyle (select == Left)
                 , Css.borderRadius4 (Css.px 8) Css.zero Css.zero (Css.px 8)
-                , Css.property "grid-column" "1 / 2"
-                , Css.property "grid-row" "1 / 2"
+                , gridColumn 1 2
+                , gridRow 1 2
                 ]
             ]
             [ H.text leftText ]
@@ -397,8 +434,8 @@ radioForm { select, leftText, rightText, name } =
             , A.css
                 [ radioLabelStyle (select == Right)
                 , Css.borderRadius4 Css.zero (Css.px 8) (Css.px 8) Css.zero
-                , Css.property "grid-column" "2 / 3"
-                , Css.property "grid-row" "1 / 2"
+                , gridColumn 2 3
+                , gridRow 1 2
                 ]
             ]
             [ H.text rightText ]

@@ -72,7 +72,7 @@ view :
         }
 view logInState isWideScreen allProductsMaybe (Model rec) =
     { title = Just "検索結果"
-    , tab = BasicParts.tabSingle ""
+    , tab = BasicParts.tabSingle "検索結果"
     , html =
         [ ProductList.view
             rec.productList

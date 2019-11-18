@@ -54,6 +54,16 @@ export const indexHtml = functions
             document.body.textContent = "ES Moduleに対応していないブラウザです。新しいブラウザを使ってください";
         }
     </script>
+    <style>
+        html {
+            height: 100%;
+        }
+
+        body {
+            margin: 0;
+            height: 100%;
+        }
+    </style>
 </head>
 
 <body>

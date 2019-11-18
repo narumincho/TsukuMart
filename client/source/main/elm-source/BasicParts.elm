@@ -4,7 +4,6 @@ module BasicParts exposing
     , bottomNavigation
     , headerWithBackArrow
     , headerWithoutBackArrow
-    , isTabNone
     , menu
     , tabMap
     , tabMulti
@@ -14,11 +13,9 @@ module BasicParts exposing
     )
 
 import Css
+import Css.Transitions
 import Data.LogInState
 import Data.User
-import Html
-import Html.Attributes
-import Html.Events
 import Html.Styled
 import Html.Styled.Attributes
 import Html.Styled.Events
@@ -63,11 +60,12 @@ header =
             [ Css.displayFlex
             , Css.backgroundColor Page.Style.primaryColor
             , Page.Style.normalShadow
-            , Css.position Css.fixed
             , Css.width (Css.pct 100)
             , Css.padding Css.zero
             , Css.boxSizing Css.borderBox
             , Css.zIndex (Css.int 2)
+            , Page.Style.gridColumn 1 3
+            , Page.Style.gridRow 1 2
             ]
         ]
 
@@ -329,11 +327,11 @@ menu logInState =
     Html.Styled.div
         [ Html.Styled.Attributes.css
             [ Css.width (Css.px 320)
-            , Css.height (Css.calc (Css.pct 100) Css.minus (Css.px 64))
             , Css.backgroundColor (Css.rgb 221 221 221)
-            , Css.position Css.fixed
             , Css.top (Css.px 64)
             , Css.left Css.zero
+            , Page.Style.gridColumn 1 2
+            , Page.Style.gridRow 2 5
             ]
         ]
         (case logInState of
@@ -551,36 +549,21 @@ toCount tab =
             0
 
 
-isTabNone : Tab a -> Bool
-isTabNone tab =
-    tab == None
-
-
 {-| タブの見た目
 -}
-tabView : Bool -> Tab msg -> Html.Styled.Html msg
-tabView isWideScreen tabData =
-    Html.div
-        (Html.Attributes.classList
-            [ ( "mainTab", True ), ( "mainTab-wide", isWideScreen ) ]
-            :: (case tabData of
-                    None ->
-                        [ Html.Attributes.style "height" "0" ]
-
-                    _ ->
-                        [ Html.Attributes.style "grid-template-columns"
-                            (List.repeat (toCount tabData) "1fr" |> String.join " ")
-                        , Html.Attributes.style "height" "3rem"
-                        ]
-               )
-        )
+tabView : Tab msg -> Html.Styled.Html msg
+tabView tabData =
+    Html.Styled.div
+        [ Html.Styled.Attributes.css [ tabStyle tabData ]
+        ]
         (case tabData of
             Multi tabList selectIndex ->
                 (tabList
                     |> List.indexedMap
                         (\index ( label, msg ) ->
                             itemView
-                                (index == selectIndex)
+                                index
+                                selectIndex
                                 label
                                 (Just msg)
                         )
@@ -592,7 +575,8 @@ tabView isWideScreen tabData =
 
             Single label ->
                 [ itemView
-                    True
+                    0
+                    0
                     label
                     Nothing
                 , selectLineView 0 1
@@ -601,27 +585,85 @@ tabView isWideScreen tabData =
             None ->
                 []
         )
-        |> Html.Styled.fromUnstyled
 
 
-itemView : Bool -> String -> Maybe msg -> Html.Html msg
-itemView isSelected label clickEventMaybe =
-    Html.div
-        (if isSelected then
-            [ Html.Attributes.class "mainTab-item-select" ]
+tabStyle : Tab msg -> Css.Style
+tabStyle tab =
+    Css.batch
+        ([ Css.backgroundColor (Css.rgb 240 240 240)
+         , Page.Style.displayGridAndGap 0
+         , Page.Style.gridTemplateRows "48px"
+         , Css.boxShadow4 Css.zero (Css.px 2) (Css.px 4) (Css.rgba 0 0 0 0.4)
+         , Css.textShadow4 Css.zero (Css.px 1) (Css.px 2) (Css.rgba 0 0 0 0.4)
+         , Page.Style.gridColumn 2 3
+         , Page.Style.gridRow 2 3
+         ]
+            ++ (case tab of
+                    None ->
+                        [ Css.height Css.zero ]
 
-         else
-            case clickEventMaybe of
-                Just clickEvent ->
-                    [ Html.Attributes.class "mainTab-item"
-                    , Html.Attributes.style "-webkit-tap-highlight-color" "transparent"
-                    , Html.Events.onClick clickEvent
-                    ]
-
-                Nothing ->
-                    [ Html.Attributes.class "mainTab-item" ]
+                    _ ->
+                        [ Page.Style.gridTemplateColumns
+                            (List.repeat (toCount tab) "1fr" |> String.join " ")
+                        , Css.height (Css.px 48)
+                        ]
+               )
         )
-        [ Html.text label ]
+
+
+itemView : Int -> Int -> String -> Maybe msg -> Html.Styled.Html msg
+itemView index selectIndex label clickEventMaybe =
+    let
+        isSelected =
+            index == selectIndex
+    in
+    Html.Styled.div
+        ([ Html.Styled.Attributes.css
+            ([ Css.displayFlex
+             , Css.justifyContent Css.center
+             , Css.alignItems Css.center
+             , Css.color
+                (if isSelected then
+                    Page.Style.primaryColor
+
+                 else
+                    Css.rgb 85 85 85
+                )
+             , Page.Style.userSelectNone
+             , Css.Transitions.transition
+                [ Css.Transitions.color3 300 0 Css.Transitions.ease ]
+             , Page.Style.gridRow 1 2
+             , Page.Style.gridColumn (index + 1) (index + 2)
+             ]
+                ++ (if isSelected then
+                        [ Css.fontWeight Css.bold ]
+
+                    else
+                        [ Css.cursor Css.pointer
+                        , Css.hover
+                            [ Css.backgroundColor (Css.rgb 221 221 221)
+                            , Css.color Page.Style.primaryColor
+                            ]
+                        ]
+                   )
+                ++ (case clickEventMaybe of
+                        Just _ ->
+                            [ Page.Style.webkitTapHighlightColorTransparent ]
+
+                        Nothing ->
+                            []
+                   )
+            )
+         ]
+            ++ (case clickEventMaybe of
+                    Just clickEvent ->
+                        [ Html.Styled.Events.onClick clickEvent ]
+
+                    Nothing ->
+                        []
+               )
+        )
+        [ Html.Styled.text label ]
 
 
 {-| タブの下線
@@ -630,13 +672,29 @@ itemView isSelected label clickEventMaybe =
   - count : 全部で何個のタブがあるか
 
 -}
-selectLineView : Int -> Int -> Html.Html msg
+selectLineView : Int -> Int -> Html.Styled.Html msg
 selectLineView index count =
-    Html.div [ Html.Attributes.class "mainTab-selectLineArea" ]
-        [ Html.div
-            [ Html.Attributes.class "mainTab-selectLine"
-            , Html.Attributes.style "left" ("calc( 100% /" ++ String.fromInt count ++ " * " ++ String.fromInt index ++ ")")
-            , Html.Attributes.style "width" ("calc( 100% / " ++ String.fromInt count ++ ")")
+    Html.Styled.div
+        [ Html.Styled.Attributes.css
+            [ Css.position Css.relative
+            , Page.Style.gridColumn 1 4
+            , Page.Style.gridRow 1 2
+            , Css.alignSelf Css.end
+            , Css.height (Css.px 4)
+            , Page.Style.pointerEventsNone
+            ]
+        ]
+        [ Html.Styled.div
+            [ Html.Styled.Attributes.css
+                [ Css.position Css.absolute
+                , Css.backgroundColor Page.Style.primaryColor
+                , Css.height (Css.pct 100)
+                , Css.Transitions.transition
+                    [ Css.Transitions.left3 300 0 Css.Transitions.ease
+                    ]
+                , Css.property "left" ("calc( 100% /" ++ String.fromInt count ++ " * " ++ String.fromInt index ++ ")")
+                , Css.property "width" ("calc( 100% / " ++ String.fromInt count ++ ")")
+                ]
             ]
             []
         ]
@@ -739,15 +797,16 @@ bottomNavigationContainer item =
     Html.Styled.div
         [ Html.Styled.Attributes.css
             [ Page.Style.displayGridAndGap 0
-            , Css.property "grid-template-columns"
+            , Page.Style.gridColumn 2 3
+            , Page.Style.gridRow 4 5
+            , Page.Style.gridTemplateColumns
                 ("1fr"
                     |> List.repeat (List.length item)
                     |> String.join " "
                 )
-            , Css.height (Css.px 64)
-            , Css.position Css.fixed
             , Css.bottom Css.zero
             , Css.width (Css.pct 100)
+            , Css.height (Css.px 64)
             , Css.backgroundColor (Css.rgb 81 33 130)
             ]
         ]

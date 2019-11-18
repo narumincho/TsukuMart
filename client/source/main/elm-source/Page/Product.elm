@@ -52,7 +52,7 @@ type Model
         , productEditor : ProductEditor.Model
         , sending : Bool
         }
-    | Confirm Product.Id
+    | EditConfirm Product.Id
 
 
 type Cmd
@@ -70,6 +70,7 @@ type Cmd
     | CmdUpdateProductData Api.Token Product.Id Api.UpdateProductRequest
     | CmdReplaceElementText { id : String, text : String }
     | CmdJumpToHome
+    | CmdScrollToTop
 
 
 type Msg
@@ -103,17 +104,18 @@ initModel logInState id =
         , commentSending = False
         , comment = ""
         }
-    , case LogInState.getToken logInState of
+    , (case LogInState.getToken logInState of
         Just accessToken ->
             [ CmdGetProductAndMarkHistory
                 { productId = id
                 , token = accessToken
                 }
-            , CmdGetCommentList id
             ]
 
         Nothing ->
-            [ CmdGetCommentList id ]
+            []
+      )
+        ++ [ CmdGetCommentList id, CmdScrollToTop ]
     )
 
 
@@ -128,8 +130,8 @@ getProductId model =
         Edit { beforeProduct } ->
             beforeProduct
 
-        Confirm product ->
-            product
+        EditConfirm productId ->
+            productId
 
 
 update : Maybe (List Product.Product) -> Msg -> Model -> ( Model, List Cmd )
@@ -243,7 +245,7 @@ update allProductsMaybe msg model =
         ToConfirmPage ->
             ( case model of
                 Normal { product } ->
-                    Confirm product
+                    EditConfirm product
 
                 _ ->
                     model
@@ -452,7 +454,7 @@ view logInState isWideScreen nowMaybe productAllMaybe model =
             , bottomNavigation = Nothing
             }
 
-        ( Confirm product, Just productAll ) ->
+        ( EditConfirm product, Just productAll ) ->
             let
                 productData =
                     productAll |> Product.searchFromId product

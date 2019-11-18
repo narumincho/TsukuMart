@@ -33,6 +33,7 @@ import Page.Product
 import Page.Search
 import Page.SearchResult
 import Page.SoldProducts
+import Page.Style
 import Page.Trade
 import Page.TradesInPast
 import Page.TradesInProgress
@@ -63,6 +64,9 @@ port saveAccessTokenToLocalStorage : String -> Cmd msg
 
 
 port deleteAllFromLocalStorage : () -> Cmd msg
+
+
+port mainViewScrollToTop : () -> Cmd msg
 
 
 port elementScrollIntoView : String -> Cmd msg
@@ -931,6 +935,9 @@ productPageCmdToCmd key cmd =
         Page.Product.CmdJumpToHome ->
             Browser.Navigation.load (PageLocation.toUrlAsString PageLocation.Home)
 
+        Page.Product.CmdScrollToTop ->
+            mainViewScrollToTop ()
+
 
 tradePageCmdToCmd : Page.Trade.Cmd -> Cmd Msg
 tradePageCmdToCmd cmd =
@@ -1261,69 +1268,54 @@ view (Model rec) =
     in
     { title = title
     , body =
-        [ BasicParts.headerWithBackArrow
-            |> Html.Styled.map (always HistoryBack)
-        ]
-            ++ (if rec.wideScreen then
-                    [ BasicParts.menu rec.logInState ]
+        [ Html.Styled.div
+            [ Html.Styled.Attributes.css
+                [ Page.Style.displayGridAndGap 0
+                , Page.Style.gridTemplateColumns "max-content 1fr"
+                , Page.Style.gridTemplateRows "64px max-content 1fr max-content"
+                , Css.height (Css.pct 100)
+                , Css.property "word-wrap" "break-word"
+                ]
+            ]
+            ([ BasicParts.headerWithBackArrow
+                |> Html.Styled.map (always HistoryBack)
+             ]
+                ++ (if rec.wideScreen then
+                        [ BasicParts.menu rec.logInState ]
 
-                else
-                    []
-               )
-            ++ [ BasicParts.tabView rec.wideScreen tab |> Html.Styled.map PageMsg
-               , Html.Styled.div
-                    [ Html.Styled.Attributes.css
-                        [ mainViewPaddingStyle tab rec.wideScreen
-                        , Css.property "word-wrap" "break-word"
-                        , Css.overflowX Css.hidden
-                        , Css.width (Css.pct 100)
+                    else
+                        []
+                   )
+                ++ [ BasicParts.tabView tab |> Html.Styled.map PageMsg
+                   , Html.Styled.div
+                        [ Html.Styled.Attributes.id "mainView"
+                        , Html.Styled.Attributes.css
+                            [ Css.overflowX Css.auto
+                            , Page.Style.gridColumn 2 3
+                            , Page.Style.gridRow 3 4
+                            , Page.Style.webkitOverflowScrolling
+                            ]
                         ]
-                    ]
-                    html
-                    |> Html.Styled.map PageMsg
-               ]
-            ++ (case rec.message of
-                    Just m ->
-                        [ Html.Styled.Keyed.node "div" [] [ ( m, messageView m ) ] ]
+                        html
+                        |> Html.Styled.map PageMsg
+                   ]
+                ++ (case rec.message of
+                        Just m ->
+                            [ Html.Styled.Keyed.node "div" [] [ ( m, messageView m ) ] ]
 
-                    Nothing ->
-                        []
-               )
-            ++ (case ( rec.wideScreen, bottomNavigation ) of
-                    ( False, Just select ) ->
-                        [ BasicParts.bottomNavigation rec.logInState select ]
+                        Nothing ->
+                            []
+                   )
+                ++ (case ( rec.wideScreen, bottomNavigation ) of
+                        ( False, Just select ) ->
+                            [ BasicParts.bottomNavigation rec.logInState select ]
 
-                    ( _, _ ) ->
-                        []
-               )
-    }
-
-
-mainViewPaddingStyle : BasicParts.Tab msg -> Bool -> Css.Style
-mainViewPaddingStyle tab wideScreen =
-    let
-        paddingTop =
-            (if BasicParts.isTabNone tab then
-                64
-
-             else
-                112
+                        ( _, _ ) ->
+                            []
+                   )
             )
-                |> Css.px
-    in
-    if wideScreen then
-        Css.padding4
-            paddingTop
-            Css.zero
-            Css.zero
-            (Css.px 320)
-
-    else
-        Css.padding4
-            paddingTop
-            Css.zero
-            (Css.px 64)
-            Css.zero
+        ]
+    }
 
 
 titleAndTabDataAndMainView :

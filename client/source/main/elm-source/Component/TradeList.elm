@@ -63,8 +63,8 @@ itemView allProducts trade =
             [ Html.Styled.Attributes.src (Product.getThumbnailImageUrl product)
             , Html.Styled.Attributes.css
                 [ Css.display Css.block
-                , Css.property "grid-column" "1 / 2"
-                , Css.property "grid-row" "1 / 4"
+                , Page.Style.gridColumn 1 2
+                , Page.Style.gridRow 1 4
                 , Css.width (Css.px 192)
                 , Css.height (Css.px 192)
                 , Css.property "object-fit" "contain"
@@ -73,8 +73,8 @@ itemView allProducts trade =
             []
         , Html.Styled.div
             [ Html.Styled.Attributes.css
-                [ Css.property "grid-column" "2 / 3"
-                , Css.property "grid-row" "1 / 2"
+                [ Page.Style.gridColumn 2 3
+                , Page.Style.gridRow 1 2
                 , Css.color (Css.rgb 0 0 0)
                 , Css.fontSize (Css.px 32)
                 ]
@@ -82,15 +82,15 @@ itemView allProducts trade =
             [ Html.Styled.text (Product.getName product) ]
         , Html.Styled.div
             [ Html.Styled.Attributes.css
-                [ Css.property "grid-column" "2 / 3"
-                , Css.property "grid-row" "2 / 3"
+                [ Page.Style.gridColumn 2 3
+                , Page.Style.gridRow 2 3
                 ]
             ]
             [ Html.Styled.text (Product.priceToString (Product.getPrice product)) ]
         , Html.Styled.div
             [ Html.Styled.Attributes.css
-                [ Css.property "grid-column" "2 / 3"
-                , Css.property "grid-row" "3 / 4"
+                [ Page.Style.gridColumn 2 3
+                , Page.Style.gridRow 3 4
                 , Css.displayFlex
                 ]
             ]
