@@ -30,7 +30,7 @@ import Html.Styled
 import Html.Styled.Attributes
 import Html.Styled.Events
 import Icon
-import Page.Style
+import Style
 import PageLocation
 import Time
 
@@ -406,7 +406,7 @@ view logInState isWideScreen nowMaybe productAllMaybe model =
             { title = Just "商品詳細ページ 読み込み中"
             , tab = BasicParts.tabNone
             , html =
-                [ Page.Style.container
+                [ Style.container
                     [ Html.Styled.text "読み込み中"
                     , Icon.loading { size = 48, color = Css.rgb 0 0 0 }
                     ]
@@ -432,7 +432,7 @@ view logInState isWideScreen nowMaybe productAllMaybe model =
             { title = Just (Product.getName productId)
             , tab = BasicParts.tabNone
             , html =
-                [ Page.Style.containerKeyed
+                [ Style.containerKeyed
                     (case LogInState.getToken logInState of
                         Just accessToken ->
                             (ProductEditor.view productEditor
@@ -462,7 +462,7 @@ view logInState isWideScreen nowMaybe productAllMaybe model =
             { title = Just (Product.getName productData)
             , tab = BasicParts.tabNone
             , html =
-                [ Page.Style.container
+                [ Style.container
                     [ Html.Styled.text "購入確認画面。この商品の取引を開始しますか?"
                     , productsViewImage (Product.getImageUrls productData)
                     , productsViewName (Product.getName productData)
@@ -495,7 +495,7 @@ normalView logInState isWideScreen nowMaybe { product, likeSending, commentSendi
     { title = Just (Product.getName product)
     , tab = BasicParts.tabNone
     , html =
-        [ Page.Style.container
+        [ Style.container
             ([ productsViewImage (Product.getImageUrls product)
              , productsViewName (Product.getName product)
              , productsViewLike
@@ -633,7 +633,7 @@ itemLikeBody count =
 
 statusView : Product.Status -> Html.Styled.Html msg
 statusView status =
-    Page.Style.titleAndContent "取引状態"
+    Style.titleAndContent "取引状態"
         (Html.div
             []
             [ Html.text (Product.statusToJapaneseString status) ]
@@ -642,7 +642,7 @@ statusView status =
 
 sellerNameView : User.WithName -> Html.Styled.Html msg
 sellerNameView user =
-    Page.Style.titleAndContentStyle "出品者"
+    Style.titleAndContentStyle "出品者"
         (Html.Styled.a
             [ Html.Styled.Attributes.href (PageLocation.toUrlAsString (PageLocation.User (User.withNameGetId user)))
             , Html.Styled.Attributes.css
@@ -651,7 +651,7 @@ sellerNameView user =
                 , Css.textDecoration Css.none
                 ]
             ]
-            [ Page.Style.userImage 48 (User.withNameGetImageId user)
+            [ Style.userImage 48 (User.withNameGetImageId user)
             , Html.Styled.text (User.withNameGetDisplayName user)
             ]
         )
@@ -659,21 +659,21 @@ sellerNameView user =
 
 descriptionView : String -> Html.Styled.Html msg
 descriptionView description =
-    Page.Style.titleAndContent
+    Style.titleAndContent
         "商品の説明"
         (Html.div [] [ Html.text description ])
 
 
 categoryView : Category.Category -> Html.Styled.Html msg
 categoryView category =
-    Page.Style.titleAndContent
+    Style.titleAndContent
         "カテゴリー"
         (Html.div [] [ Html.text (Category.toJapaneseString category) ])
 
 
 conditionView : Product.Condition -> Html.Styled.Html msg
 conditionView condition =
-    Page.Style.titleAndContent
+    Style.titleAndContent
         "商品の状態"
         (Html.div
             [ Html.Attributes.class "product-condition" ]
@@ -684,7 +684,7 @@ conditionView condition =
 
 createdAtView : Maybe ( Time.Posix, Time.Zone ) -> Time.Posix -> Html.Styled.Html msg
 createdAtView nowMaybe createdAt =
-    Page.Style.titleAndContent
+    Style.titleAndContent
         "出品日時"
         (Html.div
             []

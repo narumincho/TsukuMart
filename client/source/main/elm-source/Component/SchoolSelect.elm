@@ -12,7 +12,7 @@ module Component.SchoolSelect exposing
 
 import Data.University as University
 import Html.Styled
-import Page.Style
+import Style
 
 
 type Model
@@ -175,10 +175,10 @@ view schoolSelect =
 selectSchoolView : Maybe University.School -> ( String, Html.Styled.Html Msg )
 selectSchoolView _ =
     ( "schoolSelect"
-    , Page.Style.formItem
+    , Style.formItem
         "学群"
         schoolSelectId
-        [ Page.Style.selectMenu
+        [ Style.selectMenu
             False
             schoolSelectId
             (University.schoolAll
@@ -217,10 +217,10 @@ selectDepartmentView school _ =
 selectDepartmentViewFromLabelString : University.School -> List String -> ( String, Html.Styled.Html Msg )
 selectDepartmentViewFromLabelString school labelList =
     ( "selectDepartment-" ++ University.schoolToIdString school
-    , Page.Style.formItem
+    , Style.formItem
         "学類"
         departmentSelectId
-        [ Page.Style.selectMenu
+        [ Style.selectMenu
             False
             departmentSelectId
             labelList

@@ -7,7 +7,7 @@ import Data.LogInState as LogInState
 import Data.Product as Product
 import Html.Styled
 import Html.Styled.Attributes
-import Page.Style
+import Style
 import PageLocation
 import Time
 
@@ -127,7 +127,7 @@ exhibitButton =
             , Css.color (Css.rgb 0 0 0)
             , Css.width (Css.px 96)
             , Css.height (Css.px 96)
-            , Page.Style.normalShadow
+            , Style.normalShadow
             , Css.textDecoration Css.none
             , Css.displayFlex
             , Css.justifyContent Css.center

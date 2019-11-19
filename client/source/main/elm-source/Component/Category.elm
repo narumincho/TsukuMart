@@ -16,7 +16,7 @@ import Data.Category as Category
 import Data.SearchCondition
 import Html.Styled
 import Html.Styled.Keyed
-import Page.Style
+import Style
 
 
 type Model
@@ -202,10 +202,10 @@ view (Model select) =
 groupView : Maybe Category.Group -> ( String, Html.Styled.Html Msg )
 groupView _ =
     ( "selectCategoryGroup"
-    , Page.Style.formItem
+    , Style.formItem
         "カテゴリ グループ"
         groupSelectId
-        [ Page.Style.selectMenu
+        [ Style.selectMenu
             False
             groupSelectId
             (Category.groupAll |> List.map Category.groupToJapaneseString)
@@ -222,10 +222,10 @@ groupSelectId =
 categoryView : Category.Group -> Maybe Category.Category -> ( String, Html.Styled.Html Msg )
 categoryView group _ =
     ( "selectCategory" ++ Category.groupToIdString group
-    , Page.Style.formItem
+    , Style.formItem
         "カテゴリ"
         categorySelectId
-        [ Page.Style.selectMenu
+        [ Style.selectMenu
             False
             categorySelectId
             (Category.groupToCategoryList group
@@ -239,10 +239,10 @@ categoryView group _ =
 categoryViewDisable : ( String, Html.Styled.Html Msg )
 categoryViewDisable =
     ( "selectCategoryDisable"
-    , Page.Style.formItem
+    , Style.formItem
         "カテゴリ"
         categorySelectId
-        [ Page.Style.selectMenu
+        [ Style.selectMenu
             True
             categorySelectId
             []

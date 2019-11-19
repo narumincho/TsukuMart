@@ -11,7 +11,7 @@ module Component.GraduateSelect exposing
 
 import Data.University as University
 import Html.Styled
-import Page.Style
+import Style
 
 
 type Model
@@ -70,10 +70,10 @@ update msg model =
 view : Model -> ( String, Html.Styled.Html Msg )
 view _ =
     ( "selectGraduate"
-    , Page.Style.formItem
+    , Style.formItem
         "研究科"
         graduateSelectId
-        [ Page.Style.selectMenu
+        [ Style.selectMenu
             False
             graduateSelectId
             (University.graduateAllValue

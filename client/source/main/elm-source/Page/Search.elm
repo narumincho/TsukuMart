@@ -7,7 +7,7 @@ import Html.Styled.Keyed
 import Component.Category
 import Component.GraduateSelect
 import Component.SchoolSelect
-import Page.Style
+import Style
 import PageLocation
 
 
@@ -138,7 +138,7 @@ view model =
     { title = Just "検索"
     , tab = BasicParts.tabNone
     , html =
-        [ Page.Style.container
+        [ Style.container
             (viewBody model)
         ]
     , bottomNavigation = Just BasicParts.Search
@@ -147,10 +147,10 @@ view model =
 
 viewBody : Model -> List (Html.Styled.Html Msg)
 viewBody (Model rec) =
-    [ Page.Style.formItem
+    [ Style.formItem
         "検索語句"
         searchTextId
-        [ Page.Style.inputText
+        [ Style.inputText
             { id = searchTextId
             , type_ = "text"
             , autoComplete = ""
@@ -158,19 +158,19 @@ viewBody (Model rec) =
             }
             |> Html.Styled.map InputQuery
         ]
-    , Page.Style.titleAndContentStyle
+    , Style.titleAndContentStyle
         "カテゴリ"
         (Component.Category.view rec.categorySelect
             |> Html.Styled.map MsgByCategory
         )
-    , Page.Style.radioForm
+    , Style.radioForm
         { select =
             case rec.universitySelect of
                 School _ ->
-                    Page.Style.Left
+                    Style.Left
 
                 Graduate _ ->
-                    Page.Style.Right
+                    Style.Right
         , leftText = "学群/学類"
         , rightText = "研究科"
         , name = "searchUniversityType"
@@ -178,10 +178,10 @@ viewBody (Model rec) =
         |> Html.Styled.map
             (\m ->
                 case m of
-                    Page.Style.Left ->
+                    Style.Left ->
                         SelectSchoolOrDepartment
 
-                    Page.Style.Right ->
+                    Style.Right ->
                         SelectGraduate
             )
     ]
@@ -214,7 +214,7 @@ searchTextId =
 
 searchLinkButton : Model -> Html.Styled.Html Msg
 searchLinkButton (Model rec) =
-    Page.Style.mainButtonLink
+    Style.mainButtonLink
         [ Html.Styled.text "検索する" ]
         (Just
             (PageLocation.SearchResult

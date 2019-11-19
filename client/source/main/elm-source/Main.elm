@@ -33,7 +33,7 @@ import Page.Product
 import Page.Search
 import Page.SearchResult
 import Page.SoldProducts
-import Page.Style
+import Style
 import Page.Trade
 import Page.TradesInPast
 import Page.TradesInProgress
@@ -1270,9 +1270,9 @@ view (Model rec) =
     , body =
         [ Html.Styled.div
             [ Html.Styled.Attributes.css
-                [ Page.Style.displayGridAndGap 0
-                , Page.Style.gridTemplateColumns "max-content 1fr"
-                , Page.Style.gridTemplateRows "64px max-content 1fr max-content"
+                [ Style.displayGridAndGap 0
+                , Style.gridTemplateColumns "max-content 1fr"
+                , Style.gridTemplateRows "64px max-content 1fr max-content"
                 , Css.height (Css.pct 100)
                 , Css.property "word-wrap" "break-word"
                 ]
@@ -1291,9 +1291,9 @@ view (Model rec) =
                         [ Html.Styled.Attributes.id "mainView"
                         , Html.Styled.Attributes.css
                             [ Css.overflowX Css.auto
-                            , Page.Style.gridColumn 2 3
-                            , Page.Style.gridRow 3 4
-                            , Page.Style.webkitOverflowScrolling
+                            , Style.gridColumn 2 3
+                            , Style.gridRow 3 4
+                            , Style.webkitOverflowScrolling
                             ]
                         ]
                         html

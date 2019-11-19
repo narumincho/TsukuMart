@@ -14,7 +14,7 @@ import Html.Styled.Attributes
 import Html.Styled.Events
 import Html.Styled.Keyed
 import Icon
-import Page.Style
+import Style
 
 
 port load :
@@ -307,7 +307,7 @@ normalView data =
             [ Css.padding4 (Css.px 64) (Css.px 8) (Css.px 8) (Css.px 8)
             , Css.width (Css.pct 100)
             , Css.maxWidth (Css.px 512)
-            , Page.Style.displayGridAndGap 16
+            , Style.displayGridAndGap 16
             ]
         ]
         ([ ( "title"
@@ -334,9 +334,9 @@ normalView data =
 
 studentIdView : AnalysisStudentIdOrSAddressResult -> Html.Styled.Html Msg
 studentIdView analysisStudentIdOrEmailAddressResult =
-    Page.Style.formItem "学籍番号"
+    Style.formItem "学籍番号"
         studentInputId
-        [ Page.Style.inputText
+        [ Style.inputText
             { id = studentInputId
             , type_ = "text"
             , required = True
@@ -407,9 +407,9 @@ imageView image =
 
 nameView : String -> Html.Styled.Html Msg
 nameView name =
-    Page.Style.formItem "名前"
+    Style.formItem "名前"
         studentInputId
-        (Page.Style.inputText
+        (Style.inputText
             { id = nameInputId
             , type_ = "text"
             , autoComplete = "nickname"
@@ -451,7 +451,7 @@ submitEmailLabel signUpRequestMaybe =
 
 submitButtonView : Maybe Api.SignUpRequest -> Html.Styled.Html Msg
 submitButtonView signUpRequestMaybe =
-    Page.Style.mainButton
+    Style.mainButton
         [ Html.Styled.text "新規登録する" ]
         (signUpRequestMaybe |> Maybe.map Submit)
 
@@ -509,7 +509,7 @@ loadingStyle =
     [ Css.padding4 (Css.px 128) (Css.px 8) (Css.px 8) (Css.px 8)
     , Css.width (Css.pct 100)
     , Css.maxWidth (Css.px 512)
-    , Page.Style.displayGridAndGap 16
+    , Style.displayGridAndGap 16
     , Css.fontSize (Css.rem 1.5)
     ]
         |> Css.batch

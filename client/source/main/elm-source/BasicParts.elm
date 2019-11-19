@@ -20,7 +20,7 @@ import Html.Styled
 import Html.Styled.Attributes
 import Html.Styled.Events
 import Icon
-import Page.Style
+import Style
 import PageLocation
 import Svg.Styled
 import Svg.Styled.Attributes
@@ -58,14 +58,14 @@ header =
     Html.Styled.header
         [ Html.Styled.Attributes.css
             [ Css.displayFlex
-            , Css.backgroundColor Page.Style.primaryColor
-            , Page.Style.normalShadow
+            , Css.backgroundColor Style.primaryColor
+            , Style.normalShadow
             , Css.width (Css.pct 100)
             , Css.padding Css.zero
             , Css.boxSizing Css.borderBox
             , Css.zIndex (Css.int 2)
-            , Page.Style.gridColumn 1 3
-            , Page.Style.gridRow 1 2
+            , Style.gridColumn 1 3
+            , Style.gridRow 1 2
             ]
         ]
 
@@ -330,8 +330,8 @@ menu logInState =
             , Css.backgroundColor (Css.rgb 221 221 221)
             , Css.top (Css.px 64)
             , Css.left Css.zero
-            , Page.Style.gridColumn 1 2
-            , Page.Style.gridRow 2 5
+            , Style.gridColumn 1 2
+            , Style.gridRow 2 5
             ]
         ]
         (case logInState of
@@ -352,7 +352,7 @@ menuLogInStateNone =
         [ Html.Styled.Attributes.css
             [ Css.displayFlex
             , Css.flexDirection Css.column
-            , Css.backgroundColor Page.Style.primaryColor
+            , Css.backgroundColor Style.primaryColor
             , Css.padding (Css.px 16)
             ]
         ]
@@ -363,7 +363,7 @@ menuLogInStateNone =
                 , Css.padding2 (Css.px 16) Css.zero
                 , Css.borderRadius (Css.px 8)
                 , Css.textDecoration Css.none
-                , Page.Style.userSelectNone
+                , Style.userSelectNone
                 , Css.displayFlex
                 , Css.justifyContent Css.center
                 , Css.hover
@@ -406,7 +406,7 @@ menuLogInStateOk userWithName =
     , menuItem
         (Just
             ( PageLocation.User (Data.User.withNameGetId userWithName)
-            , always (Page.Style.userImage 40 (Data.User.withNameGetImageId userWithName))
+            , always (Style.userImage 40 (Data.User.withNameGetImageId userWithName))
             )
         )
         (Data.User.withNameGetDisplayName userWithName)
@@ -455,7 +455,7 @@ menuItemStyle =
         , Css.displayFlex
         , Css.alignItems Css.center
         , Css.fontSize (Css.rem 1.5)
-        , Page.Style.userSelectNone
+        , Style.userSelectNone
         , Css.textDecoration Css.none
         , Css.color (Css.rgb 0 0 0)
         , Css.hover
@@ -486,7 +486,7 @@ subMenuItemStyle =
     , Css.fontSize (Css.rem 1.3)
     , Css.displayFlex
     , Css.alignItems Css.center
-    , Page.Style.userSelectNone
+    , Style.userSelectNone
     , Css.textDecoration Css.none
     , Css.color (Css.rgb 0 0 0)
     , Css.hover
@@ -591,19 +591,19 @@ tabStyle : Tab msg -> Css.Style
 tabStyle tab =
     Css.batch
         ([ Css.backgroundColor (Css.rgb 240 240 240)
-         , Page.Style.displayGridAndGap 0
-         , Page.Style.gridTemplateRows "48px"
+         , Style.displayGridAndGap 0
+         , Style.gridTemplateRows "48px"
          , Css.boxShadow4 Css.zero (Css.px 2) (Css.px 4) (Css.rgba 0 0 0 0.4)
          , Css.textShadow4 Css.zero (Css.px 1) (Css.px 2) (Css.rgba 0 0 0 0.4)
-         , Page.Style.gridColumn 2 3
-         , Page.Style.gridRow 2 3
+         , Style.gridColumn 2 3
+         , Style.gridRow 2 3
          ]
             ++ (case tab of
                     None ->
                         [ Css.height Css.zero ]
 
                     _ ->
-                        [ Page.Style.gridTemplateColumns
+                        [ Style.gridTemplateColumns
                             (List.repeat (toCount tab) "1fr" |> String.join " ")
                         , Css.height (Css.px 48)
                         ]
@@ -624,16 +624,16 @@ itemView index selectIndex label clickEventMaybe =
              , Css.alignItems Css.center
              , Css.color
                 (if isSelected then
-                    Page.Style.primaryColor
+                    Style.primaryColor
 
                  else
                     Css.rgb 85 85 85
                 )
-             , Page.Style.userSelectNone
+             , Style.userSelectNone
              , Css.Transitions.transition
                 [ Css.Transitions.color3 300 0 Css.Transitions.ease ]
-             , Page.Style.gridRow 1 2
-             , Page.Style.gridColumn (index + 1) (index + 2)
+             , Style.gridRow 1 2
+             , Style.gridColumn (index + 1) (index + 2)
              ]
                 ++ (if isSelected then
                         [ Css.fontWeight Css.bold ]
@@ -642,13 +642,13 @@ itemView index selectIndex label clickEventMaybe =
                         [ Css.cursor Css.pointer
                         , Css.hover
                             [ Css.backgroundColor (Css.rgb 221 221 221)
-                            , Css.color Page.Style.primaryColor
+                            , Css.color Style.primaryColor
                             ]
                         ]
                    )
                 ++ (case clickEventMaybe of
                         Just _ ->
-                            [ Page.Style.webkitTapHighlightColorTransparent ]
+                            [ Style.webkitTapHighlightColorTransparent ]
 
                         Nothing ->
                             []
@@ -677,17 +677,17 @@ selectLineView index count =
     Html.Styled.div
         [ Html.Styled.Attributes.css
             [ Css.position Css.relative
-            , Page.Style.gridColumn 1 4
-            , Page.Style.gridRow 1 2
+            , Style.gridColumn 1 4
+            , Style.gridRow 1 2
             , Css.alignSelf Css.end
             , Css.height (Css.px 4)
-            , Page.Style.pointerEventsNone
+            , Style.pointerEventsNone
             ]
         ]
         [ Html.Styled.div
             [ Html.Styled.Attributes.css
                 [ Css.position Css.absolute
-                , Css.backgroundColor Page.Style.primaryColor
+                , Css.backgroundColor Style.primaryColor
                 , Css.height (Css.pct 100)
                 , Css.Transitions.transition
                     [ Css.Transitions.left3 300 0 Css.Transitions.ease
@@ -785,7 +785,7 @@ bottomNavigation logInState select =
                     (Just (PageLocation.User (Data.User.withNameGetId userWithName)))
                     (Just
                         (always
-                            (Page.Style.userImage 32 (Data.User.withNameGetImageId userWithName))
+                            (Style.userImage 32 (Data.User.withNameGetImageId userWithName))
                         )
                     )
                     "ユーザー"
@@ -796,10 +796,10 @@ bottomNavigationContainer : List (Html.Styled.Html msg) -> Html.Styled.Html msg
 bottomNavigationContainer item =
     Html.Styled.div
         [ Html.Styled.Attributes.css
-            [ Page.Style.displayGridAndGap 0
-            , Page.Style.gridColumn 2 3
-            , Page.Style.gridRow 4 5
-            , Page.Style.gridTemplateColumns
+            [ Style.displayGridAndGap 0
+            , Style.gridColumn 2 3
+            , Style.gridRow 4 5
+            , Style.gridTemplateColumns
                 ("1fr"
                     |> List.repeat (List.length item)
                     |> String.join " "

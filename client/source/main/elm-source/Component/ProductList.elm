@@ -19,7 +19,7 @@ import Html.Styled.Attributes
 import Html.Styled.Events
 import Icon
 import Json.Decode
-import Page.Style
+import Style
 import PageLocation
 import Set
 
@@ -84,17 +84,17 @@ view : Model -> Data.LogInState.LogInState -> Bool -> Maybe (List Product.Produc
 view (Model { likeUpdating }) logInState isWideMode productList =
     case productList of
         Just [] ->
-            Page.Style.emptyList "ここに表示する商品がありません"
+            Style.emptyList "ここに表示する商品がありません"
 
         Just (x :: xs) ->
             listView likeUpdating logInState isWideMode ( x, xs )
 
         Nothing ->
-            Page.Style.container
+            Style.container
                 [ Html.Styled.div
                     [ Html.Styled.Attributes.css
-                        [ Page.Style.displayGridAndGap 0
-                        , Page.Style.justifyItemsCenter
+                        [ Style.displayGridAndGap 0
+                        , Style.justifyItemsCenter
                         ]
                     ]
                     [ Html.Styled.text "読み込み中"
@@ -112,7 +112,7 @@ listView :
 listView sending logInState isWideMode ( product, productList ) =
     Html.Styled.div
         [ Html.Styled.Attributes.css
-            [ Page.Style.displayGridAndGap 0
+            [ Style.displayGridAndGap 0
             , Css.property "grid-template-columns"
                 (if isWideMode then
                     "33.3% 33.4% 33.3%"
@@ -248,8 +248,8 @@ itemImage name url =
             , Css.width (Css.pct 100)
             , Css.height (Css.px 192)
             , Css.property "object-fit" "cover"
-            , Page.Style.gridColumn 1 2
-            , Page.Style.gridRow 1 2
+            , Style.gridColumn 1 2
+            , Style.gridRow 1 2
             , Css.backgroundColor (Css.rgb 128 128 128)
             ]
         , Html.Styled.Attributes.src url
@@ -262,8 +262,8 @@ soldOutBar : Html.Styled.Html msg
 soldOutBar =
     Html.Styled.div
         [ Html.Styled.Attributes.css
-            [ Page.Style.gridColumn 1 2
-            , Page.Style.gridRow 1 2
+            [ Style.gridColumn 1 2
+            , Style.gridRow 1 2
             , Css.overflow Css.hidden
             ]
         ]

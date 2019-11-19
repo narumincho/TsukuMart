@@ -22,7 +22,7 @@ import Html.Styled
 import Html.Styled.Attributes
 import Html.Styled.Events
 import Icon
-import Page.Style
+import Style
 import Set
 import Utility
 
@@ -486,7 +486,7 @@ photoImage index dataUrl =
 
 nameView : String -> Html.Styled.Html Msg
 nameView name =
-    Page.Style.formItem
+    Style.formItem
         "商品名"
         nameEditorId
         (Html.Styled.input
@@ -521,7 +521,7 @@ nameEditorId =
 
 descriptionView : Html.Styled.Html Msg
 descriptionView =
-    Page.Style.formItem
+    Style.formItem
         "商品の説明"
         descriptionEditorId
         [ Html.Styled.textarea
@@ -547,7 +547,7 @@ descriptionEditorId =
 
 priceView : Maybe Int -> Html.Styled.Html Msg
 priceView priceMaybe =
-    Page.Style.formItem
+    Style.formItem
         "販売価格"
         priceEditorId
         [ Html.Styled.div
@@ -595,10 +595,10 @@ priceEditorId =
 
 conditionView : Maybe Product.Condition -> Html.Styled.Html Msg
 conditionView _ =
-    Page.Style.formItem
+    Style.formItem
         "商品の状態"
         conditionSelectId
-        [ Page.Style.selectMenu
+        [ Style.selectMenu
             False
             conditionSelectId
             (Product.conditionAll

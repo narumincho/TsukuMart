@@ -13,7 +13,7 @@ import Html.Styled
 import Html.Styled.Attributes
 import Html.Styled.Events
 import Icon
-import Page.Style
+import Style
 
 
 type Model
@@ -53,7 +53,7 @@ view : Model -> Html.Styled.Html Msg
 view (Model waitLogInUrl) =
     Html.Styled.div
         [ Html.Styled.Attributes.css
-            [ Page.Style.displayGridAndGap 24
+            [ Style.displayGridAndGap 24
             , Css.padding (Css.px 24)
             ]
         ]

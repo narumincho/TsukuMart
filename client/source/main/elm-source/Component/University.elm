@@ -13,7 +13,7 @@ import Data.University as University
 import Html.Styled
 import Component.GraduateSelect as GraduateSelect
 import Component.SchoolSelect as SchoolSelect
-import Page.Style
+import Style
 
 
 type Model
@@ -196,7 +196,7 @@ view : Model -> List ( String, Html.Styled.Html Msg )
 view model =
     case model of
         School schoolSelect ->
-            schoolOrGraduateView Page.Style.Left
+            schoolOrGraduateView Style.Left
                 :: (SchoolSelect.view schoolSelect
                         |> List.map
                             (Tuple.mapSecond
@@ -205,22 +205,22 @@ view model =
                    )
 
         GraduateTsukuba { graduate, school } ->
-            schoolOrGraduateView Page.Style.Right
+            schoolOrGraduateView Style.Right
                 :: graduateTsukubaView graduate school
 
         GraduateNoTsukuba graduate ->
-            schoolOrGraduateView Page.Style.Right
+            schoolOrGraduateView Style.Right
                 :: graduateNoTsukubaView graduate
 
 
 {-| 研究科に所属しているかしていないか?
 -}
-schoolOrGraduateView : Page.Style.RadioSelect -> ( String, Html.Styled.Html Msg )
+schoolOrGraduateView : Style.RadioSelect -> ( String, Html.Styled.Html Msg )
 schoolOrGraduateView select =
     ( "schoolOrGraduate"
-    , Page.Style.titleAndContentStyle
+    , Style.titleAndContentStyle
         "所属"
-        (Page.Style.radioForm
+        (Style.radioForm
             { select = select
             , leftText = "学群生"
             , rightText = "院生"
@@ -229,10 +229,10 @@ schoolOrGraduateView select =
             |> Html.Styled.map
                 (\msg ->
                     case msg of
-                        Page.Style.Left ->
+                        Style.Left ->
                             SwitchSchool
 
-                        Page.Style.Right ->
+                        Style.Right ->
                             SwitchGraduate
                 )
         )
@@ -242,7 +242,7 @@ schoolOrGraduateView select =
 graduateTsukubaView : GraduateSelect.Model -> SchoolSelect.Model -> List ( String, Html.Styled.Html Msg )
 graduateTsukubaView graduateSelect schoolSelect =
     [ GraduateSelect.view graduateSelect |> Tuple.mapSecond (Html.Styled.map MsgByGraduate)
-    , graduateYesNoTsukubaView Page.Style.Left
+    , graduateYesNoTsukubaView Style.Left
     ]
         ++ (SchoolSelect.view schoolSelect |> List.map (Tuple.mapSecond (Html.Styled.map MsgBySchool)))
 
@@ -250,19 +250,19 @@ graduateTsukubaView graduateSelect schoolSelect =
 graduateNoTsukubaView : GraduateSelect.Model -> List ( String, Html.Styled.Html Msg )
 graduateNoTsukubaView graduateSelect =
     [ GraduateSelect.view graduateSelect |> Tuple.mapSecond (Html.Styled.map MsgByGraduate)
-    , graduateYesNoTsukubaView Page.Style.Right
+    , graduateYesNoTsukubaView Style.Right
     ]
 
 
 {-| 筑波大学に所属していたかしていなかったか
 Boolは左(筑波大学所属していた)を選択しているか
 -}
-graduateYesNoTsukubaView : Page.Style.RadioSelect -> ( String, Html.Styled.Html Msg )
+graduateYesNoTsukubaView : Style.RadioSelect -> ( String, Html.Styled.Html Msg )
 graduateYesNoTsukubaView select =
     ( "tsukubaUniversitySchoolOrNo"
-    , Page.Style.titleAndContentStyle
+    , Style.titleAndContentStyle
         "院進前の所属"
-        (Page.Style.radioForm
+        (Style.radioForm
             { select = select
             , leftText = "筑波大学に所属していた"
             , rightText = "筑波大学に所属していなかった"
@@ -271,10 +271,10 @@ graduateYesNoTsukubaView select =
             |> Html.Styled.map
                 (\msg ->
                     case msg of
-                        Page.Style.Left ->
+                        Style.Left ->
                             SwitchGraduateTsukuba
 
-                        Page.Style.Right ->
+                        Style.Right ->
                             SwitchGraduateNoTsukuba
                 )
         )

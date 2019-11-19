@@ -22,7 +22,7 @@ import Html.Styled
 import Html.Styled.Attributes
 import Html.Styled.Events
 import Icon
-import Page.Style
+import Style
 import PageLocation
 import Time
 
@@ -227,7 +227,7 @@ view logInState timeData allProductsMaybe model =
     { title = Just "取引"
     , tab = BasicParts.tabNone
     , html =
-        [ Page.Style.container
+        [ Style.container
             (case logInState of
                 LogInState.Ok { token, userWithName } ->
                     case model of
@@ -287,19 +287,19 @@ mainView sending token timeData user allProducts comments trade =
                 Trade.Seller
     in
     [ productImageView (Product.getImageUrls product)
-    , Page.Style.titleAndContent
+    , Style.titleAndContent
         "商品名"
         (Html.div [] [ Html.text (Product.getName product) ])
-    , Page.Style.titleAndContent
+    , Style.titleAndContent
         "値段"
         (Html.div [] [ Html.text (Product.priceToString (Product.getPrice product)) ])
-    , Page.Style.titleAndContent
+    , Style.titleAndContent
         "取引状態"
         (Html.text (Trade.statusToJapaneseString (Trade.getStatus trade)))
-    , Page.Style.titleAndContent
+    , Style.titleAndContent
         "更新日時"
         (Html.text (Data.DateTime.toDiffString timeData (Trade.getUpdateAt trade)))
-    , Page.Style.titleAndContent
+    , Style.titleAndContent
         "開始日時"
         (Html.text (Data.DateTime.toDiffString timeData (Trade.getCreatedAt trade)))
     , Html.Styled.a
@@ -425,7 +425,7 @@ userView userWithName =
                 (PageLocation.User (User.withNameGetId userWithName))
             )
         ]
-        [ Page.Style.userImage 48 (User.withNameGetImageId userWithName)
+        [ Style.userImage 48 (User.withNameGetImageId userWithName)
         , Html.Styled.text (User.withNameGetDisplayName userWithName)
         ]
 

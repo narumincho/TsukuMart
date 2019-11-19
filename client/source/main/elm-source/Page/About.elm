@@ -3,7 +3,7 @@ module Page.About exposing (Model, aboutModel, privacyPolicyModel, view)
 import BasicParts
 import Html.Styled
 import Html.Styled.Attributes
-import Page.Style
+import Style
 import PageLocation
 
 
@@ -36,7 +36,7 @@ view model =
             { title = "つくマートについて"
             , tab = BasicParts.tabNone
             , html =
-                [ Page.Style.container
+                [ Style.container
                     [ Html.Styled.text "つくマートについて"
                     , Html.Styled.a
                         [ Html.Styled.Attributes.href PageLocation.aboutPrivacyPolicyUrl
@@ -52,7 +52,7 @@ view model =
             { title = "プライバシーポリシー"
             , tab = BasicParts.tabNone
             , html =
-                [ Page.Style.container
+                [ Style.container
                     [ Html.Styled.text "プライバシーポリシー" ]
                 ]
             , bottomNavigation = Nothing

@@ -15,7 +15,7 @@ import Component.ProductList as ProductList
 import Data.LogInState as LogInState
 import Data.Product as Product
 import Html.Styled
-import Page.Style
+import Style
 
 
 type Model
@@ -132,7 +132,7 @@ view logInState isWideScreen (Model rec) =
     , html =
         case logInState of
             LogInState.None ->
-                [ Page.Style.container
+                [ Style.container
                     [ Html.Styled.text "ログインか新規登録をして、いいねと閲覧履歴を使えるようにしよう!"
                     , LogIn.view
                         rec.logIn

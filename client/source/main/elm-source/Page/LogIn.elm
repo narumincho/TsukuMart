@@ -10,7 +10,7 @@ module Page.LogIn exposing
 import BasicParts
 import Html.Styled
 import Component.LogIn as LogInOrSignUp
-import Page.Style
+import Style
 
 
 type Model
@@ -59,7 +59,7 @@ view (Model logInOrSignUpModel) =
     { title = Just "ログイン"
     , tab = BasicParts.tabSingle "ログイン"
     , html =
-        [ Page.Style.container
+        [ Style.container
             [ LogInOrSignUp.view logInOrSignUpModel
                 |> Html.Styled.map Msg
             ]

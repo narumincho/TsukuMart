@@ -21,7 +21,7 @@ import Html.Styled
 import Html.Styled.Attributes
 import Html.Styled.Events
 import Icon
-import Page.Style
+import Style
 import PageLocation
 
 
@@ -207,7 +207,7 @@ view logInState (Model { page, logInOrSignUpModel }) =
     { title = Just "出品"
     , tab = BasicParts.tabSingle tabText
     , html =
-        [ Page.Style.containerKeyed body
+        [ Style.containerKeyed body
         ]
     , bottomNavigation = Nothing
     }
@@ -278,15 +278,15 @@ confirmView : Api.Token -> Api.SellProductRequest -> Bool -> ( String, List ( St
 confirmView accessToken (Api.SellProductRequest requestData) sending =
     ( "出品 確認"
     , ([ confirmViewImage requestData.images
-       , Page.Style.titleAndContent "商品名"
+       , Style.titleAndContent "商品名"
             (Html.span [] [ Html.text requestData.name ])
-       , Page.Style.titleAndContent "説明文"
+       , Style.titleAndContent "説明文"
             (Html.div [] [ Html.text requestData.description ])
-       , Page.Style.titleAndContent "値段"
+       , Style.titleAndContent "値段"
             (Html.div [] [ Html.text (Product.priceToString requestData.price) ])
-       , Page.Style.titleAndContent "カテゴリー"
+       , Style.titleAndContent "カテゴリー"
             (Html.div [] [ Html.text (Data.Category.toJapaneseString requestData.category) ])
-       , Page.Style.titleAndContent "状態"
+       , Style.titleAndContent "状態"
             (Html.div [] [ Html.text (Product.conditionToJapaneseString requestData.condition) ])
        ]
         ++ (if sending then

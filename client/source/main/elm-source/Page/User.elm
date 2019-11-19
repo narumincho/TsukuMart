@@ -24,7 +24,7 @@ import Html.Styled
 import Html.Styled.Attributes
 import Html.Styled.Events
 import Icon
-import Page.Style
+import Style
 import PageLocation
 
 
@@ -275,7 +275,7 @@ view logInState isWideScreen model =
             )
     , tab = BasicParts.tabSingle "プロフィール"
     , html =
-        [ Page.Style.container
+        [ Style.container
             (case ( logInState, model ) of
                 ( LogInState.Ok { userWithName, token }, Normal normalUser ) ->
                     if User.withNameGetId userWithName == User.withProfileGetId normalUser then
@@ -361,7 +361,7 @@ imageAndDisplayNameView isWideScreen imageId displayName =
                 , Css.justifyContent Css.center
                 ]
             ]
-            [ Page.Style.userImage 200 imageId
+            [ Style.userImage 200 imageId
             , Html.Styled.div
                 [ Html.Styled.Attributes.css
                     [ Css.flexGrow (Css.int 1)
@@ -379,7 +379,7 @@ imageAndDisplayNameView isWideScreen imageId displayName =
                 , Css.justifyContent Css.center
                 ]
             ]
-            [ Page.Style.userImage 200 imageId ]
+            [ Style.userImage 200 imageId ]
         , Html.Styled.div
             [ Html.Styled.Attributes.css
                 [ Css.fontSize (Css.rem 1.5) ]
@@ -390,7 +390,7 @@ imageAndDisplayNameView isWideScreen imageId displayName =
 
 introductionView : String -> Html.Styled.Html msg
 introductionView introduction =
-    Page.Style.titleAndContent "紹介文"
+    Style.titleAndContent "紹介文"
         (Html.div []
             (introduction
                 |> String.lines
@@ -408,7 +408,7 @@ universityView university =
     in
     (case graduate of
         Just g ->
-            [ Page.Style.titleAndContent
+            [ Style.titleAndContent
                 "研究科"
                 (Html.div
                     []
@@ -421,7 +421,7 @@ universityView university =
     )
         ++ (case school of
                 Just s ->
-                    [ Page.Style.titleAndContent "学群"
+                    [ Style.titleAndContent "学群"
                         (Html.div
                             []
                             [ Html.text s ]
@@ -433,7 +433,7 @@ universityView university =
            )
         ++ (case department of
                 Just d ->
-                    [ Page.Style.titleAndContent "学類"
+                    [ Style.titleAndContent "学類"
                         (Html.div
                             []
                             [ Html.text d ]
@@ -468,7 +468,7 @@ dataLinkContainer : List ( PageLocation.PageLocation, String ) -> Html.Styled.Ht
 dataLinkContainer data =
     Html.Styled.div
         [ Html.Styled.Attributes.css
-            [ Page.Style.displayGridAndGap 8
+            [ Style.displayGridAndGap 8
             , Css.padding4 Css.zero Css.zero (Css.px 48) Css.zero
             ]
         ]

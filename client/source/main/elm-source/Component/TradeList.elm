@@ -7,7 +7,7 @@ import Data.User as User
 import Html.Styled
 import Html.Styled.Attributes
 import Icon
-import Page.Style
+import Style
 import PageLocation
 
 
@@ -20,7 +20,7 @@ view allProductsMaybe tradesMaybe =
                 mainView allProducts ( x, xs )
 
             ( _, Just [] ) ->
-                [ Page.Style.emptyList "ここに表示する取引がありません" ]
+                [ Style.emptyList "ここに表示する取引がありません" ]
 
             ( _, Nothing ) ->
                 [ Html.Styled.text "取引情報を読み込み中"
@@ -51,7 +51,7 @@ itemView allProducts trade =
                 (PageLocation.Trade (Trade.getId trade))
             )
         , Html.Styled.Attributes.css
-            [ Page.Style.displayGridAndGap 0
+            [ Style.displayGridAndGap 0
             , Css.property "grid-template-columns" "194px 1fr"
             , Css.property "grid-template-rows" "max-content max-content max-content"
             , Css.border3 (Css.px 1) Css.solid (Css.rgba 0 0 0 0.4)
@@ -63,8 +63,8 @@ itemView allProducts trade =
             [ Html.Styled.Attributes.src (Product.getThumbnailImageUrl product)
             , Html.Styled.Attributes.css
                 [ Css.display Css.block
-                , Page.Style.gridColumn 1 2
-                , Page.Style.gridRow 1 4
+                , Style.gridColumn 1 2
+                , Style.gridRow 1 4
                 , Css.width (Css.px 192)
                 , Css.height (Css.px 192)
                 , Css.property "object-fit" "contain"
@@ -73,8 +73,8 @@ itemView allProducts trade =
             []
         , Html.Styled.div
             [ Html.Styled.Attributes.css
-                [ Page.Style.gridColumn 2 3
-                , Page.Style.gridRow 1 2
+                [ Style.gridColumn 2 3
+                , Style.gridRow 1 2
                 , Css.color (Css.rgb 0 0 0)
                 , Css.fontSize (Css.px 32)
                 ]
@@ -82,15 +82,15 @@ itemView allProducts trade =
             [ Html.Styled.text (Product.getName product) ]
         , Html.Styled.div
             [ Html.Styled.Attributes.css
-                [ Page.Style.gridColumn 2 3
-                , Page.Style.gridRow 2 3
+                [ Style.gridColumn 2 3
+                , Style.gridRow 2 3
                 ]
             ]
             [ Html.Styled.text (Product.priceToString (Product.getPrice product)) ]
         , Html.Styled.div
             [ Html.Styled.Attributes.css
-                [ Page.Style.gridColumn 2 3
-                , Page.Style.gridRow 3 4
+                [ Style.gridColumn 2 3
+                , Style.gridRow 3 4
                 , Css.displayFlex
                 ]
             ]
@@ -109,6 +109,6 @@ userView : User.WithName -> Html.Styled.Html msg
 userView userWithName =
     Html.Styled.div
         []
-        [ Page.Style.userImage 48 (User.withNameGetImageId userWithName)
+        [ Style.userImage 48 (User.withNameGetImageId userWithName)
         , Html.Styled.text (User.withNameGetDisplayName userWithName)
         ]

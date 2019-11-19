@@ -6,7 +6,7 @@ import Data.User as User
 import Html.Styled
 import Html.Styled.Attributes
 import Icon
-import Page.Style
+import Style
 import PageLocation
 import Svg.Styled as S
 import Svg.Styled.Attributes as A
@@ -20,7 +20,7 @@ view :
 view nowMaybe commentListMaybe =
     Html.Styled.div
         [ Html.Styled.Attributes.css
-            [ Page.Style.displayGridAndGap 16 ]
+            [ Style.displayGridAndGap 16 ]
         ]
         (case commentListMaybe of
             Just comments ->
@@ -43,7 +43,7 @@ commentView :
 commentView nowMaybe comment =
     Html.Styled.div
         [ Html.Styled.Attributes.css
-            [ Page.Style.displayGridAndGap 0
+            [ Style.displayGridAndGap 0
             , Css.property "grid-template-columns" "1fr"
             ]
         ]
@@ -65,7 +65,7 @@ commentView nowMaybe comment =
                     (PageLocation.User (User.withNameGetId comment.user))
                 )
             ]
-            [ Page.Style.userImage 48 (User.withNameGetImageId comment.user)
+            [ Style.userImage 48 (User.withNameGetImageId comment.user)
             , Html.Styled.text (User.withNameGetDisplayName comment.user)
             ]
         , Html.Styled.div
