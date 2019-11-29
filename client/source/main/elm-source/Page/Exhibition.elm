@@ -21,8 +21,8 @@ import Html.Styled
 import Html.Styled.Attributes
 import Html.Styled.Events
 import Icon
-import Style
 import PageLocation
+import Style
 
 
 type Model
@@ -317,23 +317,12 @@ confirmView accessToken (Api.SellProductRequest requestData) sending =
 
 confirmViewImage : List String -> Html.Styled.Html Msg
 confirmViewImage images =
-    Html.Styled.div
-        [ Html.Styled.Attributes.class "exhibition-photo-cardList-container" ]
-        [ Html.Styled.div
-            [ Html.Styled.Attributes.class "exhibition-photo-cardList" ]
-            (images
-                |> List.map
-                    (\dataUrl ->
-                        Html.Styled.div
-                            [ Html.Styled.Attributes.class "exhibition-photo-card" ]
-                            [ Html.Styled.img
-                                [ Html.Styled.Attributes.src dataUrl
-                                , Html.Styled.Attributes.css
-                                    [ Css.display Css.block ]
-                                , Html.Styled.Attributes.class "exhibition-photo-card-image"
-                                ]
-                                []
-                            ]
-                    )
-            )
-        ]
+    Style.cardListContainer
+        (images
+            |> List.map
+                (\dataUrl ->
+                    { url = dataUrl
+                    , delete = Nothing
+                    }
+                )
+        )

@@ -22,8 +22,8 @@ import Html.Styled
 import Html.Styled.Attributes
 import Html.Styled.Events
 import Icon
-import Style
 import Set
+import Style
 import Utility
 
 
@@ -410,7 +410,13 @@ photoAdd =
     Html.Styled.div
         []
         [ Html.Styled.label
-            [ Html.Styled.Attributes.class "exhibition-photo-add"
+            [ Html.Styled.Attributes.css
+                [ Css.width (Css.pct 100)
+                , Css.displayFlex
+                , Css.justifyContent Css.center
+                , Css.backgroundColor (Css.rgb 100 100 100)
+                , Css.cursor Css.pointer
+                ]
             , Html.Styled.Attributes.id photoAddLabelId
             , Html.Styled.Attributes.for photoAddInputId
             ]
@@ -437,12 +443,8 @@ photoAddInputId =
 
 photoCardList : { addImages : List String, deleteAt : Set.Set Int, beforeImageIds : List ImageId.ImageId } -> Html.Styled.Html Msg
 photoCardList rec =
-    Html.Styled.div
-        [ Html.Styled.Attributes.class "exhibition-photo-cardList-container" ]
-        [ Html.Styled.div
-            [ Html.Styled.Attributes.class "exhibition-photo-cardList" ]
-            (rec |> toImageUrlList |> List.indexedMap photoImage)
-        ]
+    Style.cardListContainer
+        (rec |> toImageUrlList |> List.map photoImage)
 
 
 toImageUrlList : { addImages : List String, deleteAt : Set.Set Int, beforeImageIds : List ImageId.ImageId } -> List String
@@ -461,20 +463,11 @@ toImageUrlList { addImages, deleteAt, beforeImageIds } =
         ++ (beforeImageIds |> List.map ImageId.toUrlString)
 
 
-photoImage : Int -> String -> Html.Styled.Html Msg
-photoImage index dataUrl =
-    Html.Styled.div
-        [ Html.Styled.Attributes.class "exhibition-photo-card" ]
-        [ Icon.delete
-            |> Html.Styled.map (always (DeleteImage index))
-        , Html.Styled.img
-            [ Html.Styled.Attributes.src dataUrl
-            , Html.Styled.Attributes.css
-                [ Css.display Css.block ]
-            , Html.Styled.Attributes.class "exhibition-photo-card-image"
-            ]
-            []
-        ]
+photoImage : String -> { url : String, delete : Maybe (Int -> msg) }
+photoImage dataUrl =
+    { url = dataUrl
+    , delete = Just DeleteImage
+    }
 
 
 

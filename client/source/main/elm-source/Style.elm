@@ -1,5 +1,6 @@
 module Style exposing
     ( RadioSelect(..)
+    , cardListContainer
     , container
     , containerKeyed
     , displayGridAndGap
@@ -34,6 +35,7 @@ import Html.Styled as H
 import Html.Styled.Attributes as A
 import Html.Styled.Events
 import Html.Styled.Keyed
+import Icon
 import Json.Decode
 import PageLocation
 
@@ -511,3 +513,57 @@ emptyList text =
             []
         , H.text text
         ]
+
+
+cardListContainer : List { url : String, delete : Maybe (Int -> msg) } -> H.Html msg
+cardListContainer children =
+    H.div
+        [ A.css
+            [ Css.backgroundColor (Css.rgb 100 100 100)
+            , Css.overflowX Css.auto
+            , Css.position Css.relative
+            ]
+        ]
+        [ H.div
+            [ A.css
+                [ Css.displayFlex
+                , Css.flexDirection Css.row
+                ]
+            ]
+            (children
+                |> List.indexedMap cardListItem
+            )
+        ]
+
+
+cardListItem : Int -> { url : String, delete : Maybe (Int -> msg) } -> H.Html msg
+cardListItem index data =
+    H.div
+        [ A.css
+            [ Css.position Css.relative
+            , Css.width (Css.px 120)
+            , Css.height (Css.px 120)
+            , Css.padding (Css.px 16)
+            ]
+        ]
+        ((case data.delete of
+            Just deleteMessage ->
+                [ Icon.delete
+                    |> H.map (always (deleteMessage index))
+                ]
+
+            Nothing ->
+                []
+         )
+            ++ [ H.img
+                    [ A.css
+                        [ Css.display Css.block
+                        , Css.width (Css.px 120)
+                        , Css.height (Css.px 120)
+                        , Css.property "object-fit" "contain"
+                        ]
+                    , A.src data.url
+                    ]
+                    []
+               ]
+        )
