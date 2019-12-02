@@ -1,6 +1,7 @@
 .idea
 elm-stuff
 node_modules
+.firebase
 .vscode
 /client/distribution
 /server/source/lib/key.ts
