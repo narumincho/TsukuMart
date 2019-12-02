@@ -2,15 +2,12 @@ module Icon exposing
     ( delete
     , deleteGarbageCan
     , edit
-    , gitHub
-    , google
     , home
     , information
     , loading
     , notifications
     , photo
     , search
-    , twitter
     )
 
 import Css
