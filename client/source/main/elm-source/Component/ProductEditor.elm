@@ -14,6 +14,7 @@ module Component.ProductEditor exposing
 import Api
 import Component.Category as CategoryComp
 import Css
+import Css.Transitions
 import Data.Category as Category
 import Data.ImageId as ImageId
 import Data.Product as Product
@@ -463,7 +464,7 @@ toImageUrlList { addImages, deleteAt, beforeImageIds } =
         ++ (beforeImageIds |> List.map ImageId.toUrlString)
 
 
-photoImage : String -> { url : String, delete : Maybe (Int -> msg) }
+photoImage : String -> { url : String, delete : Maybe (Int -> Msg) }
 photoImage dataUrl =
     { url = dataUrl
     , delete = Just DeleteImage
@@ -544,11 +545,32 @@ priceView priceMaybe =
         "販売価格"
         priceEditorId
         [ Html.Styled.div
-            [ Html.Styled.Attributes.class "exhibition-itemPrice-input"
+            [ Html.Styled.Attributes.css
+                [ Css.displayFlex
+                , Css.alignItems Css.baseline
+                ]
             ]
             [ Html.Styled.input
                 [ Html.Styled.Attributes.type_ "number"
-                , Html.Styled.Attributes.class "exhibition-itemPrice-input-input"
+                , Html.Styled.Attributes.css
+                    [ Css.fontSize (Css.rem 2)
+                    , Css.flexGrow (Css.int 1)
+                    , Css.padding (Css.px 8)
+                    , Css.textAlign Css.right
+                    , Css.border3 (Css.px 1) Css.solid (Css.rgb 204 204 204)
+                    , Css.boxSizing Css.borderBox
+                    , Css.borderRadius (Css.px 8)
+                    , Css.boxShadow5 Css.inset Css.zero (Css.px 1) (Css.px 1) (Css.rgba 0 0 0 0.075)
+                    , Css.Transitions.transition
+                        [ Css.Transitions.borderColor3 0 150 Css.Transitions.easeInOut
+                        , Css.Transitions.boxShadow3 0 150 Css.Transitions.easeInOut
+                        ]
+                    , Css.outline Css.none
+                    , Css.focus
+                        [ Css.property "box-shadow" "inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px rgba(102, 175, 233, 0.6)"
+                        , Css.border3 (Css.px 1) Css.solid (Css.rgb 102 175 233)
+                        ]
+                    ]
                 , Html.Styled.Attributes.id priceEditorId
                 , Html.Styled.Attributes.placeholder "0 ～ 1000000"
                 , Html.Styled.Attributes.min "0"
