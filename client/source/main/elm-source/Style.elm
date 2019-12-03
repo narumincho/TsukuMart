@@ -17,6 +17,7 @@ module Style exposing
     , normalShadow
     , pointerEventsNone
     , primaryColor
+    , productImageList
     , radioForm
     , selectMenu
     , titleAndContent
@@ -567,3 +568,35 @@ cardListItem index data =
                     []
                ]
         )
+
+
+productImageList : List String -> H.Html msg
+productImageList urlList =
+    H.div
+        [ A.css
+            [ Css.backgroundColor (Css.rgb 128 128 128)
+            , Css.overflowX Css.auto
+            ]
+        ]
+        [ H.div
+            [ A.css
+                [ displayGridAndGap 16
+                , Css.property "grid-auto-flow" "column"
+                ]
+            ]
+            (urlList |> List.map imageView)
+        ]
+
+
+imageView : String -> H.Html msg
+imageView url =
+    H.img
+        [ A.css
+            [ Css.display Css.block
+            , Css.width (Css.px 320)
+            , Css.height (Css.px 320)
+            , Css.property "object-fit" "contain"
+            ]
+        , A.src url
+        ]
+        []

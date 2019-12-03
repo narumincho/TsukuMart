@@ -3,7 +3,6 @@ module Page.Product exposing
     , Model
     , Msg(..)
     , getProductId
-    , imageView
     , initModel
     , update
     , view
@@ -30,8 +29,8 @@ import Html.Styled
 import Html.Styled.Attributes
 import Html.Styled.Events
 import Icon
-import Style
 import PageLocation
+import Style
 import Time
 
 
@@ -464,7 +463,7 @@ view logInState isWideScreen nowMaybe productAllMaybe model =
             , html =
                 [ Style.container
                     [ Html.Styled.text "購入確認画面。この商品の取引を開始しますか?"
-                    , productsViewImage (Product.getImageUrls productData)
+                    , Style.productImageList (Product.getImageUrls productData)
                     , productsViewName (Product.getName productData)
                     , descriptionView (Product.getDescription productData)
                     , conditionView (Product.getCondition productData)
@@ -496,7 +495,7 @@ normalView logInState isWideScreen nowMaybe { product, likeSending, commentSendi
     , tab = BasicParts.tabNone
     , html =
         [ Style.container
-            ([ productsViewImage (Product.getImageUrls product)
+            ([ Style.productImageList (Product.getImageUrls product)
              , productsViewName (Product.getName product)
              , productsViewLike
                 logInState
@@ -549,28 +548,6 @@ normalView logInState isWideScreen nowMaybe { product, likeSending, commentSendi
         ]
     , bottomNavigation = Nothing
     }
-
-
-productsViewImage : List String -> Html.Styled.Html msg
-productsViewImage urlList =
-    Html.Styled.div
-        [ Html.Styled.Attributes.class "product-imageListContainer" ]
-        [ Html.Styled.div
-            [ Html.Styled.Attributes.class "product-imageList"
-            ]
-            (urlList |> List.map imageView)
-        ]
-
-
-imageView : String -> Html.Styled.Html msg
-imageView url =
-    Html.Styled.img
-        [ Html.Styled.Attributes.class "product-image"
-        , Html.Styled.Attributes.css
-            [ Css.display Css.block ]
-        , Html.Styled.Attributes.src url
-        ]
-        []
 
 
 productsViewName : String -> Html.Styled.Html msg

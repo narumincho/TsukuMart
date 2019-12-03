@@ -2,38 +2,9 @@
     --primaryColor: #733fa7;
     --primaryColorLight: #9a6cc9;
 }
-/*===============================
-        Exhibition 出品画面
-===============================*/
-.exhibition-priceView {
-    text-align: right;
-}
-
-.exhibition-confirm-msg {
-    font-size: 1.5rem;
-    text-align: center;
-}
-
 /*===============================================
                 product 商品詳細画面
 ===============================================*/
-.product-imageListContainer {
-    background-color: gray;
-    overflow-x: auto;
-}
-
-.product-imageList {
-    display: grid;
-    grid-auto-flow: column;
-    grid-gap: 1rem;
-}
-
-.product-image {
-    width: 20rem;
-    height: 20rem;
-    object-fit: contain;
-}
-
 .product-name {
     font-size: 1.5rem;
 }

@@ -22,8 +22,8 @@ import Html.Styled
 import Html.Styled.Attributes
 import Html.Styled.Events
 import Icon
-import Style
 import PageLocation
+import Style
 import Time
 
 
@@ -286,7 +286,7 @@ mainView sending token timeData user allProducts comments trade =
             else
                 Trade.Seller
     in
-    [ productImageView (Product.getImageUrls product)
+    [ Style.productImageList (Product.getImageUrls product)
     , Style.titleAndContent
         "商品名"
         (Html.div [] [ Html.text (Product.getName product) ])
@@ -377,28 +377,6 @@ mainView sending token timeData user allProducts comments trade =
                 Trade.Finish ->
                     []
            )
-
-
-productImageView : List String -> Html.Styled.Html Msg
-productImageView urlList =
-    Html.Styled.div
-        [ Html.Styled.Attributes.class "product-imageListContainer" ]
-        [ Html.Styled.div
-            [ Html.Styled.Attributes.class "product-imageList"
-            ]
-            (urlList |> List.map imageView)
-        ]
-
-
-imageView : String -> Html.Styled.Html msg
-imageView url =
-    Html.Styled.img
-        [ Html.Styled.Attributes.class "product-image"
-        , Html.Styled.Attributes.css
-            [ Css.display Css.block ]
-        , Html.Styled.Attributes.src url
-        ]
-        []
 
 
 sellerAndBuyerView : User.WithName -> User.WithName -> Html.Styled.Html msg

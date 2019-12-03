@@ -583,7 +583,9 @@ priceView priceMaybe =
                 [ Html.Styled.text "円" ]
             ]
         , Html.Styled.div
-            [ Html.Styled.Attributes.class "exhibition-priceView" ]
+            [ Html.Styled.Attributes.css
+                [Css.textAlign Css.right]
+            ]
             [ Html.Styled.text
                 (case priceMaybe of
                     Just price ->

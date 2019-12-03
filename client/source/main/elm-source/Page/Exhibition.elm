@@ -301,7 +301,11 @@ confirmView accessToken (Api.SellProductRequest requestData) sending =
 
             else
                 [ Html.Styled.div
-                    [ Html.Styled.Attributes.class "exhibition-confirm-msg" ]
+                    [ Html.Styled.Attributes.css
+                        [ Css.fontSize (Css.rem 1.5)
+                        , Css.textAlign Css.center
+                        ]
+                    ]
                     [ Html.Styled.text "この商品を出品します。よろしいですか?" ]
                 , Html.Styled.button
                     [ Html.Styled.Events.onClick (SellProduct ( accessToken, Api.SellProductRequest requestData ))
