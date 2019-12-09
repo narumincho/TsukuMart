@@ -1,29 +1,29 @@
 // Tsukumart Service Worker
 ((self: ServiceWorkerGlobalScope) => {
-    self.addEventListener("install", e => {
-        console.log(
-            "Service Worker内でServiceWorkerがブラウザにインストールされたことを検知した!"
-        );
-        e.waitUntil(self.skipWaiting());
-    });
+  self.addEventListener("install", e => {
+    console.log(
+      "Service Worker内でServiceWorkerがブラウザにインストールされたことを検知した!"
+    );
+    e.waitUntil(self.skipWaiting());
+  });
 
-    self.addEventListener("activate", e => {
-        console.log("Service Workerがアクティブな状態になった");
-        e.waitUntil(self.clients.claim());
-    });
+  self.addEventListener("activate", e => {
+    console.log("Service Workerがアクティブな状態になった");
+    e.waitUntil(self.clients.claim());
+  });
 
-    self.addEventListener("fetch", e => {
-        if (navigator.onLine) {
-            return;
-        }
-        const accept = e.request.headers.get("accept");
-        if (accept === null) {
-            return;
-        }
-        if (accept.includes("text/html")) {
-            e.respondWith(
-                new Response(
-                    `
+  self.addEventListener("fetch", e => {
+    if (navigator.onLine) {
+      return;
+    }
+    const accept = e.request.headers.get("accept");
+    if (accept === null) {
+      return;
+    }
+    if (accept.includes("text/html")) {
+      e.respondWith(
+        new Response(
+          `
 <!doctype html>
 <html>
 
@@ -44,25 +44,25 @@
 </body>
 
 </html>`,
-                    { headers: { "content-type": "text/html" } }
-                )
-            );
-        }
-    });
+          { headers: { "content-type": "text/html" } }
+        )
+      );
+    }
+  });
 
-    self.addEventListener("sync", e => {
-        console.log("syncを受け取った", e);
-    });
+  self.addEventListener("sync", e => {
+    console.log("syncを受け取った", e);
+  });
 
-    self.addEventListener("push", e => {
-        console.log("プッシュ通知をサーバーから受け取った", e);
+  self.addEventListener("push", e => {
+    console.log("プッシュ通知をサーバーから受け取った", e);
 
-        e.waitUntil(
-            self.registration.showNotification("プッシュ通知です!", {
-                body: "プッシュ通知はこのようにして送られるのです",
-                icon: "/assets/logo_bird.png",
-                tag: "push-notification-tag"
-            })
-        );
-    });
+    e.waitUntil(
+      self.registration.showNotification("プッシュ通知です!", {
+        body: "プッシュ通知はこのようにして送られるのです",
+        icon: "/assets/logo_bird.png",
+        tag: "push-notification-tag"
+      })
+    );
+  });
 })((self as unknown) as ServiceWorkerGlobalScope);
