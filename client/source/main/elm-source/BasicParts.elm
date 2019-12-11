@@ -20,8 +20,8 @@ import Html.Styled
 import Html.Styled.Attributes
 import Html.Styled.Events
 import Icon
-import Style
 import PageLocation
+import Style
 import Svg.Styled
 import Svg.Styled.Attributes
 
@@ -103,8 +103,8 @@ logo =
             ]
         , Svg.Styled.Attributes.viewBox "0 0 440.08 114.67"
         ]
-        ([ Svg.Styled.title [] [ Svg.Styled.text "つくマートのロゴ クリックしてホームに戻る" ] ]
-            ++ tsukuMartCharacters
+        (Svg.Styled.title [] [ Svg.Styled.text "つくマートのロゴ クリックしてホームに戻る" ]
+            :: tsukuMartCharacters
             ++ tsukuBird
             ++ logoSubText
         )

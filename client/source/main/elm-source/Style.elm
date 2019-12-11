@@ -21,18 +21,16 @@ module Style exposing
     , productImageList
     , radioForm
     , selectMenu
-    , titleAndContent
     , titleAndContentStyle
     , userImage
     , userSelectNone
     , webkitOverflowScrolling
     , webkitTapHighlightColorTransparent
-    )
+    , displayGridFlowColumn)
 
 import Css
 import Css.Transitions
 import Data.ImageId
-import Html
 import Html.Styled as H
 import Html.Styled.Attributes as A
 import Html.Styled.Events
@@ -97,18 +95,6 @@ containerInnerStyle =
         ]
 
 
-titleAndContent : String -> Html.Html msg -> H.Html msg
-titleAndContent title content =
-    H.div
-        [ A.css [ displayGridAndGap 4 ]
-        ]
-        [ H.div
-            [ A.css [ labelStyle ] ]
-            [ H.text title ]
-        , content |> H.fromUnstyled
-        ]
-
-
 titleAndContentStyle : String -> H.Html msg -> H.Html msg
 titleAndContentStyle title content =
     H.div
@@ -147,6 +133,25 @@ displayGridAndGap gap =
     in
     (Css.display { block | value = "grid" }
         :: (if gap == 0 then
+                []
+
+            else
+                [ Css.property "gap" (String.fromInt gap ++ "px") ]
+           )
+    )
+        |> Css.batch
+
+
+displayGridFlowColumn : Int -> Css.Style
+displayGridFlowColumn gap =
+    let
+        block =
+            Css.block
+    in
+    ([ Css.display { block | value = "grid" }
+     , Css.property "grid-auto-flow" "column"
+     ]
+        ++ (if gap == 0 then
                 []
 
             else

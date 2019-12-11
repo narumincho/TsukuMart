@@ -17,7 +17,6 @@ import Data.LogInState as LogInState
 import Data.Product as Product
 import Data.Trade as Trade
 import Data.User as User
-import Html
 import Html.Styled
 import Html.Styled.Attributes
 import Html.Styled.Events
@@ -287,21 +286,21 @@ mainView sending token timeData user allProducts comments trade =
                 Trade.Seller
     in
     [ Style.productImageList (Product.getImageUrls product)
-    , Style.titleAndContent
+    , Style.titleAndContentStyle
         "商品名"
-        (Html.div [] [ Html.text (Product.getName product) ])
-    , Style.titleAndContent
+        (Html.Styled.text (Product.getName product))
+    , Style.titleAndContentStyle
         "値段"
-        (Html.div [] [ Html.text (Product.priceToString (Product.getPrice product)) ])
-    , Style.titleAndContent
+        (Html.Styled.text (Product.priceToString (Product.getPrice product)))
+    , Style.titleAndContentStyle
         "取引状態"
-        (Html.text (Trade.statusToJapaneseString (Trade.getStatus trade)))
-    , Style.titleAndContent
+        (Html.Styled.text (Trade.statusToJapaneseString (Trade.getStatus trade)))
+    , Style.titleAndContentStyle
         "更新日時"
-        (Html.text (Data.DateTime.toDiffString timeData (Trade.getUpdateAt trade)))
-    , Style.titleAndContent
+        (Html.Styled.text (Data.DateTime.toDiffString timeData (Trade.getUpdateAt trade)))
+    , Style.titleAndContentStyle
         "開始日時"
-        (Html.text (Data.DateTime.toDiffString timeData (Trade.getCreatedAt trade)))
+        (Html.Styled.text (Data.DateTime.toDiffString timeData (Trade.getCreatedAt trade)))
     , Html.Styled.a
         [ Html.Styled.Attributes.css
             [ Css.display Css.block ]
@@ -383,7 +382,7 @@ sellerAndBuyerView : User.WithName -> User.WithName -> Html.Styled.Html msg
 sellerAndBuyerView seller buyer =
     Html.Styled.div
         [ Html.Styled.Attributes.css
-            [ Css.displayFlex ]
+            [ Style.displayGridFlowColumn 0 ]
         ]
         [ userView seller
         , Html.Styled.div

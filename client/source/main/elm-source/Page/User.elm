@@ -24,8 +24,8 @@ import Html.Styled
 import Html.Styled.Attributes
 import Html.Styled.Events
 import Icon
-import Style
 import PageLocation
+import Style
 
 
 type Model
@@ -389,15 +389,12 @@ imageAndDisplayNameView isWideScreen imageId displayName =
 
 
 introductionView : String -> Html.Styled.Html msg
-introductionView introduction =
-    Style.titleAndContent "紹介文"
-        (Html.div []
-            (introduction
-                |> String.lines
-                |> List.map Html.text
-                |> List.intersperse (Html.br [] [])
-            )
-        )
+introductionView =
+    String.lines
+        >> List.map Html.Styled.text
+        >> List.intersperse (Html.Styled.br [] [])
+        >> Html.Styled.div []
+        >> Style.titleAndContentStyle "紹介文"
 
 
 universityView : Data.University.University -> List (Html.Styled.Html msg)
@@ -408,11 +405,11 @@ universityView university =
     in
     (case graduate of
         Just g ->
-            [ Style.titleAndContent
+            [ Style.titleAndContentStyle
                 "研究科"
-                (Html.div
+                (Html.Styled.div
                     []
-                    [ Html.text g ]
+                    [ Html.Styled.text g ]
                 )
             ]
 
@@ -421,10 +418,10 @@ universityView university =
     )
         ++ (case school of
                 Just s ->
-                    [ Style.titleAndContent "学群"
-                        (Html.div
+                    [ Style.titleAndContentStyle "学群"
+                        (Html.Styled.div
                             []
-                            [ Html.text s ]
+                            [ Html.Styled.text s ]
                         )
                     ]
 
@@ -433,10 +430,10 @@ universityView university =
            )
         ++ (case department of
                 Just d ->
-                    [ Style.titleAndContent "学類"
-                        (Html.div
+                    [ Style.titleAndContentStyle "学類"
+                        (Html.Styled.div
                             []
-                            [ Html.text d ]
+                            [ Html.Styled.text d ]
                         )
                     ]
 

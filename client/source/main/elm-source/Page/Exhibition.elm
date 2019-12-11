@@ -278,16 +278,16 @@ confirmView : Api.Token -> Api.SellProductRequest -> Bool -> ( String, List ( St
 confirmView accessToken (Api.SellProductRequest requestData) sending =
     ( "出品 確認"
     , ([ confirmViewImage requestData.images
-       , Style.titleAndContent "商品名"
-            (Html.span [] [ Html.text requestData.name ])
-       , Style.titleAndContent "説明文"
-            (Html.div [] [ Html.text requestData.description ])
-       , Style.titleAndContent "値段"
-            (Html.div [] [ Html.text (Product.priceToString requestData.price) ])
-       , Style.titleAndContent "カテゴリー"
-            (Html.div [] [ Html.text (Data.Category.toJapaneseString requestData.category) ])
-       , Style.titleAndContent "状態"
-            (Html.div [] [ Html.text (Product.conditionToJapaneseString requestData.condition) ])
+       , Style.titleAndContentStyle "商品名"
+            (Html.Styled.text requestData.name)
+       , Style.titleAndContentStyle "説明文"
+            (Html.Styled.text requestData.description)
+       , Style.titleAndContentStyle "値段"
+            (Html.Styled.text (Product.priceToString requestData.price))
+       , Style.titleAndContentStyle "カテゴリー"
+            (Html.Styled.text (Data.Category.toJapaneseString requestData.category))
+       , Style.titleAndContentStyle "状態"
+            (Html.Styled.text (Product.conditionToJapaneseString requestData.condition))
        ]
         ++ (if sending then
                 [ Html.Styled.button

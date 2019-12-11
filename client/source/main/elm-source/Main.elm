@@ -33,12 +33,12 @@ import Page.Product
 import Page.Search
 import Page.SearchResult
 import Page.SoldProducts
-import Style
 import Page.Trade
 import Page.TradesInPast
 import Page.TradesInProgress
 import Page.User
 import PageLocation
+import Style
 import Task
 import Time
 import Url
@@ -1277,10 +1277,10 @@ view (Model rec) =
                 , Css.property "word-wrap" "break-word"
                 ]
             ]
-            ([ BasicParts.headerWithBackArrow
+            ((BasicParts.headerWithBackArrow
                 |> Html.Styled.map (always HistoryBack)
-             ]
-                ++ (if rec.wideScreen then
+             )
+                :: (if rec.wideScreen then
                         [ BasicParts.menu rec.logInState ]
 
                     else
