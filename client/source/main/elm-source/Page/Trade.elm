@@ -286,19 +286,19 @@ mainView sending token timeData user allProducts comments trade =
                 Trade.Seller
     in
     [ Style.productImageList (Product.getImageUrls product)
-    , Style.titleAndContentStyle
+    , Style.titleAndContent
         "商品名"
         (Html.Styled.text (Product.getName product))
-    , Style.titleAndContentStyle
+    , Style.titleAndContent
         "値段"
         (Html.Styled.text (Product.priceToString (Product.getPrice product)))
-    , Style.titleAndContentStyle
+    , Style.titleAndContent
         "取引状態"
         (Html.Styled.text (Trade.statusToJapaneseString (Trade.getStatus trade)))
-    , Style.titleAndContentStyle
+    , Style.titleAndContent
         "更新日時"
         (Html.Styled.text (Data.DateTime.toDiffString timeData (Trade.getUpdateAt trade)))
-    , Style.titleAndContentStyle
+    , Style.titleAndContent
         "開始日時"
         (Html.Styled.text (Data.DateTime.toDiffString timeData (Trade.getCreatedAt trade)))
     , Html.Styled.a

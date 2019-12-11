@@ -659,13 +659,13 @@ likeStyle liked =
 
 statusView : Product.Status -> Html.Styled.Html msg
 statusView status =
-    Style.titleAndContentStyle "取引状態"
+    Style.titleAndContent "取引状態"
         (Html.Styled.text (Product.statusToJapaneseString status))
 
 
 sellerNameView : User.WithName -> Html.Styled.Html msg
 sellerNameView user =
-    Style.titleAndContentStyle "出品者"
+    Style.titleAndContent "出品者"
         (Html.Styled.a
             [ Html.Styled.Attributes.href (PageLocation.toUrlAsString (PageLocation.User (User.withNameGetId user)))
             , Html.Styled.Attributes.css
@@ -682,21 +682,21 @@ sellerNameView user =
 
 descriptionView : String -> Html.Styled.Html msg
 descriptionView description =
-    Style.titleAndContentStyle
+    Style.titleAndContent
         "商品の説明"
         (Html.Styled.text description)
 
 
 categoryView : Category.Category -> Html.Styled.Html msg
 categoryView category =
-    Style.titleAndContentStyle
+    Style.titleAndContent
         "カテゴリー"
         (Html.Styled.text (Category.toJapaneseString category))
 
 
 conditionView : Product.Condition -> Html.Styled.Html msg
 conditionView condition =
-    Style.titleAndContentStyle
+    Style.titleAndContent
         "商品の状態"
         (Html.Styled.div
             [ Html.Styled.Attributes.css
@@ -709,7 +709,7 @@ conditionView condition =
 
 createdAtView : Maybe ( Time.Posix, Time.Zone ) -> Time.Posix -> Html.Styled.Html msg
 createdAtView nowMaybe createdAt =
-    Style.titleAndContentStyle
+    Style.titleAndContent
         "出品日時"
         (Html.Styled.text
             (Data.DateTime.toDiffString nowMaybe createdAt)

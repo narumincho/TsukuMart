@@ -21,7 +21,7 @@ module Style exposing
     , productImageList
     , radioForm
     , selectMenu
-    , titleAndContentStyle
+    , titleAndContent
     , userImage
     , userSelectNone
     , webkitOverflowScrolling
@@ -95,8 +95,8 @@ containerInnerStyle =
         ]
 
 
-titleAndContentStyle : String -> H.Html msg -> H.Html msg
-titleAndContentStyle title content =
+titleAndContent : String -> H.Html msg -> H.Html msg
+titleAndContent title content =
     H.div
         [ A.css [ displayGridAndGap 4 ]
         ]

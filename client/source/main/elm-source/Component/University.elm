@@ -218,7 +218,7 @@ view model =
 schoolOrGraduateView : Style.RadioSelect -> ( String, Html.Styled.Html Msg )
 schoolOrGraduateView select =
     ( "schoolOrGraduate"
-    , Style.titleAndContentStyle
+    , Style.titleAndContent
         "所属"
         (Style.radioForm
             { select = select
@@ -260,7 +260,7 @@ Boolは左(筑波大学所属していた)を選択しているか
 graduateYesNoTsukubaView : Style.RadioSelect -> ( String, Html.Styled.Html Msg )
 graduateYesNoTsukubaView select =
     ( "tsukubaUniversitySchoolOrNo"
-    , Style.titleAndContentStyle
+    , Style.titleAndContent
         "院進前の所属"
         (Style.radioForm
             { select = select

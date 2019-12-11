@@ -158,7 +158,7 @@ viewBody (Model rec) =
             }
             |> Html.Styled.map InputQuery
         ]
-    , Style.titleAndContentStyle
+    , Style.titleAndContent
         "カテゴリ"
         (Component.Category.view rec.categorySelect
             |> Html.Styled.map MsgByCategory

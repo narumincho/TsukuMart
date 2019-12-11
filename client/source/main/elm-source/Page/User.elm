@@ -394,7 +394,7 @@ introductionView =
         >> List.map Html.Styled.text
         >> List.intersperse (Html.Styled.br [] [])
         >> Html.Styled.div []
-        >> Style.titleAndContentStyle "紹介文"
+        >> Style.titleAndContent "紹介文"
 
 
 universityView : Data.University.University -> List (Html.Styled.Html msg)
@@ -405,7 +405,7 @@ universityView university =
     in
     (case graduate of
         Just g ->
-            [ Style.titleAndContentStyle
+            [ Style.titleAndContent
                 "研究科"
                 (Html.Styled.div
                     []
@@ -418,7 +418,7 @@ universityView university =
     )
         ++ (case school of
                 Just s ->
-                    [ Style.titleAndContentStyle "学群"
+                    [ Style.titleAndContent "学群"
                         (Html.Styled.div
                             []
                             [ Html.Styled.text s ]
@@ -430,7 +430,7 @@ universityView university =
            )
         ++ (case department of
                 Just d ->
-                    [ Style.titleAndContentStyle "学類"
+                    [ Style.titleAndContent "学類"
                         (Html.Styled.div
                             []
                             [ Html.Styled.text d ]
