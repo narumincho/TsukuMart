@@ -553,14 +553,20 @@ normalView logInState isWideScreen nowMaybe { product, likeSending, commentSendi
 productsViewName : String -> Html.Styled.Html msg
 productsViewName name =
     Html.Styled.div
-        [ Html.Styled.Attributes.class "product-name" ]
+        [ Html.Styled.Attributes.css
+            [ Css.fontSize (Css.rem 1.5) ]
+        ]
         [ Html.Styled.text name ]
 
 
 productsViewLike : LogInState.LogInState -> Bool -> Int -> Product.Id -> Html.Styled.Html Msg
 productsViewLike logInState sending likedCount id =
     Html.Styled.div
-        [ Html.Styled.Attributes.class "product-like-container" ]
+        [ Html.Styled.Attributes.css
+            [ Css.displayFlex
+            , Css.flexDirection Css.row
+            ]
+        ]
         [ likeButton logInState sending likedCount id
         ]
 
@@ -569,7 +575,7 @@ likeButton : LogInState.LogInState -> Bool -> Int -> Product.Id -> Html.Styled.H
 likeButton logInState sending likedCount id =
     if sending then
         Html.Styled.button
-            [ Html.Styled.Attributes.class "product-like"
+            [ Html.Styled.Attributes.css [ likeStyle False ]
             , Html.Styled.Attributes.disabled True
             ]
             [ Icon.loading { size = 20, color = Css.rgb 255 255 255 }
@@ -581,21 +587,26 @@ likeButton logInState sending likedCount id =
                 if List.member id likedProductIds then
                     Html.Styled.button
                         [ Html.Styled.Events.onClick (UnLike token id)
-                        , Html.Styled.Attributes.class "product-liked"
-                        , Html.Styled.Attributes.class "product-like"
+                        , Html.Styled.Attributes.css [ likeStyle True ]
                         ]
                         (itemLikeBody likedCount)
 
                 else
                     Html.Styled.button
                         [ Html.Styled.Events.onClick (Like token id)
-                        , Html.Styled.Attributes.class "product-like"
+                        , Html.Styled.Attributes.css [ likeStyle False ]
                         ]
                         (itemLikeBody likedCount)
 
             _ ->
                 Html.Styled.div
-                    [ Html.Styled.Attributes.class "product-like-label" ]
+                    [ Html.Styled.Attributes.css
+                        [ Css.borderRadius (Css.px 8)
+                        , Style.userSelectNone
+                        , Css.padding (Css.px 8)
+                        , Css.border3 (Css.px 1) Css.solid (Css.rgb 170 170 170)
+                        ]
+                    ]
                     (itemLikeBody likedCount)
 
 
@@ -603,9 +614,47 @@ itemLikeBody : Int -> List (Html.Styled.Html msg)
 itemLikeBody count =
     [ Html.Styled.text "いいね"
     , Html.Styled.span
-        [ Html.Styled.Attributes.class "product-like-number" ]
+        [ Html.Styled.Attributes.css
+            [ Css.fontSize (Css.rem 1.3) ]
+        ]
         [ Html.Styled.text (String.fromInt count) ]
     ]
+
+
+{-| True: いいねしている, False: いいねしていない
+-}
+likeStyle : Bool -> Css.Style
+likeStyle liked =
+    Css.batch
+        [ Css.backgroundColor
+            (if liked then
+                Style.primaryColor
+
+             else
+                Css.rgb 170 170 170
+            )
+        , Css.color
+            (if liked then
+                Css.rgb 255 255 255
+
+             else
+                Css.rgb 0 0 0
+            )
+        , Css.borderRadius (Css.px 8)
+        , Style.userSelectNone
+        , Css.cursor Css.pointer
+        , Css.padding (Css.px 8)
+        , Css.border2 Css.zero Css.none
+        , Css.hover
+            [ Css.backgroundColor
+                (if liked then
+                    Style.primaryColorLight
+
+                 else
+                    Css.rgb 136 136 136
+                )
+            ]
+        ]
 
 
 statusView : Product.Status -> Html.Styled.Html msg
@@ -650,11 +699,13 @@ categoryView category =
 
 conditionView : Product.Condition -> Html.Styled.Html msg
 conditionView condition =
-    Style.titleAndContent
+    Style.titleAndContentStyle
         "商品の状態"
-        (Html.div
-            [ Html.Attributes.class "product-condition" ]
-            [ Html.text (Product.conditionToJapaneseString condition)
+        (Html.Styled.div
+            [ Html.Styled.Attributes.css
+                [ Css.fontSize (Css.rem 1.5) ]
+            ]
+            [ Html.Styled.text (Product.conditionToJapaneseString condition)
             ]
         )
 

@@ -1,65 +1,10 @@
 :root {
-  --primaryColor: #733fa7;
-  --primaryColorLight: #9a6cc9;
+  --primaryColor: rgb(115, 63, 167);
+  --primaryColorLight: rgb(154, 108, 201);
 }
 /*===============================================
                 product 商品詳細画面
 ===============================================*/
-.product-name {
-  font-size: 1.5rem;
-}
-
-.product-like-container {
-  display: flex;
-  flex-direction: row;
-}
-
-.product-like-label {
-  border-radius: 0.4rem;
-  user-select: none;
-  padding: 0.5rem;
-  border: solid 1px #aaa;
-}
-
-.product-like {
-  background-color: #aaa;
-  border-radius: 8px;
-  user-select: none;
-  cursor: pointer;
-  padding: 8px;
-  border: none;
-}
-
-.product-like-number {
-  font-size: 1.3rem;
-}
-
-.product-like:hover {
-  background-color: #888;
-}
-
-.product-liked {
-  background-color: var(--primaryColor);
-  color: white;
-}
-
-.product-liked:hover {
-  background-color: var(--primaryColorLight);
-}
-
-.product-like-sending {
-  background-color: #7f2591;
-}
-
-.product-label {
-  background-color: #ddd;
-  padding: 0.2rem 0.5rem;
-}
-
-.product-condition {
-  font-size: 1.5rem;
-}
-
 .product-priceAndBuyButton {
   position: fixed;
   display: flex;

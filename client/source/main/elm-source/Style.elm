@@ -17,6 +17,7 @@ module Style exposing
     , normalShadow
     , pointerEventsNone
     , primaryColor
+    , primaryColorLight
     , productImageList
     , radioForm
     , selectMenu
@@ -44,6 +45,11 @@ import PageLocation
 primaryColor : Css.Color
 primaryColor =
     Css.rgb 115 63 167
+
+
+primaryColorLight : Css.Color
+primaryColorLight =
+    Css.rgb 154 108 201
 
 
 container : List (H.Html msg) -> H.Html msg
