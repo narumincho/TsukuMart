@@ -16,13 +16,10 @@ import Data.ImageId
 import Data.LogInState as LogInState
 import Data.University
 import Data.User as User
-import Html
-import Html.Attributes
-import Html.Events
-import Html.Keyed
 import Html.Styled
 import Html.Styled.Attributes
 import Html.Styled.Events
+import Html.Styled.Keyed
 import Icon
 import PageLocation
 import Style
@@ -522,43 +519,42 @@ logOutButton =
 -}
 editView : Api.Token -> EditModel -> List (Html.Styled.Html Msg)
 editView access editModel =
-    [ Html.Keyed.node "div"
-        [ Html.Attributes.class "form" ]
+    [ Html.Styled.Keyed.node "div"
+        [ Html.Styled.Attributes.class "form" ]
         ([ ( "nickNameEditor", displayNameEditor editModel.displayName )
          , ( "introductionEditor", introductionEditor editModel.introduction )
          ]
             ++ (Component.University.view editModel.university
-                    |> List.map (Tuple.mapSecond (Html.Styled.toUnstyled >> Html.map MsgByUniversity))
+                    |> List.map (Tuple.mapSecond (Html.Styled.map MsgByUniversity))
                )
             ++ [ ( "button", editButton access editModel )
                ]
         )
-        |> Html.Styled.fromUnstyled
     ]
 
 
-displayNameEditor : String -> Html.Html Msg
+displayNameEditor : String -> Html.Styled.Html Msg
 displayNameEditor displayName =
-    Html.div
+    Html.Styled.div
         []
-        ([ Html.label
-            [ Html.Attributes.class "form-label"
-            , Html.Attributes.for nickNameEditorId
+        ([ Html.Styled.label
+            [ Html.Styled.Attributes.class "form-label"
+            , Html.Styled.Attributes.for nickNameEditorId
             ]
-            [ Html.text "表示名" ]
-         , Html.input
-            [ Html.Attributes.attribute "autocomplete" "username"
-            , Html.Attributes.id nickNameEditorId
-            , Html.Attributes.class "form-input"
-            , Html.Events.onInput MsgInputDisplayName
+            [ Html.Styled.text "表示名" ]
+         , Html.Styled.input
+            [ Html.Styled.Attributes.attribute "autocomplete" "username"
+            , Html.Styled.Attributes.id nickNameEditorId
+            , Html.Styled.Attributes.class "form-input"
+            , Html.Styled.Events.onInput MsgInputDisplayName
             ]
             []
          ]
             ++ (if String.length displayName < 1 then
-                    [ Html.text "表示名は 1文字以上である必要があります" ]
+                    [ Html.Styled.text "表示名は 1文字以上である必要があります" ]
 
                 else if 50 < String.length displayName then
-                    [ Html.text "表示名は 50文字以内である必要があります" ]
+                    [ Html.Styled.text "表示名は 50文字以内である必要があります" ]
 
                 else
                     []
@@ -571,19 +567,19 @@ nickNameEditorId =
     "nickname-editor"
 
 
-introductionEditor : String -> Html.Html Msg
+introductionEditor : String -> Html.Styled.Html Msg
 introductionEditor _ =
-    Html.div
+    Html.Styled.div
         []
-        [ Html.label
-            [ Html.Attributes.class "form-label"
-            , Html.Attributes.for introductionEditorId
+        [ Html.Styled.label
+            [ Html.Styled.Attributes.class "form-label"
+            , Html.Styled.Attributes.for introductionEditorId
             ]
-            [ Html.text "紹介文" ]
-        , Html.textarea
-            [ Html.Attributes.id introductionEditorId
-            , Html.Attributes.class "form-textarea"
-            , Html.Events.onInput MsgInputIntroduction
+            [ Html.Styled.text "紹介文" ]
+        , Html.Styled.textarea
+            [ Html.Styled.Attributes.id introductionEditorId
+            , Html.Styled.Attributes.class "form-textarea"
+            , Html.Styled.Events.onInput MsgInputIntroduction
             ]
             []
         ]
@@ -594,28 +590,28 @@ introductionEditorId =
     "introduction-editor"
 
 
-editButton : Api.Token -> EditModel -> Html.Html Msg
+editButton : Api.Token -> EditModel -> Html.Styled.Html Msg
 editButton token editModel =
-    Html.div
-        [ Html.Attributes.class "profile-editButtonArea" ]
-        [ Html.button
-            [ Html.Attributes.class "profile-editCancelButton"
-            , Html.Events.onClick MsgBackToViewMode
+    Html.Styled.div
+        [ Html.Styled.Attributes.class "profile-editButtonArea" ]
+        [ Html.Styled.button
+            [ Html.Styled.Attributes.class "profile-editCancelButton"
+            , Html.Styled.Events.onClick MsgBackToViewMode
             ]
-            [ Html.text "キャンセル" ]
-        , Html.button
-            (Html.Attributes.class "profile-editOkButton"
+            [ Html.Styled.text "キャンセル" ]
+        , Html.Styled.button
+            (Html.Styled.Attributes.class "profile-editOkButton"
                 :: (case editModelToProfileUpdateData editModel of
                         Just profile ->
-                            [ Html.Events.onClick (MsgChangeProfile token profile)
-                            , Html.Attributes.disabled False
+                            [ Html.Styled.Events.onClick (MsgChangeProfile token profile)
+                            , Html.Styled.Attributes.disabled False
                             ]
 
                         Nothing ->
-                            [ Html.Attributes.disabled True ]
+                            [ Html.Styled.Attributes.disabled True ]
                    )
             )
-            [ Html.text "変更する" ]
+            [ Html.Styled.text "変更する" ]
         ]
 
 

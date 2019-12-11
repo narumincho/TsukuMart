@@ -16,7 +16,6 @@ import Css
 import Data.Category
 import Data.LogInState
 import Data.Product as Product
-import Html
 import Html.Styled
 import Html.Styled.Attributes
 import Html.Styled.Events
@@ -240,7 +239,7 @@ editView : ProductEditor.Model -> ( String, List ( String, Html.Styled.Html Msg 
 editView productEditorModel =
     ( "商品の情報を入力"
     , (ProductEditor.view productEditorModel
-        |> List.map (Tuple.mapSecond (Html.map MsgByProductEditor >> Html.Styled.fromUnstyled))
+        |> List.map (Tuple.mapSecond (Html.Styled.map MsgByProductEditor))
       )
         ++ [ ( "conform"
              , toConformPageButton (ProductEditor.toSoldRequest productEditorModel /= Nothing)

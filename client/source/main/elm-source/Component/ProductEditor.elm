@@ -18,7 +18,6 @@ import Css.Transitions
 import Data.Category as Category
 import Data.ImageId as ImageId
 import Data.Product as Product
-import Html
 import Html.Styled
 import Html.Styled.Attributes
 import Html.Styled.Events
@@ -360,7 +359,7 @@ imagesCheck addImageList beforeImageIds =
         Nothing
 
 
-view : Model -> List ( String, Html.Html Msg )
+view : Model -> List ( String, Html.Styled.Html Msg )
 view (Model rec) =
     (if
         4
@@ -391,7 +390,6 @@ view (Model rec) =
                 |> Html.Styled.map MsgByCategory
              )
            ]
-        |> List.map (Tuple.mapSecond Html.Styled.toUnstyled)
 
 
 imageCount : { addImagesLength : Int, deleteIndexSize : Int, beforeImageIdsLength : Int } -> Int
@@ -584,7 +582,7 @@ priceView priceMaybe =
             ]
         , Html.Styled.div
             [ Html.Styled.Attributes.css
-                [Css.textAlign Css.right]
+                [ Css.textAlign Css.right ]
             ]
             [ Html.Styled.text
                 (case priceMaybe of

@@ -22,9 +22,6 @@ import Data.LogInState as LogInState
 import Data.Product as Product
 import Data.Trade as Trade
 import Data.User as User
-import Html
-import Html.Attributes
-import Html.Events
 import Html.Styled
 import Html.Styled.Attributes
 import Html.Styled.Events
@@ -435,7 +432,7 @@ view logInState isWideScreen nowMaybe productAllMaybe model =
                     (case LogInState.getToken logInState of
                         Just accessToken ->
                             (ProductEditor.view productEditor
-                                |> List.map (Tuple.mapSecond (Html.Styled.fromUnstyled >> Html.Styled.map MsgByProductEditor))
+                                |> List.map (Tuple.mapSecond (Html.Styled.map MsgByProductEditor))
                             )
                                 ++ [ ( "okButton"
                                      , editOkCancelButton
@@ -835,14 +832,14 @@ commentTextAreaId =
 
 productsViewPriceAndBuyButton : Bool -> Product.Product -> Maybe User.WithName -> Html.Styled.Html Msg
 productsViewPriceAndBuyButton isWideScreen product userWithNameMaybe =
-    Html.div
-        [ Html.Attributes.classList
+    Html.Styled.div
+        [ Html.Styled.Attributes.classList
             [ ( "product-priceAndBuyButton", True )
             , ( "product-priceAndBuyButton-wide", isWideScreen )
             ]
         ]
-        (Html.div [ Html.Attributes.class "product-price" ]
-            [ Html.text (Product.priceToString (Product.getPrice product)) ]
+        (Html.Styled.div [ Html.Styled.Attributes.class "product-price" ]
+            [ Html.Styled.text (Product.priceToString (Product.getPrice product)) ]
             :: (case buyButton product userWithNameMaybe of
                     Just button ->
                         [ button ]
@@ -851,10 +848,9 @@ productsViewPriceAndBuyButton isWideScreen product userWithNameMaybe =
                         []
                )
         )
-        |> Html.Styled.fromUnstyled
 
 
-buyButton : Product.Product -> Maybe User.WithName -> Maybe (Html.Html Msg)
+buyButton : Product.Product -> Maybe User.WithName -> Maybe (Html.Styled.Html Msg)
 buyButton product userWithNameMaybe =
     case ( Product.getStatus product, userWithNameMaybe ) of
         ( Product.Selling, Just user ) ->
@@ -866,9 +862,9 @@ buyButton product userWithNameMaybe =
 
             else
                 Just
-                    (Html.button
-                        [ Html.Events.onClick ToConfirmPage ]
-                        [ Html.text "購入手続きへ" ]
+                    (Html.Styled.button
+                        [ Html.Styled.Events.onClick ToConfirmPage ]
+                        [ Html.Styled.text "購入手続きへ" ]
                     )
 
         _ ->
