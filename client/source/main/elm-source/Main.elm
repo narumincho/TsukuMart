@@ -1261,12 +1261,12 @@ updateLikedCountInEachPageProduct key productId allProductsMaybe result page =
 {-| 見た目を決める
 -}
 view : Model -> { title : String, body : List (Html.Styled.Html Msg) }
-view (Model rec) =
+view (Model record) =
     let
-        { title, tab, html, bottomNavigation } =
-            titleAndTabDataAndMainView rec.logInState rec.wideScreen rec.now rec.allProducts rec.page
+        pageRecord =
+            titleAndTabDataAndMainView record.logInState record.wideScreen record.now record.allProducts record.page
     in
-    { title = title
+    { title = pageRecord.title
     , body =
         [ Html.Styled.div
             [ Html.Styled.Attributes.css
@@ -1280,35 +1280,25 @@ view (Model rec) =
             ((BasicParts.headerWithBackArrow
                 |> Html.Styled.map (always HistoryBack)
              )
-                :: (if rec.wideScreen then
-                        [ BasicParts.menu rec.logInState ]
+                :: (if record.wideScreen then
+                        [ BasicParts.menu record.logInState ]
 
                     else
                         []
                    )
-                ++ [ BasicParts.tabView tab |> Html.Styled.map PageMsg
-                   , Html.Styled.div
-                        [ Html.Styled.Attributes.id "mainView"
-                        , Html.Styled.Attributes.css
-                            [ Css.overflowX Css.auto
-                            , Style.gridColumn 2 3
-                            , Style.gridRow 3 4
-                            , Style.webkitOverflowScrolling
-                            ]
-                        ]
-                        html
-                        |> Html.Styled.map PageMsg
+                ++ [ BasicParts.tabView pageRecord.tab |> Html.Styled.map PageMsg
+                   , pageRecord.view |> Html.Styled.map PageMsg
                    ]
-                ++ (case rec.message of
+                ++ (case record.message of
                         Just m ->
                             [ Html.Styled.Keyed.node "div" [] [ ( m, messageView m ) ] ]
 
                         Nothing ->
                             []
                    )
-                ++ (case ( rec.wideScreen, bottomNavigation ) of
+                ++ (case ( record.wideScreen, pageRecord.bottomNavigation ) of
                         ( False, Just select ) ->
-                            [ BasicParts.bottomNavigation rec.logInState select ]
+                            [ BasicParts.bottomNavigation record.logInState select ]
 
                         ( _, _ ) ->
                             []
@@ -1328,7 +1318,7 @@ titleAndTabDataAndMainView :
         { title : String
         , tab : BasicParts.Tab PageMsg
         , bottomNavigation : Maybe BasicParts.BottomNavigationSelect
-        , html : List (Html.Styled.Html PageMsg)
+        , view : Html.Styled.Html PageMsg
         }
 titleAndTabDataAndMainView logInState isWideScreen nowMaybe allProductsMaybe page =
     case page of
@@ -1422,26 +1412,26 @@ mapPageMsg :
     ->
         { title : Maybe String
         , tab : BasicParts.Tab eachPageMsg
-        , html : List (Html.Styled.Html eachPageMsg)
+        , view : Html.Styled.Html eachPageMsg
         , bottomNavigation : Maybe BasicParts.BottomNavigationSelect
         }
     ->
         { title : String
         , tab : BasicParts.Tab PageMsg
-        , html : List (Html.Styled.Html PageMsg)
         , bottomNavigation : Maybe BasicParts.BottomNavigationSelect
+        , view : Html.Styled.Html PageMsg
         }
-mapPageMsg f { title, tab, html, bottomNavigation } =
+mapPageMsg f record =
     { title =
-        case title of
+        case record.title of
             Just titleText ->
                 titleText ++ " | つくマート"
 
             Nothing ->
                 "つくマート"
-    , tab = tab |> BasicParts.tabMap f
-    , html = html |> List.map (Html.Styled.map f)
-    , bottomNavigation = bottomNavigation
+    , tab = record.tab |> BasicParts.tabMap f
+    , bottomNavigation = record.bottomNavigation
+    , view = record.view |> Html.Styled.map f
     }
 
 

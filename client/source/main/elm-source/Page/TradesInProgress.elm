@@ -105,14 +105,14 @@ view :
     ->
         { title : Maybe String
         , tab : BasicParts.Tab Msg
-        , html : List (Html.Styled.Html Msg)
+        , view : Html.Styled.Html Msg
         , bottomNavigation : Maybe BasicParts.BottomNavigationSelect
         }
 view logInState allProductsMaybe (Model rec) =
     { title = Just "進行中の取引"
     , tab = BasicParts.tabSingle "進行中の取引"
-    , html =
-        case logInState of
+    , view =
+        (case logInState of
             LogInState.None ->
                 [ Style.container
                     [ Html.Styled.text "ログインか新規登録をして、いいねと閲覧履歴を使えるようにしよう!"
@@ -136,5 +136,7 @@ view logInState allProductsMaybe (Model rec) =
                             Just []
                     )
                 ]
+        )
+            |> Style.mainView
     , bottomNavigation = Nothing
     }

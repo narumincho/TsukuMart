@@ -219,41 +219,42 @@ view :
     ->
         { title : Maybe String
         , tab : BasicParts.Tab Msg
-        , html : List (Html.Styled.Html Msg)
+        , view : Html.Styled.Html Msg
         , bottomNavigation : Maybe BasicParts.BottomNavigationSelect
         }
 view logInState timeData allProductsMaybe model =
     { title = Just "取引"
     , tab = BasicParts.tabNone
-    , html =
-        [ Style.container
-            (case logInState of
-                LogInState.Ok { token, userWithName } ->
-                    case model of
-                        CheckingTrader id ->
-                            [ Html.Styled.text ("id=" ++ Trade.idToString id ++ "の取引の関係者かどうかの調べてる")
-                            , Icon.loading { size = 64, color = Css.rgb 0 0 0 }
-                            ]
+    , view =
+        Style.mainView
+            [ Style.container
+                (case logInState of
+                    LogInState.Ok { token, userWithName } ->
+                        case model of
+                            CheckingTrader id ->
+                                [ Html.Styled.text ("id=" ++ Trade.idToString id ++ "の取引の関係者かどうかの調べてる")
+                                , Icon.loading { size = 64, color = Css.rgb 0 0 0 }
+                                ]
 
-                        Main { trade, sending, comments } ->
-                            case allProductsMaybe of
-                                Just allProducts ->
-                                    mainView sending token timeData userWithName allProducts comments trade
+                            Main { trade, sending, comments } ->
+                                case allProductsMaybe of
+                                    Just allProducts ->
+                                        mainView sending token timeData userWithName allProducts comments trade
 
-                                Nothing ->
-                                    [ Html.Styled.text "商品データの読み込み中"
-                                    , Icon.loading { size = 64, color = Css.rgb 0 0 0 }
-                                    ]
+                                    Nothing ->
+                                        [ Html.Styled.text "商品データの読み込み中"
+                                        , Icon.loading { size = 64, color = Css.rgb 0 0 0 }
+                                        ]
 
-                LogInState.LoadingProfile _ ->
-                    [ Html.Styled.text "読み込み中"
-                    , Icon.loading { size = 64, color = Css.rgb 0 0 0 }
-                    ]
+                    LogInState.LoadingProfile _ ->
+                        [ Html.Styled.text "読み込み中"
+                        , Icon.loading { size = 64, color = Css.rgb 0 0 0 }
+                        ]
 
-                LogInState.None ->
-                    [ Html.Styled.text "取引するにはログインが必要です" ]
-            )
-        ]
+                    LogInState.None ->
+                        [ Html.Styled.text "取引するにはログインが必要です" ]
+                )
+            ]
     , bottomNavigation = Nothing
     }
 

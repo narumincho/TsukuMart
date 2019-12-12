@@ -112,14 +112,14 @@ view :
     ->
         { title : Maybe String
         , tab : BasicParts.Tab Msg
-        , html : List (Html.Styled.Html Msg)
+        , view : Html.Styled.Html Msg
         , bottomNavigation : Maybe BasicParts.BottomNavigationSelect
         }
 view logInState isWideScreen allProductsMaybe (Model rec) =
     { title = Just "コメントした商品"
     , tab = BasicParts.tabSingle "コメントした商品"
-    , html =
-        case logInState of
+    , view =
+        (case logInState of
             LogInState.None ->
                 [ Style.container
                     [ Html.Styled.text "ログインか新規登録をして、いいねと閲覧履歴を使えるようにしよう!"
@@ -151,5 +151,7 @@ view logInState isWideScreen allProductsMaybe (Model rec) =
                     )
                     |> Html.Styled.map MsgByProductList
                 ]
+        )
+            |> Style.mainView
     , bottomNavigation = Nothing
     }

@@ -13,6 +13,7 @@ import Data.LogInState as LogInState
 import Data.Product as Product
 import Data.User as User
 import Html.Styled
+import Style
 
 
 type Model
@@ -90,33 +91,34 @@ view :
     ->
         { title : Maybe String
         , tab : BasicParts.Tab Msg
-        , html : List (Html.Styled.Html Msg)
+        , view : Html.Styled.Html Msg
         , bottomNavigation : Maybe BasicParts.BottomNavigationSelect
         }
 view logInState isWideScreen allProductsMaybe (Model rec) =
     { title = Just "出品した商品"
     , tab = BasicParts.tabSingle "出品した商品"
-    , html =
-        [ ProductList.view
-            rec.productList
-            logInState
-            isWideScreen
-            (case ( rec.normal, allProductsMaybe ) of
-                ( Normal soldProducts, Just allProducts ) ->
-                    soldProducts
-                        |> List.map (\id -> Product.searchFromId id allProducts)
-                        |> Just
+    , view =
+        Style.mainView
+            [ ProductList.view
+                rec.productList
+                logInState
+                isWideScreen
+                (case ( rec.normal, allProductsMaybe ) of
+                    ( Normal soldProducts, Just allProducts ) ->
+                        soldProducts
+                            |> List.map (\id -> Product.searchFromId id allProducts)
+                            |> Just
 
-                ( Normal _, Nothing ) ->
-                    Nothing
+                    ( Normal _, Nothing ) ->
+                        Nothing
 
-                ( Loading, _ ) ->
-                    Nothing
+                    ( Loading, _ ) ->
+                        Nothing
 
-                ( Error, _ ) ->
-                    Just []
-            )
-            |> Html.Styled.map MsgByProductList
-        ]
+                    ( Error, _ ) ->
+                        Just []
+                )
+                |> Html.Styled.map MsgByProductList
+            ]
     , bottomNavigation = Nothing
     }

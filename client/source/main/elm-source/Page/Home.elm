@@ -7,8 +7,8 @@ import Data.LogInState as LogInState
 import Data.Product as Product
 import Html.Styled
 import Html.Styled.Attributes
-import Style
 import PageLocation
+import Style
 import Time
 
 
@@ -77,7 +77,7 @@ view :
     ->
         { title : Maybe String
         , tab : BasicParts.Tab Msg
-        , html : List (Html.Styled.Html Msg)
+        , view : Html.Styled.Html Msg
         , bottomNavigation : Maybe BasicParts.BottomNavigationSelect
         }
 view logInState isWideScreen allProducts (Model rec) =
@@ -96,21 +96,23 @@ view logInState isWideScreen allProducts (Model rec) =
                     TabFree ->
                         2
             }
-    , html =
-        (ProductList.view
-            rec.productListModel
-            logInState
-            isWideScreen
-            (allProducts |> Maybe.map (filterOrSortBySelectedTab rec.tabSelect))
-            |> Html.Styled.map MsgByProductList
-        )
-            :: (case LogInState.getToken logInState of
-                    Just _ ->
-                        [ exhibitButton ]
+    , view =
+        Style.mainView
+            ((ProductList.view
+                rec.productListModel
+                logInState
+                isWideScreen
+                (allProducts |> Maybe.map (filterOrSortBySelectedTab rec.tabSelect))
+                |> Html.Styled.map MsgByProductList
+             )
+                :: (case LogInState.getToken logInState of
+                        Just _ ->
+                            [ exhibitButton ]
 
-                    Nothing ->
-                        []
-               )
+                        Nothing ->
+                            []
+                   )
+            )
     , bottomNavigation = Just BasicParts.Home
     }
 

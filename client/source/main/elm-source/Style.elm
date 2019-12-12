@@ -4,6 +4,7 @@ module Style exposing
     , container
     , containerKeyed
     , displayGridAndGap
+    , displayGridFlowColumn
     , emptyList
     , formItem
     , gridColumn
@@ -14,6 +15,8 @@ module Style exposing
     , justifyItemsCenter
     , mainButton
     , mainButtonLink
+    , mainId
+    , mainView
     , normalShadow
     , pointerEventsNone
     , primaryColor
@@ -26,7 +29,7 @@ module Style exposing
     , userSelectNone
     , webkitOverflowScrolling
     , webkitTapHighlightColorTransparent
-    , displayGridFlowColumn)
+    )
 
 import Css
 import Css.Transitions
@@ -587,6 +590,7 @@ productImageList urlList =
         [ A.css
             [ Css.backgroundColor (Css.rgb 128 128 128)
             , Css.overflowX Css.auto
+            , Css.height (Css.px 320)
             ]
         ]
         [ H.div
@@ -611,3 +615,23 @@ imageView url =
         , A.src url
         ]
         []
+
+
+{-| 主に表示するもの。mainViewというIDがつき、Commandで一番上にスクロールするようにできる
+-}
+mainView : List (H.Html msg) -> H.Html msg
+mainView =
+    H.div
+        [ mainId
+        , A.css
+            [ Css.overflowX Css.auto
+            , gridColumn 2 3
+            , gridRow 3 4
+            , webkitOverflowScrolling
+            ]
+        ]
+
+
+mainId : H.Attribute msg
+mainId =
+    A.id "mainView"

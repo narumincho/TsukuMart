@@ -17,6 +17,7 @@ module Page.Notification exposing
 
 import BasicParts
 import Html.Styled
+import Style
 
 
 type Msg
@@ -46,14 +47,15 @@ view :
     ->
         { title : Maybe String
         , tab : BasicParts.Tab Msg
-        , html : List (Html.Styled.Html Msg)
+        , view : Html.Styled.Html Msg
         , bottomNavigation : Maybe BasicParts.BottomNavigationSelect
         }
 view model =
     { title = Just "通知"
     , tab = BasicParts.tabSingle "通知"
-    , html =
-        [ Html.Styled.text "通知は、作り途中♪"
-        ]
+    , view =
+        Style.mainView
+            [ Html.Styled.text "通知は、作り途中♪♪♪♪"
+            ]
     , bottomNavigation = Just BasicParts.Notification
     }

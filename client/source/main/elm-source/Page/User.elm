@@ -251,7 +251,7 @@ view :
     ->
         { title : Maybe String
         , tab : BasicParts.Tab Msg
-        , html : List (Html.Styled.Html Msg)
+        , view : Html.Styled.Html Msg
         , bottomNavigation : Maybe BasicParts.BottomNavigationSelect
         }
 view logInState isWideScreen model =
@@ -271,32 +271,33 @@ view logInState isWideScreen model =
                     "プロフィール編集"
             )
     , tab = BasicParts.tabSingle "プロフィール"
-    , html =
-        [ Style.container
-            (case ( logInState, model ) of
-                ( LogInState.Ok { userWithName, token }, Normal normalUser ) ->
-                    if User.withNameGetId userWithName == User.withProfileGetId normalUser then
-                        normalMyProfileView token isWideScreen normalUser
+    , view =
+        Style.mainView
+            [ Style.container
+                (case ( logInState, model ) of
+                    ( LogInState.Ok { userWithName, token }, Normal normalUser ) ->
+                        if User.withNameGetId userWithName == User.withProfileGetId normalUser then
+                            normalMyProfileView token isWideScreen normalUser
 
-                    else
-                        normalView isWideScreen normalUser
+                        else
+                            normalView isWideScreen normalUser
 
-                ( _, Normal user ) ->
-                    normalView isWideScreen user
+                    ( _, Normal user ) ->
+                        normalView isWideScreen user
 
-                ( _, LoadingWithUserId userId ) ->
-                    loadingWithUserIdView userId
+                    ( _, LoadingWithUserId userId ) ->
+                        loadingWithUserIdView userId
 
-                ( _, LoadingWithUserIdAndName withName ) ->
-                    loadingWithUserIdAndNameView isWideScreen withName
+                    ( _, LoadingWithUserIdAndName withName ) ->
+                        loadingWithUserIdAndNameView isWideScreen withName
 
-                ( LogInState.Ok { token }, Edit editModel ) ->
-                    editView token editModel
+                    ( LogInState.Ok { token }, Edit editModel ) ->
+                        editView token editModel
 
-                ( _, Edit _ ) ->
-                    [ Html.Styled.text "自分以外のプロフィールは編集できない" ]
-            )
-        ]
+                    ( _, Edit _ ) ->
+                        [ Html.Styled.text "自分以外のプロフィールは編集できない" ]
+                )
+            ]
     , bottomNavigation = Just BasicParts.User
     }
 

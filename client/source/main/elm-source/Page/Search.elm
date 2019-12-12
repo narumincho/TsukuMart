@@ -1,14 +1,14 @@
 module Page.Search exposing (Cmd(..), Model, Msg, initModel, update, view)
 
 import BasicParts
-import Data.SearchCondition as SearchCondition
-import Html.Styled
-import Html.Styled.Keyed
 import Component.Category
 import Component.GraduateSelect
 import Component.SchoolSelect
-import Style
+import Data.SearchCondition as SearchCondition
+import Html.Styled
+import Html.Styled.Keyed
 import PageLocation
+import Style
 
 
 type Model
@@ -131,16 +131,17 @@ view :
     ->
         { title : Maybe String
         , tab : BasicParts.Tab Msg
-        , html : List (Html.Styled.Html Msg)
+        , view : Html.Styled.Html Msg
         , bottomNavigation : Maybe BasicParts.BottomNavigationSelect
         }
 view model =
     { title = Just "検索"
     , tab = BasicParts.tabNone
-    , html =
-        [ Style.container
-            (viewBody model)
-        ]
+    , view =
+        Style.mainView
+            [ Style.container
+                (viewBody model)
+            ]
     , bottomNavigation = Just BasicParts.Search
     }
 

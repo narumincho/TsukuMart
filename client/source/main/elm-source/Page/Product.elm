@@ -393,7 +393,7 @@ view :
     ->
         { title : Maybe String
         , tab : BasicParts.Tab Msg
-        , html : List (Html.Styled.Html Msg)
+        , view : Html.Styled.Html Msg
         , bottomNavigation : Maybe BasicParts.BottomNavigationSelect
         }
 view logInState isWideScreen nowMaybe productAllMaybe model =
@@ -401,17 +401,19 @@ view logInState isWideScreen nowMaybe productAllMaybe model =
         ( _, Nothing ) ->
             { title = Just "商品詳細ページ 読み込み中"
             , tab = BasicParts.tabNone
-            , html =
-                [ Style.container
-                    [ Html.Styled.text "読み込み中"
-                    , Icon.loading { size = 48, color = Css.rgb 0 0 0 }
+            , view =
+                Style.mainView
+                    [ Style.container
+                        [ Html.Styled.text "読み込み中"
+                        , Icon.loading { size = 48, color = Css.rgb 0 0 0 }
+                        ]
                     ]
-                ]
             , bottomNavigation = Nothing
             }
 
         ( Normal rec, Just productAll ) ->
-            normalView logInState
+            normalView
+                logInState
                 isWideScreen
                 nowMaybe
                 { likeSending = rec.likeSending
@@ -427,26 +429,27 @@ view logInState isWideScreen nowMaybe productAllMaybe model =
             in
             { title = Just (Product.getName productId)
             , tab = BasicParts.tabNone
-            , html =
-                [ Style.containerKeyed
-                    (case LogInState.getToken logInState of
-                        Just accessToken ->
-                            (ProductEditor.view productEditor
-                                |> List.map (Tuple.mapSecond (Html.Styled.map MsgByProductEditor))
-                            )
-                                ++ [ ( "okButton"
-                                     , editOkCancelButton
-                                        accessToken
-                                        beforeProduct
-                                        sending
-                                        (ProductEditor.toUpdateRequest productEditor)
-                                     )
-                                   ]
+            , view =
+                Style.mainView
+                    [ Style.containerKeyed
+                        (case LogInState.getToken logInState of
+                            Just accessToken ->
+                                (ProductEditor.view productEditor
+                                    |> List.map (Tuple.mapSecond (Html.Styled.map MsgByProductEditor))
+                                )
+                                    ++ [ ( "okButton"
+                                         , editOkCancelButton
+                                            accessToken
+                                            beforeProduct
+                                            sending
+                                            (ProductEditor.toUpdateRequest productEditor)
+                                         )
+                                       ]
 
-                        Nothing ->
-                            [ ( "needLogIn", Html.Styled.text "ログインしていないときに商品の編集はできません" ) ]
-                    )
-                ]
+                            Nothing ->
+                                [ ( "needLogIn", Html.Styled.text "ログインしていないときに商品の編集はできません" ) ]
+                        )
+                    ]
             , bottomNavigation = Nothing
             }
 
@@ -457,16 +460,17 @@ view logInState isWideScreen nowMaybe productAllMaybe model =
             in
             { title = Just (Product.getName productData)
             , tab = BasicParts.tabNone
-            , html =
-                [ Style.container
-                    [ Html.Styled.text "購入確認画面。この商品の取引を開始しますか?"
-                    , Style.productImageList (Product.getImageUrls productData)
-                    , productsViewName (Product.getName productData)
-                    , descriptionView (Product.getDescription productData)
-                    , conditionView (Product.getCondition productData)
-                    , tradeStartButton logInState product
+            , view =
+                Style.mainView
+                    [ Style.container
+                        [ Html.Styled.text "購入確認画面。この商品の取引を開始しますか?"
+                        , Style.productImageList (Product.getImageUrls productData)
+                        , productsViewName (Product.getName productData)
+                        , descriptionView (Product.getDescription productData)
+                        , conditionView (Product.getCondition productData)
+                        , tradeStartButton logInState product
+                        ]
                     ]
-                ]
             , bottomNavigation = Nothing
             }
 
@@ -484,67 +488,85 @@ normalView :
     ->
         { title : Maybe String
         , tab : BasicParts.Tab Msg
-        , html : List (Html.Styled.Html Msg)
+        , view : Html.Styled.Html Msg
         , bottomNavigation : Maybe BasicParts.BottomNavigationSelect
         }
 normalView logInState isWideScreen nowMaybe { product, likeSending, commentSending, commentList } =
     { title = Just (Product.getName product)
     , tab = BasicParts.tabNone
-    , html =
-        [ Style.container
-            ([ Style.productImageList (Product.getImageUrls product)
-             , productsViewName (Product.getName product)
-             , productsViewLike
-                logInState
-                likeSending
-                (Product.getLikedCount product)
-                (Product.getId product)
-             , statusView (Product.getStatus product)
-             , sellerNameView (Product.getSeller product)
-             , descriptionView (Product.getDescription product)
-             , categoryView (Product.getCategory product)
-             , conditionView (Product.getCondition product)
-             , createdAtView nowMaybe (Product.getCreatedAt product)
-             , commentListView commentSending
-                nowMaybe
-                (product |> Product.getSeller |> User.withNameGetId)
-                logInState
-                commentList
-             ]
-                ++ (case logInState of
-                        LogInState.Ok { token, userWithName } ->
-                            if
-                                User.withNameGetId userWithName
-                                    == User.withNameGetId (Product.getSeller product)
-                            then
-                                case Product.getStatus product of
-                                    Product.Selling ->
-                                        [ editButton
-                                        , deleteView (Product.getId product) token
-                                        ]
+    , view =
+        Html.Styled.div
+            [ Html.Styled.Attributes.css
+                [ Style.displayGridAndGap 0
+                , Style.gridColumn 2 3
+                , Style.gridRow 2 4
+                ]
+            ]
+            [ Html.Styled.div
+                [ Html.Styled.Attributes.css
+                    [ Style.displayGridAndGap 16
+                    , Css.overflowY Css.auto
+                    , Style.webkitOverflowScrolling
+                    ]
+                , Style.mainId
+                ]
+                ([ Style.productImageList (Product.getImageUrls product)
+                 , productsViewName (Product.getName product)
+                 , productsViewLike
+                    logInState
+                    likeSending
+                    (Product.getLikedCount product)
+                    (Product.getId product)
+                 , statusView (Product.getStatus product)
+                 , sellerNameView (Product.getSeller product)
+                 , descriptionView (Product.getDescription product)
+                 , categoryView (Product.getCategory product)
+                 , conditionView (Product.getCondition product)
+                 , createdAtView nowMaybe (Product.getCreatedAt product)
+                 , commentListView commentSending
+                    nowMaybe
+                    (product |> Product.getSeller |> User.withNameGetId)
+                    logInState
+                    commentList
+                 ]
+                    ++ editButtonAndDeleteButton product logInState
+                )
+            , productsViewPriceAndBuyButton isWideScreen
+                product
+                (case logInState of
+                    LogInState.Ok { userWithName } ->
+                        Just userWithName
 
-                                    _ ->
-                                        []
-
-                            else
-                                []
-
-                        _ ->
-                            []
-                   )
-            )
-        , productsViewPriceAndBuyButton isWideScreen
-            product
-            (case logInState of
-                LogInState.Ok { userWithName } ->
-                    Just userWithName
-
-                _ ->
-                    Nothing
-            )
-        ]
+                    _ ->
+                        Nothing
+                )
+            ]
     , bottomNavigation = Nothing
     }
+
+
+editButtonAndDeleteButton : Product.Product -> LogInState.LogInState -> List (Html.Styled.Html Msg)
+editButtonAndDeleteButton product logInState =
+    case logInState of
+        LogInState.Ok { token, userWithName } ->
+            if
+                User.withNameGetId userWithName
+                    == User.withNameGetId (Product.getSeller product)
+            then
+                case Product.getStatus product of
+                    Product.Selling ->
+                        [ editButton
+                        , deleteView (Product.getId product) token
+                        ]
+
+                    _ ->
+                        []
+
+            else
+                []
+
+        _ ->
+            []
 
 
 productsViewName : String -> Html.Styled.Html msg
@@ -833,9 +855,12 @@ commentTextAreaId =
 productsViewPriceAndBuyButton : Bool -> Product.Product -> Maybe User.WithName -> Html.Styled.Html Msg
 productsViewPriceAndBuyButton isWideScreen product userWithNameMaybe =
     Html.Styled.div
-        [ Html.Styled.Attributes.classList
-            [ ( "product-priceAndBuyButton", True )
-            , ( "product-priceAndBuyButton-wide", isWideScreen )
+        [ Html.Styled.Attributes.css
+            [ Css.padding (Css.px 8)
+            , Css.displayFlex
+            , Css.justifyContent Css.spaceBetween
+            , Css.backgroundColor Style.primaryColor
+            , Css.color (Css.rgb 255 255 255)
             ]
         ]
         (Html.Styled.div [ Html.Styled.Attributes.class "product-price" ]

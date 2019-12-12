@@ -117,14 +117,14 @@ view :
     ->
         { title : Maybe String
         , tab : BasicParts.Tab Msg
-        , html : List (Html.Styled.Html Msg)
+        , view : Html.Styled.Html Msg
         , bottomNavigation : Maybe BasicParts.BottomNavigationSelect
         }
 view logInState isWideScreen allProductsMaybe (Model rec) =
     { title = Just "購入した商品"
     , tab = BasicParts.tabSingle "購入した商品"
-    , html =
-        case logInState of
+    , view =
+        (case logInState of
             LogInState.None ->
                 [ Style.container
                     [ Html.Styled.text "ログインか新規登録をして、購入した商品一覧機能を使えるようにしよう!"
@@ -154,5 +154,7 @@ view logInState isWideScreen allProductsMaybe (Model rec) =
                     )
                     |> Html.Styled.map MsgByProductList
                 ]
+        )
+            |> Style.mainView
     , bottomNavigation = Nothing
     }

@@ -3,8 +3,8 @@ module Page.About exposing (Model, aboutModel, privacyPolicyModel, view)
 import BasicParts
 import Html.Styled
 import Html.Styled.Attributes
-import Style
 import PageLocation
+import Style
 
 
 type Model
@@ -27,7 +27,7 @@ view :
     ->
         { title : String
         , tab : BasicParts.Tab msg
-        , html : List (Html.Styled.Html msg)
+        , view : Html.Styled.Html msg
         , bottomNavigation : Maybe BasicParts.BottomNavigationSelect
         }
 view model =
@@ -35,25 +35,27 @@ view model =
         About ->
             { title = "つくマートについて"
             , tab = BasicParts.tabNone
-            , html =
-                [ Style.container
-                    [ Html.Styled.text "つくマートについて"
-                    , Html.Styled.a
-                        [ Html.Styled.Attributes.href PageLocation.aboutPrivacyPolicyUrl
-                        , Html.Styled.Attributes.class "mainButton"
+            , view =
+                Style.mainView
+                    [ Style.container
+                        [ Html.Styled.text "つくマートについてはまだ書かれていません"
+                        , Html.Styled.a
+                            [ Html.Styled.Attributes.href PageLocation.aboutPrivacyPolicyUrl
+                            , Html.Styled.Attributes.class "mainButton"
+                            ]
+                            [ Html.Styled.text "プライバシーポリシー(未完成)" ]
                         ]
-                        [ Html.Styled.text "プライバシーポリシー" ]
                     ]
-                ]
             , bottomNavigation = Nothing
             }
 
         PrivacyPolicy ->
             { title = "プライバシーポリシー"
             , tab = BasicParts.tabNone
-            , html =
-                [ Style.container
-                    [ Html.Styled.text "プライバシーポリシー" ]
-                ]
+            , view =
+                Style.mainView
+                    [ Style.container
+                        [ Html.Styled.text "プライバシーポリシーはまだ書かれていません" ]
+                    ]
             , bottomNavigation = Nothing
             }

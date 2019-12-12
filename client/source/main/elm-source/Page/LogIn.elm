@@ -8,8 +8,8 @@ module Page.LogIn exposing
     )
 
 import BasicParts
-import Html.Styled
 import Component.LogIn as LogInOrSignUp
+import Html.Styled
 import Style
 
 
@@ -52,17 +52,18 @@ view :
     ->
         { title : Maybe String
         , tab : BasicParts.Tab Msg
-        , html : List (Html.Styled.Html Msg)
+        , view : Html.Styled.Html Msg
         , bottomNavigation : Maybe BasicParts.BottomNavigationSelect
         }
 view (Model logInOrSignUpModel) =
     { title = Just "ログイン"
     , tab = BasicParts.tabSingle "ログイン"
-    , html =
-        [ Style.container
-            [ LogInOrSignUp.view logInOrSignUpModel
-                |> Html.Styled.map Msg
+    , view =
+        Style.mainView
+            [ Style.container
+                [ LogInOrSignUp.view logInOrSignUpModel
+                    |> Html.Styled.map Msg
+                ]
             ]
-        ]
     , bottomNavigation = Just BasicParts.User
     }
