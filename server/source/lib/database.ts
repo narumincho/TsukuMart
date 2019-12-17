@@ -300,11 +300,15 @@ export const addCommentProduct = async (
   productId: string,
   data: Pick<type.ProductComment, "body">
 ): Promise<ProductReturnLowCost> => {
+  const trimmedCommentBody = data.body.trim();
+  if (trimmedCommentBody.length === 0) {
+    throw new Error("コメントには1文字以上必要です");
+  }
   const now = databaseLow.getNowTimestamp();
   const userData = await databaseLow.getUserData(userId);
   await databaseLow.addCommentedProductData(userId, productId);
   await databaseLow.addProductComment(productId, {
-    body: data.body,
+    body: trimmedCommentBody,
     createdAt: now,
     speakerId: userId,
     speakerDisplayName: userData.displayName,
@@ -316,7 +320,7 @@ export const addCommentProduct = async (
   ).notifyToken;
   if (notifyAccessToken !== null) {
     await lineNotify.sendMessage(
-      `${userData.displayName}さんが${productData.name}にコメントをつけました。\n\n${data.body}\n\nhttps://tsukumart.com/product/${productId}`,
+      `${userData.displayName}さんが${productData.name}にコメントをつけました。\n\n${trimmedCommentBody}\n\nhttps://tsukumart.com/product/${productId}`,
       false,
       notifyAccessToken
     );

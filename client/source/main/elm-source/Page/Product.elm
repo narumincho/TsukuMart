@@ -417,6 +417,7 @@ view logInState isWideScreen nowMaybe productAllMaybe model =
                 isWideScreen
                 nowMaybe
                 { likeSending = rec.likeSending
+                , commentText = rec.comment
                 , commentSending = rec.commentSending
                 , product = productAll |> Product.searchFromId rec.product
                 , commentList = rec.commentList
@@ -482,6 +483,7 @@ normalView :
     ->
         { product : Product.Product
         , likeSending : Bool
+        , commentText : String
         , commentSending : Bool
         , commentList : Maybe (List Product.Comment)
         }
@@ -491,8 +493,8 @@ normalView :
         , view : Html.Styled.Html Msg
         , bottomNavigation : Maybe BasicParts.BottomNavigationSelect
         }
-normalView logInState isWideScreen nowMaybe { product, likeSending, commentSending, commentList } =
-    { title = Just (Product.getName product)
+normalView logInState isWideScreen nowMaybe data =
+    { title = Just (Product.getName data.product)
     , tab = BasicParts.tabNone
     , view =
         Html.Styled.div
@@ -510,29 +512,32 @@ normalView logInState isWideScreen nowMaybe { product, likeSending, commentSendi
                     ]
                 , Style.mainId
                 ]
-                ([ Style.productImageList (Product.getImageUrls product)
-                 , productsViewName (Product.getName product)
+                ([ Style.productImageList (Product.getImageUrls data.product)
+                 , productsViewName (Product.getName data.product)
                  , productsViewLike
                     logInState
-                    likeSending
-                    (Product.getLikedCount product)
-                    (Product.getId product)
-                 , statusView (Product.getStatus product)
-                 , sellerNameView (Product.getSeller product)
-                 , descriptionView (Product.getDescription product)
-                 , categoryView (Product.getCategory product)
-                 , conditionView (Product.getCondition product)
-                 , createdAtView nowMaybe (Product.getCreatedAt product)
-                 , commentListView commentSending
+                    data.likeSending
+                    (Product.getLikedCount data.product)
+                    (Product.getId data.product)
+                 , statusView (Product.getStatus data.product)
+                 , sellerNameView (Product.getSeller data.product)
+                 , descriptionView (Product.getDescription data.product)
+                 , categoryView (Product.getCategory data.product)
+                 , conditionView (Product.getCondition data.product)
+                 , createdAtView nowMaybe (Product.getCreatedAt data.product)
+                 , commentListView
+                    data.commentText
+                    data.commentSending
                     nowMaybe
-                    (product |> Product.getSeller |> User.withNameGetId)
+                    (data.product |> Product.getSeller |> User.withNameGetId)
                     logInState
-                    commentList
+                    data.commentList
                  ]
-                    ++ editButtonAndDeleteButton product logInState
+                    ++ editButtonAndDeleteButton data.product logInState
                 )
-            , productsViewPriceAndBuyButton isWideScreen
-                product
+            , productsViewPriceAndBuyButton
+                isWideScreen
+                data.product
                 (case logInState of
                     LogInState.Ok { userWithName } ->
                         Just userWithName
@@ -767,20 +772,21 @@ deleteView productId token =
 
 
 commentListView :
-    Bool
+    String
+    -> Bool
     -> Maybe ( Time.Posix, Time.Zone )
     -> User.Id
     -> LogInState.LogInState
     -> Maybe (List Product.Comment)
     -> Html.Styled.Html Msg
-commentListView commentSending nowMaybe sellerId logInState commentListMaybe =
+commentListView commentText commentSending nowMaybe sellerId logInState commentListMaybe =
     Html.Styled.div
         [ Html.Styled.Attributes.css
             [ Css.paddingBottom (Css.px 64) ]
         ]
         ((case LogInState.getToken logInState of
             Just token ->
-                [ commentInputArea commentSending token ]
+                [ commentInputArea commentText commentSending token ]
 
             Nothing ->
                 []
@@ -815,8 +821,8 @@ commentListView commentSending nowMaybe sellerId logInState commentListMaybe =
         )
 
 
-commentInputArea : Bool -> Api.Token -> Html.Styled.Html Msg
-commentInputArea sending token =
+commentInputArea : String -> Bool -> Api.Token -> Html.Styled.Html Msg
+commentInputArea commentText sending token =
     Html.Styled.div
         []
         (Html.Styled.textarea
@@ -832,6 +838,15 @@ commentInputArea sending token =
                         ]
                         [ Icon.loading { size = 24, color = Css.rgb 0 0 0 }
                         ]
+                    ]
+
+                else if String.isEmpty (String.trim commentText) then
+                    [ Html.Styled.text "コメントには1文字以上必要です"
+                    , Html.Styled.button
+                        [ Html.Styled.Attributes.disabled True
+                        , Html.Styled.Attributes.css [ Component.Comment.commentSendButtonStyle ]
+                        ]
+                        [ Html.Styled.text "コメントを送信" ]
                     ]
 
                 else
