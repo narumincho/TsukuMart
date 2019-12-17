@@ -516,25 +516,19 @@ finishButton : Maybe Sending -> Trade.SellerOrBuyer -> Api.Token -> Html.Styled.
 finishButton sending position token =
     case sending of
         Just Finish ->
-            Html.Styled.button
-                [ Html.Styled.Attributes.class "mainButton"
-                , Html.Styled.Attributes.disabled True
-                ]
+            Style.mainButton
                 [ Icon.loading { size = 24, color = Css.rgb 0 0 0 } ]
+                Nothing
 
         Just _ ->
-            Html.Styled.button
-                [ Html.Styled.Attributes.class "mainButton"
-                , Html.Styled.Attributes.disabled True
-                ]
+            Style.mainButton
                 [ Html.Styled.text (finishText position) ]
+                Nothing
 
         Nothing ->
-            Html.Styled.button
-                [ Html.Styled.Attributes.class "mainButton"
-                , Html.Styled.Events.onClick (FinishTrade token)
-                ]
+            Style.mainButton
                 [ Html.Styled.text (finishText position) ]
+                (Just (FinishTrade token))
 
 
 finishText : Trade.SellerOrBuyer -> String

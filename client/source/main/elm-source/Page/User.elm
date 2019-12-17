@@ -500,32 +500,25 @@ userDataLinkItem link text =
 
 lineNotifySettingButton : Api.Token -> Html.Styled.Html Msg
 lineNotifySettingButton token =
-    Html.Styled.button
-        [ Html.Styled.Attributes.class "mainButton"
-        , Html.Styled.Events.onClick (MsgToLineNotifySetting token)
-        ]
-        [ Html.Styled.text "LINE Notifyで通知を有効にする"
-        ]
+    Style.mainButton
+        [ Html.Styled.text "LINE Notifyで通知を有効にする" ]
+        (Just (MsgToLineNotifySetting token))
 
 
 toEditButton : Html.Styled.Html Msg
 toEditButton =
-    Html.Styled.button
-        [ Html.Styled.Attributes.class "mainButton"
-        , Html.Styled.Events.onClick MsgToEditMode
-        ]
+    Style.mainButton
         [ Icon.edit (Css.batch [ Css.width (Css.px 32), Css.height (Css.px 32) ])
         , Html.Styled.text "編集する"
         ]
+        (Just MsgToEditMode)
 
 
 logOutButton : Html.Styled.Html Msg
 logOutButton =
-    Html.Styled.button
-        [ Html.Styled.Attributes.class "subButton"
-        , Html.Styled.Events.onClick MsgLogOut
-        ]
+    Style.subButton
         [ Html.Styled.text "ログアウトする" ]
+        MsgLogOut
 
 
 {-| 編集モードでの表示

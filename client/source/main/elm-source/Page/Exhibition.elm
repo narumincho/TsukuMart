@@ -251,20 +251,14 @@ editView productEditorModel =
 
 toConformPageButton : Bool -> Html.Styled.Html Msg
 toConformPageButton available =
-    if available then
-        Html.Styled.a
-            [ Html.Styled.Attributes.href (PageLocation.toUrlAsString PageLocation.ExhibitionConfirm)
-            , Html.Styled.Attributes.class "mainButton"
-            ]
-            [ Html.Styled.text "出品確認画面へ" ]
+    Style.mainButtonLink
+        [ Html.Styled.text "出品確認画面へ" ]
+        (if available then
+            Just PageLocation.ExhibitionConfirm
 
-    else
-        Html.Styled.button
-            [ Html.Styled.Attributes.class "mainButton"
-            , Html.Styled.Attributes.class "mainButton-disabled"
-            , Html.Styled.Attributes.disabled True
-            ]
-            [ Html.Styled.text "出品確認画面へ" ]
+         else
+            Nothing
+        )
 
 
 
@@ -290,13 +284,10 @@ confirmView accessToken (Api.SellProductRequest requestData) sending =
             (Html.Styled.text (Product.conditionToJapaneseString requestData.condition))
        ]
         ++ (if sending then
-                [ Html.Styled.button
-                    [ Html.Styled.Attributes.class "mainButton"
-                    , Html.Styled.Attributes.class "mainButton-disabled"
-                    , Html.Styled.Attributes.disabled True
-                    ]
+                [ Style.mainButtonLink
                     [ Icon.loading { size = 24, color = Css.rgb 255 255 255 }
                     ]
+                    Nothing
                 ]
 
             else
@@ -307,11 +298,9 @@ confirmView accessToken (Api.SellProductRequest requestData) sending =
                         ]
                     ]
                     [ Html.Styled.text "この商品を出品します。よろしいですか?" ]
-                , Html.Styled.button
-                    [ Html.Styled.Events.onClick (SellProduct ( accessToken, Api.SellProductRequest requestData ))
-                    , Html.Styled.Attributes.class "mainButton"
-                    ]
+                , Style.mainButton
                     [ Html.Styled.text "出品する" ]
+                    (Just (SellProduct ( accessToken, Api.SellProductRequest requestData )))
                 ]
            )
       )

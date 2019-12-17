@@ -28,6 +28,7 @@ module Style exposing
     , productImageList
     , radioForm
     , selectMenu
+    , subButton
     , titleAndContent
     , userImage
     , userSelectNone
@@ -357,6 +358,15 @@ mainButtonLink children locationMaybe =
                 (children |> List.map (H.map never))
 
 
+subButton : List (H.Html Never) -> msg -> H.Html msg
+subButton children msg =
+    H.div
+        [ A.css [ subButtonStyle ]
+        , Html.Styled.Events.onClick msg
+        ]
+        (children |> List.map (H.map never))
+
+
 mainButtonStyle : Css.Style
 mainButtonStyle =
     Css.batch
@@ -374,6 +384,12 @@ mainButtonStyle =
         , Css.justifyContent Css.center
         , Css.boxSizing Css.borderBox
         , Css.textDecoration Css.none
+        , Css.cursor Css.pointer
+        , Css.hover
+            [ Css.backgroundColor primaryColorLight
+            , Css.color (Css.rgb 17 17 17)
+            , Css.fill (Css.rgb 17 17 17)
+            ]
         ]
 
 
@@ -393,6 +409,27 @@ mainButtonDisabledStyle =
         , Css.alignItems Css.center
         , Css.justifyContent Css.center
         , Css.boxSizing Css.borderBox
+        , Css.cursor Css.notAllowed
+        ]
+
+
+subButtonStyle : Css.Style
+subButtonStyle =
+    Css.batch
+        [ Css.backgroundColor (Css.rgb 153 153 153)
+        , Css.color (Css.rgb 17 17 17)
+        , Css.padding (Css.px 16)
+        , Css.fontSize (Css.rem 1.5)
+        , Css.borderRadius (Css.px 8)
+        , Css.boxShadow4 Css.zero (Css.px 2) (Css.px 4) (Css.rgba 0 0 0 0.18)
+        , Css.border2 Css.zero Css.none
+        , userSelectNone
+        , Css.cursor Css.pointer
+        , Css.displayFlex
+        , Css.alignItems Css.center
+        , Css.justifyContent Css.center
+        , Css.hover
+            [ Css.backgroundColor (Css.rgb 187 187 187) ]
         ]
 
 

@@ -742,10 +742,7 @@ createdAtView nowMaybe createdAt =
 
 editButton : Html.Styled.Html Msg
 editButton =
-    Html.Styled.button
-        [ Html.Styled.Attributes.class "subButton"
-        , Html.Styled.Events.onClick EditProduct
-        ]
+    Style.subButton
         [ Icon.edit
             (Css.batch
                 [ Css.width (Css.px 32)
@@ -754,6 +751,7 @@ editButton =
             )
         , Html.Styled.text "編集する"
         ]
+        EditProduct
 
 
 deleteView : Product.Id -> Api.Token -> Html.Styled.Html Msg
@@ -916,17 +914,9 @@ tradeStartButton : LogInState.LogInState -> Product.Id -> Html.Styled.Html Msg
 tradeStartButton logInState productId =
     Html.Styled.div
         []
-        [ Html.Styled.button
-            (Html.Styled.Attributes.class "mainButton"
-                :: (case LogInState.getToken logInState of
-                        Just accessToken ->
-                            [ Html.Styled.Events.onClick (TradeStart accessToken productId) ]
-
-                        Nothing ->
-                            [ Html.Styled.Attributes.class "mainButton-disabled" ]
-                   )
-            )
+        [ Style.mainButton
             [ Html.Styled.text "取引を開始する" ]
+            (LogInState.getToken logInState |> Maybe.map (\accessToken -> TradeStart accessToken productId))
         ]
 
 

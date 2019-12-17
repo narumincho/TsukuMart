@@ -39,11 +39,9 @@ view model =
                 Style.mainView
                     [ Style.container
                         [ Html.Styled.text "つくマートについてはまだ書かれていません"
-                        , Html.Styled.a
-                            [ Html.Styled.Attributes.href PageLocation.aboutPrivacyPolicyUrl
-                            , Html.Styled.Attributes.class "mainButton"
-                            ]
+                        , Style.mainButtonLink
                             [ Html.Styled.text "プライバシーポリシー(未完成)" ]
+                            (Just PageLocation.AboutPrivacyPolicy)
                         ]
                     ]
             , bottomNavigation = Nothing

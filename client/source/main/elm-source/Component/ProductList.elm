@@ -19,9 +19,9 @@ import Html.Styled.Attributes
 import Html.Styled.Events
 import Icon
 import Json.Decode
-import Style
 import PageLocation
 import Set
+import Style
 
 
 type Model
@@ -135,7 +135,14 @@ listView sending logInState isWideMode ( product, productList ) =
 itemView : Data.LogInState.LogInState -> Bool -> Product.Product -> Html.Styled.Html Msg
 itemView logInState sending product =
     Html.Styled.a
-        [ Html.Styled.Attributes.class "productList-item"
+        [ Html.Styled.Attributes.css
+            [ Style.displayGridAndGap 0
+            , Css.border3 (Css.px 1) Css.solid (Css.rgba 0 0 0 0.4)
+            , Css.textDecoration Css.none
+            , Css.color (Css.rgb 0 0 0)
+            , Css.hover
+                [ Css.backgroundColor (Css.rgb 204 204 204) ]
+            ]
         , Html.Styled.Attributes.href (PageLocation.toUrlAsString (PageLocation.Product (Product.getId product)))
         , Html.Styled.Attributes.id (productIdString (Product.getId product))
         ]
@@ -151,10 +158,21 @@ itemView logInState sending product =
                         [ soldOutBar ]
                )
             ++ [ Html.Styled.div
-                    [ Html.Styled.Attributes.class "productList-name" ]
+                    [ Html.Styled.Attributes.css
+                        [ Css.fontSize (Css.rem 1.1)
+                        , Css.overflowWrap Css.breakWord
+                        , Css.padding2 (Css.px 4) (Css.px 8)
+                        ]
+                    ]
                     [ Html.Styled.text (Product.getName product) ]
                , Html.Styled.div
-                    [ Html.Styled.Attributes.class "productList-priceAndLike" ]
+                    [ Html.Styled.Attributes.css
+                        [ Css.displayFlex
+                        , Css.flexDirection Css.row
+                        , Css.justifyContent Css.spaceBetween
+                        , Css.padding2 (Css.px 4) (Css.px 8)
+                        ]
+                    ]
                     [ itemLike logInState sending product
                     , itemPrice (Product.getPrice product)
                     ]
@@ -186,7 +204,7 @@ itemLike : Data.LogInState.LogInState -> Bool -> Product.Product -> Html.Styled.
 itemLike logInState sending product =
     if sending then
         Html.Styled.button
-            [ Html.Styled.Attributes.class "productList-like"
+            [ Html.Styled.Attributes.css [ productListLikeStyle False ]
             , Html.Styled.Attributes.disabled True
             , Html.Styled.Attributes.css [ Css.padding2 (Css.px 8) (Css.px 24) ]
             ]
@@ -205,8 +223,7 @@ itemLike logInState sending product =
                                 , preventDefault = True
                                 }
                             )
-                        , Html.Styled.Attributes.class "productList-liked"
-                        , Html.Styled.Attributes.class "productList-like"
+                        , Html.Styled.Attributes.css [ productListLikeStyle True ]
                         ]
                         (itemLikeBody (Product.getLikedCount product))
 
@@ -219,14 +236,55 @@ itemLike logInState sending product =
                                 , preventDefault = True
                                 }
                             )
-                        , Html.Styled.Attributes.class "productList-like"
+                        , Html.Styled.Attributes.css [ productListLikeStyle False ]
                         ]
                         (itemLikeBody (Product.getLikedCount product))
 
             _ ->
                 Html.Styled.div
-                    [ Html.Styled.Attributes.class "productList-like-noLogIn" ]
+                    [ Html.Styled.Attributes.css
+                        [ Style.userSelectNone
+                        , Css.padding (Css.px 8)
+                        , Css.border3 (Css.px 1) Css.solid (Css.rgb 170 180 170)
+                        , Css.fontSize (Css.rem 0.8)
+                        ]
+                    ]
                     (itemLikeBody (Product.getLikedCount product))
+
+
+productListLikeStyle : Bool -> Css.Style
+productListLikeStyle isLiked =
+    Css.batch
+        [ Css.backgroundColor
+            (if isLiked then
+                Style.primaryColor
+
+             else
+                Css.rgb 170 170 170
+            )
+        , Css.borderRadius (Css.px 8)
+        , Style.userSelectNone
+        , Css.cursor Css.pointer
+        , Css.padding (Css.px 8)
+        , Css.border2 Css.zero Css.none
+        , Css.fontSize (Css.rem 0.8)
+        , Css.color
+            (if isLiked then
+                Css.rgb 255 255 255
+
+             else
+                Css.rgb 0 0 0
+            )
+        , Css.hover
+            [ Css.backgroundColor
+                (if isLiked then
+                    Style.primaryColorLight
+
+                 else
+                    Css.rgb 136 136 136
+                )
+            ]
+        ]
 
 
 itemLikeBody : Int -> List (Html.Styled.Html msg)
