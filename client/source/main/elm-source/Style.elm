@@ -1,6 +1,7 @@
 module Style exposing
     ( RadioSelect(..)
     , alertColorButton
+    , buttonStyle
     , cardListContainer
     , container
     , containerKeyed
@@ -19,6 +20,8 @@ module Style exposing
     , mainId
     , mainView
     , normalShadow
+    , okAndCancelButton
+    , okButton
     , pointerEventsNone
     , primaryColor
     , primaryColorLight
@@ -648,14 +651,10 @@ alertColorButton msgMaybe =
             Nothing ->
                 A.disabled True
         , A.css
-            [ Css.backgroundColor (Css.rgb 189 46 46)
+            [ buttonStyle
+            , Css.backgroundColor (Css.rgb 189 46 46)
             , Css.color (Css.rgb 238 238 238)
-            , Css.padding (Css.px 16)
             , Css.width (Css.pct 100)
-            , Css.fontSize (Css.rem 1.5)
-            , Css.borderRadius (Css.px 8)
-            , Css.boxShadow4 Css.zero (Css.px 2) (Css.px 4) (Css.rgba 0 0 0 0.18)
-            , userSelectNone
             , Css.displayFlex
             , Css.alignItems Css.center
             , Css.justifyContent Css.center
@@ -665,4 +664,84 @@ alertColorButton msgMaybe =
             , Css.hover
                 [ Css.backgroundColor (Css.rgb 221 84 84) ]
             ]
+        ]
+
+
+okAndCancelButton : { text : String, msg : msg } -> { text : String, msg : Maybe msg } -> H.Html msg
+okAndCancelButton cancel ok =
+    H.div
+        [ A.css
+            [ displayGridAndGap 8
+            , gridTemplateColumns "1fr 1fr"
+            ]
+        ]
+        [ cancelButton cancel.text cancel.msg
+        , okButton ok.text ok.msg
+        ]
+
+
+cancelButton : String -> msg -> H.Html msg
+cancelButton text msg =
+    H.button
+        [ Html.Styled.Events.onClick msg
+        , A.css
+            [ buttonStyle
+            , Css.displayFlex
+            , Css.alignItems Css.center
+            , Css.justifyContent Css.center
+            , Css.flexGrow (Css.int 1)
+            , Css.backgroundColor (Css.rgb 153 153 153)
+            , Css.color (Css.rgb 17 17 17)
+            , Css.fill (Css.rgb 17 17 17)
+            , Css.hover
+                [ Css.backgroundColor (Css.rgb 187 187 187)
+                ]
+            ]
+        ]
+        [ H.text text ]
+
+
+okButton : String -> Maybe msg -> H.Html msg
+okButton text msgMaybe =
+    H.button
+        [ case msgMaybe of
+            Just msg ->
+                Html.Styled.Events.onClick msg
+
+            Nothing ->
+                A.disabled True
+        , A.css
+            [ buttonStyle
+            , Css.displayFlex
+            , Css.alignItems Css.center
+            , Css.justifyContent Css.center
+            , Css.flexGrow (Css.int 1)
+            , Css.backgroundColor primaryColor
+            , Css.color (Css.rgb 221 221 221)
+            , Css.fill (Css.rgb 221 221 221)
+            , Css.hover
+                [ Css.backgroundColor primaryColorLight
+                , Css.color (Css.rgb 17 17 17)
+                , Css.fill (Css.rgb 17 17 17)
+                ]
+            , Css.disabled
+                [ Css.backgroundColor (Css.rgb 170 170 170)
+                , Css.color (Css.rgb 221 221 221)
+                , Css.fill (Css.rgb 221 221 221)
+                , Css.cursor Css.notAllowed
+                ]
+            ]
+        ]
+        [ H.text text ]
+
+
+buttonStyle : Css.Style
+buttonStyle =
+    Css.batch
+        [ Css.padding (Css.px 16)
+        , Css.fontSize (Css.rem 1.5)
+        , Css.borderRadius (Css.px 8)
+        , Css.boxShadow4 Css.zero (Css.px 2) (Css.px 4) (Css.rgba 0 0 0 0.18)
+        , userSelectNone
+        , Css.cursor Css.pointer
         ]

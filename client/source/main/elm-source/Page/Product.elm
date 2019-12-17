@@ -919,33 +919,22 @@ editOkCancelButton : Api.Token -> Product.Id -> Bool -> Maybe Api.UpdateProductR
 editOkCancelButton token productId sending requestDataMaybe =
     if sending then
         Html.Styled.div
-            [ Html.Styled.Attributes.class "profile-editButtonArea" ]
-            [ Html.Styled.button
-                [ Html.Styled.Attributes.class "profile-editOkButton"
-                , Html.Styled.Attributes.disabled True
+            [ Html.Styled.Attributes.css
+                [ Style.buttonStyle
+                , Css.backgroundColor (Css.rgb 153 153 153)
+                , Css.width (Css.pct 100)
+                , Css.fill (Css.rgb 0 0 0)
+                , Css.displayFlex
+                , Css.justifyContent Css.center
                 ]
-                [ Icon.loading { size = 32, color = Css.rgb 0 0 0 } ]
             ]
+            [ Icon.loading { size = 32, color = Css.rgb 0 0 0 } ]
 
     else
-        Html.Styled.div
-            [ Html.Styled.Attributes.class "profile-editButtonArea" ]
-            [ Html.Styled.button
-                [ Html.Styled.Attributes.class "profile-editCancelButton"
-                , Html.Styled.Events.onClick MsgBackToViewMode
-                ]
-                [ Html.Styled.text "キャンセル" ]
-            , Html.Styled.button
-                (Html.Styled.Attributes.class "profile-editOkButton"
-                    :: (case requestDataMaybe of
-                            Just requestData ->
-                                [ Html.Styled.Events.onClick (UpdateProductData token productId requestData)
-                                , Html.Styled.Attributes.disabled False
-                                ]
-
-                            Nothing ->
-                                [ Html.Styled.Attributes.disabled True ]
-                       )
-                )
-                [ Html.Styled.text "変更する" ]
-            ]
+        Style.okAndCancelButton
+            { text = "キャンセル"
+            , msg = MsgBackToViewMode
+            }
+            { text = "変更する"
+            , msg = requestDataMaybe |> Maybe.map (UpdateProductData token productId)
+            }

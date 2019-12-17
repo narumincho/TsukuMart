@@ -305,7 +305,13 @@ view logInState isWideScreen model =
 loadingWithUserIdView : User.Id -> List (Html.Styled.Html msg)
 loadingWithUserIdView userId =
     [ Html.Styled.text ("ユーザーID" ++ User.idToString userId ++ "のプロフィールを読み込み中")
-    , Icon.loading { size = 48, color = Css.rgb 0 0 0 }
+    , Html.Styled.div
+        [ Html.Styled.Attributes.css
+            [ Css.displayFlex
+            , Css.justifyContent Css.center
+            ]
+        ]
+        [ Icon.loading { size = 48, color = Css.rgb 0 0 0 } ]
     ]
 
 
@@ -316,7 +322,13 @@ loadingWithUserIdAndNameView isWideScreen userWithName =
         (User.withNameGetImageId userWithName)
         (User.withNameGetDisplayName userWithName)
         ++ [ Html.Styled.text (User.withNameGetDisplayName userWithName ++ "さんの紹介文、学群学類を読み込み中")
-           , Icon.loading { size = 48, color = Css.rgb 0 0 0 }
+           , Html.Styled.div
+                [ Html.Styled.Attributes.css
+                    [ Css.displayFlex
+                    , Css.justifyContent Css.center
+                    ]
+                ]
+                [ Icon.loading { size = 48, color = Css.rgb 0 0 0 } ]
            ]
 
 
@@ -593,27 +605,13 @@ introductionEditorId =
 
 editButton : Api.Token -> EditModel -> Html.Styled.Html Msg
 editButton token editModel =
-    Html.Styled.div
-        [ Html.Styled.Attributes.class "profile-editButtonArea" ]
-        [ Html.Styled.button
-            [ Html.Styled.Attributes.class "profile-editCancelButton"
-            , Html.Styled.Events.onClick MsgBackToViewMode
-            ]
-            [ Html.Styled.text "キャンセル" ]
-        , Html.Styled.button
-            (Html.Styled.Attributes.class "profile-editOkButton"
-                :: (case editModelToProfileUpdateData editModel of
-                        Just profile ->
-                            [ Html.Styled.Events.onClick (MsgChangeProfile token profile)
-                            , Html.Styled.Attributes.disabled False
-                            ]
-
-                        Nothing ->
-                            [ Html.Styled.Attributes.disabled True ]
-                   )
-            )
-            [ Html.Styled.text "変更する" ]
-        ]
+    Style.okAndCancelButton
+        { text = "キャンセル"
+        , msg = MsgBackToViewMode
+        }
+        { text = "変更する"
+        , msg = editModelToProfileUpdateData editModel |> Maybe.map (MsgChangeProfile token)
+        }
 
 
 editModelToProfileUpdateData : EditModel -> Maybe Api.ProfileUpdateData
