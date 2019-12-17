@@ -592,12 +592,9 @@ introductionEditor _ =
             , Html.Styled.Attributes.for introductionEditorId
             ]
             [ Html.Styled.text "紹介文" ]
-        , Html.Styled.textarea
-            [ Html.Styled.Attributes.id introductionEditorId
-            , Html.Styled.Attributes.class "form-textarea"
-            , Html.Styled.Events.onInput MsgInputIntroduction
-            ]
-            []
+        , Style.inputMutilineText
+            introductionEditorId
+            |> Html.Styled.map MsgInputIntroduction
         ]
 
 

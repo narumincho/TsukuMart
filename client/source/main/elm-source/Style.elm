@@ -13,6 +13,7 @@ module Style exposing
     , gridRow
     , gridTemplateColumns
     , gridTemplateRows
+    , inputMutilineText
     , inputText
     , justifyItemsCenter
     , mainButton
@@ -282,24 +283,7 @@ blankOption =
 inputText : { id : String, type_ : String, autoCompleteMaybe : Maybe String, required : Bool, placeholder : String, maxlengthMaybe : Maybe Int } -> H.Html String
 inputText { id, type_, autoCompleteMaybe, required, placeholder, maxlengthMaybe } =
     H.input
-        ([ A.css
-            [ Css.fontSize (Css.rem 1.2)
-            , Css.padding (Css.px 8)
-            , Css.width (Css.pct 100)
-            , Css.border3 (Css.px 1) Css.solid (Css.rgb 204 204 204)
-            , Css.boxSizing Css.borderBox
-            , Css.borderRadius (Css.px 8)
-            , Css.boxShadow5 Css.inset Css.zero (Css.px 1) (Css.px 1) (Css.rgba 0 0 0 0.075)
-            , Css.outline Css.zero
-            , Css.Transitions.transition
-                [ Css.Transitions.borderColor3 150 0 Css.Transitions.easeInOut
-                , Css.Transitions.boxShadow3 150 0 Css.Transitions.easeInOut
-                ]
-            , Css.focus
-                [ Css.boxShadow inputTextFocusBoxShadow
-                , Css.border3 (Css.px 1) Css.solid (Css.rgb 102 175 233)
-                ]
-            ]
+        ([ A.css [ inputTextStyle ]
          , A.id id
          , Html.Styled.Events.onInput identity
          , A.type_ type_
@@ -329,12 +313,39 @@ inputText { id, type_, autoCompleteMaybe, required, placeholder, maxlengthMaybe 
         []
 
 
-inputTextFocusBoxShadow =
-    let
-        none =
-            Css.none
-    in
-    { none | value = "inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px rgba(102, 175, 233, 0.6)" }
+inputTextStyle : Css.Style
+inputTextStyle =
+    Css.batch
+        [ Css.fontSize (Css.rem 1.2)
+        , Css.padding (Css.px 8)
+        , Css.width (Css.pct 100)
+        , Css.border3 (Css.px 1) Css.solid (Css.rgb 204 204 204)
+        , Css.boxSizing Css.borderBox
+        , Css.borderRadius (Css.px 8)
+        , Css.boxShadow5 Css.inset Css.zero (Css.px 1) (Css.px 1) (Css.rgba 0 0 0 0.075)
+        , Css.outline Css.zero
+        , Css.Transitions.transition
+            [ Css.Transitions.borderColor3 150 0 Css.Transitions.easeInOut
+            , Css.Transitions.boxShadow3 150 0 Css.Transitions.easeInOut
+            ]
+        , Css.focus
+            [ Css.property "box-shadow" "inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px rgba(102, 175, 233, 0.6)"
+            , Css.border3 (Css.px 1) Css.solid (Css.rgb 102 175 233)
+            ]
+        ]
+
+
+inputMutilineText : String -> H.Html String
+inputMutilineText id =
+    H.textarea
+        [ A.css
+            [ inputTextStyle
+            , Css.resize Css.none
+            ]
+        , A.id id
+        , Html.Styled.Events.onInput identity
+        ]
+        []
 
 
 mainButton : List (H.Html Never) -> Maybe msg -> H.Html msg

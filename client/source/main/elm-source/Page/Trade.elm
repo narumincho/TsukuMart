@@ -412,12 +412,10 @@ commentInputArea : Maybe Sending -> Api.Token -> Html.Styled.Html Msg
 commentInputArea sending token =
     Html.Styled.div
         []
-        (Html.Styled.textarea
-            [ Html.Styled.Events.onInput InputComment
-            , Html.Styled.Attributes.class "form-textarea"
-            , Html.Styled.Attributes.id commentTextAreaId
-            ]
-            []
+        ((Style.inputMutilineText
+            commentTextAreaId
+            |> Html.Styled.map InputComment
+         )
             :: (case sending of
                     Just Comment ->
                         [ Html.Styled.button

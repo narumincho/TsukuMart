@@ -519,12 +519,9 @@ descriptionView =
     Style.formItem
         "商品の説明"
         descriptionEditorId
-        [ Html.Styled.textarea
-            [ Html.Styled.Attributes.class "form-textarea"
-            , Html.Styled.Attributes.id descriptionEditorId
-            , Html.Styled.Events.onInput InputDescription
-            ]
-            []
+        [ Style.inputMutilineText
+            descriptionEditorId
+            |> Html.Styled.map InputDescription
         ]
 
 
