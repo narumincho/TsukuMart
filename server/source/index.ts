@@ -28,7 +28,6 @@ export const indexHtml = functions
     <meta name="description" content="筑波大生専用手渡しフリーマーケットサービス">
     <meta name="theme-color" content="#733fa7">
     <title>つくマート</title>
-    <link rel="stylesheet" href="https://tsukumart.com/style.css">
     <link rel="icon" href="https://tsukumart.com/assets/logo_bird.png">
     <link rel="manifest" href="https://tsukumart.com/manifest.json">
     <meta name="twitter:card" content="summary_large_image">

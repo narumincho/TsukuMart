@@ -22,12 +22,7 @@ Remove-Item ./signUpBeforeMinifiy.js;
 $Host.UI.RawUI.ForegroundColor = "Yellow";
 Write-Output "Minify JavaScript OK";
 
-Write-Output "Minify CSS ...";
-$Host.UI.RawUI.ForegroundColor = "Gray";
-Set-Location -Path ../;
-cleancss ./style.css -o ../distribution/style.css;
-$Host.UI.RawUI.ForegroundColor = "Yellow";
-Write-Output "Minify CSS OK"
+Set-Location ../
 
 Write-Output "Call (Main) Compile ...";
 $Host.UI.RawUI.ForegroundColor = "Gray";
