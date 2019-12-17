@@ -551,22 +551,16 @@ cancelButton : Maybe Sending -> Api.Token -> Html.Styled.Html Msg
 cancelButton sending token =
     case sending of
         Just Cancel ->
-            Html.Styled.button
-                [ Html.Styled.Attributes.class "product-deleteButton"
-                , Html.Styled.Attributes.disabled True
-                ]
+            Style.alertColorButton
+                Nothing
                 [ Icon.loading { size = 24, color = Css.rgb 0 0 0 } ]
 
         Just _ ->
-            Html.Styled.button
-                [ Html.Styled.Attributes.class "product-deleteButton"
-                , Html.Styled.Attributes.disabled True
-                ]
+            Style.alertColorButton
+                Nothing
                 [ Html.Styled.text "取引をキャンセルする" ]
 
         Nothing ->
-            Html.Styled.button
-                [ Html.Styled.Attributes.class "product-deleteButton"
-                , Html.Styled.Events.onClick (CancelTrade token)
-                ]
+            Style.alertColorButton
+                (Just (CancelTrade token))
                 [ Html.Styled.text "取引をキャンセルする" ]

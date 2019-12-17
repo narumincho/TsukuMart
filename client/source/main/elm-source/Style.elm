@@ -1,5 +1,6 @@
 module Style exposing
     ( RadioSelect(..)
+    , alertColorButton
     , cardListContainer
     , container
     , containerKeyed
@@ -635,3 +636,33 @@ mainView =
 mainId : H.Attribute msg
 mainId =
     A.id "mainView"
+
+
+alertColorButton : Maybe msg -> List (H.Html msg) -> H.Html msg
+alertColorButton msgMaybe =
+    H.div
+        [ case msgMaybe of
+            Just msg ->
+                Html.Styled.Events.onClick msg
+
+            Nothing ->
+                A.disabled True
+        , A.css
+            [ Css.backgroundColor (Css.rgb 189 46 46)
+            , Css.color (Css.rgb 238 238 238)
+            , Css.padding (Css.px 16)
+            , Css.width (Css.pct 100)
+            , Css.fontSize (Css.rem 1.5)
+            , Css.borderRadius (Css.px 8)
+            , Css.boxShadow4 Css.zero (Css.px 2) (Css.px 4) (Css.rgba 0 0 0 0.18)
+            , userSelectNone
+            , Css.displayFlex
+            , Css.alignItems Css.center
+            , Css.justifyContent Css.center
+            , Css.boxSizing Css.borderBox
+            , Css.cursor Css.pointer
+            , Css.border2 Css.zero Css.none
+            , Css.hover
+                [ Css.backgroundColor (Css.rgb 221 84 84) ]
+            ]
+        ]

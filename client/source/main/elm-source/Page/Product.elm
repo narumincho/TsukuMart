@@ -753,10 +753,8 @@ editButton =
 
 deleteView : Product.Id -> Api.Token -> Html.Styled.Html Msg
 deleteView productId token =
-    Html.Styled.button
-        [ Html.Styled.Attributes.class "product-deleteButton"
-        , Html.Styled.Events.onClick (Delete token productId)
-        ]
+    Style.alertColorButton
+        (Just (Delete token productId))
         [ Icon.deleteGarbageCan
             (Css.batch
                 [ Css.width (Css.px 32)
@@ -863,7 +861,10 @@ productsViewPriceAndBuyButton isWideScreen product userWithNameMaybe =
             , Css.color (Css.rgb 255 255 255)
             ]
         ]
-        (Html.Styled.div [ Html.Styled.Attributes.class "product-price" ]
+        (Html.Styled.div
+            [ Html.Styled.Attributes.css
+                [ Css.fontSize (Css.rem 1.5) ]
+            ]
             [ Html.Styled.text (Product.priceToString (Product.getPrice product)) ]
             :: (case buyButton product userWithNameMaybe of
                     Just button ->

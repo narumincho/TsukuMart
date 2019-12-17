@@ -1,36 +1,7 @@
 :root {
   --primaryColor: rgb(115, 63, 167);
   --primaryColorLight: rgb(154, 108, 201);
-}
-/*===============================================
-                product 商品詳細画面
-===============================================*/
-.product-price {
-  font-size: 1.5rem;
-}
-
-.product-deleteButton {
-  background-color: #bd2e2e;
-  color: #eee;
-  padding: 1rem;
-  width: 100%;
-  font-size: 1.5rem;
-  border-radius: 0.4rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.18);
-  user-select: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-sizing: border-box;
-  cursor: pointer;
-  border: none;
-}
-
-.product-deleteButton:hover {
-  background-color: #dd5454;
-}
-
-/*===============================================
+} /*===============================================
                 Log In ログイン画面
 ===============================================*/
 
