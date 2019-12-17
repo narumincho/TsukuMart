@@ -279,10 +279,10 @@ blankOption =
     H.option [] [ H.text "--選択してください--" ]
 
 
-inputText : { id : String, type_ : String, autoComplete : String, required : Bool } -> H.Html String
-inputText { id, type_, autoComplete, required } =
+inputText : { id : String, type_ : String, autoCompleteMaybe : Maybe String, required : Bool, placeholder : String, maxlengthMaybe : Maybe Int } -> H.Html String
+inputText { id, type_, autoCompleteMaybe, required, placeholder, maxlengthMaybe } =
     H.input
-        [ A.css
+        ([ A.css
             [ Css.fontSize (Css.rem 1.2)
             , Css.padding (Css.px 8)
             , Css.width (Css.pct 100)
@@ -300,12 +300,32 @@ inputText { id, type_, autoComplete, required } =
                 , Css.border3 (Css.px 1) Css.solid (Css.rgb 102 175 233)
                 ]
             ]
-        , A.id id
-        , Html.Styled.Events.onInput identity
-        , A.type_ type_
-        , A.attribute "autocomplete" autoComplete
-        , A.required required
-        ]
+         , A.id id
+         , Html.Styled.Events.onInput identity
+         , A.type_ type_
+         , A.required required
+         ]
+            ++ (if String.isEmpty placeholder then
+                    []
+
+                else
+                    [ A.placeholder placeholder ]
+               )
+            ++ (case maxlengthMaybe of
+                    Just maxlength ->
+                        [ A.maxlength maxlength ]
+
+                    Nothing ->
+                        []
+               )
+            ++ (case autoCompleteMaybe of
+                    Just autoComplete ->
+                        [ A.attribute "autocomplete" autoComplete ]
+
+                    Nothing ->
+                        []
+               )
+        )
         []
 
 

@@ -154,8 +154,10 @@ viewBody (Model rec) =
         [ Style.inputText
             { id = searchTextId
             , type_ = "text"
-            , autoComplete = ""
+            , autoCompleteMaybe = Just "searchQuery"
             , required = False
+            , maxlengthMaybe = Nothing
+            , placeholder = "キーワードからさがす"
             }
             |> Html.Styled.map InputQuery
         ]

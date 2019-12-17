@@ -337,10 +337,12 @@ studentIdView analysisStudentIdOrEmailAddressResult =
     Style.formItem "学籍番号"
         studentInputId
         [ Style.inputText
-            { id = studentInputId
+            { autoCompleteMaybe = Just "studentId"
+            , id = studentInputId
+            , maxlengthMaybe = Nothing
+            , placeholder = ""
             , type_ = "text"
             , required = True
-            , autoComplete = "studentId"
             }
         , Html.Styled.div
             []
@@ -410,9 +412,11 @@ nameView name =
     Style.formItem "名前"
         studentInputId
         (Style.inputText
-            { id = nameInputId
+            { autoCompleteMaybe = Just "nickname"
+            , id = nameInputId
+            , maxlengthMaybe = Nothing
+            , placeholder = ""
             , type_ = "text"
-            , autoComplete = "nickname"
             , required = True
             }
             :: (if String.length name < 1 then

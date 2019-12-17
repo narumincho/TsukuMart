@@ -481,14 +481,17 @@ nameView name =
     Style.formItem
         "商品名"
         nameEditorId
-        (Html.Styled.input
-            [ Html.Styled.Attributes.placeholder "40文字まで"
-            , Html.Styled.Attributes.class "form-input"
-            , Html.Styled.Attributes.id nameEditorId
-            , Html.Styled.Attributes.maxlength 40
-            , Html.Styled.Events.onInput InputName
-            ]
-            []
+        ((Style.inputText
+            { id = nameEditorId
+            , type_ = "text"
+            , autoCompleteMaybe = Nothing
+            , required = True
+            , placeholder = "40文字まで"
+            , maxlengthMaybe =
+                Just 40
+            }
+            |> Html.Styled.map InputName
+         )
             :: (case nameCheck name of
                     Just errorMsg ->
                         [ Html.Styled.text errorMsg ]

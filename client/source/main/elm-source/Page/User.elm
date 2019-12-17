@@ -526,7 +526,15 @@ logOutButton =
 editView : Api.Token -> EditModel -> List (Html.Styled.Html Msg)
 editView access editModel =
     [ Html.Styled.Keyed.node "div"
-        [ Html.Styled.Attributes.class "form" ]
+        [ Html.Styled.Attributes.css
+            [ Style.displayGridAndGap 24
+            , Css.maxWidth (Css.px 640)
+            , Css.padding (Css.px 24)
+            , Css.boxSizing Css.borderBox
+            , Css.width (Css.pct 100)
+            , Css.overflowWrap Css.breakWord
+            ]
+        ]
         ([ ( "nickNameEditor", displayNameEditor editModel.displayName )
          , ( "introductionEditor", introductionEditor editModel.introduction )
          ]
@@ -548,13 +556,15 @@ displayNameEditor displayName =
             , Html.Styled.Attributes.for nickNameEditorId
             ]
             [ Html.Styled.text "表示名" ]
-         , Html.Styled.input
-            [ Html.Styled.Attributes.attribute "autocomplete" "username"
-            , Html.Styled.Attributes.id nickNameEditorId
-            , Html.Styled.Attributes.class "form-input"
-            , Html.Styled.Events.onInput MsgInputDisplayName
-            ]
-            []
+         , Style.inputText
+            { id = nickNameEditorId
+            , type_ = "text"
+            , autoCompleteMaybe = Just "username"
+            , required = True
+            , placeholder = ""
+            , maxlengthMaybe = Nothing
+            }
+            |> Html.Styled.map MsgInputDisplayName
          ]
             ++ (if String.length displayName < 1 then
                     [ Html.Styled.text "表示名は 1文字以上である必要があります" ]
