@@ -1321,7 +1321,7 @@ searchConditionToArgs condition =
 
 
 getLogInUrl : Data.SocialLoginService.SocialLoginService -> (Result String Url.Url -> msg) -> Cmd msg
-getLogInUrl service callBack =
+getLogInUrl service =
     graphQlApiRequest
         (Mutation
             [ Field
@@ -1339,12 +1339,11 @@ getLogInUrl service callBack =
                 }
             ]
         )
-        logInOrSignUpUrlResponseToResult
-        callBack
+        logInUrlResponseToResult
 
 
-logInOrSignUpUrlResponseToResult : Jd.Decoder Url.Url
-logInOrSignUpUrlResponseToResult =
+logInUrlResponseToResult : Jd.Decoder Url.Url
+logInUrlResponseToResult =
     Jd.field "getLogInUrl" Jd.string
         |> Jd.andThen
             (\urlString ->
