@@ -1422,7 +1422,7 @@ graphQlApiRequest query responseDecoder callBack =
     Http.post
         { url = "https://asia-northeast1-tsukumart-f0971.cloudfunctions.net/api"
         , body = graphQlRequestBody (queryToString query)
-        , expect = Http.expectStringResponse callBack (graphQlResponseDecoderWithoutToken responseDecoder)
+        , expect = Http.expectStringResponse callBack (graphQlResponseDecoder responseDecoder)
         }
 
 
@@ -1515,8 +1515,8 @@ graphQlRequestBody queryOrMutation =
         )
 
 
-graphQlResponseDecoderWithoutToken : Jd.Decoder a -> Http.Response String -> Result String a
-graphQlResponseDecoderWithoutToken decoder response =
+graphQlResponseDecoder : Jd.Decoder a -> Http.Response String -> Result String a
+graphQlResponseDecoder decoder response =
     case response of
         Http.BadUrl_ _ ->
             Err "BadURL"
@@ -1528,7 +1528,7 @@ graphQlResponseDecoderWithoutToken decoder response =
             Err "NetworkError"
 
         Http.BadStatus_ _ body ->
-            case body |> Jd.decodeString graphQLErrorResponseDecoderWithoutToken of
+            case body |> Jd.decodeString graphQLErrorResponseDecoder of
                 Ok message ->
                     Err message
 
@@ -1544,8 +1544,8 @@ graphQlResponseDecoderWithoutToken decoder response =
                 |> Result.mapError Jd.errorToString
 
 
-graphQLErrorResponseDecoderWithoutToken : Jd.Decoder String
-graphQLErrorResponseDecoderWithoutToken =
+graphQLErrorResponseDecoder : Jd.Decoder String
+graphQLErrorResponseDecoder =
     Jd.field "errors"
         (Jd.list
             (Jd.field "message" Jd.string)
