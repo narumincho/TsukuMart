@@ -1274,7 +1274,7 @@ view (Model record) =
                 , Style.gridTemplateColumns "max-content 1fr"
                 , Style.gridTemplateRows "64px max-content 1fr max-content"
                 , Css.height (Css.pct 100)
-                , Css.property "word-wrap" "break-word"
+                , Css.overflowWrap Css.breakWord
                 ]
             ]
             ((BasicParts.headerWithBackArrow
@@ -1464,7 +1464,7 @@ messageView message =
             , Css.property "animation-fill-mode" "forwards"
             , Css.maxWidth (Css.pct 100)
             , Css.boxSizing Css.borderBox
-            , Css.property "word-break" "break-word"
+            , Css.overflowWrap Css.breakWord
             ]
         ]
         [ Html.Styled.text message ]
