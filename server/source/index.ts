@@ -89,23 +89,6 @@ const pathToDescriptionAndImageUrl = async (
   };
 };
 
-const escapeHtml = (text: string): string =>
-  text.replace(/[&'`"<>]/g, (s: string): string =>
-    s === "&"
-      ? "&amp;"
-      : s === "'"
-      ? "&#x27;"
-      : s === "`"
-      ? "&#x60;"
-      : s === '"'
-      ? "&quot;"
-      : s === "<"
-      ? "&lt;"
-      : s === ">"
-      ? "&gt;"
-      : ""
-  );
-
 /** API */
 export const api = functions
   .region("asia-northeast1")
