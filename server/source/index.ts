@@ -5,6 +5,7 @@ import * as databaseLow from "./lib/databaseLow";
 import * as signUpCallback from "./lib/signUpCallback";
 import * as lineNotify from "./lib/lineNotify";
 import * as libSchema from "./lib/schema";
+import * as html from "@narumincho/html";
 
 console.log("サーバーのプログラムが読み込まれた!");
 
@@ -19,64 +20,46 @@ export const indexHtml = functions
     );
 
     response.setHeader("content-type", "text/html");
-    response.send(`<!doctype html>
-<html lang="ja">
+    response.send(
+      html.toString({
+        appName: "つくマート",
+        pageName: descriptionAndImageUrl.title,
+        iconPath: ["assets", "logo_bird.png"],
+        coverImageUrl: descriptionAndImageUrl.imageUrl,
+        description: descriptionAndImageUrl.description,
+        scriptPath: [
+          "https://tsukumart.com/main.js",
+          "https://www.gstatic.com/firebasejs/7.8.0/firebase-app.js",
+          "https://www.gstatic.com/firebasejs/7.8.0/firebase-firestore.js",
+          "https://tsukumart.com/__/firebase/init.js",
+          "https://tsukumart.com/call.js"
+        ],
+        twitterCard: html.TwitterCard.SummaryCardWithLargeImage,
+        language: html.Language.Japanese,
+        manifestPath: ["manifest.json"],
+        origin: "https://tsukumart.com",
+        path: request.url.substring(1).split("/"),
+        themeColor: "#733fa7",
+        style: `html {
+          height: 100%;
+      }
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1.0">
-    <meta name="description" content="筑波大生専用手渡しフリーマーケットサービス">
-    <meta name="theme-color" content="#733fa7">
-    <title>つくマート</title>
-    <link rel="icon" href="https://tsukumart.com/assets/logo_bird.png">
-    <link rel="manifest" href="https://tsukumart.com/manifest.json">
-    <meta name="twitter:card" content="summary_large_image">
-    <meta property="og:url" content="https://tsukumart.com${request.url}">
-    <meta property="og:title" content="${escapeHtml(
-      descriptionAndImageUrl.title
-    )}">
-    <meta property="og:site_name" content="つくマート">
-    <meta property="og:description" content="${escapeHtml(
-      descriptionAndImageUrl.description
-    )}">
-    <meta property="og:image" content="${escapeHtml(
-      descriptionAndImageUrl.imageUrl
-    )}">
-    <script src="https://tsukumart.com/main.js" defer></script>
-    <script src="https://www.gstatic.com/firebasejs/7.8.0/firebase-app.js" defer></script>
-    <script src="https://www.gstatic.com/firebasejs/7.8.0/firebase-firestore.js" defer></script>
-    <script src="https://tsukumart.com/__/firebase/init.js" defer></script>
-    <script src="https://tsukumart.com/call.js" type="module"></script>
-
-    <script nomodule>
-        onload = () => {
-            document.body.textContent = "ES Moduleに対応していないブラウザです。新しいブラウザを使ってください";
-        }
-    </script>
-    <style>
-        html {
-            height: 100%;
-        }
-
-        body {
-            margin: 0;
-            height: 100%;
-        }
-    </style>
-</head>
-
-<body>
-    プログラムをダウンロード中……
-    <noscript>
-        つくマートではJavaScriptを使用します。ブラウザの設定で有効にしてください。
-    </noscript>
-</body>
-`);
+      body {
+          margin: 0;
+          height: 100%;
+      }`,
+        body: [html.div(null, "つくマート読み込み中……")]
+      })
+    );
   });
 
 const pathToDescriptionAndImageUrl = async (
   path: string
-): Promise<{ title: string; description: string; imageUrl: string }> => {
+): Promise<{
+  title: string;
+  description: string;
+  imageUrl: string;
+}> => {
   const productMathResult = path.match(/^\/product\/(\w+)$/);
   if (productMathResult !== null) {
     const product = await database.getProduct(productMathResult[1]);

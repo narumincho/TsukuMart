@@ -2,7 +2,7 @@
   "hosting": {
     "headers": [
       {
-        "source": "signup",
+        "source": "/signup",
         "headers": [
           {
             "key": "content-type",
@@ -15,7 +15,7 @@
         ]
       },
       {
-        "source": "signup-call.js",
+        "source": "/signup-call.js",
         "headers": [
           {
             "key": "content-type",
@@ -44,7 +44,7 @@
     "public": "client/distribution",
     "rewrites": [
       {
-        "source": "sitemap",
+        "source": "/sitemap",
         "function": "sitemap"
       },
       {
