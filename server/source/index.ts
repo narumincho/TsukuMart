@@ -6,6 +6,7 @@ import * as signUpCallback from "./lib/signUpCallback";
 import * as lineNotify from "./lib/lineNotify";
 import * as libSchema from "./lib/schema";
 import * as html from "@narumincho/html";
+import { URL } from "url";
 
 console.log("サーバーのプログラムが読み込まれた!");
 
@@ -27,13 +28,17 @@ export const indexHtml = functions
         iconPath: ["assets", "logo_bird.png"],
         coverImageUrl: descriptionAndImageUrl.imageUrl,
         description: descriptionAndImageUrl.description,
-        scriptPath: [
-          "https://tsukumart.com/main.js",
-          "https://www.gstatic.com/firebasejs/7.8.0/firebase-app.js",
-          "https://www.gstatic.com/firebasejs/7.8.0/firebase-firestore.js",
-          "https://tsukumart.com/__/firebase/init.js",
-          "https://tsukumart.com/call.js"
+        scriptUrlList: [
+          new URL("https://tsukumart.com/main.js"),
+          new URL("https://www.gstatic.com/firebasejs/7.8.2/firebase-app.js"),
+          new URL(
+            "https://www.gstatic.com/firebasejs/7.8.2/firebase-firestore.js"
+          ),
+          new URL("https://tsukumart.com/__/firebase/init.js"),
+          new URL("https://tsukumart.com/call.js")
         ],
+        javaScriptMustBeAvailable: true,
+        styleUrlList: [],
         twitterCard: html.TwitterCard.SummaryCardWithLargeImage,
         language: html.Language.Japanese,
         manifestPath: ["manifest.json"],
@@ -48,7 +53,7 @@ export const indexHtml = functions
           margin: 0;
           height: 100%;
       }`,
-        body: [html.div(null, "つくマート読み込み中……")]
+        body: [html.div({}, "つくマート読み込み中……")]
       })
     );
   });
@@ -58,7 +63,7 @@ const pathToDescriptionAndImageUrl = async (
 ): Promise<{
   title: string;
   description: string;
-  imageUrl: string;
+  imageUrl: URL;
 }> => {
   const productMathResult = path.match(/^\/product\/(\w+)$/);
   if (productMathResult !== null) {
@@ -66,9 +71,10 @@ const pathToDescriptionAndImageUrl = async (
     return {
       title: product.name,
       description: `${product.name} | ${product.description}`,
-      imageUrl:
+      imageUrl: new URL(
         "https://asia-northeast1-tsukumart-f0971.cloudfunctions.net/image/" +
-        product.thumbnailImageId
+          product.thumbnailImageId
+      )
     };
   }
   const userMathResult = path.match(/^\/user\/(\w+)$/);
@@ -77,15 +83,16 @@ const pathToDescriptionAndImageUrl = async (
     return {
       title: user.displayName,
       description: `${user.displayName}さんのプロフィール | ${user.introduction}`,
-      imageUrl:
+      imageUrl: new URL(
         "https://asia-northeast1-tsukumart-f0971.cloudfunctions.net/image/" +
-        user.imageId
+          user.imageId
+      )
     };
   }
   return {
     title: "つくマート",
     description: "筑波大生専用手渡しフリーマーケットサービス",
-    imageUrl: "https://tsukumart.com/assets/logo_bird.png"
+    imageUrl: new URL("https://tsukumart.com/assets/logo_bird.png")
   };
 };
 
