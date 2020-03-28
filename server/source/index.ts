@@ -42,8 +42,7 @@ export const indexHtml = functions
         twitterCard: html.TwitterCard.SummaryCardWithLargeImage,
         language: html.Language.Japanese,
         manifestPath: ["manifest.json"],
-        origin: "https://tsukumart.com",
-        path: request.url.substring(1).split("/"),
+        url: new URL("https://tsukumart.com/" + request.path),
         themeColor: "#733fa7",
         style: `html {
           height: 100%;
