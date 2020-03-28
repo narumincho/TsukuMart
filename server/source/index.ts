@@ -30,9 +30,9 @@ export const indexHtml = functions
         description: descriptionAndImageUrl.description,
         scriptUrlList: [
           new URL("https://tsukumart.com/main.js"),
-          new URL("https://www.gstatic.com/firebasejs/7.8.2/firebase-app.js"),
+          new URL("https://www.gstatic.com/firebasejs/7.13.1/firebase-app.js"),
           new URL(
-            "https://www.gstatic.com/firebasejs/7.8.2/firebase-firestore.js"
+            "https://www.gstatic.com/firebasejs/7.13.1/firebase-firestore.js"
           ),
           new URL("https://tsukumart.com/__/firebase/init.js"),
           new URL("https://tsukumart.com/call.js")
