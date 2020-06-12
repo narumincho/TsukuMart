@@ -34,7 +34,7 @@ const signUpUrl = (
     new Map([
       ["sendEmailToken", sendEmailToken],
       ["name", name],
-      ["imageId", imageId]
+      ["imageId", imageId],
     ])
   );
 
@@ -47,14 +47,14 @@ const createSendEmailToken = (id: type.LogInServiceAndId) => {
   time.setUTCMinutes(time.getUTCMinutes() + 30); // 有効期限は30分後
   const payload = {
     sub: type.logInServiceAndIdToString(id),
-    exp: Math.round(time.getTime() / 1000)
+    exp: Math.round(time.getTime() / 1000),
   };
   return jwt.sign(payload, key.sendEmailTokenSecret, { algorithm: "HS256" });
 };
 
 const getAndSaveUserImage = async (imageId: URL): Promise<string> => {
   const response: AxiosResponse<Buffer> = await axios.get(imageId.toString(), {
-    responseType: "arraybuffer"
+    responseType: "arraybuffer",
   });
   const mimeType: string = response.headers["content-type"];
   return await database.saveImage(response.data, mimeType);
@@ -97,19 +97,19 @@ export const lineLogInReceiver = async (
           ["code", code],
           ["redirect_uri", key.lineLogInRedirectUri],
           ["client_id", key.lineLogInClientId],
-          ["client_secret", key.lineLogInSecret]
+          ["client_secret", key.lineLogInSecret],
         ])
       ).toString(),
       {
         headers: {
-          "Content-Type": "application/x-www-form-urlencoded"
-        }
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
       }
     )
   );
   const logInServiceAndId: type.LogInServiceAndId = {
     service: "line",
-    serviceId: lineData.id
+    serviceId: lineData.id,
   };
 
   try {
@@ -149,7 +149,7 @@ const lineTokenResponseToData = (
   const idToken = response.data.id_token;
   console.log("lineToken id_token=", idToken);
   const decoded = jwt.verify(idToken, key.lineLogInSecret, {
-    algorithms: ["HS256"]
+    algorithms: ["HS256"],
   });
   if (typeof decoded === "string") {
     throw new Error("LINE jwt include string only!");
@@ -172,6 +172,6 @@ const lineTokenResponseToData = (
   return {
     id: markedDecoded.sub,
     name: markedDecoded.name,
-    picture: markedDecoded.picture
+    picture: markedDecoded.picture,
   };
 };
