@@ -8,9 +8,9 @@ export const callBack = async (
   request: express.Request,
   response: express.Response
 ): Promise<void> => {
-  const code: string | undefined = request.query.code;
-  const state: string | undefined = request.query.state;
-  if (code === undefined || state === undefined) {
+  const code: unknown = request.query.code;
+  const state: unknown = request.query.state;
+  if (!(typeof code === "string" && typeof state === "string")) {
     console.log(
       "LINE Notifyの設定で、codeかstateが送られて来なかった。ユーザーがキャンセルした?"
     );
@@ -37,13 +37,13 @@ export const callBack = async (
             ["code", code],
             ["redirect_uri", key.lineNotifyRedirectUri],
             ["client_id", key.lineNotifyClientId],
-            ["client_secret", key.lineNotifySecret]
+            ["client_secret", key.lineNotifySecret],
           ])
         ).toString(),
         {
           headers: {
-            "Content-Type": "application/x-www-form-urlencoded"
-          }
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
         }
       )
     );
@@ -88,7 +88,7 @@ export const sendMessage = async (
       ? [
           ["message", message],
           ["stickerPackageId", "2"],
-          ["stickerId", "171"]
+          ["stickerId", "171"],
         ]
       : [["message", message]]
   );
@@ -99,9 +99,9 @@ export const sendMessage = async (
       {
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
-          Authorization: "Bearer " + accessToken
-        }
+          Authorization: "Bearer " + accessToken,
+        },
       }
     )
-    .catch(e => e.response);
+    .catch((e) => e.response);
 };

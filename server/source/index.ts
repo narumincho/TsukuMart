@@ -35,7 +35,7 @@ export const indexHtml = functions
             "https://www.gstatic.com/firebasejs/7.13.1/firebase-firestore.js"
           ),
           new URL("https://tsukumart.com/__/firebase/init.js"),
-          new URL("https://tsukumart.com/call.js")
+          new URL("https://tsukumart.com/call.js"),
         ],
         javaScriptMustBeAvailable: true,
         styleUrlList: [],
@@ -52,7 +52,7 @@ export const indexHtml = functions
           margin: 0;
           height: 100%;
       }`,
-        body: [html.div({}, "つくマート読み込み中……")]
+        body: [html.div({}, "つくマート読み込み中……")],
       })
     );
   });
@@ -73,7 +73,7 @@ const pathToDescriptionAndImageUrl = async (
       imageUrl: new URL(
         "https://asia-northeast1-tsukumart-f0971.cloudfunctions.net/image/" +
           product.thumbnailImageId
-      )
+      ),
     };
   }
   const userMathResult = path.match(/^\/user\/(\w+)$/);
@@ -85,13 +85,13 @@ const pathToDescriptionAndImageUrl = async (
       imageUrl: new URL(
         "https://asia-northeast1-tsukumart-f0971.cloudfunctions.net/image/" +
           user.imageId
-      )
+      ),
     };
   }
   return {
     title: "つくマート",
     description: "筑波大生専用手渡しフリーマーケットサービス",
-    imageUrl: new URL("https://tsukumart.com/assets/logo_bird.png")
+    imageUrl: new URL("https://tsukumart.com/assets/logo_bird.png"),
   };
 };
 
@@ -99,7 +99,7 @@ const pathToDescriptionAndImageUrl = async (
 export const api = functions
   .region("asia-northeast1")
   .runWith({
-    memory: "2GB"
+    memory: "2GB",
   })
   .https.onRequest(async (request, response) => {
     console.log("API called");
@@ -184,8 +184,8 @@ export const sitemap = functions
     response.send(`<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${pathToXml("")}
-${productData.map(product => pathToXml("product/" + product.id)).join("\n")}
-${userData.map(id => pathToXml("user/" + id)).join("\n")}
+${productData.map((product) => pathToXml("product/" + product.id)).join("\n")}
+${userData.map((id) => pathToXml("user/" + id)).join("\n")}
 </urlset>`);
   });
 

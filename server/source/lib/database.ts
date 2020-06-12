@@ -2,7 +2,6 @@ import * as jwt from "jsonwebtoken";
 import * as databaseLow from "./databaseLow";
 import * as key from "./key";
 import * as type from "./type";
-import Maybe from "graphql/tsutils/Maybe";
 import * as lineNotify from "./lineNotify";
 import { firestore } from "firebase-admin";
 
@@ -60,7 +59,7 @@ export const addUserInUserBeforeInputData = async (
   await databaseLow.addUserBeforeInputData(logInServiceAndId, {
     name,
     imageId: imageId,
-    createdAt: databaseLow.getNowTimestamp()
+    createdAt: databaseLow.getNowTimestamp(),
   });
 };
 
@@ -79,7 +78,7 @@ export const getUserInUserBeforeInputData = async (
   );
   return {
     name: data.name,
-    imageId: data.imageId
+    imageId: data.imageId,
   };
 };
 
@@ -102,7 +101,7 @@ export const addUserBeforeEmailVerification = async (
     schoolAndDepartment: flatUniversity.schoolAndDepartment,
     graduate: flatUniversity.graduate,
     email: email,
-    createdAt: databaseLow.getNowTimestamp()
+    createdAt: databaseLow.getNowTimestamp(),
   });
   return await databaseLow.createCustomToken(uid);
 };
@@ -146,7 +145,7 @@ export const getAccessTokenFromLogInAccountService = async (
         graduate: userBeforeEmailVerification.graduate,
         introduction: "",
         createdAt: databaseLow.getNowTimestamp(),
-        soldProducts: []
+        soldProducts: [],
       });
       await databaseLow.addUserPrivateData(newUserId, {
         logInAccountServiceId: type.logInServiceAndIdToString(
@@ -160,7 +159,7 @@ export const getAccessTokenFromLogInAccountService = async (
         commentedProduct: [],
         historyViewProduct: [],
         likedProduct: [],
-        notifyToken: null
+        notifyToken: null,
       });
       await databaseLow.deleteUserBeforeEmailVerification(
         logInAccountServiceId
@@ -185,7 +184,7 @@ export const verifyAccessToken = async (
   accessToken: string
 ): Promise<string> => {
   const decoded = jwt.verify(accessToken, key.accessTokenSecretKey, {
-    algorithms: ["HS256"]
+    algorithms: ["HS256"],
   }) as { sub: unknown; jti: unknown };
   if (typeof decoded.sub !== "string" || typeof decoded.jti !== "string") {
     throw new Error("invalid access token");
@@ -208,7 +207,7 @@ const createAccessToken = (
 ): string => {
   const payload = {
     sub: userId,
-    jti: randomStateForIsLastIssue // 最後に発行したものか調べる用
+    jti: randomStateForIsLastIssue, // 最後に発行したものか調べる用
   };
   /** アクセストークン */
   return jwt.sign(payload, key.accessTokenSecretKey, { algorithm: "HS256" });
@@ -228,7 +227,7 @@ const createRandomStateForIsLastIssueId = (): string => {
                     User
    ==========================================
 */
-type UserReturnLowConst = Pick<
+export type UserReturnLowConst = Pick<
   type.UserPrivate,
   "id" | "displayName" | "imageId" | "introduction" | "university" | "createdAt"
 > & {
@@ -249,7 +248,7 @@ export const getUserData = async (id: string): Promise<UserReturnLowConst> =>
   databaseLowUserDataToUserDataLowCost({
     id: id,
     data: await databaseLow.getUserData(id),
-    privateData: await databaseLow.getUserPrivateData(id)
+    privateData: await databaseLow.getUserPrivateData(id),
   });
 
 const databaseLowUserDataToUserDataLowCost = (rec: {
@@ -263,23 +262,23 @@ const databaseLowUserDataToUserDataLowCost = (rec: {
   introduction: rec.data.introduction,
   university: type.universityFromInternal({
     graduate: rec.data.graduate,
-    schoolAndDepartment: rec.data.schoolAndDepartment
+    schoolAndDepartment: rec.data.schoolAndDepartment,
   }),
   createdAt: databaseLow.timestampToDate(rec.data.createdAt),
-  soldProductAll: rec.data.soldProducts.map(id => ({ id: id })),
-  boughtProductAll: rec.privateData.boughtProduct.map(id => ({ id: id })),
-  tradingAll: rec.privateData.trading.map(id => ({ id })),
-  tradedAll: rec.privateData.traded.map(id => ({ id })),
-  historyViewProduct: rec.privateData.historyViewProduct.map(id => ({ id })),
-  likedProduct: rec.privateData.likedProduct.map(id => ({ id })),
-  commentedProduct: rec.privateData.commentedProduct.map(id => ({ id }))
+  soldProductAll: rec.data.soldProducts.map((id) => ({ id: id })),
+  boughtProductAll: rec.privateData.boughtProduct.map((id) => ({ id: id })),
+  tradingAll: rec.privateData.trading.map((id) => ({ id })),
+  tradedAll: rec.privateData.traded.map((id) => ({ id })),
+  historyViewProduct: rec.privateData.historyViewProduct.map((id) => ({ id })),
+  likedProduct: rec.privateData.likedProduct.map((id) => ({ id })),
+  commentedProduct: rec.privateData.commentedProduct.map((id) => ({ id })),
 });
 
 /**
  * すべてのユーザーIDを取得する
  */
 export const getAllUserId = async (): Promise<Array<string>> =>
-  (await databaseLow.getAllUserData()).map(rec => rec.id);
+  (await databaseLow.getAllUserData()).map((rec) => rec.id);
 
 export const markProductInHistory = async (
   userId: string,
@@ -287,11 +286,11 @@ export const markProductInHistory = async (
 ): Promise<ProductReturnLowCost> => {
   await databaseLow.addHistoryViewProductData(userId, productId);
   await databaseLow.updateProductData(productId, {
-    viewedCount: (await databaseLow.getProduct(productId)).viewedCount + 1
+    viewedCount: (await databaseLow.getProduct(productId)).viewedCount + 1,
   });
   return productReturnLowCostFromDatabaseLow({
     id: productId,
-    data: await databaseLow.getProduct(productId)
+    data: await databaseLow.getProduct(productId),
   });
 };
 
@@ -312,7 +311,7 @@ export const addCommentProduct = async (
     createdAt: now,
     speakerId: userId,
     speakerDisplayName: userData.displayName,
-    speakerImageId: userData.imageId
+    speakerImageId: userData.imageId,
   });
   const productData = await databaseLow.getProduct(productId);
   const notifyAccessToken = (
@@ -327,7 +326,7 @@ export const addCommentProduct = async (
   }
   return productReturnLowCostFromDatabaseLow({
     id: productId,
-    data: await databaseLow.getProduct(productId)
+    data: await databaseLow.getProduct(productId),
   });
 };
 
@@ -364,7 +363,7 @@ export const updateProduct = async (
     category: data.category,
     condition: data.condition,
     updateAt: nowTime,
-    imageIds: newImageData.imageIds
+    imageIds: newImageData.imageIds,
   });
   return {
     id: productId,
@@ -383,8 +382,8 @@ export const updateProduct = async (
     seller: {
       id: beforeData.sellerId,
       displayName: beforeData.sellerDisplayName,
-      imageId: beforeData.sellerImageId
-    }
+      imageId: beforeData.sellerImageId,
+    },
   };
 };
 
@@ -431,7 +430,7 @@ export const addDraftProductData = async (
       thumbnailImageId: thumbnailImageId,
       imageIds: imageIds,
       createdAt: nowTime,
-      updateAt: nowTime
+      updateAt: nowTime,
     }),
     name: data.name,
     price: data.price,
@@ -441,7 +440,7 @@ export const addDraftProductData = async (
     thumbnailImageId: thumbnailImageId,
     imageIds: imageIds,
     createdAt: nowTimeAsDate,
-    updateAt: nowTimeAsDate
+    updateAt: nowTimeAsDate,
   };
 };
 
@@ -458,7 +457,7 @@ export const getDraftProducts = async (
     thumbnailImageId: data.thumbnailImageId,
     imageIds: data.imageIds,
     createdAt: databaseLow.timestampToDate(data.createdAt),
-    updateAt: databaseLow.timestampToDate(data.createdAt)
+    updateAt: databaseLow.timestampToDate(data.createdAt),
   }));
 export const updateDraftProduct = async (
   userId: string,
@@ -486,7 +485,7 @@ export const updateDraftProduct = async (
     category: data.category,
     condition: data.condition,
     updateAt: nowTime,
-    imageIds: newImageData.imageIds
+    imageIds: newImageData.imageIds,
   });
   return {
     draftId: data.draftId,
@@ -498,7 +497,7 @@ export const updateDraftProduct = async (
     createdAt: databaseLow.timestampToDate(beforeData.createdAt),
     updateAt: databaseLow.timestampToDate(nowTime),
     thumbnailImageId: newImageData.thumbnailImageId,
-    imageIds: newImageData.imageIds
+    imageIds: newImageData.imageIds,
   };
 };
 
@@ -547,12 +546,12 @@ const updateProductImage = async (
       thumbnailImageId: await databaseLow.saveThumbnailImageFromCloudStorageToCloudStorage(
         newImageIds[0]
       ),
-      imageIds: newImageIds
+      imageIds: newImageIds,
     };
   }
   return {
     thumbnailImageId: thumbnailImageId,
-    imageIds: newImageIds
+    imageIds: newImageIds,
   };
 };
 
@@ -562,14 +561,16 @@ const updateProductImage = async (
  */
 export const setProfile = async (
   id: string,
-  data: { image: Maybe<type.DataURL> } & Pick<
+  data: { image: type.DataURL | undefined | null } & Pick<
     type.UserPrivate,
     "displayName" | "introduction" | "university"
   >
-): Promise<Pick<
-  type.UserPrivate,
-  "id" | "displayName" | "imageId" | "introduction" | "university"
->> => {
+): Promise<
+  Pick<
+    type.UserPrivate,
+    "id" | "displayName" | "imageId" | "introduction" | "university"
+  >
+> => {
   let imageId: string;
   const universityInternal = type.universityToInternal(data.university);
   if (data.image === null || data.image === undefined) {
@@ -577,7 +578,7 @@ export const setProfile = async (
       displayName: data.displayName,
       introduction: data.introduction,
       graduate: universityInternal.graduate,
-      schoolAndDepartment: universityInternal.schoolAndDepartment
+      schoolAndDepartment: universityInternal.schoolAndDepartment,
     });
     imageId = (await databaseLow.getUserData(id)).imageId;
   } else {
@@ -590,7 +591,7 @@ export const setProfile = async (
       imageId: imageId,
       introduction: data.introduction,
       graduate: universityInternal.graduate,
-      schoolAndDepartment: universityInternal.schoolAndDepartment
+      schoolAndDepartment: universityInternal.schoolAndDepartment,
     });
   }
   return {
@@ -598,7 +599,7 @@ export const setProfile = async (
     displayName: data.displayName,
     imageId: imageId,
     introduction: data.introduction,
-    university: data.university
+    university: data.university,
   };
 };
 
@@ -636,7 +637,7 @@ type ProductReturnLowCost = Pick<
 
 const productReturnLowCostFromDatabaseLow = ({
   id,
-  data
+  data,
 }: {
   id: string;
   data: databaseLow.ProductData;
@@ -657,8 +658,8 @@ const productReturnLowCostFromDatabaseLow = ({
   seller: {
     id: data.sellerId,
     displayName: data.sellerDisplayName,
-    imageId: data.sellerImageId
-  }
+    imageId: data.sellerImageId,
+  },
 });
 
 export const getAllProducts = async (): Promise<Array<ProductReturnLowCost>> =>
@@ -666,16 +667,16 @@ export const getAllProducts = async (): Promise<Array<ProductReturnLowCost>> =>
     productReturnLowCostFromDatabaseLow
   );
 
-export const getRecentProducts = async (): Promise<Array<
-  ProductReturnLowCost
->> =>
+export const getRecentProducts = async (): Promise<
+  Array<ProductReturnLowCost>
+> =>
   (await databaseLow.getRecentProductData()).map(
     productReturnLowCostFromDatabaseLow
   );
 
-export const getRecommendProducts = async (): Promise<Array<
-  ProductReturnLowCost
->> =>
+export const getRecommendProducts = async (): Promise<
+  Array<ProductReturnLowCost>
+> =>
   (await databaseLow.getRecommendProductData()).map(
     productReturnLowCostFromDatabaseLow
   );
@@ -692,7 +693,7 @@ export const getFreeProducts = async (): Promise<Array<ProductReturnLowCost>> =>
 export const getProduct = async (id: string): Promise<ProductReturnLowCost> =>
   productReturnLowCostFromDatabaseLow({
     id: id,
-    data: await databaseLow.getProduct(id)
+    data: await databaseLow.getProduct(id),
   });
 
 export type SearchCondition = {
@@ -737,7 +738,7 @@ export const productSearch = async (
       : productDataList;
 
   return productsFilteredCategory.filter(
-    product =>
+    (product) =>
       normalization(product.name).includes(normalization(condition.query)) ||
       normalization(product.description).includes(
         normalization(condition.query)
@@ -762,7 +763,7 @@ const getProductListFromUniversity = async (
       productList.push(
         productReturnLowCostFromDatabaseLow({
           id: product.id,
-          data: await databaseLow.getProduct(product.id)
+          data: await databaseLow.getProduct(product.id),
         })
       );
     }
@@ -774,11 +775,11 @@ const getUserListFromUniversityCondition = async (
   universityCondition: UniversityCondition
 ): Promise<Array<UserReturnLowConst>> => {
   const allUser = await Promise.all(
-    (await databaseLow.getAllUserData()).map(async rec =>
+    (await databaseLow.getAllUserData()).map(async (rec) =>
       databaseLowUserDataToUserDataLowCost({
         id: rec.id,
         data: rec.data,
-        privateData: await databaseLow.getUserPrivateData(rec.id)
+        privateData: await databaseLow.getUserPrivateData(rec.id),
       })
     )
   );
@@ -827,10 +828,10 @@ const filterProductsByCategoryCondition = (
 ): Array<ProductReturnLowCost> => {
   switch (condition.c) {
     case "category":
-      return products.filter(product => product.category === condition.v);
+      return products.filter((product) => product.category === condition.v);
     case "group":
       const categoryList = type.categoryListFromGroup(condition.v);
-      return products.filter(product =>
+      return products.filter((product) =>
         categoryList.includes(product.category)
       );
   }
@@ -842,7 +843,7 @@ const filterProductsByCategoryCondition = (
  */
 const normalization = (text: string): string =>
   text
-    .replace(/[ァ-ン]/g, s => String.fromCharCode(s.charCodeAt(0) - 0x60))
+    .replace(/[ァ-ン]/g, (s) => String.fromCharCode(s.charCodeAt(0) - 0x60))
     .toLowerCase();
 /**
  * 商品を出品する
@@ -853,19 +854,21 @@ export const sellProduct = async (
     type.Product,
     "name" | "price" | "description" | "condition" | "category"
   > & { images: Array<type.DataURL> }
-): Promise<Pick<
-  type.Product,
-  | "id"
-  | "name"
-  | "price"
-  | "description"
-  | "condition"
-  | "category"
-  | "thumbnailImageId"
-  | "imageIds"
-  | "createdAt"
-  | "updateAt"
->> => {
+): Promise<
+  Pick<
+    type.Product,
+    | "id"
+    | "name"
+    | "price"
+    | "description"
+    | "condition"
+    | "category"
+    | "thumbnailImageId"
+    | "imageIds"
+    | "createdAt"
+    | "updateAt"
+  >
+> => {
   const userData = await databaseLow.getUserData(userId);
 
   const thumbnailImageId = await databaseLow.saveThumbnailImageToCloudStorage(
@@ -893,10 +896,10 @@ export const sellProduct = async (
     sellerDisplayName: userData.displayName,
     sellerImageId: userData.imageId,
     createdAt: nowTimestamp,
-    updateAt: nowTimestamp
+    updateAt: nowTimestamp,
   });
   await databaseLow.updateUserData(userId, {
-    soldProducts: userData.soldProducts.concat(productId)
+    soldProducts: userData.soldProducts.concat(productId),
   });
   return {
     id: productId,
@@ -908,17 +911,19 @@ export const sellProduct = async (
     thumbnailImageId: thumbnailImageId,
     imageIds: imagesIds,
     createdAt: databaseLow.timestampToDate(nowTimestamp),
-    updateAt: databaseLow.timestampToDate(nowTimestamp)
+    updateAt: databaseLow.timestampToDate(nowTimestamp),
   };
 };
 
 export const getProductComments = async (
   productId: string
-): Promise<Array<
-  Pick<type.ProductComment, "body" | "commentId" | "createdAt"> & {
-    speaker: Pick<type.User, "id" | "displayName" | "imageId">;
-  }
->> =>
+): Promise<
+  Array<
+    Pick<type.ProductComment, "body" | "commentId" | "createdAt"> & {
+      speaker: Pick<type.User, "id" | "displayName" | "imageId">;
+    }
+  >
+> =>
   (await databaseLow.getProductComments(productId)).map(({ id, data }) => ({
     commentId: id,
     body: data.body,
@@ -926,19 +931,21 @@ export const getProductComments = async (
     speaker: {
       id: data.speakerId,
       displayName: data.speakerDisplayName,
-      imageId: data.speakerImageId
-    }
+      imageId: data.speakerImageId,
+    },
   }));
 
 export const createProductComment = async (
   userId: string,
   productId: string,
   data: Pick<type.ProductComment, "body">
-): Promise<Array<
-  Pick<type.ProductComment, "body" | "commentId" | "createdAt"> & {
-    speaker: Pick<type.User, "id" | "displayName" | "imageId">;
-  }
->> => {
+): Promise<
+  Array<
+    Pick<type.ProductComment, "body" | "commentId" | "createdAt"> & {
+      speaker: Pick<type.User, "id" | "displayName" | "imageId">;
+    }
+  >
+> => {
   const userData = await databaseLow.getUserData(userId);
   const nowTimestamp = databaseLow.getNowTimestamp();
   await databaseLow.addProductComment(productId, {
@@ -946,7 +953,7 @@ export const createProductComment = async (
     createdAt: nowTimestamp,
     speakerId: userData.displayName,
     speakerDisplayName: userData.displayName,
-    speakerImageId: userData.imageId
+    speakerImageId: userData.imageId,
   });
   await databaseLow.updateProductData(productId, { updateAt: nowTimestamp });
   return (await databaseLow.getProductComments(productId)).map(
@@ -957,8 +964,8 @@ export const createProductComment = async (
       speaker: {
         id: data.speakerId,
         displayName: data.speakerDisplayName,
-        imageId: data.speakerImageId
-      }
+        imageId: data.speakerImageId,
+      },
     })
   );
 };
@@ -972,10 +979,10 @@ export const likeProduct = async (
     return;
   }
   await databaseLow.updateProductData(productId, {
-    likedCount: firestore.FieldValue.increment(1)
+    likedCount: firestore.FieldValue.increment(1),
   });
   await databaseLow.addLikedProductData(userId, productId, {
-    createdAt: databaseLow.getNowTimestamp()
+    createdAt: databaseLow.getNowTimestamp(),
   });
   return;
 };
@@ -989,7 +996,7 @@ export const unlikeProduct = async (
     return;
   }
   await databaseLow.updateProductData(productId, {
-    likedCount: firestore.FieldValue.increment(-1)
+    likedCount: firestore.FieldValue.increment(-1),
   });
   await databaseLow.deleteLikedProductData(userId, productId);
 };
@@ -1011,14 +1018,14 @@ export const getTrade = async (id: string): Promise<TradeLowCost> => {
   return {
     id: id,
     product: {
-      id: data.productId
+      id: data.productId,
     },
     buyer: {
-      id: data.buyerUserId
+      id: data.buyerUserId,
     },
     createdAt: databaseLow.timestampToDate(data.createdAt),
     updateAt: databaseLow.timestampToDate(data.updateAt),
-    status: data.status
+    status: data.status,
   };
 };
 
@@ -1029,12 +1036,12 @@ export const getTradeComments = async (
     commentId: id,
     body: data.body,
     speaker: data.speaker,
-    createdAt: databaseLow.timestampToDate(data.createdAt)
+    createdAt: databaseLow.timestampToDate(data.createdAt),
   }));
 
 const tradeReturnLowCostFromDatabaseLow = ({
   id,
-  data
+  data,
 }: {
   id: string;
   data: databaseLow.Trade;
@@ -1042,14 +1049,14 @@ const tradeReturnLowCostFromDatabaseLow = ({
   return {
     id: id,
     product: {
-      id: data.productId
+      id: data.productId,
     },
     buyer: {
-      id: data.buyerUserId
+      id: data.buyerUserId,
     },
     createdAt: databaseLow.timestampToDate(data.createdAt),
     updateAt: databaseLow.timestampToDate(data.updateAt),
-    status: data.status
+    status: data.status,
   };
 };
 
@@ -1065,10 +1072,10 @@ export const addTradeComment = async (
     await databaseLow.addTradeComment(tradeId, {
       body: body,
       createdAt: nowTime,
-      speaker: "buyer"
+      speaker: "buyer",
     });
     await databaseLow.updateTradeData(tradeId, {
-      updateAt: nowTime
+      updateAt: nowTime,
     });
     const notifyAccessToken = (
       await databaseLow.getUserPrivateData(productData.sellerId)
@@ -1084,7 +1091,7 @@ export const addTradeComment = async (
     }
     return tradeReturnLowCostFromDatabaseLow({
       id: tradeId,
-      data: tradeData
+      data: tradeData,
     });
   }
 
@@ -1092,10 +1099,10 @@ export const addTradeComment = async (
     await databaseLow.addTradeComment(tradeId, {
       body: body,
       createdAt: nowTime,
-      speaker: "seller"
+      speaker: "seller",
     });
     await databaseLow.updateTradeData(tradeId, {
-      updateAt: nowTime
+      updateAt: nowTime,
     });
     const notifyAccessToken = (
       await databaseLow.getUserPrivateData(tradeData.buyerUserId)
@@ -1110,7 +1117,7 @@ export const addTradeComment = async (
 
     return tradeReturnLowCostFromDatabaseLow({
       id: tradeId,
-      data: tradeData
+      data: tradeData,
     });
   }
   throw new Error("取引に出品者でも、購入者でもない人がコメントしようとした");
@@ -1126,21 +1133,21 @@ export const startTrade = async (
     productId: productId,
     status: "inProgress",
     createdAt: nowTime,
-    updateAt: nowTime
+    updateAt: nowTime,
   });
   await databaseLow.updateUserPrivateData(buyerUserId, {
     trading: (
       await databaseLow.getUserPrivateData(buyerUserId)
-    ).trading.concat([tradeId])
+    ).trading.concat([tradeId]),
   });
   const product = await databaseLow.getProduct(productId);
   await databaseLow.updateUserPrivateData(product.sellerId, {
     trading: (
       await databaseLow.getUserPrivateData(product.sellerId)
-    ).trading.concat([tradeId])
+    ).trading.concat([tradeId]),
   });
   await databaseLow.updateProductData(productId, {
-    status: "trading"
+    status: "trading",
   });
 
   const seller = await databaseLow.getUserPrivateData(product.sellerId);
@@ -1155,14 +1162,14 @@ export const startTrade = async (
   return {
     id: tradeId,
     buyer: {
-      id: buyerUserId
+      id: buyerUserId,
     },
     product: {
-      id: productId
+      id: productId,
     },
     status: "inProgress",
     createdAt: databaseLow.timestampToDate(nowTime),
-    updateAt: databaseLow.timestampToDate(nowTime)
+    updateAt: databaseLow.timestampToDate(nowTime),
   };
 };
 
@@ -1209,26 +1216,26 @@ export const cancelTrade = async (
   }
   await databaseLow.updateTradeData(tradeId, {
     updateAt: nowTime,
-    status: status
+    status: status,
   });
   const buyerData = await databaseLow.getUserPrivateData(tradeData.buyerUserId);
   await databaseLow.updateUserPrivateData(tradeData.buyerUserId, {
-    trading: buyerData.trading.filter(e => e !== tradeId),
-    traded: buyerData.traded.concat([tradeId])
+    trading: buyerData.trading.filter((e) => e !== tradeId),
+    traded: buyerData.traded.concat([tradeId]),
   });
   const sellerData = await await databaseLow.getUserPrivateData(
     productData.sellerId
   );
   await databaseLow.updateUserPrivateData(productData.sellerId, {
-    trading: sellerData.trading.filter(e => e !== tradeId),
-    traded: sellerData.traded.concat([tradeId])
+    trading: sellerData.trading.filter((e) => e !== tradeId),
+    traded: sellerData.traded.concat([tradeId]),
   });
   await databaseLow.updateProductData(tradeData.productId, {
-    status: "selling"
+    status: "selling",
   });
   return tradeReturnLowCostFromDatabaseLow({
     id: tradeId,
-    data: { ...tradeData, updateAt: nowTime, status: status }
+    data: { ...tradeData, updateAt: nowTime, status: status },
   });
 };
 
@@ -1240,94 +1247,94 @@ export const finishTrade = async (userId: string, tradeId: string) => {
     if (tradeData.status === "inProgress") {
       await databaseLow.updateTradeData(tradeId, {
         updateAt: nowTime,
-        status: "waitBuyerFinish"
+        status: "waitBuyerFinish",
       });
       return tradeReturnLowCostFromDatabaseLow({
         id: tradeId,
         data: {
           ...tradeData,
           updateAt: nowTime,
-          status: "waitBuyerFinish"
-        }
+          status: "waitBuyerFinish",
+        },
       });
     }
     if (tradeData.status === "waitSellerFinish") {
       await databaseLow.updateTradeData(tradeId, {
         updateAt: nowTime,
-        status: "finish"
+        status: "finish",
       });
       const buyerData = await databaseLow.getUserPrivateData(
         tradeData.buyerUserId
       );
       await databaseLow.updateUserPrivateData(tradeData.buyerUserId, {
-        trading: buyerData.trading.filter(e => e !== tradeId),
-        traded: buyerData.traded.concat([tradeId])
+        trading: buyerData.trading.filter((e) => e !== tradeId),
+        traded: buyerData.traded.concat([tradeId]),
       });
       const sellerData = await databaseLow.getUserPrivateData(
         productData.sellerId
       );
       await databaseLow.updateUserPrivateData(productData.sellerId, {
-        trading: sellerData.trading.filter(e => e !== tradeId),
-        traded: sellerData.traded.concat([tradeId])
+        trading: sellerData.trading.filter((e) => e !== tradeId),
+        traded: sellerData.traded.concat([tradeId]),
       });
       await databaseLow.updateProductData(tradeData.productId, {
-        status: "soldOut"
+        status: "soldOut",
       });
       return tradeReturnLowCostFromDatabaseLow({
         id: tradeId,
-        data: { ...tradeData, updateAt: nowTime, status: "finish" }
+        data: { ...tradeData, updateAt: nowTime, status: "finish" },
       });
     }
     return tradeReturnLowCostFromDatabaseLow({
       id: tradeId,
-      data: tradeData
+      data: tradeData,
     });
   }
   if (tradeData.buyerUserId === userId) {
     if (tradeData.status === "inProgress") {
       await databaseLow.updateTradeData(tradeId, {
         updateAt: nowTime,
-        status: "waitSellerFinish"
+        status: "waitSellerFinish",
       });
       return tradeReturnLowCostFromDatabaseLow({
         id: tradeId,
         data: {
           ...tradeData,
           updateAt: nowTime,
-          status: "waitSellerFinish"
-        }
+          status: "waitSellerFinish",
+        },
       });
     }
     if (tradeData.status === "waitBuyerFinish") {
       await databaseLow.updateTradeData(tradeId, {
         updateAt: nowTime,
-        status: "finish"
+        status: "finish",
       });
       const buyerData = await databaseLow.getUserPrivateData(
         tradeData.buyerUserId
       );
       await databaseLow.updateUserPrivateData(tradeData.buyerUserId, {
-        trading: buyerData.trading.filter(e => e !== tradeId),
-        traded: buyerData.traded.concat([tradeId])
+        trading: buyerData.trading.filter((e) => e !== tradeId),
+        traded: buyerData.traded.concat([tradeId]),
       });
       const sellerData = await databaseLow.getUserPrivateData(
         productData.sellerId
       );
       await databaseLow.updateUserPrivateData(productData.sellerId, {
-        trading: sellerData.trading.filter(e => e !== tradeId),
-        traded: sellerData.traded.concat([tradeId])
+        trading: sellerData.trading.filter((e) => e !== tradeId),
+        traded: sellerData.traded.concat([tradeId]),
       });
       await databaseLow.updateProductData(tradeData.productId, {
-        status: "soldOut"
+        status: "soldOut",
       });
       return tradeReturnLowCostFromDatabaseLow({
         id: tradeId,
-        data: { ...tradeData, updateAt: nowTime, status: "finish" }
+        data: { ...tradeData, updateAt: nowTime, status: "finish" },
       });
     }
     return tradeReturnLowCostFromDatabaseLow({
       id: tradeId,
-      data: tradeData
+      data: tradeData,
     });
   }
   throw new Error("購入者じゃない人が、取引を完了させようとした");
@@ -1338,6 +1345,6 @@ export const saveNotifyToken = async (
   token: string
 ): Promise<void> => {
   return await databaseLow.updateUserPrivateData(userId, {
-    notifyToken: token
+    notifyToken: token,
   });
 };

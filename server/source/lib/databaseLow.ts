@@ -89,7 +89,7 @@ export const addHistoryViewProductData = async (
   productId: string
 ): Promise<void> => {
   await userPrivateCollectionRef.doc(userId).update({
-    historyViewProduct: firestore.FieldValue.arrayUnion(productId)
+    historyViewProduct: firestore.FieldValue.arrayUnion(productId),
   });
 };
 
@@ -121,7 +121,7 @@ export const addCommentedProductData = async (
   productId: string
 ): Promise<void> => {
   await userPrivateCollectionRef.doc(userId).update({
-    commentedProduct: firestore.FieldValue.arrayUnion(productId)
+    commentedProduct: firestore.FieldValue.arrayUnion(productId),
   });
 };
 
@@ -146,12 +146,7 @@ export const addDraftProductData = async (
   userId: string,
   data: DraftProductData
 ): Promise<string> =>
-  (
-    await userCollectionRef
-      .doc(userId)
-      .collection("draftProduct")
-      .add(data)
-  ).id;
+  (await userCollectionRef.doc(userId).collection("draftProduct").add(data)).id;
 
 /**
  * 商品の下書きのデータをユーザーから最後に更新した順に取得する
@@ -229,10 +224,12 @@ export const addUserPrivateData = async (
 /**
  * すべてのユーザーのデータを取得する
  */
-export const getAllUserData = async (): Promise<Array<{
-  id: string;
-  data: UserData;
-}>> => {
+export const getAllUserData = async (): Promise<
+  Array<{
+    id: string;
+    data: UserData;
+  }>
+> => {
   return (await querySnapshotToIdAndDataArray(
     await userCollectionRef.get()
   )) as Array<{
@@ -431,10 +428,12 @@ export const addProductData = async (data: ProductData): Promise<string> => {
 /**
  * すべての商品のデータを取得する
  */
-export const getAllProductData = async (): Promise<Array<{
-  id: string;
-  data: ProductData;
-}>> =>
+export const getAllProductData = async (): Promise<
+  Array<{
+    id: string;
+    data: ProductData;
+  }>
+> =>
   (await querySnapshotToIdAndDataArray(
     await productCollectionRef.get()
   )) as Array<{
@@ -445,10 +444,12 @@ export const getAllProductData = async (): Promise<Array<{
 /**
  *  商品を新着順で取得する
  */
-export const getRecentProductData = async (): Promise<Array<{
-  id: string;
-  data: ProductData;
-}>> =>
+export const getRecentProductData = async (): Promise<
+  Array<{
+    id: string;
+    data: ProductData;
+  }>
+> =>
   (await querySnapshotToIdAndDataArray(
     await getProductsOrderBy("createdAt", "desc")
   )) as Array<{
@@ -459,10 +460,12 @@ export const getRecentProductData = async (): Promise<Array<{
 /**
  * 商品をいいねが多い順に取得する
  */
-export const getRecommendProductData = async (): Promise<Array<{
-  id: string;
-  data: ProductData;
-}>> =>
+export const getRecommendProductData = async (): Promise<
+  Array<{
+    id: string;
+    data: ProductData;
+  }>
+> =>
   (await querySnapshotToIdAndDataArray(
     await getProductsOrderBy("likedCount", "desc")
   )) as Array<{ id: string; data: ProductData }>;
@@ -470,10 +473,12 @@ export const getRecommendProductData = async (): Promise<Array<{
 /**
  * 0円の商品を取得する
  */
-export const getFreeProductData = async (): Promise<Array<{
-  id: string;
-  data: ProductData;
-}>> =>
+export const getFreeProductData = async (): Promise<
+  Array<{
+    id: string;
+    data: ProductData;
+  }>
+> =>
   (await querySnapshotToIdAndDataArray(
     await getProductsCondition("price", "==", 0)
   )) as Array<{ id: string; data: ProductData }>;
@@ -603,22 +608,14 @@ export const addTradeComment = async (
   id: string,
   data: TradeComment
 ): Promise<string> => {
-  return (
-    await tradeCollectionRef
-      .doc(id)
-      .collection("comment")
-      .add(data)
-  ).id;
+  return (await tradeCollectionRef.doc(id).collection("comment").add(data)).id;
 };
 
 export const getTradeComments = async (
   id: string
 ): Promise<Array<{ id: string; data: TradeComment }>> =>
   (await querySnapshotToIdAndDataArray(
-    await tradeCollectionRef
-      .doc(id)
-      .collection("comment")
-      .get()
+    await tradeCollectionRef.doc(id).collection("comment").get()
   )) as Array<{ id: string; data: TradeComment }>;
 /* ==========================================
    ==========================================
@@ -631,7 +628,7 @@ export const getTradeComments = async (
 const querySnapshotToIdAndDataArray = (
   querySnapshot: FirebaseFirestore.QuerySnapshot
 ): Array<{ id: string; data: FirebaseFirestore.DocumentData }> =>
-  querySnapshot.docs.map(result => ({ id: result.id, data: result.data() }));
+  querySnapshot.docs.map((result) => ({ id: result.id, data: result.data() }));
 /* ==========================================
                 Time Stamp
    ==========================================
@@ -657,7 +654,7 @@ export const createFirebaseAuthUserByRandomPassword = (
     initializedAdmin
       .auth()
       .getUserByEmail(email)
-      .then(user => {
+      .then((user) => {
         user.displayName = displayName;
         resolve(user.uid);
       })
@@ -667,9 +664,9 @@ export const createFirebaseAuthUserByRandomPassword = (
           .createUser({
             email: email,
             password: createRandomPassword(),
-            displayName: displayName
+            displayName: displayName,
           })
-          .then(user => {
+          .then((user) => {
             resolve(user.uid);
           });
       });
@@ -718,12 +715,9 @@ export const saveThumbnailImageToCloudStorage = async (
 ): Promise<string> => {
   const fileId = createRandomFileId();
   const file = storage.file(fileId);
-  file.save(
-    await sharp(data)
-      .resize(300, 300, { fit: "inside" })
-      .toBuffer(),
-    { contentType: mimeType }
-  );
+  file.save(await sharp(data).resize(300, 300, { fit: "inside" }).toBuffer(), {
+    contentType: mimeType,
+  });
   return fileId;
 };
 
@@ -738,11 +732,7 @@ export const saveThumbnailImageFromCloudStorageToCloudStorage = async (
       resolve(thumbnailFileId);
     });
     readStream
-      .pipe(
-        sharp()
-          .resize(300, 300, { fit: "inside" })
-          .jpeg()
-      )
+      .pipe(sharp().resize(300, 300, { fit: "inside" }).jpeg())
       .pipe(writeStream);
   });
 /**

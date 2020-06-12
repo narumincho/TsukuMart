@@ -70,9 +70,9 @@ export const lineLogInReceiver = async (
   response: express.Response
 ): Promise<void> => {
   console.log("lineLogInCodeReceiver", request.query);
-  const code: string | undefined = request.query.code;
-  const state: string | undefined = request.query.state;
-  if (code === undefined || state === undefined) {
+  const code: unknown = request.query.code;
+  const state: unknown = request.query.state;
+  if (!(typeof code === "string" && typeof state === "string")) {
     console.log(
       "LINEからcodeかstateが送られて来なかった。ユーザーがキャンセルした?"
     );

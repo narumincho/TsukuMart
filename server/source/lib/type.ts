@@ -1,6 +1,5 @@
 import * as g from "graphql";
 import { URL } from "url";
-import Maybe from "graphql/tsutils/Maybe";
 
 /*  ===================================
  *              URL
@@ -10,7 +9,7 @@ const urlTypeScalarTypeConfig: g.GraphQLScalarTypeConfig<URL, string> = {
   name: "URL",
   description: `URL 文字列で指定する 例"https://narumincho.com/definy/spec.html"`,
   serialize: (url: URL): string => url.toString(),
-  parseValue: (value: string): URL => new URL(value)
+  parseValue: (value: string): URL => new URL(value),
 };
 
 export const urlGraphQLType = new g.GraphQLScalarType(urlTypeScalarTypeConfig);
@@ -34,9 +33,9 @@ const dataUrlTypeConfig: g.GraphQLScalarTypeConfig<DataURL, string> = {
     }
     return {
       mimeType: imageDataUrlMimeType[1],
-      data: Buffer.from(imageDataUrlMimeType[2], "base64")
+      data: Buffer.from(imageDataUrlMimeType[2], "base64"),
     };
-  }
+  },
 };
 
 export const dataUrlGraphQLType = new g.GraphQLScalarType(dataUrlTypeConfig);
@@ -50,7 +49,7 @@ const dateTimeTypeConfig: g.GraphQLScalarTypeConfig<Date, number> = {
     "日付と時刻。1970年1月1日 00:00:00 UTCから指定した日時までの経過時間をミリ秒で表した数値 2038年問題を回避するために64bitFloatの型を使う",
   serialize: (value: Date): number => value.getTime(),
   parseValue: (value: number): Date => new Date(value),
-  parseLiteral: ast => {
+  parseLiteral: (ast) => {
     if (ast.kind === "FloatValue" || ast.kind === "IntValue") {
       try {
         return new Date(Number.parseInt(ast.value));
@@ -59,7 +58,7 @@ const dateTimeTypeConfig: g.GraphQLScalarTypeConfig<Date, number> = {
       }
     }
     return null;
-  }
+  },
 };
 
 export const dateTimeGraphQLType = new g.GraphQLScalarType(dateTimeTypeConfig);
@@ -69,8 +68,8 @@ export const dateTimeGraphQLType = new g.GraphQLScalarType(dateTimeTypeConfig);
  */
 const accountServiceValues = {
   line: {
-    description: "LINE https://developers.line.biz/ja/docs/line-login/"
-  }
+    description: "LINE https://developers.line.biz/ja/docs/line-login/",
+  },
 };
 
 export type AccountService = keyof typeof accountServiceValues;
@@ -78,7 +77,7 @@ export type AccountService = keyof typeof accountServiceValues;
 export const accountServiceGraphQLType = new g.GraphQLEnumType({
   name: "AccountService",
   values: accountServiceValues,
-  description: "ソーシャルログインを提供するサービス"
+  description: "ソーシャルログインを提供するサービス",
 });
 
 export const checkAccountServiceValues = (
@@ -97,19 +96,19 @@ export const checkAccountServiceValues = (
 const schoolValues = {
   humcul: {
     description: "人文・文化学群",
-    department: ["humanity", "culture", "japanese"]
+    department: ["humanity", "culture", "japanese"],
   },
   socint: { description: "社会・国際学群", department: ["social", "cis"] },
   human: {
     description: "人間学群",
-    department: ["education", "psyche", "disability"]
+    department: ["education", "psyche", "disability"],
   },
   life: { description: "生命環境学群" },
   sse: { description: "理工学群" },
   info: { description: "情報学群" },
   med: { description: "医学群" },
   aandd: { description: "芸術専門学群" },
-  sport: { description: "体育専門学群" }
+  sport: { description: "体育専門学群" },
 };
 
 export type School = keyof typeof schoolValues;
@@ -117,14 +116,14 @@ export type School = keyof typeof schoolValues;
 export const schoolGraphQLType = new g.GraphQLEnumType({
   name: "School",
   values: schoolValues,
-  description: "学群ID"
+  description: "学群ID",
 });
 
 const departmentValues = {
   humanity: { description: "人文・文化学群 / 人文学類" },
   culture: { description: "人文・文化学群 / 比較文化学類" },
   japanese: {
-    description: "人文・文化学群 / 日本語・日本文化学類"
+    description: "人文・文化学群 / 日本語・日本文化学類",
   },
   social: { description: "社会・国際学群 / 社会学類" },
   cis: { description: "社会・国際学群 / 国際総合学類" },
@@ -147,7 +146,7 @@ const departmentValues = {
   nurse: { description: "医学群 / 看護学類" },
   ms: { description: "医学群 / 医療科学類" },
   aandd: { description: "芸術専門学群" },
-  sport: { description: "体育専門学群" }
+  sport: { description: "体育専門学群" },
 };
 
 export type Department = keyof typeof departmentValues;
@@ -155,7 +154,7 @@ export type Department = keyof typeof departmentValues;
 export const departmentGraphQLType = new g.GraphQLEnumType({
   name: "Department",
   values: departmentValues,
-  description: "学類ID"
+  description: "学類ID",
 });
 
 export const departmentListFromSchool = (school: School): Array<Department> => {
@@ -190,19 +189,19 @@ const graduateValues = {
   life: { description: " 生命環境科学研究科" },
   chs: { description: "人間総合科学研究科" },
   slis: { description: "図書館情報メディア研究科" },
-  global: { description: "グローバル研究院" }
+  global: { description: "グローバル研究院" },
 };
 export type Graduate = keyof typeof graduateValues;
 
 export const graduateGraphQLType = new g.GraphQLEnumType({
   name: "Graduate",
   values: graduateValues,
-  description: "研究科ID"
+  description: "研究科ID",
 });
 
 export type UniversityInternal = {
-  schoolAndDepartment: Maybe<Department>;
-  graduate: Maybe<Graduate>;
+  schoolAndDepartment: Department | undefined | null;
+  graduate: Graduate | undefined | null;
 };
 
 export type University =
@@ -217,7 +216,7 @@ export type University =
 export const enum UniversityC {
   GraduateTsukuba,
   GraduateNotTsukuba,
-  NotGraduate
+  NotGraduate,
 }
 /**
  *
@@ -234,19 +233,19 @@ export const universityFromInternal = (
     return {
       c: UniversityC.GraduateTsukuba,
       graduate: universityUnsafe.graduate,
-      schoolAndDepartment: universityUnsafe.schoolAndDepartment
+      schoolAndDepartment: universityUnsafe.schoolAndDepartment,
     };
   }
   if (typeof universityUnsafe.graduate === "string") {
     return {
       c: UniversityC.GraduateNotTsukuba,
-      graduate: universityUnsafe.graduate
+      graduate: universityUnsafe.graduate,
     };
   }
   if (typeof universityUnsafe.schoolAndDepartment === "string") {
     return {
       c: UniversityC.NotGraduate,
-      schoolAndDepartment: universityUnsafe.schoolAndDepartment
+      schoolAndDepartment: universityUnsafe.schoolAndDepartment,
     };
   }
   throw new Error(
@@ -264,17 +263,17 @@ export const universityToInternal = (
     case UniversityC.GraduateTsukuba:
       return {
         schoolAndDepartment: university.schoolAndDepartment,
-        graduate: university.graduate
+        graduate: university.graduate,
       };
     case UniversityC.GraduateNotTsukuba:
       return {
         schoolAndDepartment: null,
-        graduate: university.graduate
+        graduate: university.graduate,
       };
     case UniversityC.NotGraduate:
       return {
         schoolAndDepartment: university.schoolAndDepartment,
-        graduate: null
+        graduate: null,
       };
   }
 };
@@ -282,24 +281,24 @@ export const universityToInternal = (
 const universityField = {
   schoolAndDepartment: {
     type: departmentGraphQLType,
-    description: "学群学類ID 筑波大学以外からの編入ならnull"
+    description: "学群学類ID 筑波大学以外からの編入ならnull",
   },
   graduate: {
     type: graduateGraphQLType,
-    description: "研究科ID 大学生の場合はnull"
-  }
+    description: "研究科ID 大学生の場合はnull",
+  },
 };
 
 export const universityGraphQLInputType = new g.GraphQLInputObjectType({
   name: "UniversityInput",
   fields: universityField,
-  description: "大学での所属"
+  description: "大学での所属",
 });
 
 export const universityGraphQLObjectType = new g.GraphQLObjectType({
   name: "University",
   fields: universityField,
-  description: "大学での所属"
+  description: "大学での所属",
 });
 
 /** ==============================
@@ -426,14 +425,14 @@ export type ProductCommentInternal = {
  */
 const productStatusValues = {
   selling: {
-    description: "出品中"
+    description: "出品中",
   },
   trading: {
-    description: "取引中"
+    description: "取引中",
   },
   soldOut: {
-    description: "売り切れ"
-  }
+    description: "売り切れ",
+  },
 };
 
 export type ProductStatus = keyof typeof productStatusValues;
@@ -441,7 +440,7 @@ export type ProductStatus = keyof typeof productStatusValues;
 export const productStatusGraphQLType = new g.GraphQLEnumType({
   name: "ProductStatus",
   description: "取引中の状態",
-  values: productStatusValues
+  values: productStatusValues,
 });
 /** ==============================
  *        Draft Product
@@ -466,23 +465,23 @@ export type DraftProduct = {
  */
 const conditionValues = {
   new: {
-    description: "新品・未使用"
+    description: "新品・未使用",
   },
   likeNew: {
-    description: "ほぼ未使用"
+    description: "ほぼ未使用",
   },
   veryGood: {
-    description: "目立った傷や汚れなし"
+    description: "目立った傷や汚れなし",
   },
   good: {
-    description: "多少の傷や汚れあり"
+    description: "多少の傷や汚れあり",
   },
   acceptable: {
-    description: "目立つ傷や汚れあり"
+    description: "目立つ傷や汚れあり",
   },
   junk: {
-    description: "状態が悪い・ジャンク"
-  }
+    description: "状態が悪い・ジャンク",
+  },
 };
 
 export type Condition = keyof typeof conditionValues;
@@ -492,7 +491,7 @@ export const conditionDescription = "商品の品質状態";
 export const conditionGraphQLType = new g.GraphQLEnumType({
   name: "Condition",
   values: conditionValues,
-  description: conditionDescription
+  description: conditionDescription,
 });
 /* ===============================
  *       Category Group
@@ -500,26 +499,26 @@ export const conditionGraphQLType = new g.GraphQLEnumType({
  */
 const categoryGroupValues = {
   furniture: {
-    description: "家具"
+    description: "家具",
   },
   appliance: {
-    description: "電化製品・電子機器"
+    description: "電化製品・電子機器",
   },
   fashion: {
-    description: "ファッション"
+    description: "ファッション",
   },
   book: {
-    description: "教科書・本"
+    description: "教科書・本",
   },
   vehicle: {
-    description: "自転車・車両"
+    description: "自転車・車両",
   },
   food: {
-    description: "食料品"
+    description: "食料品",
   },
   hobby: {
-    description: "ホビー・雑貨"
-  }
+    description: "ホビー・雑貨",
+  },
 };
 
 export type CategoryGroup = keyof typeof categoryGroupValues;
@@ -530,7 +529,7 @@ export const categoryGroupDescription =
 export const categoryGroupGraphQLType = new g.GraphQLEnumType({
   name: "CategoryGroup",
   values: categoryGroupValues,
-  description: categoryGroupDescription
+  description: categoryGroupDescription,
 });
 /* ===============================
  *          Category
@@ -539,140 +538,140 @@ export const categoryGroupGraphQLType = new g.GraphQLEnumType({
 
 const categoryValues = {
   furnitureTable: {
-    description: "家具 / 机"
+    description: "家具 / 机",
   },
   furnitureChair: {
-    description: "家具 家具  / イス"
+    description: "家具 家具  / イス",
   },
   furnitureChest: {
-    description: "家具 / タンス・棚"
+    description: "家具 / タンス・棚",
   },
   furnitureBed: {
-    description: "家具 / 寝具"
+    description: "家具 / 寝具",
   },
   furnitureKitchen: {
-    description: "家具 / 食器・調理器具"
+    description: "家具 / 食器・調理器具",
   },
   furnitureCurtain: {
-    description: "家具 / カーテン"
+    description: "家具 / カーテン",
   },
   furnitureMat: {
-    description: "家具 / マット・カーペット"
+    description: "家具 / マット・カーペット",
   },
   furnitureOther: {
-    description: "家具 / その他"
+    description: "家具 / その他",
   },
   applianceRefrigerator: {
-    description: "電化製品・電子機器 / 冷蔵庫"
+    description: "電化製品・電子機器 / 冷蔵庫",
   },
   applianceMicrowave: {
-    description: "電化製品・電子機器 / 電子レンジ"
+    description: "電化製品・電子機器 / 電子レンジ",
   },
   applianceWashing: {
-    description: "電化製品・電子機器 / 洗濯機"
+    description: "電化製品・電子機器 / 洗濯機",
   },
   applianceVacuum: {
-    description: "電化製品・電子機器 / 掃除機"
+    description: "電化製品・電子機器 / 掃除機",
   },
   applianceTemperature: {
-    description: "電化製品・電子機器 / 冷暖房・扇風機"
+    description: "電化製品・電子機器 / 冷暖房・扇風機",
   },
   applianceHumidity: {
-    description: "電化製品・電子機器 / 加湿器・除湿機"
+    description: "電化製品・電子機器 / 加湿器・除湿機",
   },
   applianceLight: {
-    description: "電化製品・電子機器 / 照明・ライト"
+    description: "電化製品・電子機器 / 照明・ライト",
   },
   applianceTv: {
-    description: "電化製品・電子機器 / TV・ディスプレイ・プロジェクター"
+    description: "電化製品・電子機器 / TV・ディスプレイ・プロジェクター",
   },
   applianceSpeaker: {
-    description: "電化製品・電子機器 / スピーカー"
+    description: "電化製品・電子機器 / スピーカー",
   },
   applianceSmartphone: {
-    description: "電化製品・電子機器 / スマホ・タブレット"
+    description: "電化製品・電子機器 / スマホ・タブレット",
   },
   appliancePc: {
-    description: "電化製品・電子機器 / パソコン"
+    description: "電化製品・電子機器 / パソコン",
   },
   applianceCommunication: {
-    description: "電化製品・電子機器 / Wi-Fi ルーター・通信機器"
+    description: "電化製品・電子機器 / Wi-Fi ルーター・通信機器",
   },
   applianceOther: {
-    description: "電化製品・電子機器 / その他"
+    description: "電化製品・電子機器 / その他",
   },
   fashionMens: {
-    description: "ファッション / メンズ"
+    description: "ファッション / メンズ",
   },
   fashionLadies: {
-    description: "ファッション / レディース"
+    description: "ファッション / レディース",
   },
   fashionOther: {
-    description: "ファッション / その他"
+    description: "ファッション / その他",
   },
   bookTextbook: {
-    description: "教科書・本 / 教科書"
+    description: "教科書・本 / 教科書",
   },
   bookBook: {
-    description: "教科書・本 / 本"
+    description: "教科書・本 / 本",
   },
   bookComic: {
-    description: "教科書・本 / 漫画"
+    description: "教科書・本 / 漫画",
   },
   bookOther: {
-    description: "教科書・本 / その他"
+    description: "教科書・本 / その他",
   },
   vehicleBicycle: {
-    description: "自転車・車両 / 自転車"
+    description: "自転車・車両 / 自転車",
   },
   vehicleBike: {
-    description: "自転車・車両 / バイク"
+    description: "自転車・車両 / バイク",
   },
   vehicleCar: {
-    description: "自転車・車両 / 自動車 "
+    description: "自転車・車両 / 自動車 ",
   },
   vehicleOther: {
-    description: "自転車・車両 / その他"
+    description: "自転車・車両 / その他",
   },
   foodFood: {
-    description: "食料品 / 食料 "
+    description: "食料品 / 食料 ",
   },
   foodBeverage: {
-    description: "食料品 / 飲料 "
+    description: "食料品 / 飲料 ",
   },
   foodOther: {
-    description: "食料品 / その他"
+    description: "食料品 / その他",
   },
   hobbyDisc: {
-    description: "ホビー・雑貨 / CD・DVD"
+    description: "ホビー・雑貨 / CD・DVD",
   },
   hobbyInstrument: {
-    description: "ホビー・雑貨 / 楽器"
+    description: "ホビー・雑貨 / 楽器",
   },
   hobbyCamera: {
-    description: "ホビー・雑貨 / カメラ"
+    description: "ホビー・雑貨 / カメラ",
   },
   hobbyGame: {
-    description: "ホビー・雑貨 / ゲーム"
+    description: "ホビー・雑貨 / ゲーム",
   },
   hobbySport: {
-    description: "ホビー・雑貨 / スポーツ"
+    description: "ホビー・雑貨 / スポーツ",
   },
   hobbyArt: {
-    description: "ホビー・雑貨 / 美術・芸術品"
+    description: "ホビー・雑貨 / 美術・芸術品",
   },
   hobbyAccessory: {
-    description: "ホビー・雑貨 / 雑貨・小物"
+    description: "ホビー・雑貨 / 雑貨・小物",
   },
   hobbyDaily: {
-    description: "ホビー・雑貨 / 日用品"
+    description: "ホビー・雑貨 / 日用品",
   },
   hobbyHandmade: {
-    description: "ホビー・雑貨 / ハンドメイド"
+    description: "ホビー・雑貨 / ハンドメイド",
   },
   hobbyOther: {
-    description: "ホビー・雑貨 / その他"
-  }
+    description: "ホビー・雑貨 / その他",
+  },
 };
 
 export type Category = keyof typeof categoryValues;
@@ -682,7 +681,7 @@ export const categoryDescription = "商品を分類するカテゴリー";
 export const categoryGraphQLType = new g.GraphQLEnumType({
   name: "Category",
   values: categoryValues,
-  description: categoryDescription
+  description: categoryDescription,
 });
 
 export const categoryListFromGroup = (
@@ -698,7 +697,7 @@ export const categoryListFromGroup = (
         "furnitureKitchen",
         "furnitureCurtain",
         "furnitureMat",
-        "furnitureOther"
+        "furnitureOther",
       ];
     case "appliance":
       return [
@@ -714,7 +713,7 @@ export const categoryListFromGroup = (
         "applianceSmartphone",
         "appliancePc",
         "applianceCommunication",
-        "applianceOther"
+        "applianceOther",
       ];
     case "fashion":
       return ["fashionMens", "fashionLadies", "fashionOther"];
@@ -735,7 +734,7 @@ export const categoryListFromGroup = (
         "hobbyAccessory",
         "hobbyDaily",
         "hobbyHandmade",
-        "hobbyOther"
+        "hobbyOther",
       ];
   }
 };
@@ -755,23 +754,23 @@ export type Trade = {
 
 const tradeStatusValues = {
   inProgress: {
-    description: "進行中"
+    description: "進行中",
   },
   waitSellerFinish: {
-    description: "出品者の終了待ち"
+    description: "出品者の終了待ち",
   },
   waitBuyerFinish: {
-    description: "購入者の終了待ち"
+    description: "購入者の終了待ち",
   },
   finish: {
-    description: "取引終了"
+    description: "取引終了",
   },
   cancelBySeller: {
-    description: "出品者がキャンセルした"
+    description: "出品者がキャンセルした",
   },
   cancelByBuyer: {
-    description: "購入者がキャンセルした"
-  }
+    description: "購入者がキャンセルした",
+  },
 };
 
 export const tradeStatusDescription = "取引の状態";
@@ -781,7 +780,7 @@ export type TradeStatus = keyof typeof tradeStatusValues;
 export const TradeStatusGraphQLType = new g.GraphQLEnumType({
   name: "TradeStatus",
   values: tradeStatusValues,
-  description: tradeStatusDescription
+  description: tradeStatusDescription,
 });
 
 /* ===============================
@@ -800,11 +799,11 @@ export type TradeComment = {
  */
 const sellerOrBuyerValues = {
   seller: {
-    description: "商品を売る人"
+    description: "商品を売る人",
   },
   buyer: {
-    description: "商品を買う人"
-  }
+    description: "商品を買う人",
+  },
 };
 
 export type SellerOrBuyer = keyof typeof sellerOrBuyerValues;
@@ -814,7 +813,7 @@ export const sellerOrBuyerDescription = "商品を買う人か、商品を売る
 export const sellerOrBuyerGraphQLType = new g.GraphQLEnumType({
   name: "SellerOrBuyer",
   values: sellerOrBuyerValues,
-  description: sellerOrBuyerDescription
+  description: sellerOrBuyerDescription,
 });
 /* ===============================
  *      LogInService And Id
@@ -845,7 +844,7 @@ export const logInServiceAndIdFromString = (
   }
   return {
     service: service,
-    serviceId: result[2]
+    serviceId: result[2],
   };
 };
 
