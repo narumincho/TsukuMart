@@ -80,7 +80,7 @@ type ElmApp = {
 const userImageFileResizeAndConvertToDataUrl = (file: File): Promise<string> =>
   new Promise((resolve, reject) => {
     const image = new Image();
-    image.addEventListener("load", e => {
+    image.addEventListener("load", (e) => {
       const canvas = document.createElement("canvas");
       const sourceSize = Math.min(image.width, image.height);
       const outputSize = Math.min(sourceSize, 400);
@@ -111,17 +111,17 @@ const insideSize = (
     if (height < width) {
       return {
         width: 1024,
-        height: (1024 * height) / width
+        height: (1024 * height) / width,
       };
     }
     return {
       width: (1024 * width) / height,
-      height: 1024
+      height: 1024,
     };
   }
   return {
     width: width,
-    height: height
+    height: height,
   };
 };
 
@@ -184,8 +184,8 @@ const checkFileInput = (id: string) => async () => {
 /* Elmを起動!! */
 const app = window.Elm.Main.init({
   flags: {
-    accessToken: localStorage.getItem("accessToken")
-  }
+    accessToken: localStorage.getItem("accessToken"),
+  },
 });
 const windowResizeListener = () => {
   if (1000 < window.innerWidth) {
@@ -198,7 +198,7 @@ const windowResizeListener = () => {
 addEventListener("resize", windowResizeListener);
 windowResizeListener();
 /* リフレッシュトークンを保存する */
-app.ports.saveAccessTokenToLocalStorage.subscribe(accessToken => {
+app.ports.saveAccessTokenToLocalStorage.subscribe((accessToken) => {
   localStorage.setItem("accessToken", accessToken);
 });
 /* リフレッシュトークンとその他すべてを削除する */
@@ -227,7 +227,7 @@ app.ports.mainViewScrollToTop.subscribe(() => {
   });
 });
 /* 指定されたidの要素が表示されるようにスクロールさせる */
-app.ports.elementScrollIntoView.subscribe(id => {
+app.ports.elementScrollIntoView.subscribe((id) => {
   const scrollIntoView = () => {
     const element = document.getElementById(id);
     if (element === null) {
@@ -261,10 +261,10 @@ app.ports.addEventListenerForProductImages.subscribe(({ inputId, labelId }) => {
       window.requestAnimationFrame(addEventListenerForProductImages);
       return;
     }
-    labelElement.addEventListener("dragover", e => {
+    labelElement.addEventListener("dragover", (e) => {
       e.preventDefault();
     });
-    labelElement.addEventListener("drop", async e => {
+    labelElement.addEventListener("drop", async (e) => {
       e.preventDefault();
       if (e.dataTransfer === null) {
         return;
@@ -300,7 +300,7 @@ const urlBase64ToUint8Array = (base64String: string) => {
   const productCollection = firestore.collection("product");
   console.log("firestore request");
   app.ports.startListenRecommendProducts.subscribe(async () => {
-    productCollection.onSnapshot(productsQuerySnapshot => {
+    productCollection.onSnapshot((productsQuerySnapshot) => {
       console.log("firestore get response");
       app.ports.receiveAllProducts.send(
         productsQuerySnapshot.docs.map(documentDataToProduct)
@@ -328,6 +328,6 @@ const documentDataToProduct = (
     sellerImageId: data.sellerImageId,
     status: data.status,
     thumbnailImageId: data.thumbnailImageId,
-    updateAt: (data.updateAt as firebase.firestore.Timestamp).toMillis()
+    updateAt: (data.updateAt as firebase.firestore.Timestamp).toMillis(),
   };
 };

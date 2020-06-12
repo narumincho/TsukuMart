@@ -36,9 +36,9 @@ const app = Elm.SignUp.init({
   flags: {
     sendEmailToken: fragment.get("sendEmailToken"),
     name: fragment.get("name"),
-    imageId: fragment.get("imageId")
+    imageId: fragment.get("imageId"),
   },
-  node: document.getElementById("app") as HTMLElement
+  node: document.getElementById("app") as HTMLElement,
 });
 app.ports.load.subscribe(
   ({ imageInputElementId, imageUrl, nameElementId, name }) => {
@@ -101,7 +101,7 @@ const sendConfirmEmail = async (token: string) => {
     }
     console.log("ユーザー名", user.displayName);
     await user.sendEmailVerification({
-      url: "https://tsukumart.com/"
+      url: "https://tsukumart.com/",
     });
     app.ports.sentConfirmEmail.send(null);
   } catch (e) {
@@ -114,6 +114,6 @@ const sendConfirmEmail = async (token: string) => {
 
 app.ports.sendConfirmEmail.subscribe(sendConfirmEmail);
 
-app.ports.alert.subscribe(message => {
+app.ports.alert.subscribe((message) => {
   window.alert(message);
 });

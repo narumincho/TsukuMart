@@ -1,18 +1,18 @@
 // Tsukumart Service Worker
 ((self: ServiceWorkerGlobalScope) => {
-  self.addEventListener("install", e => {
+  self.addEventListener("install", (e) => {
     console.log(
       "Service Worker内でServiceWorkerがブラウザにインストールされたことを検知した!"
     );
     e.waitUntil(self.skipWaiting());
   });
 
-  self.addEventListener("activate", e => {
+  self.addEventListener("activate", (e) => {
     console.log("Service Workerがアクティブな状態になった");
     e.waitUntil(self.clients.claim());
   });
 
-  self.addEventListener("fetch", e => {
+  self.addEventListener("fetch", (e) => {
     if (navigator.onLine) {
       return;
     }
@@ -50,18 +50,18 @@
     }
   });
 
-  self.addEventListener("sync", e => {
+  self.addEventListener("sync", (e) => {
     console.log("syncを受け取った", e);
   });
 
-  self.addEventListener("push", e => {
+  self.addEventListener("push", (e) => {
     console.log("プッシュ通知をサーバーから受け取った", e);
 
     e.waitUntil(
       self.registration.showNotification("プッシュ通知です!", {
         body: "プッシュ通知はこのようにして送られるのです",
         icon: "/assets/logo_bird.png",
-        tag: "push-notification-tag"
+        tag: "push-notification-tag",
       })
     );
   });
