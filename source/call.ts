@@ -148,7 +148,10 @@ app.ports.replaceText.subscribe(({ id, text }) => {
 /* 指定されたidの要素のスクロール位置を(0,0)にする */
 app.ports.mainViewScrollToTop.subscribe(() => {
   window.requestAnimationFrame(() => {
-    document.getElementById("mainView")?.scroll(0, 0);
+    const element = document.getElementById("mainView");
+    if (element !== null) {
+      element.scroll(0, 0);
+    }
   });
 });
 /* 指定されたidの要素が表示されるようにスクロールさせる */

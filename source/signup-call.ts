@@ -1,4 +1,4 @@
-/// <reference path="../../node_modules/firebase/index.d.ts" />
+/// <reference path="../node_modules/firebase/index.d.ts" />
 
 declare const Elm: {
   SignUp: { init: (arg: { flags: {}; node: HTMLElement }) => ElmApp };
