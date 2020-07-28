@@ -1,6 +1,6 @@
 import * as firebase from "firebase/app";
 import "firebase/firestore";
-import { Elm } from "../main/elm-source/Main.elm";
+import { Elm } from "./main/elm-source/Main.elm";
 
 const userImageFileResizeAndConvertToDataUrl = (file: File): Promise<string> =>
   new Promise((resolve, reject) => {
@@ -202,21 +202,8 @@ app.ports.addEventListenerForProductImages.subscribe(({ inputId, labelId }) => {
   window.requestAnimationFrame(addEventListenerForProductImages);
 });
 
-const urlBase64ToUint8Array = (base64String: string) => {
-  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
-  const base64 = (base64String + padding)
-    .replace(/\-/g, "+")
-    .replace(/_/g, "/");
-  const rawData = window.atob(base64);
-  const outputArray = new Uint8Array(rawData.length);
-  for (let i = 0; i < rawData.length; i++) {
-    outputArray[i] = rawData.charCodeAt(i);
-  }
-  return outputArray;
-};
-
 (async () => {
-  await navigator.serviceWorker.register("../servicewoker/serviceworker.ts", {
+  await navigator.serviceWorker.register("./sw.ts", {
     scope: "/",
   });
 })();

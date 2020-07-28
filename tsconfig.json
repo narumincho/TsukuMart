@@ -6,5 +6,6 @@
     "newLine": "lf",
     "forceConsistentCasingInFileNames": true,
     "moduleResolution": "Node"
-  }
+  },
+  "exclude": ["source/sw.ts"]
 }
