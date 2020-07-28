@@ -32,7 +32,7 @@
         "headers": [
           {
             "key": "content-security-policy",
-            "value": "script-src https://tsukumart.com https://www.gstatic.com 'unsafe-inline'; worker-src https://tsukumart.com; img-src https://tsukumart.com https://asia-northeast1-tsukumart-f0971.cloudfunctions.net blob: data:; connect-src https://tsukumart.com/ https://asia-northeast1-tsukumart-f0971.cloudfunctions.net/api https://firestore.googleapis.com;"
+            "value": "script-src https://tsukumart.com https://www.gstatic.com https://*.google.com 'unsafe-inline'; worker-src https://tsukumart.com; img-src https://tsukumart.com https://asia-northeast1-tsukumart-f0971.cloudfunctions.net https://*.google.com blob: data:; connect-src https://tsukumart.com/ https://asia-northeast1-tsukumart-f0971.cloudfunctions.net/api https://firestore.googleapis.com;"
           },
           {
             "key": "cache-control",
