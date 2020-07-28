@@ -41,7 +41,7 @@
         ]
       }
     ],
-    "public": "client/distribution",
+    "public": "distribution",
     "rewrites": [
       {
         "source": "/sitemap",
@@ -52,8 +52,5 @@
         "function": "indexHtml"
       }
     ]
-  },
-  "functions": {
-    "source": "server/distribution"
   }
 }
