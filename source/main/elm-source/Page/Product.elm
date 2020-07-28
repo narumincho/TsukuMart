@@ -509,6 +509,7 @@ normalView logInState isWideScreen nowMaybe data =
                     [ Style.displayGridAndGap 16
                     , Css.overflowY Css.auto
                     , Style.webkitOverflowScrolling
+                    , Css.padding (Css.px 16)
                     ]
                 , Style.mainId
                 ]
