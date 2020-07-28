@@ -1,81 +1,6 @@
-/// <reference path="../../node_modules/firebase/index.d.ts" />
-
-interface Window {
-  Elm: {
-    Main: {
-      init: (args: { flags: { accessToken: string | null } }) => ElmApp;
-    };
-  };
-}
-
-type ElmApp = {
-  ports: {
-    addEventListenerForUserImage: {
-      subscribe: (
-        arg: (arg: { labelId: string; inputId: string }) => void
-      ) => void;
-    };
-    receiveUserImage: {
-      send: (arg: string) => void;
-    };
-    addEventListenerForProductImages: {
-      subscribe: (
-        arg: (arg: { labelId: string; inputId: string }) => void
-      ) => void;
-    };
-    receiveProductImages: {
-      send: (arg: Array<string>) => void;
-    };
-    toWideScreenMode: {
-      send: (arg: null) => void;
-    };
-    toNarrowScreenMode: {
-      send: (arg: null) => void;
-    };
-    saveAccessTokenToLocalStorage: {
-      subscribe: (arg: (accessToken: string) => void) => void;
-    };
-    deleteAllFromLocalStorage: {
-      subscribe: (arg: () => void) => void;
-    };
-    mainViewScrollToTop: {
-      subscribe: (arg: () => void) => void;
-    };
-    elementScrollIntoView: {
-      subscribe: (arg: (id: string) => void) => void;
-    };
-    replaceText: {
-      subscribe: (arg: (arg: { id: string; text: string }) => void) => void;
-    };
-    changeSelectedIndex: {
-      subscribe: (arg: (arg: { id: string; index: number }) => void) => void;
-    };
-    startListenRecommendProducts: {
-      subscribe: (arg: (arg: null) => void) => void;
-    };
-    receiveAllProducts: {
-      send: (
-        arg: Array<{
-          id: string;
-          category: string;
-          condition: string;
-          createdAt: number;
-          description: string;
-          imageIds: Array<string>;
-          likedCount: number;
-          name: Array<string>;
-          price: number;
-          sellerDisplayName: string;
-          sellerId: string;
-          sellerImageId: string;
-          status: string;
-          thumbnailImageId: string;
-          updateAt: number;
-        }>
-      ) => void;
-    };
-  };
-};
+import * as firebase from "firebase/app";
+import "firebase/firestore";
+import { Elm } from "../main/elm-source/Main.elm";
 
 const userImageFileResizeAndConvertToDataUrl = (file: File): Promise<string> =>
   new Promise((resolve, reject) => {
@@ -182,7 +107,7 @@ const checkFileInput = (id: string) => async () => {
 };
 
 /* Elmを起動!! */
-const app = window.Elm.Main.init({
+const app = Elm.Main.init({
   flags: {
     accessToken: localStorage.getItem("accessToken"),
   },
@@ -291,10 +216,13 @@ const urlBase64ToUint8Array = (base64String: string) => {
 };
 
 (async () => {
-  await navigator.serviceWorker.register("/serviceworker.js", { scope: "/" });
+  await navigator.serviceWorker.register("../servicewoker/serviceworker.ts", {
+    scope: "/",
+  });
 })();
 
 (async () => {
+  firebase.initializeApp({ projectId: "tsukumart-f0971" });
   console.log("firestore run");
   const firestore = firebase.firestore();
   const productCollection = firestore.collection("product");
