@@ -1,35 +1,6 @@
-/// <reference path="../node_modules/firebase/index.d.ts" />
-
-declare const Elm: {
-  SignUp: { init: (arg: { flags: {}; node: HTMLElement }) => ElmApp };
-};
-
-type ElmApp = {
-  ports: {
-    load: {
-      subscribe: (
-        arg: (arg: {
-          imageInputElementId: string;
-          imageUrl: string;
-          nameElementId: string;
-          name: string;
-        }) => void
-      ) => void;
-    };
-    imageInput: {
-      send: (arg: string) => void;
-    };
-    sendConfirmEmail: {
-      subscribe: (arg: (token: string) => void) => void;
-    };
-    sentConfirmEmail: {
-      send: (args: null) => void;
-    };
-    alert: {
-      subscribe: (arg: (token: string) => void) => void;
-    };
-  };
-};
+import * as firebase from "firebase/app";
+import "firebase/firestore";
+import { Elm } from "./elm/SignUp.elm";
 
 const fragment = new URLSearchParams(location.hash.substring(1));
 const app = Elm.SignUp.init({

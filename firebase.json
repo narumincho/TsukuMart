@@ -41,7 +41,7 @@
         ]
       }
     ],
-    "public": "distribution",
+    "public": "dist",
     "rewrites": [
       {
         "source": "/sitemap",

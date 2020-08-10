@@ -1,0 +1,29 @@
+name: build and deploy hosting
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    name: build and deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@v2
+      - name: setup Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: "10.x"
+      - name: Install npm dependencies (npm ci)
+        run: npm ci
+      - name: build
+        run: node ./build.js
+      - name: deploy firebase hosting
+        uses: w9jds/firebase-action@master
+        with:
+          args: deploy --only hosting
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+          PROJECT_ID: tsukumart-f0971
