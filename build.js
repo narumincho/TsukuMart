@@ -2,7 +2,7 @@
 const fileSystem = require("fs-extra");
 const parcel = require("parcel");
 
-new parcel(["./source/call.ts", "./source/signup-call.ts"], {
+new parcel(["./source/call.ts"], {
   watch: false,
   sourceMaps: true,
   production: true,
