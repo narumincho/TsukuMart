@@ -18,10 +18,10 @@ jobs:
           node-version: "10.x"
       - name: Install npm dependencies (npm ci)
         run: npm ci
-      - name: build
-        run: node ./build.js
-      - name: build by command
+      - name: build script
         run: npx parcel build source/call.ts
+      - name: build files
+        run: node build.js
       - name: deploy firebase hosting
         uses: w9jds/firebase-action@master
         with:

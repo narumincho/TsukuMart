@@ -1,12 +1,5 @@
 ///@ts-check
 const fileSystem = require("fs-extra");
-const parcel = require("parcel");
-
-new parcel(["./source/call.ts"], {
-  watch: false,
-  sourceMaps: true,
-  production: true,
-}).bundle();
 
 fileSystem.outputFile(
   "./dist/robot.txt",
