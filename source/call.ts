@@ -1,5 +1,5 @@
-import * as firebase from "firebase/app";
 import "firebase/firestore";
+import * as firebase from "firebase/app";
 import { Elm } from "./elm/Main.elm";
 
 const userImageFileResizeAndConvertToDataUrl = (file: File): Promise<string> =>
@@ -32,7 +32,7 @@ const insideSize = (
   width: number,
   height: number
 ): { width: number; height: number } => {
-  if (1024 < Math.max(width, height)) {
+  if (Math.max(width, height) > 1024) {
     if (height < width) {
       return {
         width: 1024,
@@ -45,23 +45,22 @@ const insideSize = (
     };
   }
   return {
-    width: width,
-    height: height,
+    width,
+    height,
   };
 };
 
-const productImageFilesResizeAndConvertToDataUrl = async (
+const productImageFilesResizeAndConvertToDataUrl = (
   fileList: FileList
 ): Promise<Array<string>> => {
-  const result: Array<string> = [];
-  for (let i = 0; i < Math.min(5, fileList.length); i++) {
+  const result: Array<Promise<string>> = [];
+  for (let i = 0; i < Math.min(5, fileList.length); i += 1) {
     const file = fileList.item(i);
-    if (file === null) {
-      continue;
+    if (file !== null) {
+      result.push(productImageResizeAndConvertToDataUrl(file));
     }
-    result.push(await productImageResizeAndConvertToDataUrl(file));
   }
-  return result;
+  return Promise.all(result);
 };
 
 const productImageResizeAndConvertToDataUrl = (file: File): Promise<string> =>
@@ -113,7 +112,7 @@ const app = Elm.Main.init({
   },
 });
 const windowResizeListener = () => {
-  if (1000 < window.innerWidth) {
+  if (window.innerWidth > 1000) {
     app.ports.toWideScreenMode.send(null);
   } else {
     app.ports.toNarrowScreenMode.send(null);
@@ -211,13 +210,13 @@ app.ports.addEventListenerForProductImages.subscribe(({ inputId, labelId }) => {
   });
 })();
 
-(async () => {
+(() => {
   firebase.initializeApp({ projectId: "tsukumart-f0971" });
   console.log("firestore run");
   const firestore = firebase.firestore();
   const productCollection = firestore.collection("product");
   console.log("firestore request");
-  app.ports.startListenRecommendProducts.subscribe(async () => {
+  app.ports.startListenRecommendProducts.subscribe(() => {
     productCollection.onSnapshot((productsQuerySnapshot) => {
       console.log("firestore get response");
       app.ports.receiveAllProducts.send(

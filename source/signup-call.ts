@@ -1,5 +1,5 @@
+import "firebase/auth";
 import * as firebase from "firebase/app";
-import "firebase/firestore";
 import { Elm } from "./elm/SignUp.elm";
 
 const fragment = new URLSearchParams(location.hash.substring(1));
@@ -18,7 +18,7 @@ app.ports.load.subscribe(
         imageInputElementId
       ) as HTMLInputElement;
       imageInputElement.addEventListener("input", async () => {
-        const files = imageInputElement.files;
+        const { files } = imageInputElement;
         if (files === null) {
           throw new Error("入力したものがファイルじゃなかった");
         }
@@ -65,8 +65,7 @@ const userImageFileResizeAndConvertToDataUrl = (file: File): Promise<string> =>
 const sendConfirmEmail = async (token: string) => {
   try {
     console.log("custom token", token);
-    console.log("SDK VERSION", firebase.SDK_VERSION);
-    const user = (await firebase.auth().signInWithCustomToken(token)).user;
+    const { user } = await firebase.auth().signInWithCustomToken(token);
     if (user === null) {
       throw new Error("userがnullだった");
     }
