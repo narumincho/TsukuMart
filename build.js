@@ -8,7 +8,7 @@ new parcel(["./source/call.ts", "./source/signup-call.ts"], {
   production: true,
 }).bundle();
 
-fileSystem.writeFile(
+fileSystem.outputFile(
   "./dist/robot.txt",
   `User-Agent: *
 Disallow:
@@ -17,7 +17,7 @@ Sitemap: https://tsukumart.com/sitemap
 `
 );
 
-fileSystem.writeFile(
+fileSystem.outputFile(
   "./dist/manifest.json",
   JSON.stringify({
     name: "つくマート",
@@ -37,4 +37,4 @@ fileSystem.writeFile(
 );
 
 fileSystem.copy("./source/assets/", "./dist/assets/");
-fileSystem.copyFile("./source/signup.html", "./dist/signup");
+fileSystem.copy("./source/signup.html", "./dist/signup");
