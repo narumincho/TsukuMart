@@ -20,6 +20,8 @@ jobs:
         run: npm ci
       - name: build
         run: node ./build.js
+      - name: build by command
+        run: npx parcel build source/call.ts
       - name: deploy firebase hosting
         uses: w9jds/firebase-action@master
         with:
