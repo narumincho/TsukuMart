@@ -9,7 +9,7 @@
     "debugInLocal": "node ./debugInLocal.js"
   },
   "dependencies": {
-    "firebase": "7.18.0"
+    "firebase": "7.19.0"
   },
   "devDependencies": {
     "elm": "0.19.1-3",
