@@ -4,13 +4,13 @@ module Data.Trade exposing
     , SellerOrBuyer(..)
     , Status(..)
     , Trade
+    , fromApi
     , getBuyer
     , getCreatedAt
     , getId
     , getProductId
     , getStatus
     , getUpdateAt
-    , fromApi
     , idFromString
     , idToString
     , searchFromId
@@ -66,6 +66,7 @@ fromApi rec =
         , updateAt = rec.updateAt
         , status = rec.status
         }
+
 
 type Status
     = InProgress

@@ -15,11 +15,11 @@ module Data.Product exposing
     , conditionToIdString
     , conditionToIndex
     , conditionToJapaneseString
-    , getCreatedAt
     , fromApi
     , fromFirestore
     , getCategory
     , getCondition
+    , getCreatedAt
     , getDescription
     , getId
     , getImageIds

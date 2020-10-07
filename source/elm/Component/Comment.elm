@@ -6,8 +6,8 @@ import Data.User as User
 import Html.Styled
 import Html.Styled.Attributes
 import Icon
-import Style
 import PageLocation
+import Style
 import Svg.Styled as S
 import Svg.Styled.Attributes as A
 import Time

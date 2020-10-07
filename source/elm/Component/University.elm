@@ -9,10 +9,10 @@ module Component.University exposing
     , view
     )
 
-import Data.University as University
-import Html.Styled
 import Component.GraduateSelect as GraduateSelect
 import Component.SchoolSelect as SchoolSelect
+import Data.University as University
+import Html.Styled
 import Style
 
 

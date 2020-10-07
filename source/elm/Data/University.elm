@@ -17,6 +17,7 @@ module Data.University exposing
     , graduateToJapaneseString
     , schoolAll
     , schoolFromDepartment
+    , schoolFromIdString
     , schoolFromIndex
     , schoolToDepartmentList
     , schoolToIdString
@@ -24,7 +25,7 @@ module Data.University exposing
     , schoolToJapaneseString
     , universityFromIdString
     , universityToJapaneseString
-    , schoolFromIdString)
+    )
 
 {-| 研究科、学群、学類
 -}

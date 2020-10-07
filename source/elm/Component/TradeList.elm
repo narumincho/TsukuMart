@@ -7,8 +7,8 @@ import Data.User as User
 import Html.Styled
 import Html.Styled.Attributes
 import Icon
-import Style
 import PageLocation
+import Style
 
 
 view : Maybe (List Product.Product) -> Maybe (List Trade.Trade) -> Html.Styled.Html msg
