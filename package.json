@@ -9,7 +9,7 @@
     "debugInLocal": "node ./debugInLocal.js"
   },
   "dependencies": {
-    "firebase": "7.22.1"
+    "firebase": "7.23.0"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "4.4.0",
