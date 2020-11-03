@@ -1,6 +1,6 @@
 import "firebase/auth";
-import * as firebase from "firebase/app";
 import { Elm } from "./elm/SignUp.elm";
+import firebase from "firebase/app";
 
 const fragment = new URLSearchParams(location.hash.substring(1));
 const app = Elm.SignUp.init({

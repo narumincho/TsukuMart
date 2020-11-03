@@ -1,6 +1,6 @@
 import "firebase/firestore";
-import * as firebase from "firebase/app";
 import { Elm } from "./elm/Main.elm";
+import firebase from "firebase/app";
 
 const userImageFileResizeAndConvertToDataUrl = (file: File): Promise<string> =>
   new Promise((resolve, reject) => {
