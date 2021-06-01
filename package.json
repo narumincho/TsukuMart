@@ -13,7 +13,7 @@
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "4.22.0",
-    "@typescript-eslint/parser": "4.22.0",
+    "@typescript-eslint/parser": "4.26.0",
     "elm": "0.19.1-5",
     "elm-hot": "1.1.6",
     "eslint": "7.25.0",
