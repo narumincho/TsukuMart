@@ -1,6 +1,15 @@
 export namespace Elm {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   namespace SignUp {
-    function init(arg: { flags: {}; node: HTMLElement }): ElmApp;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    function init(arg: {
+      flags: {
+        sendEmailToken: string;
+        name: string;
+        imageId: string;
+      };
+      node: HTMLElement;
+    }): ElmApp;
   }
 }
 
@@ -8,7 +17,7 @@ type ElmApp = {
   ports: {
     load: {
       subscribe: (
-        arg: (arg: {
+        arg: (parameter: {
           imageInputElementId: string;
           imageUrl: string;
           nameElementId: string;

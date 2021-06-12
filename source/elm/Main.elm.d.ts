@@ -1,5 +1,7 @@
 export namespace Elm {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   namespace Main {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     function init(args: {
       readonly flags: { accessToken: string | null };
     }): ElmApp;
@@ -10,7 +12,7 @@ type ElmApp = {
   ports: {
     addEventListenerForUserImage: {
       subscribe: (
-        arg: (arg: { labelId: string; inputId: string }) => void
+        arg: (parameter: { labelId: string; inputId: string }) => void
       ) => void;
     };
     receiveUserImage: {
@@ -18,7 +20,7 @@ type ElmApp = {
     };
     addEventListenerForProductImages: {
       subscribe: (
-        arg: (arg: { labelId: string; inputId: string }) => void
+        arg: (parameter: { labelId: string; inputId: string }) => void
       ) => void;
     };
     receiveProductImages: {
@@ -43,13 +45,17 @@ type ElmApp = {
       subscribe: (arg: (id: string) => void) => void;
     };
     replaceText: {
-      subscribe: (arg: (arg: { id: string; text: string }) => void) => void;
+      subscribe: (
+        arg: (parameter: { id: string; text: string }) => void
+      ) => void;
     };
     changeSelectedIndex: {
-      subscribe: (arg: (arg: { id: string; index: number }) => void) => void;
+      subscribe: (
+        arg: (parameter: { id: string; index: number }) => void
+      ) => void;
     };
     startListenRecommendProducts: {
-      subscribe: (arg: (arg: null) => void) => void;
+      subscribe: (arg: (parameter: null) => void) => void;
     };
     receiveAllProducts: {
       send: (

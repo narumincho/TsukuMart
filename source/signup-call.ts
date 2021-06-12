@@ -5,36 +5,34 @@ import firebase from "firebase/app";
 const fragment = new URLSearchParams(location.hash.substring(1));
 const app = Elm.SignUp.init({
   flags: {
-    sendEmailToken: fragment.get("sendEmailToken"),
-    name: fragment.get("name"),
-    imageId: fragment.get("imageId"),
+    sendEmailToken: fragment.get("sendEmailToken") as string,
+    name: fragment.get("name") as string,
+    imageId: fragment.get("imageId") as string,
   },
   node: document.getElementById("app") as HTMLElement,
 });
-app.ports.load.subscribe(
-  ({ imageInputElementId, imageUrl, nameElementId, name }) => {
-    requestAnimationFrame(() => {
-      const imageInputElement = document.getElementById(
-        imageInputElementId
-      ) as HTMLInputElement;
-      imageInputElement.addEventListener("input", async () => {
-        const { files } = imageInputElement;
-        if (files === null) {
-          throw new Error("入力したものがファイルじゃなかった");
-        }
-        const file = files.item(0);
-        if (file === null) {
-          throw new Error("入力したファイルがnullだった");
-        }
-        app.ports.imageInput.send(
-          await userImageFileResizeAndConvertToDataUrl(file)
-        );
-      });
-
-      (document.getElementById(nameElementId) as HTMLInputElement).value = name;
+app.ports.load.subscribe(({ imageInputElementId, nameElementId, name }) => {
+  requestAnimationFrame(() => {
+    const imageInputElement = document.getElementById(
+      imageInputElementId
+    ) as HTMLInputElement;
+    imageInputElement.addEventListener("input", async () => {
+      const { files } = imageInputElement;
+      if (files === null) {
+        throw new Error("入力したものがファイルじゃなかった");
+      }
+      const file = files.item(0);
+      if (file === null) {
+        throw new Error("入力したファイルがnullだった");
+      }
+      app.ports.imageInput.send(
+        await userImageFileResizeAndConvertToDataUrl(file)
+      );
     });
-  }
-);
+
+    (document.getElementById(nameElementId) as HTMLInputElement).value = name;
+  });
+});
 
 const userImageFileResizeAndConvertToDataUrl = (file: File): Promise<string> =>
   new Promise((resolve, reject) => {
@@ -85,5 +83,6 @@ const sendConfirmEmail = async (token: string) => {
 app.ports.sendConfirmEmail.subscribe(sendConfirmEmail);
 
 app.ports.alert.subscribe((message) => {
+  // eslint-disable-next-line no-alert
   window.alert(message);
 });

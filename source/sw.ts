@@ -65,4 +65,4 @@
       })
     );
   });
-})((self as unknown) as ServiceWorkerGlobalScope);
+})(self as unknown as ServiceWorkerGlobalScope);
