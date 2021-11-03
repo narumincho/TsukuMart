@@ -1,6 +1,6 @@
-import "firebase/auth";
 import { Elm } from "./elm/SignUp.elm";
-import firebase from "firebase/app";
+import { getAuth } from "firebase/auth";
+import { initializeApp } from "firebase/app";
 
 const fragment = new URLSearchParams(location.hash.substring(1));
 const app = Elm.SignUp.init({
@@ -63,7 +63,9 @@ const userImageFileResizeAndConvertToDataUrl = (file: File): Promise<string> =>
 const sendConfirmEmail = async (token: string) => {
   try {
     console.log("custom token", token);
-    const { user } = await firebase.auth().signInWithCustomToken(token);
+    const { user } = (
+      await getAuth(initializeApp({ projectId: "tsukumart-f0971" }))
+    ).signInWithCustomToken(token);
     if (user === null) {
       throw new Error("userがnullだった");
     }
