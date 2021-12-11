@@ -1,6 +1,12 @@
-import "firebase/firestore";
+import {
+  QueryDocumentSnapshot,
+  Timestamp,
+  collection,
+  getFirestore,
+  onSnapshot,
+} from "firebase/firestore";
 import { Elm } from "./elm/Main.elm";
-import firebase from "firebase/app";
+import { initializeApp } from "firebase/app";
 
 const userImageFileResizeAndConvertToDataUrl = (file: File): Promise<string> =>
   new Promise((resolve, reject) => {
@@ -211,13 +217,13 @@ app.ports.addEventListenerForProductImages.subscribe(({ inputId, labelId }) => {
 })();
 
 (() => {
-  firebase.initializeApp({ projectId: "tsukumart-f0971" });
+  const firebaseApp = initializeApp({ projectId: "tsukumart-f0971" });
   console.log("firestore run");
-  const firestore = firebase.firestore();
-  const productCollection = firestore.collection("product");
+  const firestore = getFirestore(firebaseApp);
+  const productCollection = collection(firestore, "product");
   console.log("firestore request");
   app.ports.startListenRecommendProducts.subscribe(() => {
-    productCollection.onSnapshot((productsQuerySnapshot) => {
+    onSnapshot(productCollection, (productsQuerySnapshot) => {
       console.log("firestore get response");
       app.ports.receiveAllProducts.send(
         productsQuerySnapshot.docs.map(documentDataToProduct)
@@ -226,15 +232,13 @@ app.ports.addEventListenerForProductImages.subscribe(({ inputId, labelId }) => {
   });
 })();
 
-const documentDataToProduct = (
-  documentSnapshot: firebase.firestore.QueryDocumentSnapshot
-) => {
+const documentDataToProduct = (documentSnapshot: QueryDocumentSnapshot) => {
   const data = documentSnapshot.data();
   return {
     id: documentSnapshot.id,
     category: data.category,
     condition: data.condition,
-    createdAt: (data.createdAt as firebase.firestore.Timestamp).toMillis(),
+    createdAt: (data.createdAt as Timestamp).toMillis(),
     description: data.description,
     imageIds: data.imageIds,
     likedCount: data.likedCount,
@@ -245,6 +249,6 @@ const documentDataToProduct = (
     sellerImageId: data.sellerImageId,
     status: data.status,
     thumbnailImageId: data.thumbnailImageId,
-    updateAt: (data.updateAt as firebase.firestore.Timestamp).toMillis(),
+    updateAt: (data.updateAt as Timestamp).toMillis(),
   };
 };

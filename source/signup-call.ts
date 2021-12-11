@@ -1,6 +1,10 @@
-import "firebase/auth";
+import { FirebaseApp, initializeApp } from "firebase/app";
+import {
+  getAuth,
+  sendEmailVerification,
+  signInWithCustomToken,
+} from "firebase/auth";
 import { Elm } from "./elm/SignUp.elm";
-import firebase from "firebase/app";
 
 const fragment = new URLSearchParams(location.hash.substring(1));
 const app = Elm.SignUp.init({
@@ -35,7 +39,7 @@ app.ports.load.subscribe(({ imageInputElementId, nameElementId, name }) => {
 });
 
 const userImageFileResizeAndConvertToDataUrl = (file: File): Promise<string> =>
-  new Promise((resolve, reject) => {
+  new Promise((resolve) => {
     const image = new Image();
     image.onload = () => {
       const canvas = document.createElement("canvas");
@@ -60,23 +64,32 @@ const userImageFileResizeAndConvertToDataUrl = (file: File): Promise<string> =>
     image.src = window.URL.createObjectURL(file);
   });
 
-const sendConfirmEmail = async (token: string) => {
+const sendConfirmEmail = async (token: string): Promise<void> => {
+  await sendConfirmEmailLoop(
+    initializeApp({ projectId: "tsukumart-f0971" }),
+    token
+  );
+};
+
+const sendConfirmEmailLoop = async (
+  firebaseApp: FirebaseApp,
+  token: string
+): Promise<void> => {
   try {
     console.log("custom token", token);
-    const { user } = await firebase.auth().signInWithCustomToken(token);
+    const { user } = await signInWithCustomToken(getAuth(firebaseApp), token);
     if (user === null) {
       throw new Error("userがnullだった");
     }
     console.log("ユーザー名", user.displayName);
-    await user.sendEmailVerification({
-      url: "https://tsukumart.com/",
-    });
+
+    await sendEmailVerification(user, { url: "https://tsukumart.com/" });
     app.ports.sentConfirmEmail.send(null);
   } catch (e) {
     console.log("エラーが発生したので再送する", e);
-    setTimeout(async () => {
-      await sendConfirmEmail(token);
-    }, 1000);
+    setTimeout(() => {
+      sendConfirmEmail(token);
+    }, 3000);
   }
 };
 
