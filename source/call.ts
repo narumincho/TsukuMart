@@ -211,7 +211,7 @@ app.ports.addEventListenerForProductImages.subscribe(({ inputId, labelId }) => {
 });
 
 (async () => {
-  await navigator.serviceWorker.register("./sw.ts", {
+  await navigator.serviceWorker.register(new URL("./sw.ts", import.meta.url), {
     scope: "/",
   });
 })();
