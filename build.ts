@@ -1,5 +1,5 @@
-///@ts-check
-const fileSystem = require("fs-extra");
+/* eslint-disable camelcase */
+import * as fileSystem from "fs-extra";
 
 fileSystem.outputFile(
   "./dist/robot.txt",

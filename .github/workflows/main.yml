@@ -21,7 +21,7 @@ jobs:
       - name: build script
         run: npx parcel build source/call.ts
       - name: build files
-        run: node build.js
+        run: ts-node ./build.ts
       - name: deploy firebase hosting
         uses: w9jds/firebase-action@master
         with:
