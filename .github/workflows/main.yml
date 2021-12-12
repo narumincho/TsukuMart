@@ -15,13 +15,13 @@ jobs:
       - name: setup Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: "14"
+          node-version: "16"
       - name: Install npm dependencies (npm ci)
         run: npm ci
       - name: build script
         run: npx parcel build source/call.ts
       - name: build files
-        run: ts-node ./build.ts
+        run: npx ts-node ./build.ts
       - name: deploy firebase hosting
         uses: w9jds/firebase-action@master
         with:
