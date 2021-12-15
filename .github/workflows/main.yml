@@ -19,7 +19,7 @@ jobs:
       - name: Install npm dependencies (npm ci)
         run: npm ci
       - name: build script
-        run: npx parcel build source/call.ts
+        run: npx parcel build ./source/call.ts
       - name: build files
         run: npx ts-node ./build.ts
       - name: deploy firebase hosting

@@ -6,7 +6,7 @@
   "author": "narumincho",
   "license": "ISC",
   "scripts": {
-    "debugInLocal": "ts-node ./debugInLocal.ts",
+    "debugInLocal": "parcel serve ./source/index.html --dist-dir debugDistribution --port 2520",
     "eslint-fix": "eslint ./source --fix",
     "typeCheck": "tsc --project tsconfig.json --noEmit",
     "update-package-json": "ncu -u"

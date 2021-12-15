@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { FirebaseApp, initializeApp } from "firebase/app";
 import {
   getAuth,
@@ -5,6 +6,11 @@ import {
   signInWithCustomToken,
 } from "firebase/auth";
 import { Elm } from "./elm/SignUp.elm";
+=======
+import { Elm } from "./elm/SignUp.elm";
+import { getAuth } from "firebase/auth";
+import { initializeApp } from "firebase/app";
+>>>>>>> 3ea584d (wip)
 
 const fragment = new URLSearchParams(location.hash.substring(1));
 const app = Elm.SignUp.init({
@@ -77,7 +83,13 @@ const sendConfirmEmailLoop = async (
 ): Promise<void> => {
   try {
     console.log("custom token", token);
+<<<<<<< HEAD
     const { user } = await signInWithCustomToken(getAuth(firebaseApp), token);
+=======
+    const { user } = (
+      await getAuth(initializeApp({ projectId: "tsukumart-f0971" }))
+    ).signInWithCustomToken(token);
+>>>>>>> 3ea584d (wip)
     if (user === null) {
       throw new Error("userがnullだった");
     }
