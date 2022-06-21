@@ -22,5 +22,6 @@ jobs:
         run: npx vite build
       - name: build files
         run: npx ts-node ./build.ts
+      - run: ls ./dist
       - name: deploy firebase hosting
         run: npx firebase deploy --only hosting --project tsukumart-f0971 --token ${{ secrets.FIREBASE_TOKEN }}

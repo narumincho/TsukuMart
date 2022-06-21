@@ -30,4 +30,4 @@ fileSystem.outputFile(
 );
 
 fileSystem.copy("./source/assets/", "./dist/assets/");
-fileSystem.copy("./source/signup.html", "./dist/signup");
+fileSystem.remove("./dist/index.html");
