@@ -18,7 +18,7 @@ jobs:
           node-version: "18"
           cache: "npm"
       - name: Install npm dependencies (npm ci)
-        run: npm ci
+        run: npm ci --legacy-peer-deps
       - name: build script
         run: npx vite build
       - name: build files
